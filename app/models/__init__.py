@@ -1,1 +1,1 @@
-﻿from app.models.models import Match, MatchDetail, MatchEvent, PlayerMatchStat
+from app.models.models import Match, MatchDetail, MatchEvent, PlayerMatchStat

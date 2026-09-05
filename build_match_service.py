@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 code = '''import json
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any

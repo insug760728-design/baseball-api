@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 with open("app/templates/index.html", "r", encoding="utf-8") as f:
     html = f.read()
 

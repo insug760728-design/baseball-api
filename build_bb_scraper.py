@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 code = '''from typing import List, Dict, Any, Optional
 from datetime import datetime
 from app.scrapers.base import BaseScraper
