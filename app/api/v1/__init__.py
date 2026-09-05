@@ -1,0 +1,17 @@
+from fastapi import APIRouter
+from app.api.v1.matches import router as matches_router
+from app.api.v1.player_stats import router as players_router
+from app.api.v1.crawler import router as crawler_router
+from app.api.v1.export import router as export_router
+from app.api.v1.content import router as content_router
+from app.api.v1.analytics import router as analytics_router
+from app.api.v1.scheduler import router as scheduler_router
+
+api_v1_router = APIRouter()
+api_v1_router.include_router(matches_router)
+api_v1_router.include_router(players_router)
+api_v1_router.include_router(crawler_router)
+api_v1_router.include_router(export_router)
+api_v1_router.include_router(content_router)
+api_v1_router.include_router(analytics_router)
+api_v1_router.include_router(scheduler_router)
