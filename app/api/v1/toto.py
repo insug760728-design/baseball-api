@@ -11,7 +11,7 @@ def get_betman_toto_round(
     gmTs: Optional[int] = Query(None, description='회차 번호 (예: 260066, 260065)'),
     force: bool = Query(False, description='강제 최신 수집 여부')
 ):
-    target_ts = gmTs if gmTs else (260066 if gmId == 'G024' else None)
+    target_ts = gmTs if gmTs else (260050 if gmId == 'G011' else (260066 if gmId == 'G024' else 260027))
     data = BetmanService.get_round_data(gm_id=gmId, gm_ts=target_ts, force_refresh=force)
     return data
 
@@ -33,7 +33,9 @@ def get_available_rounds(gmId: str = Query('G024')):
             'gmId': 'G011',
             'sport': '축구 승무패',
             'rounds': [
-                {'gmTs': 260049, 'label': '49회차 (2,974만 원)', 'status': 'Upcoming', 'is_live': True}
+                {'gmTs': 260050, 'label': '50회차 (EPL·세리에A 실시간 진행중 · 5.8억)', 'status': 'SaleComplete', 'is_live': True},
+                {'gmTs': 260051, 'label': '51회차 (UCL·K리그1 · 9월 9일 마감)', 'status': 'SaleBefore', 'is_live': False},
+                {'gmTs': 260052, 'label': '52회차 (EPL·라리가 · 9월 12일 마감)', 'status': 'SaleBefore', 'is_live': False}
             ]
         }
     else:

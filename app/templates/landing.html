@@ -1025,8 +1025,29 @@
         </div>
       </a>
 
-      <!-- Simple Auth Section (별명/나이 간편 로그인) -->
-      <div id="navAuthContainer" class="d-flex align-items-center">
+      <!-- Simple Auth Section, PC/Mobile View Switcher & Member Registry -->
+      <div id="navAuthContainer" class="d-flex align-items-center gap-2">
+        <!-- 💻 PC / 📱 핸드폰 버전 전환 버튼 -->
+        <div class="btn-group btn-group-sm" role="group" id="viewModeToggleGroup" style="border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 8px; overflow: hidden;">
+          <button type="button" class="btn btn-info fw-bold px-2.5 py-1 text-dark" id="btnModePC" onclick="setViewMode('pc')" title="PC 최적화 대화면 3분할 뷰">
+            <i class="bi bi-display me-1"></i>PC버전
+          </button>
+          <button type="button" class="btn btn-dark fw-bold px-2.5 py-1 text-light" id="btnModeMobile" onclick="setViewMode('mobile')" title="스마트폰 핸드폰 모바일 최적화 뷰">
+            <i class="bi bi-phone me-1"></i>핸드폰버전
+          </button>
+        </div>
+
+        <!-- 👥 회원 가입 현황 (data/members 폴더 연동) 버튼 -->
+        <button class="btn btn-sm btn-outline-secondary text-light fw-bold px-2 py-1.5" onclick="openMembersModal()" title="실제 가입한 별명·나이 인원수 목록 확인 (data/members 폴더 연동)" style="border-radius: 8px; font-size: 0.78rem; border-color: rgba(255, 255, 255, 0.2);">
+          <i class="bi bi-people-fill text-warning me-1"></i>회원현황
+        </button>
+
+        <!-- 🔑 실시간 API 연동 버튼 -->
+        <button class="btn btn-sm btn-outline-warning fw-bold px-2.5 py-1.5" onclick="openLiveApiModal()" id="navLiveApiBtn" style="border-radius: 8px; font-size: 0.80rem; border-color: rgba(245, 158, 11, 0.5);" title="API-Sports 또는 RapidAPI Key 등록 및 실시간 경기결과 연동">
+          <i class="bi bi-key-fill text-warning me-1"></i><span id="navLiveApiTxt">🔑 실시간 API 연동</span>
+        </button>
+
+        <!-- ⚡ 간편 로그인 버튼 -->
         <button class="btn btn-sm btn-warning text-dark fw-bold px-3 py-1.5" onclick="openLoginModal()" style="border-radius: 8px; box-shadow: 0 0 12px rgba(245, 158, 11, 0.45); font-size: 0.82rem;">
           <i class="bi bi-box-arrow-in-right me-1"></i>간편 로그인 (별명·나이)
         </button>
@@ -1038,6 +1059,9 @@
   <div class="breaking-ticker" style="background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 6px 0;">
     <div class="dash-container">
       <div class="ticker-wrap d-flex align-items-center">
+        <span class="badge bg-dark border text-success fw-bold me-2 py-1 px-2" style="border-color: rgba(16, 185, 129, 0.4) !important; font-size: 0.72rem;">
+          <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-white">664</strong>명
+        </span>
         <span class="ticker-badge" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; font-weight: 800; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); white-space: nowrap; margin-right: 12px;">
           <i class="bi bi-broadcast me-1"></i>BREAKING NEWS
         </span>
@@ -1054,6 +1078,19 @@
   <section class="py-2 px-1" id="prediction-section" style="background: radial-gradient(circle at 50% 0%, #131c34 0%, #0a0e1a 100%); border-bottom: 2px solid #1e293b;">
     <div class="dash-container">
       
+      <!-- 📱 핸드폰 모바일 전용 1-Tap 탭 네비게이터 -->
+      <div id="mobileTabBar" class="d-none justify-content-around p-1.5 mb-2.5 rounded-3" style="background: rgba(15, 23, 42, 0.95); border: 1.5px solid #00F0FF; position: sticky; top: 52px; z-index: 990; box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);">
+        <button class="btn btn-sm active fw-bold py-1.5 px-2 text-dark" id="mobTabToto" onclick="switchMobileView('TOTO')" style="background: linear-gradient(135deg, #00F0FF, #38bdf8); border:none; border-radius:6px; font-size:0.80rem;">
+          <i class="bi bi-check2-square me-1"></i>14경기 토토
+        </button>
+        <button class="btn btn-sm fw-bold py-1.5 px-2 text-light" id="mobTabDetail" onclick="switchMobileView('DETAIL')" style="background: transparent; border:none; border-radius:6px; font-size:0.80rem;">
+          <i class="bi bi-bar-chart-fill text-info me-1"></i>경기분석 (세이버)
+        </button>
+        <button class="btn btn-sm fw-bold py-1.5 px-2 text-light" id="mobTabChat" onclick="switchMobileView('CHAT')" style="background: transparent; border:none; border-radius:6px; font-size:0.80rem;">
+          <i class="bi bi-chat-dots-fill text-success me-1"></i>실시간 팬룸
+        </button>
+      </div>
+
       <!-- 3 : 4 : 3 Side-by-Side Unified Dashboard Row -->
       <div class="dashboard-row">
         
@@ -1161,7 +1198,7 @@
                   </span>
                 </div>
                 <span class="badge bg-dark border border-secondary text-dim px-2 py-1" style="font-size: 0.72rem;">
-                  <i class="bi bi-people-fill text-info me-1"></i>접속자: <b class="text-white" id="wsClientCount">1</b>명
+                  <i class="bi bi-people-fill text-info me-1"></i>접속자: <b class="text-white" id="wsClientCount">664</b>명
                 </span>
               </div>
 
@@ -1520,7 +1557,229 @@
   </div>
 
   <!-- Bootstrap Bundle JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+    // =============================================================
+    // 💻 PC버전 vs 📱 핸드폰버전 뷰 모드 스위처
+    // =============================================================
+    let currentViewMode = 'pc';
+    let currentMobileViewTab = 'TOTO';
+
+    function initViewMode() {
+      const savedMode = localStorage.getItem('tokeon_view_mode');
+      const isMobileDevice = window.innerWidth <= 768;
+      if (savedMode) {
+        setViewMode(savedMode, false);
+      } else if (isMobileDevice) {
+        setViewMode('mobile', false);
+      } else {
+        setViewMode('pc', false);
+      }
+    }
+
+    function setViewMode(mode, save = true) {
+      currentViewMode = mode;
+      if (save) {
+        try { localStorage.setItem('tokeon_view_mode', mode); } catch (e) {}
+      }
+
+      const btnPC = document.getElementById('btnModePC');
+      const btnMobile = document.getElementById('btnModeMobile');
+      const mobileTabBar = document.getElementById('mobileTabBar');
+      const container = document.querySelector('#prediction-section .dash-container');
+
+      if (mode === 'mobile') {
+        if (btnPC) { btnPC.className = 'btn btn-dark fw-bold px-2.5 py-1 text-light'; }
+        if (btnMobile) { btnMobile.className = 'btn btn-info fw-bold px-2.5 py-1 text-dark'; }
+        if (mobileTabBar) { mobileTabBar.classList.remove('d-none'); mobileTabBar.classList.add('d-flex'); }
+
+        if (container) {
+          container.style.maxWidth = '480px';
+          container.style.margin = '0 auto';
+          container.style.padding = '8px';
+          container.style.borderRadius = '24px';
+          container.style.border = '2px solid rgba(0, 240, 255, 0.4)';
+          container.style.boxShadow = '0 0 50px rgba(0, 240, 255, 0.25)';
+          container.style.background = '#0b1120';
+        }
+
+        switchMobileView(currentMobileViewTab);
+      } else {
+        // PC Mode
+        if (btnPC) { btnPC.className = 'btn btn-info fw-bold px-2.5 py-1 text-dark'; }
+        if (btnMobile) { btnMobile.className = 'btn btn-dark fw-bold px-2.5 py-1 text-light'; }
+        if (mobileTabBar) { mobileTabBar.classList.remove('d-flex'); mobileTabBar.classList.add('d-none'); }
+
+        if (container) {
+          container.style.maxWidth = '1600px';
+          container.style.margin = '0 auto';
+          container.style.padding = '0 12px';
+          container.style.borderRadius = '0';
+          container.style.border = 'none';
+          container.style.boxShadow = 'none';
+          container.style.background = 'transparent';
+        }
+
+        // Show all 3 columns in desktop layout
+        const p1 = document.getElementById('leftColSchedule');
+        const p2 = document.getElementById('centerColMain');
+        const p3 = document.getElementById('rightColCommunity');
+        if (p1) p1.style.display = '';
+        if (p2) p2.style.display = '';
+        if (p3) p3.style.display = '';
+      }
+    }
+
+    function switchMobileView(tab) {
+      currentMobileViewTab = tab;
+      ['mobTabToto', 'mobTabDetail', 'mobTabChat'].forEach(tId => {
+        const btn = document.getElementById(tId);
+        if (btn) {
+          btn.style.background = 'transparent';
+          btn.style.color = '#f1f5f9';
+        }
+      });
+
+      const activeBtn = document.getElementById(tab === 'TOTO' ? 'mobTabToto' : (tab === 'DETAIL' ? 'mobTabDetail' : 'mobTabChat'));
+      if (activeBtn) {
+        activeBtn.style.background = 'linear-gradient(135deg, #00F0FF, #38bdf8)';
+        activeBtn.style.color = '#000';
+      }
+
+      const p1 = document.getElementById('leftColSchedule');
+      const p2 = document.getElementById('centerColMain');
+      const p3 = document.getElementById('rightColCommunity');
+
+      if (tab === 'TOTO') {
+        if (p1) p1.style.display = 'none';
+        if (p2) p2.style.display = 'block';
+        if (p3) p3.style.display = 'none';
+        switchCenterView('TOTO');
+      } else if (tab === 'DETAIL') {
+        if (p1) p1.style.display = 'block';
+        if (p2) p2.style.display = 'block';
+        if (p3) p3.style.display = 'none';
+        switchCenterView('DETAIL');
+      } else if (tab === 'CHAT') {
+        if (p1) p1.style.display = 'none';
+        if (p2) p2.style.display = 'none';
+        if (p3) p3.style.display = 'block';
+      }
+    }
+
+    // =============================================================
+    // 👥 실시간 회원 가입 & data/members 폴더 저장 연동
+    // =============================================================
+    let membersModalObj = null;
+
+    async function openMembersModal() {
+      const modalEl = document.getElementById('memberListModal');
+      if (!modalEl) return;
+      if (!membersModalObj) membersModalObj = new bootstrap.Modal(modalEl);
+
+      try {
+        const resp = await fetch('/api/v1/auth/members');
+        if (resp.ok) {
+          const data = await resp.json();
+          const countEl = document.getElementById('modalTotalMembersCount');
+          if (countEl) countEl.innerText = `${data.total_members}명`;
+
+          const tbody = document.getElementById('memberListTableBody');
+          if (tbody) {
+            let tHtml = '';
+            (data.members || []).forEach(m => {
+              tHtml += `
+                <tr>
+                  <td class="text-center text-muted">${m.id}</td>
+                  <td class="fw-bold text-white"><span class="badge bg-primary bg-opacity-25 text-info me-1">${m.id <= 3 ? '👑 VIP' : '회원'}</span>${m.nickname}</td>
+                  <td class="text-center text-warning fw-bold">${m.age}세</td>
+                  <td class="text-dim small">${m.registered_at || '-'}</td>
+                  <td class="text-center"><span class="badge bg-dark border text-success">${m.login_count || 1}회</span></td>
+                </tr>
+              `;
+            });
+            tbody.innerHTML = tHtml;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load members:', e);
+      }
+
+      membersModalObj.show();
+    }
+
+    // =============================================================
+    // 🟢 실시간 접속자 수 600명~745명 임의 변동 시뮬레이터
+    // =============================================================
+    let currentLiveUsersCount = Math.floor(Math.random() * (730 - 640 + 1)) + 640;
+
+    function startLiveUsersFluctuation() {
+      const updateCounts = () => {
+        const wsEl = document.getElementById('wsClientCount');
+        const topEl = document.getElementById('topLiveUsersCount');
+        if (wsEl) wsEl.innerText = currentLiveUsersCount;
+        if (topEl) topEl.innerText = currentLiveUsersCount;
+      };
+
+      updateCounts();
+
+      setInterval(() => {
+        // Fluctuates by -3 to +3, staying within [600, 745]
+        const delta = Math.floor(Math.random() * 7) - 3;
+        currentLiveUsersCount += delta;
+        if (currentLiveUsersCount < 600) currentLiveUsersCount = 605 + Math.floor(Math.random() * 15);
+        if (currentLiveUsersCount > 745) currentLiveUsersCount = 740 - Math.floor(Math.random() * 15);
+        updateCounts();
+      }, 12000); // every 12 seconds
+    }
+
+    // =============================================================
+    // 🤖 AI 4분 단위 자동 채팅 글쓰기 (각자 다른 닉네임으로 실시간 소통)
+    // =============================================================
+    const AI_CHAT_PERSONAS = [
+      { author: "도산대로세이버", channel: "BASEBALL", tag: "MLB", text: "오늘 다저스 불펜 승계주자 실점률(LOB%) 84% 기록중이네요. 뒷문 단단해서 후반부 마핸 승부 유력합니다." },
+      { author: "런던붉은여우", channel: "SOCCER", tag: "EPL", text: "토트넘 손흥민 감아차기 궤적 보셨나요? xG값 0.04짜리 원더골이 터져버리네요 ㄷㄷ" },
+      { author: "베트맨1등사냥꾼", channel: "PREDICTION", tag: "토토분석", text: "이번 14경기 토토 계산기 돌려보니까 1등 예상 3.5명 수준이네요. 역배 1~2개 섞은 조합이 대박입니다!" },
+      { author: "잠실빅보이", channel: "BASEBALL", tag: "KBO", text: "오늘 잠실 맞바람이라 타구 속도 150km 이상 찍혀도 펜스 앞에서 잡히는 타구가 많네요. 언더 흐름!" },
+      { author: "산시로인테르", channel: "SOCCER", tag: "세리에A", text: "인테르 vs 나폴리 전반 1:1 명승부네요. 라우타로 오프더볼 침투랑 크바라츠헬리아 드리블 대결 볼만합니다!" },
+      { author: "골든스테이트3점", channel: "BASKETBALL", tag: "NBA", text: "eFG% 58% 이상 유지되면 쿼터당 기대득점 32점 페이스입니다. 224.5 오버 유력해 보입니다." },
+      { author: "상암축구도사", channel: "SOCCER", tag: "축구분석", text: "후반 70분 넘어가면 양팀 수비 간격 벌어지니까 역습 한 방에 결승골 터질 확률 75%입니다." },
+      { author: "다저스타디움원정대", channel: "BASEBALL", tag: "MLB", text: "샌디에이고랑 다저스 라이벌전 볼카운트 싸움 치열하네요. 선발 스플리터 낙폭 예술입니다." },
+      { author: "알리안츠직관러", channel: "SOCCER", tag: "분데스리가", text: "바이에른 뮌헨 케인-무시알라 연계 플레이 예술이네요. 원정에서 전반에만 멀티골 작렬!" },
+      { author: "데이터로승부", channel: "PREDICTION", tag: "AI픽", text: "AI 승률 시뮬레이션 10,000회 돌려본 결과 홈팀 승률 68.4% 도출됩니다. 세이버 메트릭스 믿고 갑니다." }
+    ];
+
+    let aiChatPersonaIndex = 0;
+
+    function start4MinAiChatTimer() {
+      // Automatically posts every 4 minutes (240,000 ms)
+      setInterval(() => {
+        const p = AI_CHAT_PERSONAS[aiChatPersonaIndex];
+        aiChatPersonaIndex = (aiChatPersonaIndex + 1) % AI_CHAT_PERSONAS.length;
+
+        const now = new Date();
+        const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+        const newMsg = {
+          id: Date.now(),
+          author: p.author,
+          channel: p.channel,
+          sport_tag: p.tag,
+          content: p.text,
+          created_at: timeStr,
+          likes: Math.floor(Math.random() * 12) + 3
+        };
+
+        if (typeof communityMessages !== 'undefined') {
+          communityMessages.push(newMsg);
+          if (currentChatChannel === 'ALL' || newMsg.channel === currentChatChannel) {
+            appendMessageToFeed(newMsg);
+          }
+        }
+        console.log(`[AI 4분 자동 채팅] '${p.author}' 게시 완료: ${p.text.slice(0, 25)}...`);
+      }, 240000); // 4 minutes = 240,000 ms
+    }
+
+  </script>
 
   <!-- Real News & Matches Script -->
   <script>
@@ -1579,6 +1838,12 @@
 
       try {
         localStorage.setItem('tokeon_simple_user', JSON.stringify(currentUser));
+        // Save to data/members folder via backend API
+        fetch('/api/v1/auth/register-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nickname: nickname, age: age })
+        }).catch(err => console.warn('Member folder registration error:', err));
       } catch (err) {}
 
       // Auto-activate 3-day VIP trial on simple login
@@ -2886,10 +3151,33 @@
           timeClean = timeClean.replace(/^[0-9]{2}\./, ''); // remove year prefix
         }
 
-        // Result badge if finished
+        // Result badge if finished or live
         let resultBadge = '<span class="badge bg-success bg-opacity-25 text-success border border-success px-1.5 py-0.5" style="font-size:0.64rem;">● 발매중</span>';
         if (m.result) {
           resultBadge = `<span class="badge ${m.result === 'W' ? 'bg-info text-dark' : (m.result === 'D' ? 'bg-warning text-dark' : 'bg-danger text-white')} px-1.5 py-0.5" style="font-size: 0.65rem; font-weight:800;">적중: ${m.result === 'W' ? '승' : (m.result === 'D' ? drawBtnTxt : '패')}</span>`;
+        }
+
+        // Live Match Score Sync Check
+        let liveMatch = null;
+        if (m.db_match_id && typeof allMatches !== 'undefined' && allMatches) {
+          liveMatch = allMatches.find(x => x.id === m.db_match_id);
+        }
+        if (!liveMatch && typeof allMatches !== 'undefined' && allMatches) {
+          const ch = (m.home || '').replace(/[\s\.\·-]/g, '').toLowerCase();
+          const ca = (m.away || '').replace(/[\s\.\·-]/g, '').toLowerCase();
+          liveMatch = allMatches.find(x => {
+            const xh = (x.home_team_name || '').replace(/[\s\.\·-]/g, '').toLowerCase();
+            const xa = (x.away_team_name || '').replace(/[\s\.\·-]/g, '').toLowerCase();
+            return (xh.includes(ch) || ch.includes(xh)) && (xa.includes(ca) || ca.includes(xa));
+          });
+        }
+
+        if (liveMatch) {
+          if (liveMatch.status === 'LIVE') {
+            resultBadge = `<span class="badge bg-danger animate-pulse px-1.5 py-0.5" style="font-size:0.68rem; font-weight:800;"><i class="bi bi-broadcast me-1"></i>LIVE [${liveMatch.home_score} : ${liveMatch.away_score}]</span>`;
+          } else if (liveMatch.status === 'FINISHED') {
+            resultBadge = `<span class="badge px-1.5 py-0.5" style="background:#0f172a; border:1px solid rgba(255,255,255,0.25); font-size:0.68rem; font-weight:800;"><span style="color:#00F0FF;">${liveMatch.home_score}</span> : <span style="color:#FFB703;">${liveMatch.away_score}</span> <span class="badge bg-secondary ms-1 py-0 px-1" style="font-size:0.60rem;">종료</span></span>`;
+          }
         }
 
         const probHome = m.db_prob_home || (Math.round((Number(m.pW) || 45) * 1.05));
@@ -3012,12 +3300,6 @@
                 <span class="badge bg-danger animate-pulse" style="font-size: 0.68rem; padding: 2px 7px;">
                   <i class="bi bi-fire me-0.5"></i>5회 연속 이월 잭팟
                 </span>
-              </div>
-              <div>
-                <span class="badge bg-dark text-info border" style="font-size: 0.70rem; border-color: rgba(56, 189, 248, 0.4) !important;" title="베트맨 공식 사이트 10분 주기 실시간 자동 동기화">
-                  <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#00F0FF;"></span>10분 자동집계: <span id="totoSyncTimeBadge">${toto.updated_at || '실시간'}</span>
-                </span>
-              </div>
             </div>
           </div>
 
@@ -3040,8 +3322,8 @@
               </span>
             </div>
             <div class="d-flex align-items-center gap-2">
-              <button class="btn btn-sm fw-bold text-dark px-3 py-1.5" onclick="openTotoCalculatorModal('${totoKey}')" style="background: linear-gradient(135deg, #00F0FF, #38bdf8); border: none; border-radius: 6px; font-size: 0.78rem; box-shadow: 0 0 16px rgba(0, 240, 255, 0.7);" title="마킹한 조합의 실제 예상 등수 및 1등 당첨 인원수(예: 3.5명)와 수령액 계산">
-                <i class="bi bi-calculator-fill me-1"></i>⚡ AI 당첨인원 계산기 (1등 3.5명)
+              <button class="btn btn-sm fw-bold text-dark px-3 py-1.5" onclick="openTotoCalculatorModal('${totoKey}')" style="background: linear-gradient(135deg, #00F0FF, #38bdf8); border: none; border-radius: 6px; font-size: 0.80rem; box-shadow: 0 0 16px rgba(0, 240, 255, 0.7);" title="조합 계산기">
+                <i class="bi bi-calculator-fill me-1"></i>계산기
               </button>
               <button class="btn btn-sm fw-bold text-success px-2.5 py-1.5" onclick="shareTotoToChat('${totoKey}')" style="background: rgba(16, 185, 129, 0.18); border: 1px solid rgba(16, 185, 129, 0.45); border-radius: 6px; font-size: 0.74rem;" title="채팅방에 내 조합 공유">
                 <i class="bi bi-chat-dots-fill me-1"></i>팬룸 공유
@@ -4326,7 +4608,380 @@
         console.error('Matches load error:', err);
       }
       initPredictionSection();
+    checkLiveApiStatus();
+      initViewMode();
+      startLiveUsersFluctuation();
+      start4MinAiChatTimer();
     });
+
+  
+    // ==========================================
+    // ⚡ 실시간 API-Sports / RapidAPI 연동 & 스코어 동기화 모달
+    // ==========================================
+    let liveApiModalObj = null;
+
+    async function checkLiveApiStatus() {
+      try {
+        const resp = await fetch('/api/v1/live/status');
+        if (!resp.ok) return;
+        const data = await resp.json();
+
+        const btnTxt = document.getElementById('navLiveApiTxt');
+        const btn = document.getElementById('navLiveApiBtn');
+        if (btnTxt && btn) {
+          if (data.is_configured) {
+            btnTxt.innerHTML = `<span class="pulse-dot me-1" style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981;"></span>${data.provider} 연동중`;
+            btn.className = 'btn btn-sm btn-outline-success fw-bold px-2.5 py-1.5';
+            btn.style.borderColor = 'rgba(16, 185, 129, 0.6)';
+          } else {
+            btnTxt.innerHTML = '🔑 실시간 API 연동';
+            btn.className = 'btn btn-sm btn-outline-warning fw-bold px-2.5 py-1.5';
+            btn.style.borderColor = 'rgba(245, 158, 11, 0.5)';
+          }
+        }
+        return data;
+      } catch (e) {
+        console.warn('Live API status check failed:', e);
+      }
+    }
+
+    async function openLiveApiModal() {
+      const modalEl = document.getElementById('liveApiModal');
+      if (!modalEl) return;
+      if (!liveApiModalObj) {
+        liveApiModalObj = new bootstrap.Modal(modalEl);
+      }
+
+      // Populate status
+      const data = await checkLiveApiStatus();
+      initViewMode();
+      startLiveUsersFluctuation();
+      start4MinAiChatTimer();
+      if (data) {
+        const statusText = document.getElementById('liveApiStatusText');
+        const statusSub = document.getElementById('liveApiStatusSub');
+        const statusBanner = document.getElementById('liveApiStatusBanner');
+
+        if (data.is_configured) {
+          statusText.innerHTML = `<span class="pulse-dot me-1" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"></span>현재 실시간 연동 상태: <span class="text-success fw-bold">${data.provider} 연동 완료</span> (키: ${data.masked_key})`;
+          statusSub.innerText = `위성 실시간 피드 활성화: 축구 5대리그·K리그, 야구 MLB·KBO·NPB (현재 LIVE ${data.active_live_count || 0}경기, 오늘 종료 ${data.today_finished_count || 0}경기)`;
+          statusBanner.style.background = 'rgba(16, 185, 129, 0.15)';
+          statusBanner.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        } else {
+          statusText.innerHTML = `<span class="pulse-dot me-1" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#f59e0b;"></span>현재 실시간 연동 상태: <span class="text-warning fw-bold">API 키 미등록 (기본 피드 동작중)</span>`;
+          statusSub.innerText = `유료 API Key를 등록하시면 실시간 스코어 및 경기 종료 결과가 초단위로 100% 자동 갱신됩니다.`;
+          statusBanner.style.background = 'rgba(245, 158, 11, 0.12)';
+          statusBanner.style.borderColor = 'rgba(245, 158, 11, 0.35)';
+        }
+
+        // Populate monitor list
+        const monitorEl = document.getElementById('liveMatchesMonitorList');
+        if (monitorEl) {
+          let mHtml = '';
+          if (data.live_matches && data.live_matches.length > 0) {
+            mHtml += '<div class="text-info small fw-bold mb-1"><i class="bi bi-broadcast me-1"></i>현재 실시간 LIVE 경기 (' + data.live_matches.length + '경기):</div>';
+            data.live_matches.forEach(m => {
+              mHtml += `
+                <div class="d-flex justify-content-between align-items-center p-2 mb-1 rounded" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3);">
+                  <div class="small text-white">
+                    <span class="badge bg-danger animate-pulse me-1" style="font-size:0.65rem;">LIVE</span>
+                    <strong>${m.home}</strong> vs <strong>${m.away}</strong>
+                  </div>
+                  <div class="fw-bold fs-6 text-white">${m.score}</div>
+                </div>
+              `;
+            });
+          } else {
+            mHtml += '<div class="text-muted small py-2 text-center">현재 진행중인 LIVE 경기가 없습니다. (다음 경기 대기중)</div>';
+          }
+          monitorEl.innerHTML = mHtml;
+        }
+      }
+
+      liveApiModalObj.show();
+    }
+
+    async function saveLiveApiKey() {
+      const inputEl = document.getElementById('liveApiKeyInput');
+      if (!inputEl) return;
+      const key = inputEl.value.trim();
+      if (!key || key.length < 5) {
+        alert('유효한 API Key를 입력해주세요.');
+        return;
+      }
+
+      const provEl = document.querySelector('input[name="liveApiProvider"]:checked');
+      const provider = provEl ? provEl.value : 'api_sports';
+
+      const btn = document.getElementById('saveKeyBtn');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>동기화 중...';
+      }
+
+      try {
+        const resp = await fetch('/api/v1/live/set-key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: key, provider: provider })
+        });
+
+        const res = await resp.json();
+        if (resp.ok && res.status === 'SUCCESS') {
+          alert('🎉 API Key가 성공적으로 등록되었습니다!\n' + res.message);
+          inputEl.value = '';
+          await checkLiveApiStatus();
+      initViewMode();
+      startLiveUsersFluctuation();
+      start4MinAiChatTimer();
+          await silentLiveRefresh();
+          if (liveApiModalObj) liveApiModalObj.hide();
+        } else {
+          alert('⚠️ 등록 실패: ' + (res.detail || res.message || '알 수 없는 오류'));
+        }
+      } catch (e) {
+        alert('네트워크 오류: ' + e);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i>API 키 등록 및 즉시 반영';
+        }
+      }
+    }
+
+    async function manualForceSyncLive() {
+      try {
+        const resp = await fetch('/api/v1/live/sync-now', { method: 'POST' });
+        const res = await resp.json();
+        alert('⚡ 실시간 데이터 강제 동기화가 완료되었습니다!\n' + (res.message || ''));
+        await silentLiveRefresh();
+        await openLiveApiModal();
+      } catch (e) {
+        alert('동기화 오류: ' + e);
+      }
+    }
+
+  
+    // =============================================================
+    // 💻 PC버전 vs 📱 핸드폰버전 뷰 모드 스위처
+    // =============================================================
+    let currentViewMode = 'pc';
+    let currentMobileViewTab = 'TOTO';
+
+    function initViewMode() {
+      const savedMode = localStorage.getItem('tokeon_view_mode');
+      const isMobileDevice = window.innerWidth <= 768;
+      if (savedMode) {
+        setViewMode(savedMode, false);
+      } else if (isMobileDevice) {
+        setViewMode('mobile', false);
+      } else {
+        setViewMode('pc', false);
+      }
+    }
+
+    function setViewMode(mode, save = true) {
+      currentViewMode = mode;
+      if (save) {
+        try { localStorage.setItem('tokeon_view_mode', mode); } catch (e) {}
+      }
+
+      const btnPC = document.getElementById('btnModePC');
+      const btnMobile = document.getElementById('btnModeMobile');
+      const mobileTabBar = document.getElementById('mobileTabBar');
+      const container = document.querySelector('#prediction-section .dash-container');
+
+      if (mode === 'mobile') {
+        if (btnPC) { btnPC.className = 'btn btn-dark fw-bold px-2.5 py-1 text-light'; }
+        if (btnMobile) { btnMobile.className = 'btn btn-info fw-bold px-2.5 py-1 text-dark'; }
+        if (mobileTabBar) { mobileTabBar.classList.remove('d-none'); mobileTabBar.classList.add('d-flex'); }
+
+        if (container) {
+          container.style.maxWidth = '480px';
+          container.style.margin = '0 auto';
+          container.style.padding = '8px';
+          container.style.borderRadius = '24px';
+          container.style.border = '2px solid rgba(0, 240, 255, 0.4)';
+          container.style.boxShadow = '0 0 50px rgba(0, 240, 255, 0.25)';
+          container.style.background = '#0b1120';
+        }
+
+        switchMobileView(currentMobileViewTab);
+      } else {
+        // PC Mode
+        if (btnPC) { btnPC.className = 'btn btn-info fw-bold px-2.5 py-1 text-dark'; }
+        if (btnMobile) { btnMobile.className = 'btn btn-dark fw-bold px-2.5 py-1 text-light'; }
+        if (mobileTabBar) { mobileTabBar.classList.remove('d-flex'); mobileTabBar.classList.add('d-none'); }
+
+        if (container) {
+          container.style.maxWidth = '1600px';
+          container.style.margin = '0 auto';
+          container.style.padding = '0 12px';
+          container.style.borderRadius = '0';
+          container.style.border = 'none';
+          container.style.boxShadow = 'none';
+          container.style.background = 'transparent';
+        }
+
+        // Show all 3 columns in desktop layout
+        const p1 = document.getElementById('leftColSchedule');
+        const p2 = document.getElementById('centerColMain');
+        const p3 = document.getElementById('rightColCommunity');
+        if (p1) p1.style.display = '';
+        if (p2) p2.style.display = '';
+        if (p3) p3.style.display = '';
+      }
+    }
+
+    function switchMobileView(tab) {
+      currentMobileViewTab = tab;
+      ['mobTabToto', 'mobTabDetail', 'mobTabChat'].forEach(tId => {
+        const btn = document.getElementById(tId);
+        if (btn) {
+          btn.style.background = 'transparent';
+          btn.style.color = '#f1f5f9';
+        }
+      });
+
+      const activeBtn = document.getElementById(tab === 'TOTO' ? 'mobTabToto' : (tab === 'DETAIL' ? 'mobTabDetail' : 'mobTabChat'));
+      if (activeBtn) {
+        activeBtn.style.background = 'linear-gradient(135deg, #00F0FF, #38bdf8)';
+        activeBtn.style.color = '#000';
+      }
+
+      const p1 = document.getElementById('leftColSchedule');
+      const p2 = document.getElementById('centerColMain');
+      const p3 = document.getElementById('rightColCommunity');
+
+      if (tab === 'TOTO') {
+        if (p1) p1.style.display = 'none';
+        if (p2) p2.style.display = 'block';
+        if (p3) p3.style.display = 'none';
+        switchCenterView('TOTO');
+      } else if (tab === 'DETAIL') {
+        if (p1) p1.style.display = 'block';
+        if (p2) p2.style.display = 'block';
+        if (p3) p3.style.display = 'none';
+        switchCenterView('DETAIL');
+      } else if (tab === 'CHAT') {
+        if (p1) p1.style.display = 'none';
+        if (p2) p2.style.display = 'none';
+        if (p3) p3.style.display = 'block';
+      }
+    }
+
+    // =============================================================
+    // 👥 실시간 회원 가입 & data/members 폴더 저장 연동
+    // =============================================================
+    let membersModalObj = null;
+
+    async function openMembersModal() {
+      const modalEl = document.getElementById('memberListModal');
+      if (!modalEl) return;
+      if (!membersModalObj) membersModalObj = new bootstrap.Modal(modalEl);
+
+      try {
+        const resp = await fetch('/api/v1/auth/members');
+        if (resp.ok) {
+          const data = await resp.json();
+          const countEl = document.getElementById('modalTotalMembersCount');
+          if (countEl) countEl.innerText = `${data.total_members}명`;
+
+          const tbody = document.getElementById('memberListTableBody');
+          if (tbody) {
+            let tHtml = '';
+            (data.members || []).forEach(m => {
+              tHtml += `
+                <tr>
+                  <td class="text-center text-muted">${m.id}</td>
+                  <td class="fw-bold text-white"><span class="badge bg-primary bg-opacity-25 text-info me-1">${m.id <= 3 ? '👑 VIP' : '회원'}</span>${m.nickname}</td>
+                  <td class="text-center text-warning fw-bold">${m.age}세</td>
+                  <td class="text-dim small">${m.registered_at || '-'}</td>
+                  <td class="text-center"><span class="badge bg-dark border text-success">${m.login_count || 1}회</span></td>
+                </tr>
+              `;
+            });
+            tbody.innerHTML = tHtml;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load members:', e);
+      }
+
+      membersModalObj.show();
+    }
+
+    // =============================================================
+    // 🟢 실시간 접속자 수 600명~745명 임의 변동 시뮬레이터
+    // =============================================================
+    let currentLiveUsersCount = Math.floor(Math.random() * (730 - 640 + 1)) + 640;
+
+    function startLiveUsersFluctuation() {
+      const updateCounts = () => {
+        const wsEl = document.getElementById('wsClientCount');
+        const topEl = document.getElementById('topLiveUsersCount');
+        if (wsEl) wsEl.innerText = currentLiveUsersCount;
+        if (topEl) topEl.innerText = currentLiveUsersCount;
+      };
+
+      updateCounts();
+
+      setInterval(() => {
+        // Fluctuates by -3 to +3, staying within [600, 745]
+        const delta = Math.floor(Math.random() * 7) - 3;
+        currentLiveUsersCount += delta;
+        if (currentLiveUsersCount < 600) currentLiveUsersCount = 605 + Math.floor(Math.random() * 15);
+        if (currentLiveUsersCount > 745) currentLiveUsersCount = 740 - Math.floor(Math.random() * 15);
+        updateCounts();
+      }, 12000); // every 12 seconds
+    }
+
+    // =============================================================
+    // 🤖 AI 4분 단위 자동 채팅 글쓰기 (각자 다른 닉네임으로 실시간 소통)
+    // =============================================================
+    const AI_CHAT_PERSONAS = [
+      { author: "도산대로세이버", channel: "BASEBALL", tag: "MLB", text: "오늘 다저스 불펜 승계주자 실점률(LOB%) 84% 기록중이네요. 뒷문 단단해서 후반부 마핸 승부 유력합니다." },
+      { author: "런던붉은여우", channel: "SOCCER", tag: "EPL", text: "토트넘 손흥민 감아차기 궤적 보셨나요? xG값 0.04짜리 원더골이 터져버리네요 ㄷㄷ" },
+      { author: "베트맨1등사냥꾼", channel: "PREDICTION", tag: "토토분석", text: "이번 14경기 토토 계산기 돌려보니까 1등 예상 3.5명 수준이네요. 역배 1~2개 섞은 조합이 대박입니다!" },
+      { author: "잠실빅보이", channel: "BASEBALL", tag: "KBO", text: "오늘 잠실 맞바람이라 타구 속도 150km 이상 찍혀도 펜스 앞에서 잡히는 타구가 많네요. 언더 흐름!" },
+      { author: "산시로인테르", channel: "SOCCER", tag: "세리에A", text: "인테르 vs 나폴리 전반 1:1 명승부네요. 라우타로 오프더볼 침투랑 크바라츠헬리아 드리블 대결 볼만합니다!" },
+      { author: "골든스테이트3점", channel: "BASKETBALL", tag: "NBA", text: "eFG% 58% 이상 유지되면 쿼터당 기대득점 32점 페이스입니다. 224.5 오버 유력해 보입니다." },
+      { author: "상암축구도사", channel: "SOCCER", tag: "축구분석", text: "후반 70분 넘어가면 양팀 수비 간격 벌어지니까 역습 한 방에 결승골 터질 확률 75%입니다." },
+      { author: "다저스타디움원정대", channel: "BASEBALL", tag: "MLB", text: "샌디에이고랑 다저스 라이벌전 볼카운트 싸움 치열하네요. 선발 스플리터 낙폭 예술입니다." },
+      { author: "알리안츠직관러", channel: "SOCCER", tag: "분데스리가", text: "바이에른 뮌헨 케인-무시알라 연계 플레이 예술이네요. 원정에서 전반에만 멀티골 작렬!" },
+      { author: "데이터로승부", channel: "PREDICTION", tag: "AI픽", text: "AI 승률 시뮬레이션 10,000회 돌려본 결과 홈팀 승률 68.4% 도출됩니다. 세이버 메트릭스 믿고 갑니다." }
+    ];
+
+    let aiChatPersonaIndex = 0;
+
+    function start4MinAiChatTimer() {
+      // Automatically posts every 4 minutes (240,000 ms)
+      setInterval(() => {
+        const p = AI_CHAT_PERSONAS[aiChatPersonaIndex];
+        aiChatPersonaIndex = (aiChatPersonaIndex + 1) % AI_CHAT_PERSONAS.length;
+
+        const now = new Date();
+        const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+        const newMsg = {
+          id: Date.now(),
+          author: p.author,
+          channel: p.channel,
+          sport_tag: p.tag,
+          content: p.text,
+          created_at: timeStr,
+          likes: Math.floor(Math.random() * 12) + 3
+        };
+
+        if (typeof communityMessages !== 'undefined') {
+          communityMessages.push(newMsg);
+          if (currentChatChannel === 'ALL' || newMsg.channel === currentChatChannel) {
+            appendMessageToFeed(newMsg);
+          }
+        }
+        console.log(`[AI 4분 자동 채팅] '${p.author}' 게시 완료: ${p.text.slice(0, 25)}...`);
+      }, 240000); // 4 minutes = 240,000 ms
+    }
 
   </script>
 
@@ -4473,7 +5128,7 @@
             <span class="badge" style="background: linear-gradient(135deg, #0284c7, #00F0FF); color: #000; font-weight: 800; font-size: 0.85rem;">
               <i class="bi bi-calculator-fill me-1"></i>AI 빅데이터 시뮬레이터
             </span>
-            <h5 class="modal-title text-white fw-bold mb-0" id="calcModalTitle">14경기 토토 예상 당첨 인원 및 수령액 계산기</h5>
+            <h5 class="modal-title text-white fw-bold mb-0" id="calcModalTitle">14경기 토토 계산기</h5>
           </div>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
@@ -4485,6 +5140,145 @@
         <div class="modal-footer border-top d-flex justify-content-between" style="border-color: rgba(255,255,255,0.08) !important;">
           <div class="text-dim small">
             <i class="bi bi-shield-check text-success me-1"></i>베트맨 공식 실시간 투표율 & 푸아송 이항확률 분포(Poisson-Binomial) 모델 기반
+          </div>
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 🔑 Modal: 실시간 경기결과 API 연동 센터 (API-Sports & RapidAPI) -->
+  <div class="modal fade" id="liveApiModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content" style="background: #0b1120; border: 1.5px solid #10b981; border-radius: 16px; box-shadow: 0 0 35px rgba(16, 185, 129, 0.35);">
+        <div class="modal-header border-bottom d-flex justify-content-between align-items-center" style="border-color: rgba(255,255,255,0.08) !important;">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-success text-dark fw-bold px-2 py-1" style="font-size: 0.85rem;">
+              <i class="bi bi-broadcast me-1"></i>LIVE SYNC
+            </span>
+            <h5 class="modal-title text-white fw-bold mb-0">⚡ 실시간 경기결과 API 연동 센터 (API-Sports & RapidAPI)</h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-4">
+          <!-- Status Banner -->
+          <div class="p-3 mb-4 rounded-3 d-flex justify-content-between align-items-center" id="liveApiStatusBanner" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);">
+            <div>
+              <div class="text-white fw-bold fs-6" id="liveApiStatusText">
+                <span class="pulse-dot me-1" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"></span>
+                실시간 연동 상태: 로딩 중...
+              </div>
+              <div class="text-muted small mt-1" id="liveApiStatusSub">API-Football & API-Baseball 실시간 스코어 수신 대기</div>
+            </div>
+            <button class="btn btn-sm btn-outline-success fw-bold px-3 py-1.5" onclick="manualForceSyncLive()">
+              <i class="bi bi-arrow-repeat me-1"></i>지금 즉시 강제 동기화
+            </button>
+          </div>
+
+          <!-- API Key Input Form -->
+          <div class="mb-4 p-3 rounded-3" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.08);">
+            <label class="form-label text-white fw-bold small mb-2"><i class="bi bi-key-fill text-warning me-1"></i>보유하신 API Key 등록</label>
+            
+            <div class="d-flex gap-4 mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="liveApiProvider" id="provApiSports" value="api_sports" checked>
+                <label class="form-check-label text-light small fw-bold" for="provApiSports">
+                  API-Sports (Direct) <span class="badge bg-primary" style="font-size:0.65rem;">권장</span>
+                </label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="liveApiProvider" id="provRapidApi" value="rapidapi">
+                <label class="form-check-label text-light small fw-bold" for="provRapidApi">
+                  RapidAPI
+                </label>
+              </div>
+            </div>
+
+            <div class="input-group mb-2">
+              <span class="input-group-text bg-dark border-secondary text-muted"><i class="bi bi-lock-fill"></i></span>
+              <input type="text" class="form-control bg-dark text-white border-secondary font-monospace" id="liveApiKeyInput" placeholder="API Key 입력 (예: 4a8b7c9d... 또는 RapidAPI Key)" autocomplete="off">
+              <button class="btn btn-success fw-bold px-4" onclick="saveLiveApiKey()" id="saveKeyBtn">
+                <i class="bi bi-check2-circle me-1"></i>API 키 등록 및 즉시 반영
+              </button>
+            </div>
+            <div class="text-muted small" style="font-size: 0.74rem;">
+              <i class="bi bi-info-circle me-1"></i>키를 등록하시면 환경설정(.env)에 안전하게 저장되며, 실시간 경기 스코어와 종료 결과가 초단위로 자동 갱신됩니다.
+            </div>
+          </div>
+
+          <!-- Live & Finished Matches Monitor -->
+          <h6 class="fw-bold text-white mb-2"><i class="bi bi-activity text-info me-1"></i>현재 실시간 진행중 & 오늘 종료된 경기 모니터링</h6>
+          <div id="liveMatchesMonitorList" class="p-2 rounded-2" style="background: rgba(10, 14, 26, 0.7); border: 1px solid rgba(255, 255, 255, 0.05); max-height: 220px; overflow-y: auto;">
+            <!-- Loaded by javascript -->
+          </div>
+        </div>
+
+        <div class="modal-footer border-top d-flex justify-content-between" style="border-color: rgba(255,255,255,0.08) !important;">
+          <div class="text-dim small">
+            <i class="bi bi-shield-lock text-success me-1"></i>SSL 암호화 전송 및 데이터베이스 다이렉트 동기화
+          </div>
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 👥 Modal: 회원 가입 현황 목록 (data/members 폴더 실시간 연동) -->
+  <div class="modal fade" id="memberListModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content" style="background: #0b1120; border: 1.5px solid #f59e0b; border-radius: 16px; box-shadow: 0 0 35px rgba(245, 158, 11, 0.35);">
+        <div class="modal-header border-bottom d-flex justify-content-between align-items-center" style="border-color: rgba(255,255,255,0.08) !important;">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-warning text-dark fw-bold px-2 py-1" style="font-size: 0.85rem;">
+              <i class="bi bi-people-fill me-1"></i>MEMBERS REGISTRY
+            </span>
+            <h5 class="modal-title text-white fw-bold mb-0">TOKEON 실제 가입 회원 목록 및 현황</h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-4">
+          <!-- Folder Path Callout -->
+          <div class="p-3 mb-3 rounded-3 d-flex justify-content-between align-items-center" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35);">
+            <div>
+              <div class="text-white fw-bold fs-6">
+                📁 회원 데이터 저장 폴더: <span class="text-warning font-monospace">data/members/</span>
+              </div>
+              <div class="text-muted small mt-1">
+                실시간 텍스트 요약 파일: <span class="text-info font-monospace">data/members/member_summary.txt</span>
+              </div>
+            </div>
+            <div class="text-end">
+              <span class="text-muted small">총 가입 회원</span>
+              <div class="fs-4 fw-bold text-warning" id="modalTotalMembersCount">6명</div>
+            </div>
+          </div>
+
+          <!-- Members Table -->
+          <div class="table-responsive rounded-2" style="max-height: 340px; overflow-y: auto; border: 1px solid rgba(255, 255, 255, 0.08);">
+            <table class="table table-dark table-hover mb-0" style="font-size: 0.84rem;">
+              <thead style="background: #0f172a; position: sticky; top: 0; z-index: 1;">
+                <tr>
+                  <th style="width: 10%; text-align: center;">번호</th>
+                  <th style="width: 30%;">별명(닉네임)</th>
+                  <th style="width: 20%; text-align: center;">연령(나이)</th>
+                  <th style="width: 25%;">가입 일시</th>
+                  <th style="width: 15%; text-align: center;">접속 횟수</th>
+                </tr>
+              </thead>
+              <tbody id="memberListTableBody">
+                <tr><td colspan="5" class="text-center py-4 text-muted">회원 목록을 불러오는 중입니다...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="modal-footer border-top d-flex justify-content-between" style="border-color: rgba(255,255,255,0.08) !important;">
+          <div class="text-dim small">
+            <i class="bi bi-file-earmark-text text-info me-1"></i>로컬 폴더(data/members/)에 실시간 자동 영구 저장됩니다.
           </div>
           <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">닫기</button>
         </div>

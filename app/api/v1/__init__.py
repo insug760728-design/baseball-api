@@ -9,6 +9,8 @@ from app.api.v1.scheduler import router as scheduler_router
 from app.api.v1.news import router as news_router
 from app.api.v1.community import router as community_router
 from app.api.v1.toto import router as toto_router
+from app.api.v1.live import router as live_router
+from app.api.v1.auth import router as auth_router
 
 api_v1_router = APIRouter()
 api_v1_router.include_router(matches_router)
@@ -21,3 +23,5 @@ api_v1_router.include_router(scheduler_router)
 api_v1_router.include_router(news_router)
 api_v1_router.include_router(community_router)
 api_v1_router.include_router(toto_router)
+api_v1_router.include_router(live_router)
+api_v1_router.include_router(auth_router)

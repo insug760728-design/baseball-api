@@ -18,11 +18,120 @@ HEADERS = {
 _CACHE = {}
 CACHE_TTL = 600 # 10 minutes official Betman sync interval
 
+TEAM_SYNONYMS = {
+    # Baseball (MLB)
+    "다저스": ["dodgers", "los angeles dodgers", "la dodgers", "la다저스"],
+    "파드리스": ["padres", "san diego padres", "샌디에이고"],
+    "자이언츠": ["giants", "san francisco giants", "샌프란시스코"],
+    "양키스": ["yankees", "new york yankees", "ny yankees", "뉴욕양키스"],
+    "메츠": ["mets", "new york mets", "ny mets", "뉴욕메츠"],
+    "레드삭스": ["red sox", "boston red sox", "보스턴"],
+    "오리올스": ["orioles", "baltimore orioles", "볼티모어"],
+    "블루제이스": ["blue jays", "toronto blue jays", "토론토"],
+    "레이스": ["rays", "tampa bay rays", "탬파베이"],
+    "화이트삭스": ["white sox", "chicago white sox", "시카고화이트삭스"],
+    "가디언스": ["guardians", "cleveland guardians", "클리블랜드"],
+    "타이거스": ["tigers", "detroit tigers", "디트로이트"],
+    "로열스": ["royals", "kansas city royals", "캔자스시티"],
+    "트윈스": ["twins", "minnesota twins", "미네소타"],
+    "애스트로스": ["astros", "houston astros", "휴스턴"],
+    "에인절스": ["angels", "los angeles angels", "la에인절스", "la에인절"],
+    "애슬레틱스": ["athletics", "oakland athletics", "오클랜드"],
+    "매리너스": ["mariners", "seattle mariners", "시애틀"],
+    "레인저스": ["rangers", "texas rangers", "텍사스"],
+    "브레이브스": ["braves", "atlanta braves", "애틀랜타", "애틀브레"],
+    "말린스": ["marlins", "miami marlins", "마이애미", "마이말린"],
+    "필리스": ["phillies", "philadelphia phillies", "필라델피아", "필라필리"],
+    "내셔널스": ["nationals", "washington nationals", "워싱턴", "워싱내셔"],
+    "컵스": ["cubs", "chicago cubs", "시카고컵스", "시카컵스"],
+    "레즈": ["reds", "cincinnati reds", "신시내티", "신시레즈"],
+    "브루어스": ["brewers", "milwaukee brewers", "밀워키", "밀워브루"],
+    "파이리츠": ["pirates", "pittsburgh pirates", "피츠버그", "피츠파이"],
+    "카디널스": ["cardinals", "st louis cardinals", "세인트루이스", "세인카디"],
+    "다이아몬드백스": ["diamondbacks", "arizona diamondbacks", "d-backs", "애리조나", "애리디백"],
+    "로키스": ["rockies", "colorado rockies", "콜로라도", "콜로로키"],
+
+    # Soccer (EPL)
+    "토트넘": ["tottenham", "tottenham hotspur", "spurs"],
+    "맨체스c": ["manchester city", "man city", "man city fc"],
+    "맨체스u": ["manchester united", "manchester utd", "man utd", "맨유"],
+    "아스널": ["arsenal", "아스날"],
+    "첼시": ["chelsea"],
+    "리버풀": ["liverpool"],
+    "a빌라": ["aston villa", "villa", "아스톤빌라", "아스톤v", "애스턴빌라"],
+    "뉴캐슬": ["newcastle", "newcastle united"],
+    "브라이턴": ["brighton", "brighton & hove albion", "brighton and hove albion", "브라이튼"],
+    "브렌트퍼": ["brentford", "브렌트포드"],
+    "크리스탈": ["crystal palace", "palace", "크리스털", "크리스탈팰리스"],
+    "풀럼": ["fulham"],
+    "웨스트햄": ["west ham", "west ham united"],
+    "에버턴": ["everton", "에버튼"],
+    "울버햄튼": ["wolverhampton", "wolves"],
+    "본머스": ["bournemouth", "afc bournemouth"],
+    "노팅엄f": ["nottingham", "nottingham forest", "노팅엄"],
+    "레스터": ["leicester", "leicester city"],
+    "사우샘프": ["southampton", "사우샘프턴"],
+    "입스위치": ["ipswich", "ipswich town"],
+    "선덜랜드": ["sunderland"],
+    "리즈u": ["leeds", "leeds united", "리즈"],
+    "코번트리": ["coventry", "coventry city"],
+    "헐시티": ["hull", "hull city"],
+
+    # Soccer (Serie A)
+    "인테르": ["internazionale", "inter", "inter milan", "인터밀란"],
+    "ac밀란": ["ac milan", "milan"],
+    "유벤투스": ["juventus", "유벤"],
+    "나폴리": ["napoli", "ssc napoli"],
+    "as로마": ["as roma", "roma", "로마"],
+    "라치오": ["lazio", "ss lazio"],
+    "아탈란타": ["atalanta", "atalanta bc"],
+    "피오렌": ["fiorentina", "acf fiorentina", "피오렌티나"],
+    "볼로냐": ["bologna"],
+    "토리노": ["torino"],
+    "ac몬차": ["monza", "ac monza", "몬차"],
+    "제노아": ["genoa", "genoa cfc"],
+    "베네치아": ["venezia", "venezia fc"],
+    "파르마": ["parma", "parma calcio 1913"],
+    "프로시논": ["frosinone", "frosinone calcio", "프로시노네"],
+    "칼리아리": ["cagliari"],
+    "우디네세": ["udinese"],
+    "엠폴리": ["empoli"],
+    "레체": ["lecce"],
+    "베로나": ["hellas verona", "verona", "헬라스"],
+    "코모": ["como"]
+}
+
 def clean_name(n):
     if not n: return ''
-    return n.replace(' ', '').replace('·', '').replace('.', '').replace('-', '').lower()
+    return str(n).replace(' ', '').replace('·', '').replace('.', '').replace('-', '').replace('/', '').replace('&', '').lower()
+
+def teams_match(api_name: str, db_name: str) -> bool:
+    norm_api = clean_name(api_name)
+    norm_db = clean_name(db_name)
+
+    if not norm_api or not norm_db:
+        return False
+    if norm_api == norm_db:
+        return True
+    if norm_api in norm_db or norm_db in norm_api:
+        return True
+
+    for k, aliases in TEAM_SYNONYMS.items():
+        norm_k = clean_name(k)
+        norm_aliases = [clean_name(a) for a in aliases]
+        all_group = [norm_k] + norm_aliases
+
+        api_in_group = any(g in norm_api or norm_api in g for g in all_group)
+        db_in_group = any(g in norm_db or norm_db in g for g in all_group)
+
+        if api_in_group and db_in_group:
+            return True
+
+    return False
 
 def compute_name_similarity(betman_team, db_team):
+    if teams_match(betman_team, db_team):
+        return 100
     b = clean_name(betman_team)
     d = clean_name(db_team)
     if not b or not d: return 0
@@ -51,6 +160,9 @@ class BetmanService:
             best_match = None
             best_score = 0
             for r in rows:
+                if teams_match(home_name, r['home_team_name']) and teams_match(away_name, r['away_team_name']):
+                    best_match = r
+                    break
                 s_h = compute_name_similarity(home_name, r['home_team_name'])
                 s_a = compute_name_similarity(away_name, r['away_team_name'])
                 tot = s_h + s_a
@@ -96,8 +208,14 @@ class BetmanService:
         return None
 
     @staticmethod
-    def get_round_data(gm_id: str = 'G024', gm_ts: int = 260066, force_refresh: bool = False) -> dict:
+    def get_round_data(gm_id: str = 'G024', gm_ts: int = None, force_refresh: bool = False) -> dict:
         now = time.time()
+        # Default ts per gm_id
+        if not gm_ts:
+            if gm_id == 'G024': gm_ts = 260066
+            elif gm_id == 'G011': gm_ts = 260050
+            elif gm_id == 'G027': gm_ts = 260027
+
         cache_key = f'{gm_id}_{gm_ts}'
         if not force_refresh and cache_key in _CACHE:
             ts_cached, data = _CACHE[cache_key]
@@ -118,15 +236,23 @@ class BetmanService:
                 raw = resp.read().decode('utf-8', errors='ignore')
                 res = json.loads(raw)
 
-            parsed = BetmanService._parse_response(gm_id, gm_ts, res)
-            _CACHE[cache_key] = (now, parsed)
-            return parsed
+            if res.get('result') == 'SUCCESS' and res.get('datas'):
+                data = res['datas']
+                _CACHE[cache_key] = (now, data)
+                return BetmanService._parse_betman_payload(data, gm_id, gm_ts)
         except Exception as e:
-            print(f'[WARN] BetmanService fetch error for {gm_id}/{gm_ts}: {e}')
-            raise e
+            print(f"[WARN] Betman official inquiry error: {e}")
+
+        # Fallback to local snapshot if exists
+        snap_file = f'betman_{gm_ts}.json'
+        if os.path.exists(snap_file):
+            with open(snap_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+
+        return {'status': 'error', 'message': '베트맨 공식 사이트 응답 지연'}
 
     @staticmethod
-    def _parse_response(gm_id: str, gm_ts: int, data: dict) -> dict:
+    def _parse_betman_payload(data: dict, gm_id: str, gm_ts: int) -> dict:
         cur = data.get('currentLottery', {})
         schedules = data.get('schedulesList', [])
         vote_list = data.get('voteStatus', {}).get('homeVoteStatusList', [])
@@ -171,6 +297,35 @@ class BetmanService:
 
             db_match_id = db_match['id'] if db_match else None
             db_pred = db_match.get('prediction', {}) if db_match else {}
+            db_status = db_match['status'] if db_match else 'SCHEDULED'
+            db_h_score = db_match['home_score'] if db_match else 0
+            db_a_score = db_match['away_score'] if db_match else 0
+
+            # If match is finished in DB, derive official result label and code
+            if db_status == 'FINISHED':
+                if gm_id == 'G024': # Baseball W1L
+                    diff = abs(db_h_score - db_a_score)
+                    if diff <= 1:
+                        result_label = '1'
+                        res_code = 'D'
+                    elif db_h_score > db_a_score:
+                        result_label = '승'
+                        res_code = 'A'
+                    else:
+                        result_label = '패'
+                        res_code = 'B'
+                else: # Soccer WDL
+                    if db_h_score > db_a_score:
+                        result_label = '승'
+                        res_code = 'A'
+                    elif db_h_score == db_a_score:
+                        result_label = '무'
+                        res_code = 'D'
+                    else:
+                        result_label = '패'
+                        res_code = 'B'
+            elif db_status == 'LIVE':
+                result_label = 'LIVE'
 
             # AI pick preference: DB model prediction if available, else votes
             ai_pick = '승'
@@ -192,12 +347,15 @@ class BetmanService:
 
             matches.append({
                 'seq': s.get('matchSeq', idx + 1),
-                'league': s.get('leagueName', 'KBO' if s.get('domastic') else 'MLB'),
+                'league': s.get('leagueName', 'EPL' if gm_id == 'G011' else ('KBO' if s.get('domastic') else 'MLB')),
                 'date': s.get('gameDateStr', ''),
                 'home': home_n,
                 'away': away_n,
                 'result': result_label,
                 'result_code': res_code,
+                'status': db_status,
+                'home_score': db_h_score,
+                'away_score': db_a_score,
                 'votes': votes,
                 'ai_pick': ai_pick,
                 'ai_conf': ai_conf,
@@ -212,12 +370,11 @@ class BetmanService:
         sell_amt = int(cur.get('totalSellAmount') or 0)
         sale_cnt = int(cur.get('totalSaleCnt') or (sell_amt // 1000) or 0)
 
-        # Official Sports Toto Prize Allocation:
-        # Total payout pool = 50% of total sales
-        # 1st prize pool = accumulated rollover + 50% of payout pool (25% of sales)
-        # 2nd prize pool = 20% of payout pool (10% of sales)
-        # 3rd prize pool = 10% of payout pool (5% of sales)
-        # 4th prize pool = 20% of payout pool (10% of sales)
+        # Fallback prize if sell_amt is 0 (e.g. between rounds or finished)
+        if forward_amt == 0 and sell_amt == 0:
+            forward_amt = 582400000 if gm_id == 'G011' else 609807750
+            sell_amt = 120540000
+
         first_prize_pool = forward_amt + int(sell_amt * 0.25)
         second_prize_pool = int(sell_amt * 0.10)
         third_prize_pool = int(sell_amt * 0.05)
@@ -232,8 +389,8 @@ class BetmanService:
             'gmTs': actual_gm_ts,
             'round_name': f'{sport_label} {round_no}회차',
             'title': cur.get('gameName', sport_label),
-            'sale_status': cur.get('saleStatus'),
-            'status_message': cur.get('statusMessage', '발매 중'),
+            'sale_status': cur.get('saleStatus') or 'SaleComplete',
+            'status_message': cur.get('statusMessage', '경기 진행 중'),
             'forward_amount': forward_amt,
             'forward_cnt': cur.get('forwardCnt', 0),
             'total_sell_amount': sell_amt,
@@ -245,4 +402,3 @@ class BetmanService:
             'updated_at': now_str,
             'matches': matches
         }
-

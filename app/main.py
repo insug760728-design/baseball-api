@@ -43,6 +43,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[WARN] 스케줄러 시작 중 오류: {e}")
 
+    # 4분 주기 AI 자동 채팅 봇 백그라운드 시작 (각자 다른 닉네임으로 실시간 소통)
+    try:
+        import asyncio
+        from app.services.ai_chat_bot_service import start_ai_chat_bot_task
+        asyncio.create_task(start_ai_chat_bot_task())
+    except Exception as e:
+        print(f"[WARN] AI 채팅 봇 시작 중 오류: {e}")
+
     yield
 
     # 서버 종료 시 스케줄러 정리
