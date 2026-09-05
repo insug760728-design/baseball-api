@@ -66,16 +66,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-html_path = os.path.join(current_dir, "templates", "index.html")
+landing_path = os.path.join(current_dir, "templates", "landing.html")
+dashboard_path = os.path.join(current_dir, "templates", "index.html")
 
-@app.get("/", response_class=HTMLResponse, summary="야구 전문 관리 대시보드")
+@app.get("/", response_class=HTMLResponse, summary="SPORTIX PRO — 스포츠 종합 포털 & 실시간 소식")
+def domain_portal(request: Request):
+    try:
+        target = landing_path if os.path.exists(landing_path) else dashboard_path
+        with open(target, "r", encoding="utf-8") as f:
+            content = f.read()
+        return HTMLResponse(content=content)
+    except Exception as e:
+        return HTMLResponse(content=f"<h1>포털 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
+
+@app.get("/dashboard", response_class=HTMLResponse, summary="스포츠 전문 관리 대시보드")
 def admin_dashboard(request: Request):
     try:
-        with open(html_path, "r", encoding="utf-8") as f:
+        with open(dashboard_path, "r", encoding="utf-8") as f:
             content = f.read()
         return HTMLResponse(content=content)
     except Exception as e:
         return HTMLResponse(content=f"<h1>대시보드 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
+
+@app.get("/portal", response_class=HTMLResponse, summary="스포츠 종합 포털 화면")
+def portal_redirect(request: Request):
+    return domain_portal(request)
 
 def generate_timeline_widget_html(match_data: dict, events: list) -> str:
     ev_html = ""
