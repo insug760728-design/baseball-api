@@ -53,3 +53,20 @@ def trigger_crawl(payload: DateRangeSyncRequest, db: Session = Depends(get_db)):
             "message": f"{result['league_name']} ({s_date} ~ {e_date}) 데이터 수집이 성공적으로 완료되었습니다.",
             "result": result
         }
+
+@router.get("/live-api-status", summary="전용 유료 API(API-Football/API-Baseball) 연동 상태 조회")
+def get_live_api_status():
+    from app.services.live_api_sports_service import LiveApiSportsService
+    return LiveApiSportsService.get_status_info()
+
+@router.post("/sync-live-apisports", summary="전용 유료 API 실시간 라이브 스코어 동기화 실행")
+def sync_live_apisports():
+    from app.services.live_api_sports_service import LiveApiSportsService
+    fb_res = LiveApiSportsService.sync_live_football()
+    bb_res = LiveApiSportsService.sync_live_baseball()
+    return {
+        "status": "SUCCESS",
+        "football": fb_res,
+        "baseball": bb_res,
+        "message": "전용 API-Sports 실시간 라이브 동기화 완료"
+    }

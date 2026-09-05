@@ -3,6 +3,7 @@ import urllib.request
 import json
 import time
 import os
+import sqlite3
 
 BETMAN_INQ_URL = 'https://www.betman.co.kr/buyPsblGame/gameInfoInq.do'
 
@@ -14,11 +15,86 @@ HEADERS = {
     'Referer': 'https://www.betman.co.kr/main/mainPage/gamebuy/gameSlip.do?gmId=G024'
 }
 
-# In-memory cache: (gm_id, gm_ts) -> (timestamp, data)
 _CACHE = {}
 CACHE_TTL = 300 # 5 minutes
 
+def clean_name(n):
+    if not n: return ''
+    return n.replace(' ', '').replace('·', '').replace('.', '').replace('-', '').lower()
+
+def compute_name_similarity(betman_team, db_team):
+    b = clean_name(betman_team)
+    d = clean_name(db_team)
+    if not b or not d: return 0
+    if b in d or d in b:
+        return 100
+    if len(b) >= 2 and b[:2] in d:
+        return 80
+    if len(b) >= 4 and b[2:4] in d:
+        return 70
+    return 0
+
 class BetmanService:
+    @staticmethod
+    def _find_matching_db_match(home_name: str, away_name: str, sport_code: str = 'BASEBALL') -> dict:
+        try:
+            db_path = 'sports_data.db'
+            if not os.path.exists(db_path):
+                return None
+            conn = sqlite3.connect(db_path)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute('SELECT id, match_date, sport_code, league_name, home_team_name, away_team_name, home_score, away_score, status FROM matches WHERE sport_code = ?', (sport_code,))
+            rows = cursor.fetchall()
+            conn.close()
+
+            best_match = None
+            best_score = 0
+            for r in rows:
+                s_h = compute_name_similarity(home_name, r['home_team_name'])
+                s_a = compute_name_similarity(away_name, r['away_team_name'])
+                tot = s_h + s_a
+                if tot > best_score and s_h >= 50 and s_a >= 50:
+                    best_score = tot
+                    best_match = r
+            
+            if best_match:
+                from app.services.team_split_service import TeamSplitService
+                pred = TeamSplitService.get_quick_prediction(
+                    home_team=best_match['home_team_name'],
+                    away_team=best_match['away_team_name'],
+                    sport_code=best_match['sport_code'],
+                    status=best_match['status'],
+                    home_score=best_match['home_score'],
+                    away_score=best_match['away_score']
+                )
+                h_pct = 50
+                a_pct = 50
+                if pred:
+                    conf = pred.get('confidence', 50)
+                    if pred.get('favored_team') == best_match['home_team_name']:
+                        h_pct = conf
+                        a_pct = 100 - conf
+                    elif pred.get('favored_team') == best_match['away_team_name']:
+                        a_pct = conf
+                        h_pct = 100 - conf
+                    pred['home_pct'] = h_pct
+                    pred['away_pct'] = a_pct
+
+                return {
+                    'id': best_match['id'],
+                    'home_team_name': best_match['home_team_name'],
+                    'away_team_name': best_match['away_team_name'],
+                    'match_date': best_match['match_date'],
+                    'home_score': best_match['home_score'],
+                    'away_score': best_match['away_score'],
+                    'status': best_match['status'],
+                    'prediction': pred
+                }
+        except Exception as e:
+            print(f"[WARN] BetmanService DB matching error: {e}")
+        return None
+
     @staticmethod
     def get_round_data(gm_id: str = 'G024', gm_ts: int = 260066) -> dict:
         now = time.time()
@@ -47,10 +123,6 @@ class BetmanService:
             return parsed
         except Exception as e:
             print(f'[WARN] BetmanService fetch error for {gm_id}/{gm_ts}: {e}')
-            # Fallback to local cached json if exists
-            fallback = BetmanService._get_fallback_data(gm_id, gm_ts)
-            if fallback:
-                return fallback
             raise e
 
     @staticmethod
@@ -63,6 +135,7 @@ class BetmanService:
         round_no = str(actual_gm_ts)[-2:]
 
         sport_label = '야구 승1패' if gm_id == 'G024' else ('축구 승무패' if gm_id == 'G011' else '농구 승5패')
+        sport_code = 'BASEBALL' if gm_id == 'G024' else ('SOCCER' if gm_id == 'G011' else 'BASKETBALL')
 
         matches = []
         for idx, s in enumerate(schedules):
@@ -90,27 +163,49 @@ class BetmanService:
             elif res_code == 'D': result_label = '1' if gm_id == 'G024' else ('5' if gm_id == 'G027' else '무')
             elif res_code == 'B': result_label = '패'
 
-            # AI Pick logic
+            home_n = s.get('homeName', '')
+            away_n = s.get('awayName', '')
+
+            # Match with our database to get internal match ID and AI probabilities!
+            db_match = BetmanService._find_matching_db_match(home_n, away_n, sport_code)
+
+            db_match_id = db_match['id'] if db_match else None
+            db_pred = db_match.get('prediction', {}) if db_match else {}
+
+            # AI pick preference: DB model prediction if available, else votes
             ai_pick = '승'
             ai_conf = votes['win']
-            if votes['loss'] > votes['win'] and votes['loss'] > votes['draw']:
-                ai_pick = '패'
-                ai_conf = votes['loss']
-            elif votes['draw'] > votes['win'] and votes['draw'] > votes['loss']:
-                ai_pick = '1' if gm_id == 'G024' else ('5' if gm_id == 'G027' else '무')
-                ai_conf = votes['draw']
+            if db_pred and db_pred.get('favored_team'):
+                fav = db_pred.get('favored_team')
+                if fav == db_match['home_team_name']:
+                    ai_pick = '승'
+                elif fav == db_match['away_team_name']:
+                    ai_pick = '패'
+                ai_conf = db_pred.get('confidence', votes['win'])
+            else:
+                if votes['loss'] > votes['win'] and votes['loss'] > votes['draw']:
+                    ai_pick = '패'
+                    ai_conf = votes['loss']
+                elif votes['draw'] > votes['win'] and votes['draw'] > votes['loss']:
+                    ai_pick = '1' if gm_id == 'G024' else ('5' if gm_id == 'G027' else '무')
+                    ai_conf = votes['draw']
 
             matches.append({
                 'seq': s.get('matchSeq', idx + 1),
                 'league': s.get('leagueName', 'KBO' if s.get('domastic') else 'MLB'),
                 'date': s.get('gameDateStr', ''),
-                'home': s.get('homeName', ''),
-                'away': s.get('awayName', ''),
+                'home': home_n,
+                'away': away_n,
                 'result': result_label,
                 'result_code': res_code,
                 'votes': votes,
                 'ai_pick': ai_pick,
-                'ai_conf': ai_conf
+                'ai_conf': ai_conf,
+                'db_match_id': db_match_id,
+                'db_home_team': db_match['home_team_name'] if db_match else home_n,
+                'db_away_team': db_match['away_team_name'] if db_match else away_n,
+                'db_prob_home': db_pred.get('home_pct', 50),
+                'db_prob_away': db_pred.get('away_pct', 50)
             })
 
         return {
@@ -127,7 +222,3 @@ class BetmanService:
             'total_sale_cnt': cur.get('totalSaleCnt', 0),
             'matches': matches
         }
-
-    @staticmethod
-    def _get_fallback_data(gm_id: str, gm_ts: int) -> dict:
-        return None

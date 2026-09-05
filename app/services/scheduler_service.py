@@ -221,6 +221,15 @@ class SchedulerService:
 
             logger.info(f"[Scheduler Hourly] 1시간 주기 동기화 완료: {summary}")
             try:
+                from app.services.live_api_sports_service import LiveApiSportsService
+                if LiveApiSportsService.is_configured():
+                    fb_res = LiveApiSportsService.sync_live_football()
+                    bb_res = LiveApiSportsService.sync_live_baseball()
+                    summary["API_SPORTS_LIVE"] = {"football": fb_res, "baseball": bb_res}
+            except Exception as ase:
+                logger.error(f"[Scheduler] API-Sports live sync error: {ase}")
+
+            try:
                 from app.core.websocket_manager import manager
                 await manager.broadcast({
                     "type": "HOURLY_SYNC_COMPLETE",
