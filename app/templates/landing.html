@@ -1200,7 +1200,7 @@
     async function loadLiveMatches() {
       const container = document.getElementById('stripContainer');
       try {
-        const resp = await fetch('/api/v1/matches?limit=60');
+        const resp = await fetch('/api/v1/matches?limit=300');
         if (!resp.ok) throw new Error('Failed to load matches');
         allMatches = await resp.json();
 
@@ -1225,9 +1225,16 @@
         return;
       }
 
-      const filtered = sport === 'ALL' 
-        ? allMatches.slice(0, 25) 
-        : allMatches.filter(m => m.sport_code === sport).slice(0, 25);
+      let filtered = [];
+      if (sport === 'ALL') {
+        const finishedSoccer = allMatches.filter(m => m.sport_code === 'SOCCER' && m.status === 'FINISHED').slice(0, 10);
+        const finishedBasketball = allMatches.filter(m => m.sport_code === 'BASKETBALL' && m.status === 'FINISHED').slice(0, 8);
+        const finishedBaseball = allMatches.filter(m => m.sport_code === 'BASEBALL' && m.status === 'FINISHED').slice(0, 8);
+        filtered = [...finishedSoccer, ...finishedBasketball, ...finishedBaseball];
+        if (filtered.length === 0) filtered = allMatches.slice(0, 30);
+      } else {
+        filtered = allMatches.filter(m => m.sport_code === sport).slice(0, 30);
+      }
 
       let html = '';
       filtered.forEach(m => {

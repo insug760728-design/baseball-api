@@ -8,23 +8,25 @@ from app.schemas.schemas import MatchResponse, MatchUpdate, DateRangeSyncRequest
 
 router = APIRouter(prefix="/matches", tags=["야구 경기 일정 및 결과"])
 
-@router.get("", response_model=List[MatchResponse], summary="야구 경기 일정 및 결과 목록 조회 (기간 필터 포함)")
+@router.get("", response_model=List[MatchResponse], summary="경기 일정 및 결과 목록 조회 (종목/기간 필터 포함)")
 def list_matches(
-    sport_code: Optional[str] = Query("BASEBALL", description="스포츠 종목 코드 (BASEBALL)"),
-    league_name: Optional[str] = Query(None, description="야구 리그명 (MLB, KBO, NPB)"),
+    sport_code: Optional[str] = Query(None, description="스포츠 종목 코드 (BASEBALL, SOCCER, BASKETBALL 또는 ALL)"),
+    league_name: Optional[str] = Query(None, description="리그명 (MLB, KBO, NPB, EPL, LALIGA, NBA 등)"),
     status: Optional[str] = Query(None, description="상태 필터 (SCHEDULED, LIVE, FINISHED)"),
     start_date: Optional[str] = Query(None, description="시작일 (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="종료일 (YYYY-MM-DD)"),
+    limit: Optional[int] = Query(None, description="조회 개수 제한"),
     db: Session = Depends(get_db)
 ):
-    """지정된 기간 및 조건에 맞는 야구 경기 일정/결과 목록을 조회합니다."""
+    """지정된 종목 및 조건에 맞는 경기 일정/결과 목록을 조회합니다."""
     return MatchService.get_matches(
         db,
-        sport_code=sport_code or "BASEBALL",
+        sport_code=sport_code,
         league_name=league_name,
         status=status,
         start_date=start_date,
-        end_date=end_date
+        end_date=end_date,
+        limit=limit
     )
 
 @router.post("/sync", summary="기간별 야구 경기 데이터 동기화 수집")

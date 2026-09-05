@@ -163,7 +163,8 @@ class MatchService:
         db.commit()
 
     @staticmethod
-    def get_matches(db: Session, sport_code: Optional[str] = "BASEBALL", league_name: Optional[str] = None, status: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None):
+    @staticmethod
+    def get_matches(db: Session, sport_code: Optional[str] = None, league_name: Optional[str] = None, status: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None, limit: Optional[int] = None):
         query = db.query(Match)
 
         # 리그명에 따라 sport_code 자동 감지
@@ -176,8 +177,8 @@ class MatchService:
             elif any(bb in ln_upper for bb in ["MLB", "KBO", "NPB", "메이저리그", "프로야구"]):
                 sport_code = "BASEBALL"
 
-        if sport_code and sport_code.upper() != "ALL":
-            query = query.filter(Match.sport_code == sport_code)
+        if sport_code and sport_code.upper() not in ["ALL", "NONE", ""]:
+            query = query.filter(Match.sport_code == sport_code.upper())
         if league_name:
             query = query.filter(Match.league_name.contains(league_name))
         if status:
@@ -186,7 +187,11 @@ class MatchService:
             query = query.filter(Match.match_date >= f"{start_date} 00:00")
         if end_date:
             query = query.filter(Match.match_date <= f"{end_date} 23:59")
-        return query.order_by(Match.match_date.desc()).all()
+        
+        q = query.order_by(Match.match_date.desc(), Match.id.desc())
+        if limit:
+            return q.limit(limit).all()
+        return q.all()
 
     @staticmethod
     def get_match_full_detail(db: Session, match_id: int):
