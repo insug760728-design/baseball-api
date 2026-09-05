@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.models.models import Match, MatchDetail, MatchEvent, PlayerMatchStat
 from app.scrapers.baseball_scraper import BaseballScraper
+from app.scrapers.soccer_scraper import SoccerScraper, SOCCER_LEAGUE_CODES
 from app.core.sports_catalog import SPORTS_CATALOG
 
 class MatchService:
@@ -20,7 +21,10 @@ class MatchService:
         if not resolved_name:
             resolved_name = league_name or league_id
 
-        scraper = BaseballScraper(league_id=league_id, league_name=resolved_name)
+        if league_id.upper() in SOCCER_LEAGUE_CODES:
+            scraper = SoccerScraper(league_id=league_id)
+        else:
+            scraper = BaseballScraper(league_id=league_id, league_name=resolved_name)
         
         dates_to_scrape = []
         if start_date and end_date:
@@ -46,7 +50,7 @@ class MatchService:
                 if not match:
                     match = Match(
                         official_id=m_data["official_id"],
-                        sport_code="BASEBALL",
+                        sport_code=m_data.get("sport_code", scraper.get_sport_code()),
                         league_name=m_data["league_name"],
                         season=m_data.get("season", "2026"),
                         round_name=m_data.get("round_name"),
@@ -157,7 +161,9 @@ class MatchService:
 
     @staticmethod
     def get_matches(db: Session, sport_code: Optional[str] = "BASEBALL", league_name: Optional[str] = None, status: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None):
-        query = db.query(Match).filter(Match.sport_code == "BASEBALL")
+        query = db.query(Match)
+        if sport_code:
+            query = query.filter(Match.sport_code == sport_code)
         if league_name:
             query = query.filter(Match.league_name.contains(league_name))
         if status:

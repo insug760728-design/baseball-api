@@ -72,3 +72,32 @@ def get_player_rolling_stats(
         "status": "success",
         "data": stats
     }
+
+@router.get("/soccer/matches/{match_id}/advanced", summary="축구 경기별 xG, PPDA, Field Tilt, 골키퍼 선방 등 고급 지표 조회")
+def get_soccer_match_advanced(match_id: int, db: Session = Depends(get_db)):
+    from app.services.soccer_analytics_service import SoccerAnalyticsService
+    data = SoccerAnalyticsService.compute_match_advanced_stats(db, match_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="축구 경기 상세 데이터를 찾을 수 없습니다.")
+    return {"status": "success", "data": data}
+
+@router.get("/soccer/players/{player_name}/rolling", summary="축구 선수별 3, 5, 7, 10단위 xG, xA, xGOT, KP 롤링 추이 조회")
+def get_soccer_player_rolling(
+    player_name: str,
+    team_name: Optional[str] = Query(None, description="구단명"),
+    windows: str = Query("3,5,7,10", description="경기수 단위"),
+    days: str = Query("3,5,7,10", description="날짜 단위"),
+    db: Session = Depends(get_db)
+):
+    from app.services.soccer_analytics_service import SoccerAnalyticsService
+    try:
+        w_list = [int(x.strip()) for x in windows.split(",") if x.strip().isdigit()]
+    except Exception:
+        w_list = [3, 5, 7, 10]
+    try:
+        d_list = [int(x.strip()) for x in days.split(",") if x.strip().isdigit()]
+    except Exception:
+        d_list = [3, 5, 7, 10]
+
+    stats = SoccerAnalyticsService.calculate_player_rolling_stats(db, player_name, team_name=team_name, windows=w_list, days_windows=d_list)
+    return {"status": "success", "data": stats}

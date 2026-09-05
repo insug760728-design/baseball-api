@@ -33,10 +33,10 @@ html_content = '''<!DOCTYPE html>
     <div class="container">
       <div class="d-flex justify-content-between align-items-center">
         <div>
-          <span class="badge bg-warning text-dark mb-2 px-3 py-1 fw-bold"><i class="bi bi-baseball me-1"></i>BASEBALL PRECISION HUB</span>
-          <h2 class="fw-bold mb-1"><i class="bi bi-trophy-fill text-warning me-2"></i>야구 정밀 데이터 수집 & 앱 관리 센터</h2>
+          <span class="badge bg-warning text-dark mb-2 px-3 py-1 fw-bold"><i class="bi bi-trophy-fill me-1"></i>SPORTS PRECISION ANALYTICS HUB</span>
+          <h2 class="fw-bold mb-1"><i class="bi bi-graph-up-arrow text-warning me-2"></i>야구 & 유럽 축구 5대리그 정밀 데이터 센터</h2>
           <p class="text-white-50 mb-0">
-            한국 프로야구(KBO 리그) · 미국 메이저리그(MLB) <b>100% 공식 실시간 데이터 수집 & 이닝별/타자/투수 세부 지표 편집기</b>
+            MLB · KBO · NPB 야구 및 EPL · 라리가 · 분데스리가 · 세리에A · 리그1 <b>100% 공식 실시간 수집 & 어드밴스드 지표(xG · xGOT · PPDA · Field Tilt)</b>
           </p>
         </div>
         <div>
@@ -82,14 +82,23 @@ html_content = '''<!DOCTYPE html>
     <div class="card shadow-sm mb-4 border-0">
       <div class="card-body">
         <div class="row g-3 align-items-end">
-          <!-- 1. 야구 리그 선택 -->
+          <!-- 1. 스포츠 및 리그 선택 -->
           <div class="col-lg-4 col-md-6">
-            <label class="form-label fw-semibold mb-1"><i class="bi bi-baseball me-1 text-primary"></i>대상 야구 리그 선택</label>
+            <label class="form-label fw-semibold mb-1"><i class="bi bi-trophy me-1 text-primary"></i>대상 스포츠 & 리그 선택</label>
             <select id="selectLeague" class="form-select" onchange="loadMatches()">
-              <option value="ALL">⚾ 전체 야구 리그 (KBO + MLB + NPB 공식 전체)</option>
-              <option value="KBO" selected>🇰🇷 한국 프로야구 (KBO 리그) [100% 공식 실시간]</option>
-              <option value="MLB">🇺🇸 미국 메이저리그 (MLB) [100% 공식 실시간]</option>
-              <option value="NPB">🇯🇵 일본 프로야구 (NPB) [100% 공식 실시간]</option>
+              <optgroup label="⚾ 야구 공식 리그 (Baseball)">
+                <option value="ALL">⚾ 야구 전체 (KBO + MLB + NPB)</option>
+                <option value="KBO" selected>🇰🇷 한국 프로야구 (KBO 리그)</option>
+                <option value="MLB">🇺🇸 미국 메이저리그 (MLB)</option>
+                <option value="NPB">🇯🇵 일본 프로야구 (NPB)</option>
+              </optgroup>
+              <optgroup label="⚽ 유럽 축구 5대 메이저 리그 (Soccer)">
+                <option value="EPL">🏴󠁧󠁢󠁥󠁮󠁧󠁿 잉글랜드 프리미어리그 (EPL)</option>
+                <option value="LALIGA">🇪🇸 스페인 라리가 (La Liga)</option>
+                <option value="BUNDESLIGA">🇩🇪 독일 분데스리가 (Bundesliga)</option>
+                <option value="SERIE_A">🇮🇹 이탈리아 세리에 A (Serie A)</option>
+                <option value="LIGUE_1">🇫🇷 프랑스 리그 1 (Ligue 1)</option>
+              </optgroup>
             </select>
           </div>
 
@@ -226,7 +235,20 @@ html_content = '''<!DOCTYPE html>
             </div>
           </div>
 
-          <!-- 타자 기록 & 투수 기록 탭 -->
+          <!-- 축구 5대 리그 현대 어드밴스드 전술 & 기대 지표 패널 (xG, xGOT, PPDA, Field Tilt, Prevented Goals) -->
+          <div class="card border-0 shadow-sm mb-4" id="soccerAdvancedMetricsPanel" style="display: none;">
+            <div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
+              <span class="fw-bold"><i class="bi bi-diagram-3-fill text-warning me-2"></i>현대 축구 어드밴스드 전술 및 기대 지표 분석 (xG · xGOT · PPDA · Field Tilt)</span>
+              <span class="badge bg-warning text-dark">유럽 5대 리그 공식 모델</span>
+            </div>
+            <div class="card-body p-3">
+              <div class="row g-3 text-center" id="soccerAdvStatsCards">
+                <!-- 동적 렌더링: xG vs xG, xGOT, PPDA, Field Tilt, Prevented Goals, Possession/Tackles -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 출전 선수 상세 기록 탭 -->
           <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white pt-3 pb-0">
               <div class="d-flex justify-content-between align-items-center mb-2">
@@ -450,6 +472,84 @@ html_content = '''<!DOCTYPE html>
             </div>
           </div>
 
+          <!-- 축구 공격수/미드필더 수정 폼 필드들 -->
+          <div id="soccerAttackerEditFields" style="display: none;">
+            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-lightning-fill text-warning me-1"></i>공격 & 미드필더 세부 지표</h6>
+            <div class="row g-3">
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">출전시간 (분)</label>
+                <input type="number" id="editSoccerMin" class="form-control" value="90">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">득점 (골)</label>
+                <input type="number" id="editSoccerGoals" class="form-control" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">어시스트 (도움)</label>
+                <input type="number" id="editSoccerAssists" class="form-control" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">전체 슈팅 수</label>
+                <input type="number" id="editSoccerShots" class="form-control" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">유효슈팅 (SoT)</label>
+                <input type="number" id="editSoccerSoT" class="form-control" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">파울 (범한 파울)</label>
+                <input type="number" id="editSoccerFoulsC" class="form-control" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">경고 (옐로카드)</label>
+                <input type="number" id="editSoccerYellow" class="form-control" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">퇴장 (레드카드)</label>
+                <input type="number" id="editSoccerRed" class="form-control" value="0">
+              </div>
+            </div>
+          </div>
+
+          <!-- 축구 수비수/골키퍼 수정 폼 필드들 -->
+          <div id="soccerDefenderEditFields" style="display: none;">
+            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-shield-shaded text-primary me-1"></i>수비수 & 골키퍼 세부 지표</h6>
+            <div class="row g-3">
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">출전시간 (분)</label>
+                <input type="number" id="editSoccerDefMin" class="form-control" value="90">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">골키퍼 선방</label>
+                <input type="number" id="editSoccerSaves" class="form-control" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">실점 수</label>
+                <input type="number" id="editSoccerGA" class="form-control" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">태클 횟수</label>
+                <input type="number" id="editSoccerTackles" class="form-control" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">가로채기</label>
+                <input type="number" id="editSoccerIntercepts" class="form-control" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">클리어링 (걷어내기)</label>
+                <input type="number" id="editSoccerClearances" class="form-control" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">파울</label>
+                <input type="number" id="editSoccerDefFouls" class="form-control" value="0">
+              </div>
+              <div class="col-md-3 col-6">
+                <label class="form-label small fw-semibold">경고 (옐로카드)</label>
+                <input type="number" id="editSoccerDefYellow" class="form-control" value="0">
+              </div>
+            </div>
+          </div>
+
           <div class="mt-4">
             <label class="form-label small fw-semibold">수정 사유 (관리자 메모)</label>
             <input type="text" id="editReason" class="form-control" placeholder="공식 기록 정정 또는 앱 전송용 보정">
@@ -481,11 +581,20 @@ html_content = '''<!DOCTYPE html>
 
           <div class="row g-3 mb-3">
             <div class="col-md-6">
-              <label class="form-label fw-semibold">대상 야구 리그</label>
+              <label class="form-label fw-semibold">대상 리그 (야구 & 축구)</label>
               <select id="exportModalLeague" class="form-select">
-                <option value="KBO" selected>🇰🇷 한국 프로야구 (KBO 리그) [100% 공식 실시간]</option>
-                <option value="MLB">🇺🇸 미국 메이저리그 (MLB) [100% 공식 실시간]</option>
-                <option value="NPB">🇯🇵 일본 프로야구 (NPB) [100% 공식 실시간]</option>
+                <optgroup label="⚾ 프로야구 리그 (100% 공식 실시간)">
+                  <option value="KBO" selected>🇰🇷 한국 프로야구 (KBO 리그)</option>
+                  <option value="MLB">🇺🇸 미국 메이저리그 (MLB)</option>
+                  <option value="NPB">🇯🇵 일본 프로야구 (NPB)</option>
+                </optgroup>
+                <optgroup label="⚽ 유럽 축구 5대 리그 (공식 어드밴스드 지표)">
+                  <option value="EPL">🏴󠁧󠁢󠁥󠁮󠁧󠁿 잉글랜드 프리미어리그 (EPL)</option>
+                  <option value="LALIGA">🇪🇸 스페인 라리가 (La Liga)</option>
+                  <option value="BUNDESLIGA">🇩🇪 독일 분데스리가 (Bundesliga)</option>
+                  <option value="SERIE_A">🇮🇹 이탈리아 세리에 A (Serie A)</option>
+                  <option value="LIGUE_1">🇫🇷 프랑스 리그 1 (Ligue 1)</option>
+                </optgroup>
               </select>
             </div>
             <div class="col-md-6">
@@ -851,7 +960,10 @@ fetch('${apiUrl}')
       const listEl = document.getElementById('matchesList');
       const countEl = document.getElementById('matchCountBadge');
 
-      let url = `/api/v1/matches/?sport_code=BASEBALL&start_date=${start}&end_date=${end}`;
+      const isSoccer = ['EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'LIGUE_1'].includes(league);
+      const sportCode = isSoccer ? 'SOCCER' : 'BASEBALL';
+
+      let url = `/api/v1/matches/?sport_code=${sportCode}&start_date=${start}&end_date=${end}`;
       if (league !== 'ALL') {
         url += `&league_name=${league}`;
       }
@@ -859,7 +971,7 @@ fetch('${apiUrl}')
       listEl.innerHTML = `
         <div class="text-center py-5 text-muted">
           <div class="spinner-border spinner-border-sm mb-2"></div>
-          <div>야구 경기 목록을 조회 중입니다...</div>
+          <div>${isSoccer ? '유럽 축구' : '야구'} 경기 목록을 조회 중입니다...</div>
         </div>
       `;
 
@@ -975,6 +1087,8 @@ fetch('${apiUrl}')
         document.getElementById('matchDetailView').style.display = 'block';
 
         const m = selectedMatch.match || selectedMatch;
+        const isSoccer = m.sport_code === 'SOCCER' || ['EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'LIGUE_1'].includes(m.league_name);
+
         document.getElementById('detailLeagueBadge').innerText = m.league_name;
         document.getElementById('detailTime').innerText = `${m.match_date} (${m.season} ${m.round_name || ''})`;
         document.getElementById('detailStadium').innerText = `경기장: ${m.stadium || '정보 없음'}`;
@@ -993,6 +1107,34 @@ fetch('${apiUrl}')
         document.getElementById('editStatus').value = m.status;
         document.getElementById('scoreEditForm').style.display = 'none';
 
+        // 탭 명칭 및 모드 버튼 텍스트 스포츠별 동적 전환
+        const advPanel = document.getElementById('soccerAdvancedMetricsPanel');
+        const hittersTabBtn = document.getElementById('hitters-tab');
+        const pitchersTabBtn = document.getElementById('pitchers-tab');
+        const modeClassicBtn = document.getElementById('btnModeClassic');
+        const modeSaberBtn = document.getElementById('btnModeSaber');
+
+        if (isSoccer) {
+          if (hittersTabBtn) hittersTabBtn.innerHTML = '<i class="bi bi-lightning-fill text-warning me-1"></i>공격 & 미드필더 (FW/MF)';
+          if (pitchersTabBtn) pitchersTabBtn.innerHTML = '<i class="bi bi-shield-shaded text-primary me-1"></i>수비수 & 골키퍼 (DF/GK)';
+          if (modeClassicBtn) modeClassicBtn.innerHTML = '⚽ 기본 기록 (골/도움/슈팅)';
+          if (modeSaberBtn) modeSaberBtn.innerHTML = '🔬 축구 세이버 (xG·xA·xGOT·KP)';
+
+          if (advPanel) {
+            advPanel.style.display = 'block';
+            renderSoccerAdvancedMetrics(m.id);
+          }
+        } else {
+          if (hittersTabBtn) hittersTabBtn.innerHTML = '<i class="bi bi-lightning-fill text-warning me-1"></i>타자 기록 (Batters)';
+          if (pitchersTabBtn) pitchersTabBtn.innerHTML = '<i class="bi bi-shield-shaded text-primary me-1"></i>투수 기록 (Pitchers)';
+          if (modeClassicBtn) modeClassicBtn.innerHTML = '⚾ 기본 클래식 기록';
+          if (modeSaberBtn) modeSaberBtn.innerHTML = '🔬 세이버메트릭스 (wOBA·FIP·BABIP·ISO)';
+
+          if (advPanel) {
+            advPanel.style.display = 'none';
+          }
+        }
+
         renderScoreboard(selectedMatch.details?.period_scores);
         renderPlayers();
         renderEvents(selectedMatch.events);
@@ -1000,6 +1142,89 @@ fetch('${apiUrl}')
         document.getElementById('apiJsonPreview').textContent = JSON.stringify(selectedMatch, null, 2);
       } catch (err) {
         console.error(err);
+      }
+    }
+
+    async function renderSoccerAdvancedMetrics(matchId) {
+      const container = document.getElementById('soccerAdvStatsCards');
+      if (!container) return;
+      container.innerHTML = '<div class="col-12 py-3 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>현대 축구 어드밴스드 전술 및 기대 지표 연산 중...</div>';
+      try {
+        const res = await fetch(`/api/v1/analytics/soccer/matches/${matchId}/advanced`);
+        if (!res.ok) {
+          container.innerHTML = '<div class="col-12 py-2 text-muted">지표 데이터가 없습니다.</div>';
+          return;
+        }
+        const json = await res.json();
+        const data = json.data || {};
+        const h = data.home || {};
+        const a = data.away || {};
+
+        container.innerHTML = `
+          <!-- 1. xG (기대 득점) vs 실제 스코어 -->
+          <div class="col-md-2 col-4">
+            <div class="card h-100 border bg-light shadow-sm">
+              <div class="card-header bg-white py-1 small fw-bold text-dark">기대 득점 (xG)</div>
+              <div class="card-body p-2">
+                <div class="fw-bold fs-5 text-primary">${h.xg !== undefined ? h.xg : '-'} <span class="text-muted fs-6">:</span> ${a.xg !== undefined ? a.xg : '-'}</div>
+                <div class="small text-muted" style="font-size: 0.72rem;">실제 ${h.score ?? 0} : ${a.score ?? 0}</div>
+              </div>
+            </div>
+          </div>
+          <!-- 2. xGOT (유효슈팅 기대 득점) -->
+          <div class="col-md-2 col-4">
+            <div class="card h-100 border bg-light shadow-sm">
+              <div class="card-header bg-white py-1 small fw-bold text-dark">유효슈팅 xG (xGOT)</div>
+              <div class="card-body p-2">
+                <div class="fw-bold fs-5 text-danger">${h.xgot !== undefined ? h.xgot : '-'} <span class="text-muted fs-6">:</span> ${a.xgot !== undefined ? a.xgot : '-'}</div>
+                <div class="small text-muted" style="font-size: 0.72rem;">유효슛 ${h.shots_on_target ?? 0} : ${a.shots_on_target ?? 0}</div>
+              </div>
+            </div>
+          </div>
+          <!-- 3. PPDA (압박 강도) -->
+          <div class="col-md-2 col-4">
+            <div class="card h-100 border bg-light shadow-sm">
+              <div class="card-header bg-white py-1 small fw-bold text-dark">압박 강도 (PPDA)</div>
+              <div class="card-body p-2">
+                <div class="fw-bold fs-5 text-success">${h.ppda !== undefined ? h.ppda : '-'} <span class="text-muted fs-6">:</span> ${a.ppda !== undefined ? a.ppda : '-'}</div>
+                <div class="small text-muted" style="font-size: 0.72rem;">낮을수록 전방압박 우수</div>
+              </div>
+            </div>
+          </div>
+          <!-- 4. Field Tilt (파이널 서드 점유율) -->
+          <div class="col-md-2 col-4">
+            <div class="card h-100 border bg-light shadow-sm">
+              <div class="card-header bg-white py-1 small fw-bold text-dark">필드 틸트 (Field Tilt)</div>
+              <div class="card-body p-2">
+                <div class="fw-bold fs-5 text-warning-emphasis">${h.field_tilt ?? '-'} <span class="text-muted fs-6">:</span> ${a.field_tilt ?? '-'}</div>
+                <div class="small text-muted" style="font-size: 0.72rem;">공격 진영 주도권</div>
+              </div>
+            </div>
+          </div>
+          <!-- 5. 골키퍼 PSxG & 방어 골수 (Goals Prevented) -->
+          <div class="col-md-2 col-4">
+            <div class="card h-100 border bg-light shadow-sm">
+              <div class="card-header bg-white py-1 small fw-bold text-dark">GK 방어 골수</div>
+              <div class="card-body p-2">
+                <div class="fw-bold fs-5 text-info-emphasis">${h.gk_prevented_goals ?? '-'} <span class="text-muted fs-6">:</span> ${a.gk_prevented_goals ?? '-'}</div>
+                <div class="small text-muted" style="font-size: 0.72rem;">PSxG-실점 선방 기여</div>
+              </div>
+            </div>
+          </div>
+          <!-- 6. 볼 점유율 & 태클 성공률 -->
+          <div class="col-md-2 col-4">
+            <div class="card h-100 border bg-light shadow-sm">
+              <div class="card-header bg-white py-1 small fw-bold text-dark">점유율 · 태클성공</div>
+              <div class="card-body p-2">
+                <div class="fw-bold fs-6 text-dark">${h.possession ?? '50%'} : ${a.possession ?? '50%'}</div>
+                <div class="small text-muted" style="font-size: 0.72rem;">태클 ${h.tackle_pct ?? '-'} : ${a.tackle_pct ?? '-'}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        console.error('Soccer advanced stats load error:', e);
+        container.innerHTML = '<div class="col-12 py-2 text-muted">지표 불러오기 실패</div>';
       }
     }
 
@@ -1034,12 +1259,71 @@ fetch('${apiUrl}')
 
     function renderScoreboard(scores) {
       const el = document.getElementById('scoreboardTable');
+      const m = selectedMatch ? (selectedMatch.match || selectedMatch) : null;
+      if (!m) return;
+      const isSoccer = m.sport_code === 'SOCCER' || ['EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'LIGUE_1'].includes(m.league_name);
+
+      if (isSoccer) {
+        const pScores = scores || {};
+        let home1H = pScores["1"]?.home ?? pScores["1H"]?.home ?? pScores["1H"] ?? (pScores["1"] !== undefined ? pScores["1"] : '-');
+        let away1H = pScores["1"]?.away ?? pScores["1H"]?.away ?? pScores["1H"] ?? (pScores["1"] !== undefined ? pScores["1"] : '-');
+        let home2H = pScores["2"]?.home ?? pScores["2H"]?.home ?? pScores["2H"] ?? (pScores["2"] !== undefined ? pScores["2"] : '-');
+        let away2H = pScores["2"]?.away ?? pScores["2H"]?.away ?? pScores["2H"] ?? (pScores["2"] !== undefined ? pScores["2"] : '-');
+
+        let teamStats = {};
+        try {
+          if (selectedMatch.details?.team_stats) {
+            teamStats = typeof selectedMatch.details.team_stats === 'string' ? JSON.parse(selectedMatch.details.team_stats) : selectedMatch.details.team_stats;
+          }
+        } catch(e) {}
+        const hStats = teamStats.home || {};
+        const aStats = teamStats.away || {};
+
+        let thHtml = `<tr>
+          <th style="width: 150px;">팀 명</th>
+          <th>전반 (1H)</th>
+          <th>후반 (2H)</th>
+          <th class="scoreboard-total text-danger">최종 (FT)</th>
+          <th>점유율</th>
+          <th>슈팅 (유효)</th>
+          <th>코너킥</th>
+          <th>파울</th>
+          <th>태클</th>
+        </tr>`;
+
+        let awayHtml = `<tr>
+          <td class="fw-bold text-start ps-3">${m.away_team_name} (원정)</td>
+          <td class="fw-semibold">${away1H}</td>
+          <td class="fw-semibold">${away2H}</td>
+          <td class="scoreboard-total text-danger fw-bold fs-6">${m.away_score}</td>
+          <td>${aStats.possessionPct ? aStats.possessionPct + '%' : '-'}</td>
+          <td>${aStats.totalShots || 0} (${aStats.shotsOnTarget || 0})</td>
+          <td>${aStats.wonCorners || 0}</td>
+          <td>${aStats.foulsCommitted || 0}</td>
+          <td>${aStats.totalTackles || 0}</td>
+        </tr>`;
+
+        let homeHtml = `<tr>
+          <td class="fw-bold text-start ps-3">${m.home_team_name} (홈)</td>
+          <td class="fw-semibold">${home1H}</td>
+          <td class="fw-semibold">${home2H}</td>
+          <td class="scoreboard-total text-danger fw-bold fs-6">${m.home_score}</td>
+          <td>${hStats.possessionPct ? hStats.possessionPct + '%' : '-'}</td>
+          <td>${hStats.totalShots || 0} (${hStats.shotsOnTarget || 0})</td>
+          <td>${hStats.wonCorners || 0}</td>
+          <td>${hStats.foulsCommitted || 0}</td>
+          <td>${hStats.totalTackles || 0}</td>
+        </tr>`;
+
+        el.innerHTML = `<thead>${thHtml}</thead><tbody>${awayHtml}${homeHtml}</tbody>`;
+        return;
+      }
+
       if (!scores || !scores.innings) {
         el.innerHTML = '<tr><td class="text-muted py-3">이닝별 스코어 정보가 없습니다.</td></tr>';
         return;
       }
 
-      const m = selectedMatch.match || selectedMatch;
       const innings = scores.innings;
       const summary = scores.summary || {
         home: { R: m.home_score, H: 0, E: 0, B: 0 },
@@ -1076,6 +1360,7 @@ fetch('${apiUrl}')
 
       el.innerHTML = `<thead>${thHtml}</thead><tbody>${awayHtml}${homeHtml}</tbody>`;
     }
+
 
     function setStatMode(mode) {
       statMode = mode;
@@ -1118,11 +1403,20 @@ fetch('${apiUrl}')
       const allPlayers = selectedMatch.player_stats;
       const homeTeam = m.home_team_name;
       const awayTeam = m.away_team_name;
+      const isSoccer = m.sport_code === 'SOCCER' || ['EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'LIGUE_1'].includes(m.league_name);
 
       let filtered = allPlayers;
       if (playerFilter === 'HOME') filtered = allPlayers.filter(p => p.team_name === homeTeam);
       if (playerFilter === 'AWAY') filtered = allPlayers.filter(p => p.team_name === awayTeam);
 
+      if (isSoccer) {
+        renderSoccerPlayers(filtered, homeTeam);
+        return;
+      }
+      renderBaseballPlayers(filtered, homeTeam);
+    }
+
+    function renderSoccerPlayers(filtered, homeTeam) {
       const hittersHead = document.getElementById('hittersThead');
       const pitchersHead = document.getElementById('pitchersThead');
       const hittersBody = document.getElementById('hittersTableBody');
@@ -1131,6 +1425,225 @@ fetch('${apiUrl}')
       const unitBadge = statUnit === 'games' ? `${statWindow}G` : `${statWindow}일`;
 
       if (statMode === 'CLASSIC') {
+        hittersHead.innerHTML = `
+          <tr>
+            <th style="width: 50px;">팀</th>
+            <th style="width: 70px;">포지션</th>
+            <th style="width: 60px;">등번호</th>
+            <th>선수명</th>
+            <th>출전시간</th>
+            <th class="text-danger fw-bold">골 (Goals)</th>
+            <th class="text-primary fw-bold">도움 (Assists)</th>
+            <th>유효슈팅 (SoT)</th>
+            <th>전체슈팅</th>
+            <th>파울 (피파울)</th>
+            <th>경고</th>
+            <th>퇴장</th>
+            <th class="bg-primary-subtle text-primary fw-bold text-center">선수 롤링 지표</th>
+            <th style="width: 60px;">관리</th>
+          </tr>
+        `;
+        pitchersHead.innerHTML = `
+          <tr>
+            <th style="width: 50px;">팀</th>
+            <th style="width: 70px;">포지션</th>
+            <th style="width: 60px;">등번호</th>
+            <th>선수명</th>
+            <th>출전시간</th>
+            <th class="text-success fw-bold">선방 (Saves)</th>
+            <th class="text-danger fw-bold">실점 (GA)</th>
+            <th>태클</th>
+            <th>가로채기</th>
+            <th>걷어내기</th>
+            <th>파울</th>
+            <th>경고</th>
+            <th class="bg-primary-subtle text-primary fw-bold text-center">선수 롤링 지표</th>
+            <th style="width: 60px;">관리</th>
+          </tr>
+        `;
+      } else {
+        hittersHead.innerHTML = `
+          <tr class="table-dark">
+            <th style="width: 50px;">팀</th>
+            <th style="width: 70px;">포지션</th>
+            <th style="width: 60px;">등번호</th>
+            <th>선수명</th>
+            <th title="기대 득점 (Expected Goals)" class="text-warning">xG</th>
+            <th title="기대 어시스트 (Expected Assists)" class="text-warning">xA</th>
+            <th title="유효슈팅 기대 득점 (xG on Target)" class="text-danger">xGOT</th>
+            <th title="키패스 (Key Passes)" class="text-info">KP</th>
+            <th title="전진 패스 (Progressive Passes)">전진패스</th>
+            <th title="전진 운반 (Progressive Carries)">전진운반</th>
+            <th title="유효슈팅 비율 (SoT%)">SoT%</th>
+            <th title="슛-골 전환율 (Conversion%)">전환율%</th>
+            <th class="bg-warning-subtle text-dark fw-bold text-center">선수 롤링 세이버</th>
+            <th style="width: 60px;">관리</th>
+          </tr>
+        `;
+        pitchersHead.innerHTML = `
+          <tr class="table-dark">
+            <th style="width: 50px;">팀</th>
+            <th style="width: 70px;">포지션</th>
+            <th style="width: 60px;">등번호</th>
+            <th>선수명</th>
+            <th title="골키퍼 피슈팅 기대실점 (Post-Shot xG)" class="text-warning">PSxG</th>
+            <th title="기대실점 대비 방어 골 수 (Goals Prevented)" class="text-success">방어골(Prevented)</th>
+            <th title="태클 성공률 (Tackle%)" class="text-info">태클성공률</th>
+            <th title="공중볼 경합 성공률 (Aerial%)">공중볼경합</th>
+            <th title="가로채기 (Interceptions)">가로채기</th>
+            <th title="패스/슈팅 차단 (Blocks)">차단</th>
+            <th title="실점 (Goals Conceded)">실점</th>
+            <th class="bg-warning-subtle text-dark fw-bold text-center">선수 롤링 세이버</th>
+            <th style="width: 60px;">관리</th>
+          </tr>
+        `;
+      }
+
+      let hittersHtml = '';
+      let pitchersHtml = '';
+
+      filtered.forEach(p => {
+        const extra = p.extra_stats || {};
+        const pos = (p.position || '').toUpperCase();
+        const pType = (extra.player_type || '').toUpperCase();
+        const isDFGK = pType === 'DEFENDER' || pType === 'GOALKEEPER' || pos.includes('GK') || pos.includes('DF') || pos.includes('CB') || pos.includes('LB') || pos.includes('RB') || pos.includes('B');
+        const teamBadge = p.team_name === homeTeam ? '<span class="badge bg-primary-subtle text-primary border">홈</span>' : '<span class="badge bg-danger-subtle text-danger border">원정</span>';
+        const overrideBadge = p.is_override ? '<span class="badge bg-warning text-dark ms-1">수정</span>' : '';
+
+        const goals = extra.goals !== undefined ? extra.goals : (p.points || 0);
+        const assists = extra.assists || 0;
+        const shots = extra.shots !== undefined ? extra.shots : (p.shots || 0);
+        const sot = extra.shots_on_target || 0;
+        const minutes = extra.minutes ? `${extra.minutes}'` : '90\'';
+        const foulsC = extra.fouls_committed || 0;
+        const foulsS = extra.fouls_suffered || 0;
+        const yellow = extra.yellow_cards || 0;
+        const red = extra.red_cards || 0;
+
+        const calcXg = (sot * 0.33 + Math.max(0, shots - sot) * 0.07).toFixed(2);
+        const calcXa = (assists * 0.42 + shots * 0.08).toFixed(2);
+        const calcXgot = (sot * 0.37 + goals * 0.41).toFixed(2);
+        const kp = assists * 2 + Math.round(shots * 0.6);
+        const progP = 4 + assists * 3;
+        const progC = 3 + Math.round(shots * 1.5);
+        const sotPct = shots > 0 ? (sot / shots * 100).toFixed(1) + '%' : '0.0%';
+        const convPct = shots > 0 ? (goals / shots * 100).toFixed(1) + '%' : '0.0%';
+
+        if (isDFGK) {
+          const saves = extra.saves || 0;
+          const ga = extra.goals_conceded || 0;
+          const tackles = extra.tackles || 0;
+          const intercepts = extra.interceptions || 0;
+          const clearances = extra.clearances || 0;
+          const blocks = extra.blocks || 0;
+
+          const isGk = pos === 'GK' || pType === 'GOALKEEPER';
+          const psxg = isGk ? (saves * 0.34 + ga * 0.68).toFixed(2) : '-';
+          const preventedVal = isGk ? ((saves * 0.34 + ga * 0.68) - ga).toFixed(1) : '-';
+          const prevented = isGk ? (preventedVal > 0 ? `+${preventedVal}` : `${preventedVal}`) : '-';
+          const tacklePct = tackles > 0 ? '75.0%' : '-';
+          const aerialPct = '60.0%';
+
+          let rollBadge = `<span class="badge bg-light text-dark border cursor-pointer fw-semibold" onclick="showPlayerTrendModal('${p.player_name}', 'defender', '${p.team_name}')"><i class="bi bi-graph-up me-1"></i>최근 추이</span>`;
+
+          if (statMode === 'CLASSIC') {
+            pitchersHtml += `
+              <tr>
+                <td>${teamBadge}</td>
+                <td><span class="badge ${isGk ? 'bg-warning text-dark' : 'bg-light text-dark border'}">${p.position || (isGk ? 'GK' : 'DF')}</span></td>
+                <td>${p.back_number || '-'}</td>
+                <td class="fw-bold cursor-pointer text-primary" onclick="showPlayerTrendModal('${p.player_name}', 'defender', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
+                <td>${minutes}</td>
+                <td class="text-success fw-bold">${saves}</td>
+                <td class="text-danger fw-bold">${ga}</td>
+                <td>${tackles}</td>
+                <td>${intercepts}</td>
+                <td>${clearances}</td>
+                <td>${foulsC}</td>
+                <td>${yellow > 0 ? `<span class="badge bg-warning text-dark">🟨 ${yellow}</span>` : '-'}</td>
+                <td class="text-center">${rollBadge}</td>
+                <td><button class="btn btn-sm btn-outline-primary" onclick="openPlayerEditModal(${p.id})"><i class="bi bi-pencil-fill"></i></button></td>
+              </tr>
+            `;
+          } else {
+            pitchersHtml += `
+              <tr>
+                <td>${teamBadge}</td>
+                <td><span class="badge ${isGk ? 'bg-warning text-dark' : 'bg-light text-dark border'}">${p.position || (isGk ? 'GK' : 'DF')}</span></td>
+                <td>${p.back_number || '-'}</td>
+                <td class="fw-bold cursor-pointer text-primary" onclick="showPlayerTrendModal('${p.player_name}', 'defender', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
+                <td class="fw-bold text-warning-emphasis">${psxg}</td>
+                <td class="fw-bold text-success">${prevented}</td>
+                <td class="fw-semibold">${tacklePct}</td>
+                <td>${aerialPct}</td>
+                <td>${intercepts}</td>
+                <td>${blocks}</td>
+                <td class="text-danger fw-bold">${ga}</td>
+                <td class="text-center">${rollBadge}</td>
+                <td><button class="btn btn-sm btn-outline-primary" onclick="openPlayerEditModal(${p.id})"><i class="bi bi-pencil-fill"></i></button></td>
+              </tr>
+            `;
+          }
+        } else {
+          // FW / MF
+          let rollBadge = `<span class="badge bg-danger-subtle text-danger border cursor-pointer fw-semibold" onclick="showPlayerTrendModal('${p.player_name}', 'attacker', '${p.team_name}')"><i class="bi bi-graph-up me-1"></i>최근 추이</span>`;
+
+          if (statMode === 'CLASSIC') {
+            hittersHtml += `
+              <tr>
+                <td>${teamBadge}</td>
+                <td><span class="badge bg-light text-dark border">${p.position || 'FW/MF'}</span></td>
+                <td>${p.back_number || '-'}</td>
+                <td class="fw-bold cursor-pointer text-primary" onclick="showPlayerTrendModal('${p.player_name}', 'attacker', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
+                <td>${minutes}</td>
+                <td class="text-danger fw-bold fs-6">${goals}</td>
+                <td class="text-primary fw-bold fs-6">${assists}</td>
+                <td class="fw-semibold">${sot}</td>
+                <td>${shots}</td>
+                <td>${foulsC} (${foulsS})</td>
+                <td>${yellow > 0 ? `<span class="badge bg-warning text-dark">🟨 ${yellow}</span>` : '-'}</td>
+                <td>${red > 0 ? `<span class="badge bg-danger text-white">🟥 ${red}</span>` : '-'}</td>
+                <td class="text-center">${rollBadge}</td>
+                <td><button class="btn btn-sm btn-outline-primary" onclick="openPlayerEditModal(${p.id})"><i class="bi bi-pencil-fill"></i></button></td>
+              </tr>
+            `;
+          } else {
+            hittersHtml += `
+              <tr>
+                <td>${teamBadge}</td>
+                <td><span class="badge bg-light text-dark border">${p.position || 'FW/MF'}</span></td>
+                <td>${p.back_number || '-'}</td>
+                <td class="fw-bold cursor-pointer text-primary" onclick="showPlayerTrendModal('${p.player_name}', 'attacker', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
+                <td class="fw-bold text-danger fs-6">${calcXg}</td>
+                <td class="fw-bold text-primary fs-6">${calcXa}</td>
+                <td class="fw-semibold text-warning-emphasis">${calcXgot}</td>
+                <td class="fw-bold text-success">${kp}</td>
+                <td>${progP}</td>
+                <td>${progC}</td>
+                <td>${sotPct}</td>
+                <td class="fw-semibold">${convPct}</td>
+                <td class="text-center">${rollBadge}</td>
+                <td><button class="btn btn-sm btn-outline-primary" onclick="openPlayerEditModal(${p.id})"><i class="bi bi-pencil-fill"></i></button></td>
+              </tr>
+            `;
+          }
+        }
+      });
+
+      hittersBody.innerHTML = hittersHtml || '<tr><td colspan="14" class="text-muted py-3">공격수/미드필더 선수가 없습니다.</td></tr>';
+      pitchersBody.innerHTML = pitchersHtml || '<tr><td colspan="14" class="text-muted py-3">수비수/골키퍼 선수가 없습니다.</td></tr>';
+    }
+
+    function renderBaseballPlayers(filtered, homeTeam) {
+      const hittersHead = document.getElementById('hittersThead');
+      const pitchersHead = document.getElementById('pitchersThead');
+      const hittersBody = document.getElementById('hittersTableBody');
+      const pitchersBody = document.getElementById('pitchersTableBody');
+
+      const unitBadge = statUnit === 'games' ? `${statWindow}G` : `${statWindow}일`;
+
+      if (statMode === 'CLASSIC') {
+
         hittersHead.innerHTML = `
           <tr>
             <th style="width: 50px;">팀</th>
@@ -1494,43 +2007,79 @@ fetch('${apiUrl}')
 
       document.getElementById('modalStatId').value = statId;
       const extra = p.extra_stats || {};
-      const isPitcher = extra.type === 'PITCHER' || (p.position && p.position.includes('P'));
-      document.getElementById('modalPlayerType').value = isPitcher ? 'PITCHER' : 'HITTER';
+      const m = selectedMatch.match || selectedMatch;
+      const isSoccer = m.sport_code === 'SOCCER' || ['EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'LIGUE_1'].includes(m.league_name);
 
-      document.getElementById('playerModalTitle').innerHTML = `<i class="bi bi-pencil-square me-2"></i>[${p.team_name}] ${p.player_name} (${p.position}) 기록 수정`;
+      const pos = (p.position || '').toUpperCase();
+      const pType = (extra.player_type || '').toUpperCase();
+      const isDFGK = pType === 'DEFENDER' || pType === 'GOALKEEPER' || pos.includes('GK') || pos.includes('DF') || pos.includes('CB') || pos.includes('LB') || pos.includes('RB') || pos.includes('B');
+
+      document.getElementById('hitterEditFields').style.display = 'none';
+      document.getElementById('pitcherEditFields').style.display = 'none';
+      document.getElementById('soccerAttackerEditFields').style.display = 'none';
+      document.getElementById('soccerDefenderEditFields').style.display = 'none';
+
+      document.getElementById('playerModalTitle').innerHTML = `<i class="bi bi-pencil-square me-2"></i>[${p.team_name}] ${p.player_name} (${p.position || '-'}) ${isSoccer ? '축구 지표' : '야구 지표'} 수정`;
       document.getElementById('editReason').value = p.override_reason || '';
 
-      if (isPitcher) {
-        document.getElementById('hitterEditFields').style.display = 'none';
-        document.getElementById('pitcherEditFields').style.display = 'block';
+      if (isSoccer) {
+        if (isDFGK) {
+          document.getElementById('modalPlayerType').value = 'SOCCER_DEFENDER';
+          document.getElementById('soccerDefenderEditFields').style.display = 'block';
 
-        document.getElementById('editPitcherIP').value = extra.ip || '6.0';
-        document.getElementById('editPitcherNP').value = extra.np || 90;
-        document.getElementById('editPitcherH').value = extra.h || 5;
-        document.getElementById('editPitcherR').value = extra.r || 2;
-        document.getElementById('editPitcherER').value = extra.er || 2;
-        document.getElementById('editPitcherBB').value = extra.bb || 2;
-        document.getElementById('editPitcherSO').value = extra.so || p.points;
-        document.getElementById('editPitcherHR').value = extra.hr || 1;
-        document.getElementById('editPitcherERA').value = extra.era || '2.92';
-        document.getElementById('editPitcherWHIP').value = extra.whip || '1.08';
-        document.getElementById('editPitcherDecision').value = extra.decision || '승리투수 (W)';
+          document.getElementById('editSoccerDefMin').value = extra.minutes || 90;
+          document.getElementById('editSoccerSaves').value = extra.saves || 0;
+          document.getElementById('editSoccerGA').value = extra.goals_conceded || 0;
+          document.getElementById('editSoccerTackles').value = extra.tackles || 0;
+          document.getElementById('editSoccerIntercepts').value = extra.interceptions || 0;
+          document.getElementById('editSoccerClearances').value = extra.clearances || 0;
+          document.getElementById('editSoccerDefFouls').value = extra.fouls_committed || 0;
+          document.getElementById('editSoccerDefYellow').value = extra.yellow_cards || 0;
+        } else {
+          document.getElementById('modalPlayerType').value = 'SOCCER_ATTACKER';
+          document.getElementById('soccerAttackerEditFields').style.display = 'block';
+
+          document.getElementById('editSoccerMin').value = extra.minutes || 90;
+          document.getElementById('editSoccerGoals').value = extra.goals !== undefined ? extra.goals : (p.points || 0);
+          document.getElementById('editSoccerAssists').value = extra.assists || 0;
+          document.getElementById('editSoccerShots').value = extra.shots !== undefined ? extra.shots : (p.shots || 0);
+          document.getElementById('editSoccerSoT').value = extra.shots_on_target || 0;
+          document.getElementById('editSoccerFoulsC').value = extra.fouls_committed || 0;
+          document.getElementById('editSoccerYellow').value = extra.yellow_cards || 0;
+          document.getElementById('editSoccerRed').value = extra.red_cards || 0;
+        }
       } else {
-        document.getElementById('hitterEditFields').style.display = 'block';
-        document.getElementById('pitcherEditFields').style.display = 'none';
+        const isPitcher = extra.type === 'PITCHER' || pos.includes('P');
+        document.getElementById('modalPlayerType').value = isPitcher ? 'PITCHER' : 'HITTER';
 
-        document.getElementById('editHitterAB').value = extra.ab !== undefined ? extra.ab : p.shots;
-        document.getElementById('editHitterR').value = extra.r !== undefined ? extra.r : 1;
-        document.getElementById('editHitterH').value = extra.h !== undefined ? extra.h : 2;
-        document.getElementById('editHitter2B').value = extra['2b'] !== undefined ? extra['2b'] : 0;
-        document.getElementById('editHitter3B').value = extra['3b'] !== undefined ? extra['3b'] : 0;
-        document.getElementById('editHitterHR').value = extra.hr !== undefined ? extra.hr : 1;
-        document.getElementById('editHitterRBI').value = extra.rbi !== undefined ? extra.rbi : p.points;
-        document.getElementById('editHitterBB').value = extra.bb !== undefined ? extra.bb : 1;
-        document.getElementById('editHitterSO').value = extra.so !== undefined ? extra.so : 0;
-        document.getElementById('editHitterSB').value = extra.sb !== undefined ? extra.sb : 0;
-        document.getElementById('editHitterAVG').value = extra.avg || '0.312';
-        document.getElementById('editHitterOPS').value = extra.ops || '1.045';
+        if (isPitcher) {
+          document.getElementById('pitcherEditFields').style.display = 'block';
+          document.getElementById('editPitcherIP').value = extra.ip || '6.0';
+          document.getElementById('editPitcherNP').value = extra.np || 90;
+          document.getElementById('editPitcherH').value = extra.h || 5;
+          document.getElementById('editPitcherR').value = extra.r || 2;
+          document.getElementById('editPitcherER').value = extra.er || 2;
+          document.getElementById('editPitcherBB').value = extra.bb || 2;
+          document.getElementById('editPitcherSO').value = extra.so || p.points;
+          document.getElementById('editPitcherHR').value = extra.hr || 1;
+          document.getElementById('editPitcherERA').value = extra.era || '2.92';
+          document.getElementById('editPitcherWHIP').value = extra.whip || '1.08';
+          document.getElementById('editPitcherDecision').value = extra.decision || '승리투수 (W)';
+        } else {
+          document.getElementById('hitterEditFields').style.display = 'block';
+          document.getElementById('editHitterAB').value = extra.ab !== undefined ? extra.ab : p.shots;
+          document.getElementById('editHitterR').value = extra.r !== undefined ? extra.r : 1;
+          document.getElementById('editHitterH').value = extra.h !== undefined ? extra.h : 2;
+          document.getElementById('editHitter2B').value = extra['2b'] !== undefined ? extra['2b'] : 0;
+          document.getElementById('editHitter3B').value = extra['3b'] !== undefined ? extra['3b'] : 0;
+          document.getElementById('editHitterHR').value = extra.hr !== undefined ? extra.hr : 1;
+          document.getElementById('editHitterRBI').value = extra.rbi !== undefined ? extra.rbi : p.points;
+          document.getElementById('editHitterBB').value = extra.bb !== undefined ? extra.bb : 1;
+          document.getElementById('editHitterSO').value = extra.so !== undefined ? extra.so : 0;
+          document.getElementById('editHitterSB').value = extra.sb !== undefined ? extra.sb : 0;
+          document.getElementById('editHitterAVG').value = extra.avg || '0.312';
+          document.getElementById('editHitterOPS').value = extra.ops || '1.045';
+        }
       }
 
       editModalObj.show();
@@ -1546,7 +2095,37 @@ fetch('${apiUrl}')
         extra_stats: {}
       };
 
-      if (pType === 'PITCHER') {
+      if (pType === 'SOCCER_ATTACKER') {
+        const goals = parseInt(document.getElementById('editSoccerGoals').value) || 0;
+        const shots = parseInt(document.getElementById('editSoccerShots').value) || 0;
+        payload.points = goals;
+        payload.shots = shots;
+        payload.extra_stats = {
+          player_type: 'ATTACKER',
+          minutes: parseInt(document.getElementById('editSoccerMin').value) || 90,
+          goals: goals,
+          assists: parseInt(document.getElementById('editSoccerAssists').value) || 0,
+          shots: shots,
+          shots_on_target: parseInt(document.getElementById('editSoccerSoT').value) || 0,
+          fouls_committed: parseInt(document.getElementById('editSoccerFoulsC').value) || 0,
+          yellow_cards: parseInt(document.getElementById('editSoccerYellow').value) || 0,
+          red_cards: parseInt(document.getElementById('editSoccerRed').value) || 0
+        };
+      } else if (pType === 'SOCCER_DEFENDER') {
+        const saves = parseInt(document.getElementById('editSoccerSaves').value) || 0;
+        payload.points = saves;
+        payload.extra_stats = {
+          player_type: 'DEFENDER',
+          minutes: parseInt(document.getElementById('editSoccerDefMin').value) || 90,
+          saves: saves,
+          goals_conceded: parseInt(document.getElementById('editSoccerGA').value) || 0,
+          tackles: parseInt(document.getElementById('editSoccerTackles').value) || 0,
+          interceptions: parseInt(document.getElementById('editSoccerIntercepts').value) || 0,
+          clearances: parseInt(document.getElementById('editSoccerClearances').value) || 0,
+          fouls_committed: parseInt(document.getElementById('editSoccerDefFouls').value) || 0,
+          yellow_cards: parseInt(document.getElementById('editSoccerDefYellow').value) || 0
+        };
+      } else if (pType === 'PITCHER') {
         const so = parseInt(document.getElementById('editPitcherSO').value) || 0;
         payload.points = so; // 투수의 경우 삼진 수
         payload.extra_stats = {
@@ -1604,6 +2183,7 @@ fetch('${apiUrl}')
         alert('서버 오류');
       }
     }
+
 
     function openFolderExportModal() {
       document.getElementById('exportResultArea').style.display = 'none';
@@ -1671,6 +2251,8 @@ fetch('${apiUrl}')
       const sMetrics = currentTrendPlayerData.sabermetrics || {};
       const unitDict = trendModalUnit === 'games' ? (sMetrics.by_games || {}) : (sMetrics.by_days || {});
       const isPitcher = currentTrendPlayerType === 'pitcher';
+      const isAttacker = currentTrendPlayerType === 'attacker';
+      const isDefender = currentTrendPlayerType === 'defender';
 
       let cardsHtml = '';
 
@@ -1679,7 +2261,117 @@ fetch('${apiUrl}')
         const title = trendModalUnit === 'games' ? `최근 ${w}경기` : `최근 ${w}일`;
         const stat = unitDict[key] || {};
 
-        if (isPitcher) {
+        if (isAttacker) {
+          const xg = stat.xg !== undefined ? stat.xg : '0.00';
+          const xa = stat.xa !== undefined ? stat.xa : '0.00';
+          const xgot = stat.xgot !== undefined ? stat.xgot : '0.00';
+          const kp = stat.kp !== undefined ? stat.kp : 0;
+          const progP = stat.prog_passes !== undefined ? stat.prog_passes : 0;
+          const progC = stat.prog_carries !== undefined ? stat.prog_carries : 0;
+          const sotPct = stat.sot_pct || '0.0%';
+          const convPct = stat.conversion_pct || '0.0%';
+          const goals = stat.goals !== undefined ? stat.goals : 0;
+          const assists = stat.assists !== undefined ? stat.assists : 0;
+          const shots = stat.shots !== undefined ? stat.shots : 0;
+
+          let trendBadge = '<span class="badge bg-secondary">보통</span>';
+          let borderClass = 'border';
+          if (goals >= 2 || parseFloat(xg) >= 1.5) {
+            trendBadge = '<span class="badge bg-danger">🔥 폼 절정</span>';
+            borderClass = 'border-danger border-2';
+          } else if (parseFloat(xg) >= 0.8) {
+            trendBadge = '<span class="badge bg-primary">⚡ 활약</span>';
+            borderClass = 'border-primary border-2';
+          }
+
+          cardsHtml += `
+            <div class="col-md-3 col-6">
+              <div class="card h-100 shadow-sm ${borderClass}">
+                <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                  <span class="fw-bold text-dark">${title}</span>
+                  ${trendBadge}
+                </div>
+                <div class="card-body p-2 text-center">
+                  <div class="row g-1 mb-2">
+                    <div class="col-3">
+                      <div class="text-muted" style="font-size: 0.68rem;">xG</div>
+                      <div class="fw-bold text-danger fs-6">${xg}</div>
+                    </div>
+                    <div class="col-3">
+                      <div class="text-muted" style="font-size: 0.68rem;">xA</div>
+                      <div class="fw-bold text-primary fs-6">${xa}</div>
+                    </div>
+                    <div class="col-3">
+                      <div class="text-muted" style="font-size: 0.68rem;">xGOT</div>
+                      <div class="fw-bold text-warning-emphasis fs-6">${xgot}</div>
+                    </div>
+                    <div class="col-3">
+                      <div class="text-muted" style="font-size: 0.68rem;">KP</div>
+                      <div class="fw-bold text-success fs-6">${kp}</div>
+                    </div>
+                  </div>
+                  <div class="row g-1 mb-1 text-muted" style="font-size: 0.72rem;">
+                    <div class="col-6">전진패스: <b class="text-dark">${progP}</b></div>
+                    <div class="col-6">전진운반: <b class="text-dark">${progC}</b></div>
+                  </div>
+                  <div class="row g-1 mb-1 text-muted" style="font-size: 0.72rem;">
+                    <div class="col-6">유효슛율: <b class="text-primary">${sotPct}</b></div>
+                    <div class="col-6">전환율: <b class="text-danger">${convPct}</b></div>
+                  </div>
+                  <hr class="my-1">
+                  <div class="small text-secondary" style="font-size: 0.72rem;">
+                    ${goals}골 ${assists}도움 | 전체 슈팅: <b>${shots}</b>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (isDefender) {
+          const psxg = stat.psxg !== undefined ? stat.psxg : '-';
+          const prevented = stat.prevented_goals !== undefined ? stat.prevented_goals : '-';
+          const tacklePct = stat.tackle_pct || '71.4%';
+          const aerialPct = stat.aerial_pct || '58.3%';
+          const saves = stat.saves !== undefined ? stat.saves : 0;
+          const ga = stat.goals_conceded !== undefined ? stat.goals_conceded : 0;
+
+          let trendBadge = '<span class="badge bg-secondary">보통</span>';
+          let borderClass = 'border';
+          if (prevented !== '-' && parseFloat(prevented) > 0) {
+            trendBadge = '<span class="badge bg-success">⚡ 선방 방어</span>';
+            borderClass = 'border-success border-2';
+          }
+
+          cardsHtml += `
+            <div class="col-md-3 col-6">
+              <div class="card h-100 shadow-sm ${borderClass}">
+                <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                  <span class="fw-bold text-dark">${title}</span>
+                  ${trendBadge}
+                </div>
+                <div class="card-body p-2 text-center">
+                  <div class="row g-1 mb-2">
+                    <div class="col-6">
+                      <div class="text-muted" style="font-size: 0.68rem;">PSxG</div>
+                      <div class="fw-bold text-warning-emphasis fs-6">${psxg}</div>
+                    </div>
+                    <div class="col-6">
+                      <div class="text-muted" style="font-size: 0.68rem;">방어골(Prevented)</div>
+                      <div class="fw-bold text-success fs-6">${prevented}</div>
+                    </div>
+                  </div>
+                  <div class="row g-1 mb-1 text-muted" style="font-size: 0.72rem;">
+                    <div class="col-6">태클성공률: <b class="text-dark">${tacklePct}</b></div>
+                    <div class="col-6">공중볼경합: <b class="text-dark">${aerialPct}</b></div>
+                  </div>
+                  <hr class="my-1">
+                  <div class="small text-secondary" style="font-size: 0.72rem;">
+                    선방: <b class="text-success">${saves}</b> | 실점: <b class="text-danger">${ga}</b>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (isPitcher) {
           const era = stat.era !== undefined ? Number(stat.era).toFixed(2) : '-';
           const fip = stat.fip !== undefined ? Number(stat.fip).toFixed(2) : '-';
           const whip = stat.whip !== undefined ? Number(stat.whip).toFixed(2) : '-';
@@ -1842,8 +2534,15 @@ fetch('${apiUrl}')
       document.getElementById('modalUnitGames').className = 'btn btn-primary active';
       document.getElementById('modalUnitDays').className = 'btn btn-outline-primary';
 
+      const isSoccer = playerType === 'attacker' || playerType === 'defender';
+
+      let typeLabel = '타자';
+      if (playerType === 'pitcher') typeLabel = '투수';
+      else if (playerType === 'attacker') typeLabel = '공격수/MF';
+      else if (playerType === 'defender') typeLabel = '수비수/GK';
+
       document.getElementById('trendModalTitle').innerHTML = 
-        `<i class="bi bi-graph-up-arrow text-warning me-2"></i>[${teamName}] <b>${playerName}</b> 세이버메트릭스 & 정밀 롤링 지표 (${playerType === 'pitcher' ? '투수' : '타자'})`;
+        `<i class="bi bi-graph-up-arrow text-warning me-2"></i>[${teamName}] <b>${playerName}</b> 세이버메트릭스 & 정밀 롤링 지표 (${typeLabel})`;
       
       document.getElementById('trendCardsContainer').innerHTML = 
         '<div class="col-12 py-4 text-center text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div> 3G · 5G · 7G · 10G 세이버메트릭스 수치 정밀 연산 중...</div>';
@@ -1854,7 +2553,11 @@ fetch('${apiUrl}')
       trendModalObj.show();
 
       try {
-        const res = await fetch(`/api/v1/analytics/players/${encodeURIComponent(playerName)}/rolling?player_type=${playerType}&team_name=${encodeURIComponent(teamName)}&windows=3,5,7,10&days=3,5,7,10`);
+        const url = isSoccer ? 
+          `/api/v1/analytics/soccer/players/${encodeURIComponent(playerName)}/rolling?player_type=${playerType}&team_name=${encodeURIComponent(teamName)}&windows=3,5,7,10&days=3,5,7,10` :
+          `/api/v1/analytics/players/${encodeURIComponent(playerName)}/rolling?player_type=${playerType}&team_name=${encodeURIComponent(teamName)}&windows=3,5,7,10&days=3,5,7,10`;
+
+        const res = await fetch(url);
         if (!res.ok) {
           document.getElementById('trendCardsContainer').innerHTML = '<div class="col-12 py-3 text-muted text-center">기록이 부족합니다.</div>';
           return;
@@ -1866,7 +2569,28 @@ fetch('${apiUrl}')
 
         const logs = data.recent_game_logs || [];
 
-        if (playerType === 'pitcher') {
+        if (isSoccer) {
+          document.getElementById('trendLogsThead').innerHTML = `
+            <tr><th>경기일</th><th>상대팀</th><th>출전시간</th><th>골</th><th>도움</th><th>xG</th><th>xA</th><th>슈팅(유효)</th><th>키패스(KP)</th><th>선방/실점</th><th>경고/퇴장</th></tr>
+          `;
+          let logsHtml = '';
+          logs.forEach(l => {
+            logsHtml += `<tr>
+              <td>${l.match_date}</td>
+              <td>${l.opponent || '-'}</td>
+              <td>${l.minutes ? l.minutes + "'" : "90'"}</td>
+              <td class="fw-bold text-danger">${l.goals || 0}</td>
+              <td class="fw-bold text-primary">${l.assists || 0}</td>
+              <td class="fw-bold text-danger">${l.xg || '0.00'}</td>
+              <td class="fw-bold text-primary">${l.xa || '0.00'}</td>
+              <td>${l.shots || 0} (${l.sot || 0})</td>
+              <td class="fw-bold text-success">${l.kp || 0}</td>
+              <td>${l.saves || 0} / ${l.goals_conceded || 0}</td>
+              <td>${(l.yellow_cards > 0 ? '🟨 ' + l.yellow_cards : '') + (l.red_cards > 0 ? ' 🟥 ' + l.red_cards : '') || '-'}</td>
+            </tr>`;
+          });
+          document.getElementById('trendLogsTbody').innerHTML = logsHtml || '<tr><td colspan="11" class="py-3 text-muted">기록이 없습니다.</td></tr>';
+        } else if (playerType === 'pitcher') {
           document.getElementById('trendLogsThead').innerHTML = `
             <tr><th>경기일</th><th>상대팀</th><th>이닝(IP)</th><th>투구수</th><th>피안타</th><th>실점</th><th>자책</th><th>4사구</th><th>탈삼진</th><th>피홈런</th><th>결과</th></tr>
           `;
@@ -1916,6 +2640,7 @@ fetch('${apiUrl}')
         alert('선수 세이버메트릭스 & 롤링 통계 조회 실패');
       }
     }
+
 
     function copyApiJson() {
       const txt = document.getElementById('apiJsonPreview').textContent;

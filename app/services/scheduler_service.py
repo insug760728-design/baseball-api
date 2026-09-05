@@ -22,7 +22,7 @@ class SchedulerService:
         "hour": 0,
         "minute": 0,
         "enabled": True,
-        "leagues": ["KBO", "NPB", "MLB"]
+        "leagues": ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1"]
     }
     _last_run_info: Dict[str, Any] = {
         "last_run_time": None,

@@ -43,13 +43,15 @@ def export_folders(payload: ExportFolderRequest, db: Session = Depends(get_db)):
 @router.get("/download-zip/{league_id}", summary="생성된 팀/선수별 폴더 ZIP 파일 다운로드")
 @router.get("/download-export-zip", summary="생성된 팀/선수별 폴더 ZIP 파일 다운로드 (Query Param)")
 def download_zip(league_id: str = "MLB"):
-    # 두 가지 파일명 패턴 모두 지원
+    # 세 가지 파일명 패턴 지원 (야구, 축구, 공통)
     zip_path = os.path.abspath(os.path.join("exports", f"{league_id}_baseball_export.zip"))
+    if not os.path.exists(zip_path):
+        zip_path = os.path.abspath(os.path.join("exports", f"{league_id}_soccer_export.zip"))
     if not os.path.exists(zip_path):
         zip_path = os.path.abspath(os.path.join("exports", f"{league_id}_contents_export.zip"))
     if not os.path.exists(zip_path):
         raise HTTPException(status_code=404, detail="생성된 압축 파일을 찾을 수 없습니다. 먼저 /export-folders 생성을 실행하세요.")
-    return FileResponse(zip_path, filename=f"{league_id}_baseball_content.zip", media_type="application/zip")
+    return FileResponse(zip_path, filename=f"{league_id}_content.zip", media_type="application/zip")
 
 @router.get("/{league_id}/teams", summary="특정 리그의 전체 팀 목록 조회")
 def get_league_teams(league_id: str, db: Session = Depends(get_db)):
