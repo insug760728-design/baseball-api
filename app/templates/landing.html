@@ -1757,7 +1757,7 @@
         aiChatPersonaIndex = (aiChatPersonaIndex + 1) % AI_CHAT_PERSONAS.length;
 
         const now = new Date();
-        const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        const timeStr = (typeof getKstTimeFormatted === 'function') ? getKstTimeFormatted() : (String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'));
 
         const newMsg = {
           id: Date.now(),
@@ -2538,7 +2538,53 @@
     // ------------------------------------------------------------------
     // 14경기 토토 데이터베이스 (베트맨 공식 실시간 연동 + 토토캔 실제 회차)
     // ------------------------------------------------------------------
+    // Helper: Strict Korean Standard Time (KST, UTC+9) Formatter
+    function getKstTimeFormatted() {
+      try {
+        const now = new Date();
+        const kst = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
+        return String(kst.getHours()).padStart(2, '0') + ':' + String(kst.getMinutes()).padStart(2, '0');
+      } catch (e) {
+        const d = new Date();
+        const kstH = String((d.getUTCHours() + 9) % 24).padStart(2, '0');
+        const kstM = String(d.getUTCMinutes()).padStart(2, '0');
+        return kstH + ':' + kstM;
+      }
+    }
+
     const TOTO_DATA = {
+      W1L: {
+        title: '야구 승1패 66회차',
+        sport: 'BASEBALL',
+        period: '09.06(일) 08:00 ~ 09.06(일) 17:00',
+        totalVotes: '89,623',
+        prize: '609,807,750원',
+        rollover: '609,807,750원 (5회 이월🔥)',
+        forward_amount: 609807750,
+        total_sell_amount: 89623000,
+        total_sale_cnt: 89623,
+        first_prize_pool: 632213500,
+        second_prize_pool: 8962300,
+        third_prize_pool: 4481150,
+        fourth_prize_pool: 8962300,
+        status: 'SaleProgress',
+        matches: [
+          { seq: 1, league: 'MLB', time: '09.06 (일) 08:10', home: '보스턴', away: '뉴욕양키', pW: 38.2, pD: 24.5, pL: 37.3, aiPick: 'W', result: null },
+          { seq: 2, league: 'MLB', time: '09.06 (일) 08:15', home: '볼티모어', away: '탬파베이', pW: 55.4, pD: 22.1, pL: 22.5, aiPick: 'W', result: null },
+          { seq: 3, league: 'MLB', time: '09.06 (일) 08:40', home: '클리블랜', away: '미네소타', pW: 44.1, pD: 25.3, pL: 30.6, aiPick: 'W', result: null },
+          { seq: 4, league: 'MLB', time: '09.06 (일) 09:10', home: '휴스턴', away: '텍사스', pW: 58.7, pD: 20.4, pL: 20.9, aiPick: 'W', result: null },
+          { seq: 5, league: 'MLB', time: '09.06 (일) 09:40', home: 'LA다저스', away: '샌프란시', pW: 68.9, pD: 18.2, pL: 12.9, aiPick: 'W', result: null },
+          { seq: 6, league: 'MLB', time: '09.06 (일) 10:05', home: '시애틀', away: 'LA에인절', pW: 51.3, pD: 24.7, pL: 24.0, aiPick: 'W', result: null },
+          { seq: 7, league: 'MLB', time: '09.06 (일) 10:10', home: '샌디에이', away: '애리조나', pW: 49.5, pD: 26.2, pL: 24.3, aiPick: 'W', result: null },
+          { seq: 8, league: 'KBO', time: '09.06 (일) 14:00', home: 'LG', away: '두산', pW: 47.8, pD: 25.1, pL: 27.1, aiPick: 'W', result: null },
+          { seq: 9, league: 'KBO', time: '09.06 (일) 14:00', home: 'KIA', away: '삼성', pW: 52.6, pD: 24.0, pL: 23.4, aiPick: 'W', result: null },
+          { seq: 10, league: 'KBO', time: '09.06 (일) 14:00', home: 'SSG', away: 'KT', pW: 43.5, pD: 26.5, pL: 30.0, aiPick: 'D', result: null },
+          { seq: 11, league: 'KBO', time: '09.06 (일) 14:00', home: 'NC', away: '롯데', pW: 39.8, pD: 25.8, pL: 34.4, aiPick: 'L', result: null },
+          { seq: 12, league: 'KBO', time: '09.06 (일) 14:00', home: '한화', away: '키움', pW: 56.1, pD: 23.2, pL: 20.7, aiPick: 'W', result: null },
+          { seq: 13, league: 'MLB', time: '09.06 (일) 08:05', home: '필라델', away: '뉴욕메츠', pW: 46.8, pD: 25.4, pL: 27.8, aiPick: 'W', result: null },
+          { seq: 14, league: 'MLB', time: '09.06 (일) 08:10', home: '애틀랜타', away: '마이애미', pW: 64.2, pD: 21.0, pL: 14.8, aiPick: 'W', result: null }
+        ]
+      },
       WDL: {
         title: '축구 승무패 49회차',
         sport: 'SOCCER',
@@ -2606,7 +2652,7 @@
 
       // Automatically select initial view: 14경기 토토 마킹표 (베트맨 실시간 66회차)
       switchCenterView('TOTO');
-      selectTotoRound('W1L', 260066);
+      selectTotoRound('WDL', 260050);
 
       startLiveAutoSync(30);
       startBetman10MinSync();
@@ -3030,64 +3076,86 @@
     // ------------------------------------------------------------------
     // 베트맨(BETMAN) 실시간 14경기 데이터 자동 로더 & 라운드 선택
     // ------------------------------------------------------------------
-    async function loadBetmanToto(gmTs = 260066, forceRefresh = false) {
-      currentBetmanTs = gmTs;
+    async function loadBetmanToto(roundKey = 'WDL', gmTs = null, forceRefresh = false) {
+      currentTotoRound = roundKey;
+      let gmId = 'G011';
+      let defaultTs = 260050;
+      let sportTitle = '축구 승무패 50회차 (EPL & 세리에A 실시간 결과 연동)';
+
+      if (roundKey === 'W1L') {
+        gmId = 'G024';
+        defaultTs = 260066;
+        sportTitle = '야구 승1패 66회차 (MLB & KBO 이월금 6억🔥)';
+      } else if (roundKey === 'W5L') {
+        gmId = 'G027';
+        defaultTs = 260027;
+        sportTitle = '농구 승5패 27회차 (NBA & KBL 최종결과)';
+      }
+
+      const targetTs = gmTs || defaultTs;
+      currentBetmanTs = targetTs;
+
       const panel = document.getElementById('predDetailPanel');
       if (panel) {
         panel.innerHTML = `
           <div class="d-flex flex-column justify-content-center align-items-center h-100 py-5">
             <div class="spinner-border text-info mb-3" role="status"></div>
-            <div class="text-white fw-bold">베트맨(BETMAN) 공식 서버에서 14경기 실시간 데이터를 자동 수집 중...</div>
-            <div class="text-muted small mt-1">야구 승1패 ${String(gmTs).slice(-2)}회차 (공식 투표율 & 이월금 & AI 승률 동기화)</div>
+            <div class="text-white fw-bold">베트맨(BETMAN) 공식 14경기 실시간 데이터 동기화 중...</div>
+            <div class="text-muted small mt-1">${sportTitle}</div>
           </div>
         `;
       }
 
       try {
-        const resp = await fetch(`/api/v1/toto/betman?gmId=G024&gmTs=${gmTs}${forceRefresh ? '&force=true' : ''}`);
+        const resp = await fetch(`/api/v1/toto/betman?gmId=${gmId}&gmTs=${targetTs}${forceRefresh ? '&force=true' : ''}`);
         if (resp.ok) {
           const data = await resp.json();
-          TOTO_DATA.W1L_LIVE = {
-            title: data.round_name,
-            sport: 'BASEBALL',
-            gmTs: data.gmTs,
-            period: data.status_message,
-            totalVotes: Number(data.total_sale_cnt || 89623).toLocaleString(),
-            prize: Number(data.forward_amount || 609807750).toLocaleString() + '원',
-            rollover: Number(data.forward_amount || 609807750).toLocaleString() + `원 (${data.forward_cnt || 5}회 이월)`,
-            forward_amount: data.forward_amount || 609807750,
-            total_sell_amount: data.total_sell_amount || 89623000,
-            total_sale_cnt: data.total_sale_cnt || 89623,
-            first_prize_pool: data.first_prize_pool || (609807750 + Math.round((data.total_sell_amount || 89623000) * 0.25)),
-            second_prize_pool: data.second_prize_pool || Math.round((data.total_sell_amount || 89623000) * 0.10),
-            third_prize_pool: data.third_prize_pool || Math.round((data.total_sell_amount || 89623000) * 0.05),
-            fourth_prize_pool: data.fourth_prize_pool || Math.round((data.total_sell_amount || 89623000) * 0.10),
-            updated_at: data.updated_at || new Date().toTimeString().slice(0, 8),
-            status: data.sale_status,
-            matches: data.matches.map(m => ({
-              seq: m.seq,
-              league: m.league,
-              time: m.date,
-              home: m.home,
-              away: m.away,
-              pW: m.votes.win,
-              pD: m.votes.draw,
-              pL: m.votes.loss,
-              aiPick: (m.ai_pick === '승' ? 'W' : (m.ai_pick === '1' ? 'D' : 'L')),
-              result: (m.result === '승' ? 'W' : (m.result === '1' ? 'D' : (m.result === '패' ? 'L' : null))),
-              db_match_id: m.db_match_id,
-              db_home_team: m.db_home_team,
-              db_away_team: m.db_away_team,
-              db_prob_home: m.db_prob_home,
-              db_prob_away: m.db_prob_away
-            }))
-          };
+          if (data && data.status === 'success' && Array.isArray(data.matches) && data.matches.length > 0) {
+            TOTO_DATA[roundKey + '_LIVE'] = {
+              title: data.round_name || sportTitle,
+              sport: data.gmId === 'G011' ? 'SOCCER' : (data.gmId === 'G024' ? 'BASEBALL' : 'BASKETBALL'),
+              gmTs: data.gmTs,
+              period: data.status_message,
+              totalVotes: Number(data.total_sale_cnt || 89623).toLocaleString(),
+              prize: Number(data.forward_amount || 582400000).toLocaleString() + '원',
+              rollover: Number(data.forward_amount || 0) > 0 ? (Number(data.forward_amount).toLocaleString() + `원 (${data.forward_cnt || 1}회 이월🔥)`) : '',
+              forward_amount: data.forward_amount,
+              total_sell_amount: data.total_sell_amount,
+              total_sale_cnt: data.total_sale_cnt,
+              first_prize_pool: data.first_prize_pool,
+              second_prize_pool: data.second_prize_pool,
+              third_prize_pool: data.third_prize_pool,
+              fourth_prize_pool: data.fourth_prize_pool,
+              updated_at: data.updated_at || new Date().toTimeString().slice(0, 8),
+              status: data.sale_status,
+              matches: data.matches.map(m => ({
+                seq: m.seq,
+                league: m.league,
+                time: m.date,
+                home: m.home,
+                away: m.away,
+                pW: m.votes ? m.votes.win : 45.0,
+                pD: m.votes ? m.votes.draw : 25.0,
+                pL: m.votes ? m.votes.loss : 30.0,
+                aiPick: (m.ai_pick === '승' ? 'W' : (m.ai_pick === '1' || m.ai_pick === '5' || m.ai_pick === '무' ? 'D' : 'L')),
+                result: (m.result === '승' ? 'W' : (m.result === '1' || m.result === '5' || m.result === '무' ? 'D' : (m.result === '패' ? 'L' : null))),
+                status: m.status,
+                home_score: m.home_score,
+                away_score: m.away_score,
+                db_match_id: m.db_match_id,
+                db_home_team: m.db_home_team,
+                db_away_team: m.db_away_team,
+                db_prob_home: m.db_prob_home,
+                db_prob_away: m.db_prob_away
+              }))
+            };
+          }
         }
       } catch (e) {
-        console.warn('Betman live fetch failed, using built-in:', e);
+        console.warn('Betman live fetch error, using safe fallback:', e);
       }
 
-      renderTotoSheet('W1L');
+      renderTotoSheet(roundKey);
     }
 
     function selectTotoRound(roundKey, gmTs = null) {
@@ -3110,12 +3178,7 @@
         }
       });
 
-      if (roundKey === 'W1L') {
-        const targetTs = gmTs || currentBetmanTs || 260066;
-        loadBetmanToto(targetTs);
-      } else {
-        renderTotoSheet(roundKey);
-      }
+      loadBetmanToto(roundKey, gmTs);
     }
 
     // ------------------------------------------------------------------
@@ -3125,8 +3188,12 @@
       const panel = document.getElementById('predDetailPanel');
       if (!panel) return;
 
-      let toto = (totoKey === 'W1L' && TOTO_DATA.W1L_LIVE) ? TOTO_DATA.W1L_LIVE : TOTO_DATA[totoKey];
-      if (!toto) toto = TOTO_DATA.W1L;
+      let toto = TOTO_DATA[totoKey + '_LIVE'] || TOTO_DATA[totoKey];
+      if (!toto) toto = TOTO_DATA.WDL || TOTO_DATA.W1L || TOTO_DATA.W5L;
+      if (!toto || !Array.isArray(toto.matches) || toto.matches.length === 0) {
+        panel.innerHTML = '<div class="text-center text-info py-5"><div class="spinner-border text-info mb-2" role="status"></div><div>토토 데이터를 준비 중입니다...</div></div>';
+        return;
+      }
 
       const drawLabel = (totoKey === 'W1L') ? '1 (1점차)' : ((totoKey === 'W5L') ? '5 (5점이내)' : '무 (무)');
       const drawBtnTxt = (totoKey === 'W1L') ? '1' : ((totoKey === 'W5L') ? '5' : '무');
@@ -4451,7 +4518,9 @@
         const msg = data.message;
         communityMessages.push(msg);
         if (currentChatChannel === 'ALL' || msg.channel === currentChatChannel) {
+          if (!document.querySelector(`[data-chat-content="${msg.content}"]`)) {
           appendMessageToFeed(msg);
+        }
         }
       } else if (data.type === 'HOURLY_SYNC_COMPLETE') {
         // 1-Hour Automated Sync Broadcast arrived!
@@ -4522,6 +4591,7 @@
       div.className = 'p-2 mb-2 rounded-3 border';
       div.style.background = 'rgba(15, 23, 42, 0.7)';
       div.style.borderColor = 'rgba(255,255,255,0.06)';
+      div.setAttribute('data-chat-content', msg.content);
       div.innerHTML = `
         <div class="d-flex justify-content-between align-items-center mb-1">
           <div class="d-flex align-items-center gap-2">
@@ -4549,14 +4619,28 @@
 
       if (!content) return;
 
-      // Try sending via WebSocket first
+      const kstTime = (typeof getKstTimeFormatted === 'function') ? getKstTimeFormatted() : '';
+      // Immediately append for instantaneous responsive feedback
+      const localChatMsg = {
+        id: Date.now(),
+        author: author,
+        channel: currentChatChannel,
+        sport_tag: sportTag,
+        content: content,
+        created_at: kstTime,
+        likes: 0
+      };
+      appendMessageToFeed(localChatMsg);
+
+      // Send via WebSocket
       if (liveSocket && liveSocket.readyState === WebSocket.OPEN) {
         liveSocket.send(JSON.stringify({
           type: 'CHAT',
           author: author,
           channel: currentChatChannel,
           sport_tag: sportTag,
-          content: content
+          content: content,
+          created_at: kstTime
         }));
       } else {
         // Fallback to REST API
@@ -4961,7 +5045,7 @@
         aiChatPersonaIndex = (aiChatPersonaIndex + 1) % AI_CHAT_PERSONAS.length;
 
         const now = new Date();
-        const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        const timeStr = (typeof getKstTimeFormatted === 'function') ? getKstTimeFormatted() : (String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'));
 
         const newMsg = {
           id: Date.now(),

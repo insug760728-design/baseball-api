@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from pydantic import BaseModel
 from app.core.websocket_manager import manager
 
 logger = logging.getLogger("community_api")
+
+KST = timezone(timedelta(hours=9))
+
+def get_kst_time_str() -> str:
+    return datetime.now(KST).strftime("%H:%M")
 
 router = APIRouter(tags=["Community & WebSocket"])
 
@@ -85,7 +90,7 @@ async def post_community_message(payload: ChatMessagePayload):
         "channel": payload.channel,
         "sport_tag": payload.sport_tag or "일반",
         "content": payload.content.strip(),
-        "created_at": datetime.now().strftime("%H:%M"),
+        "created_at": get_kst_time_str(),
         "likes": 0
     }
     _msg_id_counter += 1
@@ -134,7 +139,7 @@ async def websocket_live_endpoint(websocket: WebSocket):
                             "channel": channel,
                             "sport_tag": sport_tag,
                             "content": content,
-                            "created_at": datetime.now().strftime("%H:%M"),
+                            "created_at": get_kst_time_str(),
                             "likes": 0
                         }
                         _msg_id_counter += 1

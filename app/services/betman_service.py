@@ -244,10 +244,18 @@ class BetmanService:
             print(f"[WARN] Betman official inquiry error: {e}")
 
         # Fallback to local snapshot if exists
-        snap_file = f'betman_{gm_ts}.json'
-        if os.path.exists(snap_file):
-            with open(snap_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
+        candidates = [
+            f'betman_{gm_ts}.json',
+            f'betman_{gm_id}_{gm_ts}.json',
+            'betman_260050.json' if gm_id == 'G011' else ('betman_260066.json' if gm_id == 'G024' else 'betman_260027.json')
+        ]
+        for snap_file in candidates:
+            if os.path.exists(snap_file):
+                try:
+                    with open(snap_file, 'r', encoding='utf-8') as f:
+                        return json.load(f)
+                except Exception as ex:
+                    print(f"[WARN] Failed to load snapshot {snap_file}: {ex}")
 
         return {'status': 'error', 'message': '베트맨 공식 사이트 응답 지연'}
 

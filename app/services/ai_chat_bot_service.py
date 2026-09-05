@@ -2,10 +2,11 @@
 import asyncio
 import random
 import logging
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List
 
 logger = logging.getLogger("ai_chat_bot")
+KST = timezone(timedelta(hours=9))
 
 AI_PERSONAS = [
     {
@@ -147,7 +148,7 @@ async def start_ai_chat_bot_task():
                 "channel": channel,
                 "sport_tag": sport_tag,
                 "content": content,
-                "created_at": datetime.now().strftime("%H:%M"),
+                "created_at": datetime.now(KST).strftime("%H:%M"),
                 "likes": random.randint(3, 16)
             }
             COMMUNITY_MESSAGES.append(chat_obj)
