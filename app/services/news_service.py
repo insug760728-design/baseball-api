@@ -94,23 +94,7 @@ class NewsService:
                 except Exception as e:
                     print(f"[WARN] Error fetching news for {query}: {e}")
 
-        # Add 1-2 curated in-depth analytics column articles
-        all_items.append({
-            "id": item_id,
-            "category": "ANALYTICS",
-            "categoryLabel": "📊 데이터 칼럼",
-            "categoryClass": "bg-analytics",
-            "title": "2026 현대 스포츠 세이버메트릭스: 승패의 우연을 걷어내는 계량 모델의 진화",
-            "desc": "야구의 wOBA와 FIP, 축구의 xG와 PPDA, 농구의 Pace와 TS%가 증명하는 스포츠 데이터 인텔리전스 분석.",
-            "author": "스포허브 데이터랩 수석분석관",
-            "source": "SPORTIX 공식 리서치",
-            "link": "/dashboard",
-            "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "chips": ["wOBA_FIP", "xG_PPDA", "Pace_TS%", "세이버메트릭스"],
-            "content": "현대 프로 스포츠는 이제 단순한 클래식 기록(타율, 승수, 득점)을 넘어 선수의 본질적 기여도와 팀의 구조적 승리 기대치를 평가하는 세이버메트릭스 시대로 완전히 전환되었습니다.\n\n당사 SPORTIX PRO 데이터 엔진은 매일 실시간으로 수집되는 3대 종목 259경기 이상의 박스스코어를 기반으로 3·5·7·10일 롤링 트렌드를 정밀 산출하여 현장과 미디어에 공급하고 있습니다."
-        })
-
-        # Sort with diverse sports mix
+        # Only 100% real-time official sports journalism news
         cls._cached_news = all_items
         cls._last_fetched = time.time()
         print(f"[INFO] Successfully loaded {len(all_items)} real sports news articles.")
