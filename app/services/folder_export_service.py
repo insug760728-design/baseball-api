@@ -20,6 +20,8 @@ class FolderExportService:
         """
         if league_id.upper() in ["EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1"]:
             return cls.export_soccer_league_to_folder_structure(db, league_id=league_id, start_date=start_date, end_date=end_date, base_dir=base_dir)
+        elif league_id.upper() in ["NBA", "BASKETBALL"]:
+            return cls.export_basketball_league_to_folder_structure(db, league_id=league_id, start_date=start_date, end_date=end_date, base_dir=base_dir)
 
         # 1. 해당 기간 경기 조회 (DB에 없을 경우에만 공식 사이트 동기화)
         all_matches = MatchService.get_matches(db, start_date=start_date, end_date=end_date)
@@ -380,6 +382,161 @@ class FolderExportService:
             json.dump(export_manifest, mf, ensure_ascii=False, indent=2)
 
         zip_path = os.path.abspath(os.path.join(base_dir, f"{league_id}_soccer_export.zip"))
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+            for root, dirs, files in os.walk(export_root):
+                for f in files:
+                    full_p = os.path.join(root, f)
+                    rel_p = os.path.relpath(full_p, export_root)
+                    zipf.write(full_p, arcname=os.path.join(league_id, rel_p))
+
+        return {
+            "status": "SUCCESS",
+            "export_root_dir": export_root,
+            "zip_file_path": zip_path,
+            "manifest": export_manifest
+        }
+
+    @classmethod
+    def export_basketball_league_to_folder_structure(cls, db: Session, league_id: str = "NBA", start_date: str = "2026-04-10", end_date: str = "2026-04-15", base_dir: str = "exports"):
+        """
+        농구(NBA) 전용 정밀 분석 폴더 구조화 및 ZIP 압축 내보내기
+        - exports/BASKETBALL/NBA/{TEAM}/guards/
+        - exports/BASKETBALL/NBA/{TEAM}/forwards/
+        - exports/BASKETBALL/NBA/{TEAM}/centers/
+        - exports/BASKETBALL/NBA/{TEAM}/matches/
+        - exports/BASKETBALL/NBA/{TEAM}/team_summary.json
+        - exports/NBA_basketball_export.zip
+        """
+        from app.services.basketball_analytics_service import BasketballAnalyticsService
+
+        # 1. 경기 조회
+        all_matches = MatchService.get_matches(db, sport_code="BASKETBALL", start_date=start_date, end_date=end_date)
+        if not all_matches:
+            MatchService.sync_from_official_site(db, league_id=league_id, start_date=start_date, end_date=end_date)
+            all_matches = MatchService.get_matches(db, sport_code="BASKETBALL", start_date=start_date, end_date=end_date)
+
+        league_matches = [m for m in all_matches if league_id.upper() in (m.official_id or "") or league_id.upper() in m.league_name.upper()]
+        if not league_matches:
+            league_matches = all_matches
+
+        # 2. 내보내기 디렉토리 초기화
+        export_root = os.path.abspath(os.path.join(base_dir, "BASKETBALL", league_id))
+        if os.path.exists(export_root):
+            shutil.rmtree(export_root)
+        os.makedirs(export_root, exist_ok=True)
+
+        team_names = set()
+        for m in league_matches:
+            team_names.add(m.home_team_name)
+            team_names.add(m.away_team_name)
+
+        export_manifest = {
+            "sport": "BASKETBALL",
+            "league_id": league_id,
+            "period": {"start_date": start_date, "end_date": end_date},
+            "exported_at": datetime.now().isoformat(),
+            "total_teams": len(team_names),
+            "teams": {}
+        }
+
+        for team_name in sorted(list(team_names)):
+            safe_team = team_name.replace(" ", "_").replace("/", "_")
+            team_dir = os.path.join(export_root, safe_team)
+            guards_dir = os.path.join(team_dir, "guards")
+            forwards_dir = os.path.join(team_dir, "forwards")
+            centers_dir = os.path.join(team_dir, "centers")
+            matches_dir = os.path.join(team_dir, "matches")
+
+            os.makedirs(guards_dir, exist_ok=True)
+            os.makedirs(forwards_dir, exist_ok=True)
+            os.makedirs(centers_dir, exist_ok=True)
+            os.makedirs(matches_dir, exist_ok=True)
+
+            team_match_objs = [m for m in league_matches if m.home_team_name == team_name or m.away_team_name == team_name]
+
+            # 1) 경기별 파일 생성
+            for m in team_match_objs:
+                opp_name = m.away_team_name if m.home_team_name == team_name else m.home_team_name
+                is_home = (m.home_team_name == team_name)
+                m_date_str = m.match_date[:10]
+                m_time_str = m.match_date[11:16].replace(":", "") if len(m.match_date) > 15 else "0000"
+                match_file_name = f"{m_date_str}_{m_time_str}_vs_{opp_name.replace(' ', '_')}.json"
+
+                detail_data = MatchService.get_match_full_detail(db, m.id)
+                adv_stats = BasketballAnalyticsService.compute_match_advanced_stats(m, m.details)
+
+                m_content = {
+                    "match_id": m.id,
+                    "official_id": m.official_id,
+                    "match_date": m.match_date,
+                    "stadium": m.stadium,
+                    "team": team_name,
+                    "opponent": opp_name,
+                    "is_home": is_home,
+                    "team_score": m.home_score if is_home else m.away_score,
+                    "opponent_score": m.away_score if is_home else m.home_score,
+                    "status": m.status,
+                    "period_scores": detail_data["details"]["period_scores"],
+                    "team_stats": detail_data["details"]["team_stats"],
+                    "advanced_metrics": adv_stats
+                }
+                with open(os.path.join(matches_dir, match_file_name), "w", encoding="utf-8") as mf:
+                    json.dump(m_content, mf, ensure_ascii=False, indent=2)
+
+            # 2) 선수별 파일 및 롤링 계산
+            player_logs = {}
+            for m in team_match_objs:
+                m_detail = MatchService.get_match_full_detail(db, m.id)
+                for p in m_detail["player_stats"]:
+                    if p["team_name"] == team_name:
+                        p_name = p["player_name"]
+                        if p_name not in player_logs:
+                            player_logs[p_name] = {
+                                "position": p.get("position", "G"),
+                                "back_number": p.get("back_number"),
+                                "games": []
+                            }
+                        player_logs[p_name]["games"].append(p)
+
+            for p_name, p_data in player_logs.items():
+                safe_p = p_name.replace(" ", "_").replace("/", "_")
+                pos = p_data.get("position", "G")
+                if "C" in pos: target_dir = centers_dir
+                elif "F" in pos: target_dir = forwards_dir
+                else: target_dir = guards_dir
+
+                rolling = BasketballAnalyticsService.calculate_player_rolling_stats(db, p_name, team_name=team_name)
+                p_content = {
+                    "player_name": p_name,
+                    "team": team_name,
+                    "position": pos,
+                    "back_number": p_data.get("back_number"),
+                    "games_count": len(p_data["games"]),
+                    "rolling_stats": rolling
+                }
+                with open(os.path.join(target_dir, f"{safe_p}.json"), "w", encoding="utf-8") as pf:
+                    json.dump(p_content, pf, ensure_ascii=False, indent=2)
+
+            # 3) 구단 종합 요약
+            team_summary = {
+                "team_name": team_name,
+                "league": league_id,
+                "matches_played": len(team_match_objs),
+                "total_players": len(player_logs),
+                "exported_at": datetime.now().isoformat()
+            }
+            with open(os.path.join(team_dir, "team_summary.json"), "w", encoding="utf-8") as ts_file:
+                json.dump(team_summary, ts_file, ensure_ascii=False, indent=2)
+
+            export_manifest["teams"][team_name] = {
+                "matches_count": len(team_match_objs),
+                "players_count": len(player_logs)
+            }
+
+        with open(os.path.join(export_root, "manifest.json"), "w", encoding="utf-8") as mf:
+            json.dump(export_manifest, mf, ensure_ascii=False, indent=2)
+
+        zip_path = os.path.abspath(os.path.join(base_dir, f"{league_id}_basketball_export.zip"))
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             for root, dirs, files in os.walk(export_root):
                 for f in files:

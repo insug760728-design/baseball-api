@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.models import Match, MatchDetail, MatchEvent, PlayerMatchStat
 from app.scrapers.baseball_scraper import BaseballScraper
 from app.scrapers.soccer_scraper import SoccerScraper, SOCCER_LEAGUE_CODES
+from app.scrapers.basketball_scraper import BasketballScraper
 from app.core.sports_catalog import SPORTS_CATALOG
 
 class MatchService:
@@ -23,6 +24,8 @@ class MatchService:
 
         if league_id.upper() in SOCCER_LEAGUE_CODES:
             scraper = SoccerScraper(league_id=league_id)
+        elif league_id.upper() in ["NBA", "BASKETBALL"]:
+            scraper = BasketballScraper(league_id=league_id)
         else:
             scraper = BaseballScraper(league_id=league_id, league_name=resolved_name)
         
@@ -162,7 +165,18 @@ class MatchService:
     @staticmethod
     def get_matches(db: Session, sport_code: Optional[str] = "BASEBALL", league_name: Optional[str] = None, status: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None):
         query = db.query(Match)
-        if sport_code:
+
+        # 리그명에 따라 sport_code 자동 감지
+        if league_name:
+            ln_upper = league_name.upper()
+            if any(s in ln_upper for s in ["EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "프리미어", "라리가", "분데스", "세리에", "리그 1"]):
+                sport_code = "SOCCER"
+            elif any(b in ln_upper for b in ["NBA", "KBL", "농구"]):
+                sport_code = "BASKETBALL"
+            elif any(bb in ln_upper for bb in ["MLB", "KBO", "NPB", "메이저리그", "프로야구"]):
+                sport_code = "BASEBALL"
+
+        if sport_code and sport_code.upper() != "ALL":
             query = query.filter(Match.sport_code == sport_code)
         if league_name:
             query = query.filter(Match.league_name.contains(league_name))

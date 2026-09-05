@@ -101,3 +101,45 @@ def get_soccer_player_rolling(
 
     stats = SoccerAnalyticsService.calculate_player_rolling_stats(db, player_name, team_name=team_name, windows=w_list, days_windows=d_list)
     return {"status": "success", "data": stats}
+
+# ==================== [농구 (NBA) 전용 어드밴스드 & 롤링 엔드포인트] ====================
+
+@router.get("/basketball/matches/{match_id}/advanced", summary="농구 경기 Pace, ORtg, DRtg, Net Rating, eFG%, TS% 어드밴스드 전력 비교 조회")
+def get_basketball_match_advanced(match_id: int, db: Session = Depends(get_db)):
+    from app.services.basketball_analytics_service import BasketballAnalyticsService
+    from app.models.models import Match, MatchDetail
+    match = db.query(Match).filter(Match.id == match_id).first()
+    if not match:
+        raise HTTPException(status_code=404, detail="경기를 찾을 수 없습니다.")
+    detail = db.query(MatchDetail).filter(MatchDetail.match_id == match_id).first()
+    data = BasketballAnalyticsService.compute_match_advanced_stats(match, detail)
+    return {"status": "success", "data": data}
+
+@router.get("/basketball/players/{player_name}/rolling", summary="농구 선수별 3, 5, 7, 10단위 TS%, eFG%, Game Score 롤링 추이 조회")
+def get_basketball_player_rolling(
+    player_name: str,
+    player_type: str = Query("guard", description="포지션 (guard, forward, center)"),
+    team_name: Optional[str] = Query(None, description="구단명"),
+    windows: str = Query("3,5,7,10", description="경기수 단위"),
+    days: str = Query("3,5,7,10", description="날짜 단위"),
+    db: Session = Depends(get_db)
+):
+    from app.services.basketball_analytics_service import BasketballAnalyticsService
+    try:
+        w_list = [int(x.strip()) for x in windows.split(",") if x.strip().isdigit()]
+    except Exception:
+        w_list = [3, 5, 7, 10]
+    try:
+        d_list = [int(x.strip()) for x in days.split(",") if x.strip().isdigit()]
+    except Exception:
+        d_list = [3, 5, 7, 10]
+
+    stats = BasketballAnalyticsService.calculate_player_rolling_stats(
+        db,
+        player_name=player_name,
+        windows=w_list,
+        days=d_list,
+        player_type=player_type,
+        team_name=team_name
+    )
+    return {"status": "success", "data": stats}

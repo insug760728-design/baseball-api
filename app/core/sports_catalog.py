@@ -64,5 +64,14 @@ SPORTS_CATALOG = {
         "leagues": [
             {"id": "LIGUE_1", "name": "프랑스 리그 1 (Ligue 1)", "api_code": "fra.1"}
         ]
+    },
+
+    # [농구 리그]
+    "NBA": {
+        "title": "미국 프로농구 (NBA)",
+        "sport_code": "BASKETBALL",
+        "leagues": [
+            {"id": "NBA", "name": "미국 프로농구 (NBA)", "api_code": "nba"}
+        ]
     }
 }

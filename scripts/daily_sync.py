@@ -35,11 +35,11 @@ def main():
     today = now.strftime("%Y-%m-%d")
 
     print(f"==================================================")
-    print(f"⚾⚽ [야구 & 유럽축구 5대리그 일일 자동 수집기 가동]")
+    print(f"⚾⚽🏀 [야구 & 축구 & 농구 일일 자동 수집기 가동]")
     print(f"📅 대상 날짜: {yesterday} ~ {today} (현재시각: {now.strftime('%Y-%m-%d %H:%M:%S')})")
     print(f"==================================================")
 
-    leagues = ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1"]
+    leagues = ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "NBA"]
     summary = {}
 
     for league in leagues:

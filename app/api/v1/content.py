@@ -48,6 +48,8 @@ def download_zip(league_id: str = "MLB"):
     if not os.path.exists(zip_path):
         zip_path = os.path.abspath(os.path.join("exports", f"{league_id}_soccer_export.zip"))
     if not os.path.exists(zip_path):
+        zip_path = os.path.abspath(os.path.join("exports", f"{league_id}_basketball_export.zip"))
+    if not os.path.exists(zip_path):
         zip_path = os.path.abspath(os.path.join("exports", f"{league_id}_contents_export.zip"))
     if not os.path.exists(zip_path):
         raise HTTPException(status_code=404, detail="생성된 압축 파일을 찾을 수 없습니다. 먼저 /export-folders 생성을 실행하세요.")

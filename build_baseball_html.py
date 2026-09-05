@@ -99,6 +99,9 @@ html_content = '''<!DOCTYPE html>
                 <option value="SERIE_A">🇮🇹 이탈리아 세리에 A (Serie A)</option>
                 <option value="LIGUE_1">🇫🇷 프랑스 리그 1 (Ligue 1)</option>
               </optgroup>
+              <optgroup label="🏀 농구 공식 메이저 리그 (Basketball)">
+                <option value="NBA">🇺🇸 미국 프로농구 (NBA)</option>
+              </optgroup>
             </select>
           </div>
 
@@ -238,8 +241,8 @@ html_content = '''<!DOCTYPE html>
           <!-- 축구 5대 리그 현대 어드밴스드 전술 & 기대 지표 패널 (xG, xGOT, PPDA, Field Tilt, Prevented Goals) -->
           <div class="card border-0 shadow-sm mb-4" id="soccerAdvancedMetricsPanel" style="display: none;">
             <div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
-              <span class="fw-bold"><i class="bi bi-diagram-3-fill text-warning me-2"></i>현대 축구 어드밴스드 전술 및 기대 지표 분석 (xG · xGOT · PPDA · Field Tilt)</span>
-              <span class="badge bg-warning text-dark">유럽 5대 리그 공식 모델</span>
+              <span class="fw-bold" id="advMetricsPanelTitle"><i class="bi bi-diagram-3-fill text-warning me-2"></i>어드밴스드 전술 및 기대 지표 분석</span>
+              <span class="badge bg-warning text-dark" id="advMetricsBadge">공식 계량 모델</span>
             </div>
             <div class="card-body p-3">
               <div class="row g-3 text-center" id="soccerAdvStatsCards">
@@ -594,6 +597,9 @@ html_content = '''<!DOCTYPE html>
                   <option value="BUNDESLIGA">🇩🇪 독일 분데스리가 (Bundesliga)</option>
                   <option value="SERIE_A">🇮🇹 이탈리아 세리에 A (Serie A)</option>
                   <option value="LIGUE_1">🇫🇷 프랑스 리그 1 (Ligue 1)</option>
+                </optgroup>
+                <optgroup label="🏀 프로농구 리그 (100% 공식 실시간)">
+                  <option value="NBA">🇺🇸 미국 프로농구 (NBA)</option>
                 </optgroup>
               </select>
             </div>
@@ -961,17 +967,24 @@ fetch('${apiUrl}')
       const countEl = document.getElementById('matchCountBadge');
 
       const isSoccer = ['EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'LIGUE_1'].includes(league);
-      const sportCode = isSoccer ? 'SOCCER' : 'BASEBALL';
+      const isBasketball = ['NBA', 'KBL'].includes(league);
+      let sportCode = 'BASEBALL';
+      if (isSoccer) sportCode = 'SOCCER';
+      else if (isBasketball) sportCode = 'BASKETBALL';
 
       let url = `/api/v1/matches/?sport_code=${sportCode}&start_date=${start}&end_date=${end}`;
       if (league !== 'ALL') {
         url += `&league_name=${league}`;
       }
 
+      let sportLabel = '야구';
+      if (isSoccer) sportLabel = '유럽 축구';
+      else if (isBasketball) sportLabel = 'NBA 농구';
+
       listEl.innerHTML = `
         <div class="text-center py-5 text-muted">
           <div class="spinner-border spinner-border-sm mb-2"></div>
-          <div>${isSoccer ? '유럽 축구' : '야구'} 경기 목록을 조회 중입니다...</div>
+          <div>${sportLabel} 경기 목록을 조회 중입니다...</div>
         </div>
       `;
 
@@ -1088,6 +1101,7 @@ fetch('${apiUrl}')
 
         const m = selectedMatch.match || selectedMatch;
         const isSoccer = m.sport_code === 'SOCCER' || ['EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'LIGUE_1'].includes(m.league_name);
+        const isBasketball = m.sport_code === 'BASKETBALL' || m.league_name?.includes('NBA') || m.league_name?.includes('농구');
 
         document.getElementById('detailLeagueBadge').innerText = m.league_name;
         document.getElementById('detailTime').innerText = `${m.match_date} (${m.season} ${m.round_name || ''})`;
@@ -1114,7 +1128,19 @@ fetch('${apiUrl}')
         const modeClassicBtn = document.getElementById('btnModeClassic');
         const modeSaberBtn = document.getElementById('btnModeSaber');
 
-        if (isSoccer) {
+        if (isBasketball) {
+          if (hittersTabBtn) hittersTabBtn.innerHTML = '<i class="bi bi-star-fill text-warning me-1"></i>선발 라인업 (Starters)';
+          if (pitchersTabBtn) pitchersTabBtn.innerHTML = '<i class="bi bi-people-fill text-primary me-1"></i>벤치 선수단 (Bench)';
+          if (modeClassicBtn) modeClassicBtn.innerHTML = '🏀 기본 기록 (득점/리바운드/어시스트)';
+          if (modeSaberBtn) modeSaberBtn.innerHTML = '🔬 농구 세이버 (TS%·eFG%·GameScore)';
+
+          if (advPanel) {
+            advPanel.style.display = 'block';
+            const pTitle = document.getElementById('advMetricsPanelTitle');
+            if (pTitle) pTitle.innerHTML = '<i class="bi bi-diagram-3-fill text-warning me-2"></i>농구 어드밴스드 전력 분석 (Pace · ORtg · DRtg · Net Rating · eFG% · TS%)';
+            renderBasketballAdvancedMetrics(m.id);
+          }
+        } else if (isSoccer) {
           if (hittersTabBtn) hittersTabBtn.innerHTML = '<i class="bi bi-lightning-fill text-warning me-1"></i>공격 & 미드필더 (FW/MF)';
           if (pitchersTabBtn) pitchersTabBtn.innerHTML = '<i class="bi bi-shield-shaded text-primary me-1"></i>수비수 & 골키퍼 (DF/GK)';
           if (modeClassicBtn) modeClassicBtn.innerHTML = '⚽ 기본 기록 (골/도움/슈팅)';
@@ -1122,6 +1148,8 @@ fetch('${apiUrl}')
 
           if (advPanel) {
             advPanel.style.display = 'block';
+            const pTitle = document.getElementById('advMetricsPanelTitle');
+            if (pTitle) pTitle.innerHTML = '<i class="bi bi-diagram-3-fill text-warning me-2"></i>현대 축구 어드밴스드 전술 및 기대 지표 분석 (xG · xGOT · PPDA · Field Tilt)';
             renderSoccerAdvancedMetrics(m.id);
           }
         } else {
@@ -1228,6 +1256,89 @@ fetch('${apiUrl}')
       }
     }
 
+    async function renderBasketballAdvancedMetrics(matchId) {
+      const container = document.getElementById('soccerAdvStatsCards');
+      if (!container) return;
+      container.innerHTML = '<div class="col-12 py-3 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>농구 어드밴스드 전력 및 세이버메트릭스 연산 중...</div>';
+      try {
+        const res = await fetch(`/api/v1/analytics/basketball/matches/${matchId}/advanced`);
+        if (!res.ok) {
+          container.innerHTML = '<div class="col-12 py-2 text-muted">지표 데이터가 없습니다.</div>';
+          return;
+        }
+        const json = await res.json();
+        const data = json.data || {};
+        const h = data.home || {};
+        const a = data.away || {};
+
+        container.innerHTML = `
+          <!-- 1. Pace (경기 템포) -->
+          <div class="col-md-2 col-4">
+            <div class="card h-100 border bg-light shadow-sm">
+              <div class="card-header bg-white py-1 small fw-bold text-dark">경기 템포 (Pace)</div>
+              <div class="card-body p-2">
+                <div class="fw-bold fs-5 text-primary">${h.pace ?? '-'} <span class="text-muted fs-6">포제션</span></div>
+                <div class="small text-muted" style="font-size: 0.72rem;">48분당 공격권 횟수</div>
+              </div>
+            </div>
+          </div>
+          <!-- 2. ORtg (공격 효율) -->
+          <div class="col-md-2 col-4">
+            <div class="card h-100 border bg-light shadow-sm">
+              <div class="card-header bg-white py-1 small fw-bold text-dark">공격 효율 (ORtg)</div>
+              <div class="card-body p-2">
+                <div class="fw-bold fs-5 text-danger">${h.ortg ?? '-'} <span class="text-muted fs-6">:</span> ${a.ortg ?? '-'}</div>
+                <div class="small text-muted" style="font-size: 0.72rem;">100포제션당 득점 기대치</div>
+              </div>
+            </div>
+          </div>
+          <!-- 3. DRtg (수비 효율) -->
+          <div class="col-md-2 col-4">
+            <div class="card h-100 border bg-light shadow-sm">
+              <div class="card-header bg-white py-1 small fw-bold text-dark">수비 효율 (DRtg)</div>
+              <div class="card-body p-2">
+                <div class="fw-bold fs-5 text-success">${h.drtg ?? '-'} <span class="text-muted fs-6">:</span> ${a.drtg ?? '-'}</div>
+                <div class="small text-muted" style="font-size: 0.72rem;">낮을수록 실점 억제 우수</div>
+              </div>
+            </div>
+          </div>
+          <!-- 4. Net Rating (공수 마진) -->
+          <div class="col-md-2 col-4">
+            <div class="card h-100 border bg-light shadow-sm">
+              <div class="card-header bg-white py-1 small fw-bold text-dark">공수 마진 (Net Rtg)</div>
+              <div class="card-body p-2">
+                <div class="fw-bold fs-5 text-warning-emphasis">${h.net_rating !== undefined ? (h.net_rating > 0 ? '+' + h.net_rating : h.net_rating) : '-'} <span class="text-muted fs-6">:</span> ${a.net_rating !== undefined ? (a.net_rating > 0 ? '+' + a.net_rating : a.net_rating) : '-'}</div>
+                <div class="small text-muted" style="font-size: 0.72rem;">ORtg - DRtg 순수 마진</div>
+              </div>
+            </div>
+          </div>
+          <!-- 5. eFG% (유효 야투율) -->
+          <div class="col-md-2 col-4">
+            <div class="card h-100 border bg-light shadow-sm">
+              <div class="card-header bg-white py-1 small fw-bold text-dark">유효 야투율 (eFG%)</div>
+              <div class="card-body p-2">
+                <div class="fw-bold fs-5 text-info-emphasis">${h.efg_pct ?? '-'}% <span class="text-muted fs-6">:</span> ${a.efg_pct ?? '-'}%</div>
+                <div class="small text-muted" style="font-size: 0.72rem;">3점 가중치 반영 슛효율</div>
+              </div>
+            </div>
+          </div>
+          <!-- 6. TS% (진짜 슛 성공률) -->
+          <div class="col-md-2 col-4">
+            <div class="card h-100 border bg-light shadow-sm">
+              <div class="card-header bg-white py-1 small fw-bold text-dark">진짜 성공률 (TS%)</div>
+              <div class="card-body p-2">
+                <div class="fw-bold fs-5 text-dark">${h.ts_pct ?? '-'}% <span class="text-muted fs-6">:</span> ${a.ts_pct ?? '-'}%</div>
+                <div class="small text-muted" style="font-size: 0.72rem;">2점·3점·자유투 종합</div>
+              </div>
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        console.error('Basketball advanced stats load error:', e);
+        container.innerHTML = '<div class="col-12 py-2 text-muted">지표 불러오기 실패</div>';
+      }
+    }
+
     function toggleEditMatchScore() {
       const form = document.getElementById('scoreEditForm');
       form.style.display = form.style.display === 'none' ? 'block' : 'none';
@@ -1262,6 +1373,83 @@ fetch('${apiUrl}')
       const m = selectedMatch ? (selectedMatch.match || selectedMatch) : null;
       if (!m) return;
       const isSoccer = m.sport_code === 'SOCCER' || ['EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'LIGUE_1'].includes(m.league_name);
+      const isBasketball = m.sport_code === 'BASKETBALL' || m.league_name?.includes('NBA') || m.league_name?.includes('농구');
+
+      if (isBasketball) {
+        let pScores = scores || {};
+        if (typeof pScores === 'string') {
+          try { pScores = JSON.parse(pScores); } catch(e) {}
+        }
+        const hQ = pScores.home || {};
+        const aQ = pScores.away || {};
+
+        let teamStats = {};
+        try {
+          if (selectedMatch.details?.team_stats) {
+            teamStats = typeof selectedMatch.details.team_stats === 'string' ? JSON.parse(selectedMatch.details.team_stats) : selectedMatch.details.team_stats;
+          }
+        } catch(e) {}
+        const hStats = teamStats.home || {};
+        const aStats = teamStats.away || {};
+
+        const hasOt = (hQ.ot > 0 || aQ.ot > 0);
+        let thHtml = `<tr>
+          <th style="width: 150px;">팀 명</th>
+          <th>1Q</th>
+          <th>2Q</th>
+          <th>3Q</th>
+          <th>4Q</th>
+          ${hasOt ? '<th>OT</th>' : ''}
+          <th class="scoreboard-total text-danger">총점 (PTS)</th>
+          <th>야투 (FG%)</th>
+          <th>3점슛 (3P%)</th>
+          <th>자유투 (FT%)</th>
+          <th>REB</th>
+          <th>AST</th>
+          <th>STL</th>
+          <th>BLK</th>
+          <th>TO</th>
+        </tr>`;
+
+        let awayHtml = `<tr>
+          <td class="fw-bold text-start ps-3">${m.away_team_name} (원정)</td>
+          <td class="fw-semibold">${aQ.q1 ?? '-'}</td>
+          <td class="fw-semibold">${aQ.q2 ?? '-'}</td>
+          <td class="fw-semibold">${aQ.q3 ?? '-'}</td>
+          <td class="fw-semibold">${aQ.q4 ?? '-'}</td>
+          ${hasOt ? `<td class="fw-semibold">${aQ.ot ?? 0}</td>` : ''}
+          <td class="scoreboard-total text-danger fw-bold fs-6">${m.away_score}</td>
+          <td>${aStats.fgm !== undefined ? aStats.fgm + '/' + aStats.fga + ' (' + (aStats.fg_pct || 0) + '%)' : '-'}</td>
+          <td>${aStats.fg3m !== undefined ? aStats.fg3m + '/' + aStats.fg3a + ' (' + (aStats.fg3_pct || 0) + '%)' : '-'}</td>
+          <td>${aStats.ftm !== undefined ? aStats.ftm + '/' + aStats.fta + ' (' + (aStats.ft_pct || 0) + '%)' : '-'}</td>
+          <td class="fw-bold">${aStats.reb || 0}</td>
+          <td class="fw-bold text-primary">${aStats.ast || 0}</td>
+          <td>${aStats.stl || 0}</td>
+          <td>${aStats.blk || 0}</td>
+          <td class="text-danger">${aStats.to || 0}</td>
+        </tr>`;
+
+        let homeHtml = `<tr>
+          <td class="fw-bold text-start ps-3">${m.home_team_name} (홈)</td>
+          <td class="fw-semibold">${hQ.q1 ?? '-'}</td>
+          <td class="fw-semibold">${hQ.q2 ?? '-'}</td>
+          <td class="fw-semibold">${hQ.q3 ?? '-'}</td>
+          <td class="fw-semibold">${hQ.q4 ?? '-'}</td>
+          ${hasOt ? `<td class="fw-semibold">${hQ.ot ?? 0}</td>` : ''}
+          <td class="scoreboard-total text-danger fw-bold fs-6">${m.home_score}</td>
+          <td>${hStats.fgm !== undefined ? hStats.fgm + '/' + hStats.fga + ' (' + (hStats.fg_pct || 0) + '%)' : '-'}</td>
+          <td>${hStats.fg3m !== undefined ? hStats.fg3m + '/' + hStats.fg3a + ' (' + (hStats.fg3_pct || 0) + '%)' : '-'}</td>
+          <td>${hStats.ftm !== undefined ? hStats.ftm + '/' + hStats.fta + ' (' + (hStats.ft_pct || 0) + '%)' : '-'}</td>
+          <td class="fw-bold">${hStats.reb || 0}</td>
+          <td class="fw-bold text-primary">${hStats.ast || 0}</td>
+          <td>${hStats.stl || 0}</td>
+          <td>${hStats.blk || 0}</td>
+          <td class="text-danger">${hStats.to || 0}</td>
+        </tr>`;
+
+        el.innerHTML = `<thead>${thHtml}</thead><tbody>${awayHtml}${homeHtml}</tbody>`;
+        return;
+      }
 
       if (isSoccer) {
         const pScores = scores || {};
@@ -1404,16 +1592,182 @@ fetch('${apiUrl}')
       const homeTeam = m.home_team_name;
       const awayTeam = m.away_team_name;
       const isSoccer = m.sport_code === 'SOCCER' || ['EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'LIGUE_1'].includes(m.league_name);
+      const isBasketball = m.sport_code === 'BASKETBALL' || m.league_name?.includes('NBA') || m.league_name?.includes('농구');
 
       let filtered = allPlayers;
       if (playerFilter === 'HOME') filtered = allPlayers.filter(p => p.team_name === homeTeam);
       if (playerFilter === 'AWAY') filtered = allPlayers.filter(p => p.team_name === awayTeam);
 
+      if (isBasketball) {
+        renderBasketballPlayers(filtered, homeTeam);
+        return;
+      }
       if (isSoccer) {
         renderSoccerPlayers(filtered, homeTeam);
         return;
       }
       renderBaseballPlayers(filtered, homeTeam);
+    }
+
+    function renderBasketballPlayers(filtered, homeTeam) {
+      const startersHead = document.getElementById('hittersThead');
+      const benchHead = document.getElementById('pitchersThead');
+      const startersBody = document.getElementById('hittersTableBody');
+      const benchBody = document.getElementById('pitchersTableBody');
+
+      if (statMode === 'CLASSIC') {
+        const headerHtml = `
+          <tr>
+            <th style="width: 50px;">팀</th>
+            <th style="width: 60px;">포지션</th>
+            <th>선수명</th>
+            <th>출전시간</th>
+            <th class="text-danger fw-bold">득점 (PTS)</th>
+            <th>야투 (FGM-A)</th>
+            <th>야투율 (FG%)</th>
+            <th>3점 (3PM-A)</th>
+            <th>3점율 (3P%)</th>
+            <th>자유투 (FTM-A)</th>
+            <th>리바운드 (REB)</th>
+            <th>어시스트 (AST)</th>
+            <th>스틸 (STL)</th>
+            <th>블록 (BLK)</th>
+            <th>턴오버 (TO)</th>
+            <th>파울 (PF)</th>
+            <th>득실차 (+/-)</th>
+            <th class="bg-primary-subtle text-primary fw-bold text-center">선수 롤링 지표</th>
+          </tr>
+        `;
+        startersHead.innerHTML = headerHtml;
+        benchHead.innerHTML = headerHtml;
+      } else {
+        const headerHtml = `
+          <tr class="table-dark">
+            <th style="width: 50px;">팀</th>
+            <th style="width: 60px;">포지션</th>
+            <th>선수명</th>
+            <th>출전시간</th>
+            <th class="text-danger fw-bold">득점 (PTS)</th>
+            <th class="text-danger fw-bold" title="진짜 슛 효율 (True Shooting %)">TS%</th>
+            <th class="text-primary fw-bold" title="유효 야투율 (Effective FG%)">eFG%</th>
+            <th class="text-success fw-bold" title="홀린저 경기 종합 기여도">Game Score</th>
+            <th>AST/TO 비율</th>
+            <th>PTS/36분</th>
+            <th>REB/36분</th>
+            <th>AST/36분</th>
+            <th>득실차 (+/-)</th>
+            <th class="bg-warning-subtle text-dark fw-bold text-center">선수 롤링 세이버</th>
+          </tr>
+        `;
+        startersHead.innerHTML = headerHtml;
+        benchHead.innerHTML = headerHtml;
+      }
+
+      let startersHtml = '';
+      let benchHtml = '';
+
+      filtered.forEach((p, idx) => {
+        const extra = typeof p.extra_stats === 'string' ? JSON.parse(p.extra_stats || '{}') : (p.extra_stats || {});
+        const pos = (p.position || 'G').toUpperCase();
+        const isStarter = extra.starter === true || (idx < 5 && extra.starter === undefined);
+        const teamBadge = p.team_name === homeTeam ? '<span class="badge bg-primary-subtle text-primary border">홈</span>' : '<span class="badge bg-danger-subtle text-danger border">원정</span>';
+
+        const pts = p.points || extra.pts || 0;
+        const minutes = p.minutes_played || extra.minutes || 0;
+        const minStr = minutes ? `${minutes}분` : '-';
+
+        const fgm = extra.fgm || 0;
+        const fga = extra.fga || p.shots || 0;
+        const fgPct = extra.fg_pct || (fga > 0 ? (fgm / fga * 100).toFixed(1) : '0.0');
+
+        const fg3m = extra.fg3m || 0;
+        const fg3a = extra.fg3a || 0;
+        const fg3Pct = extra.fg3_pct || (fg3a > 0 ? (fg3m / fg3a * 100).toFixed(1) : '0.0');
+
+        const ftm = extra.ftm || 0;
+        const fta = extra.fta || 0;
+        const ftPct = extra.ft_pct || (fta > 0 ? (ftm / fta * 100).toFixed(1) : '0.0');
+
+        const reb = extra.reb || 0;
+        const oreb = extra.oreb || 0;
+        const dreb = extra.dreb || 0;
+        const ast = p.assists || extra.ast || 0;
+        const stl = extra.stl || 0;
+        const blk = extra.blk || 0;
+        const to = extra.to || 0;
+        const pf = extra.pf || 0;
+        const pm = extra.plus_minus || 0;
+        const pmBadge = pm > 0 ? `<span class="badge bg-success">+${pm}</span>` : (pm < 0 ? `<span class="badge bg-danger">${pm}</span>` : `<span class="badge bg-secondary">0</span>`);
+
+        const tsPct = extra.ts_pct !== undefined ? extra.ts_pct : (2 * (fga + 0.44 * fta) > 0 ? (pts / (2 * (fga + 0.44 * fta)) * 100).toFixed(1) : '0.0');
+        const efgPct = extra.efg_pct !== undefined ? extra.efg_pct : (fga > 0 ? ((fgm + 0.5 * fg3m) / fga * 100).toFixed(1) : '0.0');
+        const gameScore = extra.game_score !== undefined ? extra.game_score : 0.0;
+        const astToRatio = to > 0 ? (ast / to).toFixed(2) : ast.toFixed(2);
+
+        const pts36 = minutes > 0 ? (pts / minutes * 36).toFixed(1) : '-';
+        const reb36 = minutes > 0 ? (reb / minutes * 36).toFixed(1) : '-';
+        const ast36 = minutes > 0 ? (ast / minutes * 36).toFixed(1) : '-';
+
+        let posGroup = 'guard';
+        if (pos.includes('C')) posGroup = 'center';
+        else if (pos.includes('F')) posGroup = 'forward';
+
+        const rollBadge = `<span class="badge bg-light text-dark border cursor-pointer fw-semibold" onclick="showPlayerTrendModal('${p.player_name}', '${posGroup}', '${p.team_name}')"><i class="bi bi-graph-up me-1"></i>3·5·7·10G</span>`;
+
+        let rowHtml = '';
+        if (statMode === 'CLASSIC') {
+          rowHtml = `
+            <tr>
+              <td>${teamBadge}</td>
+              <td><span class="badge bg-secondary">${pos}</span></td>
+              <td class="fw-bold text-start ps-3">${p.player_name}</td>
+              <td>${minStr}</td>
+              <td class="fw-bold text-danger fs-6">${pts}</td>
+              <td>${fgm}-${fga}</td>
+              <td class="fw-semibold">${fgPct}%</td>
+              <td>${fg3m}-${fg3a}</td>
+              <td class="fw-semibold text-primary">${fg3Pct}%</td>
+              <td>${ftm}-${fta} (${ftPct}%)</td>
+              <td class="fw-bold">${reb} <small class="text-muted">(${oreb}/${dreb})</small></td>
+              <td class="fw-bold text-primary">${ast}</td>
+              <td>${stl}</td>
+              <td>${blk}</td>
+              <td class="text-danger">${to}</td>
+              <td>${pf}</td>
+              <td>${pmBadge}</td>
+              <td>${rollBadge}</td>
+            </tr>
+          `;
+        } else {
+          rowHtml = `
+            <tr>
+              <td>${teamBadge}</td>
+              <td><span class="badge bg-secondary">${pos}</span></td>
+              <td class="fw-bold text-start ps-3">${p.player_name}</td>
+              <td>${minStr}</td>
+              <td class="fw-bold text-danger fs-6">${pts}</td>
+              <td class="fw-bold text-danger">${tsPct}%</td>
+              <td class="fw-bold text-primary">${efgPct}%</td>
+              <td class="fw-bold text-success">${gameScore}</td>
+              <td>${astToRatio}</td>
+              <td class="text-muted">${pts36}</td>
+              <td class="text-muted">${reb36}</td>
+              <td class="text-muted">${ast36}</td>
+              <td>${pmBadge}</td>
+              <td>${rollBadge}</td>
+            </tr>
+          `;
+        }
+
+        if (isStarter) {
+          startersHtml += rowHtml;
+        } else {
+          benchHtml += rowHtml;
+        }
+      });
+
+      startersBody.innerHTML = startersHtml || '<tr><td colspan="18" class="text-muted py-3">선발 선수 기록이 없습니다.</td></tr>';
+      benchBody.innerHTML = benchHtml || '<tr><td colspan="18" class="text-muted py-3">벤치 선수 기록이 없습니다.</td></tr>';
     }
 
     function renderSoccerPlayers(filtered, homeTeam) {
@@ -2253,8 +2607,80 @@ fetch('${apiUrl}')
       const isPitcher = currentTrendPlayerType === 'pitcher';
       const isAttacker = currentTrendPlayerType === 'attacker';
       const isDefender = currentTrendPlayerType === 'defender';
+      const isBasketball = currentTrendPlayerType === 'guard' || currentTrendPlayerType === 'forward' || currentTrendPlayerType === 'center';
 
       let cardsHtml = '';
+
+      if (isBasketball) {
+        const bUnitDict = trendModalUnit === 'games' ? (currentTrendPlayerData.rolling_games || {}) : (currentTrendPlayerData.rolling_days || {});
+        windows.forEach(w => {
+          const key = trendModalUnit === 'games' ? `${w}G` : `${w}D`;
+          const title = trendModalUnit === 'games' ? `최근 ${w}경기` : `최근 ${w}일`;
+          const stat = bUnitDict[key] || {};
+          const pts = stat.avg_pts !== undefined ? stat.avg_pts : (stat.pts || 0);
+          const reb = stat.avg_reb !== undefined ? stat.avg_reb : (stat.reb || 0);
+          const ast = stat.avg_ast !== undefined ? stat.avg_ast : (stat.ast || 0);
+          const stl = stat.avg_stl !== undefined ? stat.avg_stl : (stat.stl || 0);
+          const blk = stat.avg_blk !== undefined ? stat.avg_blk : (stat.blk || 0);
+          const to = stat.avg_to !== undefined ? stat.avg_to : (stat.to || 0);
+          const ts = stat.ts_pct !== undefined ? stat.ts_pct + '%' : '0.0%';
+          const efg = stat.efg_pct !== undefined ? stat.efg_pct + '%' : '0.0%';
+          const gs = stat.game_score !== undefined ? stat.game_score : 0.0;
+          const astTo = stat.ast_to_ratio !== undefined ? stat.ast_to_ratio : 0.0;
+          const pm = stat.avg_plus_minus !== undefined ? stat.avg_plus_minus : 0;
+
+          let trendBadge = '<span class="badge bg-secondary">보통</span>';
+          let borderClass = 'border';
+          if (pts >= 25 || gs >= 20) {
+            trendBadge = '<span class="badge bg-danger">🔥 득점 폭발</span>';
+            borderClass = 'border-danger border-2';
+          } else if (pts >= 18 || gs >= 15) {
+            trendBadge = '<span class="badge bg-primary">⚡ 에이스 활약</span>';
+            borderClass = 'border-primary border-2';
+          }
+
+          cardsHtml += `
+            <div class="col-md-3 col-6">
+              <div class="card h-100 shadow-sm ${borderClass}">
+                <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                  <span class="fw-bold text-dark">${title}</span>
+                  ${trendBadge}
+                </div>
+                <div class="card-body p-2 text-center">
+                  <div class="row g-1 mb-2">
+                    <div class="col-4">
+                      <div class="text-muted" style="font-size: 0.68rem;">평균득점</div>
+                      <div class="fw-bold text-danger fs-5">${pts}</div>
+                    </div>
+                    <div class="col-4">
+                      <div class="text-muted" style="font-size: 0.68rem;">리바운드</div>
+                      <div class="fw-bold text-primary fs-5">${reb}</div>
+                    </div>
+                    <div class="col-4">
+                      <div class="text-muted" style="font-size: 0.68rem;">어시스트</div>
+                      <div class="fw-bold text-success fs-5">${ast}</div>
+                    </div>
+                  </div>
+                  <div class="row g-1 mb-1 text-muted" style="font-size: 0.72rem;">
+                    <div class="col-6">TS% (진짜효율): <b class="text-danger">${ts}</b></div>
+                    <div class="col-6">eFG% (유효야투): <b class="text-primary">${efg}</b></div>
+                  </div>
+                  <div class="row g-1 mb-1 text-muted" style="font-size: 0.72rem;">
+                    <div class="col-6">Game Score: <b class="text-success">${gs}</b></div>
+                    <div class="col-6">AST/TO 비율: <b class="text-dark">${astTo}</b></div>
+                  </div>
+                  <hr class="my-1">
+                  <div class="small text-secondary" style="font-size: 0.72rem;">
+                    스틸 ${stl} | 블록 ${blk} | 턴오버 ${to} | 득실마진: <b>${pm > 0 ? '+' + pm : pm}</b>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = cardsHtml;
+        return;
+      }
 
       windows.forEach(w => {
         const key = trendModalUnit === 'games' ? `${w}G` : `${w}D`;
@@ -2535,11 +2961,15 @@ fetch('${apiUrl}')
       document.getElementById('modalUnitDays').className = 'btn btn-outline-primary';
 
       const isSoccer = playerType === 'attacker' || playerType === 'defender';
+      const isBasketball = playerType === 'guard' || playerType === 'forward' || playerType === 'center';
 
       let typeLabel = '타자';
       if (playerType === 'pitcher') typeLabel = '투수';
       else if (playerType === 'attacker') typeLabel = '공격수/MF';
       else if (playerType === 'defender') typeLabel = '수비수/GK';
+      else if (playerType === 'guard') typeLabel = '가드 (G)';
+      else if (playerType === 'forward') typeLabel = '포워드 (F)';
+      else if (playerType === 'center') typeLabel = '센터 (C)';
 
       document.getElementById('trendModalTitle').innerHTML = 
         `<i class="bi bi-graph-up-arrow text-warning me-2"></i>[${teamName}] <b>${playerName}</b> 세이버메트릭스 & 정밀 롤링 지표 (${typeLabel})`;
@@ -2548,14 +2978,16 @@ fetch('${apiUrl}')
         '<div class="col-12 py-4 text-center text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div> 3G · 5G · 7G · 10G 세이버메트릭스 수치 정밀 연산 중...</div>';
       
       document.getElementById('trendLogsThead').innerHTML = '';
-      document.getElementById('trendLogsTbody').innerHTML = '<tr><td colspan="13" class="py-3 text-muted">경기 기록 로딩 중...</td></tr>';
+      document.getElementById('trendLogsTbody').innerHTML = '<tr><td colspan="15" class="py-3 text-muted">경기 기록 로딩 중...</td></tr>';
       
       trendModalObj.show();
 
       try {
-        const url = isSoccer ? 
-          `/api/v1/analytics/soccer/players/${encodeURIComponent(playerName)}/rolling?player_type=${playerType}&team_name=${encodeURIComponent(teamName)}&windows=3,5,7,10&days=3,5,7,10` :
-          `/api/v1/analytics/players/${encodeURIComponent(playerName)}/rolling?player_type=${playerType}&team_name=${encodeURIComponent(teamName)}&windows=3,5,7,10&days=3,5,7,10`;
+        const url = isBasketball ?
+          `/api/v1/analytics/basketball/players/${encodeURIComponent(playerName)}/rolling?player_type=${playerType}&team_name=${encodeURIComponent(teamName)}&windows=3,5,7,10&days=3,5,7,10` :
+          (isSoccer ? 
+            `/api/v1/analytics/soccer/players/${encodeURIComponent(playerName)}/rolling?player_type=${playerType}&team_name=${encodeURIComponent(teamName)}&windows=3,5,7,10&days=3,5,7,10` :
+            `/api/v1/analytics/players/${encodeURIComponent(playerName)}/rolling?player_type=${playerType}&team_name=${encodeURIComponent(teamName)}&windows=3,5,7,10&days=3,5,7,10`);
 
         const res = await fetch(url);
         if (!res.ok) {
@@ -2569,7 +3001,32 @@ fetch('${apiUrl}')
 
         const logs = data.recent_game_logs || [];
 
-        if (isSoccer) {
+        if (isBasketball) {
+          document.getElementById('trendLogsThead').innerHTML = `
+            <tr><th>경기일</th><th>상대팀</th><th>출전시간</th><th>득점(PTS)</th><th>리바운드(O/D)</th><th>어시스트(AST)</th><th>스틸(STL)</th><th>블록(BLK)</th><th>턴오버(TO)</th><th>야투(FG%)</th><th>3점(3P%)</th><th>자유투(FT%)</th><th>TS%</th><th>GameScore</th><th>+/-</th></tr>
+          `;
+          let logsHtml = '';
+          logs.forEach(l => {
+            logsHtml += `<tr>
+              <td>${l.match_date}</td>
+              <td>${l.opponent || '-'}</td>
+              <td>${l.minutes ? l.minutes + "분" : "-"}</td>
+              <td class="fw-bold text-danger">${l.pts || 0}</td>
+              <td><b>${l.reb || 0}</b> <span class="small text-muted">(${l.oreb || 0}/${l.dreb || 0})</span></td>
+              <td class="fw-bold text-primary">${l.ast || 0}</td>
+              <td>${l.stl || 0}</td>
+              <td>${l.blk || 0}</td>
+              <td class="text-danger">${l.to || 0}</td>
+              <td>${l.fg_str || '-'} (${l.fg_pct || 0}%)</td>
+              <td>${l.fg3_str || '-'} (${l.fg3_pct || 0}%)</td>
+              <td>${l.ft_str || '-'} (${l.ft_pct || 0}%)</td>
+              <td class="fw-bold text-danger">${l.ts_pct || 0}%</td>
+              <td class="fw-bold text-success">${l.game_score || 0}</td>
+              <td><span class="badge ${l.plus_minus >= 0 ? 'bg-success' : 'bg-danger'}">${l.plus_minus > 0 ? '+' + l.plus_minus : l.plus_minus}</span></td>
+            </tr>`;
+          });
+          document.getElementById('trendLogsTbody').innerHTML = logsHtml || '<tr><td colspan="15" class="py-3 text-muted">기록이 없습니다.</td></tr>';
+        } else if (isSoccer) {
           document.getElementById('trendLogsThead').innerHTML = `
             <tr><th>경기일</th><th>상대팀</th><th>출전시간</th><th>골</th><th>도움</th><th>xG</th><th>xA</th><th>슈팅(유효)</th><th>키패스(KP)</th><th>선방/실점</th><th>경고/퇴장</th></tr>
           `;
