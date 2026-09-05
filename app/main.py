@@ -105,7 +105,7 @@ def domain_portal(request: Request):
             
         with open(target, "r", encoding="utf-8") as f:
             content = f.read()
-        return HTMLResponse(content=content)
+        return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
     except Exception as e:
         return HTMLResponse(content=f"<h1>포털 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
 
@@ -117,7 +117,7 @@ def b2b_portal():
         target = b2b_portal_path if os.path.exists(b2b_portal_path) else landing_path
         with open(target, "r", encoding="utf-8") as f:
             content = f.read()
-        return HTMLResponse(content=content)
+        return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
     except Exception as e:
         return HTMLResponse(content=f"<h1>B2B 포털 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
 
@@ -127,7 +127,7 @@ def analytics_portal(request: Request):
     try:
         with open(landing_path, "r", encoding="utf-8") as f:
             content = f.read()
-        return HTMLResponse(content=content)
+        return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
     except Exception as e:
         return HTMLResponse(content=f"<h1>분석 포털 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
 
