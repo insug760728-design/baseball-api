@@ -73,5 +73,22 @@ SPORTS_CATALOG = {
         "leagues": [
             {"id": "NBA", "name": "미국 프로농구 (NBA)", "api_code": "nba"}
         ]
+    },
+
+    # [아시아 축구 리그]
+    "KLEAGUE": {
+        "title": "한국 K리그 (K-League 1 & 2)",
+        "sport_code": "SOCCER",
+        "leagues": [
+            {"id": "KLEAGUE", "name": "한국 K리그 (K-League)"},
+            {"id": "KLEAGUE2", "name": "한국 K리그 2 (K League 2)"}
+        ]
+    },
+    "JLEAGUE": {
+        "title": "일본 J리그 (J.League)",
+        "sport_code": "SOCCER",
+        "leagues": [
+            {"id": "JLEAGUE", "name": "일본 J리그 (J.League)", "api_code": "jpn.1"}
+        ]
     }
 }

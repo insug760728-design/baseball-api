@@ -2,7 +2,7 @@
 import urllib.request
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 
 from app.scrapers.base import BaseScraper
@@ -101,7 +101,16 @@ class SoccerScraper(BaseScraper):
                 status = "SCHEDULED"
 
             raw_date = ev.get("date", "")
-            match_date_str = raw_date[:16].replace("T", " ") if "T" in raw_date else d
+            if "T" in raw_date:
+                try:
+                    utc_clean = raw_date.replace("Z", "+00:00")
+                    utc_dt = datetime.fromisoformat(utc_clean)
+                    kst_dt = utc_dt + timedelta(hours=9)
+                    match_date_str = kst_dt.strftime("%Y-%m-%d %H:%M")
+                except Exception:
+                    match_date_str = raw_date[:16].replace("T", " ")
+            else:
+                match_date_str = d
 
             stadium = comps.get("venue", {}).get("fullName") or "스타디움"
             round_name = ev.get("season", {}).get("slug", "정규시즌")

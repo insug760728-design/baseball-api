@@ -111,10 +111,15 @@ class BasketballScraper(BaseScraper):
 
             match_date_str = ev.get("date", "")
             try:
-                dt_obj = datetime.strptime(match_date_str, "%Y-%m-%dT%H:%MZ")
+                dt_obj = datetime.strptime(match_date_str, "%Y-%m-%dT%H:%MZ") + timedelta(hours=9)
                 formatted_date = dt_obj.strftime("%Y-%m-%d %H:%M")
             except Exception:
-                formatted_date = d + " 19:00"
+                try:
+                    clean = match_date_str.replace("Z", "+00:00")
+                    dt_obj = datetime.fromisoformat(clean) + timedelta(hours=9)
+                    formatted_date = dt_obj.strftime("%Y-%m-%d %H:%M")
+                except Exception:
+                    formatted_date = d + " 19:00"
 
             venue_name = comps.get("venue", {}).get("fullName", "")
 

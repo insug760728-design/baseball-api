@@ -115,8 +115,17 @@ class MlbOfficialScraper:
 
             venue_name = g.get("venue", {}).get("name", "MLB Stadium")
             game_time_raw = g.get("gameDate", "")
-            # 한국 시간 변환 또는 표기 시간
-            match_time_display = f"{d} {game_time_raw[11:16]}" if len(game_time_raw) >= 16 else f"{d} 10:00"
+            # 100% 한국 표준시 (KST = UTC + 9시간) 변환
+            if game_time_raw:
+                try:
+                    clean = game_time_raw.replace("Z", "+00:00")
+                    dt = datetime.fromisoformat(clean)
+                    kst_dt = dt + timedelta(hours=9)
+                    match_time_display = kst_dt.strftime("%Y-%m-%d %H:%M")
+                except Exception:
+                    match_time_display = f"{d} 10:00"
+            else:
+                match_time_display = f"{d} 10:00"
 
             results.append({
                 "official_id": f"MLB_{game_pk}",

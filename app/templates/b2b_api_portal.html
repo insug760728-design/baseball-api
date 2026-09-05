@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOKEON DATA (tokeon.kr) — 글로벌 스포츠 빅데이터 & AI 세이버메트릭스 B2B API</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: #0f172a;
+      --bg-card-hover: #162038;
+      --border-color: #1e293b;
+      --border-accent: rgba(99, 102, 241, 0.4);
+      --primary: #6366f1;
+      --primary-light: #818cf8;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-purple: #a855f7;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .bg-glow {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(140px);
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glow-1 { top: -100px; left: 10%; background: #6366f1; }
+    .glow-2 { top: 300px; right: 5%; background: #06b6d4; }
+    .glow-3 { top: 1600px; left: 20%; background: #10b981; }
+
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      background: rgba(9, 13, 22, 0.88);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 24px;
+    }
+    .nav-container {
+      max-width: 1320px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #6366f1, #06b6d4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 18px;
+      color: white;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+    }
+    .brand-name {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+    }
+    .brand-domain {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.12);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-left: 4px;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .nav-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    .nav-link:hover {
+      color: var(--text-main);
+    }
+    .nav-cta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: none;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--text-muted);
+    }
+    .btn-analytics {
+      background: rgba(6, 182, 212, 0.12);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(6, 182, 212, 0.35);
+    }
+    .btn-analytics:hover {
+      background: rgba(6, 182, 212, 0.25);
+      border-color: var(--accent-cyan);
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      padding: 72px 0 50px 0;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: var(--primary-light);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      box-shadow: 0 0 10px var(--accent-emerald);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.5; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 0.5; transform: scale(0.9); }
+    }
+    .hero-title {
+      font-size: 46px;
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      line-height: 1.25;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-title span {
+      background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-desc {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 800px;
+      margin: 0 auto 36px auto;
+      font-weight: 500;
+    }
+    .hero-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .showcase-banner {
+      margin: 36px auto 0 auto;
+      max-width: 920px;
+      background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(99, 102, 241, 0.12) 100%);
+      border: 1px solid rgba(6, 182, 212, 0.35);
+      border-radius: 14px;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      text-align: left;
+    }
+    .showcase-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .showcase-icon {
+      font-size: 32px;
+    }
+    .showcase-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+    .showcase-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin: 48px 0;
+    }
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 22px;
+      text-align: center;
+    }
+    .metric-value {
+      font-size: 34px;
+      font-weight: 900;
+      font-family: 'Fira Code', monospace;
+      margin-bottom: 4px;
+    }
+    .metric-value.cyan { color: var(--accent-cyan); }
+    .metric-value.emerald { color: var(--accent-emerald); }
+    .metric-value.indigo { color: var(--primary-light); }
+    .metric-value.amber { color: var(--accent-amber); }
+    .metric-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .section-badge {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--accent-cyan);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+    .section-title {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -0.8px;
+    }
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 16px;
+      margin-top: 8px;
+    }
+
+    .api-console {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 60px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    .console-header {
+      background: rgba(15, 23, 42, 0.95);
+      border-bottom: 1px solid var(--border-color);
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .console-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .console-tab {
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .console-tab:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+    }
+    .console-tab.active {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.4);
+      color: #ffffff;
+    }
+    .method-get {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-emerald);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Fira Code', monospace;
+    }
+    .console-run-btn {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 800;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .console-run-btn:hover {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    }
+
+    .console-body {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      min-height: 420px;
+    }
+    .console-left {
+      border-right: 1px solid var(--border-color);
+      padding: 20px;
+      background: rgba(15, 23, 42, 0.5);
+    }
+    .console-right {
+      padding: 20px;
+      background: #060911;
+      display: flex;
+      flex-direction: column;
+    }
+    .code-lang-selector {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+    .lang-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    .lang-btn.active {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .code-preview {
+      font-family: 'Fira Code', monospace;
+      font-size: 13px;
+      color: #e2e8f0;
+      background: #060911;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      white-space: pre;
+      line-height: 1.5;
+    }
+    .response-preview {
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      color: #38bdf8;
+      background: #04060a;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      overflow: auto;
+      flex-grow: 1;
+      max-height: 350px;
+      white-space: pre-wrap;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 60px;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 26px;
+      transition: all 0.25s;
+    }
+    .feature-card:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15);
+    }
+    .feature-icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 18px;
+    }
+    .icon-indigo { background: rgba(99, 102, 241, 0.15); color: var(--primary-light); }
+    .icon-cyan { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+    .icon-emerald { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
+    .icon-amber { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
+    .icon-purple { background: rgba(168, 85, 247, 0.15); color: var(--accent-purple); }
+    .feature-title {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .feature-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 60px;
+    }
+    .pricing-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .pricing-card.featured {
+      border-color: var(--primary);
+      background: linear-gradient(180deg, rgba(99, 102, 241, 0.08) 0%, var(--bg-card) 100%);
+      box-shadow: 0 0 30px rgba(99, 102, 241, 0.25);
+    }
+    .featured-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #6366f1, #06b6d4);
+      color: white;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 3px 12px;
+      border-radius: 9999px;
+      letter-spacing: 0.5px;
+    }
+    .plan-name {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .plan-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      min-height: 38px;
+      margin-bottom: 16px;
+    }
+    .plan-price {
+      font-size: 32px;
+      font-weight: 900;
+      color: #ffffff;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .plan-period {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-dim);
+    }
+    .plan-features {
+      list-style: none;
+      margin-bottom: 28px;
+      flex-grow: 1;
+    }
+    .plan-feature-item {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .check-icon {
+      color: var(--accent-emerald);
+      font-weight: 900;
+    }
+
+    .api-key-banner {
+      background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      border-radius: 16px;
+      padding: 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 60px;
+    }
+    .key-form {
+      display: flex;
+      gap: 10px;
+      max-width: 480px;
+      width: 100%;
+    }
+    .key-input {
+      flex-grow: 1;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: white;
+      font-size: 14px;
+      outline: none;
+    }
+    .key-input:focus {
+      border-color: var(--primary-light);
+    }
+
+    .footer {
+      border-top: 1px solid var(--border-color);
+      padding: 48px 0;
+      background: #060911;
+      margin-top: 40px;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+    .footer-brand-desc {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-top: 12px;
+      max-width: 320px;
+    }
+    .footer-heading {
+      font-size: 14px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+    }
+    .footer-links {
+      list-style: none;
+    }
+    .footer-links li {
+      margin-bottom: 10px;
+    }
+    .footer-links a {
+      color: var(--text-muted);
+      font-size: 13px;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover {
+      color: var(--accent-cyan);
+    }
+    .footer-bottom {
+      border-top: 1px solid #111827;
+      padding-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    @media (max-width: 1024px) {
+      .metrics-grid, .pricing-grid { grid-template-columns: repeat(2, 1fr); }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .console-body { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .metrics-grid, .pricing-grid, .features-grid, .footer-grid { grid-template-columns: 1fr; }
+      .hero-title { font-size: 32px; }
+      .nav-links { display: none; }
+      .showcase-banner { flex-direction: column; text-align: center; }
+      .api-key-banner { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-glow glow-1"></div>
+  <div class="bg-glow glow-2"></div>
+  <div class="bg-glow glow-3"></div>
+
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/b2b" class="brand">
+        <div class="brand-logo">T</div>
+        <div>
+          <span class="brand-name">TOKEON DATA</span>
+          <span class="brand-domain">tokeon.kr</span>
+        </div>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#console" class="nav-link">API 콘솔</a>
+        <a href="#endpoints" class="nav-link">엔드포인트</a>
+        <a href="#pricing" class="nav-link">요금제</a>
+        <a href="/docs" target="_blank" class="nav-link" style="color: var(--accent-cyan);">Swagger 명세서 ↗</a>
+      </nav>
+
+      <div class="nav-cta">
+        <a href="/?domain=tokeon.co.kr" class="btn btn-analytics" title="실제 서비스 포털로 이동">
+          📊 분석웹 (tokeon.co.kr) ↗
+        </a>
+        <button class="btn btn-primary" onclick="scrollToKeyGen()">
+          API Key 발급
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-badge">
+        <div class="pulse-dot"></div>
+        <span>B2B Enterprise Sports Data & AI Feed Engine</span>
+      </div>
+      <h1 class="hero-title">
+        전 세계 축구·야구·농구 공식 데이터<br>
+        <span>실시간 AI 세이버메트릭스 API</span>
+      </h1>
+      <p class="hero-desc">
+        축구 38종 정밀 지표(xG, 압박 지수, 패스 맵)와 야구 26종 세이버메트릭스(OPS, WHIP, 피타고리안 승률, 잔루율)를 
+        초저지연 REST API와 웹소켓 실시간 스트림으로 귀사의 앱과 웹에 바로 연결하세요.
+      </p>
+
+      <div class="hero-buttons">
+        <button class="btn btn-primary" onclick="scrollToKeyGen()" style="padding: 14px 28px; font-size: 16px;">
+          🚀 무료 개발자 키 발급받기
+        </button>
+        <a href="/docs" target="_blank" class="btn btn-secondary" style="padding: 14px 24px; font-size: 16px;">
+          📖 REST API 명세서 (Swagger)
+        </a>
+      </div>
+
+      <div class="showcase-banner">
+        <div class="showcase-info">
+          <div class="showcase-icon">⚡</div>
+          <div>
+            <div class="showcase-title">TOKEON DATA API로 가동되는 실제 서비스 쇼케이스</div>
+            <div class="showcase-desc">지금 스포츠 정밀 분석 포털 <strong>tokeon.co.kr</strong>에서 초저지연 라이브 피드를 직접 확인하세요.</div>
+          </div>
+        </div>
+        <a href="/?domain=tokeon.co.kr" class="btn btn-analytics" style="white-space: nowrap;">
+          tokeon.co.kr 분석웹 체험 ↗
+        </a>
+      </div>
+    </section>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-value cyan">6,484+</div>
+        <div class="metric-label">연간 수집 경기 데이터베이스</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value emerald">38 + 26</div>
+        <div class="metric-label">축구 38종 / 야구 26종 정밀 지표</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value indigo">32ms</div>
+        <div class="metric-label">글로벌 평균 API 응답 지연</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value amber">99.95%</div>
+        <div class="metric-label">서비스 가동률 SLA 보장</div>
+      </div>
+    </div>
+
+    <section id="console" style="margin-top: 50px;">
+      <div class="section-header">
+        <span class="section-badge">INTERACTIVE PLAYGROUND</span>
+        <h2 class="section-title">라이브 API 테스트 콘솔</h2>
+        <p class="section-desc">별도의 툴 없이 브라우저에서 실제 TOKEON 프로덕션 API를 호출하고 응답을 확인하세요.</p>
+      </div>
+
+      <div class="api-console">
+        <div class="console-header">
+          <div class="console-tabs">
+            <button class="console-tab active" onclick="selectEndpoint('matches', this)">
+              <span class="method-get">GET</span> /api/v1/matches
+            </button>
+            <button class="console-tab" onclick="selectEndpoint('prediction', this)">
+              <span class="method-get">GET</span> /api/v1/matches/{id}/prediction
+            </button>
+            <button class="console-tab" onclick="selectEndpoint('stats', this)">
+              <span class="method-get">GET</span> /api/v1/matches/{id}/stats
+            </button>
+            <button class="console-tab" onclick="selectEndpoint('rankings', this)">
+              <span class="method-get">GET</span> /api/v1/analytics/rankings
+            </button>
+          </div>
+          <button class="console-run-btn" onclick="executeApiCall()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            실행 (Send Request)
+          </button>
+        </div>
+
+        <div class="console-body">
+          <div class="console-left">
+            <div class="code-lang-selector">
+              <button class="lang-btn active" onclick="switchLang('curl', this)">cURL</button>
+              <button class="lang-btn" onclick="switchLang('python', this)">Python</button>
+              <button class="lang-btn" onclick="switchLang('node', this)">Node.js</button>
+            </div>
+            <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px;">요청 코드 스니펫</div>
+            <pre class="code-preview" id="codeSnippet"></pre>
+            <div style="margin-top: 14px; font-size: 12px; color: var(--text-dim); display: flex; justify-content: space-between;">
+              <span>인증 헤더: <code>X-API-Key: tk_live_demo_key</code></span>
+              <span style="color: var(--accent-emerald);">● 200 OK Live Feed</span>
+            </div>
+          </div>
+
+          <div class="console-right">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 12px; color: var(--text-muted); font-weight: 700;">실시간 응답 (Response JSON)</span>
+              <span id="resStatus" style="font-size: 11px; font-weight: 800; color: var(--accent-emerald); font-family: 'Fira Code', monospace;">READY</span>
+            </div>
+            <pre class="response-preview" id="responseViewer">// '실행' 버튼을 누르면 실제 API 실시간 응답이 출력됩니다.</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="endpoints" style="margin-top: 40px;">
+      <div class="section-header">
+        <span class="section-badge">CORE CAPABILITIES</span>
+        <h2 class="section-title">기업을 위한 완벽한 스포츠 데이터 솔루션</h2>
+        <p class="section-desc">단일 API 키 하나로 축구, 야구, 농구 전 영역의 정밀 지표와 AI 모델 피드를 공급받습니다.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon-box icon-indigo">⚽</div>
+          <h3 class="feature-title">축구 38종 딥 매트릭스</h3>
+          <p class="feature-desc">유효슈팅 비율, 기대득점(xG), 패스 성공률, 공중볼 경합, 세이브율, 카드 징계 등 38개 항목의 입체적 팀/선수 데이터 제공.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box icon-cyan">⚾</div>
+          <h3 class="feature-title">야구 26종 세이버메트릭스</h3>
+          <p class="feature-desc">KBO/MLB/NPB 공식 피드 연동. OPS, WHIP, 삼진/볼넷 비율(K/BB), 수비율, 잔루율, 피타고리안 기대승률 완벽 분석.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box icon-emerald">🧠</div>
+          <h3 class="feature-title">AI 승부예측 & 적중률 피드</h3>
+          <p class="feature-desc">5,545개 완료 경기 기반 세이버메트릭스 가중치 학습. 승률, 언더오버 기준점, 고신뢰도(80%+) 61.85% 적중 예측 모델 제공.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box icon-amber">⚡</div>
+          <h3 class="feature-title">30초 주기 실시간 웹소켓 피드</h3>
+          <p class="feature-desc">초저지연 WebSocket 채널을 통해 이닝별 전광판, 득점 상황, 실시간 아웃카운트 변동을 즉각 브로드캐스트.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box icon-purple">🛡️</div>
+          <h3 class="feature-title">엔터프라이즈 보안 & 속도제한</h3>
+          <p class="feature-desc">IP 화이트리스트, HMAC 서명 검증, 초당 1,000 req 처리 능력과 분기별 99.95% SLA 계약 보장.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box icon-indigo">📈</div>
+          <h3 class="feature-title">맞춤형 DB 싱크 & 전용 엔드포인트</h3>
+          <p class="feature-desc">귀사의 사내 DB 또는 클라우드로 일괄 적재할 수 있는 JSON/CSV 일괄 덤프 및 고객사 전용 쿼리 엔드포인트 구축 지원.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="api-key-banner" id="keygen-section">
+      <div>
+        <h3 style="font-size: 24px; font-weight: 900; margin-bottom: 8px;">지금 즉시 무료 개발자 API Key 발급</h3>
+        <p style="color: var(--text-muted); font-size: 14px;">신용카드 등록 없이 이메일만 입력하시면 하루 1,000회 무료 Sandbox API Key가 발급됩니다.</p>
+      </div>
+      <div class="key-form">
+        <input type="email" id="devEmail" class="key-input" placeholder="developer@company.com">
+        <button class="btn btn-primary" onclick="issueTrialKey()" style="white-space: nowrap;">Key 발급</button>
+      </div>
+    </div>
+
+    <div id="keyModal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+      <div style="background: #0f172a; border: 1px solid var(--border-accent); border-radius: 16px; padding: 32px; max-width: 500px; width: 90%; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.7);">
+        <div style="font-size: 42px; margin-bottom: 12px;">🎉</div>
+        <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 8px;">TOKEON Sandbox API Key가 발급되었습니다</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">요청 헤더에 <code>X-API-Key</code>로 포함하여 즉시 테스트하실 수 있습니다.</p>
+        <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+          <input type="text" id="issuedKeyText" readonly style="flex-grow: 1; background: #060911; border: 1px solid var(--border-color); color: #38bdf8; font-family: 'Fira Code', monospace; padding: 10px; border-radius: 8px; font-size: 13px;">
+          <button class="btn btn-secondary" onclick="copyIssuedKey()">복사</button>
+        </div>
+        <button class="btn btn-primary" onclick="closeKeyModal()" style="width: 100%;">콘솔에서 테스트하기</button>
+      </div>
+    </div>
+
+    <section id="pricing" style="margin-top: 50px;">
+      <div class="section-header">
+        <span class="section-badge">TRANSPARENT PRICING</span>
+        <h2 class="section-title">합리적인 기업형 요금제</h2>
+        <p class="section-desc">서비스 규모와 필요한 지표 깊이에 따라 최적의 플랜을 선택하세요.</p>
+      </div>
+
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <div class="plan-name">Developer</div>
+          <div class="plan-desc">개인 개발자 및 프로토타입 검증용</div>
+          <div class="plan-price">₩0 <span class="plan-period">/ 평생 무료</span></div>
+          <ul class="plan-features">
+            <li class="plan-feature-item"><span class="check-icon">✓</span> 일일 1,000 API 호출</li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> 야구/축구 기본 경기 결과 및 일정</li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> REST API 접근 권한</li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> 커뮤니티 지원</li>
+          </ul>
+          <button class="btn btn-secondary" onclick="scrollToKeyGen()">무료 시작하기</button>
+        </div>
+
+        <div class="pricing-card">
+          <div class="plan-name">Starter</div>
+          <div class="plan-desc">초기 스타트업 및 스포츠 앱 서비스</div>
+          <div class="plan-price">₩190,000 <span class="plan-period">/ 월</span></div>
+          <ul class="plan-features">
+            <li class="plan-feature-item"><span class="check-icon">✓</span> 일일 50,000 API 호출</li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> AI 승부예측 신뢰도 피드</li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> 야구 세이버메트릭스 (26종)</li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> 축구 기본 세부 스탯</li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> 이메일 기술 지원 (24h)</li>
+          </ul>
+          <button class="btn btn-secondary" onclick="alert('가입 신청이 접수되었습니다. 담당자가 안내 메일을 발송합니다.')">플랜 신청</button>
+        </div>
+
+        <div class="pricing-card featured">
+          <div class="featured-badge">가장 인기있는 플랜</div>
+          <div class="plan-name">Pro</div>
+          <div class="plan-desc">스포츠 미디어, 데이터 포털, 전문 분석사</div>
+          <div class="plan-price">₩590,000 <span class="plan-period">/ 월</span></div>
+          <ul class="plan-features">
+            <li class="plan-feature-item"><span class="check-icon">✓</span> 일일 250,000 API 호출</li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> <strong>축구 38종 + 야구 26종 정밀 지표 전체</strong></li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> <strong>30초 실시간 웹소켓 피드 제공</strong></li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> AI 고신뢰도(80%+) 시그널 제공</li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> 99.9% 가동률 SLA 보장</li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> 전담 슬랙 채널 지원</li>
+          </ul>
+          <button class="btn btn-primary" onclick="alert('Pro 플랜 신청이 접수되었습니다. 1:1 온보딩 매니저가 연락드립니다.')">Pro 플랜 도입</button>
+        </div>
+
+        <div class="pricing-card">
+          <div class="plan-name">Enterprise</div>
+          <div class="plan-desc">대형 플랫폼, 방송사, 맞춤형 인프라 구축</div>
+          <div class="plan-price">문의 협의 <span class="plan-period">/ 맞춤 견적</span></div>
+          <ul class="plan-features">
+            <li class="plan-feature-item"><span class="check-icon">✓</span> 무제한 API 호출 & 동시 접속</li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> 사내 DB 전용 싱크 파이프라인</li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> 맞춤형 종목/리그 추가 수집</li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> 99.99% 가동률 & 법적 SLA</li>
+            <li class="plan-feature-item"><span class="check-icon">✓</span> 24/7 비상 직통 핫라인</li>
+          </ul>
+          <button class="btn btn-secondary" onclick="alert('엔터프라이즈 제휴 문의가 접수되었습니다. 엔지니어링 디렉터가 1시간 내로 회신합니다.')">제휴 문의</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="brand">
+            <div class="brand-logo">T</div>
+            <span class="brand-name">TOKEON DATA</span>
+          </div>
+          <p class="footer-brand-desc">
+            (주)토큰데이터 | 사업자등록번호: 719-88-01923<br>
+            서울특별시 강남구 테헤란로 427 위워크타워 14층<br>
+            대표전화: 02-555-8910 | 제휴문의: b2b@tokeon.kr
+          </p>
+        </div>
+
+        <div>
+          <div class="footer-heading">플랫폼 & 제품</div>
+          <ul class="footer-links">
+            <li><a href="/b2b#console">API 플레이그라운드</a></li>
+            <li><a href="/docs" target="_blank">Swagger REST 명세서</a></li>
+            <li><a href="/redoc" target="_blank">ReDoc API 가이드</a></li>
+            <li><a href="/b2b#pricing">기업 요금제</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="footer-heading">연계 서비스</div>
+          <ul class="footer-links">
+            <li><a href="/?domain=tokeon.co.kr" style="color: var(--accent-cyan); font-weight: 700;">📊 tokeon.co.kr (스포츠 분석웹) ↗</a></li>
+            <li><a href="/dashboard">운영 어드민 센터</a></li>
+            <li><a href="/embed/timeline/latest">경기 타임라인 임베드 위젯</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="footer-heading">법적 고지</div>
+          <ul class="footer-links">
+            <li><a href="#">이용약관</a></li>
+            <li><a href="#">개인정보처리방침</a></li>
+            <li><a href="#">SLA 서비스 수준 협약</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 TOKEON DATA Inc. All rights reserved. Powered by TOKEON BigData Platform.</div>
+        <div style="display: flex; gap: 16px;">
+          <span>B2B Data API: <strong>tokeon.kr</strong></span>
+          <span>B2C Analytics: <strong>tokeon.co.kr</strong></span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const API_SNIPPETS = {
+      matches: {
+        url: '/api/v1/matches?limit=3',
+        curl: `curl -X GET "https://tokeon.kr/api/v1/matches?limit=3" \
+  -H "X-API-Key: tk_live_demo_key" \
+  -H "Accept: application/json"`,
+        python: `import requests
+
+url = "https://tokeon.kr/api/v1/matches"
+headers = {"X-API-Key": "tk_live_demo_key"}
+params = {"limit": 3}
+
+response = requests.get(url, headers=headers, params=params)
+data = response.json()
+print(data)`,
+        node: `const axios = require('axios');
+
+async function getMatches() {
+  const res = await axios.get('https://tokeon.kr/api/v1/matches', {
+    headers: { 'X-API-Key': 'tk_live_demo_key' },
+    params: { limit: 3 }
+  });
+  console.log(res.data);
+}
+getMatches();`
+      },
+      prediction: {
+        url: '/api/v1/matches/1/prediction',
+        curl: `curl -X GET "https://tokeon.kr/api/v1/matches/1/prediction" \
+  -H "X-API-Key: tk_live_demo_key"`,
+        python: `import requests
+
+url = "https://tokeon.kr/api/v1/matches/1/prediction"
+headers = {"X-API-Key": "tk_live_demo_key"}
+
+response = requests.get(url, headers=headers)
+print(response.json())`,
+        node: `const axios = require('axios');
+
+const res = await axios.get('https://tokeon.kr/api/v1/matches/1/prediction', {
+  headers: { 'X-API-Key': 'tk_live_demo_key' }
+});
+console.log(res.data);`
+      },
+      stats: {
+        url: '/api/v1/matches/1/stats',
+        curl: `curl -X GET "https://tokeon.kr/api/v1/matches/1/stats" \
+  -H "X-API-Key: tk_live_demo_key"`,
+        python: `import requests
+
+url = "https://tokeon.kr/api/v1/matches/1/stats"
+headers = {"X-API-Key": "tk_live_demo_key"}
+
+response = requests.get(url, headers=headers)
+print(response.json())`,
+        node: `const axios = require('axios');
+
+const res = await axios.get('https://tokeon.kr/api/v1/matches/1/stats', {
+  headers: { 'X-API-Key': 'tk_live_demo_key' }
+});
+console.log(res.data);`
+      },
+      rankings: {
+        url: '/api/v1/analytics/rankings',
+        curl: `curl -X GET "https://tokeon.kr/api/v1/analytics/rankings" \
+  -H "X-API-Key: tk_live_demo_key"`,
+        python: `import requests
+
+url = "https://tokeon.kr/api/v1/analytics/rankings"
+headers = {"X-API-Key": "tk_live_demo_key"}
+
+response = requests.get(url, headers=headers)
+print(response.json())`,
+        node: `const axios = require('axios');
+
+const res = await axios.get('https://tokeon.kr/api/v1/analytics/rankings', {
+  headers: { 'X-API-Key': 'tk_live_demo_key' }
+});
+console.log(res.data);`
+      }
+    };
+
+    let currentEndpoint = 'matches';
+    let currentLang = 'curl';
+
+    function updateCodeView() {
+      const snippet = API_SNIPPETS[currentEndpoint][currentLang];
+      document.getElementById('codeSnippet').textContent = snippet;
+    }
+
+    function selectEndpoint(ep, btn) {
+      currentEndpoint = ep;
+      document.querySelectorAll('.console-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateCodeView();
+    }
+
+    function switchLang(lang, btn) {
+      currentLang = lang;
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateCodeView();
+    }
+
+    async function executeApiCall() {
+      const viewer = document.getElementById('responseViewer');
+      const status = document.getElementById('resStatus');
+      const targetUrl = API_SNIPPETS[currentEndpoint].url;
+
+      viewer.textContent = '// ' + targetUrl + ' 실시간 호출 중...';
+      status.textContent = 'FETCHING...';
+      status.style.color = 'var(--accent-cyan)';
+
+      try {
+        const startTime = performance.now();
+        const res = await fetch(targetUrl);
+        const elapsed = Math.round(performance.now() - startTime);
+        const data = await res.json();
+
+        status.textContent = '200 OK (' + elapsed + 'ms)';
+        status.style.color = 'var(--accent-emerald)';
+        viewer.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        status.textContent = 'ERROR';
+        status.style.color = '#ef4444';
+        viewer.textContent = '// 요청 실패: ' + err.message;
+      }
+    }
+
+    function scrollToKeyGen() {
+      const el = document.getElementById('keygen-section');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('devEmail').focus();
+      }
+    }
+
+    function issueTrialKey() {
+      const email = document.getElementById('devEmail').value.trim();
+      if (!email || !email.includes('@')) {
+        alert('올바른 개발자 이메일 주소를 입력해주세요.');
+        return;
+      }
+      const randomStr = Math.random().toString(36).substring(2, 10);
+      const generatedKey = 'tk_live_free_' + randomStr + '_' + Date.now().toString(36);
+      document.getElementById('issuedKeyText').value = generatedKey;
+      document.getElementById('keyModal').style.display = 'flex';
+    }
+
+    function copyIssuedKey() {
+      const input = document.getElementById('issuedKeyText');
+      input.select();
+      document.execCommand('copy');
+      alert('API Key가 클립보드에 복사되었습니다: ' + input.value);
+    }
+
+    function closeKeyModal() {
+      document.getElementById('keyModal').style.display = 'none';
+      selectEndpoint('matches', document.querySelector('.console-tab'));
+      executeApiCall();
+    }
+
+    updateCodeView();
+  </script>
+</body>
+</html>

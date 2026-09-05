@@ -8,6 +8,7 @@ from app.scrapers.baseball_scraper import BaseballScraper
 from app.scrapers.soccer_scraper import SoccerScraper, SOCCER_LEAGUE_CODES
 from app.scrapers.basketball_scraper import BasketballScraper
 from app.core.sports_catalog import SPORTS_CATALOG
+from app.services.team_split_service import TeamSplitService
 
 class MatchService:
 
@@ -163,8 +164,7 @@ class MatchService:
         db.commit()
 
     @staticmethod
-    @staticmethod
-    def get_matches(db: Session, sport_code: Optional[str] = None, league_name: Optional[str] = None, status: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None, limit: Optional[int] = None):
+    def get_matches(db: Session, sport_code: Optional[str] = None, league_name: Optional[str] = None, status: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None, limit: Optional[int] = None, order: Optional[str] = "asc"):
         query = db.query(Match)
 
         # 리그명에 따라 sport_code 자동 감지
@@ -188,10 +188,20 @@ class MatchService:
         if end_date:
             query = query.filter(Match.match_date <= f"{end_date} 23:59")
         
-        q = query.order_by(Match.match_date.desc(), Match.id.desc())
-        if limit:
-            return q.limit(limit).all()
-        return q.all()
+        if order and order.lower() == "desc":
+            q = query.order_by(Match.match_date.desc(), Match.id.desc())
+        else:
+            q = query.order_by(Match.match_date.asc(), Match.id.asc())
+
+        matches = q.limit(limit).all() if limit else q.all()
+        for m in matches:
+            try:
+                m.prediction = TeamSplitService.get_quick_prediction(
+                    m.home_team_name, m.away_team_name, m.sport_code, m.status, m.home_score, m.away_score
+                )
+            except Exception:
+                m.prediction = None
+        return matches
 
     @staticmethod
     def get_match_full_detail(db: Session, match_id: int):

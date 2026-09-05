@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.services.match_service import MatchService
+from app.services.team_split_service import TeamSplitService
 from app.schemas.schemas import MatchResponse, MatchUpdate, DateRangeSyncRequest, PlayerMatchStatUpdate
 
 router = APIRouter(prefix="/matches", tags=["야구 경기 일정 및 결과"])
@@ -16,6 +17,7 @@ def list_matches(
     start_date: Optional[str] = Query(None, description="시작일 (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="종료일 (YYYY-MM-DD)"),
     limit: Optional[int] = Query(None, description="조회 개수 제한"),
+    order: Optional[str] = Query("asc", description="정렬 방식 (asc=시간순 오름차순, desc=내림차순)"),
     db: Session = Depends(get_db)
 ):
     """지정된 종목 및 조건에 맞는 경기 일정/결과 목록을 조회합니다."""
@@ -26,7 +28,8 @@ def list_matches(
         status=status,
         start_date=start_date,
         end_date=end_date,
-        limit=limit
+        limit=limit,
+        order=order
     )
 
 @router.post("/sync", summary="기간별 야구 경기 데이터 동기화 수집")
@@ -51,6 +54,7 @@ def get_match_full(match_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="경기를 찾을 수 없습니다.")
     
     m = data["match"]
+    matchup_analysis = TeamSplitService.get_matchup_analysis(m.home_team_name, m.away_team_name, m.sport_code)
     return {
         "id": m.id,
         "official_id": m.official_id,
@@ -68,7 +72,8 @@ def get_match_full(match_id: int, db: Session = Depends(get_db)):
         "custom_notes": m.custom_notes,
         "details": data["details"],
         "events": data["events"],
-        "player_stats": data["player_stats"]
+        "player_stats": data["player_stats"],
+        "matchup_analysis": matchup_analysis
     }
 
 @router.put("/{match_id}/score", response_model=MatchResponse, summary="경기 스코어 및 상태 직접 수정 (PUT)")

@@ -67,17 +67,61 @@ app.add_middleware(
 )
 
 landing_path = os.path.join(current_dir, "templates", "landing.html")
+b2b_portal_path = os.path.join(current_dir, "templates", "b2b_api_portal.html")
 dashboard_path = os.path.join(current_dir, "templates", "index.html")
 
-@app.get("/", response_class=HTMLResponse, summary="SPORTIX PRO — 스포츠 종합 포털 & 실시간 소식")
+def is_b2b_domain(request: Request) -> bool:
+    # 1. 쿼리 파라미터 확인 (?domain=tokeon.kr 또는 ?domain=b2b)
+    domain_param = request.query_params.get("domain", "").lower()
+    if "tokeon.kr" in domain_param and "co.kr" not in domain_param:
+        return True
+    if domain_param in ("b2b", "api"):
+        return True
+    
+    # 2. Host 헤더 확인 (tokeon.kr vs tokeon.co.kr)
+    host = request.headers.get("host", "").lower()
+    if "tokeon.kr" in host and "co.kr" not in host:
+        return True
+    if host.startswith("api."):
+        return True
+        
+    return False
+
+@app.get("/", response_class=HTMLResponse, summary="TOKEON 포털 (tokeon.kr / tokeon.co.kr 듀얼 도메인 분기)")
 def domain_portal(request: Request):
     try:
-        target = landing_path if os.path.exists(landing_path) else dashboard_path
+        if is_b2b_domain(request):
+            target = b2b_portal_path if os.path.exists(b2b_portal_path) else landing_path
+        else:
+            target = landing_path if os.path.exists(landing_path) else dashboard_path
+            
         with open(target, "r", encoding="utf-8") as f:
             content = f.read()
         return HTMLResponse(content=content)
     except Exception as e:
         return HTMLResponse(content=f"<h1>포털 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
+
+@app.get("/b2b", response_class=HTMLResponse, summary="TOKEON DATA — B2B 스포츠 데이터 API 전문 포털 (tokeon.kr)")
+@app.get("/api-company", response_class=HTMLResponse)
+@app.get("/developer", response_class=HTMLResponse)
+def b2b_portal():
+    try:
+        target = b2b_portal_path if os.path.exists(b2b_portal_path) else landing_path
+        with open(target, "r", encoding="utf-8") as f:
+            content = f.read()
+        return HTMLResponse(content=content)
+    except Exception as e:
+        return HTMLResponse(content=f"<h1>B2B 포털 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
+
+@app.get("/analytics", response_class=HTMLResponse, summary="TOKEON ANALYTICS — 스포츠 정밀 분석 웹 포털 (tokeon.co.kr)")
+@app.get("/portal", response_class=HTMLResponse)
+def analytics_portal(request: Request):
+    try:
+        with open(landing_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        return HTMLResponse(content=content)
+    except Exception as e:
+        return HTMLResponse(content=f"<h1>분석 포털 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
 
 @app.get("/dashboard", response_class=HTMLResponse, summary="스포츠 전문 관리 대시보드")
 def admin_dashboard(request: Request):
@@ -87,10 +131,6 @@ def admin_dashboard(request: Request):
         return HTMLResponse(content=content)
     except Exception as e:
         return HTMLResponse(content=f"<h1>대시보드 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
-
-@app.get("/portal", response_class=HTMLResponse, summary="스포츠 종합 포털 화면")
-def portal_redirect(request: Request):
-    return domain_portal(request)
 
 def generate_timeline_widget_html(match_data: dict, events: list) -> str:
     ev_html = ""
@@ -196,17 +236,35 @@ def embed_timeline_by_id(match_id: int):
     finally:
         db.close()
 
+import secrets
+
+@app.post("/api/v1/auth/trial-key", summary="무료 Sandbox API Key 즉시 발급 (tokeon.kr B2B 개발자용)")
+def generate_trial_api_key(request: Request):
+    key = f"tk_live_free_{secrets.token_hex(6)}"
+    return {
+        "status": "success",
+        "api_key": key,
+        "tier": "Developer Free (Sandbox)",
+        "rate_limit": "1,000 requests / day",
+        "active": True,
+        "message": "API 키가 성공적으로 발급되었습니다. X-API-Key 헤더에 포함하여 호출하세요."
+    }
+
 @app.exception_handler(404)
 async def not_found_exception_handler(request: Request, exc):
     if not request.url.path.startswith("/api/"):
         try:
-            with open(html_path, "r", encoding="utf-8") as f:
+            target = b2b_portal_path if is_b2b_domain(request) else landing_path
+            with open(target, "r", encoding="utf-8") as f:
                 return HTMLResponse(content=f.read())
         except Exception:
             pass
     return JSONResponse(status_code=404, content={"detail": "Not Found"})
 
+from app.api.v1.community import router as community_router
+
 app.include_router(api_v1_router, prefix=settings.API_V1_STR)
+app.include_router(community_router)
 
 if __name__ == "__main__":
     import uvicorn

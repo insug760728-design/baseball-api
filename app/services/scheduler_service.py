@@ -49,8 +49,16 @@ class SchedulerService:
                 id=cls._job_id,
                 replace_existing=True
             )
+            # 1시간마다 향후 3일간 경기 및 스코어 자동 동기화 (매시 0분 실행)
+            hourly_trigger = CronTrigger(minute=0)
+            scheduler.add_job(
+                cls.execute_hourly_sync_job,
+                trigger=hourly_trigger,
+                id="hourly_sports_sync_job",
+                replace_existing=True
+            )
             scheduler.start()
-            logger.info(f"[Scheduler] 매일 {cls._config['hour']:02d}:{cls._config['minute']:02d} 자동 동기화 스케줄러 시작 완료.")
+            logger.info(f"[Scheduler] 매일 {cls._config['hour']:02d}:{cls._config['minute']:02d} 및 1시간 주기 자동 동기화 스케줄러 시작 완료.")
 
     @classmethod
     def shutdown_scheduler(cls):
@@ -178,3 +186,54 @@ class SchedulerService:
         finally:
             db.close()
             cls._is_running_task = False
+
+    @classmethod
+    async def execute_hourly_sync_job(cls):
+        """1시간마다 야구/축구/농구 최근 및 향후 3일간 경기 일정 및 스코어 자동 동기화"""
+        if cls._is_running_task:
+            logger.info("[Scheduler Hourly] 일일 작업 진행 중으로 1시간 수집 대기")
+            return
+
+        cls._is_running_task = True
+        start_time = datetime.now()
+        logger.info(f"[Scheduler Hourly] 1시간 주기 전 종목 자동 동기화 시작: {start_time.isoformat()}")
+
+        db = SessionLocal()
+        summary = {}
+
+        # 오늘 ~ 오늘+3일
+        today_str = start_time.strftime("%Y-%m-%d")
+        d3_str = (start_time + timedelta(days=3)).strftime("%Y-%m-%d")
+
+        try:
+            active_leagues = cls._config.get("leagues", ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "NBA"])
+            for lid in active_leagues:
+                try:
+                    res = MatchService.sync_from_official_site(
+                        db=db,
+                        league_id=lid,
+                        start_date=today_str,
+                        end_date=d3_str
+                    )
+                    summary[lid] = res.get("synced_matches_count", 0)
+                except Exception as ex:
+                    summary[lid] = f"ERR: {str(ex)}"
+
+            logger.info(f"[Scheduler Hourly] 1시간 주기 동기화 완료: {summary}")
+            try:
+                from app.core.websocket_manager import manager
+                await manager.broadcast({
+                    "type": "HOURLY_SYNC_COMPLETE",
+                    "timestamp": datetime.now().isoformat(),
+                    "summary": summary,
+                    "message": "1시간 주기 전 종목(5대리그·MLB·KBO·K리그·NPB·J리그·NBA) 자동 동기화 완료"
+                })
+            except Exception as be:
+                logger.warning(f"[Scheduler] WebSocket 브로드캐스트 오류: {be}")
+        except Exception as e:
+            logger.error(f"[Scheduler Hourly] 1시간 주기 동기화 중 오류: {e}")
+        finally:
+            db.close()
+            cls._is_running_task = False
+
+

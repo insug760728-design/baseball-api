@@ -89,8 +89,9 @@ class MatchResponse(MatchBase):
     id: int
     is_customized: bool = False
     custom_notes: Optional[str] = None
-    created_at: datetime
-    updated_at: datetime
+    prediction: Optional[Dict[str, Any]] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
