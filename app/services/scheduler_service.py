@@ -57,8 +57,17 @@ class SchedulerService:
                 id="hourly_sports_sync_job",
                 replace_existing=True
             )
+            # 10분마다 베트맨(Betman) 공식 발매금액·투표율·이월금 자동 최신화 (매 10분마다 실행)
+            betman_trigger = CronTrigger(minute="*/10")
+            scheduler.add_job(
+                cls.execute_betman_10min_sync_job,
+                trigger=betman_trigger,
+                id="betman_10min_sync_job",
+                replace_existing=True
+            )
             scheduler.start()
-            logger.info(f"[Scheduler] 매일 {cls._config['hour']:02d}:{cls._config['minute']:02d} 및 1시간 주기 자동 동기화 스케줄러 시작 완료.")
+            logger.info(f"[Scheduler] 매일 {cls._config['hour']:02d}:{cls._config['minute']:02d}, 1시간 전종목 동기화, 및 10분 주기 베트맨 공식 동기화 스케줄러 시작 완료.")
+
 
     @classmethod
     def shutdown_scheduler(cls):
@@ -244,5 +253,29 @@ class SchedulerService:
         finally:
             db.close()
             cls._is_running_task = False
+
+    @classmethod
+    async def execute_betman_10min_sync_job(cls):
+        """10분 주기 베트맨(BETMAN) 공식 발매금액·투표율·이월금 자동 최신화"""
+        try:
+            from app.services.betman_service import BetmanService
+            res = BetmanService.get_round_data(gm_id='G024', gm_ts=260066, force_refresh=True)
+            logger.info(f"[Scheduler] 베트맨 10분 주기 자동 최신화 완료 (총매출: {res.get('total_sell_amount', 0):,}원, 1등누적: {res.get('first_prize_pool', 0):,}원)")
+            try:
+                from app.core.websocket_manager import manager
+                await manager.broadcast({
+                    "type": "BETMAN_10MIN_UPDATED",
+                    "timestamp": res.get("updated_at"),
+                    "gmId": "G024",
+                    "gmTs": 260066,
+                    "first_prize_pool": res.get("first_prize_pool"),
+                    "total_sell_amount": res.get("total_sell_amount"),
+                    "total_sale_cnt": res.get("total_sale_cnt")
+                })
+            except Exception:
+                pass
+        except Exception as e:
+            logger.error(f"[Scheduler] 베트맨 10분 동기화 오류: {e}")
+
 
 

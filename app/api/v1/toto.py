@@ -8,11 +8,13 @@ router = APIRouter(prefix='/toto', tags=['토토 14경기 인터랙티브 & 베�
 @router.get('/betman', summary='베트맨(Betman) 14경기 공식 데이터 실시간 자동 수집 & 조회')
 def get_betman_toto_round(
     gmId: str = Query('G024', description='게임 ID: G024(야구 승1패), G011(축구 승무패), G027(농구 승5패)'),
-    gmTs: Optional[int] = Query(None, description='회차 번호 (예: 260066, 260065)')
+    gmTs: Optional[int] = Query(None, description='회차 번호 (예: 260066, 260065)'),
+    force: bool = Query(False, description='강제 최신 수집 여부')
 ):
     target_ts = gmTs if gmTs else (260066 if gmId == 'G024' else None)
-    data = BetmanService.get_round_data(gm_id=gmId, gm_ts=target_ts)
+    data = BetmanService.get_round_data(gm_id=gmId, gm_ts=target_ts, force_refresh=force)
     return data
+
 
 @router.get('/rounds', summary='토토 회차 목록')
 def get_available_rounds(gmId: str = Query('G024')):

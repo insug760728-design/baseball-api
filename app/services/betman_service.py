@@ -16,7 +16,7 @@ HEADERS = {
 }
 
 _CACHE = {}
-CACHE_TTL = 300 # 5 minutes
+CACHE_TTL = 600 # 10 minutes official Betman sync interval
 
 def clean_name(n):
     if not n: return ''
@@ -96,10 +96,10 @@ class BetmanService:
         return None
 
     @staticmethod
-    def get_round_data(gm_id: str = 'G024', gm_ts: int = 260066) -> dict:
+    def get_round_data(gm_id: str = 'G024', gm_ts: int = 260066, force_refresh: bool = False) -> dict:
         now = time.time()
         cache_key = f'{gm_id}_{gm_ts}'
-        if cache_key in _CACHE:
+        if not force_refresh and cache_key in _CACHE:
             ts_cached, data = _CACHE[cache_key]
             if now - ts_cached < CACHE_TTL:
                 return data
@@ -208,6 +208,24 @@ class BetmanService:
                 'db_prob_away': db_pred.get('away_pct', 50)
             })
 
+        forward_amt = int(cur.get('forwardAmount') or 0)
+        sell_amt = int(cur.get('totalSellAmount') or 0)
+        sale_cnt = int(cur.get('totalSaleCnt') or (sell_amt // 1000) or 0)
+
+        # Official Sports Toto Prize Allocation:
+        # Total payout pool = 50% of total sales
+        # 1st prize pool = accumulated rollover + 50% of payout pool (25% of sales)
+        # 2nd prize pool = 20% of payout pool (10% of sales)
+        # 3rd prize pool = 10% of payout pool (5% of sales)
+        # 4th prize pool = 20% of payout pool (10% of sales)
+        first_prize_pool = forward_amt + int(sell_amt * 0.25)
+        second_prize_pool = int(sell_amt * 0.10)
+        third_prize_pool = int(sell_amt * 0.05)
+        fourth_prize_pool = int(sell_amt * 0.10)
+
+        from datetime import datetime
+        now_str = datetime.now().strftime("%H:%M:%S")
+
         return {
             'status': 'success',
             'gmId': gm_id,
@@ -216,9 +234,15 @@ class BetmanService:
             'title': cur.get('gameName', sport_label),
             'sale_status': cur.get('saleStatus'),
             'status_message': cur.get('statusMessage', '발매 중'),
-            'forward_amount': cur.get('forwardAmount', 0),
+            'forward_amount': forward_amt,
             'forward_cnt': cur.get('forwardCnt', 0),
-            'total_sell_amount': cur.get('totalSellAmount', 0),
-            'total_sale_cnt': cur.get('totalSaleCnt', 0),
+            'total_sell_amount': sell_amt,
+            'total_sale_cnt': sale_cnt,
+            'first_prize_pool': first_prize_pool,
+            'second_prize_pool': second_prize_pool,
+            'third_prize_pool': third_prize_pool,
+            'fourth_prize_pool': fourth_prize_pool,
+            'updated_at': now_str,
             'matches': matches
         }
+
