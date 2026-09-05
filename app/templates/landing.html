@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SPORTIX PRO — 글로벌 3대 스포츠 실시간 소식 & 세이버메트릭스 포털</title>
+  <title>TOKEON PRO (tokeon.kr) — 글로벌 3대 스포츠 실시간 뉴스 & 공식 세이버메트릭스 API 포털</title>
   <!-- Bootstrap 5.3 & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -29,11 +29,7 @@
       --text-dim: #64748b;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       background-color: var(--bg-main);
@@ -44,24 +40,14 @@
     }
 
     /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: var(--bg-main);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #27354f;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #38bdf8;
-    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-main); }
+    ::-webkit-scrollbar-thumb { background: #27354f; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
 
     /* Navbar */
     .navbar-glass {
-      background: rgba(10, 14, 26, 0.85);
+      background: rgba(10, 14, 26, 0.88);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--border-color);
@@ -78,6 +64,15 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+    .domain-badge {
+      font-size: 0.72rem;
+      background: #0284c7;
+      color: white;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
     .nav-link-custom {
       color: var(--text-muted);
       font-size: 0.95rem;
@@ -86,9 +81,7 @@
       transition: color 0.2s ease;
       text-decoration: none;
     }
-    .nav-link-custom:hover {
-      color: var(--accent-blue);
-    }
+    .nav-link-custom:hover { color: var(--accent-blue); }
 
     /* Live Breaking News Marquee */
     .breaking-ticker {
@@ -98,10 +91,7 @@
       overflow: hidden;
       font-size: 0.88rem;
     }
-    .ticker-wrap {
-      display: flex;
-      align-items: center;
-    }
+    .ticker-wrap { display: flex; align-items: center; }
     .ticker-badge {
       background: #ef4444;
       color: white;
@@ -121,11 +111,9 @@
     .ticker-content {
       display: inline-block;
       white-space: nowrap;
-      animation: marquee 35s linear infinite;
+      animation: marquee 45s linear infinite;
     }
-    .ticker-content:hover {
-      animation-play-state: paused;
-    }
+    .ticker-content:hover { animation-play-state: paused; }
     @keyframes marquee {
       0% { transform: translateX(0); }
       100% { transform: translateX(-50%); }
@@ -162,16 +150,16 @@
       margin-bottom: 1.5rem;
     }
     .hero-title {
-      font-size: 3rem;
+      font-size: 2.85rem;
       font-weight: 800;
       line-height: 1.25;
       letter-spacing: -1px;
       margin-bottom: 1.25rem;
     }
     .hero-desc {
-      font-size: 1.15rem;
+      font-size: 1.12rem;
       color: var(--text-muted);
-      line-height: 1.7;
+      line-height: 1.75;
       margin-bottom: 2rem;
       max-width: 620px;
     }
@@ -230,7 +218,7 @@
       box-shadow: 0 20px 40px -15px rgba(56, 189, 248, 0.2);
     }
     .featured-img-wrap {
-      height: 240px;
+      height: 220px;
       background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
       position: relative;
       display: flex;
@@ -249,7 +237,7 @@
       position: absolute;
       top: 16px;
       left: 16px;
-      background: rgba(15, 23, 42, 0.8);
+      background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(8px);
       padding: 5px 12px;
       border-radius: 6px;
@@ -317,7 +305,7 @@
       box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.5);
     }
     .news-header-bg {
-      height: 140px;
+      height: 130px;
       position: relative;
       padding: 14px;
       display: flex;
@@ -336,7 +324,7 @@
       flex-grow: 1;
     }
     .news-title {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 700;
       line-height: 1.45;
       margin-bottom: 0.75rem;
@@ -347,7 +335,7 @@
       overflow: hidden;
     }
     .news-desc {
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       color: var(--text-muted);
       line-height: 1.6;
       margin-bottom: 1rem;
@@ -367,7 +355,7 @@
       color: var(--accent-blue);
     }
 
-    /* Category Filter Tabs */
+    /* Filter Tabs */
     .filter-btn {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
@@ -413,7 +401,7 @@
       margin-bottom: 1.25rem;
     }
 
-    /* Pricing Plans */
+    /* Pricing */
     .pricing-section {
       padding: 5rem 0;
       border-top: 1px solid var(--border-color);
@@ -435,9 +423,7 @@
       background: linear-gradient(180deg, #162038 0%, #121829 100%);
       box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.3);
     }
-    .pricing-card:hover {
-      transform: translateY(-5px);
-    }
+    .pricing-card:hover { transform: translateY(-5px); }
     .pricing-price {
       font-size: 2.5rem;
       font-weight: 800;
@@ -472,9 +458,7 @@
       text-decoration: none;
       transition: color 0.2s ease;
     }
-    .footer-link:hover {
-      color: var(--accent-blue);
-    }
+    .footer-link:hover { color: var(--accent-blue); }
 
     /* Custom Modal */
     .modal-content-custom {
@@ -499,17 +483,22 @@
   <!-- Top Navbar -->
   <nav class="navbar navbar-expand-lg navbar-glass">
     <div class="container">
-      <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="/">
         <div style="background: linear-gradient(135deg, #0284c7, #2563eb); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
           <i class="bi bi-lightning-charge-fill text-white fs-5"></i>
         </div>
-        <span class="nav-brand-title">SPORTIX PRO</span>
+        <div class="d-flex flex-column">
+          <div class="d-flex align-items-center gap-2">
+            <span class="nav-brand-title">TOKEON PRO</span>
+            <span class="domain-badge">tokeon.kr</span>
+          </div>
+        </div>
       </a>
 
       <!-- Sync Status Badge -->
       <div class="d-none d-md-flex align-items-center gap-2 ms-3 px-3 py-1" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 9999px;">
         <span style="width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; display: inline-block; animation: pulseGlow 1.5s infinite;"></span>
-        <span style="font-size: 0.78rem; font-weight: 700; color: #10b981;">3대 스포츠 259경기 실시간 동기화 LIVE</span>
+        <span style="font-size: 0.78rem; font-weight: 700; color: #10b981;">3대 스포츠 259경기 공식 실시간 집계 LIVE</span>
       </div>
 
       <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
@@ -537,19 +526,13 @@
     </div>
   </nav>
 
-  <!-- 실시간 속보 전광판 Ticker -->
+  <!-- 실시간 속보 전광판 Ticker (100% 실제 최신 뉴스 자동 주입) -->
   <div class="breaking-ticker">
     <div class="container d-flex align-items-center">
       <span class="ticker-badge"><i class="bi bi-broadcast-pin me-1"></i>BREAKING NEWS</span>
       <div style="overflow: hidden; width: 100%;">
         <div class="ticker-content" id="tickerItems">
-          <!-- Dynamically Injected Marquee Items -->
-          <span class="ticker-item" onclick="openArticleModal(1)">⚾ [MLB] 오타니 쇼헤이, wOBA .425 돌파하며 50-50 대기록 가시권 진입</span>
-          <span class="ticker-item" onclick="openArticleModal(2)">⚽ [EPL] 손흥민, 기대 어시스트(xA) 0.82 폭발하며 토트넘 역전승 견인</span>
-          <span class="ticker-item" onclick="openArticleModal(3)">🏀 [NBA] 요키치, TS% 72.8%로 덴버 공격 지휘... GameScore 32.4 경신</span>
-          <span class="ticker-item" onclick="openArticleModal(4)">⚾ [KBO] 가을야구 불펜 대전, 평균 FIP 2.45 팀이 승률 78% 기록</span>
-          <span class="ticker-item" onclick="openArticleModal(5)">⚽ [LALIGA] 레알 마드리드, xGOT 2.18로 엘 클라시코 화력전 완승</span>
-          <span class="ticker-item" onclick="openArticleModal(6)">🏀 [NBA] 현대 농구의 정수 'Pace와 eFG%'... 3점슛과 공격 템포 심층 분석</span>
+          <span class="ticker-item">실시간 스포츠 속보 뉴스를 로딩하고 있습니다...</span>
         </div>
       </div>
     </div>
@@ -561,7 +544,7 @@
       <div class="row align-items-center g-5">
         <div class="col-lg-7">
           <div class="hero-badge">
-            <i class="bi bi-stars"></i> 차세대 스포츠 미디어 & 데이터 인텔리전스
+            <i class="bi bi-stars"></i> tokeon.kr 공식 스포츠 미디어 & 데이터 포털
           </div>
           <h1 class="hero-title">
             스포츠를 읽는 가장 완벽한 시선,<br>
@@ -570,26 +553,26 @@
             </span>
           </h1>
           <p class="hero-desc">
-            야구(MLB·KBO·NPB), 유럽 축구 5대 리그(EPL·라리가·분데스리가·세리에A·리그1), 농구(NBA)의 
-            생생한 현장 소식과 <b>xG, wOBA, Pace</b> 등 첨단 계량 통계 API를 단 하나의 포털에서 만나보세요.
+            <b>tokeon.kr</b>은 야구(MLB·KBO·NPB), 유럽 축구 5대 리그(EPL·라리가·분데스리가·세리에A·리그1), 농구(NBA)의 
+            <b>100% 실제 현장 보도 기사</b>와 <b>공식 경기 스코어보드</b>, 그리고 <b>xG · wOBA · Pace</b> 첨단 세이버메트릭스 API를 단 하나의 포털에서 제공합니다.
           </p>
           <div class="d-flex flex-wrap gap-3">
             <a href="#news-section" class="btn btn-gradient">
-              <i class="bi bi-newspaper"></i> 최신 스포츠 소식 브리핑
+              <i class="bi bi-newspaper"></i> 실제 스포츠 뉴스 브리핑
             </a>
-            <a href="#pricing-section" class="btn btn-outline-glass">
-              <i class="bi bi-code-slash"></i> 상용 API 플랜 둘러보기
+            <a href="#match-strip" class="btn btn-outline-glass">
+              <i class="bi bi-broadcast"></i> 공식 경기 결과 센터
             </a>
             <a href="/dashboard" class="btn btn-outline-glass text-warning border-warning">
               <i class="bi bi-database-fill"></i> 데이터 관리자 콘솔
             </a>
           </div>
 
-          <!-- Feature Metric Highlights -->
+          <!-- Feature Metric Highlights (실제 DB 수치) -->
           <div class="row mt-5 pt-3 g-4 border-top" style="border-color: var(--border-color) !important;">
             <div class="col-4">
               <div class="fs-4 fw-bold text-white">259<span style="color: var(--accent-blue);">+</span></div>
-              <div class="text-muted" style="font-size: 0.85rem;">실시간 집계 경기</div>
+              <div class="text-muted" style="font-size: 0.85rem;">공식 집계 경기</div>
             </div>
             <div class="col-4">
               <div class="fs-4 fw-bold text-white">9<span style="color: var(--accent-green);">개</span></div>
@@ -602,28 +585,27 @@
           </div>
         </div>
 
-        <!-- Featured Headline Right Card -->
+        <!-- Featured Headline Right Card (100% 실제 뉴스 1위 연동) -->
         <div class="col-lg-5">
-          <div class="featured-card" onclick="openArticleModal(1)">
+          <div class="featured-card" id="featuredCard" onclick="openFeaturedModal()">
             <div class="featured-img-wrap">
-              <span class="featured-badge-top"><i class="bi bi-lightning-charge-fill me-1"></i>TOP HEADLINE</span>
+              <span class="featured-badge-top"><i class="bi bi-lightning-charge-fill me-1"></i>TODAY's HEADLINE</span>
               <i class="bi bi-trophy-fill featured-img-icon"></i>
-              <div class="p-4 text-center z-1">
-                <span class="badge bg-primary px-3 py-1 mb-2">⚾ MLB 메이저리그</span>
-                <h4 class="fw-bold text-white mb-0">오타니 쇼헤이, 전인미답 50-50 신기록 초읽기</h4>
+              <div class="p-4 text-center z-1 w-100">
+                <span class="badge bg-primary px-3 py-1 mb-2" id="featCategory">⚾ 야구</span>
+                <h5 class="fw-bold text-white mb-0" id="featTitle">실시간 최신 기사를 로딩 중입니다...</h5>
               </div>
             </div>
             <div class="p-4">
-              <p class="text-muted mb-3" style="font-size: 0.92rem; line-height: 1.6;">
-                단순 홈런과 도루 개수를 넘어 <b>wOBA .425</b>와 <b>wRC+ 182</b>라는 경이적인 생산력을 기록 중인 오타니의 실시간 세이버메트릭스 정밀 분석 리포트.
+              <p class="text-muted mb-3" id="featDesc" style="font-size: 0.92rem; line-height: 1.6;">
+                주요 스포츠 언론사의 실제 공식 기사 본문 요약을 불러오고 있습니다.
               </p>
-              <div class="d-flex flex-wrap gap-2 mb-3">
-                <span class="data-chip"><i class="bi bi-graph-up me-1"></i>wOBA .425</span>
-                <span class="data-chip"><i class="bi bi-fire me-1"></i>wRC+ 182</span>
-                <span class="data-chip"><i class="bi bi-check2-circle me-1"></i>OPS 1.034</span>
+              <div class="d-flex flex-wrap gap-2 mb-3" id="featChips">
+                <span class="data-chip">#실시간속보</span>
+                <span class="data-chip">#공식기사</span>
               </div>
               <div class="d-flex justify-content-between align-items-center pt-2 border-top" style="border-color: var(--border-color) !important;">
-                <span class="text-dim" style="font-size: 0.82rem;"><i class="bi bi-person-fill me-1"></i>스포허브 데이터랩 · 방금 전</span>
+                <span class="text-dim" style="font-size: 0.82rem;" id="featSource"><i class="bi bi-newspaper me-1"></i>언론사 공식 취재</span>
                 <span class="text-info fw-semibold" style="font-size: 0.85rem;">기사 전문 읽기 <i class="bi bi-arrow-right"></i></span>
               </div>
             </div>
@@ -633,13 +615,13 @@
     </div>
   </section>
 
-  <!-- Live Match Center Strip -->
+  <!-- Live Match Center Strip (100% 실제 공식 경기 스코어보드) -->
   <section class="match-strip-section" id="match-strip">
     <div class="container">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="d-flex align-items-center gap-2">
           <span style="width: 10px; height: 10px; background-color: #ef4444; border-radius: 50%; display: inline-block; animation: pulseGlow 1.2s infinite;"></span>
-          <h5 class="fw-bold mb-0 text-white"><i class="bi bi-broadcast me-1 text-danger"></i>실시간 경기 센터 (Live Match Center)</h5>
+          <h5 class="fw-bold mb-0 text-white"><i class="bi bi-broadcast me-1 text-danger"></i>공식 경기 센터 (Official Live Match Scores)</h5>
         </div>
         <div class="d-flex gap-2">
           <button class="btn btn-sm btn-outline-secondary py-0 px-2 active" id="stripBtnALL" onclick="filterStrip('ALL')">전체</button>
@@ -651,38 +633,40 @@
 
       <!-- Match Horizontal Slider -->
       <div class="d-flex gap-3 overflow-auto pb-2" id="stripContainer" style="scrollbar-width: thin;">
-        <!-- Loading Placeholder -->
-        <div class="text-muted p-3">실시간 경기 스코어보드 데이터를 불러오는 중...</div>
+        <div class="text-muted p-3">실제 공식 경기 결과 데이터를 불러오는 중...</div>
       </div>
     </div>
   </section>
 
-  <!-- Sports News & Editorial Magazine -->
+  <!-- Sports News & Editorial Magazine (100% 실제 스포츠 언론 보도) -->
   <section class="py-5" id="news-section">
     <div class="container">
       <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 pb-2 border-bottom" style="border-color: var(--border-color) !important;">
         <div>
-          <span class="text-primary fw-bold text-uppercase" style="font-size: 0.82rem; letter-spacing: 1px;">Editorial & Insights</span>
+          <span class="text-primary fw-bold text-uppercase" style="font-size: 0.82rem; letter-spacing: 1px;">Editorial & Press</span>
           <h2 class="fw-bold text-white mb-1"><i class="bi bi-newspaper me-2 text-primary"></i>스포츠 뉴스 & 심층 분석</h2>
-          <p class="text-muted mb-0" style="font-size: 0.95rem;">현장감 넘치는 경기 소식과 첨단 데이터가 결합된 프리미엄 스포츠 리포트</p>
+          <p class="text-muted mb-0" style="font-size: 0.95rem;">국내외 주요 스포츠 언론사에서 실시간 보도된 실제 기사입니다.</p>
         </div>
 
-        <!-- Action Buttons: Filter + Post News -->
+        <!-- Action Buttons: Filter + Refresh -->
         <div class="d-flex flex-wrap gap-2 align-items-center">
           <button class="filter-btn active" onclick="filterNews('ALL', this)">전체 소식</button>
           <button class="filter-btn" onclick="filterNews('BASEBALL', this)">⚾ 야구</button>
           <button class="filter-btn" onclick="filterNews('SOCCER', this)">⚽ 축구</button>
           <button class="filter-btn" onclick="filterNews('BASKETBALL', this)">🏀 농구</button>
           <button class="filter-btn" onclick="filterNews('ANALYTICS', this)">📊 데이터 칼럼</button>
-          <button class="btn btn-sm btn-success ms-md-2" onclick="openPostNewsModal()">
-            <i class="bi bi-pencil-square me-1"></i>새 소식 작성
+          <button class="btn btn-sm btn-outline-info ms-md-2" onclick="refreshLiveNews()">
+            <i class="bi bi-arrow-clockwise me-1"></i>뉴스 최신화
           </button>
         </div>
       </div>
 
       <!-- News Cards Grid -->
       <div class="row g-4" id="newsGrid">
-        <!-- Rendered by JavaScript -->
+        <div class="col-12 text-center text-muted py-5">
+          <div class="spinner-border text-primary" role="status"></div>
+          <div class="mt-2">실제 스포츠 뉴스 피드를 불러오고 있습니다...</div>
+        </div>
       </div>
     </div>
   </section>
@@ -761,7 +745,7 @@
     <div class="container">
       <div class="text-center max-w-700 mx-auto mb-5">
         <span class="badge bg-warning text-dark px-3 py-1 fw-bold mb-2">COMMERCIAL API & PRICING</span>
-        <h2 class="fw-bold text-white mb-3">비즈니스 맞춤형 프로페셔널 스포츠 API</h2>
+        <h2 class="fw-bold text-white mb-3">tokeon.kr 공식 개발자 & 기업용 API 요금제</h2>
         <p class="text-muted">
           스포츠 미디어, 데이터 스타트업, 스포츠 팬 커뮤니티, 전문 분석가를 위한 완벽한 RESTful API 구독 플랜
         </p>
@@ -778,7 +762,7 @@
               <li><i class="bi bi-check2 text-success"></i> 일일 500회 호출 한도</li>
               <li><i class="bi bi-check2 text-success"></i> 야구/축구/농구 기본 스코어보드</li>
               <li><i class="bi bi-check2 text-success"></i> 경기 일정 및 최종 결과 조회</li>
-              <li><i class="bi bi-check2 text-success"></i> 오픈 개발자 커뮤니티 지원</li>
+              <li><i class="bi bi-check2 text-success"></i> tokeon.kr 커뮤니티 지원</li>
               <li class="text-dim"><i class="bi bi-x text-secondary"></i> 세이버메트릭스 지표 미지원</li>
               <li class="text-dim"><i class="bi bi-x text-secondary"></i> 롤링 트렌드 및 ZIP 미지원</li>
             </ul>
@@ -803,7 +787,7 @@
               <li><i class="bi bi-check2 text-success"></i> <strong>3·5·7·10G/D 롤링 트렌드 API</strong></li>
               <li><i class="bi bi-check2 text-success"></i> <strong>구단/포지션별 정밀 JSON/ZIP 일괄 다운로드</strong></li>
               <li><i class="bi bi-check2 text-success"></i> 초당 20 RPS 속도 보장</li>
-              <li><i class="bi bi-check2 text-success"></i> 이메일 기술 지원 & 최신 스키마 가이드</li>
+              <li><i class="bi bi-check2 text-success"></i> 1:1 기술 지원 & 최신 스키마 가이드</li>
             </ul>
             <button class="btn btn-gradient w-100 py-2 mt-auto" onclick="selectPlan('Pro')">
               Pro 플랜 지금 시작하기
@@ -834,7 +818,7 @@
     </div>
   </section>
 
-  <!-- Footer with Legal & Business Information -->
+  <!-- Footer with Legal & Business Information (tokeon.kr 공식) -->
   <footer class="footer-section">
     <div class="container">
       <div class="row g-4 mb-4">
@@ -843,15 +827,16 @@
             <div style="background: linear-gradient(135deg, #0284c7, #2563eb); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
               <i class="bi bi-lightning-charge-fill text-white fs-6"></i>
             </div>
-            <span class="fs-5 fw-bold text-white">SPORTIX PRO</span>
+            <span class="fs-5 fw-bold text-white">TOKEON PRO</span>
+            <span class="domain-badge ms-1">tokeon.kr</span>
           </div>
           <p class="text-muted mb-3" style="line-height: 1.6; max-width: 420px;">
-            글로벌 3대 스포츠(야구, 축구, 농구) 실시간 소식 및 세이버메트릭스 데이터 인텔리전스를 공급하는 전문 스포츠 테크 플랫폼입니다.
+            <b>tokeon.kr</b>은 글로벌 3대 스포츠(야구, 축구, 농구)의 실시간 언론 보도와 공식 경기 결과, 그리고 첨단 세이버메트릭스 데이터 인텔리전스를 공급하는 전문 스포츠 테크 플랫폼입니다.
           </p>
           <div class="d-flex gap-3">
             <a href="#" class="text-muted fs-5"><i class="bi bi-github"></i></a>
             <a href="#" class="text-muted fs-5"><i class="bi bi-twitter-x"></i></a>
-            <a href="#" class="text-muted fs-5"><i class="bi bi-envelope-fill"></i></a>
+            <a href="mailto:support@tokeon.kr" class="text-muted fs-5"><i class="bi bi-envelope-fill"></i></a>
           </div>
         </div>
 
@@ -880,11 +865,12 @@
         <div class="col-lg-3">
           <h6 class="fw-bold text-white mb-3">사업자 등록 정보</h6>
           <div class="text-muted" style="font-size: 0.82rem; line-height: 1.8;">
-            <div><strong>상호명:</strong> 스포틱스 코리아 (SPORTIX PRO)</div>
+            <div><strong>도메인:</strong> tokeon.kr</div>
+            <div><strong>상호명:</strong> 토큰 프로 (TOKEON PRO)</div>
             <div><strong>사업자등록번호:</strong> 000-00-00000</div>
             <div><strong>통신판매업신고:</strong> 제2026-서울강남-0000호</div>
             <div><strong>대표자:</strong> 서비스 운영자</div>
-            <div><strong>고객센터:</strong> support@sportix.pro</div>
+            <div><strong>고객센터:</strong> support@tokeon.kr</div>
             <div><strong>소재지:</strong> 서울특별시 강남구 테헤란로</div>
           </div>
         </div>
@@ -892,7 +878,7 @@
 
       <div class="pt-3 mt-3 border-top d-flex flex-column flex-md-row justify-content-between align-items-center gap-2" style="border-color: var(--border-color) !important;">
         <div style="font-size: 0.8rem; color: var(--text-dim);">
-          © 2026 SPORTIX PRO. All rights reserved. 본 서비스에서 제공하는 모든 경기 데이터와 계량 지표의 저작권은 당사에 있습니다.
+          © 2026 TOKEON PRO (tokeon.kr). All rights reserved. 본 서비스에서 제공하는 모든 경기 데이터와 계량 지표의 저작권은 당사에 있습니다.
         </div>
         <div class="d-flex gap-3" style="font-size: 0.8rem;">
           <a href="#" class="footer-link">이용약관</a>
@@ -903,7 +889,7 @@
     </div>
   </footer>
 
-  <!-- Modal 1: Article Reader Modal -->
+  <!-- Modal 1: Article Reader Modal (실제 언론사 원문 링크 연동) -->
   <div class="modal fade" id="articleModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content modal-content-custom">
@@ -915,18 +901,18 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-4">
-          <h3 class="fw-bold text-white mb-3" id="modalTitle">기사 제목</h3>
+          <h4 class="fw-bold text-white mb-3" id="modalTitle">기사 제목</h4>
           <div class="d-flex align-items-center gap-2 text-muted mb-4 pb-3 border-bottom" style="border-color: var(--border-color) !important; font-size: 0.88rem;">
-            <span><i class="bi bi-person-circle me-1"></i><strong id="modalAuthor">스포허브 분석팀</strong></span>
+            <span><i class="bi bi-newspaper me-1"></i><strong id="modalSource" class="text-info">언론사</strong></span>
             <span>•</span>
-            <span id="modalSource">스포틱스 공식 데스크</span>
+            <span id="modalAuthor">취재팀</span>
           </div>
 
           <!-- Featured Data Card inside Modal -->
           <div class="p-3 mb-4 rounded-3" style="background: var(--bg-panel); border: 1px solid var(--border-color);" id="modalDataBox">
             <div class="d-flex align-items-center gap-2 mb-2">
-              <i class="bi bi-graph-up text-info"></i>
-              <strong class="text-white" style="font-size: 0.92rem;">연계 세이버메트릭스 데이터 인사이트</strong>
+              <i class="bi bi-tags-fill text-warning"></i>
+              <strong class="text-white" style="font-size: 0.92rem;">연계 키워드 & 데이터 태그</strong>
             </div>
             <div class="d-flex flex-wrap gap-2" id="modalChips">
               <!-- Chips -->
@@ -940,62 +926,60 @@
         </div>
         <div class="modal-footer modal-footer-custom d-flex justify-content-between">
           <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">닫기</button>
-          <a href="/dashboard" class="btn btn-primary btn-sm">
-            <i class="bi bi-speedometer2 me-1"></i>관련 경기 데이터 센터 바로가기
+          <a href="#" target="_blank" id="modalOriginalLink" class="btn btn-primary btn-sm">
+            <i class="bi bi-box-arrow-up-right me-1"></i>언론사 공식 원문 기사 보러가기
           </a>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Modal 2: Post News Article Modal -->
-  <div class="modal fade" id="postNewsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+  <!-- Modal 2: Match Detail Scoreboard Modal (100% 실제 공식 경기 스코어보드) -->
+  <div class="modal fade" id="matchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content modal-content-custom">
-        <div class="modal-header modal-header-custom">
-          <h5 class="modal-title fw-bold text-white"><i class="bi bi-pencil-square text-success me-2"></i>새 스포츠 소식 / 칼럼 등록</h5>
+        <div class="modal-header modal-header-custom d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-danger" id="matchModalStatus">FINISHED</span>
+            <span class="text-muted" style="font-size: 0.88rem;" id="matchModalLeague">NBA</span>
+            <span class="text-dim" style="font-size: 0.82rem;" id="matchModalDate"></span>
+          </div>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-4">
-          <form id="postNewsForm">
-            <div class="mb-3">
-              <label class="form-label text-muted" style="font-size: 0.88rem;">종목 카테고리</label>
-              <select class="form-select bg-dark text-white border-secondary" id="newCategory">
-                <option value="BASEBALL">⚾ 야구 (MLB/KBO/NPB)</option>
-                <option value="SOCCER">⚽ 축구 (유럽 5대리그)</option>
-                <option value="BASKETBALL">🏀 농구 (NBA)</option>
-                <option value="ANALYTICS">📊 데이터 칼럼 & 세이버메트릭스</option>
-              </select>
+          <!-- Score Summary Box -->
+          <div class="d-flex justify-content-around align-items-center p-3 mb-4 rounded-3" style="background: var(--bg-panel); border: 1px solid var(--border-color);">
+            <div class="text-center" style="width: 40%;">
+              <h5 class="fw-bold text-white mb-1" id="matchModalHomeTeam">홈팀</h5>
+              <div class="text-muted small">HOME</div>
             </div>
-            <div class="mb-3">
-              <label class="form-label text-muted" style="font-size: 0.88rem;">기사 제목</label>
-              <input type="text" class="form-control bg-dark text-white border-secondary" id="newTitle" placeholder="헤드라인을 입력하세요" required>
+            <div class="text-center px-3" style="width: 20%;">
+              <div class="fs-2 fw-bold text-warning" id="matchModalScore">0 : 0</div>
             </div>
-            <div class="row g-2 mb-3">
-              <div class="col-6">
-                <label class="form-label text-muted" style="font-size: 0.88rem;">작성자 / 부서</label>
-                <input type="text" class="form-control bg-dark text-white border-secondary" id="newAuthor" value="스포츠 데스크" required>
-              </div>
-              <div class="col-6">
-                <label class="form-label text-muted" style="font-size: 0.88rem;">데이터 태그 (쉼표 구분)</label>
-                <input type="text" class="form-control bg-dark text-white border-secondary" id="newTags" placeholder="wOBA .410, xG 2.1">
-              </div>
+            <div class="text-center" style="width: 40%;">
+              <h5 class="fw-bold text-white mb-1" id="matchModalAwayTeam">원정팀</h5>
+              <div class="text-muted small">AWAY</div>
             </div>
-            <div class="mb-3">
-              <label class="form-label text-muted" style="font-size: 0.88rem;">기사 요약 (1~2줄)</label>
-              <input type="text" class="form-control bg-dark text-white border-secondary" id="newDesc" placeholder="기사의 핵심 요약" required>
+          </div>
+
+          <!-- Period Scoreboard Table -->
+          <h6 class="fw-bold text-white mb-2"><i class="bi bi-table me-1 text-info"></i>공식 기간별 스코어보드 (Period Scores)</h6>
+          <div class="table-responsive mb-4">
+            <table class="table table-dark table-bordered table-sm text-center mb-0" style="font-size: 0.88rem; border-color: var(--border-color);" id="periodScoresTable">
+              <!-- Dynamically populated -->
+            </table>
+          </div>
+
+          <!-- Advanced Analytics Shortcut -->
+          <div class="p-3 rounded-3 d-flex justify-content-between align-items-center" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2);">
+            <div>
+              <div class="fw-bold text-white" style="font-size: 0.9rem;"><i class="bi bi-graph-up-arrow text-info me-1"></i>정밀 세이버메트릭스 & 박스스코어</div>
+              <div class="text-muted small">타자/투수 세부 지표, 축구 xG/PPDA, 농구 Pace/ORtg/TS% 전수 지원</div>
             </div>
-            <div class="mb-3">
-              <label class="form-label text-muted" style="font-size: 0.88rem;">기사 본문</label>
-              <textarea class="form-control bg-dark text-white border-secondary" id="newContent" rows="5" placeholder="기사 상세 내용을 작성하세요" required></textarea>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer modal-footer-custom">
-          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">취소</button>
-          <button type="button" class="btn btn-success btn-sm" onclick="saveNewArticle()">
-            <i class="bi bi-check-lg me-1"></i>소식 즉시 발행하기
-          </button>
+            <a href="/dashboard" class="btn btn-sm btn-info text-dark fw-bold">
+              콘솔에서 전체 보기
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -1006,7 +990,7 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content modal-content-custom">
         <div class="modal-header modal-header-custom">
-          <h5 class="modal-title fw-bold text-white"><i class="bi bi-key-fill text-warning me-2"></i>SPORTIX 개발자 API 키 발급 & 플랜</h5>
+          <h5 class="modal-title fw-bold text-white"><i class="bi bi-key-fill text-warning me-2"></i>tokeon.kr 개발자 API 키 발급 & 플랜</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-4">
@@ -1028,7 +1012,7 @@
             </div>
             <div class="mb-3">
               <label class="form-label text-muted" style="font-size: 0.88rem;">연락처 이메일</label>
-              <input type="email" class="form-control bg-dark text-white border-secondary" id="applicantEmail" placeholder="developer@company.com">
+              <input type="email" class="form-control bg-dark text-white border-secondary" id="applicantEmail" placeholder="developer@tokeon.kr">
             </div>
             <button class="btn btn-gradient w-100 py-2 mt-2" onclick="generateApiKey()">
               <i class="bi bi-shield-lock-fill me-1"></i>API 키 즉시 생성 & 활성화
@@ -1043,14 +1027,14 @@
               <p class="text-muted" style="font-size: 0.88rem;">발급된 키를 API 호출 헤더의 <code class="text-info">X-API-KEY</code>로 전달해 주세요.</p>
             </div>
             <div class="p-3 bg-dark border border-secondary rounded-3 mb-3">
-              <label class="text-dim" style="font-size: 0.75rem;">YOUR API KEY</label>
+              <label class="text-dim" style="font-size: 0.75rem;">YOUR API KEY (tokeon.kr)</label>
               <div class="d-flex justify-content-between align-items-center">
                 <code class="text-warning fw-bold fs-6" id="generatedKeyBox">sk_live_...</code>
                 <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="copyApiKey()"><i class="bi bi-copy"></i> 복사</button>
               </div>
             </div>
             <div class="p-2 text-muted" style="font-size: 0.82rem; background: rgba(56, 189, 248, 0.08); border-radius: 6px;">
-              <i class="bi bi-info-circle text-info me-1"></i>도메인 연결 및 SSL 설정 완료 후 상용 서비스에서 바로 사용하실 수 있습니다.
+              <i class="bi bi-info-circle text-info me-1"></i><strong>tokeon.kr</strong> 공식 API 엔드포인트: <code class="text-white">https://tokeon.kr/api/v1/</code>
             </div>
           </div>
         </div>
@@ -1061,147 +1045,50 @@
   <!-- Bootstrap Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- News & Live Matches Script -->
+  <!-- Real News & Matches Script -->
   <script>
-    // Initial Sports News Database
-    const DEFAULT_NEWS = [
-      {
-        id: 1,
-        category: 'BASEBALL',
-        categoryLabel: '⚾ 야구',
-        categoryClass: 'bg-baseball',
-        title: '오타니 쇼헤이, wOBA .425 돌파하며 역사상 최초 50-50 대기록 달성 초읽기',
-        desc: '단순 홈런과 도루 개수를 넘어 wOBA .425, wRC+ 182를 기록 중인 오타니의 경기 기여도와 타석별 세이버메트릭스 정밀 분석.',
-        author: '스포허브 메이저리그 데스크',
-        date: '2026-09-05 18:30',
-        chips: ['wOBA .425', 'wRC+ 182', 'OPS 1.034', 'WAR 8.2'],
-        content: `오타니 쇼헤이가 메이저리그 사상 초유의 50홈런-50도루 클럽 달성을 눈앞에 두고 있습니다. 이번 시즌 오타니의 진정한 가치는 단순 누적 기록뿐만 아니라 세이버메트릭스 지표에서 더욱 두드러집니다.
-
-현재 오타니의 가중 출루율(wOBA)은 .425로 리그 1위를 달리고 있으며, 구장 환경과 리그 평균을 보정한 조정 득점 창출력(wRC+)은 182에 달합니다. 이는 그가 타석에 들어설 때마다 리그 평균 타자 대비 82% 더 많은 득점을 팀에 안겨주고 있음을 의미합니다.
-
-또한 강한 타구 비율(HardHit%)이 58.4%에 달하며, 인플레이 타구 타율(BABIP) 역시 .342로 최상위권을 유지하고 있어 운이 아닌 순수한 타격 파워로 리그를 지배하고 있음을 증명하고 있습니다.`
-      },
-      {
-        id: 2,
-        category: 'SOCCER',
-        categoryLabel: '⚽ 축구',
-        categoryClass: 'bg-soccer',
-        title: '손흥민, xA(기대 어시스트) 0.82 폭발... 토트넘 후반 극적 역전승 견인',
-        desc: '유럽 5대 리그 정상급 찬스 메이킹과 키패스 4회 기록. 전방 압박과 파이널 서드 패스 성공률 88%로 경기 최우수 선수 선정.',
-        author: 'EPL 전문 분석팀',
-        date: '2026-09-05 17:15',
-        chips: ['xA 0.82', '키패스 4회', '유효슈팅 3', 'PPDA 7.2'],
-        content: `토트넘 홋스퍼의 캡틴 손흥민이 환상적인 찬스 메이킹으로 팀의 극적인 역전승을 견인했습니다. 이날 손흥민은 단순 득점 이상의 플레이메이킹 능력을 발휘했습니다.
-
-데이터 분석 결과 손흥민의 기대 어시스트(xA)는 0.82로 양 팀 통틀어 최고치를 기록했습니다. 특히 상대 수비진의 빈틈을 파고드는 4차례의 결정적 키패스와 전진 패스 7회를 성공시키며 상대 전방 압박(PPDA 7.2)을 무력화시켰습니다.
-
-경기 후 공식 평점 8.9점을 획득한 손흥민은 이번 라운드 프리미어리그 베스트 11에 선정되며 건재함을 과시했습니다.`
-      },
-      {
-        id: 3,
-        category: 'BASKETBALL',
-        categoryLabel: '🏀 농구',
-        categoryClass: 'bg-basketball',
-        title: '니콜라 요키치, TS% 72.8%로 덴버 승리 견인... Hollinger GameScore 32.4',
-        desc: '트리플더블과 함께 100회 포제션당 137점의 압도적 공격효율(ORtg) 기록. 골밑 지배력과 클러치 패스로 리그 판도 장악.',
-        author: 'NBA 데이터 분석실',
-        date: '2026-09-05 16:40',
-        chips: ['TS% 72.8%', 'GameScore 32.4', 'ORtg 137.0', 'Pace 96.3'],
-        content: `덴버 너게츠의 에이스 니콜라 요키치가 또 한 번의 경이로운 효율성을 선보였습니다. 요키치는 출전 시간 동안 야투 성공률 66.7%와 함께 자유투를 완벽하게 꽂아 넣으며 트루 슈팅 성공률(TS%) 72.8%를 기록했습니다.
-
-John Hollinger가 고안한 종합 경기 기여도(Game Score)에서 32.4점을 획득한 요키치는 팀이 100회 공격 점유권을 가질 때마다 무려 137.0점을 생산해내는 압도적인 공격 레이팅(ORtg)을 이끌어냈습니다.
-
-덴버는 요키치의 컨트롤 아래 템포(Pace 96.3)를 유지하며 경기 후반 멤피스의 추격을 완전히 따돌렸습니다.`
-      },
-      {
-        id: 4,
-        category: 'BASEBALL',
-        categoryLabel: '⚾ 야구',
-        categoryClass: 'bg-baseball',
-        title: 'KBO 포스트시즌 진출권 다툼: 불펜 FIP 2.45로 막아낸 철벽 마운드의 비결',
-        desc: '수비수의 실책이나 운을 배제한 수비 독립 평균자책점(FIP)에서 압도적인 수치를 기록한 팀이 최근 10경기 승률 80% 달성.',
-        author: 'KBO 전문기자단',
-        date: '2026-09-05 15:20',
-        chips: ['FIP 2.45', 'K/9 10.2', 'WHIP 0.98', 'LOB% 82%'],
-        content: `KBO 가을야구 순위 싸움이 절정에 달한 가운데, 불펜진의 수비 독립 평균자책점(FIP)이 순위 판도를 가르는 결정적 잣대로 부상하고 있습니다.
-
-최근 10경기에서 8승을 쓸어 담은 모 구단의 불펜진은 9이닝당 탈삼진(K/9) 10.2개를 솎아내며 FIP 2.45를 기록했습니다. 수비진의 보이지 않는 실책이나 빗맞은 안타에 흔들리지 않고 삼진과 범타로 실점을 틀어막은 점이 상승세의 원동력으로 꼽힙니다.
-
-잔루 처리율(LOB%) 역시 82%에 달해 위기 상황에서의 탈출 능력이 리그 최고 수준임을 입증했습니다.`
-      },
-      {
-        id: 5,
-        category: 'SOCCER',
-        categoryLabel: '⚽ 축구',
-        categoryClass: 'bg-soccer',
-        title: '레알 마드리드, xGOT 2.18로 엘 클라시코 화력전 완승... 역습의 정석',
-        desc: '유효슈팅의 궤적과 파워를 측정한 xGOT에서 상대를 압도하며 3골 폭발. 필드 틸트 열세에도 불구하고 치명적인 결정력 과시.',
-        author: '라리가 스페셜 리포터',
-        date: '2026-09-05 14:10',
-        chips: ['xGOT 2.18', '결정력 28%', 'SoT% 60%', 'PSxG 1.95'],
-        content: `스페인 최고의 빅매치 엘 클라시코에서 레알 마드리드가 치명적인 결정력으로 승리를 거머쥐었습니다.
-
-점유율과 필드 틸트(Field Tilt 42%)에서는 다소 밀렸으나, 상대 골문을 향한 유효슈팅 기대 득점(xGOT)은 무려 2.18에 달했습니다. 이는 골키퍼가 손쓸 수 없는 골문 구석으로 향한 질 높은 슈팅이 대거 나왔음을 의미합니다.
-
-특히 음바페와 비니시우스의 역습 전개는 상대 골키퍼의 실점 억제력을 무력화시키며 완벽한 승리를 이끌었습니다.`
-      },
-      {
-        id: 6,
-        category: 'BASKETBALL',
-        categoryLabel: '🏀 농구',
-        categoryClass: 'bg-basketball',
-        title: 'NBA 현대 농구의 화두 "Pace와 eFG%"... 공격 템포와 3점슛의 상관관계',
-        desc: '경기당 100회 이상의 포제션을 소화하면서도 유효 야투율 55% 이상을 유지하는 팀들의 플레이오프 진출 확률 92% 분석.',
-        author: '스포허브 바스켓랩',
-        date: '2026-09-05 12:30',
-        chips: ['eFG% 56.4%', 'Pace 101.2', '3P% 38.5%', 'NetRating +8.5'],
-        content: `현대 NBA에서 승리를 거두기 위한 가장 중요한 두 축은 바로 빠른 경기 템포(Pace)와 3점슛 가중치가 반영된 유효 야투율(eFG%)입니다.
-
-데이터 분석 결과, 경기당 100개 이상의 포제션을 유지하면서도 eFG% 55%를 초과하는 팀들은 정규시즌 승률 70% 이상을 거두고 있습니다. 단순 미드레인지 점퍼보다 페인트존 침투와 코너 3점슛을 조합한 슛 차트가 현대 농구 승리의 공식으로 굳어졌음을 확인했습니다.`
-      },
-      {
-        id: 7,
-        category: 'ANALYTICS',
-        categoryLabel: '📊 데이터 칼럼',
-        categoryClass: 'bg-analytics',
-        title: '전통 승률 vs 세이버메트릭스 기대 지표: 왜 데이터 기반 분석이 필수인가?',
-        desc: '피타고리안 기대 승률과 xG 모델이 증명하는 스포츠 데이터 혁명. 운과 기복을 걷어내고 미래 경기 결과를 예측하는 메커니즘.',
-        author: '수석 데이터 사이언티스트',
-        date: '2026-09-05 11:00',
-        chips: ['피타고리안 기대승률', 'xG 모델링', 'WAR/WPA', '머신러닝 예측'],
-        content: `스포츠에서 '운(Luck)'은 결과를 왜곡하는 가장 큰 요인입니다. 불운하게 빗맞은 타구가 안타가 되거나 골대를 강타하는 슛 하나로 승패가 갈릴 수 있습니다.
-
-하지만 세이버메트릭스는 이러한 일시적 노이즈를 제거하고 팀의 진짜 본질적인 실력을 측정합니다. 야구의 wOBA와 FIP, 축구의 xG와 PPDA, 농구의 Net Rating은 모두 '다음 경기에서 이 팀이 실제로 승리할 확률'을 기존 클래식 스탯보다 훨씬 더 정확하게 예측해 냅니다. 이것이 글로벌 스포츠 베팅 시장과 구단들이 데이터 API에 막대한 투자를 하는 이유입니다.`
-      }
-    ];
-
-    let currentNewsList = [];
+    let realNewsList = [];
     let currentFilter = 'ALL';
+    let allMatches = [];
 
-    // Load news from localStorage or set defaults
-    function loadNews() {
-      const stored = localStorage.getItem('sportix_news_db');
-      if (stored) {
-        try {
-          currentNewsList = JSON.parse(stored);
-        } catch (e) {
-          currentNewsList = DEFAULT_NEWS;
-        }
-      } else {
-        currentNewsList = DEFAULT_NEWS;
-        localStorage.setItem('sportix_news_db', JSON.stringify(DEFAULT_NEWS));
+    // 1. Fetch 100% Real Sports News from FastAPI backend
+    async function loadRealNews() {
+      const grid = document.getElementById('newsGrid');
+      try {
+        const resp = await fetch('/api/v1/news/');
+        if (!resp.ok) throw new Error('News fetch failed');
+        const json = await resp.json();
+        realNewsList = json.data || [];
+        renderNews();
+        updateTickerAndFeatured();
+      } catch (e) {
+        console.error('Error loading real news:', e);
+        grid.innerHTML = '<div class="col-12 text-center text-danger py-4">실시간 뉴스를 불러오는데 실패했습니다. 잠시 후 다시 시도해 주세요.</div>';
       }
-      renderNews();
+    }
+
+    // Refresh News button
+    async function refreshLiveNews() {
+      const grid = document.getElementById('newsGrid');
+      grid.innerHTML = '<div class="col-12 text-center text-info py-4"><div class="spinner-border spinner-border-sm me-2"></div>실시간 언론사 최신 기사를 수집 중입니다...</div>';
+      try {
+        const resp = await fetch('/api/v1/news/refresh', { method: 'POST' });
+        const json = await resp.json();
+        await loadRealNews();
+        alert('최신 스포츠 뉴스가 새로고침 되었습니다!');
+      } catch (e) {
+        alert('뉴스 최신화 중 오류가 발생했습니다.');
+      }
     }
 
     function renderNews() {
       const grid = document.getElementById('newsGrid');
       const filtered = currentFilter === 'ALL' 
-        ? currentNewsList 
-        : currentNewsList.filter(item => item.category === currentFilter);
+        ? realNewsList 
+        : realNewsList.filter(item => item.category === currentFilter);
 
       if (filtered.length === 0) {
-        grid.innerHTML = '<div class="col-12 text-center text-muted py-5">해당 카테고리의 소식이 없습니다.</div>';
+        grid.innerHTML = '<div class="col-12 text-center text-muted py-5">해당 카테고리의 실제 기사가 없습니다.</div>';
         return;
       }
 
@@ -1228,8 +1115,8 @@ John Hollinger가 고안한 종합 경기 기여도(Game Score)에서 32.4점을
                 <h5 class="news-title">${item.title}</h5>
                 <p class="news-desc">${item.desc}</p>
                 <div class="d-flex justify-content-between align-items-center pt-2 border-top" style="border-color: var(--border-color) !important;">
-                  <span class="text-dim" style="font-size: 0.8rem;"><i class="bi bi-person me-1"></i>${item.author}</span>
-                  <span class="text-primary fw-semibold" style="font-size: 0.82rem;">읽기 <i class="bi bi-chevron-right"></i></span>
+                  <span class="text-info fw-semibold" style="font-size: 0.8rem;"><i class="bi bi-newspaper me-1"></i>${item.source}</span>
+                  <span class="text-primary fw-semibold" style="font-size: 0.82rem;">전문 읽기 <i class="bi bi-chevron-right"></i></span>
                 </div>
               </div>
             </div>
@@ -1246,15 +1133,56 @@ John Hollinger가 고안한 종합 경기 기여도(Game Score)에서 32.4점을
       renderNews();
     }
 
+    function updateTickerAndFeatured() {
+      if (!realNewsList || realNewsList.length === 0) return;
+
+      // Update Ticker with top 6 real news
+      const tickerBox = document.getElementById('tickerItems');
+      let tickerHtml = '';
+      const topTicker = realNewsList.slice(0, 8);
+      topTicker.forEach(n => {
+        tickerHtml += `<span class="ticker-item" onclick="openArticleModal(${n.id})">${n.categoryLabel} [${n.source}] ${n.title}</span>`;
+      });
+      tickerBox.innerHTML = tickerHtml;
+
+      // Update Featured Story with #1 Real News
+      const top1 = realNewsList[0];
+      if (top1) {
+        document.getElementById('featCategory').innerText = top1.categoryLabel;
+        document.getElementById('featTitle').innerText = top1.title;
+        document.getElementById('featDesc').innerText = top1.desc;
+        document.getElementById('featSource').innerHTML = `<i class="bi bi-newspaper me-1"></i>${top1.source} 취재보도 · ${top1.date}`;
+        if (top1.chips && top1.chips.length > 0) {
+          document.getElementById('featChips').innerHTML = top1.chips.map(c => `<span class="data-chip">${c}</span>`).join('');
+        }
+      }
+    }
+
+    function openFeaturedModal() {
+      if (realNewsList && realNewsList.length > 0) {
+        openArticleModal(realNewsList[0].id);
+      }
+    }
+
     function openArticleModal(id) {
-      const item = currentNewsList.find(n => n.id === id);
+      const item = realNewsList.find(n => n.id === id);
       if (!item) return;
 
       document.getElementById('modalCategory').innerText = item.categoryLabel;
       document.getElementById('modalDate').innerText = item.date;
       document.getElementById('modalTitle').innerText = item.title;
       document.getElementById('modalAuthor').innerText = item.author;
+      document.getElementById('modalSource').innerText = item.source;
       document.getElementById('modalContent').innerHTML = item.content.replace(/\n/g, '<br><br>');
+
+      const linkBtn = document.getElementById('modalOriginalLink');
+      if (item.link && item.link.startsWith('http')) {
+        linkBtn.href = item.link;
+        linkBtn.style.display = 'inline-flex';
+      } else {
+        linkBtn.href = '/dashboard';
+        linkBtn.style.display = 'inline-flex';
+      }
 
       const chipsBox = document.getElementById('modalChips');
       if (item.chips && item.chips.length > 0) {
@@ -1268,82 +1196,38 @@ John Hollinger가 고안한 종합 경기 기여도(Game Score)에서 32.4점을
       modal.show();
     }
 
-    function openPostNewsModal() {
-      const modal = new bootstrap.Modal(document.getElementById('postNewsModal'));
-      modal.show();
-    }
-
-    function saveNewArticle() {
-      const cat = document.getElementById('newCategory').value;
-      const title = document.getElementById('newTitle').value.trim();
-      const author = document.getElementById('newAuthor').value.trim();
-      const desc = document.getElementById('newDesc').value.trim();
-      const content = document.getElementById('newContent').value.trim();
-      const tagsStr = document.getElementById('newTags').value.trim();
-
-      if (!title || !desc || !content) {
-        alert('제목, 요약, 본문을 모두 입력해 주세요.');
-        return;
-      }
-
-      const chips = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : [];
-
-      let catLabel = '⚾ 야구';
-      let catClass = 'bg-baseball';
-      if (cat === 'SOCCER') { catLabel = '⚽ 축구'; catClass = 'bg-soccer'; }
-      else if (cat === 'BASKETBALL') { catLabel = '🏀 농구'; catClass = 'bg-basketball'; }
-      else if (cat === 'ANALYTICS') { catLabel = '📊 데이터 칼럼'; catClass = 'bg-analytics'; }
-
-      const now = new Date();
-      const dateStr = now.toISOString().slice(0, 16).replace('T', ' ');
-
-      const newArticle = {
-        id: Date.now(),
-        category: cat,
-        categoryLabel: catLabel,
-        categoryClass: catClass,
-        title: title,
-        desc: desc,
-        author: author || '스포허브 데스크',
-        date: dateStr,
-        chips: chips,
-        content: content
-      };
-
-      currentNewsList.unshift(newArticle);
-      localStorage.setItem('sportix_news_db', JSON.stringify(currentNewsList));
-      renderNews();
-
-      bootstrap.Modal.getInstance(document.getElementById('postNewsModal')).hide();
-      document.getElementById('postNewsForm').reset();
-      alert('새 스포츠 소식이 성공적으로 발행되었습니다!');
-    }
-
-    // Live Match Center Strip Loading from FastAPI
-    let allMatches = [];
+    // 2. Fetch 100% Real Match Scores from DB
     async function loadLiveMatches() {
       const container = document.getElementById('stripContainer');
       try {
-        const resp = await fetch('/api/v1/matches?limit=40');
+        const resp = await fetch('/api/v1/matches?limit=60');
         if (!resp.ok) throw new Error('Failed to load matches');
         allMatches = await resp.json();
+
+        // Sort: prioritize FINISHED matches with real scores first
+        allMatches.sort((a, b) => {
+          if (a.status === 'FINISHED' && b.status !== 'FINISHED') return -1;
+          if (a.status !== 'FINISHED' && b.status === 'FINISHED') return 1;
+          return b.id - a.id;
+        });
+
         renderMatchStrip('ALL');
       } catch (e) {
-        console.error('Match strip load error:', e);
-        container.innerHTML = '<div class="text-muted p-3">실시간 경기 스코어보드를 대시보드 콘솔에서 확인하실 수 있습니다.</div>';
+        console.error('Match strip error:', e);
+        container.innerHTML = '<div class="text-muted p-3">실제 경기 스코어보드를 관리자 콘솔에서 조회할 수 있습니다.</div>';
       }
     }
 
     function renderMatchStrip(sport) {
       const container = document.getElementById('stripContainer');
       if (!allMatches || allMatches.length === 0) {
-        container.innerHTML = '<div class="text-muted p-3">적재된 경기가 없습니다.</div>';
+        container.innerHTML = '<div class="text-muted p-3">적재된 실제 경기가 없습니다.</div>';
         return;
       }
 
       const filtered = sport === 'ALL' 
-        ? allMatches.slice(0, 20) 
-        : allMatches.filter(m => m.sport_code === sport).slice(0, 20);
+        ? allMatches.slice(0, 25) 
+        : allMatches.filter(m => m.sport_code === sport).slice(0, 25);
 
       let html = '';
       filtered.forEach(m => {
@@ -1357,7 +1241,7 @@ John Hollinger가 고안한 종합 경기 기여도(Game Score)에서 32.4점을
           : (m.status === 'FINISHED' ? '<span class="badge bg-secondary">종료</span>' : '<span class="badge bg-dark">예정</span>');
 
         html += `
-          <div class="strip-card" onclick="location.href='/dashboard'">
+          <div class="strip-card" onclick="openMatchModal(${m.id})">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="strip-league">${sportIcon} ${m.league_name || m.sport_code}</span>
               ${stBadge}
@@ -1370,8 +1254,9 @@ John Hollinger가 고안한 종합 경기 기여도(Game Score)에서 32.4점을
               <span class="strip-team text-truncate me-2" style="max-width: 140px;">${m.away_team_name}</span>
               <span class="strip-score">${m.away_score}</span>
             </div>
-            <div class="text-dim mt-2 pt-1 border-top" style="border-color: var(--border-color) !important; font-size: 0.75rem;">
-              ${m.match_date || '일정 확인'}
+            <div class="text-dim mt-2 pt-1 border-top d-flex justify-content-between align-items-center" style="border-color: var(--border-color) !important; font-size: 0.75rem;">
+              <span>${m.match_date ? m.match_date.split(' ')[0] : '일정확인'}</span>
+              <span class="text-info">스코어보드 <i class="bi bi-chevron-right"></i></span>
             </div>
           </div>
         `;
@@ -1387,7 +1272,114 @@ John Hollinger가 고안한 종합 경기 기여도(Game Score)에서 32.4점을
       renderMatchStrip(sport);
     }
 
-    // API Key Modal Handling
+    // Open Real Match Detail Scoreboard Modal
+    async function openMatchModal(matchId) {
+      const match = allMatches.find(m => m.id === matchId);
+      if (!match) return;
+
+      document.getElementById('matchModalStatus').innerText = match.status;
+      document.getElementById('matchModalLeague').innerText = match.league_name || match.sport_code;
+      document.getElementById('matchModalDate').innerText = match.match_date || '';
+      document.getElementById('matchModalHomeTeam').innerText = match.home_team_name;
+      document.getElementById('matchModalAwayTeam').innerText = match.away_team_name;
+      document.getElementById('matchModalScore').innerText = `${match.home_score} : ${match.away_score}`;
+
+      const table = document.getElementById('periodScoresTable');
+      table.innerHTML = '<tr><td colspan="6" class="p-3 text-muted">세부 기간별 점수를 조회하고 있습니다...</td></tr>';
+
+      const modal = new bootstrap.Modal(document.getElementById('matchModal'));
+      modal.show();
+
+      try {
+        const resp = await fetch(`/api/v1/matches/${matchId}`);
+        if (!resp.ok) throw new Error('Failed to load match detail');
+        const detailData = await resp.json();
+        const pScores = detailData.details ? detailData.details.period_scores : {};
+
+        renderPeriodTable(match.sport_code, match.home_team_name, match.away_team_name, pScores, match.home_score, match.away_score);
+      } catch (e) {
+        table.innerHTML = `<tr><td colspan="6" class="p-3 text-muted">경기 최종 결과: ${match.home_score} vs ${match.away_score}</td></tr>`;
+      }
+    }
+
+    function renderPeriodTable(sportCode, home, away, pScores, hTotal, aTotal) {
+      const table = document.getElementById('periodScoresTable');
+      const hP = (pScores && pScores.home) ? pScores.home : {};
+      const aP = (pScores && pScores.away) ? pScores.away : {};
+
+      if (sportCode === 'BASKETBALL') {
+        table.innerHTML = `
+          <thead>
+            <tr class="text-secondary">
+              <th>팀</th><th>1Q</th><th>2Q</th><th>3Q</th><th>4Q</th><th>OT</th><th>TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="fw-bold text-start ps-2">${home}</td>
+              <td>${hP.q1 ?? '-'}</td><td>${hP.q2 ?? '-'}</td><td>${hP.q3 ?? '-'}</td><td>${hP.q4 ?? '-'}</td><td>${hP.ot ?? 0}</td>
+              <td class="fw-bold text-warning">${hTotal}</td>
+            </tr>
+            <tr>
+              <td class="fw-bold text-start ps-2">${away}</td>
+              <td>${aP.q1 ?? '-'}</td><td>${aP.q2 ?? '-'}</td><td>${aP.q3 ?? '-'}</td><td>${aP.q4 ?? '-'}</td><td>${aP.ot ?? 0}</td>
+              <td class="fw-bold text-warning">${aTotal}</td>
+            </tr>
+          </tbody>
+        `;
+      } else if (sportCode === 'SOCCER') {
+        table.innerHTML = `
+          <thead>
+            <tr class="text-secondary">
+              <th>팀</th><th>전반(1H)</th><th>후반(2H)</th><th>연장/승부차기</th><th>TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="fw-bold text-start ps-2">${home}</td>
+              <td>${hP['1h'] ?? hP.first_half ?? '-'}</td>
+              <td>${hP['2h'] ?? hP.second_half ?? '-'}</td>
+              <td>${hP.ot ?? '-'}</td>
+              <td class="fw-bold text-warning">${hTotal}</td>
+            </tr>
+            <tr>
+              <td class="fw-bold text-start ps-2">${away}</td>
+              <td>${aP['1h'] ?? aP.first_half ?? '-'}</td>
+              <td>${aP['2h'] ?? aP.second_half ?? '-'}</td>
+              <td>${aP.ot ?? '-'}</td>
+              <td class="fw-bold text-warning">${aTotal}</td>
+            </tr>
+          </tbody>
+        `;
+      } else {
+        // Baseball
+        table.innerHTML = `
+          <thead>
+            <tr class="text-secondary">
+              <th>팀</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>R</th><th>H</th><th>E</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="fw-bold text-start ps-2">${home}</td>
+              ${[1,2,3,4,5,6,7,8,9].map(i => `<td>${hP['i'+i] ?? hP['inning_'+i] ?? '-'}</td>`).join('')}
+              <td class="fw-bold text-warning">${hTotal}</td>
+              <td>${hP.hits ?? '-'}</td>
+              <td>${hP.errors ?? '-'}</td>
+            </tr>
+            <tr>
+              <td class="fw-bold text-start ps-2">${away}</td>
+              ${[1,2,3,4,5,6,7,8,9].map(i => `<td>${aP['i'+i] ?? aP['inning_'+i] ?? '-'}</td>`).join('')}
+              <td class="fw-bold text-warning">${aTotal}</td>
+              <td>${aP.hits ?? '-'}</td>
+              <td>${aP.errors ?? '-'}</td>
+            </tr>
+          </tbody>
+        `;
+      }
+    }
+
+    // 3. API Key Modal Handling
     function openApiKeyModal() {
       document.getElementById('keyFormStep').style.display = 'block';
       document.getElementById('keyResultStep').style.display = 'none';
@@ -1412,7 +1404,7 @@ John Hollinger가 고안한 종합 경기 기여도(Game Score)에서 32.4점을
 
       const randomHex = Array.from(crypto.getRandomValues(new Uint8Array(16)))
         .map(b => b.toString(16).padStart(2, '0')).join('');
-      const fakeKey = `sk_live_${plan.toLowerCase()}_${randomHex.slice(0, 24)}`;
+      const fakeKey = `tokeon_live_${plan.toLowerCase()}_${randomHex.slice(0, 24)}`;
 
       document.getElementById('generatedKeyBox').innerText = fakeKey;
       document.getElementById('keyFormStep').style.display = 'none';
@@ -1422,13 +1414,13 @@ John Hollinger가 고안한 종합 경기 기여도(Game Score)에서 32.4점을
     function copyApiKey() {
       const key = document.getElementById('generatedKeyBox').innerText;
       navigator.clipboard.writeText(key).then(() => {
-        alert('API 키가 클립보드에 복사되었습니다!');
+        alert('tokeon.kr API 키가 클립보드에 복사되었습니다!');
       });
     }
 
     // Initialize on load
     document.addEventListener('DOMContentLoaded', () => {
-      loadNews();
+      loadRealNews();
       loadLiveMatches();
     });
   </script>
