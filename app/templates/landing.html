@@ -4362,8 +4362,13 @@
 
     function handleIncomingWebSocketMessage(data) {
       if (data.type === 'CONNECTION_ESTABLISHED') {
-        const countEl = document.getElementById('wsClientCount');
-        if (countEl && data.active_clients) countEl.innerText = data.active_clients;
+        const wsEl = document.getElementById('wsClientCount');
+        const topEl = document.getElementById('topLiveUsersCount');
+        // Synchronize both counters to the exact same live visitor count
+        const targetCount = (data.active_clients && data.active_clients >= 500) ? data.active_clients : currentLiveUsersCount;
+        currentLiveUsersCount = targetCount;
+        if (wsEl) wsEl.innerText = targetCount;
+        if (topEl) topEl.innerText = targetCount;
       } else if (data.type === 'NEW_COMMUNITY_MESSAGE') {
         const msg = data.message;
         communityMessages.push(msg);
@@ -4588,9 +4593,6 @@
 
       // Populate status
       const data = await checkLiveApiStatus();
-      initViewMode();
-      startLiveUsersFluctuation();
-      start4MinAiChatTimer();
       if (data) {
         const statusText = document.getElementById('liveApiStatusText');
         const statusSub = document.getElementById('liveApiStatusSub');
@@ -4665,9 +4667,6 @@
           alert('🎉 API Key가 성공적으로 등록되었습니다!\n' + res.message);
           inputEl.value = '';
           await checkLiveApiStatus();
-      initViewMode();
-      startLiveUsersFluctuation();
-      start4MinAiChatTimer();
           await silentLiveRefresh();
           if (liveApiModalObj) liveApiModalObj.hide();
         } else {
@@ -4877,28 +4876,31 @@
     }
 
     // =============================================================
-    // 🟢 실시간 접속자 수 600명~745명 임의 변동 시뮬레이터
+    // 🟢 실시간 접속자 수 600명~745명 임의 변동 시뮬레이터 (좌측 & 우측 완벽 동일 동기화)
     // =============================================================
-    let currentLiveUsersCount = Math.floor(Math.random() * (730 - 640 + 1)) + 640;
+    let currentLiveUsersCount = 664;
+    let liveUsersInterval = null;
+
+    function syncLiveUserCounts() {
+      const wsEl = document.getElementById('wsClientCount');
+      const topEl = document.getElementById('topLiveUsersCount');
+      if (wsEl) wsEl.innerText = currentLiveUsersCount;
+      if (topEl) topEl.innerText = currentLiveUsersCount;
+    }
 
     function startLiveUsersFluctuation() {
-      const updateCounts = () => {
-        const wsEl = document.getElementById('wsClientCount');
-        const topEl = document.getElementById('topLiveUsersCount');
-        if (wsEl) wsEl.innerText = currentLiveUsersCount;
-        if (topEl) topEl.innerText = currentLiveUsersCount;
-      };
+      syncLiveUserCounts();
 
-      updateCounts();
+      if (liveUsersInterval) return;
 
-      setInterval(() => {
-        // Fluctuates by -3 to +3, staying within [600, 745]
+      liveUsersInterval = setInterval(() => {
+        // Fluctuates by -3 to +3, staying strictly within [620, 745]
         const delta = Math.floor(Math.random() * 7) - 3;
         currentLiveUsersCount += delta;
-        if (currentLiveUsersCount < 600) currentLiveUsersCount = 605 + Math.floor(Math.random() * 15);
+        if (currentLiveUsersCount < 620) currentLiveUsersCount = 625 + Math.floor(Math.random() * 15);
         if (currentLiveUsersCount > 745) currentLiveUsersCount = 740 - Math.floor(Math.random() * 15);
-        updateCounts();
-      }, 12000); // every 12 seconds
+        syncLiveUserCounts();
+      }, 10000); // every 10 seconds
     }
 
     // =============================================================
