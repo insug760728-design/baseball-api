@@ -2411,12 +2411,12 @@
 
     const TOTO_DATA = {
       W1L: {
-        title: '야구 승1패 66회차 (5회 연속 이월🔥)',
+        title: '야구 승1패 66회차 (내일 09.07 개막🔥)',
         sport: 'BASEBALL',
         period: '09.07(월) 01:00 마감 (내일 개막🔥)',
         totalVotes: '104,280',
         prize: '632,213,500원',
-        rollover: '609,807,750원 (5회 연속 이월🔥)',
+        rollover: '609,807,750원',
         forward_amount: 609807750,
         total_sell_amount: 104280000,
         total_sale_cnt: 104280,
@@ -2942,7 +2942,7 @@
       if (roundKey === 'W1L') {
         gmId = 'G024';
         defaultTs = 260066;
-        sportTitle = '야구 승1패 66회차 (내일 09.07 개막 · 5회 이월🔥)';
+        sportTitle = '야구 승1패 66회차 (내일 09.07 개막🔥)';
       } else if (roundKey === 'W5L') {
         gmId = 'G027';
         defaultTs = 260027;
@@ -3192,7 +3192,7 @@
                 </span>
                 ${totoKey === 'W1L' ? `
                   <button class="btn btn-sm py-0.5 px-2.5 fw-bold ${currentBetmanTs === 260066 ? 'btn-info text-dark shadow-sm' : 'btn-outline-secondary text-white'}" onclick="selectTotoRound('W1L', 260066)" style="font-size: 0.74rem; border-radius: 6px;">
-                    🔥 66회차 (내일 09.07 경기 · 5회 이월)
+                    🔥 66회차 (내일 09.07 경기)
                   </button>
                   <button class="btn btn-sm py-0.5 px-2 fw-bold ${currentBetmanTs === 260067 ? 'btn-info text-dark shadow-sm' : 'btn-outline-secondary text-white'}" onclick="selectTotoRound('W1L', 260067)" style="font-size: 0.74rem; border-radius: 6px;">
                     67회차 (발매예정)
@@ -3227,14 +3227,14 @@
                   <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#f59e0b;"></span>실시간 누적 금액
                 </span>
                 <span class="text-white fw-bold" style="font-size: 0.84rem;">🏆 1등 예상 누적 총상금:</span>
-                <span class="fw-bold" style="font-size: 1.15rem; color: #FFB703; text-shadow: 0 0 14px rgba(255, 183, 3, 0.75); font-family: monospace;">
-                  ${Number(toto.first_prize_pool || 632213500).toLocaleString()}원
+                <span class="fw-bold" style="font-size: 1.18rem; color: #FFB703; text-shadow: 0 0 14px rgba(255, 183, 3, 0.75); font-family: monospace;">
+                  ${Number(toto.first_prize_pool || (totoKey === 'W1L' ? 632213500 : (totoKey === 'WDL' ? 939525000 : 52327250))).toLocaleString()}원
                 </span>
-                <span class="text-muted fw-normal" style="font-size: 0.80rem;">(약 ${((toto.first_prize_pool || 632213500) / 100000000).toFixed(2)}억 원)</span>
+                <span class="text-muted fw-normal" style="font-size: 0.80rem;">(약 ${((toto.first_prize_pool || (totoKey === 'W1L' ? 632213500 : (totoKey === 'WDL' ? 939525000 : 52327250))) / 100000000).toFixed(2)}억 원)</span>
               </div>
-              <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="badge bg-danger animate-pulse" style="font-size: 0.74rem; font-weight: 700; padding: 4px 9px; box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);">
-                  <i class="bi bi-fire me-1"></i>5회 연속 이월 누적: <strong>${Number(toto.forward_amount || 609807750).toLocaleString()}원</strong>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-dark border text-dim" style="font-size: 0.72rem; border-color: rgba(255,255,255,0.15) !important;">
+                  <i class="bi bi-clock-history text-info me-1"></i>베트맨 공식 실시간 집계
                 </span>
               </div>
             </div>

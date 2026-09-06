@@ -23,7 +23,7 @@ def get_available_rounds(gmId: str = Query('G024')):
             'gmId': 'G024',
             'sport': '야구 승1패',
             'rounds': [
-                {'gmTs': 260066, 'label': '66회차 (5회 연속 이월 · 6.3억 잭팟🔥)', 'status': 'SaleProgress', 'is_live': True},
+                {'gmTs': 260066, 'label': '66회차 (09.07 경기 · 6.3억 잭팟🔥)', 'status': 'SaleProgress', 'is_live': True},
                 {'gmTs': 260067, 'label': '67회차 (내일 09.07 시작 · 발매예정)', 'status': 'SaleBefore', 'is_live': False},
                 {'gmTs': 260065, 'label': '65회차 (종료결과 · 3.9억)', 'status': 'Finished', 'is_live': False}
             ]
