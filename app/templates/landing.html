@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -712,11 +712,16 @@
         overflow-x: hidden !important;
         width: 100% !important;
         max-width: 100vw !important;
-        touch-action: pan-y pinch-zoom !important;
+        touch-action: pan-y !important;
         overscroll-behavior-x: none !important;
         position: relative !important;
+        -webkit-text-size-adjust: 100% !important;
+      }
+      body {
+        padding-right: 0px !important;
       }
       #mainAppWrapper, .dash-container, #prediction-section, section {
+        width: 100% !important;
         max-width: 100vw !important;
         overflow-x: hidden !important;
         box-sizing: border-box !important;
@@ -752,9 +757,53 @@
         box-sizing: border-box !important;
         overflow-x: hidden !important;
       }
+      /* Mobile App-Style Fullscreen Modal: 100% locked, zero margin, no horizontal shifting */
+      .modal {
+        overflow-x: hidden !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
       .modal-dialog {
-        max-width: 96vw !important;
-        margin: 0.5rem auto !important;
+        max-width: 100vw !important;
+        width: 100vw !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 100vh !important;
+      }
+      .modal-content-custom, .modal-content {
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        min-height: 100vh !important;
+        overflow-x: hidden !important;
+      }
+      .modal-body {
+        padding: 12px 10px !important;
+        overflow-x: hidden !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+      }
+      .modal-body .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+      }
+      .modal-body .col-12, .modal-body .col-md-6 {
+        padding-left: 4px !important;
+        padding-right: 4px !important;
+      }
+      .table-responsive {
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+      #periodScoresTable th, #periodScoresTable td {
+        padding: 3px 2px !important;
+        font-size: 0.74rem !important;
       }
     }
 
@@ -2463,6 +2512,8 @@
       table.innerHTML = html;
     }
 
+    const matchDetailCache = new Map();
+
     async function openMatchModal(matchId) {
       const match = allMatches.find(m => m.id === matchId);
       if (!match) return;
@@ -2484,29 +2535,39 @@
         aiBadgeEl.innerHTML = `<span class="badge" style="background: rgba(0, 240, 255, 0.2); color: #00F0FF; border: 1px solid #00F0FF;"><i class="bi bi-cpu me-1"></i>AI추천: ${pPick} ${pConf}</span>`;
       }
 
-      const table = document.getElementById('periodScoresTable');
-      if (table) table.innerHTML = '<tr><td colspan="10" class="p-3 text-muted text-center">공식 스코어보드를 조회하고 있습니다...</td></tr>';
-      const compContainer = document.getElementById('matchModalStatsComparison');
-      if (compContainer) compContainer.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-info me-2"></div>선발투수 및 세부 데이터를 분석하고 있습니다...</div>';
-      const aiBanner = document.getElementById('matchModalAiPredictionBanner');
-      if (aiBanner) aiBanner.innerHTML = '';
+      // 1. Instant cache check (0ms)
+      const cached = matchDetailCache.get(matchId);
+      if (cached) {
+        const pScores = cached.details ? cached.details.period_scores : {};
+        const tStats = cached.details ? cached.details.team_stats : {};
+        renderPeriodTable(match.sport_code, match.home_team_name, match.away_team_name, pScores, match.home_score, match.away_score);
+        renderModalComparison(match, tStats, cached.player_stats || [], cached.matchup_analysis);
+      } else {
+        // 2. Instant Optimistic Render: display initial match prediction and skeleton in 0ms!
+        renderPeriodTable(match.sport_code, match.home_team_name, match.away_team_name, {}, match.home_score, match.away_score);
+        renderModalComparison(match, {}, [], null);
+      }
 
       const modalEl = document.getElementById('matchModal');
       const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
       modal.show();
 
+      // 3. Fast parallel background fetch (timeout 5s)
       try {
-        const resp = await fetch(`/api/v1/matches/${matchId}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const resp = await fetch(`/api/v1/matches/${matchId}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
         if (!resp.ok) throw new Error('Failed to load match detail');
         const detailData = await resp.json();
+        matchDetailCache.set(matchId, detailData);
+
         const pScores = detailData.details ? detailData.details.period_scores : {};
         const tStats = detailData.details ? detailData.details.team_stats : {};
-
         renderPeriodTable(match.sport_code, match.home_team_name, match.away_team_name, pScores, match.home_score, match.away_score);
         renderModalComparison(match, tStats, detailData.player_stats || [], detailData.matchup_analysis);
       } catch (e) {
-        if (table) table.innerHTML = `<tr><td colspan="10" class="p-3 text-muted text-center">경기 최종 결과: ${match.home_score} vs ${match.away_score}</td></tr>`;
-        if (compContainer) renderModalComparison(match, {}, [], null);
+        console.warn('Background match detail fetch error:', e);
       }
     }
 

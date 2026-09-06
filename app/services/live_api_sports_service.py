@@ -4,6 +4,7 @@ import json
 import urllib.request
 import logging
 from typing import Dict, Any, List, Optional
+from collections import defaultdict
 from datetime import datetime, timedelta
 from sqlalchemy import or_
 
@@ -182,6 +183,24 @@ def normalize_name(n: str) -> str:
     if not n: return ""
     return str(n).replace(" ", "").replace("·", "").replace(".", "").replace("-", "").replace("/", "").lower()
 
+_CANONICAL_LOOKUP: Dict[str, str] = {}
+for _k, _aliases in TEAM_SYNONYMS.items():
+    _k_norm = normalize_name(_k)
+    _CANONICAL_LOOKUP[_k_norm] = _k
+    for _a in _aliases:
+        _CANONICAL_LOOKUP[normalize_name(_a)] = _k
+
+def get_canonical(n: str) -> str:
+    norm = normalize_name(n)
+    if not norm:
+        return ""
+    if norm in _CANONICAL_LOOKUP:
+        return _CANONICAL_LOOKUP[norm]
+    for k, canon in _CANONICAL_LOOKUP.items():
+        if len(k) >= 3 and (k in norm or norm in k):
+            return canon
+    return norm
+
 def teams_match(api_name: str, db_name: str) -> bool:
     norm_api = normalize_name(api_name)
     norm_db = normalize_name(db_name)
@@ -194,26 +213,7 @@ def teams_match(api_name: str, db_name: str) -> bool:
         if norm_api in norm_db or norm_db in norm_api:
             return True
 
-    # Check synonyms
-    for k, aliases in TEAM_SYNONYMS.items():
-        norm_k = normalize_name(k)
-        norm_aliases = [normalize_name(a) for a in aliases]
-        all_group = [norm_k] + norm_aliases
-
-        def matches_cand(cand):
-            for g in all_group:
-                if len(g) <= 2:
-                    if g == cand or cand.startswith(g) or cand.endswith(g):
-                        return True
-                else:
-                    if g in cand or cand in g:
-                        return True
-            return False
-
-        if matches_cand(norm_api) and matches_cand(norm_db):
-            return True
-
-    return False
+    return get_canonical(api_name) == get_canonical(db_name)
 
 
 class LiveApiSportsService:
@@ -383,6 +383,10 @@ class LiveApiSportsService:
                 )
             ).all()
 
+            db_by_home = defaultdict(list)
+            for m in db_matches:
+                db_by_home[get_canonical(m.home_team_name)].append(m)
+
             for f in all_fixtures:
                 fixture_info = f.get("fixture", {})
                 teams = f.get("teams", {})
@@ -397,8 +401,10 @@ class LiveApiSportsService:
                 h_score = goals.get("home") if goals.get("home") is not None else 0
                 a_score = goals.get("away") if goals.get("away") is not None else 0
 
-                for m in db_matches:
-                    if teams_match(h_name, m.home_team_name) and teams_match(a_name, m.away_team_name):
+                canon_h = get_canonical(h_name)
+                candidate_matches = db_by_home.get(canon_h, [])
+                for m in candidate_matches:
+                    if teams_match(a_name, m.away_team_name):
                         m.home_score = h_score
                         m.away_score = a_score
                         m.status = mapped_status
@@ -473,6 +479,10 @@ class LiveApiSportsService:
                 )
             ).all()
 
+            db_by_home = defaultdict(list)
+            for m in db_matches:
+                db_by_home[get_canonical(m.home_team_name)].append(m)
+
             for g in all_games:
                 status_info = g.get("status", {})
                 teams = g.get("teams", {})
@@ -486,8 +496,10 @@ class LiveApiSportsService:
                 h_score = scores.get("home", {}).get("total") or 0
                 a_score = scores.get("away", {}).get("total") or 0
 
-                for m in db_matches:
-                    if teams_match(h_name, m.home_team_name) and teams_match(a_name, m.away_team_name):
+                canon_h = get_canonical(h_name)
+                candidate_matches = db_by_home.get(canon_h, [])
+                for m in candidate_matches:
+                    if teams_match(a_name, m.away_team_name):
                         m.home_score = h_score
                         m.away_score = a_score
                         m.status = mapped_status
