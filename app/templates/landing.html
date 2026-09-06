@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko" class="auth-locked">
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1244,70 +1244,9 @@
       font-weight: 700;
     }
 
-    html.auth-locked .login-lock-overlay {
-      display: flex !important;
-    }
-    html.auth-locked #mainAppWrapper {
-      filter: blur(20px) !important;
-      opacity: 0.08 !important;
-      pointer-events: none !important;
-      user-select: none !important;
-    }
   </style>
-  <script>
-    (function() {
-      try {
-        var s = localStorage.getItem('tokeon_simple_user');
-        if (s) {
-          var u = JSON.parse(s);
-          if (u && u.nickname) {
-            document.documentElement.classList.remove('auth-locked');
-            return;
-          }
-        }
-      } catch (e) {}
-      document.documentElement.classList.add('auth-locked');
-    })();
-  </script>
 </head>
 <body>
-
-  <!-- 🔒 Full-Screen Login Lock Overlay ("로그인하세요" - 로그인 안되면 화면 차단) -->
-  <div id="loginLockOverlay" class="login-lock-overlay">
-    <div class="login-lock-card">
-      <div class="lock-glow-icon mb-3">
-        <i class="bi bi-shield-lock-fill"></i>
-      </div>
-      <span class="badge px-3 py-1 mb-2 fw-bold" style="background: rgba(0, 240, 255, 0.18); color: #00F0FF; border: 1px solid #00F0FF; font-size: 0.82rem;">
-        TOKEON 실시간 빅데이터 포털
-      </span>
-      <h2 class="text-white fw-bold mb-2" style="font-size: 1.8rem; letter-spacing: -0.5px;">로그인하세요</h2>
-      <p class="text-light small mb-4" style="line-height: 1.6; opacity: 0.9;">
-        본 서비스는 100% 실시간 공식 경기 데이터와 AI 세이버메트릭스 분석을 제공합니다.<br>
-        <strong class="text-warning">간편 로그인</strong>을 완료하시면 모든 화면을 무료로 자유롭게 이용하실 수 있습니다.
-      </p>
-
-      <!-- Instant Login Form inside Lock Card -->
-      <form id="lockLoginForm" onsubmit="handleLockLogin(event)">
-        <div class="mb-3 text-start">
-          <label class="form-label text-white fw-bold small"><i class="bi bi-person-fill text-info me-1"></i>활동할 별명 (닉네임)</label>
-          <input type="text" class="form-control bg-dark text-white border-secondary py-2" id="lockNicknameInput" placeholder="예: 슈퍼손, 홈런왕, 세이버" maxlength="12" required autocomplete="off" style="font-size: 0.95rem;">
-          <div class="form-text text-muted" style="font-size: 0.72rem;">실시간 채팅, 승부예측 분석방에서 사용할 별명입니다.</div>
-        </div>
-        <div class="mb-3 text-start">
-          <label class="form-label text-white fw-bold small"><i class="bi bi-calendar-event text-warning me-1"></i>나이 (연령)</label>
-          <input type="number" class="form-control bg-dark text-white border-secondary py-2" id="lockAgeInput" placeholder="예: 28" min="10" max="100" required autocomplete="off" style="font-size: 0.95rem;">
-          <div class="form-text text-muted" style="font-size: 0.72rem;">비밀번호 없이 별명과 나이만으로 즉시 접속됩니다.</div>
-        </div>
-        <div class="p-2 mb-3 rounded-2 text-center" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35);">
-          <span class="text-success small fw-bold"><i class="bi bi-gift-fill me-1"></i>입장 시 3일 VIP 무료체험 자동 적용!</span>
-        </div>
-        <button type="submit" class="btn btn-info w-100 py-2.5 fw-bold text-dark fs-6" style="background: linear-gradient(135deg, #00F0FF, #0284c7); border: none; box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);">
-          <i class="bi bi-box-arrow-in-right me-1"></i>간편 로그인 (입장하기)
-        </button>
-      </form>
-    </div>
-  </div>
 
 
 
@@ -1968,73 +1907,32 @@
       alert(`🎉 [${nickname}]님 (${age}세) 환영합니다!\n별명과 나이로 즉시 접속되었습니다.\n(3일 VIP 무료체험이 함께 적용되었습니다)`);
     }
 
-    function handleLockLogin(e) {
-      if (e) e.preventDefault();
-      const nickEl = document.getElementById('lockNicknameInput');
-      const ageEl = document.getElementById('lockAgeInput');
-      const nickname = nickEl ? nickEl.value.trim() : '';
-      const age = ageEl ? parseInt(ageEl.value.trim(), 10) : 0;
-
-      if (!nickname) {
-        alert('활동하실 별명(닉네임)을 입력해주세요.');
-        if (nickEl) nickEl.focus();
-        return;
-      }
-      if (!age || isNaN(age) || age < 1 || age > 120) {
-        alert('올바른 나이를 숫자로 입력해주세요. (예: 28)');
-        if (ageEl) ageEl.focus();
-        return;
-      }
-
-      currentUser = {
-        nickname: nickname,
-        age: age,
-        isLoggedIn: true,
-        loginAt: new Date().toISOString()
-      };
-
-      try {
-        localStorage.setItem('tokeon_simple_user', JSON.stringify(currentUser));
-        fetch('/api/v1/auth/register-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nickname: nickname, age: age })
-        }).catch(err => console.warn('Member folder registration error:', err));
-      } catch (err) {}
-
-      isVipUser = true;
-      updateVipDisplay();
-      renderAuthUI();
-      alert(`🎉 [${nickname}]님 (${age}세) 환영합니다!\n로그인이 완료되어 모든 분석 화면이 정상 잠금 해제되었습니다.`);
-    }
-
     function handleLogout() {
       currentUser = null;
       try {
         localStorage.removeItem('tokeon_simple_user');
       } catch (e) {}
-      document.documentElement.classList.add('auth-locked');
       renderAuthUI();
-      alert('로그아웃되었습니다. 화면이 잠금 처리되었습니다.');
+      alert('로그아웃되었습니다.');
     }
 
     function renderAuthUI() {
-      const lockOverlay = document.getElementById('loginLockOverlay');
       const mainWrapper = document.getElementById('mainAppWrapper');
       const navContainer = document.getElementById('navAuthContainer');
       const subDisplay = document.getElementById('subBarAuthDisplay');
       const chatAuthorEl = document.getElementById('chatAuthorInput');
 
+      // Screen is always 100% accessible and crystal clear
+      document.documentElement.classList.remove('auth-locked');
+      if (mainWrapper) {
+        mainWrapper.style.filter = 'none';
+        mainWrapper.style.opacity = '1';
+        mainWrapper.style.pointerEvents = 'auto';
+        mainWrapper.style.userSelect = 'auto';
+      }
+
       if (currentUser && currentUser.nickname) {
-        // Logged In State: Unlock screen & remove blur
-        document.documentElement.classList.remove('auth-locked');
-        if (lockOverlay) lockOverlay.style.display = 'none';
-        if (mainWrapper) {
-          mainWrapper.style.filter = 'none';
-          mainWrapper.style.opacity = '1';
-          mainWrapper.style.pointerEvents = 'auto';
-          mainWrapper.style.userSelect = 'auto';
-        }
+        // Logged In State: Show nickname, age, logout
         if (navContainer) {
           navContainer.innerHTML = `
             <div class="btn-group btn-group-sm" role="group" id="viewModeToggleGroup" style="border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 8px; overflow: hidden;">
@@ -2052,7 +1950,7 @@
               <i class="bi bi-person-circle text-info me-1"></i>
               <span class="text-white fw-bold" style="font-size: 0.78rem;">${currentUser.nickname}</span>
               <span class="text-info small fw-bold ms-1 d-none d-sm-inline" style="font-size: 0.70rem;">(${currentUser.age}세)</span>
-              <button class="btn btn-xs btn-danger py-0 px-1.5 ms-1.5 text-white fw-bold" onclick="handleLogout()" style="font-size: 0.68rem;" title="로그아웃 시 화면이 즉시 잠깁니다">로그아웃</button>
+              <button class="btn btn-xs btn-danger py-0 px-1.5 ms-1.5 text-white fw-bold" onclick="handleLogout()" style="font-size: 0.68rem;" title="로그아웃">로그아웃</button>
             </div>
           `;
         }
@@ -2069,15 +1967,7 @@
           chatAuthorEl.title = "간편 로그인된 별명입니다.";
         }
       } else {
-        // NOT Logged In: Strictly lock and blur screen so user CANNOT view without login
-        document.documentElement.classList.add('auth-locked');
-        if (lockOverlay) lockOverlay.style.display = 'flex';
-        if (mainWrapper) {
-          mainWrapper.style.filter = 'blur(16px)';
-          mainWrapper.style.opacity = '0.12';
-          mainWrapper.style.pointerEvents = 'none';
-          mainWrapper.style.userSelect = 'none';
-        }
+        // NOT Logged In: Freely view all matches & analysis, show clean Login button
         if (navContainer) {
           navContainer.innerHTML = `
             <div class="btn-group btn-group-sm me-1" role="group" id="viewModeToggleGroup" style="border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 8px; overflow: hidden;">
@@ -2088,6 +1978,9 @@
                 <i class="bi bi-phone me-1"></i>앱
               </button>
             </div>
+            <button class="btn btn-sm btn-outline-secondary text-light fw-bold px-2 py-1" onclick="openMembersModal()" title="실제 가입 회원 목록" style="border-radius: 8px; font-size: 0.75rem; border-color: rgba(255, 255, 255, 0.2);">
+              <i class="bi bi-people-fill text-warning"></i><span class="d-none d-sm-inline ms-1">회원</span>
+            </button>
             <button class="btn btn-sm btn-warning text-dark fw-bold px-2.5 py-1" onclick="openLoginModal()" style="border-radius: 8px; box-shadow: 0 0 12px rgba(245, 158, 11, 0.45); font-size: 0.78rem;">
               <i class="bi bi-box-arrow-in-right me-1"></i>로그인
             </button>
@@ -2097,7 +1990,7 @@
         if (chatAuthorEl) {
           chatAuthorEl.value = '';
           chatAuthorEl.readOnly = false;
-          chatAuthorEl.placeholder = '로그인 후 이용 가능';
+          chatAuthorEl.placeholder = '별명을 입력하여 응원하기';
         }
       }
     }
@@ -2338,6 +2231,7 @@
         allMatches = await resp.json();
 
         renderMatchStrip('ALL');
+        renderPredMatches();
       } catch (e) {
         console.error('Match strip error:', e);
         if (container) container.innerHTML = '<div class="text-muted p-3">실제 경기 스코어보드를 불러오는 중입니다.</div>';
@@ -2346,6 +2240,7 @@
 
     function renderMatchStrip(sport) {
       const container = document.getElementById('stripContainer');
+      if (!container) return;
       if (!allMatches || allMatches.length === 0) {
         container.innerHTML = '<div class="text-muted p-3">적재된 실제 경기가 없습니다.</div>';
         return;
@@ -2403,7 +2298,7 @@
         `;
       });
 
-      container.innerHTML = html;
+      if (container) container.innerHTML = html;
     }
 
     function filterStrip(sport) {
