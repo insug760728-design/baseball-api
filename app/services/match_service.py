@@ -220,9 +220,9 @@ class MatchService:
             if start_date.upper() != "ALL":
                 query = query.filter(Match.match_date >= f"{start_date} 00:00")
         elif not end_date and not league_name:
-            # 기본 호출 시 과거 14일부터 미래 전체(오늘, 내일, 라이브, 예정) 일정을 우선 반환
-            fourteen_days_ago = (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d")
-            query = query.filter(Match.match_date >= f"{fourteen_days_ago} 00:00")
+            # 기본 호출 시 최근 3일부터 미래 전체(오늘, 내일, 라이브, 예정) 일정을 우선 반환 (초고속 로딩)
+            three_days_ago = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
+            query = query.filter(Match.match_date >= f"{three_days_ago} 00:00")
         if end_date:
             query = query.filter(Match.match_date <= f"{end_date} 23:59")
         

@@ -141,14 +141,20 @@ def _get_baseball_recent_pitching(conn, team_name: str, limit: int = 3, league_n
         "fatigue_level": "과부하 경고 (180구↑)" if total_bp_pitches_all_3 >= 180 else ("보통 (120~180구)" if total_bp_pitches_all_3 >= 120 else "양호/휴식충분 (120구 미만)")
     }
 
+_series_context_cache = {}
+
 def _detect_baseball_series_context(conn, home_team: str, away_team: str, match_date: Optional[str] = None):
     """
-    야구 전용: 동일 상대와의 연속 3연전 시리즈 진행 상황 및 스윕(2-0) 여부 감지
+    야구 전용: 동일 상대와의 연속 3연전 시리즈 진행 상황 및 스윕(2-0) 여부 감지 (고속 메모리 캐싱 적용)
     """
     if not match_date:
         match_date = datetime.now().strftime("%Y-%m-%d %H:%M")
     
     target_dt_str = match_date[:10]
+    cache_key = (home_team, away_team, target_dt_str)
+    if cache_key in _series_context_cache:
+        return _series_context_cache[cache_key]
+
     try:
         target_dt = datetime.strptime(target_dt_str, "%Y-%m-%d")
     except Exception:
@@ -157,6 +163,7 @@ def _detect_baseball_series_context(conn, home_team: str, away_team: str, match_
     earliest_dt_str = (target_dt - timedelta(days=5)).strftime("%Y-%m-%d 00:00")
     
     c = conn.cursor()
+
     c.execute("""
         SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, status
         FROM matches
@@ -231,7 +238,7 @@ def _detect_baseball_series_context(conn, home_team: str, away_team: str, match_
     else:
         series_score = "시리즈 1차전"
         
-    return {
+    res_dict = {
         "is_series_active": played_count > 0,
         "played_count": played_count,
         "game_number": game_number,
@@ -250,6 +257,8 @@ def _detect_baseball_series_context(conn, home_team: str, away_team: str, match_
             "1승 1패 팽팽한 균형 속에서 위닝 시리즈를 가리는 3차전 최종 승부입니다." if is_rubber_game else f"시리즈 {game_number}차전 매치업입니다."
         )
     }
+    _series_context_cache[cache_key] = res_dict
+    return res_dict
 
 # League Pools for Baseball (KBO / MLB / NPB)
 MLB_TEAMS_POOL = [
