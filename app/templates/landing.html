@@ -2389,7 +2389,7 @@
 
     let currentCenterMode = 'TOTO'; // 'TOTO' or 'DETAIL'
     let currentTotoRound = 'W1L'; // 'W1L' (야구), 'WDL' (축구), 'W5L' (농구)
-    let currentBetmanTs = 260005; // Current active Betman round: 5회차 (260005)
+    let currentBetmanTs = 260066; // Current active Betman round: 66회차 (260066, 5회 연속 이월)
     let userTotoMarks = {}; // key: `${totoKey}_${seq}`, value: ['W', 'D', 'L']
 
     // ------------------------------------------------------------------
@@ -2411,12 +2411,12 @@
 
     const TOTO_DATA = {
       W1L: {
-        title: '야구 승1패 5회차',
+        title: '야구 승1패 66회차 (5회 연속 이월🔥)',
         sport: 'BASEBALL',
         period: '09.07(월) 01:00 마감 (내일 개막🔥)',
         totalVotes: '104,280',
         prize: '632,213,500원',
-        rollover: '609,807,750원 (5회 이월🔥)',
+        rollover: '609,807,750원 (5회 연속 이월🔥)',
         forward_amount: 609807750,
         total_sell_amount: 104280000,
         total_sale_cnt: 104280,
@@ -2625,7 +2625,7 @@
         selectTotoRound('WDL');
       } else if (sKey === 'W1L') {
         switchCenterView('TOTO');
-        selectTotoRound('W1L', 260005);
+        selectTotoRound('W1L', 260066);
       } else if (sKey === 'W5L') {
         switchCenterView('TOTO');
         selectTotoRound('W5L');
@@ -2941,8 +2941,8 @@
 
       if (roundKey === 'W1L') {
         gmId = 'G024';
-        defaultTs = 260005;
-        sportTitle = '야구 승1패 5회차 (내일 09.07 개막 · 6억 이월🔥)';
+        defaultTs = 260066;
+        sportTitle = '야구 승1패 66회차 (내일 09.07 개막 · 5회 이월🔥)';
       } else if (roundKey === 'W5L') {
         gmId = 'G027';
         defaultTs = 260027;
@@ -3068,10 +3068,10 @@
           timeClean = timeClean.replace(/^[0-9]{2}\./, ''); // remove year prefix
         }
 
-        // Result badge if finished or live
-        let resultBadge = '<span class="badge bg-success bg-opacity-25 text-success border border-success px-1.5 py-0.5" style="font-size:0.64rem;">● 발매중</span>';
-        if (m.result) {
-          resultBadge = `<span class="badge ${m.result === 'W' ? 'bg-info text-dark' : (m.result === 'D' ? 'bg-warning text-dark' : 'bg-danger text-white')} px-1.5 py-0.5" style="font-size: 0.65rem; font-weight:800;">적중: ${m.result === 'W' ? '승' : (m.result === 'D' ? drawBtnTxt : '패')}</span>`;
+        // Check if match is in the future (e.g. tomorrow 09.07 or later)
+        const isFutureGame = (m.time && (m.time.includes('09.07') || m.time.includes('09-07') || m.time.includes('26.09.07')));
+        if (isFutureGame) {
+          m.result = null; // Future match MUST NEVER show a finished result
         }
 
         // Live Match Score Sync Check
@@ -3082,19 +3082,31 @@
         if (!liveMatch && typeof allMatches !== 'undefined' && allMatches) {
           const ch = (m.home || '').replace(/[\s\.\·-]/g, '').toLowerCase();
           const ca = (m.away || '').replace(/[\s\.\·-]/g, '').toLowerCase();
+          const mDateMatch = (m.time || '').match(/(\d{2})\.(\d{2})/);
+          const targetMMDD = mDateMatch ? `${mDateMatch[1]}-${mDateMatch[2]}` : '';
+
           liveMatch = allMatches.find(x => {
+            if (targetMMDD && x.match_date && !x.match_date.includes(targetMMDD)) {
+              return false; // MUST match exact same date!
+            }
             const xh = (x.home_team_name || '').replace(/[\s\.\·-]/g, '').toLowerCase();
             const xa = (x.away_team_name || '').replace(/[\s\.\·-]/g, '').toLowerCase();
             return (xh.includes(ch) || ch.includes(xh)) && (xa.includes(ca) || ca.includes(xa));
           });
         }
 
-        if (liveMatch) {
+        // Result badge if finished, live, or scheduled
+        let resultBadge = '<span class="badge bg-success bg-opacity-25 text-success border border-success px-1.5 py-0.5" style="font-size:0.64rem;">● 발매중</span>';
+        if (isFutureGame) {
+          resultBadge = '<span class="badge bg-success bg-opacity-25 text-success border border-success px-1.5 py-0.5" style="font-size:0.64rem;">● 발매중 (내일 09.07)</span>';
+        } else if (liveMatch) {
           if (liveMatch.status === 'LIVE') {
             resultBadge = `<span class="badge bg-danger animate-pulse px-1.5 py-0.5" style="font-size:0.68rem; font-weight:800;"><i class="bi bi-broadcast me-1"></i>LIVE [${liveMatch.home_score} : ${liveMatch.away_score}]</span>`;
           } else if (liveMatch.status === 'FINISHED') {
             resultBadge = `<span class="badge px-1.5 py-0.5" style="background:#0f172a; border:1px solid rgba(255,255,255,0.25); font-size:0.68rem; font-weight:800;"><span style="color:#00F0FF;">${liveMatch.home_score}</span> : <span style="color:#FFB703;">${liveMatch.away_score}</span> <span class="badge bg-secondary ms-1 py-0 px-1" style="font-size:0.60rem;">종료</span></span>`;
           }
+        } else if (m.result) {
+          resultBadge = `<span class="badge ${m.result === 'W' ? 'bg-info text-dark' : (m.result === 'D' ? 'bg-warning text-dark' : 'bg-danger text-white')} px-1.5 py-0.5" style="font-size: 0.65rem; font-weight:800;">적중: ${m.result === 'W' ? '승' : (m.result === 'D' ? drawBtnTxt : '패')}</span>`;
         }
 
         const probHome = m.db_prob_home || (Math.round((Number(m.pW) || 45) * 1.05));
@@ -3181,11 +3193,11 @@
                   <i class="bi bi-trophy-fill me-1 text-warning"></i>${toto.title}
                 </span>
                 ${totoKey === 'W1L' ? `
-                  <button class="btn btn-sm py-0.5 px-2.5 fw-bold ${currentBetmanTs === 260005 ? 'btn-info text-dark shadow-sm' : 'btn-outline-secondary text-white'}" onclick="selectTotoRound('W1L', 260005)" style="font-size: 0.74rem; border-radius: 6px;">
-                    🔥 5회차 (내일 09.07 시작)
+                  <button class="btn btn-sm py-0.5 px-2.5 fw-bold ${currentBetmanTs === 260066 ? 'btn-info text-dark shadow-sm' : 'btn-outline-secondary text-white'}" onclick="selectTotoRound('W1L', 260066)" style="font-size: 0.74rem; border-radius: 6px;">
+                    🔥 66회차 (내일 09.07 경기 · 5회 이월)
                   </button>
-                  <button class="btn btn-sm py-0.5 px-2 fw-bold ${currentBetmanTs === 260066 ? 'btn-info text-dark shadow-sm' : 'btn-outline-secondary text-white'}" onclick="selectTotoRound('W1L', 260066)" style="font-size: 0.74rem; border-radius: 6px;">
-                    66회차 (09.06 마감)
+                  <button class="btn btn-sm py-0.5 px-2 fw-bold ${currentBetmanTs === 260067 ? 'btn-info text-dark shadow-sm' : 'btn-outline-secondary text-white'}" onclick="selectTotoRound('W1L', 260067)" style="font-size: 0.74rem; border-radius: 6px;">
+                    67회차 (발매예정)
                   </button>
                   <button class="btn btn-sm py-0.5 px-2 fw-bold ${currentBetmanTs === 260065 ? 'btn-info text-dark shadow-sm' : 'btn-outline-secondary text-white'}" onclick="selectTotoRound('W1L', 260065)" style="font-size: 0.74rem; border-radius: 6px;">
                     65회차 (종료결과)
@@ -3218,7 +3230,7 @@
                   ${((toto.first_prize_pool || 632213500) / 100000000).toFixed(2)}억 원
                 </span>
                 <span class="badge bg-danger animate-pulse" style="font-size: 0.68rem; padding: 2px 7px;">
-                  <i class="bi bi-fire me-0.5"></i>5회 연속 이월 잭팟
+                  <i class="bi bi-fire me-0.5"></i>5회 연속 이월된 누적 상금 (6억 980만 원)
                 </span>
             </div>
           </div>

@@ -145,7 +145,7 @@ def compute_name_similarity(betman_team, db_team):
 
 class BetmanService:
     @staticmethod
-    def _find_matching_db_match(home_name: str, away_name: str, sport_code: str = 'BASEBALL') -> dict:
+    def _find_matching_db_match(home_name: str, away_name: str, sport_code: str = 'BASEBALL', match_date_str: str = None) -> dict:
         try:
             db_path = 'sports_data.db'
             if not os.path.exists(db_path):
@@ -153,8 +153,20 @@ class BetmanService:
             conn = sqlite3.connect(db_path)
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute('SELECT id, match_date, sport_code, league_name, home_team_name, away_team_name, home_score, away_score, status FROM matches WHERE sport_code = ?', (sport_code,))
-            rows = cursor.fetchall()
+
+            date_param = None
+            if match_date_str:
+                import re
+                m = re.search(r'(\d{2})[\.-](\d{2})', str(match_date_str))
+                if m:
+                    date_param = f"%{m.group(1)}-{m.group(2)}%"
+
+            if date_param:
+                cursor.execute('SELECT id, match_date, sport_code, league_name, home_team_name, away_team_name, home_score, away_score, status FROM matches WHERE sport_code = ? AND match_date LIKE ?', (sport_code, date_param))
+                rows = cursor.fetchall()
+            else:
+                cursor.execute('SELECT id, match_date, sport_code, league_name, home_team_name, away_team_name, home_score, away_score, status FROM matches WHERE sport_code = ?', (sport_code,))
+                rows = cursor.fetchall()
             conn.close()
 
             best_match = None
@@ -247,7 +259,7 @@ class BetmanService:
         candidates = [
             f'betman_{gm_ts}.json',
             f'betman_{gm_id}_{gm_ts}.json',
-            'betman_260050.json' if gm_id == 'G011' else ('betman_260005.json' if gm_id == 'G024' else 'betman_260027.json')
+            'betman_260050.json' if gm_id == 'G011' else ('betman_260066.json' if gm_id == 'G024' else 'betman_260027.json')
         ]
         for snap_file in candidates:
             if os.path.exists(snap_file):
@@ -299,9 +311,10 @@ class BetmanService:
 
             home_n = s.get('homeName', '')
             away_n = s.get('awayName', '')
+            match_date_str = s.get('gameDate') or s.get('date') or ''
 
             # Match with our database to get internal match ID and AI probabilities!
-            db_match = BetmanService._find_matching_db_match(home_n, away_n, sport_code)
+            db_match = BetmanService._find_matching_db_match(home_n, away_n, sport_code, match_date_str)
 
             db_match_id = db_match['id'] if db_match else None
             db_pred = db_match.get('prediction', {}) if db_match else {}
@@ -309,8 +322,34 @@ class BetmanService:
             db_h_score = db_match['home_score'] if db_match else 0
             db_a_score = db_match['away_score'] if db_match else 0
 
+            # Guard against future matches being marked as FINISHED
+            from datetime import datetime, timezone, timedelta
+            KST = timezone(timedelta(hours=9))
+            now_kst = datetime.now(KST)
+
+            is_future_match = False
+            check_date = (db_match['match_date'] if db_match else None) or match_date_str
+            if check_date:
+                try:
+                    import re
+                    m_m = re.search(r'(\d{4})[-.](\d{2})[-.](\d{2})\s+(\d{2}):(\d{2})', check_date)
+                    if m_m:
+                        m_dt = datetime(int(m_m.group(1)), int(m_m.group(2)), int(m_m.group(3)), int(m_m.group(4)), int(m_m.group(5)), tzinfo=KST)
+                        if m_dt > now_kst:
+                            is_future_match = True
+                    elif '09.07' in check_date or '09-07' in check_date or '09.08' in check_date:
+                        is_future_match = True
+                except Exception:
+                    pass
+
+            if is_future_match:
+                db_status = 'SCHEDULED'
+                result_label = None
+                res_code = None
+                db_h_score = 0
+                db_a_score = 0
             # If match is finished in DB, derive official result label and code
-            if db_status == 'FINISHED':
+            elif db_status == 'FINISHED':
                 if gm_id == 'G024': # Baseball W1L
                     diff = abs(db_h_score - db_a_score)
                     if diff <= 1:
