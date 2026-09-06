@@ -14,6 +14,7 @@ import logging
 import math
 import random
 import time
+from datetime import datetime, timedelta
 import urllib.request
 import urllib.parse
 from collections import defaultdict
@@ -138,6 +139,116 @@ def _get_baseball_recent_pitching(conn, team_name: str, limit: int = 3, league_n
         "games": results,
         "total_bullpen_np_3g": total_bp_pitches_all_3,
         "fatigue_level": "과부하 경고 (180구↑)" if total_bp_pitches_all_3 >= 180 else ("보통 (120~180구)" if total_bp_pitches_all_3 >= 120 else "양호/휴식충분 (120구 미만)")
+    }
+
+def _detect_baseball_series_context(conn, home_team: str, away_team: str, match_date: Optional[str] = None):
+    """
+    야구 전용: 동일 상대와의 연속 3연전 시리즈 진행 상황 및 스윕(2-0) 여부 감지
+    """
+    if not match_date:
+        match_date = datetime.now().strftime("%Y-%m-%d %H:%M")
+    
+    target_dt_str = match_date[:10]
+    try:
+        target_dt = datetime.strptime(target_dt_str, "%Y-%m-%d")
+    except Exception:
+        target_dt = datetime.now()
+    
+    earliest_dt_str = (target_dt - timedelta(days=5)).strftime("%Y-%m-%d 00:00")
+    
+    c = conn.cursor()
+    c.execute("""
+        SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, status
+        FROM matches
+        WHERE sport_code = 'BASEBALL'
+          AND status = 'FINISHED'
+          AND match_date < ?
+          AND match_date >= ?
+          AND (
+              (home_team_name = ? AND away_team_name = ?) OR
+              (home_team_name = ? AND away_team_name = ?)
+          )
+        ORDER BY match_date DESC
+        LIMIT 4
+    """, (match_date, earliest_dt_str, home_team, away_team, away_team, home_team))
+    
+    rows = c.fetchall()
+    
+    series_matches = []
+    last_dt = target_dt
+    for r in rows:
+        m_dt_str = r[1][:10]
+        try:
+            m_dt = datetime.strptime(m_dt_str, "%Y-%m-%d")
+        except:
+            continue
+        
+        day_diff = (last_dt - m_dt).days
+        if 0 <= day_diff <= 2:
+            series_matches.append(r)
+            last_dt = m_dt
+        else:
+            break
+            
+    played_count = len(series_matches)
+    game_number = played_count + 1
+    
+    home_wins = 0
+    away_wins = 0
+    for r in series_matches:
+        h_t, a_t, h_s, a_s = r[2], r[3], r[4], r[5]
+        if h_s > a_s:
+            if h_t == home_team: home_wins += 1
+            else: away_wins += 1
+        elif a_s > h_s:
+            if a_t == home_team: home_wins += 1
+            else: away_wins += 1
+            
+    is_sweep_game = False
+    is_rubber_game = False
+    sweep_leader = None
+    sweep_trailer = None
+    
+    if played_count >= 2:
+        if home_wins == played_count:
+            is_sweep_game = True
+            sweep_leader = home_team
+            sweep_trailer = away_team
+            series_score = f"{home_team} {home_wins}승 0패"
+        elif away_wins == played_count:
+            is_sweep_game = True
+            sweep_leader = away_team
+            sweep_trailer = home_team
+            series_score = f"{away_team} {away_wins}승 0패"
+        elif home_wins == 1 and away_wins == 1:
+            is_rubber_game = True
+            series_score = "1승 1패 동률"
+        else:
+            series_score = f"{home_team} {home_wins}승 {away_wins}패"
+    elif played_count == 1:
+        leader = home_team if home_wins > away_wins else away_team
+        series_score = f"{leader} 1승 0패"
+    else:
+        series_score = "시리즈 1차전"
+        
+    return {
+        "is_series_active": played_count > 0,
+        "played_count": played_count,
+        "game_number": game_number,
+        "series_score": series_score,
+        "is_sweep_game": is_sweep_game,
+        "is_rubber_game": is_rubber_game,
+        "sweep_leader": sweep_leader,
+        "sweep_trailer": sweep_trailer,
+        "adjustment_applied": "-7% 스윕 저지 및 불펜 피로도 역보정" if is_sweep_game else ("위닝시리즈 총력전 모멘텀" if is_rubber_game else None),
+        "warning_badge": "🔥 3차전 스윕도전 (이변주의)" if is_sweep_game else ("⚡ 3차전 위닝결정전" if is_rubber_game else None),
+        "description": (
+            f"이번 시리즈 {played_count}연승을 달린 {sweep_leader}의 스윕 도전 경기입니다. "
+            f"역사적 3차전 스윕 실패율(50%↑)과 연투에 따른 불펜 필승조 소모를 반영하여 "
+            f"{sweep_trailer}의 반등 확률(+7%)이 매트릭스에 역보정되었습니다."
+        ) if is_sweep_game else (
+            "1승 1패 팽팽한 균형 속에서 위닝 시리즈를 가리는 3차전 최종 승부입니다." if is_rubber_game else f"시리즈 {game_number}차전 매치업입니다."
+        )
     }
 
 # League Pools for Baseball (KBO / MLB / NPB)
@@ -1031,7 +1142,7 @@ class TeamSplitService:
         return cls._cached_splits, cls._cached_h2h
 
     @classmethod
-    def get_quick_prediction(cls, home_team: str, away_team: str, sport_code: str, status: str, home_score: int = 0, away_score: int = 0):
+    def get_quick_prediction(cls, home_team: str, away_team: str, sport_code: str, status: str, home_score: int = 0, away_score: int = 0, match_date: Optional[str] = None):
         splits, h2h = cls.get_all_splits()
 
         h_data = splits.get(home_team)
@@ -1050,6 +1161,8 @@ class TeamSplitService:
         h_ra = h_home["ra"] / h_games
         a_rf = a_away["rf"] / a_games
         a_ra = a_away["ra"] / a_games
+
+        series_ctx = None
 
         if sport_code == "SOCCER":
             exp_h = max(0.3, (h_rf * 0.6 + a_ra * 0.4) * 1.15)
@@ -1108,6 +1221,22 @@ class TeamSplitService:
             rec_diff = (h_rec_w - a_rec_w) * 0.015
             prob_home = min(0.89, max(0.11, prob_home + rec_diff))
 
+            # Detect Baseball 3-Game Series Context & Sweep Resistance
+            try:
+                c_conn_ctx = sqlite3.connect("sports_data.db")
+                series_ctx = _detect_baseball_series_context(c_conn_ctx, home_team, away_team, match_date)
+                c_conn_ctx.close()
+            except Exception as e:
+                series_ctx = None
+
+            if series_ctx and series_ctx.get("is_sweep_game"):
+                # Sweep Resistance: 3rd game 3-in-a-row victory is historically <= 50%.
+                # Apply -7% penalty against the 2-0 team and +7% to the 0-2 trailing team.
+                if series_ctx.get("sweep_leader") == home_team:
+                    prob_home = min(0.85, max(0.15, prob_home - 0.07))
+                elif series_ctx.get("sweep_leader") == away_team:
+                    prob_home = min(0.85, max(0.15, prob_home + 0.07))
+
             if prob_home >= 0.50:
                 pick_type = "HOME_WIN"
                 expected_label = "예상승"
@@ -1149,7 +1278,8 @@ class TeamSplitService:
             "confidence_level": conf_tier,
             "is_finished": is_finished,
             "is_match": is_match,
-            "status_badge": status_badge
+            "status_badge": status_badge,
+            "series_context": series_ctx if sport_code == "BASEBALL" else None
         }
 
     @classmethod
@@ -1286,23 +1416,28 @@ class TeamSplitService:
             # 4. Baseball recent 3 games pitching stats (starter NP, bullpen NP)
             home_pitching_3g = {"games": [], "total_bullpen_np_3g": 0, "fatigue_level": "양호"}
             away_pitching_3g = {"games": [], "total_bullpen_np_3g": 0, "fatigue_level": "양호"}
+            series_ctx = None
             if sport_code == "BASEBALL":
                 m_league = None
+                m_date = None
                 if match_id:
-                    c_cur.execute("SELECT league_name FROM matches WHERE id = ?", (match_id,))
+                    c_cur.execute("SELECT league_name, match_date FROM matches WHERE id = ?", (match_id,))
                     l_row = c_cur.fetchone()
                     if l_row:
                         m_league = l_row[0]
+                        m_date = l_row[1]
                 if not m_league:
                     m_league = "미국 메이저리그 (MLB)" if home_team in MLB_TEAMS_POOL else ("일본 프로야구 (NPB)" if home_team in NPB_TEAMS_POOL else "한국 프로야구 (KBO)")
                 home_pitching_3g = _get_baseball_recent_pitching(c_conn, home_team, 3, league_name=m_league)
                 away_pitching_3g = _get_baseball_recent_pitching(c_conn, away_team, 3, league_name=m_league)
+                series_ctx = _detect_baseball_series_context(c_conn, home_team, away_team, m_date)
 
             c_conn.close()
         except Exception as err:
             logger.warning(f"Error fetching recent 10 matches: {err}")
             home_pitching_3g = {"games": [], "total_bullpen_np_3g": 0, "fatigue_level": "양호"}
             away_pitching_3g = {"games": [], "total_bullpen_np_3g": 0, "fatigue_level": "양호"}
+            series_ctx = None
 
         # -------------------------------------------------------------
         # 1. SOCCER FULL METRICS
@@ -1541,6 +1676,14 @@ class TeamSplitService:
         
         home_adv = 0.04
         prob_home = min(0.85, max(0.15, raw_prob_home + home_adv))
+
+        # Apply sweep resistance penalty
+        if series_ctx and series_ctx.get("is_sweep_game"):
+            if series_ctx.get("sweep_leader") == home_team:
+                prob_home = min(0.85, max(0.15, prob_home - 0.07))
+            elif series_ctx.get("sweep_leader") == away_team:
+                prob_home = min(0.85, max(0.15, prob_home + 0.07))
+
         prob_away = 1.0 - prob_home
 
         win_pct_home = int(round(prob_home * 100))
@@ -1566,6 +1709,11 @@ class TeamSplitService:
             f"[마운드 및 방어율] {home_team} 팀 평균자책 {h_era:.2f}(WHIP {h_whip:.2f}) vs {away_team} 팀 평균자책 {a_era:.2f}(WHIP {a_whip:.2f})",
             f"[세이버메트릭스 기대치] {home_team} 피타고리안 기대승률 {h_pyth}% vs {away_team} 피타고리안 기대승률 {a_pyth}%"
         ]
+        if series_ctx and series_ctx.get("is_sweep_game"):
+            drivers_list.insert(0, f"[시리즈 스윕 변수] {series_ctx.get('description')}")
+        elif series_ctx and series_ctx.get("is_rubber_game"):
+            drivers_list.insert(0, f"[시리즈 위닝 결정전] {series_ctx.get('description')}")
+
         if starting_pitchers_analysis:
             hst = starting_pitchers_analysis.get("home", {})
             ast = starting_pitchers_analysis.get("away", {})
@@ -1644,6 +1792,7 @@ class TeamSplitService:
                 "favored_pct": favored_pct
             },
             "starting_pitchers": starting_pitchers_analysis,
+            "series_context": series_ctx,
             "drivers": drivers_list
         }
         cls._MATCHUP_ANALYSIS_CACHE[cache_key] = (now, baseball_res)

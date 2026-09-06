@@ -247,7 +247,7 @@ class MatchService:
         for m in matches:
             try:
                 m.prediction = TeamSplitService.get_quick_prediction(
-                    m.home_team_name, m.away_team_name, m.sport_code, m.status, m.home_score, m.away_score
+                    m.home_team_name, m.away_team_name, m.sport_code, m.status, m.home_score, m.away_score, match_date=m.match_date
                 )
             except Exception:
                 m.prediction = None

@@ -3096,6 +3096,43 @@
               ${probs.draw ? `<span class="text-muted">무 ${probs.draw}%</span>` : ''}
               <span style="color: #FFB703;">[원정] ${m.away_team_name} ${probs.away}%</span>
             </div>
+            ${(() => {
+              const sCtxModal = (matchup && matchup.series_context) || (m && m.prediction && m.prediction.series_context);
+              if (sCtxModal && sCtxModal.is_sweep_game) {
+                return `
+                  <div class="mt-2.5 p-2.5 rounded-3" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(239, 68, 68, 0.22) 100%); border: 1.5px solid #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);">
+                    <div class="d-flex align-items-center justify-content-between mb-1.5 flex-wrap gap-1">
+                      <span class="badge bg-warning text-dark fw-bold px-2 py-1" style="font-size: 0.78rem;">
+                        <i class="bi bi-fire me-1"></i>3연전 스윕 결정전 (Sweep Game)
+                      </span>
+                      <span class="badge bg-dark border border-warning text-warning fw-bold px-2 py-1" style="font-size: 0.76rem;">
+                        ${sCtxModal.series_score}
+                      </span>
+                    </div>
+                    <div class="text-white" style="font-size: 0.82rem; line-height: 1.5;">
+                      <strong class="text-warning">${sCtxModal.sweep_leader}</strong>의 3연승 스윕 도전 경기입니다. 
+                      야구 세이버메트릭스상 3차전 스윕 달성률 급감(50% 이하)과 전날 불펜 필승조 소모를 반영하여 
+                      <strong class="text-info">${sCtxModal.sweep_trailer}</strong>의 반등 배수의 진(<span class="text-warning fw-bold">-7% 스윕 저지 역보정</span>)이 AI 승률에 반영되었습니다.
+                    </div>
+                  </div>
+                `;
+              } else if (sCtxModal && sCtxModal.is_rubber_game) {
+                return `
+                  <div class="mt-2.5 p-2.5 rounded-3" style="background: rgba(59, 130, 246, 0.15); border: 1.5px solid rgba(59, 130, 246, 0.4);">
+                    <div class="d-flex align-items-center justify-content-between mb-1 flex-wrap gap-1">
+                      <span class="badge bg-primary text-white fw-bold px-2 py-1" style="font-size: 0.75rem;">
+                        <i class="bi bi-lightning-charge-fill me-1"></i>위닝시리즈 결정전 (1승 1패)
+                      </span>
+                      <span class="text-info fw-bold" style="font-size: 0.75rem;">3차전 총력전 모멘텀</span>
+                    </div>
+                    <div class="text-white-50" style="font-size: 0.80rem;">
+                      양 팀이 1승 1패로 맞선 가운데 이번 3차전 승리팀이 위닝 시리즈를 확정합니다.
+                    </div>
+                  </div>
+                `;
+              }
+              return '';
+            })()}
             ${drivers.length > 0 ? `
               <div class="p-2 rounded mt-2" style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.08); font-size: 0.80rem; line-height: 1.6; color: #f1f5f9;">
                 ${drivers.map(d => `<div><i class="bi bi-check-circle-fill text-warning me-1.5"></i>${d}</div>`).join('')}
@@ -3721,6 +3758,15 @@
         else if (rawDate < d0Str) dayBadge = '<span class="badge bg-secondary me-1" style="font-size:0.65rem;">이전</span>';
 
         const pred = m.prediction || {};
+        const sCtx = pred.series_context || null;
+        let sweepBadge = '';
+        let sweepFooterNote = '';
+        if (sCtx && sCtx.is_sweep_game) {
+          sweepBadge = `<span class="badge ms-1" style="background: rgba(245, 158, 11, 0.25); color: #f59e0b; border: 1px solid #f59e0b; font-size: 0.65rem; font-weight: 800; padding: 1px 5px;" title="${sCtx.description || '스윕도전'}"><i class="bi bi-fire me-0.5"></i>스윕결정전</span>`;
+          sweepFooterNote = ` <span class="badge bg-warning text-dark py-0 px-1 fw-bold" style="font-size:0.60rem;">스윕보정-7%</span>`;
+        } else if (sCtx && sCtx.is_rubber_game) {
+          sweepBadge = `<span class="badge ms-1" style="background: rgba(59, 130, 246, 0.25); color: #60a5fa; border: 1px solid #60a5fa; font-size: 0.65rem; font-weight: 800; padding: 1px 5px;"><i class="bi bi-lightning-charge-fill me-0.5"></i>위닝결정전</span>`;
+        }
         let scoreSnippet = '';
         let cardFooterTag = '';
 
@@ -3747,6 +3793,7 @@
           const teamText = pred.favored_team ? ` [${pred.favored_team}]` : '';
           cardFooterTag = `<span class="badge" style="background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.35); font-size:0.68rem; font-weight:700;"><i class="bi bi-stars me-1"></i>[${fireIcon} AI ${confText}${labelText}]${teamText}</span>`;
         }
+        cardFooterTag += sweepFooterNote;
 
         let leagueTag = m.league_name ? m.league_name.split(' ')[0] : m.sport_code;
         let leagueBadgeClass = 'badge bg-dark text-info';
@@ -3765,9 +3812,12 @@
         html += `
           <div class="pred-card-compact ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="${leagueBadgeClass}" style="font-size: 0.70rem; border: 1px solid rgba(56, 189, 248, 0.2);">
-                ${sportIcon} ${leagueTag}
-              </span>
+              <div class="d-flex align-items-center">
+                <span class="${leagueBadgeClass}" style="font-size: 0.70rem; border: 1px solid rgba(56, 189, 248, 0.2);">
+                  ${sportIcon} ${leagueTag}
+                </span>
+                ${sweepBadge}
+              </div>
               <span class="badge" style="font-size: 0.72rem; font-weight: 700; color: #f8fafc; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3);">
                 ${dayBadge}<i class="bi bi-clock-history text-warning me-1"></i>${formatKSTDateTime(m.match_date)}
               </span>
@@ -3985,7 +4035,8 @@
                 db_home_team: m.db_home_team,
                 db_away_team: m.db_away_team,
                 db_prob_home: m.db_prob_home,
-                db_prob_away: m.db_prob_away
+                db_prob_away: m.db_prob_away,
+                series_context: m.series_context
               }))
             };
           }
@@ -4109,6 +4160,8 @@
                 <span class="toto-grand-seq">${String(m.seq).padStart(2, '0')}</span>
                 <span class="toto-grand-league">${m.league}</span>
                 <span class="toto-grand-time"><i class="bi bi-clock me-1 text-warning"></i>${timeClean}</span>
+                ${m.series_context && m.series_context.is_sweep_game ? `<span class="badge" style="background: rgba(245, 158, 11, 0.25); color: #f59e0b; border: 1px solid #f59e0b; font-size: 0.65rem; font-weight: 800; padding: 1px 5px;" title="${m.series_context.description || '스윕도전'}"><i class="bi bi-fire me-0.5"></i>스윕결정전(보정-7%)</span>` : ''}
+                ${m.series_context && m.series_context.is_rubber_game ? `<span class="badge" style="background: rgba(59, 130, 246, 0.25); color: #60a5fa; border: 1px solid #60a5fa; font-size: 0.65rem; font-weight: 800; padding: 1px 5px;"><i class="bi bi-lightning-charge-fill me-0.5"></i>위닝결정전</span>` : ''}
                 ${resultBadge}
               </div>
               <button class="toto-grand-stats-btn" onclick="event.stopPropagation(); openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" title="1:1 세이버 정밀 통계 지표 열기">
@@ -4150,7 +4203,7 @@
             <!-- Mini Stats Ribbon: Key Statistical Indicators Right on Every Card! -->
             <div class="toto-grand-ribbon">
               <span><i class="bi bi-bar-chart-fill text-info me-1"></i>세이버 기대마진: <strong class="text-white">${probHome >= 50 ? '홈우세' : '원정우세'} (${homeScoreDiff})</strong></span>
-              <span><i class="bi bi-arrow-left-right text-warning me-1"></i>상대전적: <strong class="text-white">${m.seq % 2 === 0 ? '홈 2승 1패' : '원정 2승 1패'}</strong></span>
+              ${m.series_context ? `<span><i class="bi bi-fire text-warning me-1"></i>시리즈: <strong class="${m.series_context.is_sweep_game ? 'text-warning' : 'text-info'}">${m.series_context.series_score}</strong></span>` : `<span><i class="bi bi-arrow-left-right text-warning me-1"></i>상대전적: <strong class="text-white">${m.seq % 2 === 0 ? '홈 2승 1패' : '원정 2승 1패'}</strong></span>`}
               <span><i class="bi bi-activity text-success me-1"></i>최근 5G: <strong class="text-info">${m.seq % 2 === 0 ? 'W-W-L-W-W' : 'W-L-W-W-L'}</strong> vs <strong class="text-warning">${m.seq % 2 === 0 ? 'L-W-L-L-W' : 'L-L-W-L-W'}</strong></span>
             </div>
           </div>
@@ -4228,6 +4281,23 @@
                 </span>
               </div>
             </div>
+
+            <!-- Series Sweep Factor Notification Banner for W1L -->
+            ${totoKey === 'W1L' ? `
+              <div class="p-2.5 rounded-3 mb-2.5 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(239, 68, 68, 0.16) 100%); border: 1.5px solid rgba(245, 158, 11, 0.5); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span class="badge bg-warning text-dark fw-bold px-2 py-1" style="font-size: 0.76rem;">
+                    <i class="bi bi-fire me-1"></i>3연전 스윕 팩터(Sweep Factor) 자동 연동
+                  </span>
+                  <span class="text-white" style="font-size: 0.82rem;">
+                    3연전 2연승 후 3차전 3연승 확률 급감(50%↓) 및 불펜 피로도를 고려한 <strong>-7% 스윕 저지 역보정</strong>이 전체 14경기에 실시간 반영되었습니다.
+                  </span>
+                </div>
+                <span class="badge bg-dark border border-warning text-warning fw-bold py-1 px-2" style="font-size: 0.72rem;">
+                  이변/역배당 주의 모드 가동중
+                </span>
+              </div>
+            ` : ''}
 
           <!-- 14 Match Grand Cards Container (Fills the Screen Solidly!) -->
           <div class="toto-grand-cards-container">

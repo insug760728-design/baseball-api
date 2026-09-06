@@ -190,7 +190,8 @@ class BetmanService:
                     sport_code=best_match['sport_code'],
                     status=best_match['status'],
                     home_score=best_match['home_score'],
-                    away_score=best_match['away_score']
+                    away_score=best_match['away_score'],
+                    match_date=best_match.get('match_date')
                 )
                 h_pct = 50
                 a_pct = 50
@@ -410,7 +411,8 @@ class BetmanService:
                 'db_home_team': db_match['home_team_name'] if db_match else home_n,
                 'db_away_team': db_match['away_team_name'] if db_match else away_n,
                 'db_prob_home': db_pred.get('home_pct', 50),
-                'db_prob_away': db_pred.get('away_pct', 50)
+                'db_prob_away': db_pred.get('away_pct', 50),
+                'series_context': db_pred.get('series_context')
             })
 
         forward_amt = int(cur.get('forwardAmount') or 0)
