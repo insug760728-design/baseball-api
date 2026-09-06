@@ -1833,8 +1833,13 @@
     }
     
     // -------------------------------------------------------------
-    // ⚡ 간편 로그인 (별명 + 나이) 상태 관리
+    // ⚡ 모바일/PC 뷰 모드 및 사용자 인증 상태 관리
     // -------------------------------------------------------------
+    let currentViewMode = (typeof window !== 'undefined' && window.innerWidth <= 768) ? 'mobile' : 'pc';
+    try {
+      const savedMode = localStorage.getItem('tokeon_view_mode');
+      if (savedMode) currentViewMode = savedMode;
+    } catch(e) {}
     let currentUser = null;
 
     function initAuthUser() {
