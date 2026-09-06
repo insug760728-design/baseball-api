@@ -11,7 +11,7 @@ def get_betman_toto_round(
     gmTs: Optional[int] = Query(None, description='회차 번호 (예: 260066, 260065)'),
     force: bool = Query(False, description='강제 최신 수집 여부')
 ):
-    target_ts = gmTs if gmTs else (260050 if gmId == 'G011' else (260066 if gmId == 'G024' else 260027))
+    target_ts = gmTs if gmTs else (260050 if gmId == 'G011' else (260005 if gmId == 'G024' else 260027))
     data = BetmanService.get_round_data(gm_id=gmId, gm_ts=target_ts, force_refresh=force)
     return data
 
@@ -23,9 +23,9 @@ def get_available_rounds(gmId: str = Query('G024')):
             'gmId': 'G024',
             'sport': '야구 승1패',
             'rounds': [
-                {'gmTs': 260066, 'label': '66회차 (발매중 · 6억 이월🔥)', 'status': 'SaleProgress', 'is_live': True},
-                {'gmTs': 260065, 'label': '65회차 (종료결과 · 3.9억)', 'status': 'Finished', 'is_live': False},
-                {'gmTs': 260064, 'label': '64회차 (이전회차 · 2.7억)', 'status': 'Finished', 'is_live': False}
+                {'gmTs': 260005, 'label': '5회차 (내일 09.07 개막 · 6.3억 잭팟🔥)', 'status': 'SaleProgress', 'is_live': True},
+                {'gmTs': 260066, 'label': '66회차 (09.06 오늘마감 · 6억 이월)', 'status': 'SaleComplete', 'is_live': False},
+                {'gmTs': 260065, 'label': '65회차 (종료결과 · 3.9억)', 'status': 'Finished', 'is_live': False}
             ]
         }
     elif gmId == 'G011':

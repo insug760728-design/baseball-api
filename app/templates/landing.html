@@ -2389,7 +2389,7 @@
 
     let currentCenterMode = 'TOTO'; // 'TOTO' or 'DETAIL'
     let currentTotoRound = 'W1L'; // 'W1L' (야구), 'WDL' (축구), 'W5L' (농구)
-    let currentBetmanTs = 260066; // Current active Betman round (260066)
+    let currentBetmanTs = 260005; // Current active Betman round: 5회차 (260005)
     let userTotoMarks = {}; // key: `${totoKey}_${seq}`, value: ['W', 'D', 'L']
 
     // ------------------------------------------------------------------
@@ -2411,35 +2411,35 @@
 
     const TOTO_DATA = {
       W1L: {
-        title: '야구 승1패 66회차',
+        title: '야구 승1패 5회차',
         sport: 'BASEBALL',
-        period: '09.06(일) 08:00 ~ 09.06(일) 17:00',
-        totalVotes: '89,623',
-        prize: '609,807,750원',
+        period: '09.07(월) 01:00 마감 (내일 개막🔥)',
+        totalVotes: '104,280',
+        prize: '632,213,500원',
         rollover: '609,807,750원 (5회 이월🔥)',
         forward_amount: 609807750,
-        total_sell_amount: 89623000,
-        total_sale_cnt: 89623,
+        total_sell_amount: 104280000,
+        total_sale_cnt: 104280,
         first_prize_pool: 632213500,
-        second_prize_pool: 8962300,
-        third_prize_pool: 4481150,
-        fourth_prize_pool: 8962300,
+        second_prize_pool: 10428000,
+        third_prize_pool: 5214000,
+        fourth_prize_pool: 10428000,
         status: 'SaleProgress',
         matches: [
-          { seq: 1, league: 'MLB', time: '09.06 (일) 08:10', home: '보스턴', away: '뉴욕양키', pW: 38.2, pD: 24.5, pL: 37.3, aiPick: 'W', result: null },
-          { seq: 2, league: 'MLB', time: '09.06 (일) 08:15', home: '볼티모어', away: '탬파베이', pW: 55.4, pD: 22.1, pL: 22.5, aiPick: 'W', result: null },
-          { seq: 3, league: 'MLB', time: '09.06 (일) 08:40', home: '클리블랜', away: '미네소타', pW: 44.1, pD: 25.3, pL: 30.6, aiPick: 'W', result: null },
-          { seq: 4, league: 'MLB', time: '09.06 (일) 09:10', home: '휴스턴', away: '텍사스', pW: 58.7, pD: 20.4, pL: 20.9, aiPick: 'W', result: null },
-          { seq: 5, league: 'MLB', time: '09.06 (일) 09:40', home: 'LA다저스', away: '샌프란시', pW: 68.9, pD: 18.2, pL: 12.9, aiPick: 'W', result: null },
-          { seq: 6, league: 'MLB', time: '09.06 (일) 10:05', home: '시애틀', away: 'LA에인절', pW: 51.3, pD: 24.7, pL: 24.0, aiPick: 'W', result: null },
-          { seq: 7, league: 'MLB', time: '09.06 (일) 10:10', home: '샌디에이', away: '애리조나', pW: 49.5, pD: 26.2, pL: 24.3, aiPick: 'W', result: null },
-          { seq: 8, league: 'KBO', time: '09.06 (일) 14:00', home: 'LG', away: '두산', pW: 47.8, pD: 25.1, pL: 27.1, aiPick: 'W', result: null },
-          { seq: 9, league: 'KBO', time: '09.06 (일) 14:00', home: 'KIA', away: '삼성', pW: 52.6, pD: 24.0, pL: 23.4, aiPick: 'W', result: null },
-          { seq: 10, league: 'KBO', time: '09.06 (일) 14:00', home: 'SSG', away: 'KT', pW: 43.5, pD: 26.5, pL: 30.0, aiPick: 'D', result: null },
-          { seq: 11, league: 'KBO', time: '09.06 (일) 14:00', home: 'NC', away: '롯데', pW: 39.8, pD: 25.8, pL: 34.4, aiPick: 'L', result: null },
-          { seq: 12, league: 'KBO', time: '09.06 (일) 14:00', home: '한화', away: '키움', pW: 56.1, pD: 23.2, pL: 20.7, aiPick: 'W', result: null },
-          { seq: 13, league: 'MLB', time: '09.06 (일) 08:05', home: '필라델', away: '뉴욕메츠', pW: 46.8, pD: 25.4, pL: 27.8, aiPick: 'W', result: null },
-          { seq: 14, league: 'MLB', time: '09.06 (일) 08:10', home: '애틀랜타', away: '마이애미', pW: 64.2, pD: 21.0, pL: 14.8, aiPick: 'W', result: null }
+          { seq: 1, league: 'MLB', time: '09.07 (월) 01:10', home: '신시내티', away: '밀워키', pW: 42.5, pD: 25.1, pL: 32.4, aiPick: 'W', result: null, db_match_id: 691 },
+          { seq: 2, league: 'MLB', time: '09.07 (월) 02:10', home: '필라델', away: '애틀랜타', pW: 51.8, pD: 24.3, pL: 23.9, aiPick: 'W', result: null, db_match_id: 692 },
+          { seq: 3, league: 'MLB', time: '09.07 (월) 02:35', home: '볼티모어', away: '보스턴', pW: 48.2, pD: 25.6, pL: 26.2, aiPick: 'W', result: null, db_match_id: 693 },
+          { seq: 4, league: 'MLB', time: '09.07 (월) 02:35', home: '피츠버그', away: 'LA에인절', pW: 39.4, pD: 26.8, pL: 33.8, aiPick: 'D', result: null, db_match_id: 694 },
+          { seq: 5, league: 'MLB', time: '09.07 (월) 02:40', home: '클리블랜', away: '디트로이트', pW: 54.2, pD: 23.1, pL: 22.7, aiPick: 'W', result: null, db_match_id: 695 },
+          { seq: 6, league: 'MLB', time: '09.07 (월) 02:40', home: '뉴욕메츠', away: '샌프란시', pW: 46.5, pD: 25.2, pL: 28.3, aiPick: 'W', result: null, db_match_id: 696 },
+          { seq: 7, league: 'MLB', time: '09.07 (월) 02:40', home: '마이애미', away: '시카고컵', pW: 36.8, pD: 27.4, pL: 35.8, aiPick: 'L', result: null, db_match_id: 697 },
+          { seq: 8, league: 'MLB', time: '09.07 (월) 03:10', home: '휴스턴', away: '애리조나', pW: 57.1, pD: 21.5, pL: 21.4, aiPick: 'W', result: null, db_match_id: 698 },
+          { seq: 9, league: 'MLB', time: '09.07 (월) 03:10', home: '캔자스시', away: '토론토', pW: 47.9, pD: 25.3, pL: 26.8, aiPick: 'W', result: null, db_match_id: 699 },
+          { seq: 10, league: 'MLB', time: '09.07 (월) 03:35', home: '텍사스', away: '탬파베이', pW: 50.4, pD: 24.8, pL: 24.8, aiPick: 'W', result: null, db_match_id: 700 },
+          { seq: 11, league: 'MLB', time: '09.07 (월) 04:10', home: '콜로라도', away: '세인트루', pW: 38.2, pD: 26.1, pL: 35.7, aiPick: 'L', result: null, db_match_id: 701 },
+          { seq: 12, league: 'MLB', time: '09.07 (월) 05:10', home: '시애틀', away: '애슬레틱', pW: 55.6, pD: 22.9, pL: 21.5, aiPick: 'W', result: null, db_match_id: 702 },
+          { seq: 13, league: 'MLB', time: '09.07 (월) 05:10', home: '샌디에이', away: '뉴욕양키', pW: 48.7, pD: 25.0, pL: 26.3, aiPick: 'W', result: null, db_match_id: 703 },
+          { seq: 14, league: 'MLB', time: '09.07 (월) 07:20', home: 'C화이트', away: '미네소타', pW: 33.5, pD: 24.2, pL: 42.3, aiPick: 'L', result: null, db_match_id: 704 }
         ]
       },
       WDL: {
@@ -2625,7 +2625,7 @@
         selectTotoRound('WDL');
       } else if (sKey === 'W1L') {
         switchCenterView('TOTO');
-        selectTotoRound('W1L', 260066);
+        selectTotoRound('W1L', 260005);
       } else if (sKey === 'W5L') {
         switchCenterView('TOTO');
         selectTotoRound('W5L');
@@ -2941,8 +2941,8 @@
 
       if (roundKey === 'W1L') {
         gmId = 'G024';
-        defaultTs = 260066;
-        sportTitle = '야구 승1패 66회차 (MLB & KBO 이월금 6억🔥)';
+        defaultTs = 260005;
+        sportTitle = '야구 승1패 5회차 (내일 09.07 개막 · 6억 이월🔥)';
       } else if (roundKey === 'W5L') {
         gmId = 'G027';
         defaultTs = 260027;
@@ -3181,11 +3181,14 @@
                   <i class="bi bi-trophy-fill me-1 text-warning"></i>${toto.title}
                 </span>
                 ${totoKey === 'W1L' ? `
-                  <button class="btn btn-sm py-0.5 px-2.5 fw-bold ${currentBetmanTs === 260066 ? 'btn-info text-dark shadow-sm' : 'btn-outline-secondary text-white'}" onclick="selectTotoRound('W1L', 260066)" style="font-size: 0.74rem; border-radius: 6px;">
-                    🔥 66회차 (6.3억 잭팟)
+                  <button class="btn btn-sm py-0.5 px-2.5 fw-bold ${currentBetmanTs === 260005 ? 'btn-info text-dark shadow-sm' : 'btn-outline-secondary text-white'}" onclick="selectTotoRound('W1L', 260005)" style="font-size: 0.74rem; border-radius: 6px;">
+                    🔥 5회차 (내일 09.07 시작)
+                  </button>
+                  <button class="btn btn-sm py-0.5 px-2 fw-bold ${currentBetmanTs === 260066 ? 'btn-info text-dark shadow-sm' : 'btn-outline-secondary text-white'}" onclick="selectTotoRound('W1L', 260066)" style="font-size: 0.74rem; border-radius: 6px;">
+                    66회차 (09.06 마감)
                   </button>
                   <button class="btn btn-sm py-0.5 px-2 fw-bold ${currentBetmanTs === 260065 ? 'btn-info text-dark shadow-sm' : 'btn-outline-secondary text-white'}" onclick="selectTotoRound('W1L', 260065)" style="font-size: 0.74rem; border-radius: 6px;">
-                    65회차 (적중결과)
+                    65회차 (종료결과)
                   </button>
                 ` : ''}
               </div>

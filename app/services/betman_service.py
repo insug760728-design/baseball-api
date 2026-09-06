@@ -247,7 +247,7 @@ class BetmanService:
         candidates = [
             f'betman_{gm_ts}.json',
             f'betman_{gm_id}_{gm_ts}.json',
-            'betman_260050.json' if gm_id == 'G011' else ('betman_260066.json' if gm_id == 'G024' else 'betman_260027.json')
+            'betman_260050.json' if gm_id == 'G011' else ('betman_260005.json' if gm_id == 'G024' else 'betman_260027.json')
         ]
         for snap_file in candidates:
             if os.path.exists(snap_file):
