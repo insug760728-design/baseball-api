@@ -52,6 +52,14 @@ class MatchService:
             for m_data in scraped_matches:
                 match = db.query(Match).filter(Match.official_id == m_data["official_id"]).first()
                 if not match:
+                    # Also check by home/away teams and date to prevent duplicates from differing official_id prefixes
+                    match = db.query(Match).filter(
+                        Match.home_team_name == m_data["home_team_name"],
+                        Match.away_team_name == m_data["away_team_name"],
+                        Match.match_date.like(f"{current_d}%")
+                    ).first()
+
+                if not match:
                     match = Match(
                         official_id=m_data["official_id"],
                         sport_code=m_data.get("sport_code", scraper.get_sport_code()),
@@ -224,6 +232,18 @@ class MatchService:
             q = query.order_by(Match.match_date.asc(), Match.id.asc())
 
         matches = q.limit(limit).all() if limit else q.all()
+        
+        # Deduplicate matches by fixture key (sport, home, away, date)
+        unique_matches = []
+        seen_keys = set()
+        for m in matches:
+            d_part = (m.match_date or "")[:10]
+            f_key = f"{m.sport_code}_{m.home_team_name}_{m.away_team_name}_{d_part}"
+            if f_key not in seen_keys:
+                seen_keys.add(f_key)
+                unique_matches.append(m)
+        matches = unique_matches
+
         for m in matches:
             try:
                 m.prediction = TeamSplitService.get_quick_prediction(

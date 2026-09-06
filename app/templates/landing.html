@@ -2274,19 +2274,34 @@
       return dateStr;
     }
 
-    // 2. Fetch 100% Real Match Scores from DB
+    // 2. Fetch 100% Real Match Scores from DB with Fixture-Level Deduplication
     async function loadLiveMatches() {
       const container = document.getElementById('stripContainer');
       try {
         const resp = await fetch('/api/v1/matches?order=asc&limit=3000');
         if (!resp.ok) throw new Error('Failed to load matches');
-        allMatches = await resp.json();
+        const rawMatches = await resp.json();
+
+        // Ensure absolute fixture-level uniqueness (sport + home + away + YYYY-MM-DD)
+        const uniqueList = [];
+        const seenKeys = new Set();
+        for (const m of rawMatches) {
+          const dPart = (m.match_date || '').slice(0, 10);
+          const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            uniqueList.push(m);
+          }
+        }
+        allMatches = uniqueList;
 
         renderMatchStrip('ALL');
         renderPredMatches();
       } catch (e) {
         console.error('Match strip error:', e);
-        if (container) container.innerHTML = '<div class="text-muted p-3">실제 경기 스코어보드를 불러오는 중입니다.</div>';
+        if (container && (!allMatches || allMatches.length === 0)) {
+          container.innerHTML = '<div class="text-muted p-3">실제 경기 스코어보드를 불러오는 중입니다.</div>';
+        }
       }
     }
 
@@ -2314,7 +2329,20 @@
       const finishedMatches = filtered.filter(m => m.status === 'FINISHED')
         .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
 
-      let displayList = [...liveMatches, ...upcomingMatches, ...finishedMatches].slice(0, 30);
+      // Ensure deduplication in display strip
+      const combined = [...liveMatches, ...upcomingMatches, ...finishedMatches];
+      const uniqueStrip = [];
+      const seenStripKeys = new Set();
+      for (const m of combined) {
+        const dPart = (m.match_date || '').slice(0, 10);
+        const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
+        if (!seenStripKeys.has(key)) {
+          seenStripKeys.add(key);
+          uniqueStrip.push(m);
+        }
+      }
+
+      let displayList = uniqueStrip.slice(0, 30);
       if (displayList.length === 0) displayList = filtered.slice(0, 30);
 
       let html = '';
@@ -5142,6 +5170,10 @@
           badge.innerText = '방금 1시간 전 종목 자동 동기화 완료!';
           setTimeout(() => { badge.innerText = '1시간 자동 업데이트 활성'; }, 5000);
         }
+      } else if (data.type === 'LIVE_SCORE_UPDATE') {
+        // Real-time score update pushed from backend!
+        console.log('[WebSocket] Live score update received!', data);
+        loadLiveMatches();
       }
     }
 
@@ -5303,6 +5335,8 @@
       } catch (err) {
         console.error('Matches load error:', err);
       }
+      // 30초 주기 실시간 라이브 경기 스코어 자동 폴링 최신화
+      setInterval(loadLiveMatches, 30000);
       initPredictionSection();
       initViewMode();
       startLiveUsersFluctuation();

@@ -305,14 +305,27 @@ class SchedulerService:
             logger.error(f"[Scheduler] 바탕화면 트래픽 갱신 오류: {e}")
 
     @classmethod
-    def execute_live_api_sports_job(cls):
+    async def execute_live_api_sports_job(cls):
         """2분 주기 API-Sports 유료 실시간 축구 & 야구 동기화"""
         try:
             from app.services.live_api_sports_service import LiveApiSportsService
             if LiveApiSportsService.is_configured():
                 fb_res = LiveApiSportsService.sync_live_football()
                 bb_res = LiveApiSportsService.sync_live_baseball()
-                logger.info(f"[Scheduler LiveApi] 실시간 유료 API 동기화 완료: 축구 {fb_res.get('updated_db_matches', 0)}경기, 야구 {bb_res.get('updated_db_matches', 0)}경기 갱신")
+                tot_updated = (fb_res.get('updated_db_matches', 0) or 0) + (bb_res.get('updated_db_matches', 0) or 0)
+                logger.info(f"[Scheduler LiveApi] 실시간 유료 API 동기화 완료: 축구 {fb_res.get('updated_db_matches', 0)}경기, 야구 {bb_res.get('updated_db_matches', 0)}경기 갱신 (총 {tot_updated}건)")
+                if tot_updated > 0:
+                    try:
+                        from app.core.websocket_manager import manager
+                        await manager.broadcast({
+                            "type": "LIVE_SCORE_UPDATE",
+                            "timestamp": datetime.now().isoformat(),
+                            "updated_total": tot_updated,
+                            "football": fb_res.get('updated_db_matches', 0),
+                            "baseball": bb_res.get('updated_db_matches', 0)
+                        })
+                    except Exception as be:
+                        logger.warning(f"[Scheduler LiveApi] WebSocket broadcast error: {be}")
         except Exception as e:
             logger.error(f"[Scheduler LiveApi] 실시간 유료 API 동기화 오류: {e}")
 

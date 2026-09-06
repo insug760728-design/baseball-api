@@ -7,7 +7,7 @@ class Settings:
     PROJECT_NAME: str = 'Sports Data Hub API'
     DATABASE_URL: str = os.getenv('DATABASE_URL', 'sqlite:///./sports_data.db')
     API_V1_STR: str = '/api/v1'
-    API_SPORTS_KEY: str = os.getenv('API_SPORTS_KEY', '')
+    API_SPORTS_KEY: str = os.getenv('API_SPORTS_KEY', '050a2debf0dc45ecf519ce236c9f46f5')
     RAPIDAPI_KEY: str = os.getenv('RAPIDAPI_KEY', '')
 
 settings = Settings()

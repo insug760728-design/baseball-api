@@ -4,7 +4,8 @@ import json
 import urllib.request
 import logging
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
+from sqlalchemy import or_
 
 from app.core.config import settings
 from app.core.database import SessionLocal
@@ -29,71 +30,152 @@ BASEBALL_STATUS_MAP = {
     "NS": "SCHEDULED", "POST": "CANCELLED", "CANC": "CANCELLED"
 }
 
-# Korean <-> English / International Team Synonyms
+# Comprehensive Korean <-> English / International Team Synonyms
 TEAM_SYNONYMS = {
+    # Baseball (KBO)
+    "키움": ["kiwoom", "kiwoom heroes", "키움 히어로즈", "히어로즈"],
+    "NC": ["nc", "nc dinos", "nc 다이노스", "다이노스"],
+    "KIA": ["kia", "kia tigers", "기아", "kia 타이거즈", "기아 타이거즈", "타이거즈"],
+    "KT": ["kt", "kt wiz", "kt wiz suwon", "kt 위즈", "위즈"],
+    "LG": ["lg", "lg twins", "lg 트윈스", "트윈스"],
+    "삼성": ["samsung", "samsung lions", "삼성 라이온즈", "라이온즈"],
+    "롯데": ["lotte", "lotte giants", "롯데 자이언츠", "자이언츠"],
+    "한화": ["hanwha", "hanwha eagles", "한화 이글스", "이글스"],
+    "SSG": ["ssg", "ssg landers", "ssg 랜더스", "랜더스", "sk"],
+    "두산": ["doosan", "doosan bears", "두산 베어스", "베어스"],
+
+    # Baseball (NPB)
+    "요미우리": ["yomiuri", "yomiuri giants", "요미우리 자이언츠"],
+    "한신": ["hanshin", "hanshin tigers", "한신 타이거스"],
+    "주니치": ["chunichi", "chunichi dragons", "주니치 드래곤즈"],
+    "야쿠르트": ["yakult", "yakult swallows", "도쿄 야쿠르트", "도쿄 야쿠르트 스왈로스"],
+    "히로시마": ["hiroshima", "hiroshima carp", "히로시마 도요 카프"],
+    "요코하마": ["yokohama", "yokohama baystars", "요코하마 dena 베이스타즈"],
+    "소프트뱅크": ["softbank", "fukuoka softbank", "fukuoka s. hawks", "후쿠오카 소프트뱅크"],
+    "오릭스": ["orix", "orix buffaloes", "오릭스 버펄로스"],
+    "지바롯데": ["chiba lotte", "chiba lotte marines", "지바 롯데", "지바 롯데 마린스"],
+    "라쿠텐": ["rakuten", "rakuten gold. eagles", "도호쿠 라쿠텐", "도호쿠 라쿠텐 골든이글스"],
+    "세이부": ["seibu", "seibu lions", "사이타마 세이부 라이온즈"],
+    "닛폰햄": ["nippon ham", "nippon ham fighters", "홋카이도 닛폰햄"],
+
     # Baseball (MLB)
-    "다저스": ["dodgers", "los angeles dodgers", "la dodgers", "la다저스"],
-    "파드리스": ["padres", "san diego padres", "샌디에이고"],
-    "자이언츠": ["giants", "san francisco giants", "샌프란시스코"],
-    "양키스": ["yankees", "new york yankees", "ny yankees", "뉴욕양키스"],
-    "메츠": ["mets", "new york mets", "ny mets", "뉴욕메츠"],
-    "레드삭스": ["red sox", "boston red sox", "보스턴"],
-    "오리올스": ["orioles", "baltimore orioles", "볼티모어"],
-    "블루제이스": ["blue jays", "toronto blue jays", "토론토"],
-    "레이스": ["rays", "tampa bay rays", "탬파베이"],
-    "화이트삭스": ["white sox", "chicago white sox", "시카고화이트삭스"],
-    "가디언스": ["guardians", "cleveland guardians", "클리블랜드"],
-    "타이거스": ["tigers", "detroit tigers", "디트로이트"],
-    "로열스": ["royals", "kansas city royals", "캔자스시티"],
-    "트윈스": ["twins", "minnesota twins", "미네소타"],
-    "애스트로스": ["astros", "houston astros", "휴스턴"],
-    "에인절스": ["angels", "los angeles angels", "la에인절스"],
-    "애슬레틱스": ["athletics", "oakland athletics", "오클랜드"],
-    "매리너스": ["mariners", "seattle mariners", "시애틀"],
-    "레인저스": ["rangers", "texas rangers", "텍사스"],
-    "브레이브스": ["braves", "atlanta braves", "애틀랜타"],
-    "말린스": ["marlins", "miami marlins", "마이애미"],
-    "필리스": ["phillies", "philadelphia phillies", "필라델피아"],
-    "내셔널스": ["nationals", "washington nationals", "워싱턴"],
-    "컵스": ["cubs", "chicago cubs", "시카고컵스"],
-    "레즈": ["reds", "cincinnati reds", "신시내티"],
-    "브루어스": ["brewers", "milwaukee brewers", "밀워키"],
-    "파이리츠": ["pirates", "pittsburgh pirates", "피츠버그"],
-    "카디널스": ["cardinals", "st louis cardinals", "세인트루이스"],
-    "다이아몬드백스": ["diamondbacks", "arizona diamondbacks", "d-backs", "애리조나"],
-    "로키스": ["rockies", "colorado rockies", "콜로라도"],
+    "다저스": ["dodgers", "los angeles dodgers", "la dodgers", "la다저스", "다저스"],
+    "파드리스": ["padres", "san diego padres", "샌디에이고", "파드리스"],
+    "자이언츠": ["giants", "san francisco giants", "샌프란시스코", "자이언츠"],
+    "양키스": ["yankees", "new york yankees", "ny yankees", "뉴욕양키스", "뉴욕 양키스"],
+    "메츠": ["mets", "new york mets", "ny mets", "뉴욕메츠", "뉴욕 메츠"],
+    "레드삭스": ["red sox", "boston red sox", "보스턴", "레드삭스"],
+    "오리올스": ["orioles", "baltimore orioles", "볼티모어", "오리올스"],
+    "블루제이스": ["blue jays", "toronto blue jays", "토론토", "블루제이스"],
+    "레이스": ["rays", "tampa bay rays", "탬파베이", "레이스"],
+    "화이트삭스": ["white sox", "chicago white sox", "시카고화이트삭스", "시카고 화이트삭스"],
+    "가디언스": ["guardians", "cleveland guardians", "클리블랜드", "가디언스"],
+    "타이거스": ["tigers", "detroit tigers", "디트로이트", "타이거스"],
+    "로열스": ["royals", "kansas city royals", "캔자스시티", "로열스"],
+    "트윈스": ["twins", "minnesota twins", "미네소타", "트윈스"],
+    "애스트로스": ["astros", "houston astros", "휴스턴", "애스트로스"],
+    "에인절스": ["angels", "los angeles angels", "la에인절스", "la 에인절스"],
+    "애슬레틱스": ["athletics", "oakland athletics", "오클랜드", "애슬레틱스"],
+    "매리너스": ["mariners", "seattle mariners", "시애틀", "매리너스"],
+    "레인저스": ["rangers", "texas rangers", "텍사스", "레인저스"],
+    "브레이브스": ["braves", "atlanta braves", "애틀랜타", "브레이브스"],
+    "말린스": ["marlins", "miami marlins", "마이애미", "말린스"],
+    "필리스": ["phillies", "philadelphia phillies", "필라델피아", "필리스"],
+    "내셔널스": ["nationals", "washington nationals", "워싱턴", "내셔널스"],
+    "컵스": ["cubs", "chicago cubs", "시카고컵스", "시카고 컵스"],
+    "레즈": ["reds", "cincinnati reds", "신시내티", "레즈"],
+    "브루어스": ["brewers", "milwaukee brewers", "밀워키", "브루어스"],
+    "파이리츠": ["pirates", "pittsburgh pirates", "피츠버그", "파이리츠"],
+    "카디널스": ["cardinals", "st louis cardinals", "st. louis cardinals", "세인트루이스", "카디널스"],
+    "다이아몬드백스": ["diamondbacks", "arizona diamondbacks", "d-backs", "애리조나", "다이아몬드백스"],
+    "로키스": ["rockies", "colorado rockies", "콜로라도", "로키스"],
 
     # Soccer (EPL / La Liga / Serie A / Bundesliga / Ligue 1)
-    "인테르": ["internazionale", "inter", "inter milan", "인터밀란"],
-    "나폴리": ["napoli", "ssc napoli"],
+    "에버턴": ["everton", "에버튼"],
+    "맨체스u": ["manchester united", "manchester utd", "man utd", "맨유", "맨체스터유나이티드", "맨체스터 유나이티드"],
+    "맨체스c": ["manchester city", "man city", "man city fc", "맨시티", "맨체스터시티", "맨체스터 시티"],
+    "아스널": ["arsenal", "아스날"],
+    "첼시": ["chelsea"],
+    "리버풀": ["liverpool"],
+    "토트넘": ["tottenham", "tottenham hotspur", "spurs"],
+    "a빌라": ["aston villa", "villa", "아스톤빌라", "아스톤v", "애스턴빌라", "아스톤 빌라"],
+    "뉴캐슬": ["newcastle", "newcastle united"],
+    "브라이턴": ["brighton", "brighton & hove albion", "brighton and hove albion", "브라이튼"],
+    "브렌트퍼": ["brentford", "브렌트포드"],
+    "크리스탈": ["crystal palace", "palace", "크리스털", "크리스탈팰리스", "크리스탈 팰리스"],
+    "풀럼": ["fulham"],
+    "웨스트햄": ["west ham", "west ham united"],
+    "울버햄튼": ["wolverhampton", "wolves"],
+    "본머스": ["bournemouth", "afc bournemouth"],
+    "노팅엄f": ["nottingham", "nottingham forest", "노팅엄"],
+    "레스터": ["leicester", "leicester city"],
+    "사우샘프": ["southampton", "사우샘프턴"],
+    "입스위치": ["ipswich", "ipswich town"],
     "헐시티": ["hull", "hull city"],
-    "아스톤v": ["aston villa", "villa", "아스톤빌라"],
-    "샬케04": ["schalke", "schalke 04", "샬케"],
-    "바이에른": ["bayern", "bayern munich", "bayern munchen", "바이에른뮌헨"],
+    "유벤투스": ["juventus", "유벤"],
+    "ac밀란": ["ac milan", "milan", "밀란"],
+    "인테르": ["internazionale", "inter", "inter milan", "인터밀란", "인터 밀란"],
+    "나폴리": ["napoli", "ssc napoli"],
+    "as로마": ["roma", "as roma", "로마"],
+    "라치오": ["lazio", "ss lazio"],
+    "아탈란타": ["atalanta", "atalanta bc"],
+    "피오렌": ["fiorentina", "acf fiorentina", "피오렌티나"],
+    "볼로냐": ["bologna"],
+    "토리노": ["torino"],
+    "몬차": ["monza", "ac monza", "ac몬차"],
+    "제노아": ["genoa", "genoa cfc"],
+    "베네치아": ["venezia", "venezia fc"],
+    "파르마": ["parma", "parma calcio 1913"],
+    "프로시노": ["frosinone", "frosinone calcio", "프로시노네", "프로시논"],
+    "칼리아리": ["cagliari"],
+    "우디네세": ["udinese"],
+    "엠폴리": ["empoli"],
+    "레체": ["lecce"],
+    "베로나": ["hellas verona", "verona", "헬라스"],
+    "코모": ["como"],
+    "바르셀로": ["barcelona", "fc barcelona", "바르셀로나", "바르사"],
+    "레알마드리드": ["real madrid", "레알", "레알 마드리드"],
+    "아틀레티코": ["atletico madrid", "atletico de madrid", "atletico", "아틀레티코 마드리드"],
+    "발렌시아": ["valencia", "valencia cf"],
+    "비야레알": ["villarreal", "villarreal cf"],
+    "세비야": ["sevilla", "sevilla fc"],
+    "소시에다드": ["real sociedad", "레알 소시에다드"],
+    "베티스": ["real betis", "레알 베티스"],
+    "빌바오": ["athletic club", "athletic bilbao", "아틀레틱 빌바오"],
+    "지로나": ["girona", "girona fc"],
+    "에스파뇰": ["espanyol", "rcd espanyol"],
+    "셀타비고": ["celta vigo", "celta de vigo", "셀타"],
+    "헤타페": ["getafe", "getafe cf"],
+    "오사수나": ["osasuna", "ca osasuna"],
+    "알라베스": ["alaves", "deportivo alaves"],
     "라요": ["rayo", "rayo vallecano", "라요바예카노"],
     "라싱산탄": ["racing", "racing santander", "라싱", "라싱산탄데르"],
+    "데포르": ["deportivo", "deportivo la coruna", "데포르티보"],
+    "바이에른": ["bayern", "bayern munich", "bayern munchen", "바이에른뮌헨", "바이에른 뮌헨"],
+    "도르트문트": ["dortmund", "borussia dortmund", "bvb"],
+    "레버쿠젠": ["leverkusen", "bayer leverkusen"],
+    "라이프치히": ["rb leipzig", "leipzig"],
+    "프랑크푸르트": ["eintracht frankfurt", "frankfurt"],
+    "슈투트가르트": ["vfb stuttgart", "stuttgart"],
+    "볼프스부르크": ["vfl wolfsburg", "wolfsburg"],
+    "묀헨글라트바흐": ["borussia monchengladbach", "monchengladbach"],
+    "함부르크": ["hamburg", "hamburger sv", "hsv"],
+    "마인츠": ["mainz", "mainz 05", "fsv mainz 05", "마인츠05"],
+    "샬케04": ["schalke", "schalke 04", "샬케"],
+    "파리생제르맹": ["psg", "paris saint germain", "paris saint-germain", "파리생제르망", "파리"],
+    "마르세유": ["marseille", "olympique marseille"],
+    "모나코": ["monaco", "as monaco"],
+    "리옹": ["lyon", "olympique lyon"],
+    "릴": ["lille", "lille osc"],
     "랑스": ["lens", "rc lens"],
     "로리앙": ["lorient", "fc lorient"],
-    "as로마": ["roma", "as roma", "로마"],
-    "아탈란타": ["atalanta", "atalanta bc"],
     "르아브르": ["le havre", "le havre ac", "havre"],
     "브레스투": ["brest", "stade brestois 29", "브레스트"],
     "니스": ["nice", "ogc nice"],
     "르망": ["le mans", "le mans fc"],
-    "비야레알": ["villarreal", "villarreal cf"],
-    "데포르": ["deportivo", "deportivo la coruna", "데포르티보"],
-    "에버턴": ["everton"],
-    "맨체스u": ["manchester united", "manchester utd", "man utd", "맨유", "맨체스터유나이티드"],
-    "함부르크": ["hamburg", "hamburger sv", "hsv"],
-    "마인츠": ["mainz", "mainz 05", "fsv mainz 05", "마인츠05"],
-    "발렌시아": ["valencia", "valencia cf"],
-    "바르셀로": ["barcelona", "fc barcelona", "바르셀로나"],
-    "프로시노": ["frosinone", "frosinone calcio", "프로시노네"],
-    "베네치아": ["venezia", "venezia fc"],
-    "파르마": ["parma", "parma calcio 1913"],
-    "몬차": ["monza", "ac monza"],
     "트루아": ["troyes", "estac troyes"],
-    "스트라스": ["strasbourg", "rc strasbourg", "스트라스부르"]
+    "스트라스": ["strasbourg", "rc strasbourg", "스트라스부르"],
+    "스타드렌": ["rennes", "stade rennais", "렌"]
 }
 
 def normalize_name(n: str) -> str:
@@ -108,8 +190,9 @@ def teams_match(api_name: str, db_name: str) -> bool:
         return False
     if norm_api == norm_db:
         return True
-    if norm_api in norm_db or norm_db in norm_api:
-        return True
+    if len(norm_api) >= 3 and len(norm_db) >= 3:
+        if norm_api in norm_db or norm_db in norm_api:
+            return True
 
     # Check synonyms
     for k, aliases in TEAM_SYNONYMS.items():
@@ -117,10 +200,17 @@ def teams_match(api_name: str, db_name: str) -> bool:
         norm_aliases = [normalize_name(a) for a in aliases]
         all_group = [norm_k] + norm_aliases
 
-        api_in_group = any(g in norm_api or norm_api in g for g in all_group)
-        db_in_group = any(g in norm_db or norm_db in g for g in all_group)
+        def matches_cand(cand):
+            for g in all_group:
+                if len(g) <= 2:
+                    if g == cand or cand.startswith(g) or cand.endswith(g):
+                        return True
+                else:
+                    if g in cand or cand in g:
+                        return True
+            return False
 
-        if api_in_group and db_in_group:
+        if matches_cand(norm_api) and matches_cand(norm_db):
             return True
 
     return False
@@ -253,25 +343,44 @@ class LiveApiSportsService:
         if not cls.is_configured():
             return {"status": "SKIPPED", "message": "API Key not configured"}
 
-        if not date_str:
-            date_str = datetime.now().strftime("%Y-%m-%d")
+        now_dt = datetime.now()
+        d_today = date_str or now_dt.strftime("%Y-%m-%d")
+        d_yesterday = (now_dt - timedelta(days=1)).strftime("%Y-%m-%d")
+        d_tomorrow = (now_dt + timedelta(days=1)).strftime("%Y-%m-%d")
 
-        # 1. Fetch live matches
+        # 1. Fetch all live soccer matches
         data_live = cls._make_request("/fixtures?live=all", sport="football")
         fixtures_live = (data_live or {}).get("response", [])
 
-        # 2. Fetch today's matches to get finished / updated scores
-        data_date = cls._make_request(f"/fixtures?date={date_str}", sport="football")
-        fixtures_date = (data_date or {}).get("response", [])
+        # 2. Fetch today's soccer matches
+        data_today = cls._make_request(f"/fixtures?date={d_today}", sport="football")
+        fixtures_today = (data_today or {}).get("response", [])
 
-        all_fixtures = {f.get("fixture", {}).get("id"): f for f in (fixtures_date + fixtures_live) if f.get("fixture", {}).get("id")}.values()
+        # 3. Fetch tomorrow's matches for late European games crossing into KST
+        fixtures_tomorrow = []
+        if now_dt.hour >= 12 or date_str:
+            data_tom = cls._make_request(f"/fixtures?date={d_tomorrow}", sport="football")
+            fixtures_tomorrow = (data_tom or {}).get("response", [])
+
+        all_fixtures_dict = {}
+        for f in (fixtures_today + fixtures_tomorrow + fixtures_live):
+            fid = f.get("fixture", {}).get("id")
+            if fid:
+                all_fixtures_dict[fid] = f
+        all_fixtures = list(all_fixtures_dict.values())
 
         updated = 0
         db = SessionLocal()
         try:
+            # Match against yesterday, today, tomorrow, or ANY match currently marked LIVE
             db_matches = db.query(Match).filter(
                 Match.sport_code == "SOCCER",
-                Match.match_date.like(f"{date_str}%")
+                or_(
+                    Match.status == "LIVE",
+                    Match.match_date.like(f"{d_yesterday}%"),
+                    Match.match_date.like(f"{d_today}%"),
+                    Match.match_date.like(f"{d_tomorrow}%")
+                )
             ).all()
 
             for f in all_fixtures:
@@ -308,6 +417,11 @@ class LiveApiSportsService:
                         updated += 1
                         break
             db.commit()
+
+            # Broadcast real-time update via WebSocket if any scores changed
+            if updated > 0:
+                cls._broadcast_live_update("SOCCER", updated)
+
         except Exception as e:
             logger.error(f"[LiveApiSports] Football sync error: {e}")
             db.rollback()
@@ -322,25 +436,41 @@ class LiveApiSportsService:
         if not cls.is_configured():
             return {"status": "SKIPPED", "message": "API Key not configured"}
 
-        if not date_str:
-            date_str = datetime.now().strftime("%Y-%m-%d")
+        now_dt = datetime.now()
+        d_today = date_str or now_dt.strftime("%Y-%m-%d")
+        d_yesterday = (now_dt - timedelta(days=1)).strftime("%Y-%m-%d")
+        d_tomorrow = (now_dt + timedelta(days=1)).strftime("%Y-%m-%d")
 
         # 1. Fetch live games
         data_live = cls._make_request("/games?live=all", sport="baseball")
         games_live = (data_live or {}).get("response", [])
 
         # 2. Fetch today's games
-        data_date = cls._make_request(f"/games?date={date_str}", sport="baseball")
+        data_date = cls._make_request(f"/games?date={d_today}", sport="baseball")
         games_date = (data_date or {}).get("response", [])
 
-        all_games = {g.get("id"): g for g in (games_date + games_live) if g.get("id")}.values()
+        # 3. Fetch yesterday's games (for games wrapping up in US time)
+        data_yesterday = cls._make_request(f"/games?date={d_yesterday}", sport="baseball")
+        games_yesterday = (data_yesterday or {}).get("response", [])
+
+        all_games_dict = {}
+        for g in (games_date + games_yesterday + games_live):
+            gid = g.get("id")
+            if gid:
+                all_games_dict[gid] = g
+        all_games = list(all_games_dict.values())
 
         updated = 0
         db = SessionLocal()
         try:
             db_matches = db.query(Match).filter(
                 Match.sport_code == "BASEBALL",
-                Match.match_date.like(f"{date_str}%")
+                or_(
+                    Match.status == "LIVE",
+                    Match.match_date.like(f"{d_yesterday}%"),
+                    Match.match_date.like(f"{d_today}%"),
+                    Match.match_date.like(f"{d_tomorrow}%")
+                )
             ).all()
 
             for g in all_games:
@@ -372,6 +502,10 @@ class LiveApiSportsService:
                         updated += 1
                         break
             db.commit()
+
+            if updated > 0:
+                cls._broadcast_live_update("BASEBALL", updated)
+
         except Exception as e:
             logger.error(f"[LiveApiSports] Baseball sync error: {e}")
             db.rollback()
@@ -379,6 +513,24 @@ class LiveApiSportsService:
             db.close()
 
         return {"status": "SUCCESS", "total_games": len(all_games), "updated_db_matches": updated}
+
+    @classmethod
+    def _broadcast_live_update(cls, sport: str, updated_count: int):
+        try:
+            from app.core.websocket_manager import manager
+            import asyncio
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(manager.broadcast({
+                    "type": "LIVE_SCORE_UPDATE",
+                    "timestamp": datetime.now().isoformat(),
+                    "sport": sport,
+                    "updated_count": updated_count
+                }))
+            except RuntimeError:
+                pass
+        except Exception:
+            pass
 
     @classmethod
     def sync_all(cls) -> Dict[str, Any]:
