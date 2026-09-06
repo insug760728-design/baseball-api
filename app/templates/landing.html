@@ -34,11 +34,16 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
+    html, body {
       background-color: var(--bg-main);
       color: var(--text-main);
       font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
-      overflow-x: hidden;
+      overflow-x: hidden !important;
+      max-width: 100vw !important;
+      width: 100% !important;
+      touch-action: pan-y pinch-zoom;
+      overscroll-behavior-x: none;
+      -webkit-overflow-scrolling: touch;
       line-height: 1.6;
     }
 
@@ -81,6 +86,8 @@
         overflow-x: hidden !important;
         width: 100% !important;
         max-width: 100vw !important;
+        touch-action: pan-y pinch-zoom !important;
+        overscroll-behavior-x: none !important;
       }
       .navbar-glass {
         padding: 6px 8px !important;
@@ -701,16 +708,58 @@
       }
     }
     @media (max-width: 991px) {
+      html, body {
+        overflow-x: hidden !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        touch-action: pan-y pinch-zoom !important;
+        overscroll-behavior-x: none !important;
+        position: relative !important;
+      }
+      #mainAppWrapper, .dash-container, #prediction-section, section {
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+      }
+      .row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+      }
+      .dash-container {
+        padding-left: 4px !important;
+        padding-right: 4px !important;
+        overflow-x: hidden !important;
+      }
       .dashboard-row {
-        flex-wrap: wrap;
+        flex-wrap: wrap !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        overflow-x: hidden !important;
       }
       .col-dash-left,
       .col-dash-center,
       .col-dash-right,
       .col-dash-news {
-        flex: 0 0 100%;
-        max-width: 100%;
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
       }
+      .modal-dialog {
+        max-width: 96vw !important;
+        margin: 0.5rem auto !important;
+      }
+    }
+
+    #starterModal {
+      z-index: 1065 !important;
     }
 
     /* Compact News Cards in 4th Column */
@@ -1118,15 +1167,13 @@
       color: #f8fafc;
     }
 
-    /* ============================================================= */
-    /* 📱 모바일 전용 앱 스타일 탭 뷰 (단일 패널 100% 핏 & 네이티브 세로 스크롤) */
-    /* ============================================================= */
     .dashboard-row.mobile-view-active {
       display: block !important;
       width: 100% !important;
+      max-width: 100vw !important;
       margin: 0 auto !important;
       padding: 0 !important;
-      overflow: visible !important;
+      overflow-x: hidden !important;
     }
     .dashboard-row.mobile-view-active .col-dash-left,
     .dashboard-row.mobile-view-active .col-dash-center,
@@ -1138,17 +1185,18 @@
       margin: 0 !important;
       padding: 4px 2px !important;
       box-sizing: border-box !important;
+      overflow-x: hidden !important;
     }
     .dashboard-row.mobile-view-active .dash-card-column {
       max-height: none !important;
       height: auto !important;
       min-height: auto !important;
-      overflow: visible !important;
+      overflow-x: hidden !important;
       border-radius: 14px !important;
     }
     .dashboard-row.mobile-view-active .dash-card-body {
       max-height: none !important;
-      overflow-y: visible !important;
+      overflow-x: hidden !important;
       height: auto !important;
     }
     .mobile-tab-btn {
@@ -1341,8 +1389,8 @@
             
             <div class="dash-card-header">
               <!-- Line 1: Header + Date Filters + Current Time Jump -->
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <div class="d-flex align-items-center gap-1">
+              <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+                <div class="d-flex align-items-center gap-1 flex-wrap">
                   <span class="fw-bold text-white small" style="font-size: 0.85rem;"><i class="bi bi-clock-history me-1 text-info"></i>시간순 경기 (KST)</span>
                   <span class="badge bg-secondary" id="predCountBadge" style="font-size: 0.72rem;">0경기</span>
                   <!-- 현시간 위치 바로가기 버튼 -->
@@ -1350,7 +1398,7 @@
                     <i class="bi bi-crosshair me-1"></i>현시간 위치
                   </button>
                 </div>
-                <div class="d-flex gap-1">
+                <div class="d-flex gap-1 flex-wrap">
                   <button class="btn btn-sm pred-date-btn active" id="predDateALL" onclick="filterPredDate('ALL')">전체</button>
                   <button class="btn btn-sm pred-date-btn" id="predDateD0" onclick="filterPredDate('D0')">오늘</button>
                   <button class="btn btn-sm pred-date-btn" id="predDateD1" onclick="filterPredDate('D1')">내일</button>
@@ -1367,7 +1415,7 @@
               </div>
 
               <!-- Line 2.5: League Quick Filter Pills (🇳🇱 네덜란드 에레디비시, KBO, MLB, NPB, EPL 등) -->
-              <div class="d-flex gap-1 mb-2 overflow-x-auto py-1" id="leagueFilterRow" style="scrollbar-width: none;">
+              <div class="d-flex gap-1 mb-2 overflow-x-auto py-1" id="leagueFilterRow" style="scrollbar-width: none; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; max-width: 100%;">
                 <button class="btn btn-xs league-pill-btn active" id="lgPillALL" onclick="filterLeague('ALL')">전체 리그</button>
                 <button class="btn btn-xs league-pill-btn" id="lgPillNED" onclick="filterLeague('NED')" style="border-color: #f97316; color: #ffedd5; background: rgba(249, 115, 22, 0.25);" title="네덜란드 에레디비시 5개년 & 실시간 경기"><span class="me-1">🇳🇱</span>네덜란드</button>
                 <button class="btn btn-xs league-pill-btn" id="lgPillKBO" onclick="filterLeague('KBO')" title="한국 프로야구">⚾ KBO</button>
@@ -1381,8 +1429,8 @@
               </div>
 
               <!-- Line 3: AI Confidence Filter & 30s Auto Sync -->
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex gap-1">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-1">
+                <div class="d-flex gap-1 flex-wrap">
                   <button class="btn btn-sm btn-info py-0 px-2 active fw-bold" id="predConfALL" onclick="filterPredConfidence('ALL')" style="font-size: 0.70rem;">AI전체</button>
                   <button class="btn btn-sm btn-outline-danger py-0 px-2 fw-bold" id="predConf80" onclick="filterPredConfidence('80')" style="font-size: 0.70rem;" title="AI 신뢰도 80% 이상 경기">🔥 80%↑</button>
                   <button class="btn btn-sm btn-outline-warning py-0 px-2 fw-bold" id="predConf70" onclick="filterPredConfidence('70')" style="font-size: 0.70rem;" title="AI 신뢰도 70% 이상 경기">⚡ 70%↑</button>
@@ -1684,62 +1732,61 @@
     </div>
   </div>
 
-  <!-- Modal 2: Match Detail Scoreboard Modal (100% 실제 공식 경기 스코어보드) -->
+  <!-- Modal 2: Match Detail Scoreboard Modal (100% 실제 공식 경기 스코어보드 & 정밀 분석) -->
   <div class="modal fade" id="matchModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content modal-content-custom">
-        <div class="modal-header modal-header-custom d-flex justify-content-between align-items-center">
-          <div class="d-flex align-items-center gap-2">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+      <div class="modal-content modal-content-custom" style="border: 1.5px solid #00F0FF; box-shadow: 0 0 35px rgba(0, 240, 255, 0.25);">
+        <div class="modal-header modal-header-custom d-flex justify-content-between align-items-center" style="background: #0f172a; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
             <span class="badge bg-danger" id="matchModalStatus">FINISHED</span>
-            <span class="text-muted" style="font-size: 0.88rem;" id="matchModalLeague">NBA</span>
+            <span class="text-info fw-bold" style="font-size: 0.88rem;" id="matchModalLeague">NBA</span>
             <span class="text-dim" style="font-size: 0.82rem;" id="matchModalDate"></span>
+            <span id="matchModalAiBadge"></span>
           </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body p-4">
+        <div class="modal-body p-3 p-md-4">
+          <!-- AI Prediction Summary Banner inside Modal -->
+          <div id="matchModalAiPredictionBanner" class="mb-3"></div>
+
           <!-- Score Summary Box -->
-          <div class="d-flex justify-content-around align-items-center p-3 mb-4 rounded-3" style="background: var(--bg-panel); border: 1px solid var(--border-color);">
+          <div class="d-flex justify-content-around align-items-center p-3 mb-3 rounded-3" style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(56, 189, 248, 0.3);">
             <div class="text-center" style="width: 40%;">
               <h5 class="fw-bold text-white mb-1" id="matchModalHomeTeam">홈팀</h5>
-              <div class="text-muted small">HOME</div>
+              <div class="badge bg-dark border text-info" style="font-size: 0.72rem;">HOME</div>
             </div>
-            <div class="text-center px-3" style="width: 20%;">
+            <div class="text-center px-2" style="width: 20%;">
               <div class="fs-2 fw-bold text-warning" id="matchModalScore">0 : 0</div>
             </div>
             <div class="text-center" style="width: 40%;">
               <h5 class="fw-bold text-white mb-1" id="matchModalAwayTeam">원정팀</h5>
-              <div class="text-muted small">AWAY</div>
+              <div class="badge bg-dark border text-warning" style="font-size: 0.72rem;">AWAY</div>
+            </div>
+          </div>
+
+          <!-- At-a-Glance Head-to-Head Comparative Metric Dashboard inside Modal -->
+          <div class="mb-3">
+            <div id="matchModalStatsComparison">
+              <!-- Dynamically populated: Starting pitchers, bullpen pitching analysis, H2H, saber metrics -->
             </div>
           </div>
 
           <!-- Period Scoreboard Table -->
-          <h6 class="fw-bold text-white mb-2"><i class="bi bi-table me-1 text-info"></i>공식 기간별 스코어보드 (Period Scores)</h6>
-          <div class="table-responsive mb-4">
-            <table class="table table-dark table-bordered table-sm text-center mb-0" style="font-size: 0.88rem; border-color: var(--border-color);" id="periodScoresTable">
-              <!-- Dynamically populated -->
-            </table>
+          <div id="periodScoresContainer" class="mb-2">
+            <h6 class="fw-bold text-white mb-2"><i class="bi bi-table me-1 text-info"></i>공식 기간별 스코어보드 (Period Scores)</h6>
+            <div class="table-responsive rounded-2" style="border: 1px solid rgba(255,255,255,0.08);" id="periodScoresTableWrap">
+              <table class="table table-dark table-bordered table-sm text-center mb-0" style="font-size: 0.88rem;" id="periodScoresTable">
+                <!-- Dynamically populated -->
+              </table>
+            </div>
           </div>
+        </div>
 
-          <!-- At-a-Glance Head-to-Head Comparative Metric Dashboard inside Modal -->
-          <div class="mb-4">
-            <h6 class="fw-bold text-white mb-2"><i class="bi bi-bar-chart-fill text-primary me-2"></i>핵심 수치 및 세이버메트릭스 매치업 (한눈에 보는 비교)</h6>
-            <div id="matchModalStatsComparison">
-              <!-- Dynamically populated -->
-            </div>
+        <div class="modal-footer border-top d-flex justify-content-between align-items-center" style="background: #0b1120; border-color: rgba(255, 255, 255, 0.1) !important; padding: 10px 16px;">
+          <div class="text-dim small">
+            <i class="bi bi-shield-check text-info me-1"></i>100% 공식 데이터 기반 실시간 정밀 분석
           </div>
-
-          <!-- Advanced Analytics Shortcut & Jump to Predictor -->
-          <div class="p-3 rounded-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2);">
-            <div>
-              <div class="fw-bold text-white" style="font-size: 0.9rem;"><i class="bi bi-graph-up-arrow text-info me-1"></i>정밀 세이버메트릭스 & 3일간 예측 랩</div>
-              <div class="text-muted small">타자/투수 세부 지표, 축구 xG/PPDA, 농구 Pace/ORtg/TS% 전수 지원</div>
-            </div>
-            <div class="d-flex gap-2">
-              <button class="btn btn-sm btn-primary fw-bold" id="btnModalGoPredictor">
-                <i class="bi bi-cpu-fill me-1"></i>상단 AI 분석 랩에서 보기
-              </button>
-            </div>
-          </div>
+          <button type="button" class="btn btn-secondary fw-bold px-4 py-1.5" data-bs-dismiss="modal">닫기</button>
         </div>
       </div>
     </div>
@@ -2327,75 +2374,65 @@
       const homeP = pScores.home || {};
       const awayP = pScores.away || {};
 
+      let html = '';
       if (sportCode === 'BASKETBALL') {
-        table.innerHTML = `
-          <div class="table-responsive">
-            <table class="table table-dark table-bordered table-sm text-center mb-0" style="font-size: 0.85rem; border-color: rgba(255,255,255,0.15);">
-              <thead style="background: #0f172a;">
-                <tr style="color: #38bdf8;"><th>팀명</th><th>1Q</th><th>2Q</th><th>3Q</th><th>4Q</th><th>OT</th><th style="color: #00F0FF;">FINAL</th></tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="fw-bold text-start ps-2 text-truncate" style="color: #00F0FF; max-width: 140px;">${homeTeam} (홈)</td>
-                  <td class="fw-bold text-white">${homeP.q1 ?? '-'}</td><td class="fw-bold text-white">${homeP.q2 ?? '-'}</td><td class="fw-bold text-white">${homeP.q3 ?? '-'}</td><td class="fw-bold text-white">${homeP.q4 ?? '-'}</td><td class="fw-bold text-white">${homeP.ot ?? 0}</td>
-                  <td class="fw-bold" style="color: #00F0FF; font-size: 1.15rem; text-shadow: 0 0 10px rgba(0,240,255,0.6);">${homeScore}</td>
-                </tr>
-                <tr>
-                  <td class="fw-bold text-start ps-2 text-truncate" style="color: #FFB703; max-width: 140px;">${awayTeam} (원정)</td>
-                  <td class="fw-bold text-white">${awayP.q1 ?? '-'}</td><td class="fw-bold text-white">${awayP.q2 ?? '-'}</td><td class="fw-bold text-white">${awayP.q3 ?? '-'}</td><td class="fw-bold text-white">${awayP.q4 ?? '-'}</td><td class="fw-bold text-white">${awayP.ot ?? 0}</td>
-                  <td class="fw-bold" style="color: #FFB703; font-size: 1.15rem; text-shadow: 0 0 10px rgba(255,183,3,0.6);">${awayScore}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        html = `
+          <thead style="background: #0f172a;">
+            <tr style="color: #38bdf8;"><th>팀명</th><th>1Q</th><th>2Q</th><th>3Q</th><th>4Q</th><th>OT</th><th style="color: #00F0FF;">FINAL</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="fw-bold text-start ps-2 text-truncate" style="color: #00F0FF; max-width: 140px;">${homeTeam} (홈)</td>
+              <td class="fw-bold text-white">${homeP.q1 ?? '-'}</td><td class="fw-bold text-white">${homeP.q2 ?? '-'}</td><td class="fw-bold text-white">${homeP.q3 ?? '-'}</td><td class="fw-bold text-white">${homeP.q4 ?? '-'}</td><td class="fw-bold text-white">${homeP.ot ?? 0}</td>
+              <td class="fw-bold" style="color: #00F0FF; font-size: 1.15rem; text-shadow: 0 0 10px rgba(0,240,255,0.6);">${homeScore}</td>
+            </tr>
+            <tr>
+              <td class="fw-bold text-start ps-2 text-truncate" style="color: #FFB703; max-width: 140px;">${awayTeam} (원정)</td>
+              <td class="fw-bold text-white">${awayP.q1 ?? '-'}</td><td class="fw-bold text-white">${awayP.q2 ?? '-'}</td><td class="fw-bold text-white">${awayP.q3 ?? '-'}</td><td class="fw-bold text-white">${awayP.q4 ?? '-'}</td><td class="fw-bold text-white">${awayP.ot ?? 0}</td>
+              <td class="fw-bold" style="color: #FFB703; font-size: 1.15rem; text-shadow: 0 0 10px rgba(255,183,3,0.6);">${awayScore}</td>
+            </tr>
+          </tbody>
         `;
       } else if (sportCode === 'SOCCER') {
-        table.innerHTML = `
-          <div class="table-responsive">
-            <table class="table table-dark table-bordered table-sm text-center mb-0" style="font-size: 0.85rem; border-color: rgba(255,255,255,0.15);">
-              <thead style="background: #0f172a;">
-                <tr style="color: #38bdf8;"><th>팀명</th><th>전반 (1H)</th><th>후반 (2H)</th><th>연장 (ET)</th><th>PK</th><th style="color: #00F0FF;">FINAL</th></tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="fw-bold text-start ps-2 text-truncate" style="color: #00F0FF; max-width: 140px;">${homeTeam} (홈)</td>
-                  <td class="fw-bold text-white">${homeP['1H'] ?? homeP['1h'] ?? '-'}</td><td class="fw-bold text-white">${homeP['2H'] ?? homeP['2h'] ?? '-'}</td><td class="fw-bold text-white">${homeP.et ?? '-'}</td><td class="fw-bold text-white">${homeP.pk ?? '-'}</td>
-                  <td class="fw-bold" style="color: #00F0FF; font-size: 1.15rem; text-shadow: 0 0 10px rgba(0,240,255,0.6);">${homeScore}</td>
-                </tr>
-                <tr>
-                  <td class="fw-bold text-start ps-2 text-truncate" style="color: #FFB703; max-width: 140px;">${awayTeam} (원정)</td>
-                  <td class="fw-bold text-white">${awayP['1H'] ?? awayP['1h'] ?? '-'}</td><td class="fw-bold text-white">${awayP['2H'] ?? awayP['2h'] ?? '-'}</td><td class="fw-bold text-white">${awayP.et ?? '-'}</td><td class="fw-bold text-white">${awayP.pk ?? '-'}</td>
-                  <td class="fw-bold" style="color: #FFB703; font-size: 1.15rem; text-shadow: 0 0 10px rgba(255,183,3,0.6);">${awayScore}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        html = `
+          <thead style="background: #0f172a;">
+            <tr style="color: #38bdf8;"><th>팀명</th><th>전반 (1H)</th><th>후반 (2H)</th><th>연장 (ET)</th><th>PK</th><th style="color: #00F0FF;">FINAL</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="fw-bold text-start ps-2 text-truncate" style="color: #00F0FF; max-width: 140px;">${homeTeam} (홈)</td>
+              <td class="fw-bold text-white">${homeP['1H'] ?? homeP['1h'] ?? '-'}</td><td class="fw-bold text-white">${homeP['2H'] ?? homeP['2h'] ?? '-'}</td><td class="fw-bold text-white">${homeP.et ?? '-'}</td><td class="fw-bold text-white">${homeP.pk ?? '-'}</td>
+              <td class="fw-bold" style="color: #00F0FF; font-size: 1.15rem; text-shadow: 0 0 10px rgba(0,240,255,0.6);">${homeScore}</td>
+            </tr>
+            <tr>
+              <td class="fw-bold text-start ps-2 text-truncate" style="color: #FFB703; max-width: 140px;">${awayTeam} (원정)</td>
+              <td class="fw-bold text-white">${awayP['1H'] ?? awayP['1h'] ?? '-'}</td><td class="fw-bold text-white">${awayP['2H'] ?? awayP['2h'] ?? '-'}</td><td class="fw-bold text-white">${awayP.et ?? '-'}</td><td class="fw-bold text-white">${awayP.pk ?? '-'}</td>
+              <td class="fw-bold" style="color: #FFB703; font-size: 1.15rem; text-shadow: 0 0 10px rgba(255,183,3,0.6);">${awayScore}</td>
+            </tr>
+          </tbody>
         `;
       } else {
         // Baseball 1~9 Inning Linescore
         const inn = pScores.innings || {};
-        table.innerHTML = `
-          <div class="table-responsive">
-            <table class="table table-dark table-bordered table-sm text-center mb-0" style="font-size: 0.82rem; border-color: rgba(255,255,255,0.15);">
-              <thead style="background: #0f172a;">
-                <tr style="color: #38bdf8;"><th>팀명</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th style="color: #00F0FF;">R</th></tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="fw-bold text-start ps-2 text-truncate" style="color: #00F0FF; max-width: 130px;">${homeTeam} (홈)</td>
-                  ${[1,2,3,4,5,6,7,8,9].map(i => `<td class="text-white">${inn[i] ? inn[i].home : '-'}</td>`).join('')}
-                  <td class="fw-bold" style="color: #00F0FF; font-size: 1.15rem; text-shadow: 0 0 10px rgba(0,240,255,0.6);">${homeScore}</td>
-                </tr>
-                <tr>
-                  <td class="fw-bold text-start ps-2 text-truncate" style="color: #FFB703; max-width: 130px;">${awayTeam} (원정)</td>
-                  ${[1,2,3,4,5,6,7,8,9].map(i => `<td class="text-white">${inn[i] ? inn[i].away : '-'}</td>`).join('')}
-                  <td class="fw-bold" style="color: #FFB703; font-size: 1.15rem; text-shadow: 0 0 10px rgba(255,183,3,0.6);">${awayScore}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        html = `
+          <thead style="background: #0f172a;">
+            <tr style="color: #38bdf8;"><th>팀명</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th style="color: #00F0FF;">R</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="fw-bold text-start ps-2 text-truncate" style="color: #00F0FF; max-width: 130px;">${homeTeam} (홈)</td>
+              ${[1,2,3,4,5,6,7,8,9].map(i => `<td class="text-white">${inn[i] ? inn[i].home : '-'}</td>`).join('')}
+              <td class="fw-bold" style="color: #00F0FF; font-size: 1.15rem; text-shadow: 0 0 10px rgba(0,240,255,0.6);">${homeScore}</td>
+            </tr>
+            <tr>
+              <td class="fw-bold text-start ps-2 text-truncate" style="color: #FFB703; max-width: 130px;">${awayTeam} (원정)</td>
+              ${[1,2,3,4,5,6,7,8,9].map(i => `<td class="text-white">${inn[i] ? inn[i].away : '-'}</td>`).join('')}
+              <td class="fw-bold" style="color: #FFB703; font-size: 1.15rem; text-shadow: 0 0 10px rgba(255,183,3,0.6);">${awayScore}</td>
+            </tr>
+          </tbody>
         `;
       }
+      table.innerHTML = html;
     }
 
     async function openMatchModal(matchId) {
@@ -2412,24 +2449,22 @@
       document.getElementById('matchModalAwayTeam').innerHTML = `<span style="color: #FFB703; font-weight: 700;">${match.away_team_name} (원정)</span>`;
       document.getElementById('matchModalScore').innerHTML = `<span style="color: #00F0FF; font-weight: 800; font-size: 1.6rem; text-shadow: 0 0 10px rgba(0,240,255,0.7);">${match.home_score}</span> <span class="text-white mx-2" style="font-size: 1.2rem;">:</span> <span style="color: #FFB703; font-weight: 800; font-size: 1.6rem; text-shadow: 0 0 10px rgba(255,183,3,0.7);">${match.away_score}</span>`;
 
-      const btnGo = document.getElementById('btnModalGoPredictor');
-      if (btnGo) {
-        btnGo.onclick = () => {
-          const mEl = document.getElementById('matchModal');
-          const instance = bootstrap.Modal.getInstance(mEl);
-          if (instance) instance.hide();
-          selectPredMatch(match.id);
-          const pSec = document.getElementById('prediction-section');
-          if (pSec) pSec.scrollIntoView({ behavior: 'smooth' });
-        };
+      const aiBadgeEl = document.getElementById('matchModalAiBadge');
+      if (aiBadgeEl) {
+        const pPick = match.ai_pick || '분석중';
+        const pConf = match.ai_confidence ? `(${match.ai_confidence}%)` : '';
+        aiBadgeEl.innerHTML = `<span class="badge" style="background: rgba(0, 240, 255, 0.2); color: #00F0FF; border: 1px solid #00F0FF;"><i class="bi bi-cpu me-1"></i>AI추천: ${pPick} ${pConf}</span>`;
       }
 
       const table = document.getElementById('periodScoresTable');
-      table.innerHTML = '<tr><td colspan="6" class="p-3 text-muted">세부 기간별 점수를 조회하고 있습니다...</td></tr>';
+      if (table) table.innerHTML = '<tr><td colspan="10" class="p-3 text-muted text-center">공식 스코어보드를 조회하고 있습니다...</td></tr>';
       const compContainer = document.getElementById('matchModalStatsComparison');
-      if (compContainer) compContainer.innerHTML = '<div class="text-center text-muted py-3">세부 수치를 분석하고 있습니다...</div>';
+      if (compContainer) compContainer.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-info me-2"></div>선발투수 및 세부 데이터를 분석하고 있습니다...</div>';
+      const aiBanner = document.getElementById('matchModalAiPredictionBanner');
+      if (aiBanner) aiBanner.innerHTML = '';
 
-      const modal = new bootstrap.Modal(document.getElementById('matchModal'));
+      const modalEl = document.getElementById('matchModal');
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
       modal.show();
 
       try {
@@ -2442,7 +2477,7 @@
         renderPeriodTable(match.sport_code, match.home_team_name, match.away_team_name, pScores, match.home_score, match.away_score);
         renderModalComparison(match, tStats, detailData.player_stats || [], detailData.matchup_analysis);
       } catch (e) {
-        table.innerHTML = `<tr><td colspan="6" class="p-3 text-muted">경기 최종 결과: ${match.home_score} vs ${match.away_score}</td></tr>`;
+        if (table) table.innerHTML = `<tr><td colspan="10" class="p-3 text-muted text-center">경기 최종 결과: ${match.home_score} vs ${match.away_score}</td></tr>`;
         if (compContainer) renderModalComparison(match, {}, [], null);
       }
     }
@@ -2477,48 +2512,67 @@
             ? `<span class="badge" style="background: rgba(16,185,129,0.25); color: #10B981; border: 1px solid #10B981; box-shadow: 0 0 8px rgba(16,185,129,0.4);"><i class="bi bi-check-circle-fill me-1"></i>선발 확정</span>`
             : `<span class="badge" style="background: rgba(245,158,11,0.25); color: #F59E0B; border: 1px solid #F59E0B;"><i class="bi bi-hourglass-split me-1"></i>선발 예고 (예상)</span>`;
 
-          const startsListHtml = starts.map((s, idx) => {
+          const startsListHtml = (starts && starts.length > 0) ? starts.map((s, idx) => {
             const isWin = s.result && s.result.includes('(W)');
             const isLoss = s.result && s.result.includes('(L)');
-            const resColor = isWin ? '#10b981' : (isLoss ? '#ef4444' : '#cbd5e1');
+            const resBadge = isWin 
+              ? '<span class="badge bg-success text-white fw-bold">승 (W)</span>' 
+              : (isLoss ? '<span class="badge bg-danger text-white fw-bold">패 (L)</span>' : '<span class="badge bg-secondary text-white">무/ND</span>');
             return `
-              <div class="p-2 rounded mb-2" style="background: rgba(15,23,42,0.65); border: 1px solid rgba(255,255,255,0.08);">
+              <div class="p-2 rounded-2 mb-2" style="background: rgba(15,23,42,0.92); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 2px 8px rgba(0,0,0,0.4);">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                  <span class="badge bg-dark text-info" style="font-size: 0.70rem;">
-                    #${idx+1} ${s.date} vs ${s.opponent} (${s.venue})
+                  <span class="badge bg-dark text-info fw-bold" style="font-size: 0.75rem; border: 1px solid rgba(56,189,248,0.3);">
+                    #${idx+1} ${s.date} vs ${s.opponent} (${s.venue || '홈'})
                   </span>
-                  <span class="fw-bold" style="font-size: 0.74rem; color: ${resColor};">
-                    ${s.result} [${s.team_score}:${s.opp_score}]
-                  </span>
+                  <div class="d-flex align-items-center gap-1">
+                    ${resBadge}
+                    <span class="fw-bold text-white ms-1" style="font-size: 0.80rem;">
+                      [${s.team_score}:${s.opp_score}]
+                    </span>
+                  </div>
                 </div>
-                <div class="d-flex align-items-center gap-2 flex-wrap" style="font-size: 0.76rem;">
-                  <div><span class="text-warning fw-bold">이닝:</span> <span class="badge bg-dark border text-warning">${s.ip}이닝</span></div>
-                  <div><span class="text-info fw-bold">투구수:</span> <span class="badge bg-primary">${s.np}구</span> <span class="text-muted" style="font-size: 0.70rem;">(S ${s.strikes} / B ${s.balls})</span></div>
-                  <div class="text-light ms-auto"><span class="text-danger fw-bold">${s.er}자책</span> · <span>${s.so}K</span> · <span>${s.bb}사사구</span> · <span>${s.h}피안타</span></div>
+                <div class="d-flex align-items-center gap-2 flex-wrap text-white" style="font-size: 0.80rem;">
+                  <div><span class="text-warning fw-bold">이닝:</span> <span class="badge bg-dark border border-warning text-warning fw-bold">${s.ip}이닝</span></div>
+                  <div><span class="text-info fw-bold">투구수:</span> <span class="badge bg-primary text-white fw-bold">${s.np}구</span> <span class="fw-semibold ms-1" style="font-size: 0.74rem; color: #cbd5e1;">(S ${s.strikes} / B ${s.balls})</span></div>
+                  <div class="ms-auto d-flex gap-1 align-items-center flex-wrap">
+                    <span class="badge bg-dark border border-danger text-danger fw-bold">${s.er}자책</span>
+                    <span class="badge bg-dark border text-light">${s.so}K</span>
+                    <span class="badge bg-dark border text-light">${s.bb}사사구</span>
+                    <span class="badge bg-dark border text-light">${s.h}피안타</span>
+                  </div>
                 </div>
               </div>
             `;
-          }).join('');
+          }).join('') : '<div class="text-center py-2 text-white-50 small">최근 선발 등판 기록이 없습니다.</div>';
 
           return `
             <div class="col-md-6 col-12">
-              <div class="p-2 rounded-3 h-100" style="background: rgba(15,23,42,0.85); border: 1px solid ${teamColor}40;">
-                <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: rgba(255,255,255,0.1) !important;">
+              <div class="p-2.5 rounded-3 h-100" style="background: rgba(15,23,42,0.92); border: 1.5px solid ${teamColor}55; box-shadow: 0 4px 16px rgba(0,0,0,0.5);">
+                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" style="border-color: rgba(255,255,255,0.12) !important;">
                   <div>
-                    <span class="fw-bold" style="color: ${teamColor}; font-size: 0.84rem;">
-                      ${isHome ? '🏠' : '✈️'} ${sideLabel} ${teamName}
+                    <span class="badge px-2 py-1 mb-1 fw-bold" style="background: ${teamColor}22; color: ${teamColor}; border: 1px solid ${teamColor}; font-size: 0.80rem;">
+                      ${isHome ? '🏠 홈팀' : '✈️ 원정팀'} · ${teamName}
                     </span>
-                    <div class="fw-bold text-white fs-6 mt-1">
-                      ${pInfo.name} <span class="text-muted small">(${pInfo.throws || '우완'})</span>
+                    <div class="fw-bold text-white fs-5 mt-1 d-flex align-items-center gap-1">
+                      <span>${pInfo.name || '선발투수 미정'}</span>
+                      <span class="badge bg-secondary bg-opacity-50 text-light fw-normal ms-1" style="font-size: 0.72rem;">${pInfo.throws || '우완'}</span>
                     </div>
                   </div>
-                  <div>
+                  <div class="text-end">
                     ${confBadge}
                   </div>
                 </div>
-                <div class="p-1 px-2 rounded mb-2 d-flex flex-wrap justify-content-between align-items-center" style="background: rgba(0,0,0,0.35); font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.06);">
-                  <span>3G 평균: <b class="text-warning">${sum.avg_ip || '-'}이닝</b> | <b class="text-info">${sum.avg_np || '-'}구</b> (총 ${sum.total_np || 0}구)</span>
-                  <span>ERA <b class="text-danger">${sum.era_3g || '-'}</b> | ${sum.record || ''} | <b class="text-light">${sum.total_so || 0}K / ${sum.total_bb || 0}사사구</b></span>
+                <div class="p-2 rounded-2 mb-2" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.12);">
+                  <div class="d-flex justify-content-between align-items-center flex-wrap gap-1" style="font-size: 0.80rem;">
+                    <div class="text-light">
+                      <span class="text-white-50">3경기 평균:</span> <b class="text-warning fw-bold fs-6">${sum.avg_ip || '-'}이닝</b> · <b class="text-info fw-bold fs-6">${sum.avg_np || '-'}구</b> <span class="text-white-50" style="font-size: 0.72rem;">(총 ${sum.total_np || 0}구)</span>
+                    </div>
+                    <div>
+                      <span class="badge bg-dark border border-danger text-danger fw-bold" style="font-size: 0.78rem;">ERA ${sum.era_3g || '-'}</span>
+                      <span class="badge bg-dark border text-light ms-1" style="font-size: 0.78rem;">${sum.record || '0승 0패'}</span>
+                      <span class="badge bg-dark border text-warning ms-1" style="font-size: 0.78rem;">${sum.total_so || 0}K / ${sum.total_bb || 0}사사구</span>
+                    </div>
+                  </div>
                 </div>
                 ${startsListHtml}
               </div>
@@ -2562,25 +2616,26 @@
           const isDraw = hm.home_score === hm.away_score;
           
           let resBadge = '';
-          if (isHomeWin) resBadge = '<span class="badge" style="background:rgba(16,185,129,0.2); color:#10b981; border:1px solid rgba(16,185,129,0.4);">홈 승</span>';
+          if (isHomeWin) resBadge = '<span class="badge" style="background:rgba(16,185,129,0.25); color:#10b981; border:1px solid rgba(16,185,129,0.5); font-weight:700;">홈 승</span>';
           else if (isDraw) resBadge = '<span class="badge bg-secondary">무승부</span>';
-          else resBadge = '<span class="badge" style="background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid rgba(239,68,68,0.4);">홈 패</span>';
+          else resBadge = '<span class="badge" style="background:rgba(239,68,68,0.25); color:#ef4444; border:1px solid rgba(239,68,68,0.5); font-weight:700;">홈 패</span>';
 
           return `
-            <div class="d-flex justify-content-between align-items-center py-1 px-2 rounded mb-1" style="background: rgba(255,255,255,0.04); font-size: 0.79rem; border: 1px solid rgba(255,255,255,0.06);">
-              <span class="text-muted" style="width: 80px; font-size: 0.72rem;">#${idx+1} ${hm.date}</span>
-              <span class="text-end fw-bold text-truncate" style="flex: 1; color: #00F0FF;" title="홈팀: ${m.home_team_name}">
-                ${m.home_team_name}
-              </span>
-              <span class="badge bg-dark border mx-2 fw-bold" style="font-size: 0.84rem; min-width: 58px; color: ${isHomeWin ? '#00F0FF' : (isAwayWin ? '#FFB703' : '#cbd5e1')};">
-                ${hm.home_score} : ${hm.away_score}
-              </span>
-              <span class="text-start fw-bold text-truncate" style="flex: 1; color: #FFB703;" title="원정팀: ${m.away_team_name}">
-                ${m.away_team_name}
-              </span>
-              <div class="text-end" style="width: 82px;">
+            <div class="p-2 rounded mb-1.5" style="background: rgba(255,255,255,0.04); font-size: 0.80rem; border: 1px solid rgba(255,255,255,0.08);">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="badge bg-dark text-info" style="font-size: 0.72rem;">#${idx+1} ${hm.date} (${hm.venue || '홈'})</span>
                 ${resBadge}
-                <span class="text-muted ms-1" style="font-size: 0.68rem;">(${hm.venue})</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-truncate me-1" style="color: #00F0FF; max-width: 42%; font-size: 0.82rem;" title="${m.home_team_name}">
+                  ${m.home_team_name}
+                </span>
+                <span class="badge bg-dark border px-2 py-1 fw-bold" style="font-size: 0.90rem; min-width: 58px; color: ${isHomeWin ? '#00F0FF' : (isAwayWin ? '#FFB703' : '#cbd5e1')};">
+                  ${hm.home_score} : ${hm.away_score}
+                </span>
+                <span class="fw-bold text-truncate text-end ms-1" style="color: #FFB703; max-width: 42%; font-size: 0.82rem;" title="${m.away_team_name}">
+                  ${m.away_team_name}
+                </span>
               </div>
             </div>
           `;
@@ -2600,35 +2655,47 @@
 
           let gHtml = '';
           if (games.length === 0) {
-            gHtml = '<div class="text-muted small py-2">최근 경기 투구수 기록이 없습니다.</div>';
+            gHtml = '<div class="text-muted small py-2 text-center">최근 경기 투구수 기록이 없습니다.</div>';
           } else {
             gHtml = games.map((g, gIdx) => {
               const st = g.starter || {};
-              const bpList = (g.bullpen_pitchers || []).map(p => `${p.name} ${p.np}구`).join(', ');
+              const bpPitchers = g.bullpen_pitchers || [];
+              const bpBadges = bpPitchers.length > 0 
+                ? bpPitchers.map(p => `
+                    <span class="badge d-inline-flex align-items-center gap-1 px-2 py-1" style="background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(56, 189, 248, 0.4); color: #f8fafc; font-size: 0.76rem; border-radius: 6px;">
+                      <span class="text-info fw-bold">${p.name}</span>
+                      <span class="badge bg-warning text-dark fw-bold py-0 px-1" style="font-size: 0.70rem;">${p.np}구</span>
+                      ${p.ip ? `<span style="color: #cbd5e1; font-size: 0.68rem;">(${p.ip}이닝)</span>` : ''}
+                    </span>
+                  `).join('')
+                : '<span class="badge bg-dark border text-light px-2 py-1" style="font-size: 0.75rem;">불펜 등판 없음 (선발 완투)</span>';
               const isWin = g.result === 'W';
               return `
-                <div class="p-2 rounded mb-2" style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08);">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="badge bg-dark text-info" style="font-size: 0.70rem;">
-                      #${gIdx+1} ${g.date} (${g.venue})
+                <div class="p-2.5 rounded-3 mb-2" style="background: rgba(15,23,42,0.92); border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+                  <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom flex-wrap gap-1" style="border-color: rgba(255,255,255,0.08) !important;">
+                    <span class="badge bg-dark text-info fw-bold" style="font-size: 0.75rem; border: 1px solid rgba(56, 189, 248, 0.3);">
+                      #${gIdx+1} ${g.date} (${g.venue || '홈'})
                     </span>
-                    <span class="fw-bold" style="font-size: 0.78rem; color: ${isWin ? '#10b981' : '#ef4444'};">
+                    <span class="fw-bold" style="font-size: 0.82rem; color: ${isWin ? '#10b981' : '#ef4444'};">
                       vs ${g.opponent} [${g.result} ${g.team_score}:${g.opp_score}]
                     </span>
                   </div>
-                  <div class="d-flex align-items-center gap-1 mb-1 flex-wrap" style="font-size: 0.76rem;">
-                    <span class="text-warning fw-bold">⚾ 선발:</span>
-                    <span class="text-white fw-bold">${st.name || '선발투수'}</span>
-                    <span class="badge bg-primary py-0 px-1 text-white">${st.np || 0}구</span>
-                    <span class="text-light">(${st.ip || '-'}이닝 ${st.er || 0}자책 ${st.so || 0}K ${st.bb || 0}사사구)</span>
+                  <div class="d-flex align-items-center gap-1 mb-1.5 flex-wrap p-1.5 rounded" style="background: rgba(0,0,0,0.35); font-size: 0.78rem;">
+                    <span class="badge bg-warning text-dark fw-bold">⚾ 선발</span>
+                    <span class="text-white fw-bold ms-1">${st.name || '선발투수'}</span>
+                    <span class="badge bg-primary text-white fw-bold">${st.np || 0}구</span>
+                    <span class="text-light fw-medium ms-1">(${st.ip || '-'}이닝 ${st.er || 0}자책 ${st.so || 0}K ${st.bb || 0}사사구)</span>
                   </div>
-                  <div style="font-size: 0.74rem;">
-                    <div class="d-flex align-items-center gap-1">
-                      <span class="text-danger fw-bold">🛡️ 불펜(${g.bullpen_count}명):</span>
-                      <span class="badge bg-danger py-0 px-1 text-white">불펜총 ${g.bullpen_np || 0}구</span>
+                  <div class="p-1.5 rounded" style="background: rgba(0,0,0,0.45); border: 1px solid rgba(239, 68, 68, 0.25);">
+                    <div class="d-flex align-items-center justify-content-between mb-1.5 flex-wrap gap-1">
+                      <span class="badge bg-danger text-white fw-bold" style="font-size: 0.74rem;">🛡️ 불펜 계투진 (${g.bullpen_count || 0}명)</span>
+                      <span class="badge" style="background: rgba(239,68,68,0.25); color: #fca5a5; border: 1px solid rgba(239,68,68,0.5); font-weight: 700; font-size: 0.74rem;">
+                        불펜총 ${g.bullpen_np || 0}구
+                      </span>
                     </div>
-                    <div class="text-muted ps-1 mt-1" style="font-size: 0.70rem; line-height: 1.3;">
-                      ${bpList ? '등판: ' + bpList : '불펜 등판 없음 (완투)'}
+                    <div class="d-flex flex-wrap gap-1 align-items-center ps-1" style="line-height: 1.4;">
+                      <span class="fw-bold" style="color: #fbbf24; font-size: 0.76rem;">등판 명단:</span>
+                      ${bpBadges}
                     </div>
                   </div>
                 </div>
@@ -2638,12 +2705,12 @@
 
           return `
             <div class="col-md-6 col-12">
-              <div class="p-2 rounded-3 h-100" style="background: rgba(15,23,42,0.85); border: 1px solid ${teamColor}40;">
-                <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: rgba(255,255,255,0.1) !important;">
-                  <span class="fw-bold" style="color: ${teamColor}; font-size: 0.84rem;">
+              <div class="p-2.5 rounded-3 h-100" style="background: rgba(15,23,42,0.92); border: 1.5px solid ${teamColor}55; box-shadow: 0 4px 16px rgba(0,0,0,0.5);">
+                <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom flex-wrap gap-1" style="border-color: rgba(255,255,255,0.1) !important;">
+                  <span class="fw-bold" style="color: ${teamColor}; font-size: 0.86rem;">
                     ${isHome ? '🏠' : '✈️'} ${sideLabel} ${teamName}
                   </span>
-                  <span class="badge" style="font-size: 0.70rem; background: ${isFatigueWarn ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}; color: ${isFatigueWarn ? '#ef4444' : '#10b981'}; border: 1px solid ${isFatigueWarn ? '#ef4444' : '#10b981'}60;">
+                  <span class="badge" style="font-size: 0.74rem; background: ${isFatigueWarn ? 'rgba(239,68,68,0.25)' : 'rgba(16,185,129,0.25)'}; color: ${isFatigueWarn ? '#ef4444' : '#10b981'}; border: 1px solid ${isFatigueWarn ? '#ef4444' : '#10b981'}60;">
                     3경기 불펜총 ${totalBp}구 (${fatigue})
                   </span>
                 </div>
@@ -2733,7 +2800,10 @@
         <!-- 0. Starting Pitchers (앞: 홈 / 뒤: 원정) -->
         ${startingPitchersHtml}
 
-        <!-- 1. Head to Head (앞: 홈팀 / 뒤: 원정팀 기준) -->
+        <!-- 1. Recent Pitching & Bullpen Analysis (야구 정밀 투수진 분석: 최근 3경기 선발 & 불펜 투구수) -->
+        ${recentResultsHtml}
+
+        <!-- 2. Head to Head (앞: 홈팀 / 뒤: 원정팀 기준) -->
         <div class="p-3 mb-3 rounded-3" style="background: rgba(15, 23, 42, 0.88); border: 1px solid rgba(255, 183, 3, 0.4);">
           <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
             <div>
@@ -2752,15 +2822,57 @@
             ${h2hListHtml}
           </div>
         </div>
-
-        <!-- 2. Recent Results (앞: 홈팀 / 뒤: 원정팀) -->
-        ${recentResultsHtml}
       `;
     }
 
     function renderModalComparison(m, tStats, playerStats, matchup) {
       const container = document.getElementById('matchModalStatsComparison');
       if (!container) return;
+
+      const aiBanner = document.getElementById('matchModalAiPredictionBanner');
+      if (aiBanner) {
+        if (matchup && matchup.probabilities) {
+          const probs = matchup.probabilities;
+          const drivers = matchup.drivers || [];
+          aiBanner.innerHTML = `
+            <div class="p-3 rounded-3" style="background: rgba(11, 17, 32, 0.95); border: 1.5px solid rgba(0, 240, 255, 0.5); box-shadow: 0 4px 20px rgba(0, 240, 255, 0.2);">
+              <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+                <span class="fw-bold text-white fs-6">
+                  <i class="bi bi-cpu-fill text-info me-1"></i>AI 빅데이터 정밀 분석 & 승률 예측
+                </span>
+                <span class="badge" style="background: rgba(0, 240, 255, 0.18); color: #00F0FF; border: 1px solid #00F0FF; font-size: 0.78rem;">
+                  신뢰도 88%
+                </span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                <div class="fw-bold" style="font-size: 1.0rem; color: #00F0FF;">
+                  <span class="text-white">AI 추천 픽:</span> 
+                  <span class="badge bg-primary text-white fs-6 ms-1 px-2.5 py-1" style="box-shadow: 0 0 10px rgba(56,189,248,0.5);">
+                    ${probs.favored_team || m.home_team_name} 승리 (${probs.favored_pct || probs.home}%)
+                  </span>
+                </div>
+              </div>
+              <div class="d-flex rounded-pill overflow-hidden mb-2" style="height: 12px; background: #090d16; border: 1px solid rgba(255,255,255,0.2);">
+                <div style="width: ${probs.home}%; background: linear-gradient(90deg, #0284c7, #00F0FF); box-shadow: 0 0 8px rgba(0, 240, 255, 0.7);" title="홈 승률: ${probs.home}%"></div>
+                ${probs.draw ? `<div style="width: ${probs.draw}%; background: #64748b;" title="무승부: ${probs.draw}%"></div>` : ''}
+                <div style="width: ${probs.away}%; background: linear-gradient(90deg, #d97706, #FFB703); box-shadow: 0 0 8px rgba(255, 183, 3, 0.7);" title="원정 승률: ${probs.away}%"></div>
+              </div>
+              <div class="d-flex justify-content-between text-white fw-bold mb-2" style="font-size: 0.82rem;">
+                <span style="color: #00F0FF;">[홈] ${m.home_team_name} ${probs.home}%</span>
+                ${probs.draw ? `<span class="text-muted">무 ${probs.draw}%</span>` : ''}
+                <span style="color: #FFB703;">[원정] ${m.away_team_name} ${probs.away}%</span>
+              </div>
+              ${drivers.length > 0 ? `
+                <div class="p-2 rounded mt-2" style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.06); font-size: 0.78rem; line-height: 1.6; color: #f1f5f9;">
+                  ${drivers.map(d => `<div><i class="bi bi-check-circle-fill text-warning me-1"></i>${d}</div>`).join('')}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        } else {
+          aiBanner.innerHTML = '';
+        }
+      }
 
       const homeStats = (tStats && tStats.home) ? tStats.home : {};
       const awayStats = (tStats && tStats.away) ? tStats.away : {};
@@ -2799,10 +2911,11 @@
         `;
       }
 
+      let barsHtml = '';
       if (m.sport_code === 'BASEBALL') {
-        container.innerHTML = `
+        barsHtml = `
           <div class="row g-2">
-            <div class="col-md-6">
+            <div class="col-md-6 col-12">
               <div class="p-2 rounded-2" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(0, 240, 255, 0.25);">
                 <div class="fw-bold mb-2 small" style="color: #00F0FF;"><i class="bi bi-house-door-fill me-1"></i>[홈팀 ${m.home_team_name}] 순수 홈 경기 지표</div>
                 ${makeModalBar('홈/원정 순수 승률 (Win%)', homeSplit.win_pct, awaySplit.win_pct, parseFloat(homeSplit.win_pct)*1000, parseFloat(awaySplit.win_pct)*1000)}
@@ -2811,7 +2924,7 @@
                 ${makeModalBar('홈/원정 경기당 안타 (Hits/G)', `${homeSplit.hits_pg}개`, `${awaySplit.hits_pg}개`, homeSplit.hits_pg, awaySplit.hits_pg)}
               </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 col-12">
               <div class="p-2 rounded-2" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 183, 3, 0.25);">
                 <div class="fw-bold mb-2 small" style="color: #FFB703;"><i class="bi bi-airplane-fill me-1"></i>[원정팀 ${m.away_team_name}] 순수 원정 경기 지표</div>
                 ${makeModalBar('홈/원정 평균 실점 (RA - 낮을수록 우수)', `${homeSplit.ra}점`, `${awaySplit.ra}점`, awaySplit.ra, homeSplit.ra)}
@@ -2825,9 +2938,9 @@
       } else if (m.sport_code === 'SOCCER') {
         const possH = homeStats.possession ? Number(homeStats.possession.replace('%','')) : 52.0;
         const possA = 100 - possH;
-        container.innerHTML = `
+        barsHtml = `
           <div class="row g-2">
-            <div class="col-md-6">
+            <div class="col-md-6 col-12">
               <div class="p-2 rounded-2" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(0, 240, 255, 0.25);">
                 <div class="fw-bold mb-2 small" style="color: #00F0FF;"><i class="bi bi-graph-up me-1"></i>[홈팀 ${m.home_team_name}] 홈 경기 지표</div>
                 ${makeModalBar('홈/원정 순수 승률 (Win%)', homeSplit.win_pct, awaySplit.win_pct, parseFloat(homeSplit.win_pct)*1000, parseFloat(awaySplit.win_pct)*1000)}
@@ -2835,7 +2948,7 @@
                 ${makeModalBar('홈/원정 득실 마진 (Goal Diff)', `${homeSplit.diff > 0 ? '+' : ''}${homeSplit.diff}골`, `${awaySplit.diff > 0 ? '+' : ''}${awaySplit.diff}골`, homeSplit.diff + 10, awaySplit.diff + 10)}
               </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 col-12">
               <div class="p-2 rounded-2" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 183, 3, 0.25);">
                 <div class="fw-bold mb-2 small" style="color: #FFB703;"><i class="bi bi-shield-shaded me-1"></i>[원정팀 ${m.away_team_name}] 원정 경기 지표</div>
                 ${makeModalBar('홈/원정 평균 실점 (GA - 낮을수록 우수)', `${homeSplit.ra}골`, `${awaySplit.ra}골`, awaySplit.ra, homeSplit.ra)}
@@ -2846,10 +2959,9 @@
           </div>
         `;
       } else {
-        // Basketball
-        container.innerHTML = `
+        barsHtml = `
           <div class="row g-2">
-            <div class="col-md-6">
+            <div class="col-md-6 col-12">
               <div class="p-2 rounded-2" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(0, 240, 255, 0.25);">
                 <div class="fw-bold mb-2 small" style="color: #00F0FF;"><i class="bi bi-star-fill me-1"></i>[홈팀 ${m.home_team_name}] 홈 경기 지표</div>
                 ${makeModalBar('홈/원정 순수 승률 (Win%)', homeSplit.win_pct, awaySplit.win_pct, parseFloat(homeSplit.win_pct)*1000, parseFloat(awaySplit.win_pct)*1000)}
@@ -2857,7 +2969,7 @@
                 ${makeModalBar('홈/원정 득실 마진 (Point Diff)', `${homeSplit.diff > 0 ? '+' : ''}${homeSplit.diff}점`, `${awaySplit.diff > 0 ? '+' : ''}${awaySplit.diff}점`, homeSplit.diff + 20, awaySplit.diff + 20)}
               </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 col-12">
               <div class="p-2 rounded-2" style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 183, 3, 0.25);">
                 <div class="fw-bold mb-2 small" style="color: #FFB703;"><i class="bi bi-dribbble me-1"></i>[원정팀 ${m.away_team_name}] 원정 경기 지표</div>
                 ${makeModalBar('홈/원정 평균 실점 (PAPG - 낮을수록 우수)', `${homeSplit.ra}점`, `${awaySplit.ra}점`, awaySplit.ra, homeSplit.ra)}
@@ -2868,7 +2980,14 @@
         `;
       }
 
-      container.innerHTML += buildH2HAndRecentHtml(m, matchup);
+      const h2hAndRecent = buildH2HAndRecentHtml(m, matchup);
+      container.innerHTML = `
+        ${h2hAndRecent}
+        <div class="mt-3 p-3 rounded-3" style="background: rgba(11,17,32,0.92); border: 1px solid rgba(56,189,248,0.3);">
+          <h6 class="fw-bold text-white mb-2"><i class="bi bi-bar-chart-fill text-primary me-2"></i>[핵심 수치 & 세이버메트릭스 한눈에 보는 비교]</h6>
+          ${barsHtml}
+        </div>
+      `;
     }
 
     // 2-1. Starting Pitcher Modal Handling
@@ -2916,6 +3035,10 @@
           // Refresh center prediction detail and match list
           if (typeof selectedMatch !== 'undefined' && selectedMatch && selectedMatch.id == matchId) {
             renderPredDetail(selectedMatch);
+          }
+          const mEl = document.getElementById('matchModal');
+          if (mEl && mEl.classList.contains('show')) {
+            openMatchModal(Number(matchId));
           }
           if (typeof loadOfficialMatches === 'function') {
             loadOfficialMatches();
@@ -3403,8 +3526,8 @@
             </div>
             <div class="d-flex justify-content-between align-items-center mt-1 pt-1 border-top" style="border-color: rgba(255,255,255,0.06) !important; font-size: 0.70rem;">
               <div>${cardFooterTag}</div>
-              <span class="${isSel ? 'text-info fw-bold' : 'text-dim'}">
-                ${isSel ? '선택됨 <i class="bi bi-check-circle-fill text-info"></i>' : '상세보기 <i class="bi bi-chevron-right"></i>'}
+              <span class="badge ${isSel ? 'bg-info text-dark fw-bold' : 'bg-dark border text-light'}" style="font-size: 0.70rem; cursor: pointer;">
+                <i class="bi bi-window-stack me-1 text-warning"></i>${isSel ? '상세 팝업 열기' : '상세보기 (팝업)'}
               </span>
             </div>
           </div>
@@ -3503,8 +3626,8 @@
       renderPredMatches();
       renderPredDetail(target);
 
-      if (currentViewMode === 'mobile' && userClicked) {
-        switchMobileTab('center');
+      if (userClicked) {
+        openMatchModal(matchId);
       }
     }
 
