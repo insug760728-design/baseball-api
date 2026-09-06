@@ -3095,11 +3095,9 @@
           });
         }
 
-        // Result badge if finished, live, or scheduled
-        let resultBadge = '<span class="badge bg-success bg-opacity-25 text-success border border-success px-1.5 py-0.5" style="font-size:0.64rem;">● 발매중</span>';
-        if (isFutureGame) {
-          resultBadge = '<span class="badge bg-success bg-opacity-25 text-success border border-success px-1.5 py-0.5" style="font-size:0.64rem;">● 발매중 (내일 09.07)</span>';
-        } else if (liveMatch) {
+        // Result badge: only display when LIVE, FINISHED, or Result decided
+        let resultBadge = '';
+        if (liveMatch) {
           if (liveMatch.status === 'LIVE') {
             resultBadge = `<span class="badge bg-danger animate-pulse px-1.5 py-0.5" style="font-size:0.68rem; font-weight:800;"><i class="bi bi-broadcast me-1"></i>LIVE [${liveMatch.home_score} : ${liveMatch.away_score}]</span>`;
           } else if (liveMatch.status === 'FINISHED') {
