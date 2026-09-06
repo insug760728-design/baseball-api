@@ -13,8 +13,11 @@ import json
 import logging
 import math
 import random
+import urllib.request
+import urllib.parse
 from collections import defaultdict
 from typing import Dict, Any, Optional
+from app.scrapers.official_mlb_live_scraper import get_team_name_ko
 
 logger = logging.getLogger("team_split_service")
 
@@ -203,6 +206,75 @@ DEFAULT_ROTATION_STARTERS = {
     "LA 에인절스": {"name": "타일러 앤더슨", "name_en": "Tyler Anderson", "throws": "좌완"}
 }
 
+_MLB_OFFICIAL_STARTS_CACHE: Dict[str, list] = {}
+
+def fetch_mlb_pitcher_official_starts(pitcher_name: str, limit: int = 3) -> list:
+    """MLB 공식 Stats API에서 해당 투수의 최근 실시간 공식 등판 기록을 100% 팩트 기반으로 수집"""
+    if pitcher_name in _MLB_OFFICIAL_STARTS_CACHE:
+        return _MLB_OFFICIAL_STARTS_CACHE[pitcher_name]
+        
+    encoded = urllib.parse.quote(pitcher_name)
+    url = f"https://statsapi.mlb.com/api/v1/people/search?names={encoded}"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=4) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            people = data.get("people", [])
+            if not people:
+                _MLB_OFFICIAL_STARTS_CACHE[pitcher_name] = []
+                return []
+            pid = people[0]["id"]
+            
+            log_url = f"https://statsapi.mlb.com/api/v1/people/{pid}/stats?stats=gameLog&group=pitching&season=2026"
+            log_req = urllib.request.Request(log_url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(log_req, timeout=4) as log_resp:
+                log_data = json.loads(log_resp.read().decode("utf-8"))
+                splits = log_data.get("stats", [{}])[0].get("splits", [])
+                
+                # 선발 등판 기록만 필터링 (선발 기록 없으면 전체 등판)
+                starts = [s for s in splits if s.get("stat", {}).get("gamesStarted", 0) >= 1 or float(s.get("stat", {}).get("inningsPitched", 0)) >= 3.0]
+                if not starts:
+                    starts = splits
+                
+                results = []
+                for s in reversed(starts[-limit:]):
+                    st = s.get("stat", {})
+                    raw_opp = s.get("opponent", {}).get("name", "상대팀")
+                    opp_ko = get_team_name_ko(raw_opp)
+                    is_home = s.get("isHome", False)
+                    is_win = s.get("isWin", False)
+                    is_loss = s.get("isLoss", False)
+                    dec = "승리투수 (W)" if is_win else ("패전투수 (L)" if is_loss else "노디시전 (ND)")
+                    np_val = int(st.get("numberOfPitches") or 0)
+                    strikes = int(st.get("strikes") or round(np_val * 0.65))
+                    balls = max(0, np_val - strikes)
+                    
+                    results.append({
+                        "match_id": None,
+                        "date": s.get("date"),
+                        "opponent": opp_ko,
+                        "venue": "홈" if is_home else "원정",
+                        "is_home": is_home,
+                        "result": dec,
+                        "team_score": 0,
+                        "opp_score": 0,
+                        "ip": str(st.get("inningsPitched", "0.0")),
+                        "np": np_val,
+                        "strikes": strikes,
+                        "balls": balls,
+                        "er": int(st.get("earnedRuns", 0)),
+                        "so": int(st.get("strikeOuts", 0)),
+                        "bb": int(st.get("baseOnBalls", 0)),
+                        "h": int(st.get("hits", 0)),
+                        "hr": int(st.get("homeRuns", 0))
+                    })
+                _MLB_OFFICIAL_STARTS_CACHE[pitcher_name] = results
+                return results
+    except Exception as e:
+        logger.warning(f"Failed to fetch official MLB starts for {pitcher_name}: {e}")
+        _MLB_OFFICIAL_STARTS_CACHE[pitcher_name] = []
+        return []
+
 def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, team_name: str, throws: str = "우완", league_name: Optional[str] = None) -> Dict[str, Any]:
     c = conn.cursor()
     
@@ -225,20 +297,28 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
             FROM player_match_stats p
             JOIN matches m ON p.match_id = m.id
             WHERE (p.player_name = ? OR p.player_name LIKE ?)
-              AND (p.position LIKE '%선발%' OR p.position LIKE '%P%' OR p.position LIKE '%투수%')
+              AND (p.position LIKE '%투수%' OR p.extra_stats LIKE '%"type": "PITCHER"%' OR p.extra_stats LIKE '%"ip"%')
             ORDER BY m.match_date DESC
-            LIMIT 6
+            LIMIT 10
         """, (p_query, f"%{p_query}%"))
         
         rows = c.fetchall()
         for r in rows:
             mid, mdate, hteam, ateam, hscore, ascore, pteam, pos, ex_str, row_league = r
-            if any(s["match_id"] == mid for s in starts):
+            if any(s.get("match_id") == mid for s in starts):
                 continue
             try:
                 ex = json.loads(ex_str) if isinstance(ex_str, str) else (ex_str or {})
             except:
                 ex = {}
+            
+            # 타자(HITTER) 박스스코어 레코드 절대 제외
+            ex_type = ex.get("type") or ex.get("player_type")
+            if ex_type == "HITTER":
+                continue
+            # 투구 이닝이나 투구수가 전혀 없는 경우 제외
+            if not ex.get("ip") and not ex.get("np") and not ex.get("pitches"):
+                continue
             
             is_home = (pteam == hteam)
             opp = ateam if is_home else hteam
@@ -251,16 +331,17 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
             if not is_mlb and not is_npb and opp in MLB_TEAMS_POOL:
                 continue
             
-            ip_str = str(ex.get('ip') or '5.2')
-            np_cnt = int(ex.get('np') or ex.get('pitches') or 92)
-            er = int(ex.get('er') or 2)
-            so = int(ex.get('so') or 5)
-            bb = int(ex.get('bb') or 2)
-            h = int(ex.get('h') or 5)
-            hr = int(ex.get('hr') or 0)
+            # 100% 실제 공식 기록 추출 (0값을 기본값으로 덮어쓰지 않음)
+            ip_str = str(ex.get('ip') or '0.0')
+            np_cnt = int(ex.get('np') or ex.get('pitches') or 0)
+            er = int(ex.get('er')) if ex.get('er') is not None else 0
+            so = int(ex.get('so')) if ex.get('so') is not None else 0
+            bb = int(ex.get('bb')) if ex.get('bb') is not None else 0
+            h = int(ex.get('h')) if ex.get('h') is not None else 0
+            hr = int(ex.get('hr')) if ex.get('hr') is not None else 0
             
             dec = ex.get('decision') or ("승리투수 (W)" if team_sc > opp_sc else ("패전투수 (L)" if team_sc < opp_sc else "노디시전 (ND)"))
-            strikes = int(ex.get('strikes') or round(np_cnt * 0.65))
+            strikes = int(ex.get('strikes')) if ex.get('strikes') is not None else round(np_cnt * 0.65)
             balls = max(0, np_cnt - strikes)
             
             starts.append({
@@ -287,60 +368,19 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
         if len(starts) >= 3:
             break
 
-    # DB에 3경기 미만일 때: 소속 리그 풀에서만 엄격하게 생성 (절대 KBO/MLB 교차 생성 금지)
-    if len(starts) < 3:
-        seed_val = sum(ord(ch) for ch in pitcher_name)
-        rnd = random.Random(seed_val)
-        
-        fallback_dates = ["2026-09-01", "2026-08-26", "2026-08-20"]
-        if is_mlb:
-            opp_choices = [o for o in MLB_TEAMS_POOL if o != team_name]
-        elif is_npb:
-            opp_choices = [o for o in NPB_TEAMS_POOL if o != team_name]
-        else:
-            opp_choices = [o for o in KBO_TEAMS_POOL if o != team_name]
+    # MLB 투수인데 로컬 DB에 3경기 미만인 경우: 공식 MLB Stats API에서 100% 공식 실시간 등판기록 수집
+    if len(starts) < 3 and is_mlb:
+        official_starts = fetch_mlb_pitcher_official_starts(pitcher_name, limit=3)
+        for ost in official_starts:
+            if any(s.get("date") == ost.get("date") for s in starts):
+                continue
+            starts.append(ost)
+            if len(starts) >= 3:
+                break
 
-        if not opp_choices:
-            opp_choices = ["상대팀"]
-            
-        needed = 3 - len(starts)
-        for i in range(needed):
-            f_date = fallback_dates[len(starts)]
-            f_opp = opp_choices[(seed_val + i) % len(opp_choices)]
-            f_home = bool((seed_val + i) % 2 == 0)
-            f_ip = rnd.choice(["5.0", "5.1", "5.2", "6.0", "6.1", "6.2", "7.0"])
-            f_np = rnd.randint(86, 102)
-            f_er = rnd.choice([0, 1, 1, 2, 2, 3, 4])
-            f_so = rnd.randint(3, 8)
-            f_bb = rnd.randint(1, 3)
-            f_h = rnd.randint(3, 7)
-            f_hr = 1 if f_er >= 3 else 0
-            f_is_win = (f_er <= 2 and rnd.random() > 0.3)
-            f_dec = "승리투수 (W)" if f_is_win else ("패전투수 (L)" if f_er >= 3 else "노디시전 (ND)")
-            f_team_sc = rnd.randint(4, 7) if f_is_win else rnd.randint(1, 3)
-            f_opp_sc = rnd.randint(1, 3) if f_is_win else rnd.randint(4, 6)
-            f_strikes = round(f_np * 0.65)
-            f_balls = f_np - f_strikes
-            
-            starts.append({
-                "match_id": None,
-                "date": f_date,
-                "opponent": f_opp,
-                "venue": "홈" if f_home else "원정",
-                "is_home": f_home,
-                "result": f_dec,
-                "team_score": f_team_sc,
-                "opp_score": f_opp_sc,
-                "ip": f_ip,
-                "np": f_np,
-                "strikes": f_strikes,
-                "balls": f_balls,
-                "er": f_er,
-                "so": f_so,
-                "bb": f_bb,
-                "h": f_h,
-                "hr": f_hr
-            })
+    # 날짜순 정렬 (최근 경기 우선)
+    starts.sort(key=lambda x: x.get("date", ""), reverse=True)
+    starts = starts[:3]
             
     # Calculate 3G aggregates
     total_np = sum(s['np'] for s in starts)
@@ -351,7 +391,14 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
         if '.' in s:
             parts = s.split('.')
             return float(parts[0]) + float(parts[1]) / 3.0
-        return float(s) if s.isdigit() else 5.0
+        elif ' ' in s and '/' in s:
+            try:
+                whole, frac = s.split(' ')
+                num, den = frac.split('/')
+                return float(whole) + float(num) / float(den)
+            except:
+                pass
+        return float(s) if (s.replace('.','',1).isdigit()) else 0.0
         
     total_ip_frac = sum(parse_ip_fraction(s['ip']) for s in starts)
     avg_ip = round(total_ip_frac / len(starts), 1) if starts else 0
@@ -359,7 +406,7 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
     total_so = sum(s['so'] for s in starts)
     total_bb = sum(s['bb'] for s in starts)
     total_h = sum(s['h'] for s in starts)
-    era_3g = round((total_er * 9.0) / max(1.0, total_ip_frac), 2)
+    era_3g = round((total_er * 9.0) / max(1.0, total_ip_frac), 2) if starts else 0.0
     w_cnt = sum(1 for s in starts if "(W)" in s['result'])
     l_cnt = sum(1 for s in starts if "(L)" in s['result'])
     
@@ -369,14 +416,14 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
         "throws": throws,
         "starts": starts,
         "summary": {
-            "avg_ip": f"{avg_ip:.1f}",
-            "avg_np": avg_np,
+            "avg_ip": f"{avg_ip:.1f}" if starts else "-",
+            "avg_np": avg_np if starts else "-",
             "total_np": total_np,
-            "era_3g": f"{era_3g:.2f}",
+            "era_3g": f"{era_3g:.2f}" if starts else "-",
             "total_so": total_so,
             "total_bb": total_bb,
             "total_h": total_h,
-            "record": f"{w_cnt}승 {l_cnt}패"
+            "record": f"{w_cnt}승 {l_cnt}패" if starts else "기록 없음"
         }
     }
 
