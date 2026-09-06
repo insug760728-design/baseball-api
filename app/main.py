@@ -93,7 +93,16 @@ def is_b2b_domain(request: Request) -> bool:
     if host.startswith("api."):
         return True
         
-    return False
+import time
+
+@app.get("/healthz", summary="Health Check & Keep-Alive")
+@app.get("/api/v1/health", summary="Health Check & Keep-Alive")
+def health_check():
+    return JSONResponse(
+        status_code=200,
+        content={"status": "ok", "service": "tokeon-live", "timestamp": time.time()},
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
+    )
 
 @app.get("/", response_class=HTMLResponse, summary="TOKEON 스포츠 분석 전문 포털 (tokeon.co.kr)")
 def domain_portal(request: Request):
