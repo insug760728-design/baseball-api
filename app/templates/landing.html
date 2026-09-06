@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="auth-locked">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -75,6 +75,55 @@
       border-radius: 4px;
       font-weight: 700;
       letter-spacing: 0.5px;
+    }
+    @media (max-width: 768px) {
+      html, body {
+        overflow-x: hidden !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+      }
+      .navbar-glass {
+        padding: 6px 8px !important;
+      }
+      .navbar-glass .dash-container {
+        padding: 0 !important;
+      }
+      .nav-brand-title {
+        font-size: 1.1rem !important;
+      }
+      .domain-badge {
+        display: none !important;
+      }
+      #navAuthContainer {
+        gap: 3px !important;
+      }
+      #viewModeToggleGroup .btn {
+        font-size: 0.72rem !important;
+        padding: 2px 6px !important;
+      }
+      .breaking-ticker {
+        padding: 4px 0 !important;
+        font-size: 0.78rem !important;
+      }
+      .ticker-badge {
+        font-size: 0.65rem !important;
+        padding: 2px 5px !important;
+        margin-right: 6px !important;
+      }
+      .login-lock-card {
+        padding: 24px 16px !important;
+        border-radius: 16px !important;
+      }
+    }
+    @media (max-width: 576px) {
+      .nav-brand-title {
+        font-size: 1.0rem !important;
+        letter-spacing: -0.5px !important;
+      }
+      #viewModeToggleGroup .btn {
+        font-size: 0.68rem !important;
+        padding: 2px 4px !important;
+      }
     }
     .nav-link-custom {
       color: var(--text-muted);
@@ -1070,84 +1119,233 @@
     }
 
     /* ============================================================= */
-    /* 📱 모바일 전용 4개 창 100% 꽉찬 가로 스와이프 (손가락 좌우 밀기) */
+    /* 📱 모바일 전용 앱 스타일 탭 뷰 (단일 패널 100% 핏 & 네이티브 세로 스크롤) */
     /* ============================================================= */
-    .dashboard-row.mobile-swipe-active {
-      display: flex !important;
-      flex-direction: row !important;
-      flex-wrap: nowrap !important;
-      overflow-x: auto !important;
-      overflow-y: hidden !important;
-      scroll-snap-type: x mandatory !important;
-      -webkit-overflow-scrolling: touch !important;
-      scroll-behavior: smooth !important;
-      gap: 0 !important;
+    .dashboard-row.mobile-view-active {
+      display: block !important;
       width: 100% !important;
       margin: 0 auto !important;
       padding: 0 !important;
+      overflow: visible !important;
     }
-    .dashboard-row.mobile-swipe-active::-webkit-scrollbar {
-      display: none !important;
-      width: 0 !important;
-      height: 0 !important;
-    }
-    .dashboard-row.mobile-swipe-active .col-dash-left,
-    .dashboard-row.mobile-swipe-active .col-dash-center,
-    .dashboard-row.mobile-swipe-active .col-dash-right,
-    .dashboard-row.mobile-swipe-active .col-dash-news {
-      display: block !important;
-      flex: 0 0 100% !important;
-      min-width: 100% !important;
-      max-width: 100% !important;
+    .dashboard-row.mobile-view-active .col-dash-left,
+    .dashboard-row.mobile-view-active .col-dash-center,
+    .dashboard-row.mobile-view-active .col-dash-right,
+    .dashboard-row.mobile-view-active .col-dash-news {
       width: 100% !important;
-      scroll-snap-align: start !important;
-      scroll-snap-stop: always !important;
-      padding: 4px !important;
+      max-width: 100% !important;
+      flex: 0 0 100% !important;
+      margin: 0 !important;
+      padding: 4px 2px !important;
       box-sizing: border-box !important;
     }
-    
+    .dashboard-row.mobile-view-active .dash-card-column {
+      max-height: none !important;
+      height: auto !important;
+      min-height: auto !important;
+      overflow: visible !important;
+      border-radius: 14px !important;
+    }
+    .dashboard-row.mobile-view-active .dash-card-body {
+      max-height: none !important;
+      overflow-y: visible !important;
+      height: auto !important;
+    }
+    .mobile-tab-btn {
+      font-size: 0.80rem;
+      font-weight: 700;
+      padding: 8px 4px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      color: #94a3b8;
+      background: transparent;
+      transition: all 0.2s ease;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .mobile-tab-btn:hover {
+      color: #f8fafc;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .mobile-tab-btn.active {
+      background: linear-gradient(135deg, #00F0FF, #38bdf8) !important;
+      color: #000000 !important;
+      font-weight: 800 !important;
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.5) !important;
+    }
+
+    /* Fullscreen Login Lock Overlay ("로그인하세요") */
+    .login-lock-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(5, 9, 18, 0.88);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 999999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .login-lock-card {
+      background: #0b1120;
+      border: 1.5px solid #00F0FF;
+      border-radius: 20px;
+      box-shadow: 0 0 50px rgba(0, 240, 255, 0.4), inset 0 0 20px rgba(0, 240, 255, 0.08);
+      max-width: 440px;
+      width: 100%;
+      padding: 32px 28px;
+      text-align: center;
+    }
+    .lock-glow-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(2, 132, 199, 0.4));
+      border: 1px solid #00F0FF;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: #00F0FF;
+    }
+
+
+
+    #mainAppWrapper {
+      transition: filter 0.3s ease, opacity 0.3s ease;
+    }
+
+    /* League Quick Filter Pills */
+    .league-pill-btn {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: #151e33;
+      color: #94a3b8;
+      border: 1px solid #27354f;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .league-pill-btn:hover {
+      background: #1e293b;
+      color: #f8fafc;
+      border-color: #38bdf8;
+    }
+    .league-pill-btn.active {
+      background: linear-gradient(135deg, #0284c7, #0ea5e9);
+      color: #ffffff !important;
+      border-color: #38bdf8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
+      font-weight: 700;
+    }
+
+    html.auth-locked .login-lock-overlay {
+      display: flex !important;
+    }
+    html.auth-locked #mainAppWrapper {
+      filter: blur(20px) !important;
+      opacity: 0.08 !important;
+      pointer-events: none !important;
+      user-select: none !important;
+    }
   </style>
+  <script>
+    (function() {
+      try {
+        var s = localStorage.getItem('tokeon_simple_user');
+        if (s) {
+          var u = JSON.parse(s);
+          if (u && u.nickname) {
+            document.documentElement.classList.remove('auth-locked');
+            return;
+          }
+        }
+      } catch (e) {}
+      document.documentElement.classList.add('auth-locked');
+    })();
+  </script>
 </head>
 <body>
+
+  <!-- 🔒 Full-Screen Login Lock Overlay ("로그인하세요" - 로그인 안되면 화면 차단) -->
+  <div id="loginLockOverlay" class="login-lock-overlay">
+    <div class="login-lock-card">
+      <div class="lock-glow-icon mb-3">
+        <i class="bi bi-shield-lock-fill"></i>
+      </div>
+      <span class="badge px-3 py-1 mb-2 fw-bold" style="background: rgba(0, 240, 255, 0.18); color: #00F0FF; border: 1px solid #00F0FF; font-size: 0.82rem;">
+        TOKEON 실시간 빅데이터 포털
+      </span>
+      <h2 class="text-white fw-bold mb-2" style="font-size: 1.8rem; letter-spacing: -0.5px;">로그인하세요</h2>
+      <p class="text-light small mb-4" style="line-height: 1.6; opacity: 0.9;">
+        본 서비스는 100% 실시간 공식 경기 데이터와 AI 세이버메트릭스 분석을 제공합니다.<br>
+        <strong class="text-warning">간편 로그인</strong>을 완료하시면 모든 화면을 무료로 자유롭게 이용하실 수 있습니다.
+      </p>
+
+      <!-- Instant Login Form inside Lock Card -->
+      <form id="lockLoginForm" onsubmit="handleLockLogin(event)">
+        <div class="mb-3 text-start">
+          <label class="form-label text-white fw-bold small"><i class="bi bi-person-fill text-info me-1"></i>활동할 별명 (닉네임)</label>
+          <input type="text" class="form-control bg-dark text-white border-secondary py-2" id="lockNicknameInput" placeholder="예: 슈퍼손, 홈런왕, 세이버" maxlength="12" required autocomplete="off" style="font-size: 0.95rem;">
+          <div class="form-text text-muted" style="font-size: 0.72rem;">실시간 채팅, 승부예측 분석방에서 사용할 별명입니다.</div>
+        </div>
+        <div class="mb-3 text-start">
+          <label class="form-label text-white fw-bold small"><i class="bi bi-calendar-event text-warning me-1"></i>나이 (연령)</label>
+          <input type="number" class="form-control bg-dark text-white border-secondary py-2" id="lockAgeInput" placeholder="예: 28" min="10" max="100" required autocomplete="off" style="font-size: 0.95rem;">
+          <div class="form-text text-muted" style="font-size: 0.72rem;">비밀번호 없이 별명과 나이만으로 즉시 접속됩니다.</div>
+        </div>
+        <div class="p-2 mb-3 rounded-2 text-center" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35);">
+          <span class="text-success small fw-bold"><i class="bi bi-gift-fill me-1"></i>입장 시 3일 VIP 무료체험 자동 적용!</span>
+        </div>
+        <button type="submit" class="btn btn-info w-100 py-2.5 fw-bold text-dark fs-6" style="background: linear-gradient(135deg, #00F0FF, #0284c7); border: none; box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);">
+          <i class="bi bi-box-arrow-in-right me-1"></i>간편 로그인 (입장하기)
+        </button>
+      </form>
+    </div>
+  </div>
+
+
+
+  <div id="mainAppWrapper">
 
   <!-- Top Navbar: Brand Logo + Simple Login Button Only -->
   <nav class="navbar navbar-glass py-2" style="background: rgba(10, 14, 26, 0.95); border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
     <div class="dash-container d-flex align-items-center justify-content-between">
       <a class="navbar-brand d-flex align-items-center gap-2 m-0 p-0" href="/">
-        <div style="background: linear-gradient(135deg, #0284c7, #2563eb); width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 12px rgba(14, 165, 233, 0.5);">
+        <div style="background: linear-gradient(135deg, #0284c7, #2563eb); width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 12px rgba(14, 165, 233, 0.5);">
           <i class="bi bi-lightning-charge-fill text-white fs-5"></i>
         </div>
         <div class="d-flex align-items-center gap-2">
-          <span class="nav-brand-title" style="font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px; color: #fff;">TOKEON ANALYTICS</span>
-          <span class="domain-badge" style="background: linear-gradient(135deg, #06b6d4, #2563eb); font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; font-weight: 700; color: white;">tokeon.co.kr</span>
+          <span class="nav-brand-title" style="font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px; color: #fff;"><span class="d-none d-sm-inline">TOKEON ANALYTICS</span><span class="d-inline d-sm-none">TOKEON</span></span>
+          <span class="domain-badge d-none d-md-inline-block" style="background: linear-gradient(135deg, #06b6d4, #2563eb); font-size: 0.72rem; padding: 2px 8px; border-radius: 6px; font-weight: 700; color: white;">tokeon.co.kr</span>
         </div>
       </a>
 
       <!-- Simple Auth Section, PC/Mobile View Switcher & Member Registry -->
-      <div id="navAuthContainer" class="d-flex align-items-center gap-2">
+      <div id="navAuthContainer" class="d-flex align-items-center gap-1.5">
         <!-- 💻 PC / 📱 핸드폰 버전 전환 버튼 -->
         <div class="btn-group btn-group-sm" role="group" id="viewModeToggleGroup" style="border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 8px; overflow: hidden;">
-          <button type="button" class="btn btn-info fw-bold px-2.5 py-1 text-dark" id="btnModePC" onclick="setViewMode('pc')" title="PC 최적화 대화면 3분할 뷰">
-            <i class="bi bi-display me-1"></i>PC버전
+          <button type="button" class="btn btn-info fw-bold px-2 py-1 text-dark" id="btnModePC" onclick="setViewMode('pc')" title="PC 최적화 대화면 4분할 뷰">
+            <i class="bi bi-display me-1"></i><span class="d-none d-sm-inline">PC</span>버전
           </button>
-          <button type="button" class="btn btn-dark fw-bold px-2.5 py-1 text-light" id="btnModeMobile" onclick="setViewMode('mobile')" title="스마트폰 핸드폰 모바일 최적화 뷰">
-            <i class="bi bi-phone me-1"></i>핸드폰버전
+          <button type="button" class="btn btn-dark fw-bold px-2 py-1 text-light" id="btnModeMobile" onclick="setViewMode('mobile')" title="스마트폰 모바일 최적화 뷰">
+            <i class="bi bi-phone me-1"></i><span class="d-none d-sm-inline">핸드폰</span>앱
           </button>
         </div>
 
         <!-- 👥 회원 가입 현황 (data/members 폴더 연동) 버튼 -->
-        <button class="btn btn-sm btn-outline-secondary text-light fw-bold px-2 py-1.5" onclick="openMembersModal()" title="실제 가입한 별명·나이 인원수 목록 확인 (data/members 폴더 연동)" style="border-radius: 8px; font-size: 0.78rem; border-color: rgba(255, 255, 255, 0.2);">
-          <i class="bi bi-people-fill text-warning me-1"></i>회원현황
-        </button>
-
-        <!-- 🔑 실시간 API 연동 버튼 -->
-        <button class="btn btn-sm btn-outline-warning fw-bold px-2.5 py-1.5" onclick="openLiveApiModal()" id="navLiveApiBtn" style="border-radius: 8px; font-size: 0.80rem; border-color: rgba(245, 158, 11, 0.5);" title="API-Sports 또는 RapidAPI Key 등록 및 실시간 경기결과 연동">
-          <i class="bi bi-key-fill text-warning me-1"></i><span id="navLiveApiTxt">🔑 실시간 API 연동</span>
+        <button class="btn btn-sm btn-outline-secondary text-light fw-bold px-2 py-1" onclick="openMembersModal()" title="실제 가입한 별명·나이 인원수 목록 확인 (data/members 폴더 연동)" style="border-radius: 8px; font-size: 0.75rem; border-color: rgba(255, 255, 255, 0.2);">
+          <i class="bi bi-people-fill text-warning"></i><span class="d-none d-sm-inline ms-1">회원</span>
         </button>
 
         <!-- ⚡ 간편 로그인 버튼 -->
-        <button class="btn btn-sm btn-warning text-dark fw-bold px-3 py-1.5" onclick="openLoginModal()" style="border-radius: 8px; box-shadow: 0 0 12px rgba(245, 158, 11, 0.45); font-size: 0.82rem;">
-          <i class="bi bi-box-arrow-in-right me-1"></i>간편 로그인 (별명·나이)
+        <button class="btn btn-sm btn-warning text-dark fw-bold px-2.5 py-1" onclick="openLoginModal()" id="btnNavLogin" style="border-radius: 8px; box-shadow: 0 0 12px rgba(245, 158, 11, 0.45); font-size: 0.78rem;">
+          <i class="bi bi-box-arrow-in-right me-1"></i><span class="d-none d-sm-inline">간편 </span>로그인
         </button>
       </div>
     </div>
@@ -1176,24 +1374,21 @@
   <section class="py-2 px-1" id="prediction-section" style="background: radial-gradient(circle at 50% 0%, #131c34 0%, #0a0e1a 100%); border-bottom: 2px solid #1e293b;">
     <div class="dash-container">
       
-      <!-- 📱 핸드폰 모바일 전용 4창 가로 스와이프 1-Tap 탭 네비게이터 -->
-      <div id="mobileTabBar" class="d-none flex-column p-1 mb-2 rounded-3" style="background: rgba(15, 23, 42, 0.95); border: 1.5px solid #00F0FF; position: sticky; top: 52px; z-index: 990; box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);">
+      <!-- 📱 핸드폰 모바일 전용 1-Tap 탭 네비게이터 (전체화면 자연스러운 스크롤) -->
+      <div id="mobileTabBar" class="d-none flex-column p-1.5 mb-2 rounded-3" style="background: rgba(11, 17, 32, 0.98); border: 1.5px solid #00F0FF; position: sticky; top: 52px; z-index: 990; box-shadow: 0 4px 20px rgba(0, 240, 255, 0.35);">
         <div class="d-flex justify-content-between align-items-center gap-1 w-100">
-          <button class="btn btn-sm fw-bold py-1.5 px-1 text-light flex-fill" id="mobTabLeft" onclick="scrollMobileToPanel(0)" style="font-size:0.75rem; border-radius:6px; background: transparent; border:none;">
-            <i class="bi bi-clock-history me-1 text-info"></i>1. 경기일정
+          <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabSchedule" onclick="switchMobileTab('schedule')">
+            <i class="bi bi-calendar3 d-block mb-1" style="font-size: 1.05rem;"></i>일정/스코어
           </button>
-          <button class="btn btn-sm active fw-bold py-1.5 px-1 text-dark flex-fill" id="mobTabCenter" onclick="scrollMobileToPanel(1)" style="font-size:0.75rem; border-radius:6px; background: linear-gradient(135deg, #00F0FF, #38bdf8); border:none; box-shadow: 0 0 10px rgba(0,240,255,0.4);">
-            <i class="bi bi-check2-square me-1"></i>2. 토토마킹
+          <button class="btn btn-sm mobile-tab-btn active flex-fill" id="mobTabCenter" onclick="switchMobileTab('center')">
+            <i class="bi bi-pie-chart-fill d-block mb-1" style="font-size: 1.05rem;"></i>분석·승부예측
           </button>
-          <button class="btn btn-sm fw-bold py-1.5 px-1 text-light flex-fill" id="mobTabRight" onclick="scrollMobileToPanel(2)" style="font-size:0.75rem; border-radius:6px; background: transparent; border:none;">
-            <i class="bi bi-chat-dots-fill text-success me-1"></i>3. 팬룸채팅
+          <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabCommunity" onclick="switchMobileTab('community')">
+            <i class="bi bi-chat-dots-fill d-block mb-1 text-success" style="font-size: 1.05rem;"></i>실시간 팬톡
           </button>
-          <button class="btn btn-sm fw-bold py-1.5 px-1 text-light flex-fill" id="mobTabNews" onclick="scrollMobileToPanel(3)" style="font-size:0.75rem; border-radius:6px; background: transparent; border:none;">
-            <i class="bi bi-newspaper text-primary me-1"></i>4. 스포츠뉴스
+          <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabNews" onclick="switchMobileTab('news')">
+            <i class="bi bi-newspaper d-block mb-1 text-primary" style="font-size: 1.05rem;"></i>스포츠뉴스
           </button>
-        </div>
-        <div class="text-center pt-1" style="font-size: 0.70rem; color: #94a3b8;">
-          <i class="bi bi-arrow-left-right text-info me-1"></i>손가락으로 화면을 좌우로 밀어서 4개의 창을 넘겨보세요
         </div>
       </div>
 
@@ -1232,6 +1427,20 @@
                 <button class="btn btn-sm sport-chip-btn flex-fill" id="predSportW5L" onclick="filterPredSport('W5L')" title="농구 14경기 승5패 (5점차 분석)">🏀 승5패</button>
               </div>
 
+              <!-- Line 2.5: League Quick Filter Pills (🇳🇱 네덜란드 에레디비시, KBO, MLB, NPB, EPL 등) -->
+              <div class="d-flex gap-1 mb-2 overflow-x-auto py-1" id="leagueFilterRow" style="scrollbar-width: none;">
+                <button class="btn btn-xs league-pill-btn active" id="lgPillALL" onclick="filterLeague('ALL')">전체 리그</button>
+                <button class="btn btn-xs league-pill-btn" id="lgPillNED" onclick="filterLeague('NED')" style="border-color: #f97316; color: #ffedd5; background: rgba(249, 115, 22, 0.25);" title="네덜란드 에레디비시 5개년 & 실시간 경기"><span class="me-1">🇳🇱</span>네덜란드</button>
+                <button class="btn btn-xs league-pill-btn" id="lgPillKBO" onclick="filterLeague('KBO')" title="한국 프로야구">⚾ KBO</button>
+                <button class="btn btn-xs league-pill-btn" id="lgPillMLB" onclick="filterLeague('MLB')" title="미국 메이저리그">⚾ MLB</button>
+                <button class="btn btn-xs league-pill-btn" id="lgPillNPB" onclick="filterLeague('NPB')" title="일본 프로야구">⚾ NPB</button>
+                <button class="btn btn-xs league-pill-btn" id="lgPillEPL" onclick="filterLeague('EPL')" title="잉글랜드 프리미어리그">⚽ EPL</button>
+                <button class="btn btn-xs league-pill-btn" id="lgPillLALIGA" onclick="filterLeague('LALIGA')" title="스페인 라리가">⚽ 라리가</button>
+                <button class="btn btn-xs league-pill-btn" id="lgPillSERIE" onclick="filterLeague('SERIE')" title="세리에 A">⚽ 세리에</button>
+                <button class="btn btn-xs league-pill-btn" id="lgPillBUNDES" onclick="filterLeague('BUNDES')" title="독일 분데스리가">⚽ 분데스</button>
+                <button class="btn btn-xs league-pill-btn" id="lgPillLIGUE1" onclick="filterLeague('LIGUE1')" title="프랑스 리그 1">⚽ 리그1</button>
+              </div>
+
               <!-- Line 3: AI Confidence Filter & 30s Auto Sync -->
               <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex gap-1">
@@ -1261,6 +1470,13 @@
         <div class="col-dash-center" id="centerColMain">
           <div class="dash-card-column" style="background: linear-gradient(180deg, #0b1120 0%, #0e172e 100%);">
             
+            <!-- Mobile Return Helper Button (모바일 모드에서만 표시) -->
+            <div class="p-1 pb-0 d-none" id="mobileReturnToScheduleBtn">
+              <button class="btn btn-sm w-100 fw-bold py-1.5" onclick="switchMobileTab('schedule')" style="background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; color: #38bdf8; border-radius: 6px; font-size: 0.82rem;">
+                <i class="bi bi-chevron-left me-1"></i>← 전체 경기 일정 목록으로 돌아가기
+              </button>
+            </div>
+
             <!-- Center Card Header: Mode Switch & Toto Round Buttons -->
             <div class="dash-card-header d-flex justify-content-between align-items-center">
               <div class="d-flex gap-1" id="centerModeTabs">
@@ -1426,7 +1642,7 @@
             <span class="domain-badge ms-1" style="background: linear-gradient(135deg, #06b6d4, #2563eb);">tokeon.co.kr</span>
           </div>
           <p class="text-muted mb-3" style="line-height: 1.6; max-width: 420px;">
-            <b>tokeon.co.kr</b>은 글로벌 스포츠(야구, 축구, 농구)의 정밀 데이터와 AI 승부예측 분석을 제공하는 스포츠 분석 포털입니다. 본 서비스의 모든 실시간 데이터와 세이버메트릭스 피드는 <b><a href="/?domain=tokeon.kr" style="color: #38bdf8; text-decoration: none;">TOKEON DATA API (tokeon.kr)</a></b>를 통해 공급받고 있습니다.
+            <b>tokeon.co.kr</b>은 글로벌 스포츠(야구, 축구, 농구)의 100% 공식 실시간 경기 데이터와 AI 승부예측 분석을 제공하는 종합 스포츠 전문 분석 포털입니다.
           </p>
           <div class="d-flex gap-3">
             <a href="#" class="text-muted fs-5"><i class="bi bi-github"></i></a>
@@ -1441,7 +1657,7 @@
             <li><a href="#newsColSidebar" class="footer-link">스포츠 뉴스</a></li>
             <li><a href="#match-strip" class="footer-link">라이브 스코어</a></li>
             <li><a href="#analytics-section" class="footer-link">세이버메트릭스</a></li>
-            <li><a href="#pricing-section" class="footer-link">API 요금제</a></li>
+            <li><a href="#betmanSection" class="footer-link">승무패·승1패 분석</a></li>
             <li><a href="/dashboard" class="footer-link text-warning fw-semibold">관리자 대시보드</a></li>
           </ul>
         </div>
@@ -1460,7 +1676,7 @@
         <div class="col-lg-3">
           <h6 class="fw-bold text-white mb-3">사업자 등록 정보</h6>
           <div class="text-muted" style="font-size: 0.82rem; line-height: 1.8;">
-            <div><strong>도메인:</strong> tokeon.co.kr (분석웹) / tokeon.kr (API)</div>
+            <div><strong>도메인:</strong> tokeon.co.kr (스포츠 분석 포털)</div>
             <div><strong>상호명:</strong> 토큰 애널리틱스 (TOKEON ANALYTICS)</div>
             <div><strong>사업자등록번호:</strong> 000-00-00000</div>
             <div><strong>통신판매업신고:</strong> 제2026-서울강남-0000호</div>
@@ -1473,12 +1689,12 @@
 
       <div class="pt-3 mt-3 border-top d-flex flex-column flex-md-row justify-content-between align-items-center gap-2" style="border-color: var(--border-color) !important;">
         <div style="font-size: 0.8rem; color: var(--text-dim);">
-          © 2026 TOKEON ANALYTICS (tokeon.co.kr) & TOKEON DATA (tokeon.kr). All rights reserved. 본 서비스에서 제공하는 모든 경기 데이터와 계량 지표의 저작권은 당사에 있습니다.
+          © 2026 TOKEON ANALYTICS (tokeon.co.kr). All rights reserved. 본 서비스에서 제공하는 모든 경기 데이터와 계량 지표의 저작권은 당사에 있습니다.
         </div>
         <div class="d-flex gap-3" style="font-size: 0.8rem;">
           <a href="#" class="footer-link">이용약관</a>
           <a href="#" class="footer-link">개인정보처리방침</a>
-          <a href="#" class="footer-link">API 서비스 규약</a>
+          <a href="#" class="footer-link">이용안내</a>
         </div>
       </div>
     </div>
@@ -1583,9 +1799,6 @@
               <button class="btn btn-sm btn-primary fw-bold" id="btnModalGoPredictor">
                 <i class="bi bi-cpu-fill me-1"></i>상단 AI 분석 랩에서 보기
               </button>
-              <a href="/dashboard" class="btn btn-sm btn-outline-info fw-bold">
-                콘솔 관리
-              </a>
             </div>
           </div>
         </div>
@@ -1593,58 +1806,48 @@
     </div>
   </div>
 
-  <!-- Modal 3: API Key & Subscription Modal -->
-  <div class="modal fade" id="apiKeyModal" tabindex="-1" aria-hidden="true">
+
+
+  <!-- Modal: Baseball Starting Pitcher Confirmation & Editing -->
+  <div class="modal fade" id="starterModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content modal-content-custom">
-        <div class="modal-header modal-header-custom">
-          <h5 class="modal-title fw-bold text-white"><i class="bi bi-key-fill text-warning me-2"></i>tokeon.kr 개발자 API 키 발급 & 플랜</h5>
+      <div class="modal-content text-white" style="background: #0b1120; border: 1px solid rgba(0, 240, 255, 0.45); box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+        <div class="modal-header border-secondary" style="background: rgba(15,23,42,0.9);">
+          <h5 class="modal-title fw-bold text-white"><i class="bi bi-person-badge-fill text-warning me-2"></i>야구 선발투수 확정 및 변경</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body p-4">
-          <div id="keyFormStep">
-            <p class="text-muted" style="font-size: 0.9rem;">
-              원하시는 플랜을 선택하고 이메일을 등록하시면 <strong>즉시 유효한 개발자 테스트 API Key</strong>가 발급됩니다.
-            </p>
-            <div class="mb-3">
-              <label class="form-label text-muted" style="font-size: 0.88rem;">선택 플랜</label>
-              <select class="form-select bg-dark text-white border-secondary" id="planSelect">
-                <option value="Free">Free Starter (월 0원 - 일 500회)</option>
-                <option value="Pro" selected>Pro Analyst (월 29,000원 - 세이버메트릭스 전체/50,000회)</option>
-                <option value="Enterprise">Enterprise (월 199,000원 - 무제한 회선/WebSocket)</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label text-muted" style="font-size: 0.88rem;">신청자명 / 법인명</label>
-              <input type="text" class="form-control bg-dark text-white border-secondary" id="applicantName" placeholder="홍길동 (또는 회사명)">
-            </div>
-            <div class="mb-3">
-              <label class="form-label text-muted" style="font-size: 0.88rem;">연락처 이메일</label>
-              <input type="email" class="form-control bg-dark text-white border-secondary" id="applicantEmail" placeholder="developer@tokeon.kr">
-            </div>
-            <button class="btn btn-gradient w-100 py-2 mt-2" onclick="generateApiKey()">
-              <i class="bi bi-shield-lock-fill me-1"></i>API 키 즉시 생성 & 활성화
-            </button>
-          </div>
-
-          <!-- Result Step -->
-          <div id="keyResultStep" style="display: none;">
-            <div class="text-center py-3">
-              <i class="bi bi-check-circle-fill text-success fs-1"></i>
-              <h5 class="fw-bold text-white mt-2">API 키 발급이 완료되었습니다!</h5>
-              <p class="text-muted" style="font-size: 0.88rem;">발급된 키를 API 호출 헤더의 <code class="text-info">X-API-KEY</code>로 전달해 주세요.</p>
-            </div>
-            <div class="p-3 bg-dark border border-secondary rounded-3 mb-3">
-              <label class="text-dim" style="font-size: 0.75rem;">YOUR API KEY (tokeon.kr)</label>
-              <div class="d-flex justify-content-between align-items-center">
-                <code class="text-warning fw-bold fs-6" id="generatedKeyBox">sk_live_...</code>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="copyApiKey()"><i class="bi bi-copy"></i> 복사</button>
+        <div class="modal-body p-3">
+          <input type="hidden" id="starterMatchId">
+          <div class="mb-3">
+            <label class="form-label fw-bold" style="color: #00F0FF; font-size: 0.88rem;">🏠 앞 [홈팀] 선발투수 (<span id="starterHomeTeamLabel">홈팀</span>)</label>
+            <div class="input-group">
+              <input type="text" class="form-control bg-dark text-white border-secondary" id="homeStarterInput" placeholder="예: 임찬규">
+              <div class="input-group-text bg-dark border-secondary">
+                <input class="form-check-input mt-0 me-1" type="checkbox" id="homeStarterConfirmed">
+                <label class="form-check-label text-success small fw-bold" for="homeStarterConfirmed">선발 확정</label>
               </div>
             </div>
-            <div class="p-2 text-muted" style="font-size: 0.82rem; background: rgba(56, 189, 248, 0.08); border-radius: 6px;">
-              <i class="bi bi-info-circle text-info me-1"></i><strong>tokeon.kr</strong> 공식 API 엔드포인트: <code class="text-white">https://tokeon.kr/api/v1/</code>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold" style="color: #FFB703; font-size: 0.88rem;">✈️ 뒤 [원정팀] 선발투수 (<span id="starterAwayTeamLabel">원정팀</span>)</label>
+            <div class="input-group">
+              <input type="text" class="form-control bg-dark text-white border-secondary" id="awayStarterInput" placeholder="예: 원태인">
+              <div class="input-group-text bg-dark border-secondary">
+                <input class="form-check-input mt-0 me-1" type="checkbox" id="awayStarterConfirmed">
+                <label class="form-check-label text-success small fw-bold" for="awayStarterConfirmed">선발 확정</label>
+              </div>
             </div>
           </div>
+          <div class="p-2 rounded text-muted small" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); font-size: 0.78rem;">
+            <i class="bi bi-info-circle text-info me-1"></i>
+            선발 확정 체크 시 <strong>[선발 확정]</strong> 뱃지가 부여되며, 해당 선발투수의 <strong>최근 3경기 이닝·투구수(볼수)·자책·삼진·사사구</strong> 기록이 즉시 실시간 계산되어 표출됩니다.
+          </div>
+        </div>
+        <div class="modal-footer border-secondary" style="background: rgba(15,23,42,0.9);">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">취소</button>
+          <button type="button" class="btn btn-sm btn-primary px-3" onclick="saveStarterModal()">
+            <i class="bi bi-check2-circle me-1"></i>저장 및 분석 갱신
+          </button>
         </div>
       </div>
     </div>
@@ -1765,31 +1968,91 @@
       alert(`🎉 [${nickname}]님 (${age}세) 환영합니다!\n별명과 나이로 즉시 접속되었습니다.\n(3일 VIP 무료체험이 함께 적용되었습니다)`);
     }
 
-    function handleLogout() {
-      if (confirm('로그아웃 하시겠습니까?')) {
-        currentUser = null;
-        try {
-          localStorage.removeItem('tokeon_simple_user');
-        } catch (e) {}
-        renderAuthUI();
-        alert('로그아웃되었습니다.');
+    function handleLockLogin(e) {
+      if (e) e.preventDefault();
+      const nickEl = document.getElementById('lockNicknameInput');
+      const ageEl = document.getElementById('lockAgeInput');
+      const nickname = nickEl ? nickEl.value.trim() : '';
+      const age = ageEl ? parseInt(ageEl.value.trim(), 10) : 0;
+
+      if (!nickname) {
+        alert('활동하실 별명(닉네임)을 입력해주세요.');
+        if (nickEl) nickEl.focus();
+        return;
       }
+      if (!age || isNaN(age) || age < 1 || age > 120) {
+        alert('올바른 나이를 숫자로 입력해주세요. (예: 28)');
+        if (ageEl) ageEl.focus();
+        return;
+      }
+
+      currentUser = {
+        nickname: nickname,
+        age: age,
+        isLoggedIn: true,
+        loginAt: new Date().toISOString()
+      };
+
+      try {
+        localStorage.setItem('tokeon_simple_user', JSON.stringify(currentUser));
+        fetch('/api/v1/auth/register-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nickname: nickname, age: age })
+        }).catch(err => console.warn('Member folder registration error:', err));
+      } catch (err) {}
+
+      isVipUser = true;
+      updateVipDisplay();
+      renderAuthUI();
+      alert(`🎉 [${nickname}]님 (${age}세) 환영합니다!\n로그인이 완료되어 모든 분석 화면이 정상 잠금 해제되었습니다.`);
+    }
+
+    function handleLogout() {
+      currentUser = null;
+      try {
+        localStorage.removeItem('tokeon_simple_user');
+      } catch (e) {}
+      document.documentElement.classList.add('auth-locked');
+      renderAuthUI();
+      alert('로그아웃되었습니다. 화면이 잠금 처리되었습니다.');
     }
 
     function renderAuthUI() {
+      const lockOverlay = document.getElementById('loginLockOverlay');
+      const mainWrapper = document.getElementById('mainAppWrapper');
       const navContainer = document.getElementById('navAuthContainer');
       const subDisplay = document.getElementById('subBarAuthDisplay');
       const chatAuthorEl = document.getElementById('chatAuthorInput');
 
       if (currentUser && currentUser.nickname) {
-        // Logged In State
+        // Logged In State: Unlock screen & remove blur
+        document.documentElement.classList.remove('auth-locked');
+        if (lockOverlay) lockOverlay.style.display = 'none';
+        if (mainWrapper) {
+          mainWrapper.style.filter = 'none';
+          mainWrapper.style.opacity = '1';
+          mainWrapper.style.pointerEvents = 'auto';
+          mainWrapper.style.userSelect = 'auto';
+        }
         if (navContainer) {
           navContainer.innerHTML = `
-            <div class="d-flex align-items-center gap-1.5 p-1 px-2 rounded-2" style="background: rgba(14, 165, 233, 0.18); border: 1px solid rgba(14, 165, 233, 0.5);">
-              <span class="badge bg-info text-dark fw-bold" style="font-size: 0.70rem;">접속중</span>
-              <span class="text-white fw-bold" style="font-size: 0.80rem;">${currentUser.nickname}</span>
-              <span class="text-info small fw-bold" style="font-size: 0.72rem;">(${currentUser.age}세)</span>
-              <button class="btn btn-xs btn-outline-secondary py-0 px-1.5 ms-1 text-white" onclick="handleLogout()" style="font-size: 0.68rem;" title="로그아웃">로그아웃</button>
+            <div class="btn-group btn-group-sm" role="group" id="viewModeToggleGroup" style="border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 8px; overflow: hidden;">
+              <button type="button" class="btn ${currentViewMode === 'pc' ? 'btn-info text-dark' : 'btn-dark text-light'} fw-bold px-2 py-1" id="btnModePC" onclick="setViewMode('pc')" title="PC 최적화 대화면 4분할 뷰">
+                <i class="bi bi-display me-1"></i><span class="d-none d-sm-inline">PC</span>버전
+              </button>
+              <button type="button" class="btn ${currentViewMode === 'mobile' ? 'btn-warning text-dark' : 'btn-dark text-light'} fw-bold px-2 py-1" id="btnModeMobile" onclick="setViewMode('mobile')" title="스마트폰 모바일 최적화 뷰">
+                <i class="bi bi-phone me-1"></i><span class="d-none d-sm-inline">핸드폰</span>앱
+              </button>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary text-light fw-bold px-2 py-1" onclick="openMembersModal()" title="실제 가입한 별명·나이 인원수 목록 확인" style="border-radius: 8px; font-size: 0.75rem; border-color: rgba(255, 255, 255, 0.2);">
+              <i class="bi bi-people-fill text-warning"></i><span class="d-none d-sm-inline ms-1">회원</span>
+            </button>
+            <div class="d-flex align-items-center bg-dark border border-secondary px-2 py-1 rounded-2">
+              <i class="bi bi-person-circle text-info me-1"></i>
+              <span class="text-white fw-bold" style="font-size: 0.78rem;">${currentUser.nickname}</span>
+              <span class="text-info small fw-bold ms-1 d-none d-sm-inline" style="font-size: 0.70rem;">(${currentUser.age}세)</span>
+              <button class="btn btn-xs btn-danger py-0 px-1.5 ms-1.5 text-white fw-bold" onclick="handleLogout()" style="font-size: 0.68rem;" title="로그아웃 시 화면이 즉시 잠깁니다">로그아웃</button>
             </div>
           `;
         }
@@ -1806,21 +2069,35 @@
           chatAuthorEl.title = "간편 로그인된 별명입니다.";
         }
       } else {
-        // Logged Out State
+        // NOT Logged In: Strictly lock and blur screen so user CANNOT view without login
+        document.documentElement.classList.add('auth-locked');
+        if (lockOverlay) lockOverlay.style.display = 'flex';
+        if (mainWrapper) {
+          mainWrapper.style.filter = 'blur(16px)';
+          mainWrapper.style.opacity = '0.12';
+          mainWrapper.style.pointerEvents = 'none';
+          mainWrapper.style.userSelect = 'none';
+        }
         if (navContainer) {
           navContainer.innerHTML = `
-            <button class="btn btn-sm btn-warning text-dark fw-bold px-2.5 py-1" onclick="openLoginModal()" style="border-radius: 6px; box-shadow: 0 0 10px rgba(245, 158, 11, 0.45); font-size: 0.78rem;">
-              <i class="bi bi-box-arrow-in-right me-1"></i>간편 로그인 (별명·나이)
+            <div class="btn-group btn-group-sm me-1" role="group" id="viewModeToggleGroup" style="border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 8px; overflow: hidden;">
+              <button type="button" class="btn ${currentViewMode === 'pc' ? 'btn-info text-dark' : 'btn-dark text-light'} fw-bold px-2 py-1" id="btnModePC" onclick="setViewMode('pc')" style="font-size: 0.72rem;">
+                <i class="bi bi-display me-1"></i>PC
+              </button>
+              <button type="button" class="btn ${currentViewMode === 'mobile' ? 'btn-warning text-dark' : 'btn-dark text-light'} fw-bold px-2 py-1" id="btnModeMobile" onclick="setViewMode('mobile')" style="font-size: 0.72rem;">
+                <i class="bi bi-phone me-1"></i>앱
+              </button>
+            </div>
+            <button class="btn btn-sm btn-warning text-dark fw-bold px-2.5 py-1" onclick="openLoginModal()" style="border-radius: 8px; box-shadow: 0 0 12px rgba(245, 158, 11, 0.45); font-size: 0.78rem;">
+              <i class="bi bi-box-arrow-in-right me-1"></i>로그인
             </button>
           `;
         }
-        if (subDisplay) {
-          subDisplay.innerHTML = '';
-        }
+        if (subDisplay) subDisplay.innerHTML = '';
         if (chatAuthorEl) {
           chatAuthorEl.value = '';
           chatAuthorEl.readOnly = false;
-          chatAuthorEl.placeholder = '별명 (또는 간편로그인)';
+          chatAuthorEl.placeholder = '로그인 후 이용 가능';
         }
       }
     }
@@ -2056,14 +2333,14 @@
     async function loadLiveMatches() {
       const container = document.getElementById('stripContainer');
       try {
-        const resp = await fetch('/api/v1/matches?order=asc&limit=10000');
+        const resp = await fetch('/api/v1/matches?order=asc&limit=3000');
         if (!resp.ok) throw new Error('Failed to load matches');
         allMatches = await resp.json();
 
         renderMatchStrip('ALL');
       } catch (e) {
         console.error('Match strip error:', e);
-        if (container) container.innerHTML = '<div class="text-muted p-3">실제 경기 스코어보드를 관리자 콘솔에서 조회할 수 있습니다.</div>';
+        if (container) container.innerHTML = '<div class="text-muted p-3">실제 경기 스코어보드를 불러오는 중입니다.</div>';
       }
     }
 
@@ -2270,7 +2547,317 @@
       }
     }
 
-    
+    function buildH2HAndRecentHtml(m, matchup) {
+      if (!matchup) return '';
+
+      const h2h = matchup.h2h || { home_wins: 0, away_wins: 0, draws: 0, total: 0 };
+      const h2hMatches = matchup.h2h_matches || [];
+      const homePitching = matchup.home_pitching_recent_3 || { games: [], total_bullpen_np_3g: 0, fatigue_level: '양호' };
+      const awayPitching = matchup.away_pitching_recent_3 || { games: [], total_bullpen_np_3g: 0, fatigue_level: '양호' };
+      const homeRecent = matchup.home_recent_matches || [];
+      const awayRecent = matchup.away_recent_matches || [];
+
+      // 0. Starting Pitchers 1:1 Matchup & Recent 3 Starts (Baseball Only)
+      let startingPitchersHtml = '';
+      const isBaseball = (m.sport_code || (matchup && matchup.sport_code) || '').toUpperCase() === 'BASEBALL' || !!(matchup && matchup.starting_pitchers);
+      if (isBaseball && matchup.starting_pitchers) {
+        const sp = matchup.starting_pitchers;
+        const hSt = sp.home || {};
+        const aSt = sp.away || {};
+        const hSum = hSt.summary || {};
+        const aSum = aSt.summary || {};
+        const hStarts = hSt.recent_3_starts || [];
+        const aStarts = aSt.recent_3_starts || [];
+
+        const renderPitcherCard = (pInfo, sum, starts, teamName, isHome) => {
+          const teamColor = isHome ? '#00F0FF' : '#FFB703';
+          const sideLabel = isHome ? '앞 [홈팀]' : '뒤 [원정팀]';
+          const isConf = !!pInfo.is_confirmed;
+          const confBadge = isConf
+            ? `<span class="badge" style="background: rgba(16,185,129,0.25); color: #10B981; border: 1px solid #10B981; box-shadow: 0 0 8px rgba(16,185,129,0.4);"><i class="bi bi-check-circle-fill me-1"></i>선발 확정</span>`
+            : `<span class="badge" style="background: rgba(245,158,11,0.25); color: #F59E0B; border: 1px solid #F59E0B;"><i class="bi bi-hourglass-split me-1"></i>선발 예고 (예상)</span>`;
+
+          const startsListHtml = starts.map((s, idx) => {
+            const isWin = s.result && s.result.includes('(W)');
+            const isLoss = s.result && s.result.includes('(L)');
+            const resColor = isWin ? '#10b981' : (isLoss ? '#ef4444' : '#cbd5e1');
+            return `
+              <div class="p-2 rounded mb-2" style="background: rgba(15,23,42,0.65); border: 1px solid rgba(255,255,255,0.08);">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="badge bg-dark text-info" style="font-size: 0.70rem;">
+                    #${idx+1} ${s.date} vs ${s.opponent} (${s.venue})
+                  </span>
+                  <span class="fw-bold" style="font-size: 0.74rem; color: ${resColor};">
+                    ${s.result} [${s.team_score}:${s.opp_score}]
+                  </span>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap" style="font-size: 0.76rem;">
+                  <div><span class="text-warning fw-bold">이닝:</span> <span class="badge bg-dark border text-warning">${s.ip}이닝</span></div>
+                  <div><span class="text-info fw-bold">투구수:</span> <span class="badge bg-primary">${s.np}구</span> <span class="text-muted" style="font-size: 0.70rem;">(S ${s.strikes} / B ${s.balls})</span></div>
+                  <div class="text-light ms-auto"><span class="text-danger fw-bold">${s.er}자책</span> · <span>${s.so}K</span> · <span>${s.bb}사사구</span> · <span>${s.h}피안타</span></div>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          return `
+            <div class="col-md-6 col-12">
+              <div class="p-2 rounded-3 h-100" style="background: rgba(15,23,42,0.85); border: 1px solid ${teamColor}40;">
+                <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: rgba(255,255,255,0.1) !important;">
+                  <div>
+                    <span class="fw-bold" style="color: ${teamColor}; font-size: 0.84rem;">
+                      ${isHome ? '🏠' : '✈️'} ${sideLabel} ${teamName}
+                    </span>
+                    <div class="fw-bold text-white fs-6 mt-1">
+                      ${pInfo.name} <span class="text-muted small">(${pInfo.throws || '우완'})</span>
+                    </div>
+                  </div>
+                  <div>
+                    ${confBadge}
+                  </div>
+                </div>
+                <div class="p-1 px-2 rounded mb-2 d-flex flex-wrap justify-content-between align-items-center" style="background: rgba(0,0,0,0.35); font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.06);">
+                  <span>3G 평균: <b class="text-warning">${sum.avg_ip || '-'}이닝</b> | <b class="text-info">${sum.avg_np || '-'}구</b> (총 ${sum.total_np || 0}구)</span>
+                  <span>ERA <b class="text-danger">${sum.era_3g || '-'}</b> | ${sum.record || ''} | <b class="text-light">${sum.total_so || 0}K / ${sum.total_bb || 0}사사구</b></span>
+                </div>
+                ${startsListHtml}
+              </div>
+            </div>
+          `;
+        };
+
+        startingPitchersHtml = `
+          <div class="p-3 mb-3 rounded-3" style="background: rgba(11, 17, 32, 0.94); border: 1px solid rgba(0, 240, 255, 0.45); box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+              <div>
+                <span class="fw-bold text-white" style="font-size: 0.90rem;">
+                  <i class="bi bi-person-badge-fill text-warning me-1"></i>[⚾ 선발투수 1:1 맞대결 & 최근 3경기 등판 상세 분석]
+                </span>
+                <span class="badge bg-dark border text-info ms-1" style="font-size: 0.72rem;">
+                  앞: [홈] vs 뒤: [원정]
+                </span>
+              </div>
+              <div>
+                <button class="btn btn-sm btn-outline-warning py-0 px-2" style="font-size: 0.72rem;" onclick="openStarterModal(${m.id}, '${m.home_team_name}', '${m.away_team_name}', '${hSt.name}', '${aSt.name}', ${hSt.is_confirmed}, ${aSt.is_confirmed})">
+                  <i class="bi bi-pencil-square me-1"></i>선발 확정/변경
+                </button>
+              </div>
+            </div>
+            <div class="row g-2">
+              ${renderPitcherCard(hSt, hSum, hStarts, m.home_team_name, true)}
+              ${renderPitcherCard(aSt, aSum, aStarts, m.away_team_name, false)}
+            </div>
+          </div>
+        `;
+      }
+
+      // 1. Head to Head (앞: 홈팀 / 뒤: 원정팀 기준)
+      let h2hListHtml = '';
+      if (h2hMatches.length === 0) {
+        h2hListHtml = '<div class="text-center text-muted py-2 small">최근 5개년 내 공식 맞대결 기록이 없습니다.</div>';
+      } else {
+        h2hListHtml = h2hMatches.map((hm, idx) => {
+          const isHomeWin = hm.home_score > hm.away_score;
+          const isAwayWin = hm.away_score > hm.home_score;
+          const isDraw = hm.home_score === hm.away_score;
+          
+          let resBadge = '';
+          if (isHomeWin) resBadge = '<span class="badge" style="background:rgba(16,185,129,0.2); color:#10b981; border:1px solid rgba(16,185,129,0.4);">홈 승</span>';
+          else if (isDraw) resBadge = '<span class="badge bg-secondary">무승부</span>';
+          else resBadge = '<span class="badge" style="background:rgba(239,68,68,0.2); color:#ef4444; border:1px solid rgba(239,68,68,0.4);">홈 패</span>';
+
+          return `
+            <div class="d-flex justify-content-between align-items-center py-1 px-2 rounded mb-1" style="background: rgba(255,255,255,0.04); font-size: 0.79rem; border: 1px solid rgba(255,255,255,0.06);">
+              <span class="text-muted" style="width: 80px; font-size: 0.72rem;">#${idx+1} ${hm.date}</span>
+              <span class="text-end fw-bold text-truncate" style="flex: 1; color: #00F0FF;" title="홈팀: ${m.home_team_name}">
+                ${m.home_team_name}
+              </span>
+              <span class="badge bg-dark border mx-2 fw-bold" style="font-size: 0.84rem; min-width: 58px; color: ${isHomeWin ? '#00F0FF' : (isAwayWin ? '#FFB703' : '#cbd5e1')};">
+                ${hm.home_score} : ${hm.away_score}
+              </span>
+              <span class="text-start fw-bold text-truncate" style="flex: 1; color: #FFB703;" title="원정팀: ${m.away_team_name}">
+                ${m.away_team_name}
+              </span>
+              <div class="text-end" style="width: 82px;">
+                ${resBadge}
+                <span class="text-muted ms-1" style="font-size: 0.68rem;">(${hm.venue})</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // 2. Recent Results (야구: 선발/불펜 투구수 3경기 vs 축구/기타: 10경기)
+      let recentResultsHtml = '';
+      if (isBaseball) {
+        const renderPitchingCard = (teamName, pData, isHome) => {
+          const teamColor = isHome ? '#00F0FF' : '#FFB703';
+          const sideLabel = isHome ? '앞 [홈팀]' : '뒤 [원정팀]';
+          const games = pData.games || [];
+          const totalBp = pData.total_bullpen_np_3g || 0;
+          const fatigue = pData.fatigue_level || '양호';
+          const isFatigueWarn = totalBp >= 180;
+
+          let gHtml = '';
+          if (games.length === 0) {
+            gHtml = '<div class="text-muted small py-2">최근 경기 투구수 기록이 없습니다.</div>';
+          } else {
+            gHtml = games.map((g, gIdx) => {
+              const st = g.starter || {};
+              const bpList = (g.bullpen_pitchers || []).map(p => `${p.name} ${p.np}구`).join(', ');
+              const isWin = g.result === 'W';
+              return `
+                <div class="p-2 rounded mb-2" style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08);">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="badge bg-dark text-info" style="font-size: 0.70rem;">
+                      #${gIdx+1} ${g.date} (${g.venue})
+                    </span>
+                    <span class="fw-bold" style="font-size: 0.78rem; color: ${isWin ? '#10b981' : '#ef4444'};">
+                      vs ${g.opponent} [${g.result} ${g.team_score}:${g.opp_score}]
+                    </span>
+                  </div>
+                  <div class="d-flex align-items-center gap-1 mb-1 flex-wrap" style="font-size: 0.76rem;">
+                    <span class="text-warning fw-bold">⚾ 선발:</span>
+                    <span class="text-white fw-bold">${st.name || '선발투수'}</span>
+                    <span class="badge bg-primary py-0 px-1 text-white">${st.np || 0}구</span>
+                    <span class="text-light">(${st.ip || '-'}이닝 ${st.er || 0}자책 ${st.so || 0}K ${st.bb || 0}사사구)</span>
+                  </div>
+                  <div style="font-size: 0.74rem;">
+                    <div class="d-flex align-items-center gap-1">
+                      <span class="text-danger fw-bold">🛡️ 불펜(${g.bullpen_count}명):</span>
+                      <span class="badge bg-danger py-0 px-1 text-white">불펜총 ${g.bullpen_np || 0}구</span>
+                    </div>
+                    <div class="text-muted ps-1 mt-1" style="font-size: 0.70rem; line-height: 1.3;">
+                      ${bpList ? '등판: ' + bpList : '불펜 등판 없음 (완투)'}
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+
+          return `
+            <div class="col-md-6 col-12">
+              <div class="p-2 rounded-3 h-100" style="background: rgba(15,23,42,0.85); border: 1px solid ${teamColor}40;">
+                <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: rgba(255,255,255,0.1) !important;">
+                  <span class="fw-bold" style="color: ${teamColor}; font-size: 0.84rem;">
+                    ${isHome ? '🏠' : '✈️'} ${sideLabel} ${teamName}
+                  </span>
+                  <span class="badge" style="font-size: 0.70rem; background: ${isFatigueWarn ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'}; color: ${isFatigueWarn ? '#ef4444' : '#10b981'}; border: 1px solid ${isFatigueWarn ? '#ef4444' : '#10b981'}60;">
+                    3경기 불펜총 ${totalBp}구 (${fatigue})
+                  </span>
+                </div>
+                ${gHtml}
+              </div>
+            </div>
+          `;
+        };
+
+        recentResultsHtml = `
+          <div class="p-3 mb-3 rounded-3" style="background: rgba(11,17,32,0.9); border: 1px solid rgba(255, 183, 3, 0.35);">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+              <span class="fw-bold text-white" style="font-size: 0.88rem;">
+                <i class="bi bi-fire text-danger me-1"></i>[야구 정밀 투수진 분석: 최근 3경기 선발 & 불펜 투구수]
+              </span>
+              <span class="badge bg-dark border border-warning text-warning" style="font-size: 0.72rem;">
+                앞: [홈팀] vs 뒤: [원정팀]
+              </span>
+            </div>
+            <div class="row g-2">
+              ${renderPitchingCard(m.home_team_name, homePitching, true)}
+              ${renderPitchingCard(m.away_team_name, awayPitching, false)}
+            </div>
+          </div>
+        `;
+      } else {
+        const renderSoccerRecentCard = (teamName, matches, isHome) => {
+          const teamColor = isHome ? '#00F0FF' : '#FFB703';
+          const sideLabel = isHome ? '앞 [홈팀]' : '뒤 [원정팀]';
+          let listHtml = '';
+          if (matches.length === 0) {
+            listHtml = '<div class="text-muted small py-2">최근 경기 기록이 없습니다.</div>';
+          } else {
+            listHtml = matches.map((g, gIdx) => {
+              let badge = '';
+              if (g.result === 'W') badge = '<span class="badge bg-success bg-opacity-75 py-0 px-1">승</span>';
+              else if (g.result === 'D') badge = '<span class="badge bg-secondary py-0 px-1">무</span>';
+              else badge = '<span class="badge bg-danger bg-opacity-75 py-0 px-1">패</span>';
+              return `
+                <div class="d-flex justify-content-between align-items-center py-1 px-2 rounded mb-1" style="background: rgba(255,255,255,0.03); font-size: 0.76rem;">
+                  <span class="text-muted" style="width: 72px;">#${gIdx+1} ${g.date}</span>
+                  <span class="badge bg-dark border text-info" style="font-size: 0.65rem;">${g.is_home ? '홈' : '원정'}</span>
+                  <span class="text-truncate px-1 fw-bold text-white" style="flex: 1;">vs ${g.opponent}</span>
+                  <span class="fw-bold mx-1" style="color: ${g.result === 'W' ? '#10b981' : (g.result === 'D' ? '#cbd5e1' : '#ef4444')};">
+                    ${g.team_score} : ${g.opp_score}
+                  </span>
+                  ${badge}
+                </div>
+              `;
+            }).join('');
+          }
+
+          return `
+            <div class="col-md-6 col-12">
+              <div class="p-2 rounded-3 h-100" style="background: rgba(15,23,42,0.85); border: 1px solid ${teamColor}40;">
+                <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: rgba(255,255,255,0.1) !important;">
+                  <span class="fw-bold" style="color: ${teamColor}; font-size: 0.84rem;">
+                    ${isHome ? '🏠' : '✈️'} ${sideLabel} ${teamName} 최근 10경기
+                  </span>
+                  <span class="text-muted small">최신순</span>
+                </div>
+                ${listHtml}
+              </div>
+            </div>
+          `;
+        };
+
+        recentResultsHtml = `
+          <div class="p-3 mb-3 rounded-3" style="background: rgba(11,17,32,0.9); border: 1px solid rgba(56, 189, 248, 0.35);">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+              <span class="fw-bold text-white" style="font-size: 0.88rem;">
+                <i class="bi bi-clock-history text-info me-1"></i>[최근 공식 10경기 결과 (현재시간 최신순)]
+              </span>
+              <span class="badge bg-dark border border-info text-info" style="font-size: 0.72rem;">
+                앞: [홈팀] vs 뒤: [원정팀]
+              </span>
+            </div>
+            <div class="row g-2">
+              ${renderSoccerRecentCard(m.home_team_name, homeRecent, true)}
+              ${renderSoccerRecentCard(m.away_team_name, awayRecent, false)}
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <!-- 0. Starting Pitchers (앞: 홈 / 뒤: 원정) -->
+        ${startingPitchersHtml}
+
+        <!-- 1. Head to Head (앞: 홈팀 / 뒤: 원정팀 기준) -->
+        <div class="p-3 mb-3 rounded-3" style="background: rgba(15, 23, 42, 0.88); border: 1px solid rgba(255, 183, 3, 0.4);">
+          <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+            <div>
+              <span class="fw-bold text-white" style="font-size: 0.88rem;">
+                <i class="bi bi-arrow-left-right text-warning me-1"></i>[맞대결 상대전적 (Head-to-Head)]
+              </span>
+              <span class="badge bg-dark text-info ms-1" style="font-size: 0.72rem;">
+                앞: [홈] ${m.home_team_name} vs 뒤: [원정] ${m.away_team_name}
+              </span>
+            </div>
+            <span class="badge" style="background: rgba(255, 183, 3, 0.15); color: #FFB703; border: 1px solid rgba(255, 183, 3, 0.4); font-size: 0.76rem;">
+              총 ${h2h.total}전: [홈] ${h2h.home_wins}승 ${h2h.draws ? h2h.draws + '무 ' : ''}${h2h.away_wins}패 [원정]
+            </span>
+          </div>
+          <div class="d-flex flex-column gap-1">
+            ${h2hListHtml}
+          </div>
+        </div>
+
+        <!-- 2. Recent Results (앞: 홈팀 / 뒤: 원정팀) -->
+        ${recentResultsHtml}
+      `;
+    }
+
     function renderModalComparison(m, tStats, playerStats, matchup) {
       const container = document.getElementById('matchModalStatsComparison');
       if (!container) return;
@@ -2380,46 +2967,68 @@
           </div>
         `;
       }
+
+      container.innerHTML += buildH2HAndRecentHtml(m, matchup);
     }
 
-    // 3. API Key Modal Handling
-    function openApiKeyModal() {
-      document.getElementById('keyFormStep').style.display = 'block';
-      document.getElementById('keyResultStep').style.display = 'none';
-      const modal = new bootstrap.Modal(document.getElementById('apiKeyModal'));
+    // 2-1. Starting Pitcher Modal Handling
+    function openStarterModal(matchId, homeTeam, awayTeam, homeCurrent, awayCurrent, homeConfirmed, awayConfirmed) {
+      document.getElementById('starterMatchId').value = matchId;
+      document.getElementById('starterHomeTeamLabel').innerText = homeTeam || '홈팀';
+      document.getElementById('starterAwayTeamLabel').innerText = awayTeam || '원정팀';
+      document.getElementById('homeStarterInput').value = homeCurrent || '';
+      document.getElementById('awayStarterInput').value = awayCurrent || '';
+      document.getElementById('homeStarterConfirmed').checked = (homeConfirmed === true || homeConfirmed === 'true');
+      document.getElementById('awayStarterConfirmed').checked = (awayConfirmed === true || awayConfirmed === 'true');
+
+      const modalEl = document.getElementById('starterModal');
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
       modal.show();
     }
 
-    function selectPlan(planName) {
-      document.getElementById('planSelect').value = planName;
-      openApiKeyModal();
-    }
+    async function saveStarterModal() {
+      const matchId = document.getElementById('starterMatchId').value;
+      const homeName = document.getElementById('homeStarterInput').value.trim();
+      const awayName = document.getElementById('awayStarterInput').value.trim();
+      const homeConfirmed = document.getElementById('homeStarterConfirmed').checked;
+      const awayConfirmed = document.getElementById('awayStarterConfirmed').checked;
 
-    function generateApiKey() {
-      const email = document.getElementById('applicantEmail').value.trim();
-      const name = document.getElementById('applicantName').value.trim();
-      const plan = document.getElementById('planSelect').value;
-
-      if (!email || !name) {
-        alert('신청자명과 이메일을 입력해 주세요.');
+      if (!homeName || !awayName) {
+        alert('홈팀과 원정팀 선발투수명을 모두 입력해 주세요.');
         return;
       }
 
-      const randomHex = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-        .map(b => b.toString(16).padStart(2, '0')).join('');
-      const fakeKey = `tokeon_live_${plan.toLowerCase()}_${randomHex.slice(0, 24)}`;
+      try {
+        const resp = await fetch(`/api/v1/matches/${matchId}/starters`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            home: { name: homeName, confirmed: homeConfirmed },
+            away: { name: awayName, confirmed: awayConfirmed }
+          })
+        });
 
-      document.getElementById('generatedKeyBox').innerText = fakeKey;
-      document.getElementById('keyFormStep').style.display = 'none';
-      document.getElementById('keyResultStep').style.display = 'block';
+        if (resp.ok) {
+          const modalEl = document.getElementById('starterModal');
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+
+          // Refresh center prediction detail and match list
+          if (typeof selectedMatch !== 'undefined' && selectedMatch && selectedMatch.id == matchId) {
+            renderPredDetail(selectedMatch);
+          }
+          if (typeof loadOfficialMatches === 'function') {
+            loadOfficialMatches();
+          }
+        } else {
+          alert('선발투수 정보 저장에 실패했습니다.');
+        }
+      } catch (e) {
+        console.error(e);
+        alert('저장 중 오류가 발생했습니다.');
+      }
     }
 
-    function copyApiKey() {
-      const key = document.getElementById('generatedKeyBox').innerText;
-      navigator.clipboard.writeText(key).then(() => {
-        alert('tokeon.kr API 키가 클립보드에 복사되었습니다!');
-      });
-    }
 
 
     // ----------------------------------------------------
@@ -2656,6 +3265,24 @@
       }
     }
 
+    let currentLeagueFilter = 'ALL';
+
+    function filterLeague(lgKey) {
+      currentLeagueFilter = lgKey;
+      ['ALL', 'NED', 'KBO', 'MLB', 'NPB', 'EPL', 'LALIGA', 'SERIE', 'BUNDES', 'LIGUE1'].forEach(k => {
+        const btn = document.getElementById('lgPill' + k);
+        if (btn) {
+          if (k === lgKey) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
+      renderPredMatches();
+      const list = getFilteredPredMatches();
+      if (list.length > 0 && currentCenterMode === 'DETAIL') {
+        selectPredMatch(list[0].id);
+      }
+    }
+
     function filterPredSport(sKey) {
       currentPredSport = sKey;
       ['ALL', 'WDL', 'W1L', 'W5L'].forEach(k => {
@@ -2723,9 +3350,32 @@
       if (currentPredSport === 'W1L') {
         list = list.filter(m => m.sport_code === 'BASEBALL' || (m.league_name && (m.league_name.includes('KBO') || m.league_name.includes('MLB') || m.league_name.includes('NPB'))));
       } else if (currentPredSport === 'WDL') {
-        list = list.filter(m => m.sport_code === 'SOCCER' || (m.league_name && (m.league_name.includes('EPL') || m.league_name.includes('LALIGA') || m.league_name.includes('K리그') || m.league_name.includes('J리그'))));
+        list = list.filter(m => m.sport_code === 'SOCCER');
       } else if (currentPredSport === 'W5L') {
         list = list.filter(m => m.sport_code === 'BASKETBALL' || (m.league_name && m.league_name.includes('NBA')));
+      }
+
+      // League Quick Filter (네덜란드 Eredivisie, KBO, MLB, NPB, EPL 등)
+      if (currentLeagueFilter && currentLeagueFilter !== 'ALL') {
+        if (currentLeagueFilter === 'NED') {
+          list = list.filter(m => m.league_name && (m.league_name.includes('Eredivisie') || m.league_name.includes('네덜란드')));
+        } else if (currentLeagueFilter === 'KBO') {
+          list = list.filter(m => m.league_name && m.league_name.includes('KBO'));
+        } else if (currentLeagueFilter === 'MLB') {
+          list = list.filter(m => m.league_name && m.league_name.includes('MLB'));
+        } else if (currentLeagueFilter === 'NPB') {
+          list = list.filter(m => m.league_name && m.league_name.includes('NPB'));
+        } else if (currentLeagueFilter === 'EPL') {
+          list = list.filter(m => m.league_name && m.league_name.includes('EPL'));
+        } else if (currentLeagueFilter === 'LALIGA') {
+          list = list.filter(m => m.league_name && (m.league_name.includes('La Liga') || m.league_name.includes('라리가')));
+        } else if (currentLeagueFilter === 'SERIE') {
+          list = list.filter(m => m.league_name && (m.league_name.includes('Serie A') || m.league_name.includes('세리에')));
+        } else if (currentLeagueFilter === 'BUNDES') {
+          list = list.filter(m => m.league_name && (m.league_name.includes('Bundesliga') || m.league_name.includes('분데스')));
+        } else if (currentLeagueFilter === 'LIGUE1') {
+          list = list.filter(m => m.league_name && (m.league_name.includes('Ligue 1') || m.league_name.includes('리그 1')));
+        }
       }
 
       if (currentPredConfidence === '80') {
@@ -2818,14 +3468,23 @@
         }
 
         let leagueTag = m.league_name ? m.league_name.split(' ')[0] : m.sport_code;
+        let leagueBadgeClass = 'badge bg-dark text-info';
         if (m.league_name && m.league_name.includes('NPB')) leagueTag = 'NPB(일야)';
         else if (m.league_name && m.league_name.includes('KBO')) leagueTag = 'KBO(한야)';
         else if (m.league_name && m.league_name.includes('MLB')) leagueTag = 'MLB(메이저)';
+        else if (m.league_name && (m.league_name.includes('Eredivisie') || m.league_name.includes('네덜란드'))) {
+          leagueTag = '🇳🇱 네덜란드 (에레디비시)';
+          leagueBadgeClass = 'badge text-dark fw-bold bg-warning';
+        } else if (m.league_name && m.league_name.includes('EPL')) leagueTag = 'EPL(프리미어)';
+        else if (m.league_name && m.league_name.includes('La Liga')) leagueTag = '라리가';
+        else if (m.league_name && m.league_name.includes('Serie A')) leagueTag = '세리에A';
+        else if (m.league_name && m.league_name.includes('Bundesliga')) leagueTag = '분데스';
+        else if (m.league_name && m.league_name.includes('Ligue 1')) leagueTag = '리그1';
 
         html += `
-          <div class="pred-card-compact ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id})">
+          <div class="pred-card-compact ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="badge bg-dark text-info" style="font-size: 0.70rem; border: 1px solid rgba(56, 189, 248, 0.2);">
+              <span class="${leagueBadgeClass}" style="font-size: 0.70rem; border: 1px solid rgba(56, 189, 248, 0.2);">
                 ${sportIcon} ${leagueTag}
               </span>
               <span class="badge" style="font-size: 0.72rem; font-weight: 700; color: #f8fafc; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3);">
@@ -2933,7 +3592,7 @@
       }
     }
 
-    function selectPredMatch(matchId) {
+    function selectPredMatch(matchId, userClicked = false) {
       selectedPredMatchId = matchId;
       currentCenterMode = 'DETAIL';
       updateCenterTabs();
@@ -2943,6 +3602,10 @@
 
       renderPredMatches();
       renderPredDetail(target);
+
+      if (currentViewMode === 'mobile' && userClicked) {
+        switchMobileTab('center');
+      }
     }
 
     function switchCenterView(mode) {
@@ -4110,6 +4773,7 @@
             ${makeRealBar('롱볼 성공률 (Longball Accuracy %)', `${homeSplit.longball_acc || 58.0}%`, `${awaySplit.longball_acc || 52.0}%`, homeSplit.longball_acc || 58.0, awaySplit.longball_acc || 52.0)}
             ${makeRealBar('골득실 마진 (Goal Diff)', `${homeSplit.diff > 0 ? '+' : ''}${homeSplit.diff}골`, `${awaySplit.diff > 0 ? '+' : ''}${awaySplit.diff}골`, homeSplit.diff + 10, awaySplit.diff + 10)}
             ${makeRealBar('경기당 승점 (PPG)', `${homeSplit.ppg || 1.8}점`, `${awaySplit.ppg || 1.2}점`, homeSplit.ppg || 1.8, awaySplit.ppg || 1.2)}
+            ${makeRealBar('5개년 맞대결 상대전적 (Head-to-Head)', `${h2h.home_wins || 0}승`, `${h2h.away_wins || 0}승 (${h2h.draws || 0}무)`, (h2h.home_wins || 0) + 1, (h2h.away_wins || 0) + 1)}
           </div>
         `;
 
@@ -4337,6 +5001,9 @@
               ${drivers.map(d => `<div class="mb-1"><i class="bi bi-check2-circle text-warning me-1"></i>${d}</div>`).join('')}
             </div>
           </div>
+
+          <!-- Head-to-Head (앞: 홈 / 뒤: 원정) & Recent Matches / Pitching Analysis -->
+          ${buildH2HAndRecentHtml(m, matchup)}
 
           <!-- Official Inning/Period Scoreboard (If finished or in-progress) -->
           ${scoreboardHtml}
@@ -4602,6 +5269,8 @@
 
 
     document.addEventListener('DOMContentLoaded', async () => {
+      // 0. 간편 로그인 인증 확인 (미로그인 시 100% 화면 차단 및 "로그인하세요" 창 표시)
+      initAuthUser();
       // 1. 팬 채팅 및 웹소켓 즉시 실행 (로딩 지연 방지)
       initCommunityAndWebSocket();
       // 2. 뉴스 및 경기 목록 로딩
@@ -4612,7 +5281,6 @@
         console.error('Matches load error:', err);
       }
       initPredictionSection();
-    checkLiveApiStatus();
       initViewMode();
       startLiveUsersFluctuation();
       start4MinAiChatTimer();
@@ -4620,132 +5288,6 @@
 
   
     // ==========================================
-    // ⚡ 실시간 API-Sports / RapidAPI 연동 & 스코어 동기화 모달
-    // ==========================================
-    let liveApiModalObj = null;
-
-    async function checkLiveApiStatus() {
-      try {
-        const resp = await fetch('/api/v1/live/status');
-        if (!resp.ok) return;
-        const data = await resp.json();
-
-        const btnTxt = document.getElementById('navLiveApiTxt');
-        const btn = document.getElementById('navLiveApiBtn');
-        if (btnTxt && btn) {
-          if (data.is_configured) {
-            btnTxt.innerHTML = `<span class="pulse-dot me-1" style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981;"></span>${data.provider} 연동중`;
-            btn.className = 'btn btn-sm btn-outline-success fw-bold px-2.5 py-1.5';
-            btn.style.borderColor = 'rgba(16, 185, 129, 0.6)';
-          } else {
-            btnTxt.innerHTML = '🔑 실시간 API 연동';
-            btn.className = 'btn btn-sm btn-outline-warning fw-bold px-2.5 py-1.5';
-            btn.style.borderColor = 'rgba(245, 158, 11, 0.5)';
-          }
-        }
-        return data;
-      } catch (e) {
-        console.warn('Live API status check failed:', e);
-      }
-    }
-
-    async function openLiveApiModal() {
-      const modalEl = document.getElementById('liveApiModal');
-      if (!modalEl) return;
-      if (!liveApiModalObj) {
-        liveApiModalObj = new bootstrap.Modal(modalEl);
-      }
-
-      // Populate status
-      const data = await checkLiveApiStatus();
-      if (data) {
-        const statusText = document.getElementById('liveApiStatusText');
-        const statusSub = document.getElementById('liveApiStatusSub');
-        const statusBanner = document.getElementById('liveApiStatusBanner');
-
-        if (data.is_configured) {
-          statusText.innerHTML = `<span class="pulse-dot me-1" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"></span>현재 실시간 연동 상태: <span class="text-success fw-bold">${data.provider} 연동 완료</span> (키: ${data.masked_key})`;
-          statusSub.innerText = `위성 실시간 피드 활성화: 축구 5대리그·K리그, 야구 MLB·KBO·NPB (현재 LIVE ${data.active_live_count || 0}경기, 오늘 종료 ${data.today_finished_count || 0}경기)`;
-          statusBanner.style.background = 'rgba(16, 185, 129, 0.15)';
-          statusBanner.style.borderColor = 'rgba(16, 185, 129, 0.4)';
-        } else {
-          statusText.innerHTML = `<span class="pulse-dot me-1" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#f59e0b;"></span>현재 실시간 연동 상태: <span class="text-warning fw-bold">API 키 미등록 (기본 피드 동작중)</span>`;
-          statusSub.innerText = `유료 API Key를 등록하시면 실시간 스코어 및 경기 종료 결과가 초단위로 100% 자동 갱신됩니다.`;
-          statusBanner.style.background = 'rgba(245, 158, 11, 0.12)';
-          statusBanner.style.borderColor = 'rgba(245, 158, 11, 0.35)';
-        }
-
-        // Populate monitor list
-        const monitorEl = document.getElementById('liveMatchesMonitorList');
-        if (monitorEl) {
-          let mHtml = '';
-          if (data.live_matches && data.live_matches.length > 0) {
-            mHtml += '<div class="text-info small fw-bold mb-1"><i class="bi bi-broadcast me-1"></i>현재 실시간 LIVE 경기 (' + data.live_matches.length + '경기):</div>';
-            data.live_matches.forEach(m => {
-              mHtml += `
-                <div class="d-flex justify-content-between align-items-center p-2 mb-1 rounded" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3);">
-                  <div class="small text-white">
-                    <span class="badge bg-danger animate-pulse me-1" style="font-size:0.65rem;">LIVE</span>
-                    <strong>${m.home}</strong> vs <strong>${m.away}</strong>
-                  </div>
-                  <div class="fw-bold fs-6 text-white">${m.score}</div>
-                </div>
-              `;
-            });
-          } else {
-            mHtml += '<div class="text-muted small py-2 text-center">현재 진행중인 LIVE 경기가 없습니다. (다음 경기 대기중)</div>';
-          }
-          monitorEl.innerHTML = mHtml;
-        }
-      }
-
-      liveApiModalObj.show();
-    }
-
-    async function saveLiveApiKey() {
-      const inputEl = document.getElementById('liveApiKeyInput');
-      if (!inputEl) return;
-      const key = inputEl.value.trim();
-      if (!key || key.length < 5) {
-        alert('유효한 API Key를 입력해주세요.');
-        return;
-      }
-
-      const provEl = document.querySelector('input[name="liveApiProvider"]:checked');
-      const provider = provEl ? provEl.value : 'api_sports';
-
-      const btn = document.getElementById('saveKeyBtn');
-      if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>동기화 중...';
-      }
-
-      try {
-        const resp = await fetch('/api/v1/live/set-key', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: key, provider: provider })
-        });
-
-        const res = await resp.json();
-        if (resp.ok && res.status === 'SUCCESS') {
-          alert('🎉 API Key가 성공적으로 등록되었습니다!\n' + res.message);
-          inputEl.value = '';
-          await checkLiveApiStatus();
-          await silentLiveRefresh();
-          if (liveApiModalObj) liveApiModalObj.hide();
-        } else {
-          alert('⚠️ 등록 실패: ' + (res.detail || res.message || '알 수 없는 오류'));
-        }
-      } catch (e) {
-        alert('네트워크 오류: ' + e);
-      } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i>API 키 등록 및 즉시 반영';
-        }
-      }
-    }
 
     async function manualForceSyncLive() {
       try {
@@ -4753,7 +5295,6 @@
         const res = await resp.json();
         alert('⚡ 실시간 데이터 강제 동기화가 완료되었습니다!\n' + (res.message || ''));
         await silentLiveRefresh();
-        await openLiveApiModal();
       } catch (e) {
         alert('동기화 오류: ' + e);
       }
@@ -4762,62 +5303,75 @@
   
     
     // =============================================================
-    // 📱 모바일 4개 창 100% 꽉찬 가로 스와이프 컨트롤러
+    // 📱 모바일 전용 네이티브 앱 스타일 탭 매니저 (단일창 100% 핏 & 네이티브 세로 스크롤)
     // =============================================================
-    let currentMobilePanelIndex = 1; // Start on Panel 1 (Center: 14경기 토토)
-    let isSwipeListenerAttached = false;
+    let currentMobileTab = 'schedule'; // 'schedule', 'center', 'community', 'news'
 
-    function initMobileSwipeCarousel() {
-      const row = document.getElementById('dashboardRow');
-      if (!row || isSwipeListenerAttached) return;
-
-      isSwipeListenerAttached = true;
-      let isThrottled = false;
-
-      row.addEventListener('scroll', () => {
-        if (isThrottled) return;
-        isThrottled = true;
-        requestAnimationFrame(() => {
-          isThrottled = false;
-          if (currentViewMode !== 'mobile') return;
-          const w = row.clientWidth;
-          if (!w) return;
-          const scrollLeft = row.scrollLeft;
-          const activeIndex = Math.round(scrollLeft / w);
-          if (activeIndex !== currentMobilePanelIndex && activeIndex >= 0 && activeIndex <= 3) {
-            currentMobilePanelIndex = activeIndex;
-            highlightMobileTab(activeIndex);
-          }
-        });
-      }, { passive: true });
-    }
-
-    function scrollMobileToPanel(index) {
-      currentMobilePanelIndex = index;
-      const row = document.getElementById('dashboardRow');
-      if (row) {
-        const w = row.clientWidth;
-        row.scrollTo({ left: index * w, behavior: 'smooth' });
-        highlightMobileTab(index);
+    function initViewMode() {
+      const isMobileScreen = window.innerWidth <= 768;
+      const savedMode = localStorage.getItem('tokeon_view_mode');
+      if (isMobileScreen) {
+        setViewMode(savedMode === 'pc' ? 'pc' : 'mobile', false);
+      } else {
+        setViewMode(savedMode || 'pc', false);
       }
     }
 
-    function highlightMobileTab(index) {
-      const tabs = ['mobTabLeft', 'mobTabCenter', 'mobTabRight', 'mobTabNews'];
-      tabs.forEach((tId, idx) => {
-        const btn = document.getElementById(tId);
-        if (btn) {
-          if (idx === index) {
-            btn.style.background = 'linear-gradient(135deg, #00F0FF, #38bdf8)';
-            btn.style.color = '#000';
-            btn.style.boxShadow = '0 0 10px rgba(0,240,255,0.4)';
+    function switchMobileTab(tabKey) {
+      currentMobileTab = tabKey;
+      const p1 = document.getElementById('leftColSchedule');
+      const p2 = document.getElementById('centerColMain');
+      const p3 = document.getElementById('rightColCommunity');
+      const p4 = document.getElementById('newsColSidebar');
+      const retBtn = document.getElementById('mobileReturnToScheduleBtn');
+
+      const panels = {
+        schedule: p1,
+        center: p2,
+        community: p3,
+        news: p4
+      };
+
+      const tabs = {
+        schedule: 'mobTabSchedule',
+        center: 'mobTabCenter',
+        community: 'mobTabCommunity',
+        news: 'mobTabNews'
+      };
+
+      Object.keys(panels).forEach(k => {
+        const el = panels[k];
+        const btn = document.getElementById(tabs[k]);
+        if (el) {
+          if (k === tabKey) {
+            el.style.display = 'block';
+            el.style.width = '100%';
+            el.style.maxWidth = '100%';
+            el.style.flex = '0 0 100%';
           } else {
-            btn.style.background = 'transparent';
-            btn.style.color = '#f1f5f9';
-            btn.style.boxShadow = 'none';
+            el.style.display = 'none';
+          }
+        }
+        if (btn) {
+          if (k === tabKey) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
           }
         }
       });
+
+      if (retBtn) {
+        if (tabKey === 'center') retBtn.classList.remove('d-none');
+        else retBtn.classList.add('d-none');
+      }
+
+      // Smooth scroll to top of content
+      const sec = document.getElementById('prediction-section');
+      if (sec && currentViewMode === 'mobile') {
+        const y = sec.getBoundingClientRect().top + window.pageYOffset - 58;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+      }
     }
 
     function setViewMode(mode, save = true) {
@@ -4835,44 +5389,58 @@
       const p2 = document.getElementById('centerColMain');
       const p3 = document.getElementById('rightColCommunity');
       const p4 = document.getElementById('newsColSidebar');
+      const retBtn = document.getElementById('mobileReturnToScheduleBtn');
+
+      const isRealPhone = window.innerWidth <= 768;
 
       if (mode === 'mobile') {
         if (btnPC) btnPC.className = 'btn btn-dark fw-bold px-2.5 py-1 text-light';
-        if (btnMobile) btnMobile.className = 'btn btn-info fw-bold px-2.5 py-1 text-dark';
-        if (mobileTabBar) { mobileTabBar.classList.remove('d-none'); mobileTabBar.classList.add('d-flex'); }
+        if (btnMobile) btnMobile.className = 'btn btn-warning fw-bold px-2.5 py-1 text-dark';
+        if (mobileTabBar) {
+          mobileTabBar.classList.remove('d-none');
+          mobileTabBar.classList.add('d-flex');
+        }
 
         if (container) {
-          container.style.maxWidth = '500px';
-          container.style.width = '100%';
-          container.style.margin = '0 auto';
-          container.style.padding = '0 4px';
-          container.style.borderRadius = '20px';
-          container.style.border = '2px solid rgba(0, 240, 255, 0.4)';
-          container.style.boxShadow = '0 0 50px rgba(0, 240, 255, 0.25)';
-          container.style.background = '#0b1120';
+          if (!isRealPhone) {
+            // PC preview of smartphone: elegant centered device frame
+            container.style.maxWidth = '460px';
+            container.style.width = '100%';
+            container.style.margin = '0 auto';
+            container.style.padding = '0 4px';
+            container.style.borderRadius = '24px';
+            container.style.border = '2px solid rgba(0, 240, 255, 0.4)';
+            container.style.boxShadow = '0 0 50px rgba(0, 240, 255, 0.25)';
+            container.style.background = '#0b1120';
+          } else {
+            // Actual smartphone screen: 100% edge-to-edge
+            container.style.maxWidth = '100%';
+            container.style.width = '100%';
+            container.style.margin = '0 auto';
+            container.style.padding = '0 2px';
+            container.style.borderRadius = '0';
+            container.style.border = 'none';
+            container.style.boxShadow = 'none';
+            container.style.background = 'transparent';
+          }
         }
 
         if (row) {
-          row.classList.add('mobile-swipe-active');
+          row.classList.add('mobile-view-active');
         }
 
-        [p1, p2, p3, p4].forEach(p => {
-          if (p) {
-            p.style.display = 'block';
-          }
-        });
-
-        initMobileSwipeCarousel();
-
-        // Smoothly glide to Center Window (14경기 토토)
-        setTimeout(() => {
-          scrollMobileToPanel(1);
-        }, 150);
+        switchMobileTab(currentMobileTab || 'schedule');
       } else {
         // PC Mode (Full-width, 1-screen ultra cockpit)
         if (btnPC) btnPC.className = 'btn btn-info fw-bold px-2.5 py-1 text-dark';
         if (btnMobile) btnMobile.className = 'btn btn-dark fw-bold px-2.5 py-1 text-light';
-        if (mobileTabBar) { mobileTabBar.classList.remove('d-flex'); mobileTabBar.classList.add('d-none'); }
+        if (mobileTabBar) {
+          mobileTabBar.classList.remove('d-flex');
+          mobileTabBar.classList.add('d-none');
+        }
+        if (retBtn) {
+          retBtn.classList.add('d-none');
+        }
 
         if (container) {
           container.style.maxWidth = '100%';
@@ -4886,7 +5454,7 @@
         }
 
         if (row) {
-          row.classList.remove('mobile-swipe-active');
+          row.classList.remove('mobile-view-active');
         }
 
         [p1, p2, p3, p4].forEach(p => {
@@ -4900,7 +5468,7 @@
         });
       }
     }
-    
+
 
     // =============================================================
     // 👥 실시간 회원 가입 & data/members 폴더 저장 연동
@@ -5180,82 +5748,7 @@
   </div>
 
 
-  <!-- 🔑 Modal: 실시간 경기결과 API 연동 센터 (API-Sports & RapidAPI) -->
-  <div class="modal fade" id="liveApiModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content" style="background: #0b1120; border: 1.5px solid #10b981; border-radius: 16px; box-shadow: 0 0 35px rgba(16, 185, 129, 0.35);">
-        <div class="modal-header border-bottom d-flex justify-content-between align-items-center" style="border-color: rgba(255,255,255,0.08) !important;">
-          <div class="d-flex align-items-center gap-2">
-            <span class="badge bg-success text-dark fw-bold px-2 py-1" style="font-size: 0.85rem;">
-              <i class="bi bi-broadcast me-1"></i>LIVE SYNC
-            </span>
-            <h5 class="modal-title text-white fw-bold mb-0">⚡ 실시간 경기결과 API 연동 센터 (API-Sports & RapidAPI)</h5>
-          </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
 
-        <div class="modal-body p-4">
-          <!-- Status Banner -->
-          <div class="p-3 mb-4 rounded-3 d-flex justify-content-between align-items-center" id="liveApiStatusBanner" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3);">
-            <div>
-              <div class="text-white fw-bold fs-6" id="liveApiStatusText">
-                <span class="pulse-dot me-1" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"></span>
-                실시간 연동 상태: 로딩 중...
-              </div>
-              <div class="text-muted small mt-1" id="liveApiStatusSub">API-Football & API-Baseball 실시간 스코어 수신 대기</div>
-            </div>
-            <button class="btn btn-sm btn-outline-success fw-bold px-3 py-1.5" onclick="manualForceSyncLive()">
-              <i class="bi bi-arrow-repeat me-1"></i>지금 즉시 강제 동기화
-            </button>
-          </div>
-
-          <!-- API Key Input Form -->
-          <div class="mb-4 p-3 rounded-3" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.08);">
-            <label class="form-label text-white fw-bold small mb-2"><i class="bi bi-key-fill text-warning me-1"></i>보유하신 API Key 등록</label>
-            
-            <div class="d-flex gap-4 mb-3">
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="liveApiProvider" id="provApiSports" value="api_sports" checked>
-                <label class="form-check-label text-light small fw-bold" for="provApiSports">
-                  API-Sports (Direct) <span class="badge bg-primary" style="font-size:0.65rem;">권장</span>
-                </label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="liveApiProvider" id="provRapidApi" value="rapidapi">
-                <label class="form-check-label text-light small fw-bold" for="provRapidApi">
-                  RapidAPI
-                </label>
-              </div>
-            </div>
-
-            <div class="input-group mb-2">
-              <span class="input-group-text bg-dark border-secondary text-muted"><i class="bi bi-lock-fill"></i></span>
-              <input type="text" class="form-control bg-dark text-white border-secondary font-monospace" id="liveApiKeyInput" placeholder="API Key 입력 (예: 4a8b7c9d... 또는 RapidAPI Key)" autocomplete="off">
-              <button class="btn btn-success fw-bold px-4" onclick="saveLiveApiKey()" id="saveKeyBtn">
-                <i class="bi bi-check2-circle me-1"></i>API 키 등록 및 즉시 반영
-              </button>
-            </div>
-            <div class="text-muted small" style="font-size: 0.74rem;">
-              <i class="bi bi-info-circle me-1"></i>키를 등록하시면 환경설정(.env)에 안전하게 저장되며, 실시간 경기 스코어와 종료 결과가 초단위로 자동 갱신됩니다.
-            </div>
-          </div>
-
-          <!-- Live & Finished Matches Monitor -->
-          <h6 class="fw-bold text-white mb-2"><i class="bi bi-activity text-info me-1"></i>현재 실시간 진행중 & 오늘 종료된 경기 모니터링</h6>
-          <div id="liveMatchesMonitorList" class="p-2 rounded-2" style="background: rgba(10, 14, 26, 0.7); border: 1px solid rgba(255, 255, 255, 0.05); max-height: 220px; overflow-y: auto;">
-            <!-- Loaded by javascript -->
-          </div>
-        </div>
-
-        <div class="modal-footer border-top d-flex justify-content-between" style="border-color: rgba(255,255,255,0.08) !important;">
-          <div class="text-dim small">
-            <i class="bi bi-shield-lock text-success me-1"></i>SSL 암호화 전송 및 데이터베이스 다이렉트 동기화
-          </div>
-          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">닫기</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
 
   <!-- 👥 Modal: 회원 가입 현황 목록 (data/members 폴더 실시간 연동) -->
@@ -5318,5 +5811,6 @@
     </div>
   </div>
 
+  </div><!-- /#mainAppWrapper -->
 </body>
 </html>

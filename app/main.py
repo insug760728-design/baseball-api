@@ -95,14 +95,10 @@ def is_b2b_domain(request: Request) -> bool:
         
     return False
 
-@app.get("/", response_class=HTMLResponse, summary="TOKEON 포털 (tokeon.kr / tokeon.co.kr 듀얼 도메인 분기)")
+@app.get("/", response_class=HTMLResponse, summary="TOKEON 스포츠 분석 전문 포털 (tokeon.co.kr)")
 def domain_portal(request: Request):
     try:
-        if is_b2b_domain(request):
-            target = b2b_portal_path if os.path.exists(b2b_portal_path) else landing_path
-        else:
-            target = landing_path if os.path.exists(landing_path) else dashboard_path
-            
+        target = landing_path if os.path.exists(landing_path) else dashboard_path
         with open(target, "r", encoding="utf-8") as f:
             content = f.read()
         return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})

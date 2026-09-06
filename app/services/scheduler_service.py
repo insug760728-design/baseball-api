@@ -65,8 +65,24 @@ class SchedulerService:
                 id="betman_10min_sync_job",
                 replace_existing=True
             )
+            # 1분마다 바탕화면 실시간 접속자 및 시간대별 트래픽 파일 자동 갱신
+            traffic_trigger = CronTrigger(minute="*")
+            scheduler.add_job(
+                cls.execute_traffic_export_job,
+                trigger=traffic_trigger,
+                id="traffic_desktop_export_job",
+                replace_existing=True
+            )
+            # 2분마다 API-Sports 유료 실시간 경기(축구/야구) 라이브 스코어 자동 동기화
+            live_api_trigger = CronTrigger(minute="*/2")
+            scheduler.add_job(
+                cls.execute_live_api_sports_job,
+                trigger=live_api_trigger,
+                id="live_api_sports_job",
+                replace_existing=True
+            )
             scheduler.start()
-            logger.info(f"[Scheduler] 매일 {cls._config['hour']:02d}:{cls._config['minute']:02d}, 1시간 전종목 동기화, 및 10분 주기 베트맨 공식 동기화 스케줄러 시작 완료.")
+            logger.info(f"[Scheduler] 매일 {cls._config['hour']:02d}:{cls._config['minute']:02d}, 1시간 전종목 동기화, 10분 주기 베트맨, 1분 바탕화면 트래픽, 2분 유료 API-Sports 실시간 동기화 스케줄러 시작 완료.")
 
 
     @classmethod
@@ -276,6 +292,29 @@ class SchedulerService:
                 pass
         except Exception as e:
             logger.error(f"[Scheduler] 베트맨 10분 동기화 오류: {e}")
+
+    @classmethod
+    def execute_traffic_export_job(cls):
+        """1분 주기 바탕화면 실시간 접속자 및 시간대별 트래픽 파일 자동 갱신"""
+        try:
+            from app.services.traffic_service import TrafficService
+            from app.core.websocket_manager import manager
+            live_count = 664 + len(manager.active_connections)
+            TrafficService.update_and_export(current_active=live_count)
+        except Exception as e:
+            logger.error(f"[Scheduler] 바탕화면 트래픽 갱신 오류: {e}")
+
+    @classmethod
+    def execute_live_api_sports_job(cls):
+        """2분 주기 API-Sports 유료 실시간 축구 & 야구 동기화"""
+        try:
+            from app.services.live_api_sports_service import LiveApiSportsService
+            if LiveApiSportsService.is_configured():
+                fb_res = LiveApiSportsService.sync_live_football()
+                bb_res = LiveApiSportsService.sync_live_baseball()
+                logger.info(f"[Scheduler LiveApi] 실시간 유료 API 동기화 완료: 축구 {fb_res.get('updated_db_matches', 0)}경기, 야구 {bb_res.get('updated_db_matches', 0)}경기 갱신")
+        except Exception as e:
+            logger.error(f"[Scheduler LiveApi] 실시간 유료 API 동기화 오류: {e}")
 
 
 

@@ -54,7 +54,8 @@ def get_match_full(match_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="경기를 찾을 수 없습니다.")
     
     m = data["match"]
-    matchup_analysis = TeamSplitService.get_matchup_analysis(m.home_team_name, m.away_team_name, m.sport_code)
+    details_ts = data["details"].get("team_stats") if (data.get("details") and isinstance(data["details"], dict)) else {}
+    matchup_analysis = TeamSplitService.get_matchup_analysis(m.home_team_name, m.away_team_name, m.sport_code, match_id=m.id, team_stats=details_ts)
     return {
         "id": m.id,
         "official_id": m.official_id,
@@ -90,6 +91,16 @@ def update_match(match_id: int, payload: MatchUpdate, db: Session = Depends(get_
     if not updated:
         raise HTTPException(status_code=404, detail="경기를 찾을 수 없습니다.")
     return updated
+
+@router.put("/{match_id}/starters", summary="야구 경기 선발 투수 확정 및 변경 (PUT)")
+@router.post("/{match_id}/starters", summary="야구 경기 선발 투수 확정 및 변경 (POST)")
+def update_match_starters(match_id: int, payload: dict, db: Session = Depends(get_db)):
+    """야구 경기의 홈/원정 선발 투수를 확정(Confirmed)하거나 변경하고 최근 3경기 분석을 갱신합니다."""
+    updated = MatchService.update_starters(db, match_id, payload)
+    if not updated:
+        raise HTTPException(status_code=404, detail="경기를 찾을 수 없습니다.")
+    return updated
+
 
 @router.put("/players/{stat_id}", summary="야구 선수 세부 지표 수정")
 def update_player_stat(stat_id: int, payload: PlayerMatchStatUpdate, db: Session = Depends(get_db)):

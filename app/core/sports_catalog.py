@@ -65,6 +65,13 @@ SPORTS_CATALOG = {
             {"id": "LIGUE_1", "name": "프랑스 리그 1 (Ligue 1)", "api_code": "fra.1"}
         ]
     },
+    "EREDIVISIE": {
+        "title": "네덜란드 에레디비시 (Eredivisie)",
+        "sport_code": "SOCCER",
+        "leagues": [
+            {"id": "EREDIVISIE", "name": "네덜란드 에레디비시 (Eredivisie)", "api_code": "ned.1"}
+        ]
+    },
 
     # [농구 리그]
     "NBA": {

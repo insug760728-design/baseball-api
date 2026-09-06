@@ -11,6 +11,7 @@ from app.api.v1.community import router as community_router
 from app.api.v1.toto import router as toto_router
 from app.api.v1.live import router as live_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.traffic import router as traffic_router
 
 api_v1_router = APIRouter()
 api_v1_router.include_router(matches_router)
@@ -25,3 +26,4 @@ api_v1_router.include_router(community_router)
 api_v1_router.include_router(toto_router)
 api_v1_router.include_router(live_router)
 api_v1_router.include_router(auth_router)
+api_v1_router.include_router(traffic_router)

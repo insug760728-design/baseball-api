@@ -184,7 +184,12 @@ class MatchService:
         if status:
             query = query.filter(Match.status == status)
         if start_date:
-            query = query.filter(Match.match_date >= f"{start_date} 00:00")
+            if start_date.upper() != "ALL":
+                query = query.filter(Match.match_date >= f"{start_date} 00:00")
+        elif not end_date and not league_name:
+            # 기본 호출 시 과거 14일부터 미래 전체(오늘, 내일, 라이브, 예정) 일정을 우선 반환
+            fourteen_days_ago = (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d")
+            query = query.filter(Match.match_date >= f"{fourteen_days_ago} 00:00")
         if end_date:
             query = query.filter(Match.match_date <= f"{end_date} 23:59")
         
@@ -325,3 +330,40 @@ class MatchService:
         db.commit()
         db.refresh(stat)
         return stat
+
+    @staticmethod
+    def update_starters(db: Session, match_id: int, starters_data: Dict[str, Any]):
+        match = db.query(Match).filter(Match.id == match_id).first()
+        if not match:
+            return None
+        detail = db.query(MatchDetail).filter(MatchDetail.match_id == match_id).first()
+        if not detail:
+            detail = MatchDetail(match_id=match_id, period_scores="{}", team_stats="{}", is_customized=True)
+            db.add(detail)
+        
+        ts = {}
+        if detail.team_stats:
+            try:
+                ts = json.loads(detail.team_stats)
+            except:
+                ts = {}
+        
+        ts["starters"] = starters_data
+        detail.team_stats = json.dumps(ts, ensure_ascii=False)
+        detail.is_customized = True
+        db.commit()
+        db.refresh(detail)
+        
+        analysis = TeamSplitService.get_matchup_analysis(
+            match.home_team_name,
+            match.away_team_name,
+            match.sport_code,
+            match_id=match.id,
+            team_stats=ts
+        )
+        return {
+            "match_id": match.id,
+            "starters": ts["starters"],
+            "matchup_analysis": analysis
+        }
+
