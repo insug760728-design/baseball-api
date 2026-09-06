@@ -514,51 +514,80 @@
       padding: 1rem 1.75rem;
     }
 
-        /* 3 : 4 : 3 Pro Sports Predictor & Live Community Dashboard (30% : 30% : 40%) */
+    /* 4-Terminal Ultra Cockpit Dashboard: 경기바(23%) | 토토마킹·세이버(35%) | 팬룸채팅(22%) | 스포츠뉴스(20%) */
     .dash-container {
       width: 100%;
-      max-width: 1560px;
+      max-width: 100% !important;
       margin: 0 auto;
-      padding-left: 14px;
-      padding-right: 14px;
+      padding-left: 8px;
+      padding-right: 8px;
     }
     .dashboard-row {
       display: flex;
-      flex-wrap: wrap;
-      margin-left: -5px;
-      margin-right: -5px;
-      width: calc(100% + 10px);
+      flex-wrap: nowrap;
+      margin-left: -4px;
+      margin-right: -4px;
+      width: calc(100% + 8px);
+      height: 100%;
     }
     .col-dash-left,
     .col-dash-center,
-    .col-dash-right {
-      padding-left: 5px;
-      padding-right: 5px;
-      margin-bottom: 10px;
+    .col-dash-right,
+    .col-dash-news {
+      padding-left: 4px;
+      padding-right: 4px;
+      margin-bottom: 0;
     }
-    /* All 3 Cards have the EXACT SAME HEIGHT (3:3:4 Pro Terminal) */
-    .dash-card-column {
-      height: calc(100vh - 125px);
-      min-height: 840px;
-      max-height: 980px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: #0b1120;
-      border: 1px solid #1e293b;
-      border-radius: 12px;
-      box-shadow: 0 10px 35px rgba(0,0,0,0.5);
+    
+    /* 1-Screen Viewport Fit on Desktop (No outer window scrollbar!) */
+    @media (min-width: 992px) {
+      html, body {
+        height: 100vh;
+        overflow: hidden !important;
+      }
+      #prediction-section {
+        padding: 4px 0 !important;
+        height: calc(100vh - 86px);
+      }
+      .dash-card-column {
+        height: calc(100vh - 96px) !important;
+        max-height: calc(100vh - 96px) !important;
+        min-height: calc(100vh - 96px) !important;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #0b1120;
+        border: 1px solid #1e293b;
+        border-radius: 10px;
+        box-shadow: 0 10px 35px rgba(0,0,0,0.5);
+      }
+      .footer-section {
+        display: none !important;
+      }
     }
+    @media (max-width: 991px) {
+      .dash-card-column {
+        height: calc(100vh - 120px);
+        min-height: 560px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #0b1120;
+        border: 1px solid #1e293b;
+        border-radius: 10px;
+      }
+    }
+
     .dash-card-header {
       flex-shrink: 0;
-      padding: 10px 12px;
+      padding: 8px 10px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(15, 23, 42, 0.75);
+      background: rgba(15, 23, 42, 0.85);
     }
     .dash-card-body {
       flex-grow: 1;
       overflow-y: auto;
-      padding: 10px 12px;
+      padding: 8px 10px;
       scrollbar-width: thin;
     }
     .pred-card-compact {
@@ -585,42 +614,70 @@
       border-color: #f59e0b !important;
     }
 
-    /* Exact 3 : 4 : 3 Column Widths on Desktop */
+    /* 4-Column Width Ratio: 23% | 35% | 22% | 20% = 100% */
     @media (min-width: 1200px) {
       .col-dash-left {
-        flex: 0 0 30%;
-        max-width: 30%;
+        flex: 0 0 23%;
+        max-width: 23%;
       }
       .col-dash-center {
-        flex: 0 0 40%;
-        max-width: 40%;
+        flex: 0 0 35%;
+        max-width: 35%;
       }
       .col-dash-right {
-        flex: 0 0 30%;
-        max-width: 30%;
+        flex: 0 0 22%;
+        max-width: 22%;
+      }
+      .col-dash-news {
+        flex: 0 0 20%;
+        max-width: 20%;
       }
     }
-    @media (min-width: 768px) and (max-width: 1199px) {
+    @media (min-width: 992px) and (max-width: 1199px) {
       .col-dash-left {
-        flex: 0 0 50%;
-        max-width: 50%;
+        flex: 0 0 23%;
+        max-width: 23%;
       }
       .col-dash-center {
-        flex: 0 0 50%;
-        max-width: 50%;
+        flex: 0 0 37%;
+        max-width: 37%;
       }
       .col-dash-right {
-        flex: 0 0 100%;
-        max-width: 100%;
+        flex: 0 0 20%;
+        max-width: 20%;
+      }
+      .col-dash-news {
+        flex: 0 0 20%;
+        max-width: 20%;
       }
     }
-    @media (max-width: 767px) {
+    @media (max-width: 991px) {
+      .dashboard-row {
+        flex-wrap: wrap;
+      }
       .col-dash-left,
       .col-dash-center,
-      .col-dash-right {
+      .col-dash-right,
+      .col-dash-news {
         flex: 0 0 100%;
         max-width: 100%;
       }
+    }
+
+    /* Compact News Cards in 4th Column */
+    .news-card-compact {
+      background: rgba(15, 23, 42, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 7px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .news-card-compact:hover {
+      background: rgba(30, 41, 59, 0.95);
+      border-color: #38bdf8;
+      transform: translateX(2px);
     }
   
     /* High-contrast Sport & Date Filter Buttons (Bright, Clear, High Legibility) */
@@ -1013,7 +1070,7 @@
     }
 
     /* ============================================================= */
-    /* 📱 모바일 전용 3개 창 100% 꽉찬 가로 스와이프 (손가락 좌우 밀기) */
+    /* 📱 모바일 전용 4개 창 100% 꽉찬 가로 스와이프 (손가락 좌우 밀기) */
     /* ============================================================= */
     .dashboard-row.mobile-swipe-active {
       display: flex !important;
@@ -1036,7 +1093,8 @@
     }
     .dashboard-row.mobile-swipe-active .col-dash-left,
     .dashboard-row.mobile-swipe-active .col-dash-center,
-    .dashboard-row.mobile-swipe-active .col-dash-right {
+    .dashboard-row.mobile-swipe-active .col-dash-right,
+    .dashboard-row.mobile-swipe-active .col-dash-news {
       display: block !important;
       flex: 0 0 100% !important;
       min-width: 100% !important;
@@ -1118,22 +1176,24 @@
   <section class="py-2 px-1" id="prediction-section" style="background: radial-gradient(circle at 50% 0%, #131c34 0%, #0a0e1a 100%); border-bottom: 2px solid #1e293b;">
     <div class="dash-container">
       
-      <!-- 📱 핸드폰 모바일 전용 1-Tap 탭 네비게이터 -->
-      <!-- 📱 핸드폰 모바일 전용 3창 가로 스와이프 1-Tap 탭 네비게이터 -->
+      <!-- 📱 핸드폰 모바일 전용 4창 가로 스와이프 1-Tap 탭 네비게이터 -->
       <div id="mobileTabBar" class="d-none flex-column p-1 mb-2 rounded-3" style="background: rgba(15, 23, 42, 0.95); border: 1.5px solid #00F0FF; position: sticky; top: 52px; z-index: 990; box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);">
         <div class="d-flex justify-content-between align-items-center gap-1 w-100">
-          <button class="btn btn-sm fw-bold py-1.5 px-1 text-light flex-fill" id="mobTabLeft" onclick="scrollMobileToPanel(0)" style="font-size:0.78rem; border-radius:6px; background: transparent; border:none;">
+          <button class="btn btn-sm fw-bold py-1.5 px-1 text-light flex-fill" id="mobTabLeft" onclick="scrollMobileToPanel(0)" style="font-size:0.75rem; border-radius:6px; background: transparent; border:none;">
             <i class="bi bi-clock-history me-1 text-info"></i>1. 경기일정
           </button>
-          <button class="btn btn-sm active fw-bold py-1.5 px-1 text-dark flex-fill" id="mobTabCenter" onclick="scrollMobileToPanel(1)" style="font-size:0.78rem; border-radius:6px; background: linear-gradient(135deg, #00F0FF, #38bdf8); border:none; box-shadow: 0 0 10px rgba(0,240,255,0.4);">
-            <i class="bi bi-check2-square me-1"></i>2. 14경기 토토
+          <button class="btn btn-sm active fw-bold py-1.5 px-1 text-dark flex-fill" id="mobTabCenter" onclick="scrollMobileToPanel(1)" style="font-size:0.75rem; border-radius:6px; background: linear-gradient(135deg, #00F0FF, #38bdf8); border:none; box-shadow: 0 0 10px rgba(0,240,255,0.4);">
+            <i class="bi bi-check2-square me-1"></i>2. 토토마킹
           </button>
-          <button class="btn btn-sm fw-bold py-1.5 px-1 text-light flex-fill" id="mobTabRight" onclick="scrollMobileToPanel(2)" style="font-size:0.78rem; border-radius:6px; background: transparent; border:none;">
-            <i class="bi bi-chat-dots-fill text-success me-1"></i>3. 실시간 팬룸
+          <button class="btn btn-sm fw-bold py-1.5 px-1 text-light flex-fill" id="mobTabRight" onclick="scrollMobileToPanel(2)" style="font-size:0.75rem; border-radius:6px; background: transparent; border:none;">
+            <i class="bi bi-chat-dots-fill text-success me-1"></i>3. 팬룸채팅
+          </button>
+          <button class="btn btn-sm fw-bold py-1.5 px-1 text-light flex-fill" id="mobTabNews" onclick="scrollMobileToPanel(3)" style="font-size:0.75rem; border-radius:6px; background: transparent; border:none;">
+            <i class="bi bi-newspaper text-primary me-1"></i>4. 스포츠뉴스
           </button>
         </div>
         <div class="text-center pt-1" style="font-size: 0.70rem; color: #94a3b8;">
-          <i class="bi bi-arrow-left-right text-info me-1"></i>손가락으로 화면을 좌우로 밀어서 3개의 창을 넘겨보세요
+          <i class="bi bi-arrow-left-right text-info me-1"></i>손가락으로 화면을 좌우로 밀어서 4개의 창을 넘겨보세요
         </div>
       </div>
 
@@ -1309,46 +1369,36 @@
           </div>
         </div>
 
-      </div>
-    </div>
-  </section>
-
-
-  <!-- Hero Section -->
-  
-
-  <!-- Live Match Center Strip (100% 실제 공식 경기 스코어보드) -->
-  
-
-  <!-- Sports News & Editorial Magazine (100% 실제 스포츠 언론 보도) -->
-  <section class="py-5" id="news-section">
-    <div class="container">
-      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 pb-2 border-bottom" style="border-color: var(--border-color) !important;">
-        <div>
-          <span class="text-primary fw-bold text-uppercase" style="font-size: 0.82rem; letter-spacing: 1px;">Editorial & Press</span>
-          <h2 class="fw-bold text-white mb-1"><i class="bi bi-newspaper me-2 text-primary"></i>스포츠 뉴스 & 심층 분석</h2>
-          <p class="text-muted mb-0" style="font-size: 0.95rem;">국내외 주요 스포츠 언론사에서 실시간 보도된 실제 기사입니다.</p>
+        <!-- 4. [우측2 20%] 실시간 스포츠 최신 뉴스 & 심층 분석 (기존 맨 아래에서 4열로 이동) -->
+        <div class="col-dash-news" id="newsColSidebar">
+          <div class="dash-card-column">
+            <div class="dash-card-header">
+              <div class="d-flex justify-content-between align-items-center mb-1.5">
+                <span class="fw-bold text-white small" style="font-size: 0.85rem;">
+                  <i class="bi bi-newspaper me-1 text-primary"></i>스포츠 뉴스 & 속보
+                </span>
+                <button class="btn btn-xs py-0.5 px-2 text-info" onclick="refreshLiveNews()" title="실시간 언론사 뉴스 최신화" style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 4px; font-size: 0.70rem;">
+                  <i class="bi bi-arrow-clockwise me-1"></i>새로고침
+                </button>
+              </div>
+              <!-- Category Filter Chips -->
+              <div class="d-flex gap-1 overflow-auto">
+                <button class="btn btn-sm sport-chip-btn active flex-fill py-0 px-1" onclick="filterNews('ALL', this)" style="font-size: 0.70rem;">전체</button>
+                <button class="btn btn-sm sport-chip-btn flex-fill py-0 px-1" onclick="filterNews('BASEBALL', this)" style="font-size: 0.70rem;">⚾야구</button>
+                <button class="btn btn-sm sport-chip-btn flex-fill py-0 px-1" onclick="filterNews('SOCCER', this)" style="font-size: 0.70rem;">⚽축구</button>
+                <button class="btn btn-sm sport-chip-btn flex-fill py-0 px-1" onclick="filterNews('BASKETBALL', this)" style="font-size: 0.70rem;">🏀농구</button>
+                <button class="btn btn-sm sport-chip-btn flex-fill py-0 px-1" onclick="filterNews('ANALYTICS', this)" style="font-size: 0.70rem;">📊칼럼</button>
+              </div>
+            </div>
+            <!-- Body: Scrollable News Cards List -->
+            <div class="dash-card-body p-2" id="newsColumnList">
+              <div class="text-center text-muted py-5">
+                <div class="spinner-border spinner-border-sm text-primary me-2"></div>실시간 언론사 뉴스를 불러오는 중...
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Action Buttons: Filter + Refresh -->
-        <div class="d-flex flex-wrap gap-2 align-items-center">
-          <button class="filter-btn active" onclick="filterNews('ALL', this)">전체 소식</button>
-          <button class="filter-btn" onclick="filterNews('BASEBALL', this)">⚾ 야구</button>
-          <button class="filter-btn" onclick="filterNews('SOCCER', this)">⚽ 축구</button>
-          <button class="filter-btn" onclick="filterNews('BASKETBALL', this)">🏀 농구</button>
-          <button class="filter-btn" onclick="filterNews('ANALYTICS', this)">📊 데이터 칼럼</button>
-          <button class="btn btn-sm btn-outline-info ms-md-2" onclick="refreshLiveNews()">
-            <i class="bi bi-arrow-clockwise me-1"></i>뉴스 최신화
-          </button>
-        </div>
-      </div>
-
-      <!-- News Cards Grid -->
-      <div class="row g-4" id="newsGrid">
-        <div class="col-12 text-center text-muted py-5">
-          <div class="spinner-border text-primary" role="status"></div>
-          <div class="mt-2">실제 스포츠 뉴스 피드를 불러오고 있습니다...</div>
-        </div>
       </div>
     </div>
   </section>
@@ -1388,7 +1438,7 @@
         <div class="col-lg-2 col-6">
           <h6 class="fw-bold text-white mb-3">서비스 바로가기</h6>
           <ul class="list-unstyled d-flex flex-column gap-2" style="font-size: 0.88rem;">
-            <li><a href="#news-section" class="footer-link">스포츠 뉴스</a></li>
+            <li><a href="#newsColSidebar" class="footer-link">스포츠 뉴스</a></li>
             <li><a href="#match-strip" class="footer-link">라이브 스코어</a></li>
             <li><a href="#analytics-section" class="footer-link">세이버메트릭스</a></li>
             <li><a href="#pricing-section" class="footer-link">API 요금제</a></li>
@@ -1827,7 +1877,7 @@
 
     // 1. Fetch 100% Real Sports News from FastAPI backend
     async function loadRealNews() {
-      const grid = document.getElementById('newsGrid');
+      const container = document.getElementById('newsColumnList') || document.getElementById('newsGrid');
       try {
         const resp = await fetch('/api/v1/news/');
         if (!resp.ok) throw new Error('News fetch failed');
@@ -1837,67 +1887,63 @@
         updateTickerAndFeatured();
       } catch (e) {
         console.error('Error loading real news:', e);
-        grid.innerHTML = '<div class="col-12 text-center text-danger py-4">실시간 뉴스를 불러오는데 실패했습니다. 잠시 후 다시 시도해 주세요.</div>';
+        if (container) container.innerHTML = '<div class="text-center text-danger py-4 small">실시간 뉴스를 불러오는데 실패했습니다. 잠시 후 다시 시도해 주세요.</div>';
       }
     }
 
     // Refresh News button
     async function refreshLiveNews() {
-      const grid = document.getElementById('newsGrid');
-      grid.innerHTML = '<div class="col-12 text-center text-info py-4"><div class="spinner-border spinner-border-sm me-2"></div>실시간 언론사 최신 기사를 수집 중입니다...</div>';
+      const container = document.getElementById('newsColumnList') || document.getElementById('newsGrid');
+      if (container) container.innerHTML = '<div class="text-center text-info py-4 small"><div class="spinner-border spinner-border-sm me-2"></div>실시간 언론사 최신 기사를 수집 중입니다...</div>';
       try {
         const resp = await fetch('/api/v1/news/refresh', { method: 'POST' });
         const json = await resp.json();
         await loadRealNews();
-        alert('최신 스포츠 뉴스가 새로고침 되었습니다!');
       } catch (e) {
         alert('뉴스 최신화 중 오류가 발생했습니다.');
       }
     }
 
     function renderNews() {
-      const grid = document.getElementById('newsGrid');
+      const container = document.getElementById('newsColumnList') || document.getElementById('newsGrid');
+      if (!container) return;
+
       const filtered = currentFilter === 'ALL' 
         ? realNewsList 
         : realNewsList.filter(item => item.category === currentFilter);
 
       if (filtered.length === 0) {
-        grid.innerHTML = '<div class="col-12 text-center text-muted py-5">해당 카테고리의 실제 기사가 없습니다.</div>';
+        container.innerHTML = '<div class="text-center text-muted py-5 small">해당 종목의 최신 기사가 없습니다.</div>';
         return;
       }
 
       let html = '';
       filtered.forEach(item => {
-        let chipHtml = '';
-        if (item.chips && item.chips.length > 0) {
-          chipHtml = item.chips.map(c => `<span class="data-chip">${c}</span>`).join('');
-        }
-
+        const dateStr = item.date ? item.date.split(' ')[0] : '';
         html += `
-          <div class="col-lg-4 col-md-6">
-            <div class="news-card" onclick="openArticleModal(${item.id})">
-              <div class="news-header-bg ${item.categoryClass}">
-                <div class="d-flex justify-content-between align-items-center">
-                  <span class="badge bg-dark bg-opacity-75 text-white">${item.categoryLabel}</span>
-                  <span class="text-white-50" style="font-size: 0.75rem;">${item.date.split(' ')[0]}</span>
-                </div>
-                <div class="d-flex flex-wrap gap-1">
-                  ${chipHtml}
-                </div>
-              </div>
-              <div class="news-body">
-                <h5 class="news-title">${item.title}</h5>
-                <p class="news-desc">${item.desc}</p>
-                <div class="d-flex justify-content-between align-items-center pt-2 border-top" style="border-color: var(--border-color) !important;">
-                  <span class="text-info fw-semibold" style="font-size: 0.8rem;"><i class="bi bi-newspaper me-1"></i>${item.source}</span>
-                  <span class="text-primary fw-semibold" style="font-size: 0.82rem;">전문 읽기 <i class="bi bi-chevron-right"></i></span>
-                </div>
-              </div>
+          <div class="news-card-compact" onclick="openArticleModal(${item.id})" title="클릭 시 기사 전문 보기">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="badge ${item.categoryClass || 'bg-primary'} text-white" style="font-size: 0.65rem; padding: 2px 6px;">
+                ${item.categoryLabel || item.category}
+              </span>
+              <span class="text-dim" style="font-size: 0.68rem; color: #94a3b8;">
+                <i class="bi bi-newspaper text-info me-0.5"></i>${item.source || '스포츠통신'} · ${dateStr}
+              </span>
+            </div>
+            <div class="fw-bold text-white text-truncate mb-1" style="font-size: 0.82rem;" title="${item.title}">
+              ${item.title}
+            </div>
+            <div class="text-dim text-truncate-2 mb-1.5" style="font-size: 0.74rem; color: #94a3b8; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35;">
+              ${item.desc || ''}
+            </div>
+            <div class="d-flex justify-content-between align-items-center pt-1 border-top" style="border-color: rgba(255,255,255,0.06) !important; font-size: 0.70rem;">
+              <span class="text-info"><i class="bi bi-lightning-charge text-warning me-1"></i>속보</span>
+              <span class="text-primary fw-bold">기사 전문 읽기 <i class="bi bi-chevron-right"></i></span>
             </div>
           </div>
         `;
       });
-      grid.innerHTML = html;
+      container.innerHTML = html;
     }
 
     function filterNews(cat, btn) {
@@ -4716,7 +4762,7 @@
   
     
     // =============================================================
-    // 📱 모바일 3개 창 100% 꽉찬 가로 스와이프 컨트롤러
+    // 📱 모바일 4개 창 100% 꽉찬 가로 스와이프 컨트롤러
     // =============================================================
     let currentMobilePanelIndex = 1; // Start on Panel 1 (Center: 14경기 토토)
     let isSwipeListenerAttached = false;
@@ -4738,7 +4784,7 @@
           if (!w) return;
           const scrollLeft = row.scrollLeft;
           const activeIndex = Math.round(scrollLeft / w);
-          if (activeIndex !== currentMobilePanelIndex && activeIndex >= 0 && activeIndex <= 2) {
+          if (activeIndex !== currentMobilePanelIndex && activeIndex >= 0 && activeIndex <= 3) {
             currentMobilePanelIndex = activeIndex;
             highlightMobileTab(activeIndex);
           }
@@ -4757,7 +4803,7 @@
     }
 
     function highlightMobileTab(index) {
-      const tabs = ['mobTabLeft', 'mobTabCenter', 'mobTabRight'];
+      const tabs = ['mobTabLeft', 'mobTabCenter', 'mobTabRight', 'mobTabNews'];
       tabs.forEach((tId, idx) => {
         const btn = document.getElementById(tId);
         if (btn) {
@@ -4788,6 +4834,7 @@
       const p1 = document.getElementById('leftColSchedule');
       const p2 = document.getElementById('centerColMain');
       const p3 = document.getElementById('rightColCommunity');
+      const p4 = document.getElementById('newsColSidebar');
 
       if (mode === 'mobile') {
         if (btnPC) btnPC.className = 'btn btn-dark fw-bold px-2.5 py-1 text-light';
@@ -4796,6 +4843,7 @@
 
         if (container) {
           container.style.maxWidth = '500px';
+          container.style.width = '100%';
           container.style.margin = '0 auto';
           container.style.padding = '0 4px';
           container.style.borderRadius = '20px';
@@ -4808,7 +4856,7 @@
           row.classList.add('mobile-swipe-active');
         }
 
-        [p1, p2, p3].forEach(p => {
+        [p1, p2, p3, p4].forEach(p => {
           if (p) {
             p.style.display = 'block';
           }
@@ -4821,15 +4869,16 @@
           scrollMobileToPanel(1);
         }, 150);
       } else {
-        // PC Mode
+        // PC Mode (Full-width, 1-screen ultra cockpit)
         if (btnPC) btnPC.className = 'btn btn-info fw-bold px-2.5 py-1 text-dark';
         if (btnMobile) btnMobile.className = 'btn btn-dark fw-bold px-2.5 py-1 text-light';
         if (mobileTabBar) { mobileTabBar.classList.remove('d-flex'); mobileTabBar.classList.add('d-none'); }
 
         if (container) {
-          container.style.maxWidth = '1600px';
+          container.style.maxWidth = '100%';
+          container.style.width = '100%';
           container.style.margin = '0 auto';
-          container.style.padding = '0 12px';
+          container.style.padding = '0 8px';
           container.style.borderRadius = '0';
           container.style.border = 'none';
           container.style.boxShadow = 'none';
@@ -4840,7 +4889,7 @@
           row.classList.remove('mobile-swipe-active');
         }
 
-        [p1, p2, p3].forEach(p => {
+        [p1, p2, p3, p4].forEach(p => {
           if (p) {
             p.style.display = '';
             p.style.flex = '';
