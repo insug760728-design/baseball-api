@@ -2,43 +2,43 @@
   "team_name": "휴스턴 애스트로스",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-04",
-    "end_date": "2026-09-05"
+    "start_date": "2026-09-05",
+    "end_date": "2026-09-06"
   },
   "total_matches": 2,
-  "hitters_count": 10,
-  "pitchers_count": 5,
+  "hitters_count": 12,
+  "pitchers_count": 10,
   "matches": [
     {
-      "date": "2026-09-05 23:15",
+      "date": "2026-09-05 09:10",
       "opponent": "애리조나 다이아몬드백스",
-      "score": "0 : 0",
+      "score": "3 : 4",
       "result": "패",
-      "file": "matches/2026-09-05_2315_vs_애리조나_다이아몬드백스.json"
+      "file": "matches/2026-09-05_0910_vs_애리조나_다이아몬드백스.json"
     },
     {
-      "date": "2026-09-04 00:10",
+      "date": "2026-09-06 08:15",
       "opponent": "애리조나 다이아몬드백스",
-      "score": "3 : 1",
-      "result": "승",
-      "file": "matches/2026-09-04_0010_vs_애리조나_다이아몬드백스.json"
+      "score": "3 : 4",
+      "result": "패",
+      "file": "matches/2026-09-06_0815_vs_애리조나_다이아몬드백스.json"
     }
   ],
   "hitters": [
     {
+      "name": "Jeremy Peña",
+      "pos": "1번 SS",
+      "file": "hitters/Jeremy_Peña.json"
+    },
+    {
+      "name": "Yordan Alvarez",
+      "pos": "2번 DH",
+      "file": "hitters/Yordan_Alvarez.json"
+    },
+    {
       "name": "Isaac Paredes",
       "pos": "3번 3B",
       "file": "hitters/Isaac_Paredes.json"
-    },
-    {
-      "name": "Cam Smith",
-      "pos": "9번 RF",
-      "file": "hitters/Cam_Smith.json"
-    },
-    {
-      "name": "Daulton Varsho",
-      "pos": "5번 CF",
-      "file": "hitters/Daulton_Varsho.json"
     },
     {
       "name": "Jose Altuve",
@@ -46,19 +46,14 @@
       "file": "hitters/Jose_Altuve.json"
     },
     {
-      "name": "Taylor Trammell",
-      "pos": "7번 LF",
-      "file": "hitters/Taylor_Trammell.json"
+      "name": "Nick Allen",
+      "pos": "4번 2B",
+      "file": "hitters/Nick_Allen.json"
     },
     {
-      "name": "Jeremy Peña",
-      "pos": "1번 SS",
-      "file": "hitters/Jeremy_Peña.json"
-    },
-    {
-      "name": "LaMonte Wade Jr.",
-      "pos": "9번 LF",
-      "file": "hitters/LaMonte_Wade_Jr..json"
+      "name": "Daulton Varsho",
+      "pos": "5번 CF",
+      "file": "hitters/Daulton_Varsho.json"
     },
     {
       "name": "Christian Walker",
@@ -66,41 +61,81 @@
       "file": "hitters/Christian_Walker.json"
     },
     {
+      "name": "Taylor Trammell",
+      "pos": "7번 LF",
+      "file": "hitters/Taylor_Trammell.json"
+    },
+    {
       "name": "Yainer Diaz",
       "pos": "8번 C",
       "file": "hitters/Yainer_Diaz.json"
     },
     {
-      "name": "Yordan Alvarez",
-      "pos": "2번 DH",
-      "file": "hitters/Yordan_Alvarez.json"
+      "name": "LaMonte Wade Jr.",
+      "pos": "9번 LF",
+      "file": "hitters/LaMonte_Wade_Jr..json"
+    },
+    {
+      "name": "Cam Smith",
+      "pos": "9번 RF",
+      "file": "hitters/Cam_Smith.json"
+    },
+    {
+      "name": "Christian Vázquez",
+      "pos": "7번 C",
+      "file": "hitters/Christian_Vázquez.json"
     }
   ],
   "pitchers": [
     {
-      "name": "Bryan Abreu",
-      "pos": "투수 (P)",
-      "file": "pitchers/Bryan_Abreu.json"
-    },
-    {
-      "name": "Josh Hader",
-      "pos": "투수 (P)",
-      "file": "pitchers/Josh_Hader.json"
+      "name": "Cristian Javier",
+      "pos": "P",
+      "file": "pitchers/Cristian_Javier.json"
     },
     {
       "name": "Enyel De Los Santos",
-      "pos": "투수 (P)",
+      "pos": "P",
       "file": "pitchers/Enyel_De_Los_Santos.json"
     },
     {
       "name": "Bennett Sousa",
-      "pos": "투수 (P)",
+      "pos": "P",
       "file": "pitchers/Bennett_Sousa.json"
     },
     {
-      "name": "Cristian Javier",
-      "pos": "투수 (P)",
-      "file": "pitchers/Cristian_Javier.json"
+      "name": "Bryan Abreu",
+      "pos": "P",
+      "file": "pitchers/Bryan_Abreu.json"
+    },
+    {
+      "name": "Josh Hader",
+      "pos": "P",
+      "file": "pitchers/Josh_Hader.json"
+    },
+    {
+      "name": "Jake Meyers",
+      "pos": "7번 PR",
+      "file": "pitchers/Jake_Meyers.json"
+    },
+    {
+      "name": "Ethan Pecko",
+      "pos": "P",
+      "file": "pitchers/Ethan_Pecko.json"
+    },
+    {
+      "name": "Kai-Wei Teng",
+      "pos": "P",
+      "file": "pitchers/Kai-Wei_Teng.json"
+    },
+    {
+      "name": "AJ Blubaugh",
+      "pos": "P",
+      "file": "pitchers/AJ_Blubaugh.json"
+    },
+    {
+      "name": "Bryan King",
+      "pos": "P",
+      "file": "pitchers/Bryan_King.json"
     }
   ]
 }

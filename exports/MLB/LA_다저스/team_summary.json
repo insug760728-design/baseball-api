@@ -2,33 +2,68 @@
   "team_name": "LA 다저스",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-04",
-    "end_date": "2026-09-05"
+    "start_date": "2026-09-05",
+    "end_date": "2026-09-06"
   },
   "total_matches": 2,
-  "hitters_count": 11,
-  "pitchers_count": 6,
+  "hitters_count": 13,
+  "pitchers_count": 9,
   "matches": [
     {
-      "date": "2026-09-05 01:10",
-      "opponent": "워싱턴 내셔널스",
-      "score": "0 : 0",
-      "result": "패",
-      "file": "matches/2026-09-05_0110_vs_워싱턴_내셔널스.json"
-    },
-    {
-      "date": "2026-09-04 02:10",
+      "date": "2026-09-05 11:10",
       "opponent": "워싱턴 내셔널스",
       "score": "5 : 3",
       "result": "승",
-      "file": "matches/2026-09-04_0210_vs_워싱턴_내셔널스.json"
+      "file": "matches/2026-09-05_1110_vs_워싱턴_내셔널스.json"
+    },
+    {
+      "date": "2026-09-06 10:10",
+      "opponent": "워싱턴 내셔널스",
+      "score": "6 : 5",
+      "result": "승",
+      "file": "matches/2026-09-06_1010_vs_워싱턴_내셔널스.json"
     }
   ],
   "hitters": [
     {
+      "name": "Tommy Edman",
+      "pos": "1번 CF",
+      "file": "hitters/Tommy_Edman.json"
+    },
+    {
+      "name": "Mookie Betts",
+      "pos": "2번 SS",
+      "file": "hitters/Mookie_Betts.json"
+    },
+    {
+      "name": "Teoscar Hernández",
+      "pos": "3번 LF",
+      "file": "hitters/Teoscar_Hernández.json"
+    },
+    {
       "name": "Will Smith",
       "pos": "4번 C",
       "file": "hitters/Will_Smith.json"
+    },
+    {
+      "name": "Max Muncy",
+      "pos": "5번 3B",
+      "file": "hitters/Max_Muncy.json"
+    },
+    {
+      "name": "Miguel Rojas",
+      "pos": "6번 2B",
+      "file": "hitters/Miguel_Rojas.json"
+    },
+    {
+      "name": "Alex Freeland",
+      "pos": "6번 2B",
+      "file": "hitters/Alex_Freeland.json"
+    },
+    {
+      "name": "Alex Call",
+      "pos": "7번 DH",
+      "file": "hitters/Alex_Call.json"
     },
     {
       "name": "Dalton Rushing",
@@ -46,71 +81,61 @@
       "file": "hitters/Enrique_Hernández.json"
     },
     {
-      "name": "Max Muncy",
-      "pos": "5번 3B",
-      "file": "hitters/Max_Muncy.json"
+      "name": "Freddie Freeman",
+      "pos": "2번 1B",
+      "file": "hitters/Freddie_Freeman.json"
     },
     {
-      "name": "Tommy Edman",
-      "pos": "1번 CF",
-      "file": "hitters/Tommy_Edman.json"
-    },
-    {
-      "name": "Teoscar Hernández",
-      "pos": "3번 LF",
-      "file": "hitters/Teoscar_Hernández.json"
-    },
-    {
-      "name": "Mookie Betts",
-      "pos": "2번 SS",
-      "file": "hitters/Mookie_Betts.json"
-    },
-    {
-      "name": "Alex Call",
-      "pos": "7번 DH",
-      "file": "hitters/Alex_Call.json"
-    },
-    {
-      "name": "Miguel Rojas",
-      "pos": "6번 2B",
-      "file": "hitters/Miguel_Rojas.json"
-    },
-    {
-      "name": "Alex Freeland",
-      "pos": "6번 2B",
-      "file": "hitters/Alex_Freeland.json"
+      "name": "Hunter Feduccia",
+      "pos": "6번 C",
+      "file": "hitters/Hunter_Feduccia.json"
     }
   ],
   "pitchers": [
     {
-      "name": "Edgardo Henriquez",
-      "pos": "투수 (P)",
-      "file": "pitchers/Edgardo_Henriquez.json"
-    },
-    {
-      "name": "Tanner Scott",
-      "pos": "투수 (P)",
-      "file": "pitchers/Tanner_Scott.json"
-    },
-    {
-      "name": "Kyle Hurt",
-      "pos": "투수 (P)",
-      "file": "pitchers/Kyle_Hurt.json"
-    },
-    {
       "name": "Blake Snell",
-      "pos": "투수 (P)",
+      "pos": "P",
       "file": "pitchers/Blake_Snell.json"
     },
     {
-      "name": "Jack Dreyer",
-      "pos": "투수 (P)",
-      "file": "pitchers/Jack_Dreyer.json"
+      "name": "Edgardo Henriquez",
+      "pos": "P",
+      "file": "pitchers/Edgardo_Henriquez.json"
+    },
+    {
+      "name": "Kyle Hurt",
+      "pos": "P",
+      "file": "pitchers/Kyle_Hurt.json"
+    },
+    {
+      "name": "Tanner Scott",
+      "pos": "P",
+      "file": "pitchers/Tanner_Scott.json"
     },
     {
       "name": "Seth Halvorsen",
-      "pos": "투수 (P)",
+      "pos": "P",
       "file": "pitchers/Seth_Halvorsen.json"
+    },
+    {
+      "name": "Jack Dreyer",
+      "pos": "P",
+      "file": "pitchers/Jack_Dreyer.json"
+    },
+    {
+      "name": "Tyler Glasnow",
+      "pos": "P",
+      "file": "pitchers/Tyler_Glasnow.json"
+    },
+    {
+      "name": "Alex Vesia",
+      "pos": "P",
+      "file": "pitchers/Alex_Vesia.json"
+    },
+    {
+      "name": "Evan Phillips",
+      "pos": "P",
+      "file": "pitchers/Evan_Phillips.json"
     }
   ]
 }

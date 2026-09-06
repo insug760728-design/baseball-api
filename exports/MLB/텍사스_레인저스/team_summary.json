@@ -2,53 +2,33 @@
   "team_name": "텍사스 레인저스",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-04",
-    "end_date": "2026-09-05"
+    "start_date": "2026-09-05",
+    "end_date": "2026-09-06"
   },
   "total_matches": 2,
-  "hitters_count": 10,
-  "pitchers_count": 7,
+  "hitters_count": 11,
+  "pitchers_count": 11,
   "matches": [
     {
-      "date": "2026-09-05 23:05",
+      "date": "2026-09-05 09:05",
       "opponent": "탬파베이 레이스",
-      "score": "0 : 0",
+      "score": "3 : 6",
       "result": "패",
-      "file": "matches/2026-09-05_2305_vs_탬파베이_레이스.json"
+      "file": "matches/2026-09-05_0905_vs_탬파베이_레이스.json"
     },
     {
-      "date": "2026-09-04 00:05",
+      "date": "2026-09-06 08:05",
       "opponent": "탬파베이 레이스",
-      "score": "6 : 7",
+      "score": "3 : 6",
       "result": "패",
-      "file": "matches/2026-09-04_0005_vs_탬파베이_레이스.json"
+      "file": "matches/2026-09-06_0805_vs_탬파베이_레이스.json"
     }
   ],
   "hitters": [
     {
-      "name": "Evan Carter",
-      "pos": "7번 CF",
-      "file": "hitters/Evan_Carter.json"
-    },
-    {
-      "name": "Wyatt Langford",
-      "pos": "3번 LF",
-      "file": "hitters/Wyatt_Langford.json"
-    },
-    {
-      "name": "Jake Burger",
-      "pos": "6번 1B",
-      "file": "hitters/Jake_Burger.json"
-    },
-    {
       "name": "Joc Pederson",
       "pos": "1번 DH",
       "file": "hitters/Joc_Pederson.json"
-    },
-    {
-      "name": "Corey Seager",
-      "pos": "2번 SS",
-      "file": "hitters/Corey_Seager.json"
     },
     {
       "name": "Justin Foscue",
@@ -56,14 +36,34 @@
       "file": "hitters/Justin_Foscue.json"
     },
     {
-      "name": "Ezequiel Duran",
-      "pos": "5번 2B",
-      "file": "hitters/Ezequiel_Duran.json"
+      "name": "Corey Seager",
+      "pos": "2번 SS",
+      "file": "hitters/Corey_Seager.json"
+    },
+    {
+      "name": "Wyatt Langford",
+      "pos": "3번 LF",
+      "file": "hitters/Wyatt_Langford.json"
     },
     {
       "name": "Brandon Nimmo",
       "pos": "4번 RF",
       "file": "hitters/Brandon_Nimmo.json"
+    },
+    {
+      "name": "Ezequiel Duran",
+      "pos": "5번 2B",
+      "file": "hitters/Ezequiel_Duran.json"
+    },
+    {
+      "name": "Jake Burger",
+      "pos": "6번 1B",
+      "file": "hitters/Jake_Burger.json"
+    },
+    {
+      "name": "Evan Carter",
+      "pos": "7번 CF",
+      "file": "hitters/Evan_Carter.json"
     },
     {
       "name": "Cody Freeman",
@@ -74,43 +74,68 @@
       "name": "Elias Díaz",
       "pos": "9번 C",
       "file": "hitters/Elias_Díaz.json"
+    },
+    {
+      "name": "Danny Jansen",
+      "pos": "9번 C",
+      "file": "hitters/Danny_Jansen.json"
     }
   ],
   "pitchers": [
-    {
-      "name": "Kumar Rocker",
-      "pos": "투수 (P)",
-      "file": "pitchers/Kumar_Rocker.json"
-    },
-    {
-      "name": "Adam Macko",
-      "pos": "투수 (P)",
-      "file": "pitchers/Adam_Macko.json"
-    },
-    {
-      "name": "Tyler Alexander",
-      "pos": "투수 (P)",
-      "file": "pitchers/Tyler_Alexander.json"
-    },
-    {
-      "name": "Chase Silseth",
-      "pos": "투수 (P)",
-      "file": "pitchers/Chase_Silseth.json"
-    },
-    {
-      "name": "Trevor Williams",
-      "pos": "투수 (P)",
-      "file": "pitchers/Trevor_Williams.json"
-    },
     {
       "name": "Nicky Lopez",
       "pos": "8번 PH",
       "file": "pitchers/Nicky_Lopez.json"
     },
     {
+      "name": "Trevor Williams",
+      "pos": "P",
+      "file": "pitchers/Trevor_Williams.json"
+    },
+    {
       "name": "Robby Ahlstrom",
-      "pos": "투수 (P)",
+      "pos": "P",
       "file": "pitchers/Robby_Ahlstrom.json"
+    },
+    {
+      "name": "Kumar Rocker",
+      "pos": "P",
+      "file": "pitchers/Kumar_Rocker.json"
+    },
+    {
+      "name": "Tyler Alexander",
+      "pos": "P",
+      "file": "pitchers/Tyler_Alexander.json"
+    },
+    {
+      "name": "Chase Silseth",
+      "pos": "P",
+      "file": "pitchers/Chase_Silseth.json"
+    },
+    {
+      "name": "Adam Macko",
+      "pos": "P",
+      "file": "pitchers/Adam_Macko.json"
+    },
+    {
+      "name": "Cam Cauley",
+      "pos": "9번 PR",
+      "file": "pitchers/Cam_Cauley.json"
+    },
+    {
+      "name": "Jacob deGrom",
+      "pos": "P",
+      "file": "pitchers/Jacob_deGrom.json"
+    },
+    {
+      "name": "Jakob Junis",
+      "pos": "P",
+      "file": "pitchers/Jakob_Junis.json"
+    },
+    {
+      "name": "Jacob Latz",
+      "pos": "P",
+      "file": "pitchers/Jacob_Latz.json"
     }
   ]
 }
