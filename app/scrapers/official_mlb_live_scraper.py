@@ -77,7 +77,7 @@ class MlbOfficialScraper:
     def scrape_schedule(self, target_date: Optional[str] = None) -> List[Dict[str, Any]]:
         """지정일의 공식 MLB 경기 목록 (스코어 및 라인스코어 포함)"""
         d = target_date or self.get_latest_available_date()
-        url = f"{MLB_API_BASE}/schedule?sportId=1&date={d}&hydrate=linescore,team"
+        url = f"{MLB_API_BASE}/schedule?sportId=1&date={d}&hydrate=probablePitcher,linescore,team"
         
         try:
             data = self._fetch_json(url)
@@ -90,7 +90,7 @@ class MlbOfficialScraper:
             # 해당 날짜에 경기가 없으면 가장 최근 유효 일자로 재조회
             latest_d = self.get_latest_available_date()
             if latest_d != d:
-                url = f"{MLB_API_BASE}/schedule?sportId=1&date={latest_d}&hydrate=linescore,team"
+                url = f"{MLB_API_BASE}/schedule?sportId=1&date={latest_d}&hydrate=probablePitcher,linescore,team"
                 data = self._fetch_json(url)
                 dates = data.get("dates", [])
 
@@ -108,6 +108,10 @@ class MlbOfficialScraper:
 
             away_score = g["teams"]["away"].get("score", 0)
             home_score = g["teams"]["home"].get("score", 0)
+
+            # 공식 선발 예고 투수 (probablePitcher)
+            h_prob_p = g.get("teams", {}).get("home", {}).get("probablePitcher", {}).get("fullName")
+            a_prob_p = g.get("teams", {}).get("away", {}).get("probablePitcher", {}).get("fullName")
 
             # 상태 (FINAL, IN_PROGRESS, SCHEDULED)
             raw_state = g.get("status", {}).get("abstractGameState", "Scheduled")
@@ -142,7 +146,9 @@ class MlbOfficialScraper:
                 "status": status,
                 "game_pk": game_pk,
                 "raw_away_team": away_team_raw,
-                "raw_home_team": home_team_raw
+                "raw_home_team": home_team_raw,
+                "probable_pitcher_home": h_prob_p,
+                "probable_pitcher_away": a_prob_p
             })
 
         return results
@@ -248,7 +254,14 @@ class MlbOfficialScraper:
             t_name_ko = get_team_name_ko(t_data.get("team", {}).get("name", ""))
             players = t_data.get("players", {})
 
-            for p_id, p in players.items():
+            # 1. 타자 (공식 타순 batters 배열 순서대로 정렬)
+            batter_ids = t_data.get("batters", [])
+            seen_batters = set()
+            for b_id in batter_ids:
+                p = players.get(f"ID{b_id}")
+                if not p:
+                    continue
+                seen_batters.add(f"ID{b_id}")
                 p_name = p.get("person", {}).get("fullName")
                 if not p_name:
                     continue
@@ -259,86 +272,106 @@ class MlbOfficialScraper:
 
                 stats_wrap = p.get("stats", {})
                 b_stat = stats_wrap.get("batting", {})
-                p_stat = stats_wrap.get("pitching", {})
                 season_b = p.get("seasonStats", {}).get("batting", {})
+
+                order = p.get("battingOrder")
+                order_label = f"{order[0]}번 {pos_abbr}" if order and len(order) >= 1 and order[0].isdigit() else pos_abbr
+
+                ab = b_stat.get("atBats", 0)
+                r = b_stat.get("runs", 0)
+                h = b_stat.get("hits", 0)
+                rbi = b_stat.get("rbi", 0)
+                hr = b_stat.get("homeRuns", 0)
+                bb = b_stat.get("baseOnBalls", 0)
+                so = b_stat.get("strikeOuts", 0)
+                sb = b_stat.get("stolenBases", 0)
+                doubles = b_stat.get("doubles", 0)
+                triples = b_stat.get("triples", 0)
+
+                avg = season_b.get("avg", "-")
+                ops = season_b.get("ops", "-")
+
+                player_stats.append({
+                    "team_name": t_name_ko,
+                    "player_name": p_name,
+                    "back_number": b_num,
+                    "position": order_label,
+                    "minutes_played": 0,
+                    "points": rbi,
+                    "assists": 0,
+                    "shots": ab,
+                    "extra_stats": {
+                        "type": "HITTER",
+                        "player_type": "HITTER",
+                        "ab": ab, "r": r, "h": h, "2b": doubles, "3b": triples,
+                        "hr": hr, "rbi": rbi, "bb": bb, "so": so, "sb": sb,
+                        "hits": h, "doubles": doubles, "triples": triples, "homeruns": hr,
+                        "runs": r, "walks": bb, "strikeouts": so, "stolen_bases": sb,
+                        "avg": avg, "ops": ops
+                    }
+                })
+
+            # 2. 투수 (공식 등판 순서 pitchers 배열 순서대로 정렬: 0번은 선발 투수!)
+            pitcher_ids = t_data.get("pitchers", [])
+            seen_pitchers = set()
+            for p_idx, p_id in enumerate(pitcher_ids):
+                p = players.get(f"ID{p_id}")
+                if not p:
+                    continue
+                seen_pitchers.add(f"ID{p_id}")
+                p_name = p.get("person", {}).get("fullName")
+                if not p_name:
+                    continue
+
+                pos_abbr = p.get("position", {}).get("abbreviation", "P")
+                jersey = p.get("jerseyNumber")
+                b_num = int(jersey) if jersey and jersey.isdigit() else None
+
+                stats_wrap = p.get("stats", {})
+                p_stat = stats_wrap.get("pitching", {})
                 season_p = p.get("seasonStats", {}).get("pitching", {})
 
-                # 타자
-                if b_stat and b_stat.get("atBats", 0) > 0 or b_stat.get("plateAppearances", 0) > 0:
-                    order = p.get("battingOrder")
-                    order_label = f"{order[0]}번 {pos_abbr}" if order and len(order) >= 1 and order[0].isdigit() else pos_abbr
+                ip = p_stat.get("inningsPitched", "0.0")
+                np = p_stat.get("numberOfPitches", 0)
+                h = p_stat.get("hits", 0)
+                r = p_stat.get("runs", 0)
+                er = p_stat.get("earnedRuns", 0)
+                bb = p_stat.get("baseOnBalls", 0)
+                so = p_stat.get("strikeOuts", 0)
+                hr = p_stat.get("homeRuns", 0)
+                era = season_p.get("era", "-")
+                whip = season_p.get("whip", "-")
 
-                    ab = b_stat.get("atBats", 0)
-                    r = b_stat.get("runs", 0)
-                    h = b_stat.get("hits", 0)
-                    rbi = b_stat.get("rbi", 0)
-                    hr = b_stat.get("homeRuns", 0)
-                    bb = b_stat.get("baseOnBalls", 0)
-                    so = b_stat.get("strikeOuts", 0)
-                    sb = b_stat.get("stolenBases", 0)
-                    doubles = b_stat.get("doubles", 0)
-                    triples = b_stat.get("triples", 0)
+                # 승패 결정
+                decision = ""
+                if p_stat.get("wins", 0) > 0: decision = "승리투수 (W)"
+                elif p_stat.get("losses", 0) > 0: decision = "패전투수 (L)"
+                elif p_stat.get("saves", 0) > 0: decision = "세이브 (SV)"
+                elif p_stat.get("holds", 0) > 0: decision = "홀드 (HD)"
 
-                    avg = season_b.get("avg", "-")
-                    ops = season_b.get("ops", "-")
+                is_starter = (p_idx == 0)
+                pos_label = "투수 (선발)" if is_starter else "투수 (구원)"
 
-                    player_stats.append({
-                        "team_name": t_name_ko,
-                        "player_name": p_name,
-                        "back_number": b_num,
-                        "position": order_label,
-                        "minutes_played": 0,
-                        "points": rbi,
-                        "assists": 0,
-                        "shots": ab,
-                        "extra_stats": {
-                            "type": "HITTER",
-                            "player_type": "HITTER",
-                            "ab": ab, "r": r, "h": h, "2b": doubles, "3b": triples,
-                            "hr": hr, "rbi": rbi, "bb": bb, "so": so, "sb": sb,
-                            "hits": h, "doubles": doubles, "triples": triples, "homeruns": hr,
-                            "runs": r, "walks": bb, "strikeouts": so, "stolen_bases": sb,
-                            "avg": avg, "ops": ops
-                        }
-                    })
-
-                # 투수
-                if p_stat and (p_stat.get("inningsPitched") or p_stat.get("numberOfPitches", 0) > 0):
-                    ip = p_stat.get("inningsPitched", "0.0")
-                    np = p_stat.get("numberOfPitches", 0)
-                    h = p_stat.get("hits", 0)
-                    r = p_stat.get("runs", 0)
-                    er = p_stat.get("earnedRuns", 0)
-                    bb = p_stat.get("baseOnBalls", 0)
-                    so = p_stat.get("strikeOuts", 0)
-                    hr = p_stat.get("homeRuns", 0)
-                    era = season_p.get("era", "-")
-                    whip = season_p.get("whip", "-")
-
-                    # 승패 결정
-                    decision = ""
-                    if p_stat.get("wins", 0) > 0: decision = "승리투수 (W)"
-                    elif p_stat.get("losses", 0) > 0: decision = "패전투수 (L)"
-                    elif p_stat.get("saves", 0) > 0: decision = "세이브 (SV)"
-                    elif p_stat.get("holds", 0) > 0: decision = "홀드 (HD)"
-
-                    player_stats.append({
-                        "team_name": t_name_ko,
-                        "player_name": p_name,
-                        "back_number": b_num,
-                        "position": f"투수 ({pos_abbr})",
-                        "minutes_played": 0,
-                        "points": so,
-                        "assists": 0,
-                        "shots": int(float(ip)) if ip and "." in ip else 0,
-                        "extra_stats": {
-                            "type": "PITCHER",
-                            "player_type": "PITCHER",
-                            "ip": ip, "np": np, "h": h, "r": r, "er": er, "bb": bb,
-                            "so": so, "hr": hr, "era": era, "whip": whip,
-                            "decision": decision
-                        }
-                    })
+                player_stats.append({
+                    "team_name": t_name_ko,
+                    "player_name": p_name,
+                    "back_number": b_num,
+                    "position": pos_label,
+                    "minutes_played": 0,
+                    "points": so,
+                    "assists": 0,
+                    "shots": int(float(ip)) if ip and "." in ip else 0,
+                    "extra_stats": {
+                        "type": "PITCHER",
+                        "player_type": "PITCHER",
+                        "is_starter": is_starter,
+                        "starter": is_starter,
+                        "pitcher_order": p_idx + 1,
+                        "ip": ip, "np": np, "h": h, "r": r, "er": er, "bb": bb,
+                        "so": so, "hr": hr, "era": era, "whip": whip,
+                        "decision": decision
+                    }
+                })
 
         return {
             "period_scores": period_scores,

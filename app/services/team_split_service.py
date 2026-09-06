@@ -36,19 +36,26 @@ def _init_stat_dict():
         "clean_sheets": 0, "failed_to_score": 0, "pk_goals": 0, "pk_shots": 0
     }
 
-def _get_baseball_recent_pitching(conn, team_name: str, limit: int = 3):
+def _get_baseball_recent_pitching(conn, team_name: str, limit: int = 3, league_name: Optional[str] = None):
     """
     야구 전용: 팀의 최근 3경기 선발 투구수 및 불펜 투수진 투구수 상세 추출
     """
     c = conn.cursor()
-    c.execute("""
+    query = """
         SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
         FROM matches
         WHERE sport_code = 'BASEBALL' AND status = 'FINISHED'
           AND (home_team_name = ? OR away_team_name = ?)
-        ORDER BY match_date DESC
-        LIMIT ?
-    """, (team_name, team_name, limit))
+    """
+    params = [team_name, team_name]
+    if league_name:
+        query += " AND (league_name = ? OR league_name LIKE ?)"
+        params.append(league_name)
+        params.append(f"%{league_name[:4]}%")
+    query += " ORDER BY match_date DESC LIMIT ?"
+    params.append(limit)
+
+    c.execute(query, tuple(params))
     matches = c.fetchall()
     results = []
     total_bp_pitches_all_3 = 0
@@ -64,6 +71,7 @@ def _get_baseball_recent_pitching(conn, team_name: str, limit: int = 3):
             SELECT player_name, position, extra_stats
             FROM player_match_stats
             WHERE match_id = ? AND team_name = ?
+            ORDER BY id ASC
         """, (mid, team_name))
         p_rows = c.fetchall()
         pitchers = []
@@ -72,20 +80,32 @@ def _get_baseball_recent_pitching(conn, team_name: str, limit: int = 3):
                 ex = json.loads(ex_str) if isinstance(ex_str, str) else (ex_str or {})
             except:
                 ex = {}
-            if ex.get('type') == 'PITCHER' or ex.get('player_type') == 'PITCHER' or 'P' in str(pos):
+            if ex.get('type') == 'PITCHER' or ex.get('player_type') == 'PITCHER' or 'P' in str(pos) or '투수' in str(pos):
                 np_val = ex.get('np') or ex.get('pitches') or 0
+                is_st = '선발' in str(pos) or (ex.get('is_starter') is True) or (ex.get('starter') is True)
                 pitchers.append({
                     'name': pname,
                     'ip': str(ex.get('ip', '1.0')),
                     'np': int(np_val),
                     'er': int(ex.get('er', 0)),
                     'so': int(ex.get('so', 0)),
-                    'bb': int(ex.get('bb', 0))
+                    'bb': int(ex.get('bb', 0)),
+                    'is_starter': is_st
                 })
         
+        starter = None
+        bullpen = []
         if pitchers:
-            starter = pitchers[0]
-            bullpen = pitchers[1:]
+            starter_cand = next((p for p in pitchers if p.get('is_starter')), None)
+            if not starter_cand:
+                # If no pitcher is marked 선발, pick the one with >= 45 pitches or max np
+                max_np_p = max(pitchers, key=lambda x: x['np'])
+                if max_np_p['np'] >= 45:
+                    starter_cand = max_np_p
+                else:
+                    starter_cand = pitchers[0]
+            starter = starter_cand
+            bullpen = [p for p in pitchers if p != starter]
             bullpen_np = sum(p['np'] for p in bullpen)
         else:
             starter = {'name': '선발 투수', 'ip': '5.2', 'np': 88, 'er': min(3, opp_score), 'so': 5, 'bb': 2}
@@ -116,118 +136,170 @@ def _get_baseball_recent_pitching(conn, team_name: str, limit: int = 3):
         "fatigue_level": "과부하 경고 (180구↑)" if total_bp_pitches_all_3 >= 180 else ("보통 (120~180구)" if total_bp_pitches_all_3 >= 120 else "양호/휴식충분 (120구 미만)")
     }
 
+# League Pools for Baseball (KBO / MLB / NPB)
+MLB_TEAMS_POOL = [
+    "뉴욕 양키스", "보스턴 레드삭스", "토론토 블루제이스", "볼티모어 오리올스", "탬파베이 레이스",
+    "시카고 화이트삭스", "클리블랜드 가디언스", "디트로이트 타이거스", "캔자스시티 로열스", "미네소타 트윈스",
+    "휴스턴 애스트로스", "LA 에인절스", "애슬레틱스", "시애틀 매리너스", "텍사스 레인저스",
+    "애틀랜타 브레이브스", "마이애미 말린스", "뉴욕 메츠", "필라델피아 필리스", "워싱턴 내셔널스",
+    "시카고 컵스", "신시내티 레즈", "밀워키 브루어스", "피츠버그 파이리츠", "세인트루이스 카디널스",
+    "애리조나 다이아몬드백스", "콜로라도 로키스", "LA 다저스", "샌디에이고 파드리스", "샌프란시스코 자이언츠"
+]
+
+NPB_TEAMS_POOL = [
+    "요미우리 자이언츠", "한신 타이거스", "주니치 드래곤즈", "요코하마 DeNA 베이스타즈",
+    "히로시마 도요 카프", "도쿄 야쿠르트 스왈로스", "후쿠오카 소프트뱅크 호크스",
+    "홋카이도 닛폰햄 파이터즈", "지바 롯데 마린스", "도호쿠 라쿠텐 골든이글스",
+    "오릭스 버펄로스", "사이타마 세이부 라이온즈"
+]
+
+KBO_TEAMS_POOL = [
+    "LG 트윈스", "삼성 라이온즈", "KIA 타이거즈", "KT 위즈", "SSG 랜더스",
+    "두산 베어스", "한화 이글스", "롯데 자이언츠", "NC 다이노스", "키움 히어로즈"
+]
+
 DEFAULT_ROTATION_STARTERS = {
     # KBO
-    "LG 트윈스": {"name": "임찬규", "throws": "우완"},
-    "삼성 라이온즈": {"name": "원태인", "throws": "우완"},
-    "KIA 타이거즈": {"name": "양현종", "throws": "좌완"},
-    "KT 위즈": {"name": "고영표", "throws": "우완"},
-    "SSG 랜더스": {"name": "김광현", "throws": "좌완"},
-    "두산 베어스": {"name": "곽빈", "throws": "우완"},
-    "한화 이글스": {"name": "류현진", "throws": "좌완"},
-    "롯데 자이언츠": {"name": "박세웅", "throws": "우완"},
-    "NC 다이노스": {"name": "신민혁", "throws": "우완"},
-    "키움 히어로즈": {"name": "하영민", "throws": "우완"},
+    "LG 트윈스": {"name": "임찬규", "name_en": "Lim Chan-kyu", "throws": "우완"},
+    "삼성 라이온즈": {"name": "원태인", "name_en": "Won Tae-in", "throws": "우완"},
+    "KIA 타이거즈": {"name": "양현종", "name_en": "Yang Hyeon-jong", "throws": "좌완"},
+    "KT 위즈": {"name": "고영표", "name_en": "Ko Young-pyo", "throws": "우완"},
+    "SSG 랜더스": {"name": "김광현", "name_en": "Kim Kwang-hyun", "throws": "좌완"},
+    "두산 베어스": {"name": "곽빈", "name_en": "Gwak Been", "throws": "우완"},
+    "한화 이글스": {"name": "류현진", "name_en": "Ryu Hyun-jin", "throws": "좌완"},
+    "롯데 자이언츠": {"name": "박세웅", "name_en": "Park Se-woong", "throws": "우완"},
+    "NC 다이노스": {"name": "신민혁", "name_en": "Shin Min-hyeok", "throws": "우완"},
+    "키움 히어로즈": {"name": "하영민", "name_en": "Ha Yeong-min", "throws": "우완"},
     # MLB
-    "LA 다저스": {"name": "야마모토 요시노부", "throws": "우완"},
-    "뉴욕 양키스": {"name": "게릿 콜", "throws": "우완"},
-    "필라델피아 필리스": {"name": "잭 휠러", "throws": "우완"},
-    "애틀랜타 브레이브스": {"name": "크리스 세일", "throws": "좌완"},
-    "샌디에이고 파드리스": {"name": "다르빗슈 유", "throws": "우완"},
-    "샌프란시스코 자이언츠": {"name": "로건 웹", "throws": "우완"},
-    "볼티모어 오리올스": {"name": "코빈 번스", "throws": "우완"},
-    "보스턴 레드삭스": {"name": "태너 하우크", "throws": "우완"},
-    "클리블랜드 가디언스": {"name": "태너 바이비", "throws": "우완"},
-    "디트로이트 타이거스": {"name": "타릭 스쿠발", "throws": "좌완"},
-    "시카고 컵스": {"name": "이마나가 쇼타", "throws": "좌완"},
-    "밀워키 브루어스": {"name": "프레디 페랄타", "throws": "우완"},
-    "휴스턴 애스트로스": {"name": "프람버 발데스", "throws": "좌완"},
-    "텍사스 레인저스": {"name": "네이선 이볼디", "throws": "우완"},
-    "토론토 블루제이스": {"name": "케빈 가우스먼", "throws": "우완"},
-    "뉴욕 메츠": {"name": "센가 코다이", "throws": "우완"},
-    "마이애미 말린스": {"name": "헤수스 루자르도", "throws": "좌완"},
-    "시애틀 매리너스": {"name": "로건 길버트", "throws": "우완"},
-    "미네소타 트윈스": {"name": "파블로 로페즈", "throws": "우완"},
-    "캔자스시티 로열스": {"name": "콜 레이건스", "throws": "좌완"},
-    "신시내티 레즈": {"name": "헌터 그린", "throws": "우완"},
-    "피츠버그 파이리츠": {"name": "폴 스킨스", "throws": "우완"},
-    "콜로라도 로키스": {"name": "카일 프리랜드", "throws": "좌완"},
-    "세인트루이스 카디널스": {"name": "소니 그레이", "throws": "우완"},
-    "워싱턴 내셔널스": {"name": "맥켄지 고어", "throws": "좌완"},
-    "애리조나 다이아몬드백스": {"name": "잭 갤런", "throws": "우완"},
-    "탬파베이 레이스": {"name": "잭 에플린", "throws": "우완"},
-    "시카고 화이트삭스": {"name": "가렛 크로셰", "throws": "좌완"},
-    "애슬레틱스": {"name": "JP 시어스", "throws": "좌완"},
-    "LA 에인절스": {"name": "타일러 앤더슨", "throws": "좌완"}
+    "LA 다저스": {"name": "야마모토 요시노부", "name_en": "Yoshinobu Yamamoto", "throws": "우완"},
+    "뉴욕 양키스": {"name": "게릿 콜", "name_en": "Gerrit Cole", "throws": "우완"},
+    "필라델피아 필리스": {"name": "잭 휠러", "name_en": "Zack Wheeler", "throws": "우완"},
+    "애틀랜타 브레이브스": {"name": "크리스 세일", "name_en": "Chris Sale", "throws": "좌완"},
+    "샌디에이고 파드리스": {"name": "다르빗슈 유", "name_en": "Yu Darvish", "throws": "우완"},
+    "샌프란시스코 자이언츠": {"name": "로건 웹", "name_en": "Logan Webb", "throws": "우완"},
+    "볼티모어 오리올스": {"name": "코빈 번스", "name_en": "Corbin Burnes", "throws": "우완"},
+    "보스턴 레드삭스": {"name": "태너 하우크", "name_en": "Tanner Houck", "throws": "우완"},
+    "클리블랜드 가디언스": {"name": "태너 바이비", "name_en": "Tanner Bibee", "throws": "우완"},
+    "디트로이트 타이거스": {"name": "타릭 스쿠발", "name_en": "Tarik Skubal", "throws": "좌완"},
+    "시카고 컵스": {"name": "이마нага 쇼타", "name_en": "Shota Imanaga", "throws": "좌완"},
+    "밀워키 브루어스": {"name": "프레디 페랄타", "name_en": "Freddy Peralta", "throws": "우완"},
+    "휴스턴 애스트로스": {"name": "프람버 발데스", "name_en": "Framber Valdez", "throws": "좌완"},
+    "텍사스 레인저스": {"name": "네이선 이볼디", "name_en": "Nathan Eovaldi", "throws": "우완"},
+    "토론토 블루제이스": {"name": "케빈 가우스먼", "name_en": "Kevin Gausman", "throws": "우완"},
+    "뉴욕 메츠": {"name": "센가 코다이", "name_en": "Kodai Senga", "throws": "우완"},
+    "마이애미 말린스": {"name": "헤수스 루자르도", "name_en": "Jesús Luzardo", "throws": "좌완"},
+    "시애틀 매리너스": {"name": "로건 길버트", "name_en": "Logan Gilbert", "throws": "우완"},
+    "미네소타 트윈스": {"name": "파블로 로페즈", "name_en": "Pablo López", "throws": "우완"},
+    "캔자스시티 로열스": {"name": "콜 레이건스", "name_en": "Cole Ragans", "throws": "좌완"},
+    "신시내티 레즈": {"name": "헌터 그린", "name_en": "Hunter Greene", "throws": "우완"},
+    "피츠버그 파이리츠": {"name": "폴 스킨스", "name_en": "Paul Skenes", "throws": "우완"},
+    "콜로라도 로키스": {"name": "카일 프리랜드", "name_en": "Kyle Freeland", "throws": "좌완"},
+    "세인트루이스 카디널스": {"name": "소니 그레이", "name_en": "Sonny Gray", "throws": "우완"},
+    "워싱턴 내셔널스": {"name": "맥켄지 고어", "name_en": "MacKenzie Gore", "throws": "좌완"},
+    "애리조나 다이아몬드백스": {"name": "잭 갤런", "name_en": "Zac Gallen", "throws": "우완"},
+    "탬파베이 레이스": {"name": "잭 에플린", "name_en": "Zach Eflin", "throws": "우완"},
+    "시카고 화이트삭스": {"name": "가렛 크로셰", "name_en": "Garrett Crochet", "throws": "좌완"},
+    "애슬레틱스": {"name": "JP 시어스", "name_en": "JP Sears", "throws": "좌완"},
+    "LA 에인절스": {"name": "타일러 앤더슨", "name_en": "Tyler Anderson", "throws": "좌완"}
 }
 
-def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, team_name: str, throws: str = "우완") -> Dict[str, Any]:
+def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, team_name: str, throws: str = "우완", league_name: Optional[str] = None) -> Dict[str, Any]:
     c = conn.cursor()
-    c.execute("""
-        SELECT m.id, m.match_date, m.home_team_name, m.away_team_name, m.home_score, m.away_score, 
-               p.team_name, p.position, p.extra_stats
-        FROM player_match_stats p
-        JOIN matches m ON p.match_id = m.id
-        WHERE p.player_name = ?
-        ORDER BY m.match_date DESC
-        LIMIT 3
-    """, (pitcher_name,))
     
-    rows = c.fetchall()
-    starts = []
-    
-    for r in rows:
-        mid, mdate, hteam, ateam, hscore, ascore, pteam, pos, ex_str = r
-        try:
-            ex = json.loads(ex_str) if isinstance(ex_str, str) else (ex_str or {})
-        except:
-            ex = {}
-        
-        is_home = (pteam == hteam)
-        opp = ateam if is_home else hteam
-        team_sc = hscore if is_home else ascore
-        opp_sc = ascore if is_home else hscore
-        
-        ip_str = str(ex.get('ip') or '5.2')
-        np_cnt = int(ex.get('np') or ex.get('pitches') or 92)
-        er = int(ex.get('er') or 2)
-        so = int(ex.get('so') or 5)
-        bb = int(ex.get('bb') or 2)
-        h = int(ex.get('h') or 5)
-        hr = int(ex.get('hr') or 0)
-        
-        dec = ex.get('decision') or ("승리투수 (W)" if team_sc > opp_sc else ("패전투수 (L)" if team_sc < opp_sc else "노디시전 (ND)"))
-        strikes = int(ex.get('strikes') or round(np_cnt * 0.65))
-        balls = max(0, np_cnt - strikes)
-        
-        starts.append({
-            "match_id": mid,
-            "date": mdate[:10] if mdate else "2026-09-01",
-            "opponent": opp,
-            "venue": "홈" if is_home else "원정",
-            "is_home": is_home,
-            "result": dec,
-            "team_score": team_sc,
-            "opp_score": opp_sc,
-            "ip": ip_str,
-            "np": np_cnt,
-            "strikes": strikes,
-            "balls": balls,
-            "er": er,
-            "so": so,
-            "bb": bb,
-            "h": h,
-            "hr": hr
-        })
+    is_mlb = ("MLB" in (league_name or "")) or ("메이저리그" in (league_name or "")) or (team_name in MLB_TEAMS_POOL)
+    is_npb = ("NPB" in (league_name or "")) or ("일본" in (league_name or "")) or (team_name in NPB_TEAMS_POOL)
 
-    # If pitcher has fewer than 3 games in DB, synthesize realistic recent rotation starts deterministically
+    # 선수명 검색어 후보 (한글/영문 대응)
+    alt_names = [pitcher_name]
+    for tm, d_p in DEFAULT_ROTATION_STARTERS.items():
+        if d_p.get("name") == pitcher_name and d_p.get("name_en"):
+            alt_names.append(d_p["name_en"])
+        elif d_p.get("name_en") == pitcher_name and d_p.get("name"):
+            alt_names.append(d_p["name"])
+
+    starts = []
+    for p_query in alt_names:
+        c.execute("""
+            SELECT m.id, m.match_date, m.home_team_name, m.away_team_name, m.home_score, m.away_score, 
+                   p.team_name, p.position, p.extra_stats, m.league_name
+            FROM player_match_stats p
+            JOIN matches m ON p.match_id = m.id
+            WHERE (p.player_name = ? OR p.player_name LIKE ?)
+              AND (p.position LIKE '%선발%' OR p.position LIKE '%P%' OR p.position LIKE '%투수%')
+            ORDER BY m.match_date DESC
+            LIMIT 6
+        """, (p_query, f"%{p_query}%"))
+        
+        rows = c.fetchall()
+        for r in rows:
+            mid, mdate, hteam, ateam, hscore, ascore, pteam, pos, ex_str, row_league = r
+            if any(s["match_id"] == mid for s in starts):
+                continue
+            try:
+                ex = json.loads(ex_str) if isinstance(ex_str, str) else (ex_str or {})
+            except:
+                ex = {}
+            
+            is_home = (pteam == hteam)
+            opp = ateam if is_home else hteam
+            team_sc = hscore if is_home else ascore
+            opp_sc = ascore if is_home else hscore
+
+            # 타 리그 팀이 상대팀으로 섞여있는 레코드 차단 (MLB는 MLB팀만, KBO는 KBO팀만)
+            if is_mlb and (opp in KBO_TEAMS_POOL or opp in NPB_TEAMS_POOL):
+                continue
+            if not is_mlb and not is_npb and opp in MLB_TEAMS_POOL:
+                continue
+            
+            ip_str = str(ex.get('ip') or '5.2')
+            np_cnt = int(ex.get('np') or ex.get('pitches') or 92)
+            er = int(ex.get('er') or 2)
+            so = int(ex.get('so') or 5)
+            bb = int(ex.get('bb') or 2)
+            h = int(ex.get('h') or 5)
+            hr = int(ex.get('hr') or 0)
+            
+            dec = ex.get('decision') or ("승리투수 (W)" if team_sc > opp_sc else ("패전투수 (L)" if team_sc < opp_sc else "노디시전 (ND)"))
+            strikes = int(ex.get('strikes') or round(np_cnt * 0.65))
+            balls = max(0, np_cnt - strikes)
+            
+            starts.append({
+                "match_id": mid,
+                "date": mdate[:10] if mdate else "2026-09-01",
+                "opponent": opp,
+                "venue": "홈" if is_home else "원정",
+                "is_home": is_home,
+                "result": dec,
+                "team_score": team_sc,
+                "opp_score": opp_sc,
+                "ip": ip_str,
+                "np": np_cnt,
+                "strikes": strikes,
+                "balls": balls,
+                "er": er,
+                "so": so,
+                "bb": bb,
+                "h": h,
+                "hr": hr
+            })
+            if len(starts) >= 3:
+                break
+        if len(starts) >= 3:
+            break
+
+    # DB에 3경기 미만일 때: 소속 리그 풀에서만 엄격하게 생성 (절대 KBO/MLB 교차 생성 금지)
     if len(starts) < 3:
         seed_val = sum(ord(ch) for ch in pitcher_name)
         rnd = random.Random(seed_val)
         
         fallback_dates = ["2026-09-01", "2026-08-26", "2026-08-20"]
-        default_opps = ["두산 베어스", "한화 이글스", "KIA 타이거즈", "삼성 라이온즈", "KT 위즈", "LG 트윈스", "SSG 랜더스", "롯데 자이언츠", "NC 다이노스", "키움 히어로즈"]
-        opp_choices = [o for o in default_opps if o != team_name]
+        if is_mlb:
+            opp_choices = [o for o in MLB_TEAMS_POOL if o != team_name]
+        elif is_npb:
+            opp_choices = [o for o in NPB_TEAMS_POOL if o != team_name]
+        else:
+            opp_choices = [o for o in KBO_TEAMS_POOL if o != team_name]
+
         if not opp_choices:
             opp_choices = ["상대팀"]
             
@@ -319,17 +391,32 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
     away_throws = "우완"
     home_confirmed = False
     away_confirmed = False
+
+    # 리그 판별
+    league_name = None
+    if match_id:
+        c.execute("SELECT league_name FROM matches WHERE id = ?", (match_id,))
+        m_row = c.fetchone()
+        if m_row:
+            league_name = m_row[0]
+    if not league_name:
+        if home_team in MLB_TEAMS_POOL:
+            league_name = "미국 메이저리그 (MLB)"
+        elif home_team in NPB_TEAMS_POOL:
+            league_name = "일본 프로야구 (NPB)"
+        else:
+            league_name = "한국 프로야구 (KBO)"
     
-    # 1. Check if team_stats has custom starters
+    # 1. Check if team_stats has custom / scraped starters
     if team_stats and isinstance(team_stats, dict) and "starters" in team_stats:
         st = team_stats.get("starters") or {}
         h_st = st.get("home") or {}
         a_st = st.get("away") or {}
-        if h_st.get("name"):
+        if h_st.get("name") and h_st.get("name") not in ["선발 예고", "선발 투수"]:
             home_name = h_st.get("name")
             home_confirmed = bool(h_st.get("confirmed", False))
             home_throws = h_st.get("throws") or DEFAULT_ROTATION_STARTERS.get(home_team, {}).get("throws", "우완")
-        if a_st.get("name"):
+        if a_st.get("name") and a_st.get("name") not in ["선발 예고", "선발 투수"]:
             away_name = a_st.get("name")
             away_confirmed = bool(a_st.get("confirmed", False))
             away_throws = a_st.get("throws") or DEFAULT_ROTATION_STARTERS.get(away_team, {}).get("throws", "우완")
@@ -343,19 +430,61 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
             ORDER BY id ASC
         """, (match_id,))
         p_rows = c.fetchall()
+
+        # 1차: 명시적 선발(선발 또는 is_starter: true)
         for t_name, p_name, pos, ex_str in p_rows:
-            if t_name == home_team and not home_name:
-                home_name = p_name
-                home_confirmed = True
-            elif t_name == away_team and not away_name:
-                away_name = p_name
-                away_confirmed = True
+            try:
+                ex = json.loads(ex_str) if isinstance(ex_str, str) else (ex_str or {})
+            except:
+                ex = {}
+            if "선발" in str(pos) or ex.get("is_starter") is True:
+                if t_name == home_team and not home_name:
+                    home_name = p_name
+                    home_confirmed = True
+                elif t_name == away_team and not away_name:
+                    away_name = p_name
+                    away_confirmed = True
+
+        # 2차: 투구수 45구 이상인 주력 선발투수
+        if not home_name or not away_name:
+            h_cands = []
+            a_cands = []
+            for t_name, p_name, pos, ex_str in p_rows:
+                try:
+                    ex = json.loads(ex_str) if isinstance(ex_str, str) else (ex_str or {})
+                except:
+                    ex = {}
+                np_v = ex.get("np") or ex.get("pitches") or 0
+                if t_name == home_team:
+                    h_cands.append((p_name, np_v))
+                elif t_name == away_team:
+                    a_cands.append((p_name, np_v))
+            if not home_name and h_cands:
+                h_cands.sort(key=lambda x: x[1], reverse=True)
+                if h_cands[0][1] >= 45:
+                    home_name = h_cands[0][0]
+                    home_confirmed = True
+            if not away_name and a_cands:
+                a_cands.sort(key=lambda x: x[1], reverse=True)
+                if a_cands[0][1] >= 45:
+                    away_name = a_cands[0][0]
+                    away_confirmed = True
+
+        # 3차: 첫 번째 투수
+        if not home_name or not away_name:
+            for t_name, p_name, pos, ex_str in p_rows:
+                if t_name == home_team and not home_name:
+                    home_name = p_name
+                    home_confirmed = True
+                elif t_name == away_team and not away_name:
+                    away_name = p_name
+                    away_confirmed = True
                 
     # 3. Fallback to DEFAULT_ROTATION_STARTERS
     if not home_name:
         d_h = DEFAULT_ROTATION_STARTERS.get(home_team)
         if d_h:
-            home_name = d_h["name"]
+            home_name = d_h.get("name_en") if "MLB" in (league_name or "") else d_h["name"]
             home_throws = d_h.get("throws", "우완")
         else:
             home_name = f"{home_team} 선발"
@@ -363,7 +492,7 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
     if not away_name:
         d_a = DEFAULT_ROTATION_STARTERS.get(away_team)
         if d_a:
-            away_name = d_a["name"]
+            away_name = d_a.get("name_en") if "MLB" in (league_name or "") else d_a["name"]
             away_throws = d_a.get("throws", "우완")
         else:
             away_name = f"{away_team} 선발"
@@ -374,8 +503,8 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
         home_confirmed = True
         away_confirmed = True
         
-    home_data = _get_pitcher_recent_3_starts(conn, home_name, home_team, home_throws)
-    away_data = _get_pitcher_recent_3_starts(conn, away_name, away_team, away_throws)
+    home_data = _get_pitcher_recent_3_starts(conn, home_name, home_team, home_throws, league_name=league_name)
+    away_data = _get_pitcher_recent_3_starts(conn, away_name, away_team, away_throws, league_name=league_name)
     
     return {
         "home": {
@@ -874,8 +1003,16 @@ class TeamSplitService:
             home_pitching_3g = {"games": [], "total_bullpen_np_3g": 0, "fatigue_level": "양호"}
             away_pitching_3g = {"games": [], "total_bullpen_np_3g": 0, "fatigue_level": "양호"}
             if sport_code == "BASEBALL":
-                home_pitching_3g = _get_baseball_recent_pitching(c_conn, home_team, 3)
-                away_pitching_3g = _get_baseball_recent_pitching(c_conn, away_team, 3)
+                m_league = None
+                if match_id:
+                    c_cur.execute("SELECT league_name FROM matches WHERE id = ?", (match_id,))
+                    l_row = c_cur.fetchone()
+                    if l_row:
+                        m_league = l_row[0]
+                if not m_league:
+                    m_league = "미국 메이저리그 (MLB)" if home_team in MLB_TEAMS_POOL else ("일본 프로야구 (NPB)" if home_team in NPB_TEAMS_POOL else "한국 프로야구 (KBO)")
+                home_pitching_3g = _get_baseball_recent_pitching(c_conn, home_team, 3, league_name=m_league)
+                away_pitching_3g = _get_baseball_recent_pitching(c_conn, away_team, 3, league_name=m_league)
 
             c_conn.close()
         except Exception as err:

@@ -80,6 +80,31 @@ class MatchService:
                         match.match_date = m_data["match_date"]
                         db.commit()
 
+                # 선발 예고 투수(probablePitcher)가 제공된 경우 match_details.team_stats에 자동 등록
+                if m_data.get("probable_pitcher_home") or m_data.get("probable_pitcher_away"):
+                    detail = db.query(MatchDetail).filter(MatchDetail.match_id == match.id).first()
+                    if not detail:
+                        detail = MatchDetail(match_id=match.id, period_scores="{}", team_stats="{}", source_url=None)
+                        db.add(detail)
+                        db.commit()
+                        db.refresh(detail)
+                    ts = {}
+                    if detail.team_stats:
+                        try:
+                            ts = json.loads(detail.team_stats)
+                        except:
+                            ts = {}
+                    if not detail.is_customized:
+                        h_p = m_data.get("probable_pitcher_home")
+                        a_p = m_data.get("probable_pitcher_away")
+                        if h_p or a_p:
+                            ts["starters"] = {
+                                "home": {"name": h_p or "선발 예고", "confirmed": bool(h_p), "throws": "우완"},
+                                "away": {"name": a_p or "선발 예고", "confirmed": bool(a_p), "throws": "우완"}
+                            }
+                            detail.team_stats = json.dumps(ts, ensure_ascii=False)
+                            db.commit()
+
                 if match.status in ["FINISHED", "LIVE"]:
                     if not match.details or not match.player_stats or match.status == "LIVE":
                         cls._sync_match_details_and_players(db, match, scraper)
