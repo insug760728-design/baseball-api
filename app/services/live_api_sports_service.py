@@ -402,6 +402,12 @@ class LiveApiSportsService:
                 )
             ).all()
 
+            # Auto-resolve stale LIVE matches older than 4.5 hours to FINISHED
+            stale_cutoff = (now_dt - timedelta(hours=4, minutes=30)).strftime("%Y-%m-%d %H:%M")
+            stale_live = db.query(Match).filter(Match.sport_code == "SOCCER", Match.status == "LIVE", Match.match_date < stale_cutoff).all()
+            for sm in stale_live:
+                sm.status = "FINISHED"
+
             db_by_home = defaultdict(list)
             for m in db_matches:
                 db_by_home[get_canonical(m.home_team_name)].append(m)
@@ -518,6 +524,12 @@ class LiveApiSportsService:
                     Match.match_date.like(f"{d_tomorrow}%")
                 )
             ).all()
+
+            # Auto-resolve stale LIVE matches older than 4.5 hours to FINISHED
+            stale_cutoff = (now_dt - timedelta(hours=4, minutes=30)).strftime("%Y-%m-%d %H:%M")
+            stale_live = db.query(Match).filter(Match.sport_code == "BASEBALL", Match.status == "LIVE", Match.match_date < stale_cutoff).all()
+            for sm in stale_live:
+                sm.status = "FINISHED"
 
             db_by_home = defaultdict(list)
             for m in db_matches:

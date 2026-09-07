@@ -38,7 +38,7 @@
       background-color: var(--bg-main);
       color: var(--text-main);
       font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
-      overflow-x: hidden !important;
+      overflow-x: clip !important;
       max-width: 100vw !important;
       width: 100% !important;
       touch-action: pan-y pinch-zoom;
@@ -53,16 +53,21 @@
     ::-webkit-scrollbar-thumb { background: #27354f; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
 
-    /* Navbar */
+    /* Navbar: Fixed at top on scroll */
     .navbar-glass {
-      background: rgba(10, 14, 26, 0.88);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      background: rgba(10, 14, 26, 0.96) !important;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border-color);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      height: 52px;
+      z-index: 1050 !important;
       transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
     }
     .nav-brand-title {
       font-weight: 800;
@@ -83,7 +88,7 @@
     }
     @media (max-width: 768px) {
       html, body {
-        overflow-x: hidden !important;
+        overflow-x: clip !important;
         width: 100% !important;
         max-width: 100vw !important;
         touch-action: pan-y pinch-zoom !important;
@@ -91,6 +96,7 @@
       }
       .navbar-glass {
         padding: 6px 8px !important;
+        height: 50px !important;
       }
       .navbar-glass .dash-container {
         padding: 0 !important;
@@ -654,6 +660,7 @@
       margin-bottom: 6px;
       cursor: pointer;
       transition: all 0.15s ease;
+      scroll-margin-top: 115px;
     }
     .pred-card-compact:hover {
       background: rgba(30, 41, 59, 0.95);
@@ -664,6 +671,12 @@
       background: linear-gradient(135deg, rgba(2, 132, 199, 0.28) 0%, rgba(15, 23, 42, 0.98) 100%);
       border: 1.5px solid #00F0FF !important;
       box-shadow: 0 0 14px rgba(0, 240, 255, 0.4);
+    }
+    .current-time-glow {
+      border-color: #00F0FF !important;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.8) !important;
+      transform: scale(1.01);
+      transition: all 0.3s ease;
     }
     .vip-gold-glow {
       box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
@@ -1531,6 +1544,7 @@
 
 
     #mainAppWrapper {
+      padding-top: 52px;
       transition: filter 0.3s ease, opacity 0.3s ease;
     }
 
@@ -4558,7 +4572,11 @@ function getFullModalMatchList() {
       const now = new Date();
       const d0Str = getKSTDateString(now);
       const d1Str = getKSTDateString(new Date(now.getTime() + 86400000));
+      const nowKstDateTime = getKSTDateTimeString(now);
+      const bufferKstDateTime = getKSTDateTimeString(new Date(now.getTime() - 20 * 60 * 1000));
+      const nowKstTimeOnly = nowKstDateTime.slice(11, 16);
 
+      let dividerInserted = false;
       let html = '';
       filtered.forEach(m => {
         const isSel = (currentCenterMode === 'DETAIL' && m.id === selectedPredMatchId);
@@ -4567,6 +4585,32 @@ function getFullModalMatchList() {
         if (m.sport_code === 'BASKETBALL') sportIcon = '🏀';
 
         const rawDate = m.match_date || '';
+
+        // Insert Current Time Anchor Divider right before the first upcoming or in-progress match
+        if (!dividerInserted && (currentPredDate === 'ALL' || currentPredDate === 'D0')) {
+          let isLiveToday = false;
+          if (m.status === 'LIVE' && rawDate) {
+            try {
+              const d = new Date(rawDate.replace(' ', 'T'));
+              const diffHours = (now.getTime() - d.getTime()) / (1000 * 60 * 60);
+              if (diffHours >= -0.5 && diffHours <= 4.5) isLiveToday = true;
+            } catch(e) {}
+          }
+          const isUpcoming = (rawDate >= bufferKstDateTime && m.status !== 'FINISHED');
+          if (isLiveToday || isUpcoming) {
+            html += `
+              <div id="currentTimeDivider" class="my-2 py-1 px-2 d-flex align-items-center justify-content-between flex-nowrap" style="background: linear-gradient(90deg, rgba(2, 132, 199, 0.35), rgba(15, 23, 42, 0.95)); border-left: 3.5px solid #00F0FF; border-radius: 6px; box-shadow: 0 0 14px rgba(0, 240, 255, 0.25); white-space: nowrap;">
+                <div class="d-flex align-items-center gap-1.5 text-truncate">
+                  <span class="pulse-dot" style="display:inline-block; width:7px; height:7px; min-width:7px; border-radius:50%; background:#00F0FF; box-shadow: 0 0 8px #00F0FF;"></span>
+                  <span class="text-white fw-bold" style="font-size: 0.74rem;"><i class="bi bi-clock-history text-warning me-1"></i>현재시간 (${nowKstTimeOnly}) 이후 경기</span>
+                </div>
+                <span class="text-info small fw-bold text-nowrap ms-1" style="font-size: 0.68rem;"><i class="bi bi-arrow-up text-warning me-0.5"></i>지난경기 위로 스크롤</span>
+              </div>
+            `;
+            dividerInserted = true;
+          }
+        }
+
         let dayBadge = '';
         if (rawDate.startsWith(d0Str)) dayBadge = '<span class="badge bg-danger bg-opacity-75 me-1" style="font-size:0.65rem;">오늘</span>';
         else if (rawDate.startsWith(d1Str)) dayBadge = '<span class="badge bg-primary bg-opacity-75 me-1" style="font-size:0.65rem;">내일</span>';
@@ -4658,82 +4702,119 @@ function getFullModalMatchList() {
       });
 
       container.innerHTML = html;
+
+      // Always automatically position view starting from current time onwards
+      if (currentPredDate !== 'FINISHED') {
+        scrollToCurrentTimeMatch(false);
+        setTimeout(() => scrollToCurrentTimeMatch(false), 80);
+      } else {
+        container.scrollTop = 0;
+      }
+    }
+
+    function findCurrentOrNextMatchCard(cards) {
+      if (!cards || cards.length === 0) return null;
+
+      const now = new Date();
+      const bufferTimeStr = getKSTDateTimeString(new Date(now.getTime() - 20 * 60 * 1000));
+
+      // 1. Truly active LIVE match of today
+      let bestLiveCard = null;
+      let minLiveDiff = Infinity;
+      cards.forEach(card => {
+        const status = card.getAttribute('data-match-status');
+        const mDate = card.getAttribute('data-match-date') || '';
+        if (status === 'LIVE' && mDate) {
+          try {
+            const d = new Date(mDate.replace(' ', 'T'));
+            const diffHours = (now.getTime() - d.getTime()) / (1000 * 60 * 60);
+            if (diffHours >= -0.5 && diffHours <= 4.5) {
+              const absDiff = Math.abs(diffHours);
+              if (absDiff < minLiveDiff) {
+                minLiveDiff = absDiff;
+                bestLiveCard = card;
+              }
+            }
+          } catch(e) {}
+        }
+      });
+      if (bestLiveCard) return bestLiveCard;
+
+      // 2. First upcoming or in-progress match at or after bufferTimeStr
+      for (const card of cards) {
+        const mDate = card.getAttribute('data-match-date') || '';
+        const status = card.getAttribute('data-match-status');
+        if (mDate && mDate >= bufferTimeStr && status !== 'FINISHED') {
+          return card;
+        }
+      }
+
+      // 3. Any match with mDate >= bufferTimeStr
+      for (const card of cards) {
+        const mDate = card.getAttribute('data-match-date') || '';
+        if (mDate && mDate >= bufferTimeStr) {
+          return card;
+        }
+      }
+
+      // 4. Fallback: match closest to now
+      let fallbackCard = cards[0];
+      let minDiff = Infinity;
+      cards.forEach(card => {
+        const mDate = card.getAttribute('data-match-date') || '';
+        if (mDate) {
+          try {
+            const d = new Date(mDate.replace(' ', 'T'));
+            const diff = Math.abs(now.getTime() - d.getTime());
+            if (diff < minDiff) {
+              minDiff = diff;
+              fallbackCard = card;
+            }
+          } catch(e) {}
+        }
+      });
+      return fallbackCard;
     }
 
     function scrollToCurrentTimeMatch(isManual = false) {
       const container = document.getElementById('predMatchList');
       if (!container) return;
 
-      const cards = container.querySelectorAll('.pred-card-compact');
-      if (!cards || cards.length === 0) return;
+      const cards = Array.from(container.querySelectorAll('.pred-card-compact'));
+      if (cards.length === 0) return;
 
-      const now = new Date();
-      let targetCard = null;
-      let minDiff = Infinity;
+      const targetCard = findCurrentOrNextMatchCard(cards);
+      if (!targetCard) return;
 
-      cards.forEach(card => {
-        const status = card.getAttribute('data-match-status');
-        const mDate = card.getAttribute('data-match-date');
+      const divider = document.getElementById('currentTimeDivider');
+      const elementToAlign = divider || targetCard;
 
-        let isLiveActive = false;
-        let diff = Infinity;
+      const isMobile = window.innerWidth <= 768 || currentViewMode === 'mobile';
 
-        if (mDate) {
-          try {
-            const d = new Date(mDate);
-            diff = Math.abs(d.getTime() - now.getTime());
-            const hoursPassed = (now.getTime() - d.getTime()) / (1000 * 60 * 60);
-            // Only truly active LIVE matches started within 3.5 hours
-            if (status === 'LIVE' && hoursPassed >= -0.2 && hoursPassed <= 3.5) {
-              isLiveActive = true;
-            }
-          } catch(e){}
-        }
-
-        if (isLiveActive) {
-          if (!targetCard || targetCard.getAttribute('data-match-status') !== 'LIVE' || diff < minDiff) {
-            targetCard = card;
-            minDiff = diff;
-          }
-        } else if (!targetCard && status !== 'FINISHED') {
-          // If no active live match, pick the upcoming match closest to now
-          if (diff < minDiff) {
-            minDiff = diff;
-            targetCard = card;
-          }
-        }
-      });
-
-      // If still no targetCard (e.g. all finished), find the match closest to now
-      if (!targetCard && cards.length > 0) {
-        cards.forEach(card => {
-          const mDate = card.getAttribute('data-match-date');
-          if (mDate) {
-            try {
-              const d = new Date(mDate);
-              const diff = Math.abs(d.getTime() - now.getTime());
-              if (diff < minDiff) {
-                minDiff = diff;
-                targetCard = card;
-              }
-            } catch(e){}
-          }
+      if (isMobile) {
+        // Mobile window scroll (align cleanly below fixed navbar 52px + sticky mobileTabBar 50px)
+        const rect = elementToAlign.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const targetY = rect.top + scrollTop - 112;
+        window.scrollTo({
+          top: Math.max(0, targetY),
+          behavior: isManual ? 'smooth' : 'auto'
         });
-        if (!targetCard) targetCard = cards[0];
+      } else {
+        // Desktop internal scroll in predMatchList
+        const targetOffset = elementToAlign.offsetTop - container.offsetTop;
+        container.scrollTop = Math.max(0, targetOffset - 4);
       }
 
-      if (targetCard) {
-        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        targetCard.classList.add('current-time-glow');
-        setTimeout(() => {
-          targetCard.classList.remove('current-time-glow');
-        }, 2000);
+      targetCard.classList.add('current-time-glow');
+      setTimeout(() => {
+        targetCard.classList.remove('current-time-glow');
+      }, 2500);
 
-        if (isManual) {
-          const matchId = targetCard.id.replace('predMatchCard_', '');
-          if (matchId) {
-            selectPredMatch(Number(matchId));
-          }
+      if (isManual) {
+        const matchId = targetCard.id.replace('predMatchCard_', '');
+        if (matchId) {
+          selectPredMatch(Number(matchId));
         }
       }
     }
@@ -6533,11 +6614,18 @@ function getFullModalMatchList() {
         else retBtn.classList.add('d-none');
       }
 
-      // Smooth scroll to top of content
-      const sec = document.getElementById('prediction-section');
-      if (sec && currentViewMode === 'mobile') {
-        const y = sec.getBoundingClientRect().top + window.pageYOffset - 58;
-        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+      // If schedule tab, position view starting from current time onwards
+      if (tabKey === 'schedule') {
+        setTimeout(() => {
+          scrollToCurrentTimeMatch(false);
+        }, 80);
+      } else {
+        // Smooth scroll to top of content
+        const sec = document.getElementById('prediction-section');
+        if (sec && currentViewMode === 'mobile') {
+          const y = sec.getBoundingClientRect().top + window.pageYOffset - 58;
+          window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+        }
       }
     }
 
