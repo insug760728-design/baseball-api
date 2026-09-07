@@ -94,9 +94,23 @@
         touch-action: pan-y pinch-zoom !important;
         overscroll-behavior-x: none !important;
       }
+      #mainAppWrapper {
+        padding-top: 96px !important;
+      }
       .navbar-glass {
-        padding: 6px 8px !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
         height: 50px !important;
+        z-index: 1050 !important;
+        padding: 6px 8px !important;
+        background: rgba(10, 14, 26, 0.98) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6) !important;
       }
       .navbar-glass .dash-container {
         padding: 0 !important;
@@ -114,6 +128,48 @@
         font-size: 0.72rem !important;
         padding: 2px 6px !important;
       }
+      #mobileTabBar {
+        display: flex !important;
+        position: fixed !important;
+        top: 50px !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: 46px !important;
+        margin: 0 !important;
+        padding: 3px 6px !important;
+        border-radius: 0 0 10px 10px !important;
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-bottom: 1.5px solid #00F0FF !important;
+        background: rgba(11, 17, 32, 0.98) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        z-index: 1045 !important;
+        box-shadow: 0 4px 20px rgba(0, 240, 255, 0.3) !important;
+      }
+      #mobileTabBar .dash-container {
+        padding: 0 !important;
+        width: 100% !important;
+      }
+      #mobileTabBar .mobile-tab-btn {
+        min-height: 40px !important;
+        height: 40px !important;
+        padding: 2px 4px !important;
+        font-size: 0.75rem !important;
+        line-height: 1.15 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 8px !important;
+      }
+      #mobileTabBar .mobile-tab-btn i {
+        font-size: 0.95rem !important;
+        line-height: 1 !important;
+        margin-bottom: 2px !important;
+      }
       .breaking-ticker {
         padding: 4px 0 !important;
         font-size: 0.78rem !important;
@@ -126,6 +182,30 @@
       .login-lock-card {
         padding: 24px 16px !important;
         border-radius: 16px !important;
+      }
+      .pred-card-compact {
+        scroll-margin-top: 105px !important;
+      }
+      #currentTimeDivider {
+        scroll-margin-top: 105px !important;
+      }
+      #prediction-section {
+        scroll-margin-top: 96px !important;
+      }
+    }
+    @media (min-width: 769px) {
+      #mobileTabBar:not(.d-flex) {
+        display: none !important;
+      }
+      #mobileTabBar.d-flex {
+        position: sticky !important;
+        top: 52px !important;
+        max-width: 460px !important;
+        margin: 0 auto !important;
+        z-index: 1045 !important;
+      }
+      #mainAppWrapper {
+        padding-top: 52px !important;
       }
     }
     @media (max-width: 576px) {
@@ -1620,6 +1700,26 @@
     </div>
   </nav>
 
+  <!-- 📱 핸드폰 모바일 전용 1-Tap 상단 탭 단축키 (고정 네비게이션) -->
+  <div id="mobileTabBar" class="d-none flex-column p-1" style="background: rgba(11, 17, 32, 0.98); border-bottom: 1.5px solid #00F0FF; z-index: 1045; box-shadow: 0 4px 20px rgba(0, 240, 255, 0.35);">
+    <div class="dash-container">
+      <div class="d-flex justify-content-between align-items-center gap-1 w-100">
+        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabSchedule" onclick="switchMobileTab('schedule')">
+          <i class="bi bi-calendar3 d-block mb-0.5" style="font-size: 1rem;"></i>일정/스코어
+        </button>
+        <button class="btn btn-sm mobile-tab-btn active flex-fill" id="mobTabCenter" onclick="switchMobileTab('center')">
+          <i class="bi bi-pie-chart-fill d-block mb-0.5" style="font-size: 1rem;"></i>분석·승부예측
+        </button>
+        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabCommunity" onclick="switchMobileTab('community')">
+          <i class="bi bi-chat-dots-fill d-block mb-0.5 text-success" style="font-size: 1rem;"></i>실시간 팬톡
+        </button>
+        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabNews" onclick="switchMobileTab('news')">
+          <i class="bi bi-newspaper d-block mb-0.5 text-primary" style="font-size: 1rem;"></i>스포츠뉴스
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Live Breaking News Marquee (로고 아래 실시간 가로 이동 뉴스 티커) -->
   <div class="breaking-ticker" style="background: rgba(15, 23, 42, 0.95); border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding: 6px 0;">
     <div class="dash-container">
@@ -1642,25 +1742,6 @@
   <!-- 🔮 [TOKEON PRO ANALYTICS 3:3:4 Dashboard] 좌(3): 경기바 30% | 중(3): 메인 분석창 & 14경기 토토 마킹표 30% | 우(4): 실시간 라이브 팬룸 40% -->
   <section class="py-2 px-1" id="prediction-section" style="background: radial-gradient(circle at 50% 0%, #131c34 0%, #0a0e1a 100%); border-bottom: 2px solid #1e293b;">
     <div class="dash-container">
-      
-      <!-- 📱 핸드폰 모바일 전용 1-Tap 탭 네비게이터 (전체화면 자연스러운 스크롤) -->
-      <div id="mobileTabBar" class="d-none flex-column p-1.5 mb-2 rounded-3" style="background: rgba(11, 17, 32, 0.98); border: 1.5px solid #00F0FF; position: sticky; top: 52px; z-index: 990; box-shadow: 0 4px 20px rgba(0, 240, 255, 0.35);">
-        <div class="d-flex justify-content-between align-items-center gap-1 w-100">
-          <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabSchedule" onclick="switchMobileTab('schedule')">
-            <i class="bi bi-calendar3 d-block mb-1" style="font-size: 1.05rem;"></i>일정/스코어
-          </button>
-          <button class="btn btn-sm mobile-tab-btn active flex-fill" id="mobTabCenter" onclick="switchMobileTab('center')">
-            <i class="bi bi-pie-chart-fill d-block mb-1" style="font-size: 1.05rem;"></i>분석·승부예측
-          </button>
-          <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabCommunity" onclick="switchMobileTab('community')">
-            <i class="bi bi-chat-dots-fill d-block mb-1 text-success" style="font-size: 1.05rem;"></i>실시간 팬톡
-          </button>
-          <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabNews" onclick="switchMobileTab('news')">
-            <i class="bi bi-newspaper d-block mb-1 text-primary" style="font-size: 1.05rem;"></i>스포츠뉴스
-          </button>
-        </div>
-      </div>
-
 
       <!-- 3 : 4 : 3 Side-by-Side Unified Dashboard Row -->
       <div class="dashboard-row" id="dashboardRow">
@@ -2304,7 +2385,7 @@
             <button class="btn btn-sm btn-outline-secondary text-light fw-bold px-2 py-1" onclick="openMembersModal()" title="실제 가입 회원 목록" style="border-radius: 8px; font-size: 0.75rem; border-color: rgba(255, 255, 255, 0.2);">
               <i class="bi bi-people-fill text-warning"></i><span class="d-none d-sm-inline ms-1">회원</span>
             </button>
-            <button class="btn btn-sm btn-warning text-dark fw-bold px-2.5 py-1" onclick="openLoginModal()" style="border-radius: 8px; box-shadow: 0 0 12px rgba(245, 158, 11, 0.45); font-size: 0.78rem;">
+            <button class="btn btn-sm btn-warning text-dark fw-bold px-2.5 py-1" onclick="openLoginModal()" id="btnNavLogin" style="border-radius: 8px; box-shadow: 0 0 12px rgba(245, 158, 11, 0.45); font-size: 0.78rem;">
               <i class="bi bi-box-arrow-in-right me-1"></i>로그인
             </button>
           `;
@@ -4792,10 +4873,10 @@ function getFullModalMatchList() {
       const isMobile = window.innerWidth <= 768 || currentViewMode === 'mobile';
 
       if (isMobile) {
-        // Mobile window scroll (align cleanly below fixed navbar 52px + sticky mobileTabBar 50px)
+        // Mobile window scroll (align cleanly below fixed navbar 50px + fixed mobileTabBar 46px = 96px)
         const rect = elementToAlign.getBoundingClientRect();
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const targetY = rect.top + scrollTop - 112;
+        const targetY = rect.top + scrollTop - 104;
         window.scrollTo({
           top: Math.max(0, targetY),
           behavior: isManual ? 'smooth' : 'auto'
@@ -6623,7 +6704,7 @@ function getFullModalMatchList() {
         // Smooth scroll to top of content
         const sec = document.getElementById('prediction-section');
         if (sec && currentViewMode === 'mobile') {
-          const y = sec.getBoundingClientRect().top + window.pageYOffset - 58;
+          const y = sec.getBoundingClientRect().top + window.pageYOffset - 100;
           window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
         }
       }
