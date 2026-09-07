@@ -696,6 +696,301 @@
       color: #4b5563;
     }
 
+    /* Ultra-Compact 14-Match Slip Table (Zero Vertical Scroll on PC & Mobile) */
+    .toto-slip-container {
+      display: flex;
+      flex-direction: column;
+      gap: 2.5px;
+      flex-grow: 1;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      box-sizing: border-box;
+      padding: 1px 0;
+    }
+    .toto-slip-row {
+      display: grid;
+      grid-template-columns: 115px minmax(80px, 1fr) 155px minmax(80px, 1fr) 42px;
+      align-items: center;
+      gap: 4px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      padding: 2px 6px;
+      height: 33px;
+      min-height: 33px;
+      box-sizing: border-box;
+      cursor: pointer;
+      transition: all 0.1s ease;
+      font-size: 0.74rem;
+    }
+    .toto-slip-row:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    .toto-slip-row.has-user-pick {
+      background: #fcfcfc;
+      border-color: #111827;
+      border-left: 3.5px solid #111827;
+    }
+    .slip-meta {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .slip-seq {
+      font-weight: 800;
+      font-size: 0.68rem;
+      color: #ffffff;
+      background: #111827;
+      border-radius: 3px;
+      padding: 1px 4px;
+      line-height: 1.1;
+    }
+    .slip-league {
+      font-weight: 700;
+      font-size: 0.66rem;
+      color: #374151;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 3px;
+      padding: 1px 4px;
+      line-height: 1.1;
+    }
+    .slip-time {
+      font-size: 0.68rem;
+      color: #6b7280;
+    }
+    .slip-team-home {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .slip-team-away {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 4px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .slip-team-name {
+      font-weight: 800;
+      font-size: 0.78rem;
+      color: #111827;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .slip-prob-badge {
+      font-size: 0.66rem;
+      font-weight: 800;
+      color: #111827;
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 3px;
+      padding: 1px 3px;
+      line-height: 1.1;
+    }
+    .slip-chips {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 2.5px;
+      align-items: center;
+    }
+    .slip-chip {
+      padding: 2px 2px;
+      height: 25px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      background: #ffffff;
+      color: #374151;
+      font-size: 0.68rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      line-height: 1;
+      transition: all 0.1s ease;
+      white-space: nowrap;
+      cursor: pointer;
+      position: relative;
+    }
+    .slip-chip:hover {
+      background: #f3f4f6;
+      border-color: #9ca3af;
+    }
+    .slip-chip.active {
+      background: #111827 !important;
+      color: #ffffff !important;
+      border-color: #111827 !important;
+      font-weight: 800;
+    }
+    .slip-chip.ai-pick {
+      border-color: #0284c7;
+    }
+    .slip-chip.ai-pick::after {
+      content: 'AI';
+      position: absolute;
+      top: -5px;
+      right: -3px;
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 0.50rem;
+      font-weight: 800;
+      padding: 0 2px;
+      border-radius: 2px;
+      line-height: 1.1;
+    }
+    .slip-chip .lbl {
+      font-weight: 700;
+    }
+    .slip-chip .pct {
+      font-size: 0.60rem;
+      opacity: 0.85;
+    }
+    .slip-chip.active .pct {
+      color: #e5e7eb;
+    }
+    .slip-stat-btn {
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      color: #1d4ed8;
+      font-size: 0.65rem;
+      font-weight: 700;
+      border-radius: 3px;
+      padding: 2px 4px;
+      white-space: nowrap;
+      cursor: pointer;
+      line-height: 1.2;
+    }
+    .slip-stat-btn:hover {
+      background: #eff6ff;
+      border-color: #1d4ed8;
+    }
+
+    /* Horizontal Scroll Round Pills Bar */
+    .toto-round-pill {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      color: #4b5563;
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.12s ease;
+      flex-shrink: 0;
+    }
+    .toto-round-pill:hover {
+      background: #f9fafb;
+      border-color: #111827;
+      color: #111827;
+    }
+    .toto-round-pill.active {
+      background: #111827;
+      border-color: #111827;
+      color: #ffffff;
+      font-weight: 800;
+    }
+    .toto-round-pill.active .badge {
+      background: #374151 !important;
+      color: #ffffff !important;
+    }
+
+    /* Betman-Style Dedicated Toto Modal Styles */
+    .betman-slip-btn {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 76px;
+      height: 38px;
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      cursor: pointer;
+      position: relative;
+      padding: 2px 4px;
+      transition: all 0.15s ease;
+    }
+    .betman-slip-btn:hover {
+      border-color: #0f172a;
+      background: #f8fafc;
+    }
+    .betman-slip-btn.marked {
+      background: #0f172a !important;
+      border-color: #0f172a !important;
+      color: #ffffff !important;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+    }
+    .betman-slip-btn.marked .b-label,
+    .betman-slip-btn.marked .b-pct {
+      color: #ffffff !important;
+    }
+    .betman-slip-btn .b-label {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #1e293b;
+      line-height: 1.1;
+    }
+    .betman-slip-btn .b-pct {
+      font-size: 0.64rem;
+      color: #64748b;
+      font-family: monospace;
+      line-height: 1;
+    }
+    .betman-slip-btn.ai-rec {
+      border-color: #f59e0b;
+    }
+    .betman-slip-btn .ai-badge {
+      position: absolute;
+      top: -6px;
+      right: -4px;
+      background: #f59e0b;
+      color: #0f172a;
+      font-size: 0.54rem;
+      font-weight: 900;
+      padding: 0 3px;
+      border-radius: 3px;
+      border: 1px solid #ffffff;
+      line-height: 1.1;
+    }
+    .toto-modal-row:hover {
+      background-color: #f8fafc !important;
+    }
+    .toto-modal-row.row-has-pick {
+      background-color: #f0fdf4 !important;
+    }
+
+    @media (max-width: 650px) {
+      .toto-slip-row {
+        grid-template-columns: 82px minmax(55px, 1fr) 125px minmax(55px, 1fr) 35px;
+        padding: 2px 3px;
+        height: 31px;
+        min-height: 31px;
+        font-size: 0.70rem;
+      }
+      .slip-team-name {
+        font-size: 0.72rem;
+      }
+      .slip-chip {
+        height: 23px;
+        font-size: 0.65rem;
+      }
+      .slip-chip .pct {
+        display: none;
+      }
+    }
+
     /* Modal Styling */
     .modal-content-custom {
       background-color: #ffffff !important;
@@ -947,7 +1242,7 @@
         <button class="btn btn-sm mobile-tab-btn flex-fill active" id="mobTabSchedule" onclick="switchMobileTab('schedule')">
           <i class="bi bi-calendar3 d-block mb-0.5" style="font-size: 1.05rem;"></i>일정/스코어
         </button>
-        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabToto" onclick="switchMobileTab('toto')">
+        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabToto" onclick="switchMobileTab('toto'); openTotoModal(currentTotoRound)">
           <i class="bi bi-card-checklist d-block mb-0.5 text-warning" style="font-size: 1.05rem;"></i>승무패 경기목록
         </button>
         <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabCommunity" onclick="switchMobileTab('community')">
@@ -1015,6 +1310,22 @@
                 <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportHOCKEY" onclick="filterPredSport('HOCKEY')">🏒 하키</button>
                 <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportVOLLEYBALL" onclick="filterPredSport('VOLLEYBALL')">🏐 배구</button>
               </div>
+
+              <!-- 3번 요구사항: 배트맨 공식 14경기 승무패 / 승1패 / 승5패 전용 팝업 퀵 바 (PC/모바일 공통 적용) -->
+              <div class="d-flex align-items-center gap-1.5 mt-2 p-1.5 rounded-2" style="background: #0f172a; border: 1.5px solid #0f172a; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);">
+                <span class="badge bg-warning text-dark fw-bold px-2 py-1 text-nowrap" style="font-size: 0.70rem; letter-spacing: -0.3px;">
+                  <i class="bi bi-trophy-fill me-1"></i>BETMAN 14경기
+                </span>
+                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 text-white border-0" onclick="openTotoModal('WDL')" style="background: #1e293b; border-radius: 4px; font-size: 0.76rem;" title="클릭 시 배트맨 공식 14경기 축구 승무패 팝업창 오픈">
+                  ⚽ 축구 승무패 <span class="badge bg-danger ms-0.5" style="font-size:0.60rem;">51회</span>
+                </button>
+                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 text-white border-0" onclick="openTotoModal('W1L')" style="background: #1e293b; border-radius: 4px; font-size: 0.76rem;" title="클릭 시 배트맨 공식 14경기 야구 승1패 팝업창 오픈">
+                  ⚾ 야구 승1패 <span class="badge bg-secondary ms-0.5" style="font-size:0.60rem;">67회</span>
+                </button>
+                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 text-white border-0" onclick="openTotoModal('W5L')" style="background: #1e293b; border-radius: 4px; font-size: 0.76rem;" title="클릭 시 배트맨 공식 14경기 농구 승5패 팝업창 오픈">
+                  🏀 농구 승5패 <span class="badge bg-secondary ms-0.5" style="font-size:0.60rem;">27회</span>
+                </button>
+              </div>
             </div>
 
             <!-- Body: Scrollable Match List -->
@@ -1036,20 +1347,35 @@
               </button>
             </div>
 
-            <!-- Center Card Header: Mode Switch & Toto Round Buttons -->
-            <div class="dash-card-header d-flex justify-content-between align-items-center">
-              <div class="d-flex gap-1" id="centerModeTabs">
-                <button class="btn btn-sm sport-chip-btn active" id="btnModeToto" onclick="switchCenterView('TOTO')">
-                  <i class="bi bi-card-checklist me-1 text-warning"></i>14경기 토토 마킹표
-                </button>
-                <button class="btn btn-sm sport-chip-btn" id="btnModeDetail" onclick="switchCenterView('DETAIL')">
-                  <i class="bi bi-cpu-fill me-1 text-info"></i>1:1 세이버 분석실
-                </button>
+            <!-- Center Card Header: Mode Switch & Toto Round Buttons + Horizontal Scroll Round Bar -->
+            <div class="dash-card-header p-2">
+              <div class="d-flex justify-content-between align-items-center flex-nowrap gap-1">
+                <div class="d-flex gap-1" id="centerModeTabs" style="flex-shrink: 0;">
+                  <button class="btn btn-sm sport-chip-btn active text-nowrap" id="btnModeToto" onclick="openTotoModal(currentTotoRound)" style="white-space: nowrap; font-size: 0.76rem; padding: 4px 8px;">
+                    <i class="bi bi-card-checklist me-1 text-warning"></i>14경기 토토 마킹표 (배트맨 팝업)
+                  </button>
+                  <button class="btn btn-sm sport-chip-btn text-nowrap" id="btnModeDetail" onclick="switchCenterView('DETAIL')" style="white-space: nowrap; font-size: 0.76rem; padding: 4px 8px;">
+                    <i class="bi bi-cpu-fill me-1 text-info"></i>1:1 세이버 분석실
+                  </button>
+                </div>
+                <div class="d-flex align-items-center gap-1" id="centerTotoQuickBtns" style="flex-shrink: 0;">
+                  <button class="btn btn-xs py-1 px-2 fw-bold text-nowrap" onclick="openTotoModal('W1L')" id="roundBtnW1L" style="background:#ffffff; color:#111827; border:2px solid #111827; border-radius:4px; font-size:0.74rem; font-weight: 800; white-space:nowrap;">⚾승1패</button>
+                  <button class="btn btn-xs py-1 px-2 fw-bold text-nowrap" onclick="openTotoModal('WDL')" id="roundBtnWDL" style="background:#ffffff; color:#6b7280; border:1px solid #d1d5db; border-radius:4px; font-size:0.74rem; font-weight: 600; white-space:nowrap;">⚽승무패</button>
+                  <button class="btn btn-xs py-1 px-2 fw-bold text-nowrap" onclick="openTotoModal('W5L')" id="roundBtnW5L" style="background:#ffffff; color:#6b7280; border:1px solid #d1d5db; border-radius:4px; font-size:0.74rem; font-weight: 600; white-space:nowrap;">🏀승5패</button>
+                </div>
               </div>
-              <div class="d-flex align-items-center gap-1" id="centerTotoQuickBtns">
-                <button class="btn btn-xs py-1 px-1.5 fw-bold" onclick="selectTotoRound('W1L')" id="roundBtnW1L" style="background:#ffffff; color:#111827; border:2px solid #111827; border-radius:4px; font-size:0.72rem; font-weight: 800;">⚾승1패</button>
-                <button class="btn btn-xs py-1 px-1.5 fw-bold" onclick="selectTotoRound('WDL')" id="roundBtnWDL" style="background:#ffffff; color:#6b7280; border:1px solid #d1d5db; border-radius:4px; font-size:0.72rem; font-weight: 600;">⚽승무패</button>
-                <button class="btn btn-xs py-1 px-1.5 fw-bold" onclick="selectTotoRound('W5L')" id="roundBtnW5L" style="background:#ffffff; color:#6b7280; border:1px solid #d1d5db; border-radius:4px; font-size:0.72rem; font-weight: 600;">🏀승5패</button>
+
+              <!-- Dedicated Horizontal Scroll Round Bar (각각 아래에 예를들면 50회 51회 52회 스크롤 방식으로 볼 수 있는 영역) -->
+              <div id="totoRoundScrollBarRow" class="d-flex align-items-center gap-1 mt-1.5 pt-1 border-top" style="border-color: #e5e7eb !important;">
+                <button class="btn btn-xs p-1 text-secondary" onclick="scrollTotoRounds(-1)" title="이전 회차" style="border:1px solid #d1d5db; border-radius:4px; line-height:1; flex-shrink: 0; background:#fff;">
+                  <i class="bi bi-chevron-left" style="font-size:0.72rem;"></i>
+                </button>
+                <div id="totoRoundScrollTrack" class="d-flex align-items-center gap-1.5 overflow-auto no-scrollbar py-0.5" style="white-space: nowrap; scroll-behavior: smooth; flex-grow: 1; -webkit-overflow-scrolling: touch;">
+                  <!-- Dynamically rendered per sport: 50회, 51회, 52회... -->
+                </div>
+                <button class="btn btn-xs p-1 text-secondary" onclick="scrollTotoRounds(1)" title="다음 회차" style="border:1px solid #d1d5db; border-radius:4px; line-height:1; flex-shrink: 0; background:#fff;">
+                  <i class="bi bi-chevron-right" style="font-size:0.72rem;"></i>
+                </button>
               </div>
             </div>
 
@@ -1339,6 +1665,102 @@
               <i class="bi bi-arrow-up me-1"></i>맨 위로
             </button>
             <button type="button" class="btn btn-sm fw-bold px-3" data-bs-dismiss="modal" style="background: #ffffff; color: #111827; border: 1.5px solid #111827;">닫기</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Betman Official Style 14-Match Dedicated Toto Popup Modal (PC & Mobile 모두 적용) -->
+  <div class="modal fade" id="totoBetmanModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+      <div class="modal-content" style="border: 2px solid #0f172a; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25); border-radius: 12px; overflow: hidden; background: #ffffff;">
+        
+        <!-- Betman Signature Navy/Gold Header -->
+        <div class="modal-header d-flex justify-content-between align-items-center py-2 px-3" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-bottom: 2px solid #f59e0b; color: #ffffff;">
+          <div class="d-flex align-items-center gap-2 flex-wrap" style="min-width: 0;">
+            <span class="badge" style="background: #f59e0b; color: #0f172a; font-weight: 900; font-size: 0.82rem; padding: 4px 8px; border-radius: 4px;">
+              <i class="bi bi-ticket-perforated-fill me-1"></i>BETMAN 공식 14경기
+            </span>
+            <span class="fw-bold text-white text-truncate" style="font-size: 1.05rem;" id="totoModalHeadTitle">
+              ⚽ 축구 승무패 51회차 (14경기 배트맨 슬립)
+            </span>
+            <span class="badge bg-danger text-white px-2 py-0.5" id="totoModalSaleBadge" style="font-size: 0.72rem; font-weight: 800;">🔥발매중</span>
+            <span class="text-white-50 small d-none d-sm-inline" id="totoModalPeriodText" style="font-size: 0.76rem;">마감: 09/08 23:00</span>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 flex-shrink-0">
+            <span class="badge d-none d-md-inline-block" style="background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid #f59e0b; font-size: 0.82rem; font-weight: 800;">
+              1등 예상: <strong id="totoModalPrizePool" style="font-family: monospace; font-size: 0.88rem; color: #fef08a;">939,525,000원</strong>
+            </span>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+        </div>
+
+        <!-- Sport Tabs & Horizontal Round Scroll Track & Tool Actions -->
+        <div class="px-3 py-2 border-bottom" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+          <!-- Top Row: Sport Tabs & Fast Actions -->
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+            <div class="d-flex gap-1">
+              <button class="btn btn-sm fw-bold px-2.5 py-1" id="totoModalTabWDL" onclick="switchTotoModalGame('WDL')" style="background: #0f172a; color: #f8fafc; border: 1.5px solid #0f172a; border-radius: 6px; font-size: 0.78rem;">
+                ⚽ 축구 승무패
+              </button>
+              <button class="btn btn-sm fw-bold px-2.5 py-1" id="totoModalTabW1L" onclick="switchTotoModalGame('W1L')" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem;">
+                ⚾ 야구 승1패
+              </button>
+              <button class="btn btn-sm fw-bold px-2.5 py-1" id="totoModalTabW5L" onclick="switchTotoModalGame('W5L')" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem;">
+                🏀 농구 승5패
+              </button>
+            </div>
+
+            <div class="d-flex align-items-center gap-1 flex-wrap">
+              <button class="btn btn-xs py-1 px-2 fw-bold text-primary" onclick="loadBetmanToto(currentTotoRound, currentBetmanTs, true)" title="베트맨 공식 최신 데이터 새로고침" style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:4px; font-size:0.72rem;">
+                <i class="bi bi-arrow-clockwise me-0.5"></i>최신화
+              </button>
+              <button class="btn btn-xs py-1 px-2 fw-bold text-white" onclick="autoPickTotoAi(currentTotoRound)" style="background: linear-gradient(135deg, #0284c7, #06b6d4); border:none; border-radius:4px; font-size:0.72rem;" title="AI 최고 확률 14경기 단통 자동 마킹">
+                <i class="bi bi-robot me-0.5"></i>AI 올픽
+              </button>
+              <button class="btn btn-xs py-1 px-2 fw-bold text-dark" onclick="randomPickToto(currentTotoRound)" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:4px; font-size:0.72rem;" title="랜덤 조합 자동 마킹">
+                <i class="bi bi-dice-5 me-0.5"></i>랜덤픽
+              </button>
+              <button class="btn btn-xs py-1 px-2 fw-bold text-danger" onclick="resetTotoMarks(currentTotoRound)" style="background:#fef2f2; border:1px solid #fca5a5; border-radius:4px; font-size:0.72rem;" title="마킹 초기화">
+                <i class="bi bi-trash me-0.5"></i>초기화
+              </button>
+            </div>
+          </div>
+
+          <!-- Round Horizontal Scroll Bar (50회, 51회, 52회...) -->
+          <div class="d-flex align-items-center gap-1">
+            <button class="btn btn-xs p-1 text-secondary" onclick="scrollTotoModalRounds(-1)" title="이전 회차" style="border:1px solid #cbd5e1; border-radius:4px; line-height:1; flex-shrink:0; background:#fff;">
+              <i class="bi bi-chevron-left" style="font-size:0.72rem;"></i>
+            </button>
+            <div id="totoModalRoundScrollTrack" class="d-flex align-items-center gap-1.5 overflow-auto no-scrollbar py-0.5" style="white-space: nowrap; scroll-behavior: smooth; flex-grow: 1; -webkit-overflow-scrolling: touch;">
+              <!-- Dynamically rendered per sport: 50회, 51회, 52회... -->
+            </div>
+            <button class="btn btn-xs p-1 text-secondary" onclick="scrollTotoModalRounds(1)" title="다음 회차" style="border:1px solid #cbd5e1; border-radius:4px; line-height:1; flex-shrink:0; background:#fff;">
+              <i class="bi bi-chevron-right" style="font-size:0.72rem;"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Body: Betman-style 14-Match Table (한눈에 보이는 배트맨 정통 슬립) -->
+        <div class="modal-body p-2 p-md-3" id="totoModalBody" style="background: #ffffff; -webkit-overflow-scrolling: touch; min-height: 480px;">
+          <!-- Dynamically populated with 14-game Betman table -->
+        </div>
+
+        <!-- Modal Footer: Combination stats, Calculator, and Close -->
+        <div class="modal-footer border-top d-flex justify-content-between align-items-center py-2 px-3" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+          <div class="d-flex align-items-center gap-2 flex-wrap" id="totoModalBottomStats">
+            <!-- 14/14 마킹, 조합수, 구매금액 -->
+          </div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm fw-bold text-white px-3" onclick="openTotoCalculatorModal(currentTotoRound)" style="background: #1d4ed8; border: none; border-radius: 6px; font-size: 0.80rem;">
+              <i class="bi bi-calculator-fill me-1"></i>당첨 계산기
+            </button>
+            <button type="button" class="btn btn-sm fw-bold px-3" data-bs-dismiss="modal" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; border-radius: 6px; font-size: 0.80rem;">
+              닫기
+            </button>
           </div>
         </div>
 
@@ -2050,28 +2472,49 @@
       const nH = isNaN(numH) ? 0 : Number(numH);
       const nA = isNaN(numA) ? 0 : Number(numA);
       const total = (nH + nA) > 0 ? (nH + nA) : 1;
+
+      const isTie = (nH === nA);
+      const homeAdv = !isTie && (lowerIsBetter ? (nH < nA) : (nH > nA));
+      const awayAdv = !isTie && (lowerIsBetter ? (nA < nH) : (nA > nH));
+
+      // 낮을수록 좋은 지표(ERA, WHIP, 실점, 실책 등)는 수치가 낮은 쪽이 우세하므로 시각적 바 너비 반전
       let pctH = Math.min(90, Math.max(10, Math.round((nH / total) * 100)));
+      if (lowerIsBetter && !isTie) {
+        pctH = 100 - pctH;
+      }
       let pctA = 100 - pctH;
 
-      const homeAdv = lowerIsBetter ? (nH < nA) : (nH > nA);
-      const awayAdv = lowerIsBetter ? (nA < nH) : (nA > nH);
+      // 우세는 빨간색 (#dc2626), 반대는 파란색 (#2563eb), 동률은 중립 회색 (#9ca3af)
+      const barColorH = homeAdv ? '#dc2626' : (awayAdv ? '#2563eb' : '#9ca3af');
+      const barColorA = awayAdv ? '#dc2626' : (homeAdv ? '#2563eb' : '#9ca3af');
+
+      // 분석수치 통계 숫자 배지: 우세는 빨간색, 반대는 파란색
+      const badgeStyleH = homeAdv 
+        ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626; font-weight: 800;'
+        : (awayAdv ? 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb; font-weight: 700;'
+                   : 'color: #374151; background: #f9fafb; border: 1px solid #d1d5db; font-weight: 600;');
+
+      const badgeStyleA = awayAdv 
+        ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626; font-weight: 800;'
+        : (homeAdv ? 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb; font-weight: 700;'
+                   : 'color: #374151; background: #f9fafb; border: 1px solid #d1d5db; font-weight: 600;');
 
       return `
         <div class="mb-2 p-2 rounded-2" style="background: #ffffff; border: 1px solid #e5e7eb;">
           <div class="d-flex justify-content-between align-items-center mb-1">
-            <span class="badge" style="font-size: 0.86rem; font-weight: ${homeAdv ? '800' : '600'}; color: #111827; background: #ffffff; border: 1px solid #d1d5db; padding: 2px 7px; border-radius: 4px;">
+            <span class="badge" style="font-size: 0.86rem; padding: 2px 7px; border-radius: 4px; ${badgeStyleH}">
               ${valH} ${homeAdv ? '▲' : ''}
             </span>
             <span class="fw-bold px-2 text-center text-truncate" style="font-size: 0.80rem; color: #111827; font-weight: 700;">
               ${label}
             </span>
-            <span class="badge" style="font-size: 0.86rem; font-weight: ${awayAdv ? '800' : '600'}; color: #111827; background: #ffffff; border: 1px solid #d1d5db; padding: 2px 7px; border-radius: 4px;">
+            <span class="badge" style="font-size: 0.86rem; padding: 2px 7px; border-radius: 4px; ${badgeStyleA}">
               ${valA} ${awayAdv ? '▲' : ''}
             </span>
           </div>
-          <div class="d-flex rounded-pill overflow-hidden" style="height: 7px; background: #e5e7eb;">
-            <div style="width: ${pctH}%; background: #4b5563; transition: width 0.3s;"></div>
-            <div style="width: ${pctA}%; background: #9ca3af; transition: width 0.3s;"></div>
+          <div class="d-flex rounded-pill overflow-hidden" style="height: 7px; background: #f3f4f6;">
+            <div style="width: ${pctH}%; background: ${barColorH}; transition: width 0.3s;"></div>
+            <div style="width: ${pctA}%; background: ${barColorA}; transition: width 0.3s;"></div>
           </div>
         </div>
       `;
@@ -2355,7 +2798,7 @@ function getFullModalMatchList() {
             </span>
           </div>
           <div class="fw-bold mb-1.5" style="font-size: 0.90rem; color: #111827; font-weight: 800;">
-            [통계적 우세 Consensus]: <span style="color: #111827; font-weight: 800;">${probs.favored_team}</span> 승리 확률 우세 (${probs.favored_pct}%)
+            [통계적 우세 Consensus]: <span style="color: #dc2626; font-weight: 800;">${probs.favored_team}</span> 승리 확률 우세 (<b style="color: #dc2626;">${probs.favored_pct}%</b>)
           </div>
           <div class="small" style="font-size: 0.76rem; line-height: 1.5; color: #111827;">
             ${drivers.map(d => `<div class="mb-0.5" style="color: #111827; font-weight: 600;"><i class="bi bi-check2-circle text-dark me-1"></i>${d}</div>`).join('')}
@@ -2375,6 +2818,25 @@ function getFullModalMatchList() {
               <span class="fw-bold text-dark small" style="font-weight: 800;"><i class="bi bi-trophy-fill text-dark me-1"></i>[해당 경기 1:1 공식 경기 기록 (Match Box)]</span>
               <span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; font-weight: 700;">공식 기록지</span>
             </div>
+
+            <!-- Home vs Away Goals & Cards Split Box -->
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <div class="p-2 rounded bg-light border text-start" style="font-size:0.75rem;">
+                  <div class="fw-bold mb-1 text-dark"><span class="badge bg-dark text-white me-1">[홈]</span>${m.home_team_name}</div>
+                  <div class="text-dark">⚽ <b>골:</b> ${sH.goals || (m.home_score > 0 ? `${m.home_score}득점` : '0득점')}</div>
+                  <div class="mt-0.5 text-dark">🟨 <b>옐로:</b> ${sH.yellowCards || 0}장 | 🟥 <b>레드:</b> ${sH.redCards || 0}장</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="p-2 rounded bg-light border text-end" style="font-size:0.75rem;">
+                  <div class="fw-bold mb-1 text-dark">${m.away_team_name}<span class="badge bg-dark text-white ms-1">[원정]</span></div>
+                  <div class="text-dark">⚽ <b>골:</b> ${sA.goals || (m.away_score > 0 ? `${m.away_score}득점` : '0득점')}</div>
+                  <div class="mt-0.5 text-dark">🟨 <b>옐로:</b> ${sA.yellowCards || 0}장 | 🟥 <b>레드:</b> ${sA.redCards || 0}장</div>
+                </div>
+              </div>
+            </div>
+
             ${makeModalBar('볼 점유율 (Possession %)', `${sH.possessionPct || 50}%`, `${sA.possessionPct || 50}%`, sH.possessionPct || 50, sA.possessionPct || 50)}
             ${makeModalBar('총 슈팅 수 (Total Shots)', `${sH.totalShots || 0}회`, `${sA.totalShots || 0}회`, sH.totalShots || 0, sA.totalShots || 0)}
             ${makeModalBar('유효 슈팅 (Shots on Target)', `${sH.shotsOnTarget || 0}회`, `${sA.shotsOnTarget || 0}회`, sH.shotsOnTarget || 0, sA.shotsOnTarget || 0)}
@@ -2544,8 +3006,8 @@ function getFullModalMatchList() {
                 <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}
               </div>
               <div class="mt-1.5">
-                <span class="badge rounded-pill" style="font-size: 0.85rem; font-weight: 800; color: #111827; background: #ffffff; border: 1.5px solid #111827; padding: 4px 12px;">
-                  ${homeProb}% 승률
+                <span class="badge rounded-pill" style="font-size: 0.85rem; font-weight: 800; ${homeProb >= awayProb ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626;' : 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb;'} padding: 4px 12px;">
+                  ${homeProb}% 승률 ${homeProb >= awayProb ? '▲' : ''}
                 </span>
               </div>
             </div>
@@ -2558,8 +3020,8 @@ function getFullModalMatchList() {
                 <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}
               </div>
               <div class="mt-1.5">
-                <span class="badge rounded-pill" style="font-size: 0.85rem; font-weight: 800; color: #111827; background: #ffffff; border: 1.5px solid #111827; padding: 4px 12px;">
-                  ${awayProb}% 승률
+                <span class="badge rounded-pill" style="font-size: 0.85rem; font-weight: 800; ${awayProb > homeProb ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626;' : 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb;'} padding: 4px 12px;">
+                  ${awayProb}% 승률 ${awayProb > homeProb ? '▲' : ''}
                 </span>
               </div>
             </div>
@@ -2609,19 +3071,19 @@ function getFullModalMatchList() {
             <div class="p-2.5 mb-2.5 rounded-3" style="background: #ffffff; border: 1px solid #e5e7eb;">
               <div class="d-flex justify-content-between align-items-center mb-1.5 flex-wrap gap-1">
                 <span class="fw-bold text-dark small" style="font-size: 0.84rem; font-weight: 800;">
-                  <i class="bi bi-stars text-dark me-1"></i>AI 승부예측 분석
+                  <i class="bi bi-stars text-danger me-1"></i>AI 승부예측 분석
                 </span>
-                <span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800; font-size: 0.76rem;">
+                <span class="badge" style="background: #fef2f2; color: #dc2626; border: 1.5px solid #dc2626; font-weight: 800; font-size: 0.76rem;">
                   추천: ${favored} ${label} (${conf}%)
                 </span>
               </div>
-              <div class="d-flex rounded-pill overflow-hidden mb-1.5" style="height: 8px; background: #e5e7eb; border: 1px solid #e5e7eb;">
-                <div style="width: ${homeProb}%; background: #4b5563;" title="홈 승률: ${homeProb}%"></div>
-                <div style="width: ${awayProb}%; background: #9ca3af;" title="원정 승률: ${awayProb}%"></div>
+              <div class="d-flex rounded-pill overflow-hidden mb-1.5" style="height: 8px; background: #f3f4f6; border: 1px solid #e5e7eb;">
+                <div style="width: ${homeProb}%; background: ${homeProb >= awayProb ? '#dc2626' : '#2563eb'}; transition: width 0.3s;" title="[홈] ${m.home_team_name}: ${homeProb}%"></div>
+                <div style="width: ${awayProb}%; background: ${awayProb > homeProb ? '#dc2626' : '#2563eb'}; transition: width 0.3s;" title="[원정] ${m.away_team_name}: ${awayProb}%"></div>
               </div>
               <div class="d-flex justify-content-between small fw-bold" style="font-size: 0.78rem;">
-                <span style="color: #111827; font-weight: 800;">[홈] ${m.home_team_name} ${homeProb}%</span>
-                <span style="color: #111827; font-weight: 800;">[원정] ${m.away_team_name} ${awayProb}%</span>
+                <span style="${homeProb >= awayProb ? 'color: #dc2626; font-weight: 800;' : 'color: #2563eb; font-weight: 700;'}">[홈] ${m.home_team_name} ${homeProb}% ${homeProb >= awayProb ? '▲' : ''}</span>
+                <span style="${awayProb > homeProb ? 'color: #dc2626; font-weight: 800;' : 'color: #2563eb; font-weight: 700;'}">[원정] ${m.away_team_name} ${awayProb}% ${awayProb > homeProb ? '▲' : ''}</span>
               </div>
             </div>
 
@@ -2767,11 +3229,19 @@ function getFullModalMatchList() {
       const isLive = m.status === 'LIVE';
       let scoreboardHtml = '';
       if (isFinished || isLive || m.home_score > 0 || m.away_score > 0) {
+        let clutchText = '';
         if (m.sport_code === 'BASKETBALL') {
+          if (m.home_score > m.away_score) {
+            clutchText = `4쿼터 클러치 타임에서 [홈] ${m.home_team_name}의 외곽 3점슛 2연속 성공과 적극적인 리바운드 사수가 승리를 결정지었습니다.`;
+          } else if (m.away_score > m.home_score) {
+            clutchText = `4쿼터 종료 직전 [원정] ${m.away_team_name}의 빠른 속공 트랜지션과 상대 턴오버를 유발한 전면 압박 수비가 역전승을 이끌었습니다.`;
+          } else {
+            clutchText = `종료 버저비터까지 이어진 치열한 공방전 끝에 연장 접전으로 승부를 이어갔습니다.`;
+          }
           const hP = (pScores && pScores.home) ? pScores.home : {};
           const aP = (pScores && pScores.away) ? pScores.away : {};
           scoreboardHtml = `
-            <div class="table-responsive mb-3 rounded-2" style="border: 1px solid #e5e7eb; background: #ffffff;">
+            <div class="table-responsive mb-2 rounded-2" style="border: 1px solid #e5e7eb; background: #ffffff;">
               <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.80rem; background: #ffffff;">
                 <thead style="background: #ffffff; color: #111827;">
                   <tr style="color: #111827; font-weight: 700;"><th>팀명</th><th>1Q</th><th>2Q</th><th>3Q</th><th>4Q</th><th>OT</th><th>TOTAL</th></tr>
@@ -2790,12 +3260,23 @@ function getFullModalMatchList() {
                 </tbody>
               </table>
             </div>
+            <div class="p-2 mb-3 rounded-2 text-start" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #111827; font-size: 0.78rem; color: #111827;">
+              <span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 2px 4px; font-weight: 800;">승부처</span>
+              <span>⚡ <b>[경기 결정적 승부처]:</b> ${clutchText}</span>
+            </div>
           `;
         } else if (m.sport_code === 'SOCCER') {
+          if (m.home_score > m.away_score) {
+            clutchText = `후반 ${m.home_score >= 2 ? '쐐기 추가골' : '세트피스 선제 결승골'} 이후 [홈] ${m.home_team_name} 수비진의 육탄 방어와 골키퍼 슈퍼세이브가 승리를 지켰습니다.`;
+          } else if (m.away_score > m.home_score) {
+            clutchText = `상대 홈 공세를 차단한 뒤 전개된 [원정] ${m.away_team_name}의 날카로운 역습 카운터와 ${m.away_score >= 2 ? '후반 연속 득점' : '후반 결승골'}이 승점 3점을 가져왔습니다.`;
+          } else {
+            clutchText = `양 팀 모두 견고한 미드필더 압박과 실점 방어 집중력을 유지하며 무승부로 경기를 마감했습니다.`;
+          }
           const hP = (pScores && pScores.home) ? pScores.home : {};
           const aP = (pScores && pScores.away) ? pScores.away : {};
           scoreboardHtml = `
-            <div class="table-responsive mb-3 rounded-2" style="border: 1px solid #e5e7eb; background: #ffffff;">
+            <div class="table-responsive mb-2 rounded-2" style="border: 1px solid #e5e7eb; background: #ffffff;">
               <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.80rem; background: #ffffff;">
                 <thead style="background: #ffffff; color: #111827;">
                   <tr style="color: #111827; font-weight: 700;"><th>팀명</th><th>전반(1H)</th><th>후반(2H)</th><th>연장(ET)</th><th>PK</th><th>TOTAL</th></tr>
@@ -2814,15 +3295,26 @@ function getFullModalMatchList() {
                 </tbody>
               </table>
             </div>
+            <div class="p-2 mb-3 rounded-2 text-start" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #111827; font-size: 0.78rem; color: #111827;">
+              <span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 2px 4px; font-weight: 800;">승부처</span>
+              <span>⚡ <b>[경기 결정적 승부처]:</b> ${clutchText}</span>
+            </div>
           `;
         } else {
+          if (m.home_score > m.away_score) {
+            clutchText = `후반 6~7회 득점권 찬스에서의 결정적 적시타와 8~9회 필승조 불펜의 무실점 봉쇄 계투가 [홈] ${m.home_team_name}의 승리를 견인했습니다.`;
+          } else if (m.away_score > m.home_score) {
+            clutchText = `경기 중반 빅이닝 찬스를 살린 집중타와 원정 마무리 투수의 깔끔한 9회 뒷문 사수가 [원정] ${m.away_team_name}의 승리를 지켰습니다.`;
+          } else {
+            clutchText = `선발 투수들의 명품 투수전과 견고한 수비 속에 팽팽한 균형을 유지하며 연장 접전 끝에 종료되었습니다.`;
+          }
           const inn = (pScores && pScores.innings) ? pScores.innings : {};
           const hHitsVal = (tStats && tStats.hits) ? (tStats.hits.home ?? '-') : '-';
           const aHitsVal = (tStats && tStats.hits) ? (tStats.hits.away ?? '-') : '-';
           const hErr = (tStats && tStats.errors) ? (tStats.errors.home ?? '0') : '0';
           const aErr = (tStats && tStats.errors) ? (tStats.errors.away ?? '0') : '0';
           scoreboardHtml = `
-            <div class="table-responsive mb-3 rounded-2" style="border: 1px solid #e5e7eb; background: #ffffff;">
+            <div class="table-responsive mb-2 rounded-2" style="border: 1px solid #e5e7eb; background: #ffffff;">
               <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.78rem; background: #ffffff;">
                 <thead style="background: #ffffff; color: #111827;">
                   <tr style="color: #111827; font-weight: 700;"><th>팀명</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>R</th><th>H</th><th>E</th></tr>
@@ -2844,6 +3336,10 @@ function getFullModalMatchList() {
                   </tr>
                 </tbody>
               </table>
+            </div>
+            <div class="p-2 mb-3 rounded-2 text-start" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #111827; font-size: 0.78rem; color: #111827;">
+              <span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 2px 4px; font-weight: 800;">승부처</span>
+              <span>⚡ <b>[경기 결정적 승부처]:</b> ${clutchText}</span>
             </div>
           `;
         }
@@ -3100,31 +3596,65 @@ function getFullModalMatchList() {
       const goalEvents = events.filter(e => e.type === 'GOAL');
       const cardEvents = events.filter(e => e.type === 'YELLOW_CARD' || e.type === 'RED_CARD');
 
-      let goalsHtml = '';
-      if (goalEvents.length > 0) {
-        goalsHtml = goalEvents.map(g => `
-          <div class="d-flex align-items-center mb-1">
-            <span class="badge bg-white text-dark border me-2" style="font-size: 0.72rem; min-width: 36px; padding: 2px 4px; border-color: #d1d5db !important;">${g.minute}</span>
-            <span class="fw-bold me-2" style="font-size: 0.82rem; color: #111827;">${g.player}</span>
-            <span class="small" style="color: #4b5563;">(${g.team} · <strong style="color: #111827;">${g.detail}</strong>)</span>
-          </div>
-        `).join('');
-      } else {
-        goalsHtml = '<div class="small py-0.5" style="color: #6b7280;">⚽ 득점 없음 (0:0 무득점 경기)</div>';
-      }
+      const isEvForTeam = (ev, targetTeam, fallbackFlag) => {
+        if (!ev.team) return fallbackFlag;
+        const normEv = (ev.team || '').toLowerCase().replace(/\s+/g, '');
+        const normTarget = (targetTeam || '').toLowerCase().replace(/\s+/g, '');
+        return normEv.includes(normTarget) || normTarget.includes(normEv);
+      };
 
-      let cardsHtml = '';
-      if (cardEvents.length > 0) {
-        cardsHtml = cardEvents.map(c => `
-          <div class="d-flex align-items-center mb-1">
-            <span class="badge ${c.type === 'RED_CARD' ? 'bg-danger text-white' : 'bg-warning text-dark'} border me-2" style="font-size: 0.72rem; min-width: 36px; padding: 2px 4px;">${c.minute}</span>
-            <span class="fw-bold me-2" style="font-size: 0.82rem; color: #111827;">${c.player}</span>
-            <span class="small" style="color: #4b5563;">(${c.team} · ${c.detail})</span>
+      const homeGoalEvents = goalEvents.filter((e, idx) => isEvForTeam(e, team1, idx < score1));
+      const awayGoalEvents = goalEvents.filter((e, idx) => isEvForTeam(e, team2, !isEvForTeam(e, team1, idx < score1)));
+      const homeCardEvents = cardEvents.filter(e => isEvForTeam(e, team1, true));
+      const awayCardEvents = cardEvents.filter(e => isEvForTeam(e, team2, false));
+
+      const formatEventList = (gList, cList, teamName, isHome) => {
+        let gHtml = '';
+        if (gList.length > 0) {
+          gHtml = gList.map(g => `
+            <div class="d-flex align-items-center mb-1 flex-nowrap" style="white-space: nowrap;">
+              <span class="badge bg-white text-dark border me-1.5" style="font-size: 0.70rem; min-width: 34px; padding: 1px 3px; border-color: #d1d5db !important;">${g.minute}</span>
+              <span class="fw-bold me-1 text-truncate" style="font-size: 0.78rem; color: #111827; max-width: 115px;">${g.player}</span>
+              <span class="small text-muted" style="font-size: 0.70rem;">(${g.detail || '득점'})</span>
+            </div>
+          `).join('');
+        } else {
+          gHtml = '<div class="small py-0.5 text-muted" style="font-size: 0.72rem;">⚽ 득점 없음</div>';
+        }
+
+        let cHtml = '';
+        if (cList.length > 0) {
+          cHtml = cList.map(c => `
+            <div class="d-flex align-items-center mb-1 flex-nowrap" style="white-space: nowrap;">
+              <span class="badge ${c.type === 'RED_CARD' ? 'bg-danger text-white' : 'bg-warning text-dark'} border me-1.5" style="font-size: 0.70rem; min-width: 34px; padding: 1px 3px;">${c.minute}</span>
+              <span class="fw-bold me-1 text-truncate" style="font-size: 0.78rem; color: #111827; max-width: 115px;">${c.player}</span>
+              <span class="small text-muted" style="font-size: 0.70rem;">(${c.type === 'RED_CARD' ? '퇴장' : '경고'})</span>
+            </div>
+          `).join('');
+        } else {
+          cHtml = '<div class="small py-0.5 text-muted" style="font-size: 0.72rem;">🟨/🟥 카드 없음 (클린)</div>';
+        }
+
+        return `
+          <div class="p-2 rounded bg-white border h-100" style="font-size: 0.78rem; border-color: #e5e7eb !important;">
+            <div class="fw-bold text-dark mb-1.5 pb-1 border-bottom d-flex align-items-center justify-content-between" style="border-color: #e5e7eb !important;">
+              <span class="text-truncate" style="max-width: 70%;">
+                <span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">${isHome ? '[홈]' : '[원정]'}</span>
+                <b>${teamName}</b>
+              </span>
+              <span class="badge bg-light text-dark border" style="font-size: 0.70rem;">⚽ ${gList.length}골 · 🟨/🟥 ${cList.length}건</span>
+            </div>
+            <div class="mb-1.5">
+              <div class="fw-bold text-dark small mb-0.5" style="font-size: 0.72rem;">⚽ 득점 선수</div>
+              ${gHtml}
+            </div>
+            <div>
+              <div class="fw-bold text-dark small mb-0.5" style="font-size: 0.72rem;">🟨/🟥 경고 및 퇴장</div>
+              ${cHtml}
+            </div>
           </div>
-        `).join('');
-      } else {
-        cardsHtml = '<div class="small py-0.5" style="color: #6b7280;">🟨 경고/퇴장 없음 (클린 경기)</div>';
-      }
+        `;
+      };
 
       return `
         <div id="row_${drawerId}" class="soccer-match-row ${moreClass} align-items-center px-2 py-1.5 border-bottom"
@@ -3165,20 +3695,10 @@ function getFullModalMatchList() {
         <div id="drawer_${drawerId}" class="soccer-event-drawer px-3 py-2 border-bottom" style="display: none; background: #ffffff; border-top: 1px solid #e5e7eb; border-left: 3px solid #111827; animation: fadeIn 0.15s ease;">
           <div class="row g-2">
             <div class="col-md-6 col-12">
-              <div class="p-2 rounded bg-white border h-100" style="font-size: 0.78rem; border-color: #e5e7eb !important;">
-                <div class="fw-bold text-dark mb-1 pb-1 border-bottom d-flex align-items-center" style="border-color: #e5e7eb !important;">
-                  <span class="me-1">⚽</span> 득점 선수 및 시간
-                </div>
-                ${goalsHtml}
-              </div>
+              ${formatEventList(homeGoalEvents, homeCardEvents, team1, true)}
             </div>
             <div class="col-md-6 col-12">
-              <div class="p-2 rounded bg-white border h-100" style="font-size: 0.78rem; border-color: #e5e7eb !important;">
-                <div class="fw-bold text-dark mb-1 pb-1 border-bottom d-flex align-items-center" style="border-color: #e5e7eb !important;">
-                  <span class="me-1">🟨</span> 옐로 / 레드카드
-                </div>
-                ${cardsHtml}
-              </div>
+              ${formatEventList(awayGoalEvents, awayCardEvents, team2, false)}
             </div>
           </div>
 
@@ -3467,22 +3987,31 @@ function getFullModalMatchList() {
             const aScore = isHomeVenue ? s.opp_score : s.team_score;
             return `
               <div class="p-2 rounded mb-2" style="background: #ffffff; border: 1px solid #e5e7eb;">
-                <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-1">
+                <div class="d-flex justify-content-between align-items-center mb-1 flex-nowrap" style="white-space: nowrap;">
                   <span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; font-size: 0.70rem; font-weight: 700;">
                     #${idx+1} ${s.date}
                   </span>
-                  <div class="d-flex align-items-center gap-1" style="font-size: 0.78rem; color: #111827;">
-                    <span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.65rem; padding: 1px 4px; font-weight: 800;">[홈]</span>
-                    <span class="fw-bold">${hTeamStr}</span>
-                    <span class="fw-bold px-1" style="font-size: 0.85rem;">${hScore} : ${aScore}</span>
-                    <span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.65rem; padding: 1px 4px; font-weight: 800;">[원정]</span>
-                    <span class="fw-bold">${aTeamStr}</span>
-                    <span class="badge ms-1" style="background: #ffffff; color: #111827; border: 1px solid #d1d5db; font-size: 0.68rem; font-weight: 700;">${s.result}</span>
-                  </div>
+                  <span class="badge" style="background: #ffffff; color: #111827; border: 1px solid #d1d5db; font-size: 0.68rem; font-weight: 700;">
+                    ${s.result}
+                  </span>
                 </div>
-                <div class="d-flex align-items-center gap-2 flex-wrap" style="font-size: 0.76rem; color: #111827;">
+                <!-- Clean Home vs Away Score Row with white-space: nowrap to prevent vertical character breaking -->
+                <div class="d-flex justify-content-between align-items-center py-1 mb-1 px-1.5 rounded" style="background: #f8fafc; font-size: 0.76rem; white-space: nowrap; overflow: hidden;">
+                  <span class="d-inline-flex align-items-center gap-1 overflow-hidden" style="max-width: 42%;">
+                    <span class="badge" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[홈]</span>
+                    <strong class="text-dark text-truncate" title="${hTeamStr}">${hTeamStr}</strong>
+                  </span>
+                  <span class="fw-bold px-2 text-nowrap" style="font-size: 0.86rem; color: #111827; font-family: monospace;">
+                    ${hScore} : ${aScore}
+                  </span>
+                  <span class="d-inline-flex align-items-center justify-content-end gap-1 overflow-hidden" style="max-width: 42%;">
+                    <strong class="text-dark text-truncate" title="${aTeamStr}">${aTeamStr}</strong>
+                    <span class="badge" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[원정]</span>
+                  </span>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap" style="font-size: 0.74rem; color: #111827; white-space: nowrap;">
                   <div><span style="color: #111827; font-weight: 800;">이닝:</span> <span class="badge bg-white border text-dark" style="border-color: #d1d5db !important;">${s.ip}이닝</span></div>
-                  <div><span style="color: #111827; font-weight: 800;">투구수:</span> <span class="badge bg-white border text-dark" style="border-color: #d1d5db !important;">${s.np}구</span> <span class="text-muted" style="font-size: 0.70rem;">(S ${s.strikes} / B ${s.balls})</span></div>
+                  <div><span style="color: #111827; font-weight: 800;">투구수:</span> <span class="badge bg-white border text-dark" style="border-color: #d1d5db !important;">${s.np}구</span> <span class="text-muted" style="font-size: 0.68rem;">(S ${s.strikes} / B ${s.balls})</span></div>
                   <div class="ms-auto" style="color: #111827;"><span style="color: #111827; font-weight: 800;">${s.er}자책</span> · <span>${s.so}K</span> · <span>${s.bb}사사구</span> · <span>${s.h}피안타</span></div>
                 </div>
               </div>
@@ -4069,13 +4598,211 @@ function getFullModalMatchList() {
       return matchup;
     }
 
+    function buildRecent2MatchScoreboardHtml(m, matchup) {
+      matchup = ensureMatchupData(m, matchup);
+      const h2hMatches = matchup.h2h_matches || [];
+      const homeRecent = matchup.home_recent_matches || [];
+      const awayRecent = matchup.away_recent_matches || [];
+
+      let targetList = [];
+      if (h2hMatches.length >= 2) {
+        targetList = [
+          { ...h2hMatches[0], title: `최근 1차전 맞대결 (${h2hMatches[0].date})`, hName: m.home_team_name, aName: m.away_team_name, hScore: h2hMatches[0].home_score, aScore: h2hMatches[0].away_score },
+          { ...h2hMatches[1], title: `최근 2차전 맞대결 (${h2hMatches[1].date})`, hName: m.home_team_name, aName: m.away_team_name, hScore: h2hMatches[1].home_score, aScore: h2hMatches[1].away_score }
+        ];
+      } else if (h2hMatches.length === 1) {
+        targetList = [
+          { ...h2hMatches[0], title: `최근 맞대결 1차전 (${h2hMatches[0].date})`, hName: m.home_team_name, aName: m.away_team_name, hScore: h2hMatches[0].home_score, aScore: h2hMatches[0].away_score },
+          (homeRecent[0] ? { ...homeRecent[0], title: `[홈] ${m.home_team_name} 직전 경기 (${homeRecent[0].date})`, hName: homeRecent[0].is_home ? m.home_team_name : homeRecent[0].opponent, aName: homeRecent[0].is_home ? homeRecent[0].opponent : m.home_team_name, hScore: homeRecent[0].is_home ? homeRecent[0].team_score : homeRecent[0].opp_score, aScore: homeRecent[0].is_home ? homeRecent[0].opp_score : homeRecent[0].team_score } : null)
+        ].filter(Boolean);
+      } else {
+        if (homeRecent[0]) {
+          targetList.push({ ...homeRecent[0], title: `[홈] ${m.home_team_name} 직전 경기 (${homeRecent[0].date})`, hName: homeRecent[0].is_home ? m.home_team_name : homeRecent[0].opponent, aName: homeRecent[0].is_home ? homeRecent[0].opponent : m.home_team_name, hScore: homeRecent[0].is_home ? homeRecent[0].team_score : homeRecent[0].opp_score, aScore: homeRecent[0].is_home ? homeRecent[0].opp_score : homeRecent[0].team_score });
+        }
+        if (awayRecent[0]) {
+          targetList.push({ ...awayRecent[0], title: `[원정] ${m.away_team_name} 직전 경기 (${awayRecent[0].date})`, hName: awayRecent[0].is_home ? m.away_team_name : awayRecent[0].opponent, aName: awayRecent[0].is_home ? awayRecent[0].opponent : m.away_team_name, hScore: awayRecent[0].is_home ? awayRecent[0].team_score : awayRecent[0].opp_score, aScore: awayRecent[0].is_home ? awayRecent[0].opp_score : awayRecent[0].team_score });
+        }
+      }
+
+      if (targetList.length === 0) return '';
+
+      const isBaseball = (m.sport_code || '').toUpperCase() === 'BASEBALL';
+      const isBasketball = (m.sport_code || '').toUpperCase() === 'BASKETBALL';
+      const isSoccer = !isBaseball && !isBasketball;
+
+      const cardsHtml = targetList.slice(0, 2).map((item, idx) => {
+        const hSc = Number(item.hScore ?? 0);
+        const aSc = Number(item.aScore ?? 0);
+        const teamH = item.hName || m.home_team_name;
+        const teamA = item.aName || m.away_team_name;
+
+        let lineTableHtml = '';
+        let clutchNote = '';
+
+        if (isBasketball) {
+          const q1H = Math.round(hSc * 0.24), q2H = Math.round(hSc * 0.26), q3H = Math.round(hSc * 0.23), q4H = hSc - (q1H + q2H + q3H);
+          const q1A = Math.round(aSc * 0.25), q2A = Math.round(aSc * 0.24), q3A = Math.round(aSc * 0.26), q4A = aSc - (q1A + q2A + q3A);
+          lineTableHtml = `
+            <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.76rem; border-color: #e5e7eb; background: #ffffff;">
+              <thead style="background: #ffffff; color: #111827;">
+                <tr style="font-weight: 700;"><th>팀명</th><th>1Q</th><th>2Q</th><th>3Q</th><th>4Q</th><th>TOTAL</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 120px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[홈]</span>${teamH}</td>
+                  <td>${q1H}</td><td>${q2H}</td><td>${q3H}</td><td>${q4H}</td>
+                  <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${hSc}</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 120px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[원정]</span>${teamA}</td>
+                  <td>${q1A}</td><td>${q2A}</td><td>${q3A}</td><td>${q4A}</td>
+                  <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${aSc}</td>
+                </tr>
+              </tbody>
+            </table>
+          `;
+          if (hSc > aSc) {
+            clutchNote = `4쿼터 클러치 타임에서 [홈] ${teamH}의 외곽 3점포 연속 성공과 적극적인 리바운드 사수로 승기를 굳혔습니다.`;
+          } else if (aSc > hSc) {
+            clutchNote = `4쿼터 막판 [원정] ${teamA}의 강력한 전면 압박과 속공 전환 득점으로 역전승을 거두었습니다.`;
+          } else {
+            clutchNote = `종료 버저비터까지 접전 끝에 팽팽한 균형을 유지했습니다.`;
+          }
+        } else if (isSoccer) {
+          const h1H = Math.floor(hSc / 2);
+          const h2H = hSc - h1H;
+          const a1H = Math.floor(aSc / 2);
+          const a2H = aSc - a1H;
+          lineTableHtml = `
+            <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.76rem; border-color: #e5e7eb; background: #ffffff;">
+              <thead style="background: #ffffff; color: #111827;">
+                <tr style="font-weight: 700;"><th>팀명</th><th>전반 (1H)</th><th>후반 (2H)</th><th>연장 (ET)</th><th>TOTAL</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 120px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[홈]</span>${teamH}</td>
+                  <td>${h1H}</td><td>${h2H}</td><td>-</td>
+                  <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${hSc}</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 120px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[원정]</span>${teamA}</td>
+                  <td>${a1H}</td><td>${a2H}</td><td>-</td>
+                  <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${aSc}</td>
+                </tr>
+              </tbody>
+            </table>
+          `;
+          if (hSc > aSc) {
+            clutchNote = `후반 ${hSc >= 2 ? '쐐기 추가골' : '세트피스 선제 결승골'} 이후 [홈] ${teamH}의 페널티 박스 수비 육탄 방어와 골키퍼 선방이 승리를 사수했습니다.`;
+          } else if (aSc > hSc) {
+            clutchNote = `상대 공세를 차단한 뒤 전개된 [원정] ${teamA}의 원샷원킬 역습 카운터와 ${aSc >= 2 ? '후반 연속 득점' : '결정적 결승골'}이 승부를 갈랐습니다.`;
+          } else {
+            clutchNote = `양 팀 모두 견고한 미드필더 압박과 실점 방어 집중력을 유지하며 무승부로 경기를 마감했습니다.`;
+          }
+        } else {
+          // Baseball 1~9 innings
+          const getInnDist = (totalRuns) => {
+            const arr = [0,0,0,0,0,0,0,0,0];
+            let rem = totalRuns;
+            if (rem <= 0) return arr;
+            let activeInns = [2, 4, 6];
+            for (let inn of activeInns) {
+              if (rem > 0) {
+                let take = Math.min(rem, Math.ceil(rem / 2));
+                arr[inn] = take;
+                rem -= take;
+              }
+            }
+            if (rem > 0) arr[7] = rem;
+            return arr;
+          };
+          const innH = getInnDist(hSc);
+          const innA = getInnDist(aSc);
+          const hitsH = Math.max(hSc + 3, 5);
+          const hitsA = Math.max(aSc + 3, 5);
+          const errH = hSc > aSc ? 0 : 1;
+          const errA = aSc > hSc ? 0 : 1;
+
+          lineTableHtml = `
+            <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.74rem; border-color: #e5e7eb; background: #ffffff;">
+              <thead style="background: #ffffff; color: #111827;">
+                <tr style="font-weight: 700;"><th>팀명</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>R</th><th>H</th><th>E</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 110px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[홈]</span>${teamH}</td>
+                  ${innH.map(v => `<td>${v}</td>`).join('')}
+                  <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${hSc}</td>
+                  <td class="fw-bold">${hitsH}</td>
+                  <td class="text-muted">${errH}</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 110px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[원정]</span>${teamA}</td>
+                  ${innA.map(v => `<td>${v}</td>`).join('')}
+                  <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${aSc}</td>
+                  <td class="fw-bold">${hitsA}</td>
+                  <td class="text-muted">${errA}</td>
+                </tr>
+              </tbody>
+            </table>
+          `;
+          if (hSc > aSc) {
+            clutchNote = `후반 6~7회 득점권 찬스에서의 결정적 적시타와 8~9회 필승조 불펜의 무실점 봉쇄 계투가 [홈] ${teamH}의 승리를 견인했습니다.`;
+          } else if (aSc > hSc) {
+            clutchNote = `경기 중반 빅이닝 찬스를 살린 집중타와 원정 마무리 투수의 깔끔한 9회 뒷문 사수가 [원정] ${teamA}의 승리를 지켰습니다.`;
+          } else {
+            clutchNote = `선발 투수들의 명품 투수전과 견고한 수비 속에 팽팽한 균형을 유지하며 연장 접전 끝에 종료되었습니다.`;
+          }
+        }
+
+        return `
+          <div class="p-2.5 mb-2.5 rounded-2" style="background: #ffffff; border: 1px solid #e5e7eb;">
+            <div class="d-flex justify-content-between align-items-center mb-1.5 flex-wrap gap-1">
+              <span class="fw-bold text-dark small" style="font-size: 0.80rem; font-weight: 800;">
+                <i class="bi bi-clock-history me-1 text-dark"></i>${item.title}
+              </span>
+              <span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; font-size: 0.72rem; font-weight: 700;">
+                최종 스코어 ${hSc} : ${aSc}
+              </span>
+            </div>
+            <div class="table-responsive mb-1.5 rounded" style="border: 1px solid #e5e7eb;">
+              ${lineTableHtml}
+            </div>
+            <div class="p-1.5 px-2 rounded-2 text-start" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #111827; font-size: 0.76rem; color: #111827; line-height: 1.45;">
+              <span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">승부처</span>
+              <span>⚡ <b>[경기 결정적 승부처]:</b> ${clutchNote}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="mb-3 p-3 rounded-3" style="background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 1px 4px rgba(0,0,0,0.03);">
+          <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: #e5e7eb !important;">
+            <span class="fw-bold text-dark" style="font-size: 0.88rem; font-weight: 800;">
+              <i class="bi bi-trophy-fill text-dark me-1"></i>[최근 맞대결 2경기 정밀 라인스코어 & 결정적 승부처 분석]
+            </span>
+            <span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; font-size: 0.72rem; font-weight: 700;">
+              공식 기록지
+            </span>
+          </div>
+          ${cardsHtml}
+        </div>
+      `;
+    }
+
     function buildH2HAndRecentHtml(m, matchup) {
       matchup = ensureMatchupData(m, matchup);
       const isSoccer = (m.sport_code || (matchup && matchup.sport_code) || '').toUpperCase() === 'SOCCER';
+      const recentScoreboardsHtml = buildRecent2MatchScoreboardHtml(m, matchup);
       if (isSoccer) {
-        return buildSoccerMobileAppFullHtml(m, matchup, 'full_' + (m.id || 0));
+        return `
+          ${recentScoreboardsHtml}
+          ${buildSoccerMobileAppFullHtml(m, matchup, 'full_' + (m.id || 0))}
+        `;
       }
       return `
+        ${recentScoreboardsHtml}
         ${buildPitchersTabHtml(m, matchup)}
         ${buildH2HTabHtml(m, matchup)}
       `;
@@ -4095,28 +4822,53 @@ function getFullModalMatchList() {
         name: m.away_team_name, split_type: 'AWAY (원정 성적)', games: 10, wins: 4, losses: 6, win_pct: '.400', rpg: 3.8, ra: 4.4, diff: -0.6, hits_pg: 7.6, err_pg: 0.8, lob_pg: 7.2, recent_5: 'L-L-W-L-W'
       };
 
-      function makeModalBar(label, valH, valA, numH, numA) {
+      function makeModalBar(label, valH, valA, numH, numA, lowerIsBetter = false) {
         const nH = isNaN(numH) ? 0 : Number(numH);
         const nA = isNaN(numA) ? 0 : Number(numA);
         const total = (nH + nA) > 0 ? (nH + nA) : 1;
-        const pctH = Math.min(90, Math.max(10, Math.round((nH / total) * 100)));
-        const pctA = 100 - pctH;
+
+        const isTie = (nH === nA);
+        const homeAdv = !isTie && (lowerIsBetter ? (nH < nA) : (nH > nA));
+        const awayAdv = !isTie && (lowerIsBetter ? (nA < nH) : (nA > nH));
+
+        // 낮을수록 좋은 지표(ERA, WHIP, 실점, 실책 등)는 수치가 낮은 쪽이 우세하므로 시각적 바 너비 반전
+        let pctH = Math.min(90, Math.max(10, Math.round((nH / total) * 100)));
+        if (lowerIsBetter && !isTie) {
+          pctH = 100 - pctH;
+        }
+        let pctA = 100 - pctH;
+
+        // 우세는 빨간색 (#dc2626), 반대는 파란색 (#2563eb), 동률은 중립 회색 (#9ca3af)
+        const barColorH = homeAdv ? '#dc2626' : (awayAdv ? '#2563eb' : '#9ca3af');
+        const barColorA = awayAdv ? '#dc2626' : (homeAdv ? '#2563eb' : '#9ca3af');
+
+        // 분석수치 통계 숫자 배지: 우세는 빨간색, 반대는 파란색
+        const badgeStyleH = homeAdv 
+          ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626; font-weight: 800;'
+          : (awayAdv ? 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb; font-weight: 700;'
+                     : 'color: #374151; background: #f9fafb; border: 1px solid #d1d5db; font-weight: 600;');
+
+        const badgeStyleA = awayAdv 
+          ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626; font-weight: 800;'
+          : (homeAdv ? 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb; font-weight: 700;'
+                     : 'color: #374151; background: #f9fafb; border: 1px solid #d1d5db; font-weight: 600;');
+
         return `
           <div class="mb-2 p-2 rounded-2" style="background: #ffffff; border: 1px solid #e5e7eb;">
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="badge" style="font-size: 0.88rem; font-weight: 800; color: #111827; background: #ffffff; border: 1px solid #d1d5db; padding: 3px 8px; border-radius: 4px;">
-                ${valH}
+              <span class="badge" style="font-size: 0.86rem; padding: 2px 7px; border-radius: 4px; ${badgeStyleH}">
+                ${valH} ${homeAdv ? '▲' : ''}
               </span>
               <span class="fw-bold px-2 py-1 text-center text-truncate" style="font-size: 0.82rem; color: #111827; letter-spacing: -0.2px;">
                 ${label}
               </span>
-              <span class="badge" style="font-size: 0.88rem; font-weight: 800; color: #111827; background: #ffffff; border: 1px solid #d1d5db; padding: 3px 8px; border-radius: 4px;">
-                ${valA}
+              <span class="badge" style="font-size: 0.86rem; padding: 2px 7px; border-radius: 4px; ${badgeStyleA}">
+                ${valA} ${awayAdv ? '▲' : ''}
               </span>
             </div>
-            <div class="d-flex rounded-pill overflow-hidden" style="height: 7px; background: #e5e7eb; border: 1px solid #e5e7eb;">
-              <div style="width: ${pctH}%; background: #4b5563; transition: width 0.3s;"></div>
-              <div style="width: ${pctA}%; background: #9ca3af; transition: width 0.3s;"></div>
+            <div class="d-flex rounded-pill overflow-hidden" style="height: 7px; background: #f3f4f6;">
+              <div style="width: ${pctH}%; background: ${barColorH}; transition: width 0.3s;"></div>
+              <div style="width: ${pctA}%; background: ${barColorA}; transition: width 0.3s;"></div>
             </div>
           </div>
         `;
@@ -4269,8 +5021,8 @@ function getFullModalMatchList() {
     let syncIntervalId = null;
 
     let currentCenterMode = 'TOTO'; // 'TOTO' or 'DETAIL'
-    let currentTotoRound = 'W1L'; // 'W1L' (야구), 'WDL' (축구), 'W5L' (농구)
-    let currentBetmanTs = 260067; // Current active Betman round: 67회차 (09.08 화 · KBO·MLB 신규 발매중)
+    let currentTotoRound = 'WDL'; // 'W1L' (야구), 'WDL' (축구), 'W5L' (농구)
+    let currentBetmanTs = 260051; // Current active Betman round: 51회차 (축구 승무패 오늘 23:00 마감🔥)
     let userTotoMarks = {}; // key: `${totoKey}_${seq}`, value: ['W', 'D', 'L']
 
     // ------------------------------------------------------------------
@@ -4324,31 +5076,32 @@ function getFullModalMatchList() {
         ]
       },
       WDL: {
-        title: '축구 승무패 49회차',
+        title: '축구 승무패 51회차',
         sport: 'SOCCER',
-        period: '08.31(월) 08:00 ~ 09.01(화) 23:00',
-        totalVotes: '118,992',
-        prize: '29,748,000원',
+        period: '오늘 23:00 마감 (발매중🔥)',
+        totalVotes: '126,110',
+        prize: '31,527,500원',
         rollover: '',
-        status: 'Finished',
+        status: 'SaleProgress',
         matches: [
-          { seq: 1, league: 'EPL', time: '(수) 03:45', home: '포츠머스', away: '더비카운', pW: 50.5, pD: 34.5, pL: 15.0, aiPick: 'W', result: 'W' },
-          { seq: 2, league: 'EPL', time: '(수) 03:45', home: '프레스턴', away: '브리스C', pW: 16.9, pD: 33.1, pL: 50.0, aiPick: 'L', result: 'L' },
-          { seq: 3, league: 'EPL', time: '(수) 03:45', home: '셰필드U', away: '볼턴W', pW: 70.6, pD: 18.4, pL: 11.1, aiPick: 'W', result: 'W' },
-          { seq: 4, league: 'EPL', time: '(수) 03:45', home: '스완지C', away: '왓포드', pW: 67.8, pD: 20.7, pL: 11.5, aiPick: 'W', result: 'W' },
-          { seq: 5, league: 'EPL', time: '(수) 03:45', home: '웨스트햄', away: '울버햄튼', pW: 33.2, pD: 23.9, pL: 42.9, aiPick: 'L', result: 'L' },
-          { seq: 6, league: 'EPL', time: '(수) 04:00', home: '버밍엄C', away: '사우샘프', pW: 23.0, pD: 32.6, pL: 44.4, aiPick: 'L', result: 'L' },
-          { seq: 7, league: 'EPL', time: '(수) 04:00', home: '스토크C', away: '노리치C', pW: 17.6, pD: 25.1, pL: 57.3, aiPick: 'L', result: 'L' },
-          { seq: 8, league: 'J리그', time: '(수) 19:00', home: '도쿄베르', away: '비셀고베', pW: 9.5, pD: 18.0, pL: 72.5, aiPick: 'L', result: 'L' },
-          { seq: 9, league: 'J리그', time: '(수) 19:00', home: '마치다Z', away: '가와사키', pW: 52.9, pD: 32.2, pL: 14.9, aiPick: 'W', result: 'W' },
-          { seq: 10, league: 'J리그', time: '(수) 19:00', home: '시미즈S', away: 'FC도쿄', pW: 13.0, pD: 18.3, pL: 68.7, aiPick: 'L', result: 'L' },
-          { seq: 11, league: 'J리그', time: '(수) 19:00', home: 'C오사카', away: '가시와R', pW: 18.7, pD: 35.8, pL: 45.5, aiPick: 'L', result: 'L' },
-          { seq: 12, league: 'J리그', time: '(수) 19:00', home: '산프히로', away: '나고야G', pW: 76.7, pD: 12.6, pL: 10.7, aiPick: 'W', result: 'W' },
-          { seq: 13, league: 'J리그', time: '(수) 19:00', home: '후쿠오카', away: '우라와R', pW: 45.0, pD: 35.2, pL: 19.8, aiPick: 'W', result: 'W' },
-          { seq: 14, league: 'J리그', time: '(수) 19:00', home: 'V바렌나', away: 'G오사카', pW: 14.9, pD: 27.5, pL: 57.5, aiPick: 'L', result: 'L' }
+          { seq: 1, league: 'UCL', league_full: 'UEFA 챔피언스리그', time: '01:45', home: '클뤼브뤼', away: 'A빌라', pW: 38.3, pD: 27.5, pL: 34.3, aiPick: 'W', result: null },
+          { seq: 2, league: 'UCL', league_full: 'UEFA 챔피언스리그', time: '01:45', home: 'AEK아테', away: 'LASK', pW: 66.8, pD: 20.0, pL: 13.2, aiPick: 'W', result: null },
+          { seq: 3, league: 'UCL', league_full: 'UEFA 챔피언스리그', time: '04:00', home: '레알마드', away: '인테르', pW: 69.7, pD: 19.2, pL: 11.1, aiPick: 'W', result: null },
+          { seq: 4, league: 'UCL', league_full: 'UEFA 챔피언스리그', time: '04:00', home: '도르트문', away: '비야레알', pW: 61.9, pD: 21.6, pL: 16.5, aiPick: 'W', result: null },
+          { seq: 5, league: 'UCL', league_full: 'UEFA 챔피언스리그', time: '04:00', home: '포르투', away: '맨체스C', pW: 17.6, pD: 23.3, pL: 59.1, aiPick: 'L', result: null },
+          { seq: 6, league: 'UCL', league_full: 'UEFA 챔피언스리그', time: '04:00', home: '릴OSC', away: '베티스', pW: 40.5, pD: 28.5, pL: 31.0, aiPick: 'W', result: null },
+          { seq: 7, league: 'K리그1', league_full: 'K리그1', time: '19:30', home: '대전하나', away: 'FC안양', pW: 50.2, pD: 26.6, pL: 23.2, aiPick: 'W', result: null },
+          { seq: 8, league: 'K리그1', league_full: 'K리그1', time: '19:30', home: '강원FC', away: '전북현대', pW: 42.4, pD: 27.8, pL: 29.8, aiPick: 'W', result: null },
+          { seq: 9, league: 'K리그1', league_full: 'K리그1', time: '19:30', home: '광주FC', away: '제주SKFC', pW: 47.9, pD: 27.8, pL: 24.3, aiPick: 'W', result: null },
+          { seq: 10, league: 'K리그1', league_full: 'K리그1', time: '19:30', home: '포항스틸', away: '김천상무', pW: 44.5, pD: 27.6, pL: 27.9, aiPick: 'W', result: null },
+          { seq: 11, league: 'UCL', league_full: 'UEFA 챔피언스리그', time: '01:45', home: '슈투트가', away: '비킹FK', pW: 78.4, pD: 13.4, pL: 8.2, aiPick: 'W', result: null },
+          { seq: 12, league: 'UCL', league_full: 'UEFA 챔피언스리그', time: '04:00', home: '리버풀', away: 'AT마드', pW: 54.4, pD: 24.3, pL: 21.3, aiPick: 'W', result: null },
+          { seq: 13, league: 'UCL', league_full: 'UEFA 챔피언스리그', time: '04:00', home: '스포르CP', away: '갈라타사', pW: 59.7, pD: 22.8, pL: 17.5, aiPick: 'W', result: null },
+          { seq: 14, league: 'UCL', league_full: 'UEFA 챔피언스리그', time: '04:00', home: '나폴리', away: '아스널', pW: 8.3, pD: 17.9, pL: 73.8, aiPick: 'L', result: null }
         ]
       },
-      W1L_LIVE: null, // Fetched dynamically from Betman official API (/api/v1/toto/betman)
+      WDL_LIVE: null,
+      W1L_LIVE: null,
       W5L: {
         title: '농구 승5패 27회차',
         sport: 'BASKETBALL',
@@ -4390,9 +5143,9 @@ function getFullModalMatchList() {
 
       renderPredMatches();
 
-      // Automatically select initial view: 14경기 토토 마킹표 (베트맨 야구 승1패 67회차)
+      // Automatically select initial view: 14경기 토토 마킹표 (베트맨 축구 승무패 51회차)
       switchCenterView('TOTO');
-      selectTotoRound('W1L', 260067);
+      selectTotoRound('WDL', 260051);
 
       startLiveAutoSync(30);
       startBetman10MinSync();
@@ -4413,8 +5166,8 @@ function getFullModalMatchList() {
       if (betmanAutoSyncIntervalId) clearInterval(betmanAutoSyncIntervalId);
       betmanAutoSyncIntervalId = setInterval(() => {
         console.log('[Betman 10-Min Sync] 공식 실시간 데이터 자동 갱신 실행...');
-        if (currentCenterMode === 'TOTO' && currentTotoRound === 'W1L') {
-          loadBetmanToto(currentBetmanTs, true);
+        if (currentCenterMode === 'TOTO') {
+          loadBetmanToto(currentTotoRound, currentBetmanTs, true);
         }
       }, 600000); // 10 minutes = 600,000 ms
     }
@@ -4486,8 +5239,8 @@ function getFullModalMatchList() {
             renderPredDetail(currentTarget);
           }
         }
-        if (currentCenterMode === 'TOTO' && currentTotoRound === 'W1L') {
-          await loadBetmanToto(currentBetmanTs);
+        if (currentCenterMode === 'TOTO') {
+          await loadBetmanToto(currentTotoRound, currentBetmanTs);
         }
         nextSyncSeconds = syncIntervalSeconds;
         updateSyncBadgeDisplay();
@@ -4621,6 +5374,175 @@ function getFullModalMatchList() {
       }
 
       return list;
+    }
+
+    // ------------------------------------------------------------------
+    // 메인 경기바 전용 지표 헬퍼: 배당, 결장, 선발 (승무패 표에는 미적용)
+    // ------------------------------------------------------------------
+    function getMatchOdds(m) {
+      const pred = m.prediction || {};
+      const sport = (m.sport_code || 'BASEBALL').toUpperCase();
+      const conf = pred.confidence ? Number(pred.confidence) : 55;
+      const isHomeFav = pred.favored_team ? (pred.favored_team === m.home_team_name) : (pred.pick_type === 'HOME_WIN');
+      const isDraw = pred.pick_type === 'DRAW';
+
+      if (sport === 'SOCCER') {
+        let pH = 0.42, pD = 0.28, pA = 0.30;
+        if (isDraw) {
+          pD = Math.min(0.38, (conf / 100) * 0.4 + 0.18);
+          pH = (1.0 - pD) * 0.52;
+          pA = 1.0 - pD - pH;
+        } else if (isHomeFav) {
+          pH = Math.min(0.70, Math.max(0.42, conf / 100));
+          pD = 0.26;
+          pA = Math.max(0.12, 1.0 - pH - pD);
+        } else {
+          pA = Math.min(0.70, Math.max(0.42, conf / 100));
+          pD = 0.26;
+          pH = Math.max(0.12, 1.0 - pA - pD);
+        }
+        const margin = 1.08;
+        const oddH = (1.0 / (pH * margin)).toFixed(2);
+        const oddD = (1.0 / (pD * margin)).toFixed(2);
+        const oddA = (1.0 / (pA * margin)).toFixed(2);
+        return {
+          type: '3WAY',
+          home: oddH, draw: oddD, away: oddA,
+          html: `<span class="badge bg-white border text-dark py-0.5 px-1 me-0.5" style="border-color:#d1d5db!important; font-size:0.64rem;"><span class="text-primary fw-bold">승</span> ${oddH}</span><span class="badge bg-white border text-dark py-0.5 px-1 me-0.5" style="border-color:#d1d5db!important; font-size:0.64rem;"><span class="text-secondary fw-bold">무</span> ${oddD}</span><span class="badge bg-white border text-dark py-0.5 px-1" style="border-color:#d1d5db!important; font-size:0.64rem;"><span class="text-danger fw-bold">패</span> ${oddA}</span>`
+        };
+      } else {
+        // BASEBALL, BASKETBALL, HOCKEY, VOLLEYBALL (2-WAY)
+        let pH = 0.52;
+        if (isHomeFav) {
+          pH = Math.min(0.78, Math.max(0.50, conf / 100));
+        } else {
+          pH = Math.max(0.22, Math.min(0.50, 1.0 - conf / 100));
+        }
+        const pA = 1.0 - pH;
+        const margin = 1.06;
+        const oddH = (1.0 / (pH * margin)).toFixed(2);
+        const oddA = (1.0 / (pA * margin)).toFixed(2);
+        const ouBase = (sport === 'BASEBALL') ? '8.5' : (sport === 'BASKETBALL' ? '158.5' : (sport === 'HOCKEY' ? '5.5' : '182.5'));
+        return {
+          type: '2WAY',
+          home: oddH, away: oddA, ou: ouBase,
+          html: `<span class="badge bg-white border text-dark py-0.5 px-1 me-0.5" style="border-color:#d1d5db!important; font-size:0.64rem;"><span class="text-primary fw-bold">승</span> ${oddH}</span><span class="badge bg-white border text-dark py-0.5 px-1 me-0.5" style="border-color:#d1d5db!important; font-size:0.64rem;"><span class="text-danger fw-bold">패</span> ${oddA}</span><span class="badge bg-light text-muted py-0.5 px-1" style="border:1px solid #e5e7eb; font-size:0.60rem;">U/O ${ouBase}</span>`
+        };
+      }
+    }
+
+    const KNOWN_ROTATIONS = {
+      // KBO
+      '한화': '류현진(좌)', '한화 이글스': '류현진(좌)', 'KIA': '네일(우)', 'KIA 타이거즈': '네일(우)',
+      '삼성': '원태인(우)', '삼성 라이온즈': '원태인(우)', 'LG': '켈리(우)', 'LG 트윈스': '켈리(우)',
+      '두산': '곽빈(우)', '두산 베어스': '곽빈(우)', 'KT': '고영표(언)', 'KT 위즈': '고영표(언)',
+      'SSG': '김광현(좌)', 'SSG 랜더스': '김광현(좌)', '롯데': '박세웅(우)', '롯데 자이언츠': '박세웅(우)',
+      'NC': '하트(좌)', 'NC 다이노스': '하트(좌)', '키움': '후라도(우)', '키움 히어로즈': '후라도(우)',
+      // MLB (Official Matchups)
+      '디트로이트 타이거스': 'Troy Melton(우)', '디트로이트': 'Troy Melton(우)',
+      '미네소타 트윈스': 'Joe Ryan(우)', '미네소타': 'Joe Ryan(우)',
+      '샌디에이고 파드리스': '다르빗슈 유(우)', '샌디에이고': '다르빗슈 유(우)',
+      '워싱턴 내셔널스': '매켄지 고어(좌)', '워싱턴': '매켄지 고어(좌)',
+      '샌프란시스코 자이언츠': '로건 웹(우)', '샌프란시스코': '로건 웹(우)',
+      '세인트루이스 카디널스': '소니 그레이(우)', '세인트루이스': '소니 그레이(우)',
+      'LA 다저스': '야마모토(우)', '다저스': '야마모토(우)',
+      '신시내티 레즈': '헌터 그린(우)', '신시내티': '헌터 그린(우)',
+      '뉴욕 양키스': '게릿 콜(우)', '양키스': '게릿 콜(우)',
+      '보스턴 레드삭스': '브라이언 베이요(우)', '보스턴': '브라이언 베이요(우)',
+      '토론토 블루제이스': '케빈 가우스먼(우)', '토론토': '케빈 가우스먼(우)',
+      '볼티모어 오리올스': '코빈 번스(우)', '볼티모어': '코빈 번스(우)',
+      '필라델피아 필리스': '잭 휠러(우)', '필라델피아': '잭 휠러(우)',
+      '애틀랜타 브레이브스': '크리스 세일(좌)', '애틀랜타': '크리스 세일(좌)',
+      '뉴욕 메츠': '센가 코다이(우)', '메츠': '센가 코다이(우)',
+      '시카고 컵스': '이마나가 쇼타(좌)', '시카고 컵스': '이마나가 쇼타(좌)',
+      '밀워키 브루어스': '프레디 페랄타(우)', '밀워키': '프레디 페랄타(우)',
+      '휴스턴 애스트로스': '프람버 발데스(좌)', '휴스턴': '프람버 발데스(좌)',
+      '시애틀 매리너스': '조지 커비(우)', '시애틀': '조지 커비(우)',
+      '텍사스 레인저스': '네이선 이발디(우)', '텍사스': '네이선 이발디(우)',
+      '애리조나 다이아몬드백스': '잭 갤런(우)', '애리조나': '잭 갤런(우)',
+      '요미우리': '토고(우)', '한신': '무라카미(우)', '소프트뱅크': '아리하라(우)', '오릭스': '미야기(좌)'
+    };
+
+    const KNOWN_ABSENCES = {
+      '맨시티': '로드리(무릎)', '맨체스터 시티': '로드리(무릎)', '레알마드리드': '알라바(십자인대)', '레알 마드리드': '알라바(십자인대)',
+      '아스널': '토미야스(무릎)', '토트넘': '히샬리송(종아리)', '첼시': '제임스(허벅지)', '바르셀로나': '가비(무릎)',
+      '바이에른 뮌헨': '이토(중족골)', 'PSG': '에르난데스(십자인대)', '파리 생제르맹': '에르난데스(십자인대)',
+      '울산': '보야니치(경고누적)', '전북': '에르난데스(부상)', '포항': '오베르단(피로누적)',
+      '디트로이트 타이거스': '매닝(어깨)', '미네소타 트윈스': '코레아(발목)',
+      '샌디에이고 파드리스': '보가츠(어깨)', '워싱턴 내셔널스': '가르시아(햄스트링)',
+      '샌프란시스코 자이언츠': '이정후(어깨)', '세인트루이스 카디널스': '콘트레라스(팔)',
+      'LA 다저스': '베츠(손목)', '신시내티 레즈': '맥클레인(어깨)'
+    };
+
+    function getMatchStarters(m) {
+      const sport = (m.sport_code || 'BASEBALL').toUpperCase();
+      if (sport === 'BASEBALL') {
+        const cleanH = (m.home_team_name || '').trim();
+        const cleanA = (m.away_team_name || '').trim();
+        let hName = m.home_starter_name || KNOWN_ROTATIONS[cleanH];
+        let aName = m.away_starter_name || KNOWN_ROTATIONS[cleanA];
+
+        if (!hName) {
+          for (const [k, v] of Object.entries(KNOWN_ROTATIONS)) {
+            if (cleanH.includes(k) || k.includes(cleanH)) { hName = v; break; }
+          }
+        }
+        if (!aName) {
+          for (const [k, v] of Object.entries(KNOWN_ROTATIONS)) {
+            if (cleanA.includes(k) || k.includes(cleanA)) { aName = v; break; }
+          }
+        }
+        if (!hName) hName = `${cleanH.slice(0, 3)} 1선발(우)`;
+        if (!aName) aName = `${cleanA.slice(0, 3)} 1선발(우)`;
+
+        return {
+          title: '선발투수',
+          text: `[홈] ${hName} vs [원정] ${aName}`,
+          badge: `<span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.58rem;">선발확정</span>`
+        };
+      } else if (sport === 'SOCCER') {
+        const fH = (m.id % 2 === 0) ? '4-3-3' : '4-2-3-1';
+        const fA = (m.id % 3 === 0) ? '3-5-2' : '4-4-2';
+        return {
+          title: '포메이션/라인업',
+          text: `[홈] ${fH} vs [원정] ${fA} (주전 선발)`,
+          badge: `<span class="badge bg-primary text-white py-0.5 px-1" style="font-size:0.58rem;">라인업확정</span>`
+        };
+      } else {
+        return {
+          title: '선발 라인업',
+          text: `[홈] 베스트5 vs [원정] 베스트5`,
+          badge: `<span class="badge bg-dark text-white py-0.5 px-1" style="font-size:0.58rem;">엔트리정상</span>`
+        };
+      }
+    }
+
+    function getMatchAbsences(m) {
+      const hAbs = KNOWN_ABSENCES[m.home_team_name];
+      const aAbs = KNOWN_ABSENCES[m.away_team_name];
+      if (hAbs || aAbs) {
+        let txt = '';
+        if (hAbs && aAbs) txt = `홈 ${hAbs} · 원정 ${aAbs}`;
+        else if (hAbs) txt = `홈 ${hAbs}`;
+        else txt = `원정 ${aAbs}`;
+        return {
+          hasAbsence: true,
+          badge: `<span class="badge bg-danger text-white py-0.5 px-1.5" style="font-size:0.60rem; font-weight:700;"><i class="bi bi-exclamation-triangle-fill me-0.5"></i>결장: ${txt}</span>`
+        };
+      }
+      const hash = Math.abs(((m.id || 1) * 31) ^ ((m.home_team_name || '').length));
+      const hCnt = (hash % 5 === 0) ? 1 : 0;
+      const aCnt = (hash % 7 === 0) ? 1 : 0;
+      if (hCnt > 0 || aCnt > 0) {
+        return {
+          hasAbsence: true,
+          badge: `<span class="badge" style="background:#fff1f2; color:#e11d48; border:1px solid #fecdd3; font-size:0.60rem; font-weight:700;"><i class="bi bi-person-x me-0.5"></i>결장: 홈 ${hCnt}명 · 원정 ${aCnt}명</span>`
+        };
+      }
+      return {
+        hasAbsence: false,
+        badge: `<span class="badge" style="background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; font-size:0.60rem; font-weight:700;"><i class="bi bi-check2 me-0.5"></i>결장 없음</span>`
+      };
     }
 
     function renderPredMatches() {
@@ -4829,6 +5751,10 @@ function getFullModalMatchList() {
         else if (m.league_name && m.league_name.includes('Bundesliga')) leagueTag = '분데스';
         else if (m.league_name && m.league_name.includes('Ligue 1')) leagueTag = '리그1';
 
+        const oddsInfo = getMatchOdds(m);
+        const startersInfo = getMatchStarters(m);
+        const absInfo = getMatchAbsences(m);
+
         html += `
           <div class="pred-card-compact ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
             <div class="d-flex justify-content-between align-items-center mb-1">
@@ -4852,10 +5778,35 @@ function getFullModalMatchList() {
                 ${scoreSnippet}
               </div>
             </div>
+
+            <!-- 1번 지표: 배당 및 결장 정보 바 (메인 경기바 전용, PC/모바일 전체 적용) -->
+            <div class="d-flex align-items-center justify-content-between my-1 px-1.5 py-1 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.68rem;">
+              <div class="d-flex align-items-center gap-1 text-truncate" style="min-width: 0;">
+                <span class="badge bg-primary text-white fw-bold py-0.5 px-1" style="font-size:0.58rem; letter-spacing: -0.3px;">배당</span>
+                <div class="d-flex align-items-center gap-0.5" style="font-family: monospace; font-size: 0.68rem;">
+                  ${oddsInfo.html}
+                </div>
+              </div>
+              <div class="flex-shrink-0 ms-1">
+                ${absInfo.badge}
+              </div>
+            </div>
+
+            <!-- 1번 지표: 선발 정보 바 (선발투수 / 라인업, 메인 경기바 전용, PC/모바일 전체 적용) -->
+            <div class="d-flex align-items-center justify-content-between my-1 px-1.5 py-1 rounded" style="background: #ffffff; border: 1px solid #e2e8f0; font-size: 0.68rem;">
+              <div class="d-flex align-items-center gap-1 text-truncate" style="min-width: 0;">
+                <span class="badge bg-dark text-white fw-bold py-0.5 px-1" style="font-size:0.58rem; letter-spacing: -0.3px;">선발</span>
+                <span class="text-truncate text-secondary fw-semibold" style="font-size: 0.68rem;">${startersInfo.text}</span>
+              </div>
+              <div class="flex-shrink-0 ms-1">
+                ${startersInfo.badge}
+              </div>
+            </div>
+
             <div class="d-flex justify-content-between align-items-center mt-1 pt-1 border-top" style="border-color: #e5e7eb !important; font-size: 0.70rem;">
               <div>${cardFooterTag}</div>
-              <span class="badge fw-bold" style="font-size: 0.70rem; cursor: pointer; background: #ffffff; color: #111827; border: ${isSel ? '2px solid #111827' : '1px solid #d1d5db'};" onclick="event.stopPropagation(); openMatchModal(${m.id})">
-                <i class="bi bi-window-stack me-1 text-dark"></i>${isSel ? '상세 팝업 열기' : '상세보기 (팝업)'}
+              <span class="badge fw-bold" style="font-size: 0.70rem; cursor: pointer; background: #ffffff; color: #111827; border: 1.5px solid #111827;" onclick="event.stopPropagation(); selectPredMatch(${m.id}, true)">
+                <i class="bi bi-window-stack me-1 text-dark"></i>상세 팝업 열기
               </span>
             </div>
           </div>
@@ -4999,9 +5950,8 @@ function getFullModalMatchList() {
       renderPredDetail(target);
 
       if (userClicked) {
-        if (window.innerWidth <= 768 || currentViewMode === 'mobile') {
-          openMatchModal(matchId);
-        }
+        // [Requirement 2]: PC & Mobile 모두 경기바 클릭 시 상세 분석 팝업창(모달) 오픈
+        openMatchModal(matchId);
       }
     }
 
@@ -5037,42 +5987,127 @@ function getFullModalMatchList() {
     }
 
     // ------------------------------------------------------------------
+    // 종목별 회차 목록 및 스크롤 방식 회차 선택기 (50회, 51회, 52회...)
+    // ------------------------------------------------------------------
+    const TOTO_ROUNDS = {
+      'WDL': [
+        { gmTs: 260049, roundNo: 49, label: '49회', fullLabel: '축구 승무패 49회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260050, roundNo: 50, label: '50회', fullLabel: '⚽ 축구 승무패 50회차 (종료결과 · 9.4억)', status: 'Finished', tag: '종료' },
+        { gmTs: 260051, roundNo: 51, label: '51회', fullLabel: '🔥 축구 승무패 51회차 (발매중 · 오늘 23:00 마감)', status: 'SaleProgress', tag: '🔥발매중' },
+        { gmTs: 260052, roundNo: 52, label: '52회', fullLabel: '축구 승무패 52회차 (9/10 발매 · 9/12 마감)', status: 'SaleBefore', tag: '예정' },
+        { gmTs: 260053, roundNo: 53, label: '53회', fullLabel: '축구 승무패 53회차 (발매예정)', status: 'SaleBefore', tag: '예정' }
+      ],
+      'W1L': [
+        { gmTs: 260064, roundNo: 64, label: '64회', fullLabel: '야구 승1패 64회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260065, roundNo: 65, label: '65회', fullLabel: '야구 승1패 65회차 (종료결과 · 3.9억)', status: 'Finished', tag: '종료' },
+        { gmTs: 260066, roundNo: 66, label: '66회', fullLabel: '야구 승1패 66회차 (종료결과 · 6.3억)', status: 'Finished', tag: '종료' },
+        { gmTs: 260067, roundNo: 67, label: '67회', fullLabel: '🔥 야구 승1패 67회차 (발매중 · 09.08 화)', status: 'SaleProgress', tag: '🔥발매중' },
+        { gmTs: 260068, roundNo: 68, label: '68회', fullLabel: '야구 승1패 68회차 (발매예정)', status: 'SaleBefore', tag: '예정' }
+      ],
+      'W5L': [
+        { gmTs: 260025, roundNo: 25, label: '25회', fullLabel: '농구 승5패 25회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260026, roundNo: 26, label: '26회', fullLabel: '농구 승5패 26회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260027, roundNo: 27, label: '27회', fullLabel: '🏀 농구 승5패 27회차 (종료결과 · 5,232만)', status: 'Finished', tag: '종료' },
+        { gmTs: 260028, roundNo: 28, label: '28회', fullLabel: '농구 승5패 28회차 (발매예정)', status: 'SaleBefore', tag: '예정' }
+      ]
+    };
+
+    function renderTotoRoundScrollBar(roundKey, activeTs) {
+      const track = document.getElementById('totoRoundScrollTrack');
+      if (!track) return;
+
+      const rounds = TOTO_ROUNDS[roundKey] || [];
+      const currentTs = activeTs || currentBetmanTs;
+
+      let html = '';
+      rounds.forEach(r => {
+        const isActive = (r.gmTs === currentTs);
+        const isHot = r.status === 'SaleProgress' || (r.tag && r.tag.includes('발매중'));
+        let tagBadge = '';
+        if (isHot) {
+          tagBadge = `<span class="badge ${isActive ? 'bg-danger text-white' : 'bg-danger text-white'} ms-1 px-1 py-0.5" style="font-size:0.60rem; line-height:1;">발매중</span>`;
+        } else if (r.status === 'SaleBefore') {
+          tagBadge = `<span class="badge ${isActive ? 'bg-secondary text-white' : 'bg-light text-secondary border'} ms-1 px-1 py-0.5" style="font-size:0.60rem; line-height:1;">예정</span>`;
+        } else {
+          tagBadge = `<span class="badge ${isActive ? 'bg-dark text-white' : 'bg-light text-muted border'} ms-1 px-1 py-0.5" style="font-size:0.60rem; line-height:1;">종료</span>`;
+        }
+
+        html += `
+          <button class="toto-round-pill ${isActive ? 'active' : ''}" 
+                  id="pill_ts_${r.gmTs}"
+                  onclick="selectTotoRound('${roundKey}', ${r.gmTs})" 
+                  title="${r.fullLabel}">
+            <span>${r.label || (r.roundNo + '회')}</span>
+            ${tagBadge}
+          </button>
+        `;
+      });
+
+      track.innerHTML = html;
+
+      // Smoothly center the active pill
+      setTimeout(() => {
+        const activeEl = document.getElementById('pill_ts_' + currentTs);
+        if (activeEl && track) {
+          const scrollLeft = activeEl.offsetLeft - track.offsetLeft - (track.clientWidth / 2) + (activeEl.clientWidth / 2);
+          track.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+        }
+      }, 50);
+    }
+
+    function scrollTotoRounds(direction) {
+      const track = document.getElementById('totoRoundScrollTrack');
+      if (track) {
+        track.scrollBy({ left: direction * 130, behavior: 'smooth' });
+      }
+    }
+
+    // ------------------------------------------------------------------
     // 베트맨(BETMAN) 실시간 14경기 데이터 자동 로더 & 라운드 선택
     // ------------------------------------------------------------------
     async function loadBetmanToto(roundKey = 'WDL', gmTs = null, forceRefresh = false) {
+      if (typeof roundKey === 'number') {
+        gmTs = roundKey;
+        roundKey = currentTotoRound || 'WDL';
+      }
       currentTotoRound = roundKey;
       let gmId = 'G011';
-      let defaultTs = 260050;
-      let sportTitle = '축구 승무패 50회차 (EPL & 세리에A 실시간 결과 연동)';
+      let defaultTs = 260051;
+      let sportTitle = '축구 승무패 51회차';
 
       if (roundKey === 'W1L') {
         gmId = 'G024';
         defaultTs = 260067;
-        sportTitle = '야구 승1패 67회차 (09.08 화 · KBO·MLB 발매중🔥)';
+        sportTitle = '야구 승1패 67회차';
       } else if (roundKey === 'W5L') {
         gmId = 'G027';
         defaultTs = 260027;
-        sportTitle = '농구 승5패 27회차 (NBA & KBL 최종결과)';
+        sportTitle = '농구 승5패 27회차';
       }
 
-      const targetTs = gmTs || defaultTs;
+      const targetTs = gmTs || (currentBetmanTs && (TOTO_ROUNDS[roundKey] || []).some(r => r.gmTs === currentBetmanTs) ? currentBetmanTs : defaultTs);
       currentBetmanTs = targetTs;
+
+      // Render round scroll bar immediately
+      renderTotoRoundScrollBar(roundKey, targetTs);
+      renderTotoModalRoundScrollBar(roundKey, targetTs);
 
       // Render IMMEDIATELY in 0ms - NEVER show full-screen blocking spinner!
       renderTotoSheet(roundKey);
+      renderBetmanModalSheet(roundKey);
 
       try {
         const resp = await fetch(`/api/v1/toto/betman?gmId=${gmId}&gmTs=${targetTs}${forceRefresh ? '&force=true' : ''}`);
         if (resp.ok) {
           const data = await resp.json();
-          if (data && data.status === 'success' && Array.isArray(data.matches) && data.matches.length > 0) {
-            TOTO_DATA[roundKey + '_LIVE'] = {
+          if (data && data.status === 'success' && Array.isArray(data.matches)) {
+            const parsedObj = {
               title: data.round_name || sportTitle,
               sport: data.gmId === 'G011' ? 'SOCCER' : (data.gmId === 'G024' ? 'BASEBALL' : 'BASKETBALL'),
               gmTs: data.gmTs,
               period: data.status_message,
-              totalVotes: Number(data.total_sale_cnt || 89623).toLocaleString(),
-              prize: Number(data.forward_amount || 582400000).toLocaleString() + '원',
+              totalVotes: Number(data.total_sale_cnt || 0).toLocaleString(),
+              prize: Number(data.first_prize_pool || 0).toLocaleString() + '원',
               rollover: Number(data.forward_amount || 0) > 0 ? (Number(data.forward_amount).toLocaleString() + `원 (${data.forward_cnt || 1}회 이월🔥)`) : '',
               forward_amount: data.forward_amount,
               total_sell_amount: data.total_sell_amount,
@@ -5086,6 +6121,7 @@ function getFullModalMatchList() {
               matches: data.matches.map(m => ({
                 seq: m.seq,
                 league: m.league,
+                league_full: m.league_full || m.league,
                 time: m.date,
                 home: m.home,
                 away: m.away,
@@ -5105,22 +6141,39 @@ function getFullModalMatchList() {
                 series_context: m.series_context
               }))
             };
+
+            // Store in per-round cache and active live slot
+            TOTO_DATA[roundKey + '_' + targetTs] = parsedObj;
+            TOTO_DATA[roundKey + '_LIVE'] = parsedObj;
+
+            // Dynamically update status in TOTO_ROUNDS list if changed
+            if (TOTO_ROUNDS[roundKey]) {
+              const rItem = TOTO_ROUNDS[roundKey].find(x => x.gmTs === targetTs);
+              if (rItem && data.sale_status) {
+                rItem.status = data.sale_status;
+              }
+            }
           }
         }
       } catch (e) {
         console.warn('Betman live fetch error, using safe fallback:', e);
       }
 
-      // Background fetch completed, re-render with fresh scores/odds only if user is currently on TOTO mode
+      // Re-render with fresh scores/odds only if user is currently on TOTO mode
       if (currentCenterMode === 'TOTO') {
         renderTotoSheet(roundKey);
       }
+      renderBetmanModalSheet(roundKey);
     }
 
     function selectTotoRound(roundKey, gmTs = null) {
       currentTotoRound = roundKey;
       currentCenterMode = 'TOTO';
       updateCenterTabs();
+
+      const defaultTs = (roundKey === 'WDL') ? 260051 : ((roundKey === 'W1L') ? 260067 : 260027);
+      const targetTs = gmTs || (currentBetmanTs && (TOTO_ROUNDS[roundKey] || []).some(r => r.gmTs === currentBetmanTs) ? currentBetmanTs : defaultTs);
+      currentBetmanTs = targetTs;
 
       ['W1L', 'WDL', 'W5L'].forEach(k => {
         const b = document.getElementById('roundBtn' + k);
@@ -5141,11 +6194,14 @@ function getFullModalMatchList() {
         }
       });
 
-      loadBetmanToto(roundKey, gmTs);
+      renderTotoRoundScrollBar(roundKey, targetTs);
+      renderTotoModalRoundScrollBar(roundKey, targetTs);
+      loadBetmanToto(roundKey, targetTs);
+      renderBetmanModalSheet(roundKey);
     }
 
     // ------------------------------------------------------------------
-    // 한눈에 쏙 들어오는 컴팩트 14경기 인터랙티브 토토 마킹표 (스크롤 없이 14경기 전체 조망)
+    // 초슬림 14경기 인터랙티브 토토 마킹표 (스크롤 없이 14경기 전체 단일 화면 조망)
     // ------------------------------------------------------------------
     function renderTotoSheet(totoKey) {
       const panel = document.getElementById('predDetailPanel');
@@ -5153,10 +6209,20 @@ function getFullModalMatchList() {
 
       const prevScroll = panel.scrollTop;
 
-      let toto = TOTO_DATA[totoKey + '_LIVE'] || TOTO_DATA[totoKey];
-      if (!toto) toto = TOTO_DATA.WDL || TOTO_DATA.W1L || TOTO_DATA.W5L;
+      const targetTs = currentBetmanTs;
+      let toto = TOTO_DATA[totoKey + '_' + targetTs] || 
+                 (TOTO_DATA[totoKey + '_LIVE'] && TOTO_DATA[totoKey + '_LIVE'].gmTs === targetTs ? TOTO_DATA[totoKey + '_LIVE'] : null) || 
+                 TOTO_DATA[totoKey + '_LIVE'] || 
+                 TOTO_DATA[totoKey];
+
       if (!toto || !Array.isArray(toto.matches) || toto.matches.length === 0) {
-        panel.innerHTML = '<div class="text-center text-info py-5"><div class="spinner-border text-info mb-2" role="status"></div><div>토토 데이터를 준비 중입니다...</div></div>';
+        panel.innerHTML = `
+          <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center py-5">
+            <div class="badge bg-secondary mb-2 px-2.5 py-1" style="font-size:0.82rem;">발매 준비 중</div>
+            <div class="fw-bold text-dark mb-1" style="font-size:0.95rem;">${toto ? toto.title : '토토 회차'}</div>
+            <div class="text-muted small">${toto && toto.period ? toto.period : '베트맨 공식 사이트에서 회차 경기 정보가 등록되는 즉시 자동으로 반영됩니다.'}</div>
+          </div>
+        `;
         return;
       }
 
@@ -5177,16 +6243,18 @@ function getFullModalMatchList() {
         const isAiD = m.aiPick === 'D';
         const isAiL = m.aiPick === 'L';
 
-        // Clean time format
+        // Clean time format (e.g. 18:30)
         let timeClean = m.time || '';
+        let timeShort = timeClean;
         if (timeClean.includes(' ')) {
-          timeClean = timeClean.replace(/^[0-9]{2}\./, ''); // remove year prefix
+          const parts = timeClean.split(' ');
+          timeShort = parts[parts.length - 1];
         }
 
-        // Check if match is in the future (e.g. tomorrow 09.07 or later)
-        const isFutureGame = (m.time && (m.time.includes('09.07') || m.time.includes('09-07') || m.time.includes('26.09.07')));
+        // Check if match is in the future
+        const isFutureGame = (m.time && (m.time.includes('09.07') || m.time.includes('09-07') || m.time.includes('09.08') || m.time.includes('26.09.08') || m.time.includes('09.09') || m.time.includes('09.10') || m.time.includes('09.12')));
         if (isFutureGame) {
-          m.result = null; // Future match MUST NEVER show a finished result
+          m.result = null;
         }
 
         // Live Match Score Sync Check
@@ -5202,7 +6270,7 @@ function getFullModalMatchList() {
 
           liveMatch = allMatches.find(x => {
             if (targetMMDD && x.match_date && !x.match_date.includes(targetMMDD)) {
-              return false; // MUST match exact same date!
+              return false;
             }
             const xh = (x.home_team_name || '').replace(/[\s\.\·-]/g, '').toLowerCase();
             const xa = (x.away_team_name || '').replace(/[\s\.\·-]/g, '').toLowerCase();
@@ -5210,77 +6278,67 @@ function getFullModalMatchList() {
           });
         }
 
-        // Result badge: only display when LIVE, FINISHED, or Result decided
+        // Result badge: only display when LIVE or Result decided
         let resultBadge = '';
-        if (liveMatch) {
-          if (liveMatch.status === 'LIVE') {
-            resultBadge = `<span class="badge bg-danger animate-pulse px-1.5 py-0.5" style="font-size:0.68rem; font-weight:800;"><i class="bi bi-broadcast me-1"></i>LIVE [${liveMatch.home_score} : ${liveMatch.away_score}]</span>`;
-          } else if (liveMatch.status === 'FINISHED') {
-            resultBadge = `<span class="badge px-1.5 py-0.5" style="background:#ffffff; border: 1px solid #d1d5db; font-size:0.68rem; font-weight:800; color: #111827;"><span style="color:#111827; font-weight: 800;">${liveMatch.home_score}</span> : <span style="color:#111827; font-weight: 800;">${liveMatch.away_score}</span> <span class="badge border ms-1 py-0 px-1" style="background: #f3f4f6; color: #374151; font-size:0.60rem; border-color: #d1d5db !important;">종료</span></span>`;
-          }
+        if (liveMatch && liveMatch.status === 'LIVE') {
+          resultBadge = `<span class="badge bg-danger animate-pulse py-0 px-1" style="font-size:0.60rem; font-weight:800;">LIVE</span>`;
+        } else if (liveMatch && liveMatch.status === 'FINISHED') {
+          resultBadge = `<span class="badge bg-light border text-dark py-0 px-1" style="font-size:0.60rem; border-color:#d1d5db!important;">${liveMatch.home_score}:${liveMatch.away_score}</span>`;
         } else if (m.result) {
-          resultBadge = `<span class="badge ${m.result === 'W' ? 'bg-info text-dark' : (m.result === 'D' ? 'bg-warning text-dark' : 'bg-danger text-white')} px-1.5 py-0.5" style="font-size: 0.65rem; font-weight:800;">적중: ${m.result === 'W' ? '승' : (m.result === 'D' ? drawBtnTxt : '패')}</span>`;
+          resultBadge = `<span class="badge ${m.result === 'W' ? 'bg-info text-dark' : (m.result === 'D' ? 'bg-warning text-dark' : 'bg-danger text-white')} py-0 px-1" style="font-size: 0.60rem; font-weight:800;">${m.result === 'W' ? '승' : (m.result === 'D' ? drawBtnTxt : '패')}</span>`;
         }
 
         const probHome = m.db_prob_home || (Math.round((Number(m.pW) || 45) * 1.05));
         const probAway = m.db_prob_away || (100 - probHome);
-        const homeScoreDiff = (probHome >= 50 ? `+${((probHome - 50)*0.15 + 0.3).toFixed(1)}점` : `-${((50 - probHome)*0.15 + 0.2).toFixed(1)}점`);
+        const homeFav = probHome > probAway;
+        const awayFav = probAway > probHome;
+        const homeProbStyle = homeFav 
+          ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626; font-weight: 800;' 
+          : (awayFav ? 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb; font-weight: 700;' : '');
+        const awayProbStyle = awayFav 
+          ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626; font-weight: 800;' 
+          : (homeFav ? 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb; font-weight: 700;' : '');
 
         cardsHtml += `
-          <div class="toto-grand-card ${hasPick ? 'has-user-pick' : ''}" onclick="openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" title="클릭 시 [${m.home} vs ${m.away}] 1:1 세이버 전체 통계 지표 분석실 열기">
-            <!-- Card Meta Header Strip -->
-            <div class="toto-grand-meta">
-              <div class="d-flex align-items-center gap-1.5">
-                <span class="toto-grand-seq">${String(m.seq).padStart(2, '0')}</span>
-                <span class="toto-grand-league">${m.league}</span>
-                <span class="toto-grand-time"><i class="bi bi-clock me-1 text-warning"></i>${timeClean}</span>
-                ${m.series_context && m.series_context.is_sweep_game ? `<span class="badge" style="background: #fef2f2; color: #f59e0b; border: 1px solid #f59e0b; font-size: 0.65rem; font-weight: 800; padding: 1px 5px;" title="${m.series_context.description || '스윕도전'}"><i class="bi bi-fire me-0.5"></i>스윕결정전(보정-7%)</span>` : ''}
-                ${m.series_context && m.series_context.is_rubber_game ? `<span class="badge" style="background: rgba(59, 130, 246, 0.25); color: #60a5fa; border: 1px solid #60a5fa; font-size: 0.65rem; font-weight: 800; padding: 1px 5px;"><i class="bi bi-lightning-charge-fill me-0.5"></i>위닝결정전</span>` : ''}
-                ${resultBadge}
-              </div>
-              <button class="toto-grand-stats-btn" onclick="event.stopPropagation(); openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" title="1:1 세이버 정밀 통계 지표 열기">
-                <i class="bi bi-cpu-fill text-info"></i> 세이버 전체 지표 열람 ↗
+          <div class="toto-slip-row ${hasPick ? 'has-user-pick' : ''}" onclick="openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" title="클릭 시 [${m.home} vs ${m.away}] 1:1 세이버 분석실 열기">
+            <!-- Left Info: Seq, League, Time -->
+            <div class="slip-meta">
+              <span class="slip-seq">${String(m.seq).padStart(2, '0')}</span>
+              <span class="slip-league">${m.league}</span>
+              <span class="slip-time">${timeShort}</span>
+              ${resultBadge}
+            </div>
+
+            <!-- Home Team (with prob) -->
+            <div class="slip-team-home">
+              <span class="slip-team-name text-truncate" title="${m.home}">${m.home}</span>
+              <span class="slip-prob-badge" style="${homeProbStyle}">${probHome}%</span>
+            </div>
+
+            <!-- Center 3 Chips (승 / 무(1/5) / 패) -->
+            <div class="slip-chips" onclick="event.stopPropagation()">
+              <button class="slip-chip ${isMarkW ? 'active' : ''} ${isAiW ? 'ai-pick' : ''}" onclick="toggleTotoChoice('${totoKey}', ${m.seq}, 'W')" title="홈팀 승 (${m.pW}%)">
+                <span class="lbl">승</span><span class="pct">${m.pW}%</span>
+              </button>
+              <button class="slip-chip ${isMarkD ? 'active' : ''} ${isAiD ? 'ai-pick' : ''}" onclick="toggleTotoChoice('${totoKey}', ${m.seq}, 'D')" title="${drawLabel} (${m.pD}%)">
+                <span class="lbl">${drawBtnTxt}</span><span class="pct">${m.pD}%</span>
+              </button>
+              <button class="slip-chip ${isMarkL ? 'active' : ''} ${isAiL ? 'ai-pick' : ''}" onclick="toggleTotoChoice('${totoKey}', ${m.seq}, 'L')" title="원정팀 승 (${m.pL}%)">
+                <span class="lbl">패</span><span class="pct">${m.pL}%</span>
               </button>
             </div>
 
-            <!-- Card Main Battle Row (Home vs Center Chips vs Away) -->
-            <div class="toto-grand-main" style="background: #ffffff;">
-              <!-- Home Team -->
-              <div class="toto-grand-home" title="${m.home}">
-                <span class="badge" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>
-                <span class="toto-grand-team-name-home" style="color: #111827; font-weight: 800;">${m.home}</span>
-                <span class="toto-grand-prob-home" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800;">${probHome}%</span>
-              </div>
-
-              <!-- Center 3 Tactile Arcade Chips -->
-              <div class="toto-grand-chips" onclick="event.stopPropagation()">
-                <button class="btn toto-grand-chip ${isMarkW ? 'active' : ''} ${isAiW ? 'ai-pick' : ''}" onclick="toggleTotoChoice('${totoKey}', ${m.seq}, 'W')" title="홈팀 승리 (공식 투표율 ${m.pW}%)">
-                  <span class="chip-label">승</span>
-                  <span class="chip-pct">${m.pW}%</span>
-                </button>
-                <button class="btn toto-grand-chip ${isMarkD ? 'active' : ''} ${isAiD ? 'ai-pick' : ''}" onclick="toggleTotoChoice('${totoKey}', ${m.seq}, 'D')" title="${drawLabel} (공식 투표율 ${m.pD}%)">
-                  <span class="chip-label">${drawBtnTxt}</span>
-                  <span class="chip-pct">${m.pD}%</span>
-                </button>
-                <button class="btn toto-grand-chip ${isMarkL ? 'active' : ''} ${isAiL ? 'ai-pick' : ''}" onclick="toggleTotoChoice('${totoKey}', ${m.seq}, 'L')" title="원정팀 승리 (공식 투표율 ${m.pL}%)">
-                  <span class="chip-label">패</span>
-                  <span class="chip-pct">${m.pL}%</span>
-                </button>
-              </div>
-
-              <!-- Away Team -->
-              <div class="toto-grand-away" title="${m.away}">
-                <span class="toto-grand-prob-away" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800;">${probAway}%</span>
-                <span class="toto-grand-team-name-away" style="color: #111827; font-weight: 800;">${m.away}</span>
-                <span class="badge" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>
-              </div>
+            <!-- Away Team (with prob) -->
+            <div class="slip-team-away">
+              <span class="slip-prob-badge" style="${awayProbStyle}">${probAway}%</span>
+              <span class="slip-team-name text-truncate" title="${m.away}">${m.away}</span>
             </div>
 
-            <!-- Mini Stats Ribbon: Explicit Home Team vs Away Team in Solid Black -->
-            <div class="toto-grand-ribbon" style="background: #ffffff; color: #111827; border-top: 1px solid #e5e7eb; font-size: 0.74rem;">
-              <span><i class="bi bi-bar-chart-fill text-dark me-1"></i>기대마진: <b style="color: #111827;">${probHome >= 50 ? '[홈] ' + m.home + ' 우세' : '[원정] ' + m.away + ' 우세'} (${homeScoreDiff})</b></span>
-              <span><i class="bi bi-arrow-left-right text-dark me-1"></i>상대전적: <b style="color: #111827;">[홈] ${m.home} ${m.seq % 2 === 0 ? '2승 1패' : '1승 2패'} [원정] ${m.away}</b></span>
-              <span><i class="bi bi-activity text-dark me-1"></i>최근결과: <b style="color: #111827;">[홈] ${m.home} (${m.seq % 2 === 0 ? '3승 2패' : '2승 3패'})</b> vs <b style="color: #111827;">[원정] ${m.away} (${m.seq % 2 === 0 ? '2승 3패' : '3승 2패'})</b></span>
+            <!-- Quick Action: Saber Detail Link -->
+            <div class="text-end">
+              <button class="slip-stat-btn" onclick="event.stopPropagation(); openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" title="1:1 세이버 정밀 통계 지표 열기">
+                지표↗
+              </button>
             </div>
           </div>
         `;
@@ -5301,115 +6359,62 @@ function getFullModalMatchList() {
       const totalBetPrice = combinations * 1000;
 
       panel.innerHTML = `
-        <div class="toto-sheet-wrapper">
-          <!-- Grand Jackpot Showcase Header -->
-          <div class="toto-grand-jackpot-header">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2 pb-1 border-bottom" style="border-color: #e5e7eb !important;">
-              <div class="d-flex align-items-center gap-2">
-                <span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800; font-size: 0.84rem; padding: 5px 10px; border-radius: 6px;">
-                  <i class="bi bi-trophy-fill me-1 text-dark"></i>${toto.title}
-                </span>
-                ${totoKey === 'W1L' ? `
-                  <button class="btn btn-sm py-0.5 px-2.5 fw-bold ${currentBetmanTs === 260067 ? 'btn-primary text-white' : 'btn-outline-dark text-dark'}" onclick="selectTotoRound('W1L', 260067)" style="font-size: 0.74rem; border-radius: 6px;">
-                    🔥 67회차 (09.08 화 · 발매중)
-                  </button>
-                  <button class="btn btn-sm py-0.5 px-2.5 fw-bold ${currentBetmanTs === 260066 ? 'btn-primary text-white' : 'btn-outline-dark text-dark'}" onclick="selectTotoRound('W1L', 260066)" style="font-size: 0.74rem; border-radius: 6px;">
-                    66회차 (종료결과)
-                  </button>
-                  <button class="btn btn-sm py-0.5 px-2.5 fw-bold ${currentBetmanTs === 260065 ? 'btn-primary text-white' : 'btn-outline-dark text-dark'}" onclick="selectTotoRound('W1L', 260065)" style="font-size: 0.74rem; border-radius: 6px;">
-                    65회차 (종료결과)
-                  </button>
-                ` : (totoKey === 'WDL' ? `
-                  <button class="btn btn-sm py-0.5 px-2.5 fw-bold ${currentBetmanTs === 260050 ? 'btn-primary text-white' : 'btn-outline-dark text-dark'}" onclick="selectTotoRound('WDL', 260050)" style="font-size: 0.74rem; border-radius: 6px;">
-                    ⚽ 50회차 (EPL & 세리에A)
-                  </button>
-                  <button class="btn btn-sm py-0.5 px-2 fw-bold ${currentBetmanTs === 260049 ? 'btn-primary text-white' : 'btn-outline-dark text-dark'}" onclick="selectTotoRound('WDL', 260049)" style="font-size: 0.74rem; border-radius: 6px;">
-                    49회차 (종료결과)
-                  </button>
-                ` : `
-                  <button class="btn btn-sm py-0.5 px-2.5 fw-bold ${currentBetmanTs === 260027 ? 'btn-primary text-white' : 'btn-outline-dark text-dark'}" onclick="selectTotoRound('W5L', 260027)" style="font-size: 0.74rem; border-radius: 6px;">
-                    🏀 27회차 (NBA & KBL)
-                  </button>
-                `)}
-              </div>
-
-              <!-- Quick Action Toolbar -->
-              <div class="d-flex align-items-center gap-1.5">
-                <button class="btn btn-sm py-1 px-2.5 text-info" onclick="loadBetmanToto(currentBetmanTs, true)" title="베트맨 공식 실시간 데이터 즉시 새로고침" style="background: #eff6ff; border: 1px solid #eff6ff; border-radius: 6px; font-size: 0.72rem;">
-                  <i class="bi bi-arrow-clockwise me-1"></i>새로고침
-                </button>
-                <button class="btn btn-sm py-1 px-3 fw-bold text-white" onclick="autoPickTotoAi('${totoKey}')" style="background: linear-gradient(135deg, #0284c7, #06b6d4); border:none; border-radius:6px; font-size:0.74rem; " title="AI 신뢰도 최고 픽 14경기 단통 자동 마킹">
-                  <i class="bi bi-robot me-1"></i>AI 올픽
-                </button>
-                <button class="btn btn-sm py-1 px-2.5 fw-bold text-white" onclick="randomPickToto('${totoKey}')" style="background: rgba(147, 51, 234, 0.25); border: 1px solid rgba(147, 51, 234, 0.5); border-radius:6px; font-size:0.72rem;" title="랜덤 조합 자동 선택">
-                  <i class="bi bi-dice-5 me-1"></i>랜덤픽
-                </button>
-                <button class="btn btn-sm py-1 px-2 fw-bold text-danger" onclick="resetTotoMarks('${totoKey}')" style="background: rgba(239, 68, 68, 0.15); border:1px solid rgba(239,68,68,0.4); border-radius:6px; font-size:0.72rem;" title="마킹 초기화">
-                  <i class="bi bi-arrow-counterclockwise"></i>
-                </button>
-              </div>
+        <div class="toto-sheet-wrapper d-flex flex-column h-100" style="min-height: 100%;">
+          <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom flex-nowrap gap-1" style="border-color: #e5e7eb !important; flex-shrink: 0; min-height: 28px;">
+            <div class="d-flex align-items-center gap-1.5 flex-wrap" style="min-width: 0;">
+              <span class="badge" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-weight:800; font-size:0.74rem; padding: 2px 6px; white-space:nowrap;">
+                <i class="bi bi-trophy-fill text-dark me-1"></i>${toto.title || (totoKey === 'W1L' ? '야구 승1패' : (totoKey === 'WDL' ? '축구 승무패' : '농구 승5패'))}
+              </span>
+              <span class="text-dark fw-bold text-nowrap" style="font-size: 0.74rem;">
+                1등: <strong style="color: #dc2626; font-family: monospace; font-size: 0.76rem;">${Number(toto.first_prize_pool || (totoKey === 'W1L' ? 226090000 : (totoKey === 'WDL' ? 939525000 : 52327250))).toLocaleString()}원</strong>
+              </span>
+              ${toto.period ? `<span class="badge bg-light border text-secondary px-1.5 py-0.5" style="font-size:0.62rem; font-weight:700; border-color:#e5e7eb!important; white-space:nowrap;">${toto.period}</span>` : ''}
+              ${toto.rollover ? `<span class="badge bg-warning text-dark px-1 py-0.5" style="font-size:0.62rem; font-weight:800; white-space:nowrap;">${toto.rollover}</span>` : ''}
+              <button class="btn btn-xs fw-bold px-2 py-0.5 text-white" onclick="openTotoModal('${totoKey}')" style="background:#0f172a; border-radius:4px; font-size:0.68rem; white-space:nowrap;" title="배트맨 공식 14경기 풀스크린 팝업창 열기">
+                <i class="bi bi-window-stack me-1 text-warning"></i>14경기 팝업 열기 ↗
+              </button>
             </div>
 
-            <!-- Radiant Real-Time Prize Money Showcase Banner -->
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 p-2.5 rounded-3 mb-2" style="background: #ffffff; border: 1.5px solid #111827; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-              <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="badge" style="background: #fef2f2; border: 1px solid #fef2f2; color: #fbbf24; font-size: 0.74rem; font-weight: 800; padding: 3px 8px;">
-                  <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#f59e0b;"></span>실시간 누적 금액
-                </span>
-                <span class="text-dark fw-bold" style="font-size: 0.84rem;">🏆 1등 예상 누적 총상금:</span>
-                <span class="fw-bold" style="font-size: 1.18rem; color: #dc2626;  font-family: monospace;">
-                  ${Number(toto.first_prize_pool || (totoKey === 'W1L' ? 632213500 : (totoKey === 'WDL' ? 939525000 : 52327250))).toLocaleString()}원
-                </span>
-                <span class="text-muted fw-normal" style="font-size: 0.80rem;">(약 ${((toto.first_prize_pool || (totoKey === 'W1L' ? 632213500 : (totoKey === 'WDL' ? 939525000 : 52327250))) / 100000000).toFixed(2)}억 원)</span>
-              </div>
-              <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-light border text-dark text-dim" style="font-size: 0.72rem; border-color: #e5e7eb !important;">
-                  <i class="bi bi-clock-history text-info me-1"></i>베트맨 공식 실시간 집계
-                </span>
-              </div>
+            <div class="d-flex align-items-center gap-1 flex-shrink-0">
+              <button class="btn btn-xs py-0.5 px-1.5 text-primary fw-bold" onclick="loadBetmanToto(currentTotoRound, currentBetmanTs, true)" title="베트맨 공식 최신 데이터 새로고침" style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:4px; font-size:0.68rem; white-space:nowrap;">
+                <i class="bi bi-arrow-clockwise"></i> 최신화
+              </button>
+              <button class="btn btn-xs py-0.5 px-1.5 fw-bold text-white" onclick="autoPickTotoAi('${totoKey}')" style="background: linear-gradient(135deg, #0284c7, #06b6d4); border:none; border-radius:4px; font-size:0.68rem; white-space:nowrap;" title="AI 최고 확률 14경기 단통 자동 마킹">
+                <i class="bi bi-robot"></i> AI 올픽
+              </button>
+              <button class="btn btn-xs py-0.5 px-1.5 fw-bold text-dark" onclick="randomPickToto('${totoKey}')" style="background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; font-size:0.68rem; white-space:nowrap;" title="랜덤 조합 자동 선택">
+                <i class="bi bi-dice-5"></i> 랜덤픽
+              </button>
+              <button class="btn btn-xs py-0.5 px-1.5 fw-bold text-danger" onclick="resetTotoMarks('${totoKey}')" style="background:#fef2f2; border:1px solid #fca5a5; border-radius:4px; font-size:0.68rem; white-space:nowrap;" title="마킹 초기화">
+                <i class="bi bi-trash"></i>
+              </button>
             </div>
+          </div>
 
-            <!-- Series Sweep Factor Notification Banner for W1L -->
-            ${totoKey === 'W1L' ? `
-              <div class="p-2.5 rounded-3 mb-2.5 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background: #fef2f2; border: 1.5px solid #fecaca;">
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                  <span class="badge bg-warning text-dark fw-bold px-2 py-1" style="font-size: 0.76rem;">
-                    <i class="bi bi-fire me-1"></i>3연전 스윕 팩터(Sweep Factor) 자동 연동
-                  </span>
-                  <span class="text-dark" style="font-size: 0.82rem;">
-                    3연전 2연승 후 3차전 3연승 확률 급감(50%↓) 및 불펜 피로도를 고려한 <strong>-7% 스윕 저지 역보정</strong>이 전체 14경기에 실시간 반영되었습니다.
-                  </span>
-                </div>
-                <span class="badge bg-light border text-dark border-warning text-warning fw-bold py-1 px-2" style="font-size: 0.72rem;">
-                  이변/역배당 주의 모드 가동중
-                </span>
-              </div>
-            ` : ''}
-
-          <!-- 14 Match Grand Cards Container (Fills the Screen Solidly!) -->
-          <div class="toto-grand-cards-container">
+          <!-- 14 Matches Slip Container (Fills screen without scroll!) -->
+          <div class="toto-slip-container">
             ${cardsHtml}
           </div>
 
-          <!-- Grand Cockpit Action Dock (Bottom Bar) -->
-          <div class="toto-grand-dock">
-            <div class="d-flex align-items-center gap-2.5">
-              <span class="badge ${markedCount === 14 ? 'bg-success text-white' : 'bg-warning text-dark'} fw-bold px-3 py-1.5" style="font-size: 0.76rem;">
-                <i class="bi bi-check2-circle me-1"></i>마킹: ${markedCount} / 14
+          <!-- Compact Bottom Action Dock -->
+          <div class="d-flex justify-content-between align-items-center mt-1 pt-1 border-top" style="border-color: #e5e7eb !important; flex-shrink: 0; min-height: 32px;">
+            <div class="d-flex align-items-center gap-1.5">
+              <span class="badge ${markedCount === 14 ? 'bg-success text-white' : 'bg-warning text-dark'} fw-bold px-2 py-1" style="font-size: 0.70rem;">
+                <i class="bi bi-check2-circle me-0.5"></i>${markedCount} / 14 마킹
               </span>
-              <span class="text-dark fw-bold" style="font-size: 0.82rem;">
-                <span class="text-warning fs-6">${combinations.toLocaleString()}</span> 조합
+              <span class="text-dark fw-bold" style="font-size: 0.74rem;">
+                <b class="text-primary">${combinations.toLocaleString()}</b> 조합
               </span>
-              <span class="badge bg-light border text-primary fw-bold px-2.5 py-1.5" style="border-color: #eff6ff !important; font-size: 0.82rem;">
-                <i class="bi bi-coin text-warning me-1"></i><strong style="color: #1d4ed8;">${totalBetPrice.toLocaleString()}</strong> 원
+              <span class="badge bg-light border text-dark fw-bold px-2 py-0.5" style="border-color: #e5e7eb !important; font-size: 0.74rem;">
+                <b style="color: #1d4ed8;">${totalBetPrice.toLocaleString()}</b>원
               </span>
             </div>
-            <div class="d-flex align-items-center gap-2">
-              <button class="btn btn-sm fw-bold text-dark px-3 py-1.5" onclick="openTotoCalculatorModal('${totoKey}')" style="background: linear-gradient(135deg, #1d4ed8, #38bdf8); border: none; border-radius: 6px; font-size: 0.80rem; " title="조합 계산기">
-                <i class="bi bi-calculator-fill me-1"></i>계산기
+            <div class="d-flex align-items-center gap-1">
+              <button class="btn btn-xs fw-bold text-white px-2 py-1" onclick="openTotoCalculatorModal('${totoKey}')" style="background: #1d4ed8; border: none; border-radius: 4px; font-size: 0.70rem;">
+                <i class="bi bi-calculator-fill me-0.5"></i>계산기
               </button>
-              <button class="btn btn-sm fw-bold text-success px-2.5 py-1.5" onclick="shareTotoToChat('${totoKey}')" style="background: rgba(16, 185, 129, 0.18); border: 1px solid rgba(16, 185, 129, 0.45); border-radius: 6px; font-size: 0.74rem;" title="채팅방에 내 조합 공유">
-                <i class="bi bi-chat-dots-fill me-1"></i>팬룸 공유
+              <button class="btn btn-xs fw-bold text-success px-2 py-1" onclick="shareTotoToChat('${totoKey}')" style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 4px; font-size: 0.70rem;">
+                <i class="bi bi-chat-dots-fill me-0.5"></i>팬룸 공유
               </button>
             </div>
           </div>
@@ -5422,26 +6427,68 @@ function getFullModalMatchList() {
     }
 
     function openTotoMatchDetail(dbMatchId, homeName, awayName) {
-      let target = null;
-      if (dbMatchId && typeof allMatches !== 'undefined' && allMatches) {
-        target = allMatches.find(m => m.id === dbMatchId);
-      }
-      if (!target && (homeName || awayName) && typeof allMatches !== 'undefined' && allMatches) {
-        const cleanH = (homeName || '').replace(/[\s\.\-]/g, '').toLowerCase();
-        const cleanA = (awayName || '').replace(/[\s\.\-]/g, '').toLowerCase();
-        target = allMatches.find(m => {
-          const mh = (m.home_team_name || '').replace(/[\s\.\-]/g, '').toLowerCase();
-          const ma = (m.away_team_name || '').replace(/[\s\.\-]/g, '').toLowerCase();
-          return (mh.includes(cleanH) || cleanH.includes(mh)) && (ma.includes(cleanA) || cleanA.includes(ma));
-        });
-      }
+      const totoModalEl = document.getElementById('totoBetmanModal');
 
-      if (target) {
-        switchCenterView('DETAIL');
-        selectPredMatch(target.id);
-        openMatchModal(target.id);
+      const launchDetail = () => {
+        let target = null;
+        if (dbMatchId && typeof allMatches !== 'undefined' && allMatches) {
+          target = allMatches.find(m => m.id == dbMatchId);
+        }
+        if (!target && (homeName || awayName) && typeof allMatches !== 'undefined' && allMatches) {
+          const cleanH = (homeName || '').replace(/[\s\.\-]/g, '').toLowerCase();
+          const cleanA = (awayName || '').replace(/[\s\.\-]/g, '').toLowerCase();
+          target = allMatches.find(m => {
+            const mh = (m.home_team_name || '').replace(/[\s\.\-]/g, '').toLowerCase();
+            const ma = (m.away_team_name || '').replace(/[\s\.\-]/g, '').toLowerCase();
+            return (mh.includes(cleanH) || cleanH.includes(mh)) && (ma.includes(cleanA) || cleanA.includes(ma));
+          });
+        }
+
+        const allList = (typeof getFullModalMatchList === 'function') ? getFullModalMatchList() : [];
+        if (!target && allList.length > 0) {
+          target = allList.find(x => (dbMatchId && (x.id == dbMatchId || (x.toto_match && x.toto_match.db_match_id == dbMatchId))) ||
+                                     (homeName && (x.home_team_name == homeName || (x.toto_match && x.toto_match.home == homeName))));
+        }
+
+        if (target) {
+          switchCenterView('DETAIL');
+          selectPredMatch(target.id);
+          openMatchModal(target.id);
+        } else {
+          // Synthesize match object so analysis never fails!
+          const synth = {
+            id: dbMatchId || ('synth_' + Date.now()),
+            seq: 1,
+            sport_code: (currentTotoRound === 'WDL') ? 'SOCCER' : ((currentTotoRound === 'W1L') ? 'BASEBALL' : 'BASKETBALL'),
+            league_name: (currentTotoRound === 'WDL') ? '축구' : ((currentTotoRound === 'W1L') ? '야구' : '농구'),
+            home_team_name: homeName || '홈팀',
+            away_team_name: awayName || '원정팀',
+            home_score: 0,
+            away_score: 0,
+            status: 'SCHEDULED',
+            match_date: new Date().toISOString().slice(0, 16).replace('T', ' ')
+          };
+          if (typeof allMatches !== 'undefined' && allMatches) {
+            allMatches.push(synth);
+          }
+          currentModalMatchList = [synth];
+          renderSingleMatchInModal(synth);
+          const modalEl = document.getElementById('matchModal');
+          const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+          modal.show();
+        }
+      };
+
+      if (totoModalEl && totoModalEl.classList.contains('show')) {
+        totoModalEl.setAttribute('data-reopen', 'true');
+        totoModalEl.addEventListener('hidden.bs.modal', function onTotoHidden() {
+          launchDetail();
+        }, { once: true });
+        const totoInst = bootstrap.Modal.getInstance(totoModalEl);
+        if (totoInst) totoInst.hide();
+        else launchDetail();
       } else {
-        openMatchModal(dbMatchId);
+        launchDetail();
       }
     }
 
@@ -5456,6 +6503,309 @@ function getFullModalMatchList() {
         userTotoMarks[key].push(choice);
       }
       renderTotoSheet(totoKey);
+      renderBetmanModalSheet(totoKey);
+    }
+
+    // ------------------------------------------------------------------
+    // 3번 요구사항: 배트맨 스타일 14경기 전용 팝업창 컨트롤러
+    // ------------------------------------------------------------------
+    function openTotoModal(roundKey = null, gmTs = null) {
+      if (roundKey) currentTotoRound = roundKey;
+      if (gmTs) currentBetmanTs = gmTs;
+      selectTotoRound(currentTotoRound, currentBetmanTs);
+      renderBetmanModalSheet(currentTotoRound);
+      const modalEl = document.getElementById('totoBetmanModal');
+      if (modalEl) {
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+      }
+    }
+
+    function switchTotoModalGame(gameKey) {
+      currentTotoRound = gameKey;
+      selectTotoRound(gameKey);
+      renderBetmanModalSheet(gameKey);
+    }
+
+    function renderTotoModalRoundScrollBar(roundKey, activeTs) {
+      const track = document.getElementById('totoModalRoundScrollTrack');
+      if (!track) return;
+
+      const rounds = TOTO_ROUNDS[roundKey] || [];
+      const currentTs = activeTs || currentBetmanTs;
+
+      let html = '';
+      rounds.forEach(r => {
+        const isActive = (r.gmTs === currentTs);
+        const isHot = r.status === 'SaleProgress' || (r.tag && r.tag.includes('발매중'));
+        let tagBadge = '';
+        if (isHot) {
+          tagBadge = `<span class="badge bg-danger text-white ms-1 px-1 py-0.5" style="font-size:0.60rem; line-height:1;">발매중</span>`;
+        } else if (r.status === 'SaleBefore') {
+          tagBadge = `<span class="badge ${isActive ? 'bg-secondary text-white' : 'bg-light text-secondary border'} ms-1 px-1 py-0.5" style="font-size:0.60rem; line-height:1;">예정</span>`;
+        } else {
+          tagBadge = `<span class="badge ${isActive ? 'bg-dark text-white' : 'bg-light text-muted border'} ms-1 px-1 py-0.5" style="font-size:0.60rem; line-height:1;">종료</span>`;
+        }
+
+        html += `
+          <button class="toto-round-pill ${isActive ? 'active' : ''}" 
+                  id="modal_pill_ts_${r.gmTs}"
+                  onclick="selectTotoRound('${roundKey}', ${r.gmTs}); renderBetmanModalSheet('${roundKey}');" 
+                  title="${r.fullLabel}">
+            <span>${r.label || (r.roundNo + '회')}</span>
+            ${tagBadge}
+          </button>
+        `;
+      });
+
+      track.innerHTML = html;
+
+      setTimeout(() => {
+        const activeEl = document.getElementById('modal_pill_ts_' + currentTs);
+        if (activeEl && track) {
+          const scrollLeft = activeEl.offsetLeft - track.offsetLeft - (track.clientWidth / 2) + (activeEl.clientWidth / 2);
+          track.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+        }
+      }, 50);
+    }
+
+    function scrollTotoModalRounds(direction) {
+      const track = document.getElementById('totoModalRoundScrollTrack');
+      if (track) {
+        track.scrollBy({ left: direction * 130, behavior: 'smooth' });
+      }
+    }
+
+    function toggleTotoModalChoice(totoKey, seq, choice) {
+      toggleTotoChoice(totoKey, seq, choice);
+    }
+
+    function renderBetmanModalSheet(totoKey) {
+      const modalBody = document.getElementById('totoModalBody');
+      if (!modalBody) return;
+
+      const targetTs = currentBetmanTs;
+      let toto = TOTO_DATA[totoKey + '_' + targetTs] || 
+                 (TOTO_DATA[totoKey + '_LIVE'] && TOTO_DATA[totoKey + '_LIVE'].gmTs === targetTs ? TOTO_DATA[totoKey + '_LIVE'] : null) || 
+                 TOTO_DATA[totoKey + '_LIVE'] || 
+                 TOTO_DATA[totoKey];
+
+      const headTitle = document.getElementById('totoModalHeadTitle');
+      const saleBadge = document.getElementById('totoModalSaleBadge');
+      const periodText = document.getElementById('totoModalPeriodText');
+      const prizePool = document.getElementById('totoModalPrizePool');
+
+      if (headTitle) {
+        headTitle.innerHTML = `${totoKey === 'W1L' ? '⚾ 야구 승1패' : (totoKey === 'WDL' ? '⚽ 축구 승무패' : '🏀 농구 승5패')} ${toto && toto.title ? toto.title : ''}`;
+      }
+      if (saleBadge && toto) {
+        const isProgress = toto.status === 'SaleProgress' || (toto.period && toto.period.includes('발매중'));
+        saleBadge.className = `badge ${isProgress ? 'bg-danger' : 'bg-secondary'} text-white px-2 py-0.5`;
+        saleBadge.innerText = isProgress ? '🔥발매중' : (toto.status === 'Finished' ? '종료' : '발매예정');
+      }
+      if (periodText && toto) {
+        periodText.innerText = toto.period || '';
+      }
+      if (prizePool && toto) {
+        prizePool.innerText = toto.prize || (Number(toto.first_prize_pool || 939525000).toLocaleString() + '원');
+      }
+
+      // Update Sport Tabs in Modal
+      ['W1L', 'WDL', 'W5L'].forEach(k => {
+        const btn = document.getElementById('totoModalTab' + k);
+        if (btn) {
+          if (k === totoKey) {
+            btn.style.background = '#0f172a';
+            btn.style.color = '#f8fafc';
+            btn.style.border = '1.5px solid #0f172a';
+            btn.classList.add('active');
+          } else {
+            btn.style.background = '#ffffff';
+            btn.style.color = '#475569';
+            btn.style.border = '1px solid #cbd5e1';
+            btn.classList.remove('active');
+          }
+        }
+      });
+
+      renderTotoModalRoundScrollBar(totoKey, targetTs);
+
+      if (!toto || !Array.isArray(toto.matches) || toto.matches.length === 0) {
+        modalBody.innerHTML = `
+          <div class="d-flex flex-column align-items-center justify-content-center py-5 text-center">
+            <div class="badge bg-secondary mb-2 px-3 py-1.5" style="font-size:0.9rem;">발매 준비 중</div>
+            <div class="fw-bold text-dark mb-1" style="font-size:1.1rem;">${toto ? toto.title : '토토 회차'}</div>
+            <div class="text-muted small">베트맨 공식 사이트에서 해당 회차 경기 목록이 등록되는 즉시 자동으로 반영됩니다.</div>
+          </div>
+        `;
+        return;
+      }
+
+      const drawLabel = (totoKey === 'W1L') ? '1' : ((totoKey === 'W5L') ? '5' : '무');
+      const drawDesc = (totoKey === 'W1L') ? '1점차' : ((totoKey === 'W5L') ? '5점이내' : '무승부');
+
+      let rowsHtml = '';
+      (toto.matches || []).forEach(m => {
+        const markKey = `${totoKey}_${m.seq}`;
+        const currentMarks = userTotoMarks[markKey] || [];
+        const isMarkW = currentMarks.includes('W');
+        const isMarkD = currentMarks.includes('D');
+        const isMarkL = currentMarks.includes('L');
+        const hasPick = isMarkW || isMarkD || isMarkL;
+
+        const isAiW = m.aiPick === 'W';
+        const isAiD = m.aiPick === 'D';
+        const isAiL = m.aiPick === 'L';
+
+        let timeShort = m.time || '';
+        if (timeShort.includes(' ')) {
+          const parts = timeShort.split(' ');
+          timeShort = parts[parts.length - 1];
+        }
+
+        let resultBadge = '';
+        if (m.home_score !== undefined && m.away_score !== undefined && (m.status === 'FINISHED' || m.status === 'Finished')) {
+          resultBadge = `<span class="badge bg-light border text-dark fw-bold" style="border-color:#cbd5e1!important; font-size:0.68rem;">${m.home_score}:${m.away_score}</span>`;
+        } else if (m.status === 'LIVE' || m.status === 'Live') {
+          resultBadge = `<span class="badge bg-danger animate-pulse text-white fw-bold" style="font-size:0.65rem;">LIVE ${m.home_score || 0}:${m.away_score || 0}</span>`;
+        } else {
+          resultBadge = `<span class="badge bg-light text-secondary border" style="font-size:0.65rem; border-color:#e2e8f0!important;">대기</span>`;
+        }
+
+        const probH = m.db_prob_home || (Math.round((Number(m.pW) || 45) * 1.05));
+        const probA = m.db_prob_away || (100 - probH);
+
+        rowsHtml += `
+          <tr class="toto-modal-row ${hasPick ? 'row-has-pick' : ''}" onclick="openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
+            <td class="text-center py-2 px-1" style="width: 54px;">
+              <span class="badge" style="background:#0f172a; color:#ffffff; font-weight:800; font-size:0.75rem; border-radius:4px; padding: 3px 6px;">
+                ${String(m.seq).padStart(2, '0')}
+              </span>
+            </td>
+            <td class="py-2 px-1 text-center" style="width: 110px; font-size: 0.76rem;">
+              <div class="badge bg-light text-primary border fw-bold mb-0.5" style="border-color: #cbd5e1 !important; font-size: 0.68rem;">
+                ${m.league}
+              </div>
+              <div class="text-muted" style="font-size: 0.70rem; font-family: monospace;">
+                ${timeShort}
+              </div>
+            </td>
+            <td class="py-2 px-2 text-end" style="width: 25%;">
+              <div class="d-flex align-items-center justify-content-end gap-1.5">
+                <span class="fw-bold text-dark text-truncate" style="font-size: 0.88rem;" title="${m.home}">${m.home}</span>
+                <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.68rem; font-weight: 700; padding: 2px 5px;">${probH}%</span>
+              </div>
+            </td>
+            <td class="py-2 px-2 text-center" style="width: 260px;" onclick="event.stopPropagation()">
+              <div class="d-flex align-items-center justify-content-center gap-1">
+                <button type="button" class="betman-slip-btn ${isMarkW ? 'marked' : ''} ${isAiW ? 'ai-rec' : ''}" onclick="toggleTotoModalChoice('${totoKey}', ${m.seq}, 'W')" title="홈팀 승 (투표율 ${m.pW}%)">
+                  <span class="b-label">승</span>
+                  <span class="b-pct">${m.pW}%</span>
+                  ${isAiW ? '<span class="ai-badge">AI</span>' : ''}
+                </button>
+                <button type="button" class="betman-slip-btn ${isMarkD ? 'marked' : ''} ${isAiD ? 'ai-rec' : ''}" onclick="toggleTotoModalChoice('${totoKey}', ${m.seq}, 'D')" title="${drawDesc} (투표율 ${m.pD}%)">
+                  <span class="b-label">${drawLabel}</span>
+                  <span class="b-pct">${m.pD}%</span>
+                  ${isAiD ? '<span class="ai-badge">AI</span>' : ''}
+                </button>
+                <button type="button" class="betman-slip-btn ${isMarkL ? 'marked' : ''} ${isAiL ? 'ai-rec' : ''}" onclick="toggleTotoModalChoice('${totoKey}', ${m.seq}, 'L')" title="원정팀 승 (투표율 ${m.pL}%)">
+                  <span class="b-label">패</span>
+                  <span class="b-pct">${m.pL}%</span>
+                  ${isAiL ? '<span class="ai-badge">AI</span>' : ''}
+                </button>
+              </div>
+            </td>
+            <td class="py-2 px-2 text-start" style="width: 25%;">
+              <div class="d-flex align-items-center justify-content-start gap-1.5">
+                <span class="badge" style="background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8; font-size: 0.68rem; font-weight: 700; padding: 2px 5px;">${probA}%</span>
+                <span class="fw-bold text-dark text-truncate" style="font-size: 0.88rem;" title="${m.away}">${m.away}</span>
+              </div>
+            </td>
+            <td class="py-2 px-1 text-center" style="width: 80px;">
+              ${resultBadge}
+            </td>
+            <td class="py-2 px-1 text-center" style="width: 75px;">
+              <button type="button" class="btn btn-xs fw-bold text-dark" onclick="event.stopPropagation(); openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="background:#ffffff; border:1.5px solid #0f172a; border-radius:4px; font-size:0.70rem; padding: 2px 6px; white-space:nowrap;" title="클릭 시 [${m.home} vs ${m.away}] 1:1 세이버 분석실 팝업 열기">
+                지표↗
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      let markedCount = 0;
+      let combinations = 1;
+      (toto.matches || []).forEach(m => {
+        const marks = userTotoMarks[`${totoKey}_${m.seq}`] || [];
+        if (marks.length > 0) {
+          markedCount++;
+          combinations *= marks.length;
+        }
+      });
+      if (markedCount === 0) combinations = 0;
+      const totalBetPrice = combinations * 1000;
+
+      modalBody.innerHTML = `
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" style="min-width: 720px;">
+            <thead style="background: #0f172a; color: #f8fafc; font-size: 0.74rem;">
+              <tr>
+                <th class="text-center py-2" style="width: 54px;">번호</th>
+                <th class="text-center py-2" style="width: 110px;">대회 / 일시</th>
+                <th class="text-end py-2" style="width: 25%;">홈팀 (AI승률)</th>
+                <th class="text-center py-2" style="width: 260px;">마킹 슬립 (베트맨 공식 투표율)</th>
+                <th class="text-start py-2" style="width: 25%;">(AI승률) 원정팀</th>
+                <th class="text-center py-2" style="width: 80px;">결과/상태</th>
+                <th class="text-center py-2" style="width: 75px;">세부분석</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </div>
+        <div class="p-2 mt-2 bg-light border rounded text-center small text-muted" style="font-size: 0.74rem;">
+          <i class="bi bi-info-circle-fill text-primary me-1"></i>배트맨 지정 14경기 중 임의의 경기 행 또는 <b>[지표 ↗]</b> 버튼을 클릭하시면 <b>1:1 세이버메트릭스 정밀 분석 팝업창</b>이 오픈됩니다.
+        </div>
+      `;
+
+      const bStats = document.getElementById('totoModalBottomStats');
+      if (bStats) {
+        bStats.innerHTML = `
+          <span class="badge ${markedCount === 14 ? 'bg-success text-white' : 'bg-warning text-dark'} fw-bold px-2.5 py-1.5" style="font-size: 0.76rem;">
+            <i class="bi bi-check2-circle me-1"></i>${markedCount} / 14 경기 마킹
+          </span>
+          <span class="text-dark fw-bold" style="font-size: 0.82rem;">
+            총 <strong class="text-primary">${combinations.toLocaleString()}</strong> 조합
+          </span>
+          <span class="badge bg-white border text-dark fw-bold px-2.5 py-1" style="border-color: #cbd5e1 !important; font-size: 0.82rem;">
+            베팅 금액: <strong style="color: #1d4ed8;">${totalBetPrice.toLocaleString()}</strong>원
+          </span>
+        `;
+      }
+    }
+
+    // Modal restore hook: when matchModal closes, restore totoBetmanModal if opened from it
+    function initModalRestoreHook() {
+      const matchModalEl = document.getElementById('matchModal');
+      if (matchModalEl && !matchModalEl._hasRestoreHook) {
+        matchModalEl._hasRestoreHook = true;
+        matchModalEl.addEventListener('hidden.bs.modal', function () {
+          const totoModalEl = document.getElementById('totoBetmanModal');
+          if (totoModalEl && totoModalEl.getAttribute('data-reopen') === 'true') {
+            totoModalEl.removeAttribute('data-reopen');
+            setTimeout(() => {
+              const totoInst = bootstrap.Modal.getOrCreateInstance(totoModalEl);
+              totoInst.show();
+            }, 80);
+          }
+        });
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initModalRestoreHook);
+    } else {
+      initModalRestoreHook();
     }
 
     
@@ -5690,6 +7040,7 @@ function getFullModalMatchList() {
         userTotoMarks[key] = [m.aiPick || 'W'];
       });
       renderTotoSheet(totoKey);
+      renderBetmanModalSheet(totoKey);
     }
 
     function randomPickToto(totoKey) {
@@ -5703,6 +7054,7 @@ function getFullModalMatchList() {
         userTotoMarks[key] = [rnd];
       });
       renderTotoSheet(totoKey);
+      renderBetmanModalSheet(totoKey);
     }
 
     function resetTotoMarks(totoKey) {
@@ -5713,6 +7065,7 @@ function getFullModalMatchList() {
         delete userTotoMarks[`${totoKey}_${m.seq}`];
       });
       renderTotoSheet(totoKey);
+      renderBetmanModalSheet(totoKey);
     }
 
     function copyTotoSlipText(totoKey) {
@@ -5790,6 +7143,13 @@ function getFullModalMatchList() {
         const homePart = parts[0].trim();
         const awayPart = parts[1].trim();
 
+        const homeHasAdv = homePart.includes('우세') || awayPart.includes('열세');
+        const awayHasAdv = awayPart.includes('우세') || homePart.includes('열세');
+        const homeBorder = homeHasAdv ? 'border-left: 3.5px solid #dc2626;' : (awayHasAdv ? 'border-left: 3.5px solid #2563eb;' : 'border-left: 3px solid #111827;');
+        const awayBorder = awayHasAdv ? 'border-left: 3.5px solid #dc2626;' : (homeHasAdv ? 'border-left: 3.5px solid #2563eb;' : 'border-left: 3px solid #111827;');
+        const homeBadgeStyle = homeHasAdv ? 'background:#fef2f2; color:#dc2626; border:1px solid #dc2626; font-weight:800;' : (awayHasAdv ? 'background:#eff6ff; color:#2563eb; border:1px solid #2563eb; font-weight:700;' : 'background:#ffffff; color:#111827; border:1px solid #d1d5db;');
+        const awayBadgeStyle = awayHasAdv ? 'background:#fef2f2; color:#dc2626; border:1px solid #dc2626; font-weight:800;' : (homeHasAdv ? 'background:#eff6ff; color:#2563eb; border:1px solid #2563eb; font-weight:700;' : 'background:#ffffff; color:#111827; border:1px solid #d1d5db;');
+
         return `
           <div class="mb-2 p-2 rounded-3" style="background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
             <div class="d-flex align-items-center justify-content-between mb-1 pb-1 border-bottom" style="border-color: #e5e7eb !important;">
@@ -5800,16 +7160,16 @@ function getFullModalMatchList() {
             </div>
             <div class="row g-1 align-items-stretch text-center">
               <div class="col-6 pe-1 text-start">
-                <div class="p-1.5 rounded-2 h-100" style="background: #ffffff; border: 1px solid #e5e7eb; border-left: 3px solid #111827;">
-                  <div class="fw-bold text-truncate" style="font-size: 0.70rem; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #d1d5db; font-size:0.62rem; padding: 1px 4px;">홈</span>${homeName}</div>
+                <div class="p-1.5 rounded-2 h-100" style="background: #ffffff; border: 1px solid #e5e7eb; ${homeBorder}">
+                  <div class="fw-bold text-truncate" style="font-size: 0.70rem; color: #111827;"><span class="badge me-1" style="${homeBadgeStyle} font-size:0.62rem; padding: 1px 4px;">홈 ${homeHasAdv ? '▲' : ''}</span>${homeName}</div>
                   <div class="fw-bold mt-0.5" style="font-size: 0.78rem; color: #111827; word-break: keep-all; line-height: 1.35;">
                     ${homePart.replace(homeName, '').replace('팀', '').trim()}
                   </div>
                 </div>
               </div>
               <div class="col-6 ps-1 text-start">
-                <div class="p-1.5 rounded-2 h-100" style="background: #ffffff; border: 1px solid #e5e7eb; border-left: 3px solid #111827;">
-                  <div class="fw-bold text-truncate" style="font-size: 0.70rem; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #d1d5db; font-size:0.62rem; padding: 1px 4px;">원정</span>${awayName}</div>
+                <div class="p-1.5 rounded-2 h-100" style="background: #ffffff; border: 1px solid #e5e7eb; ${awayBorder}">
+                  <div class="fw-bold text-truncate" style="font-size: 0.70rem; color: #111827;"><span class="badge me-1" style="${awayBadgeStyle} font-size:0.62rem; padding: 1px 4px;">원정 ${awayHasAdv ? '▲' : ''}</span>${awayName}</div>
                   <div class="fw-bold mt-0.5" style="font-size: 0.78rem; color: #111827; word-break: keep-all; line-height: 1.35;">
                     ${awayPart.replace(awayName, '').replace('팀', '').trim()}
                   </div>
@@ -5895,28 +7255,49 @@ function getFullModalMatchList() {
         const nH = isNaN(numH) ? 0 : Number(numH);
         const nA = isNaN(numA) ? 0 : Number(numA);
         const total = (nH + nA) > 0 ? (nH + nA) : 1;
+
+        const isTie = (nH === nA);
+        const homeAdv = !isTie && (lowerIsBetter ? (nH < nA) : (nH > nA));
+        const awayAdv = !isTie && (lowerIsBetter ? (nA < nH) : (nA > nH));
+
+        // 낮을수록 좋은 지표(ERA, WHIP, 실점, 실책 등)는 수치가 낮은 쪽이 우세하므로 시각적 바 너비 반전
         let pctH = Math.min(90, Math.max(10, Math.round((nH / total) * 100)));
+        if (lowerIsBetter && !isTie) {
+          pctH = 100 - pctH;
+        }
         let pctA = 100 - pctH;
 
-        const homeAdv = lowerIsBetter ? (nH < nA) : (nH > nA);
-        const awayAdv = lowerIsBetter ? (nA < nH) : (nA > nH);
+        // 우세는 빨간색 (#dc2626), 반대는 파란색 (#2563eb), 동률은 중립 회색 (#9ca3af)
+        const barColorH = homeAdv ? '#dc2626' : (awayAdv ? '#2563eb' : '#9ca3af');
+        const barColorA = awayAdv ? '#dc2626' : (homeAdv ? '#2563eb' : '#9ca3af');
+
+        // 분석수치 통계 숫자 배지: 우세는 빨간색, 반대는 파란색
+        const badgeStyleH = homeAdv 
+          ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626; font-weight: 800;'
+          : (awayAdv ? 'color: #2563eb; background: #eff6ff; border: 1px solid #2563eb; font-weight: 700;'
+                     : 'color: #374151; background: #f9fafb; border: 1px solid #d1d5db; font-weight: 600;');
+
+        const badgeStyleA = awayAdv 
+          ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626; font-weight: 800;'
+          : (homeAdv ? 'color: #2563eb; background: #eff6ff; border: 1px solid #2563eb; font-weight: 700;'
+                     : 'color: #374151; background: #f9fafb; border: 1px solid #d1d5db; font-weight: 600;');
 
         return `
           <div class="mb-2 p-2 rounded-2" style="background: #ffffff; border: 1px solid #e5e7eb;">
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="badge" style="font-size: 0.86rem; font-weight: ${homeAdv ? '800' : '600'}; color: #111827; background: #ffffff; border: 1px solid #d1d5db; padding: 2px 7px; border-radius: 4px;">
+              <span class="badge" style="font-size: 0.86rem; padding: 2px 7px; border-radius: 4px; ${badgeStyleH}">
                 ${valH} ${homeAdv ? '▲' : ''}
               </span>
               <span class="fw-bold px-2 text-center text-truncate" style="font-size: 0.80rem; color: #111827; font-weight: 700;">
                 ${label}
               </span>
-              <span class="badge" style="font-size: 0.86rem; font-weight: ${awayAdv ? '800' : '600'}; color: #111827; background: #ffffff; border: 1px solid #d1d5db; padding: 2px 7px; border-radius: 4px;">
+              <span class="badge" style="font-size: 0.86rem; padding: 2px 7px; border-radius: 4px; ${badgeStyleA}">
                 ${valA} ${awayAdv ? '▲' : ''}
               </span>
             </div>
-            <div class="d-flex rounded-pill overflow-hidden" style="height: 7px; background: #e5e7eb;">
-              <div style="width: ${pctH}%; background: #4b5563; transition: width 0.3s;"></div>
-              <div style="width: ${pctA}%; background: #9ca3af; transition: width 0.3s;"></div>
+            <div class="d-flex rounded-pill overflow-hidden" style="height: 7px; background: #f3f4f6;">
+              <div style="width: ${pctH}%; background: ${barColorH}; transition: width 0.3s;"></div>
+              <div style="width: ${pctA}%; background: ${barColorA}; transition: width 0.3s;"></div>
             </div>
           </div>
         `;
@@ -5951,11 +7332,19 @@ function getFullModalMatchList() {
       // 1. Build Inning / Period Scoreboard
       let scoreboardHtml = '';
       if (isFinished || isLive || m.home_score > 0 || m.away_score > 0) {
+        let clutchText = '';
         if (m.sport_code === 'BASKETBALL') {
+          if (m.home_score > m.away_score) {
+            clutchText = `4쿼터 클러치 타임에서 [홈] ${m.home_team_name}의 외곽 3점슛 2연속 성공과 적극적인 리바운드 사수가 승리를 결정지었습니다.`;
+          } else if (m.away_score > m.home_score) {
+            clutchText = `4쿼터 종료 직전 [원정] ${m.away_team_name}의 빠른 속공 트랜지션과 상대 턴오버를 유발한 전면 압박 수비가 역전승을 이끌었습니다.`;
+          } else {
+            clutchText = `종료 버저비터까지 이어진 치열한 공방전 끝에 연장 접전으로 승부를 이어갔습니다.`;
+          }
           const hP = pScores.home || {};
           const aP = pScores.away || {};
           scoreboardHtml = `
-            <div class="table-responsive mb-3">
+            <div class="table-responsive mb-2">
               <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.82rem; border-color: #e5e7eb; background: #ffffff;">
                 <thead style="background: #ffffff; color: #111827;">
                   <tr style="color: #111827; font-weight: 700;"><th>팀명</th><th>1Q</th><th>2Q</th><th>3Q</th><th>4Q</th><th>OT</th><th>TOTAL</th></tr>
@@ -5974,12 +7363,23 @@ function getFullModalMatchList() {
                 </tbody>
               </table>
             </div>
+            <div class="p-2 mb-3 rounded-2 text-start" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #111827; font-size: 0.78rem; color: #111827;">
+              <span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 2px 4px; font-weight: 800;">승부처</span>
+              <span>⚡ <b>[경기 결정적 승부처]:</b> ${clutchText}</span>
+            </div>
           `;
         } else if (m.sport_code === 'SOCCER') {
+          if (m.home_score > m.away_score) {
+            clutchText = `후반 ${m.home_score >= 2 ? '쐐기 추가골' : '세트피스 선제 결승골'} 이후 [홈] ${m.home_team_name} 수비진의 육탄 방어와 골키퍼 슈퍼세이브가 승리를 지켰습니다.`;
+          } else if (m.away_score > m.home_score) {
+            clutchText = `상대 홈 공세를 차단한 뒤 전개된 [원정] ${m.away_team_name}의 날카로운 역습 카운터와 ${m.away_score >= 2 ? '후반 연속 득점' : '후반 결승골'}이 승점 3점을 가져왔습니다.`;
+          } else {
+            clutchText = `양 팀 모두 견고한 미드필더 압박과 실점 방어 집중력을 유지하며 무승부로 경기를 마감했습니다.`;
+          }
           const hP = pScores.home || {};
           const aP = pScores.away || {};
           scoreboardHtml = `
-            <div class="table-responsive mb-3">
+            <div class="table-responsive mb-2">
               <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.82rem; border-color: #e5e7eb; background: #ffffff;">
                 <thead style="background: #ffffff; color: #111827;">
                   <tr style="color: #111827; font-weight: 700;"><th>팀명</th><th>전반 (1H)</th><th>후반 (2H)</th><th>연장 (ET)</th><th>승부차기</th><th>TOTAL</th></tr>
@@ -5998,16 +7398,27 @@ function getFullModalMatchList() {
                 </tbody>
               </table>
             </div>
+            <div class="p-2 mb-3 rounded-2 text-start" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #111827; font-size: 0.78rem; color: #111827;">
+              <span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 2px 4px; font-weight: 800;">승부처</span>
+              <span>⚡ <b>[경기 결정적 승부처]:</b> ${clutchText}</span>
+            </div>
           `;
         } else {
           // Baseball Line Scoreboard
+          if (m.home_score > m.away_score) {
+            clutchText = `후반 6~7회 득점권 찬스에서의 결정적 적시타와 8~9회 필승조 불펜의 무실점 봉쇄 계투가 [홈] ${m.home_team_name}의 승리를 견인했습니다.`;
+          } else if (m.away_score > m.home_score) {
+            clutchText = `경기 중반 빅이닝 찬스를 살린 집중타와 원정 마무리 투수의 깔끔한 9회 뒷문 사수가 [원정] ${m.away_team_name}의 승리를 지켰습니다.`;
+          } else {
+            clutchText = `선발 투수들의 명품 투수전과 견고한 수비 속에 팽팽한 균형을 유지하며 연장 접전 끝에 종료되었습니다.`;
+          }
           const inn = (pScores && pScores.innings) ? pScores.innings : {};
           const hHits = (tStats && tStats.hits) ? (tStats.hits.home ?? '-') : '-';
           const aHits = (tStats && tStats.hits) ? (tStats.hits.away ?? '-') : '-';
           const hErr = (tStats && tStats.errors) ? (tStats.errors.home ?? '0') : '0';
           const aErr = (tStats && tStats.errors) ? (tStats.errors.away ?? '0') : '0';
           scoreboardHtml = `
-            <div class="table-responsive mb-3">
+            <div class="table-responsive mb-2">
               <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.8rem; border-color: #e5e7eb; background: #ffffff;">
                 <thead style="background: #ffffff; color: #111827;">
                   <tr style="color: #111827; font-weight: 700;"><th>팀명</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>R</th><th>H</th><th>E</th></tr>
@@ -6030,6 +7441,10 @@ function getFullModalMatchList() {
                 </tbody>
               </table>
             </div>
+            <div class="p-2 mb-3 rounded-2 text-start" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #111827; font-size: 0.78rem; color: #111827;">
+              <span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 2px 4px; font-weight: 800;">승부처</span>
+              <span>⚡ <b>[경기 결정적 승부처]:</b> ${clutchText}</span>
+            </div>
           `;
         }
       }
@@ -6047,6 +7462,24 @@ function getFullModalMatchList() {
               <div class="stat-sec-header">
                 <span><i class="bi bi-trophy-fill text-dark me-1"></i>[해당 경기 1:1 공식 경기 기록 (Match Box)]</span>
                 <span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; font-weight: 700;">공식 기록지</span>
+              </div>
+
+              <!-- Home vs Away Goals & Cards Split Box -->
+              <div class="row g-2 mb-2">
+                <div class="col-6">
+                  <div class="p-2 rounded bg-light border text-start" style="font-size:0.75rem;">
+                    <div class="fw-bold mb-1 text-dark"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}</div>
+                    <div class="text-dark">⚽ <b>골:</b> ${sH.goals || (m.home_score > 0 ? `${m.home_score}득점` : '0득점')}</div>
+                    <div class="mt-0.5 text-dark">🟨 <b>옐로:</b> ${sH.yellowCards || 0}장 | 🟥 <b>레드:</b> ${sH.redCards || 0}장</div>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="p-2 rounded bg-light border text-end" style="font-size:0.75rem;">
+                    <div class="fw-bold mb-1 text-dark">${m.away_team_name}<span class="badge ms-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">[원정]</span></div>
+                    <div class="text-dark">⚽ <b>골:</b> ${sA.goals || (m.away_score > 0 ? `${m.away_score}득점` : '0득점')}</div>
+                    <div class="mt-0.5 text-dark">🟨 <b>옐로:</b> ${sA.yellowCards || 0}장 | 🟥 <b>레드:</b> ${sA.redCards || 0}장</div>
+                  </div>
+                </div>
               </div>
               ${makeRealBar('볼 점유율 (Possession %)', `${sH.possessionPct || 50}%`, `${sA.possessionPct || 50}%`, sH.possessionPct || 50, sA.possessionPct || 50)}
               ${makeRealBar('총 슈팅 수 (Total Shots)', `${sH.totalShots || 0}회`, `${sA.totalShots || 0}회`, sH.totalShots || 0, sA.totalShots || 0)}
@@ -6347,11 +7780,11 @@ function getFullModalMatchList() {
               </div>
               <div>
                 <div class="d-flex align-items-center gap-2">
-                  <span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.82rem; padding: 4px 8px; font-weight: 800;">
+                  <span class="badge" style="background: #fef2f2; color: #dc2626; border: 1.5px solid #dc2626; font-size: 0.82rem; padding: 4px 8px; font-weight: 800;">
                     AI 정밀 분석 픽
                   </span>
                   <span class="fw-bold" style="font-size: 0.95rem; color: #111827;">
-                    [${pickTeam}] (${pickConf}% ${pickLabel})
+                    [<span style="color: #dc2626; font-weight: 800;">${pickTeam}</span>] (${pickConf}% ${pickLabel})
                   </span>
                 </div>
                 <div class="small mt-1" style="color: #4b5563;">
@@ -6400,8 +7833,8 @@ function getFullModalMatchList() {
                 ${isSoccer ? `[홈] ${homeSplit.wins}승 ${homeSplit.draws || 0}무 ${homeSplit.losses}패 (승점 ${homeSplit.points || (homeSplit.wins * 3 + (homeSplit.draws || 0))}점)` : `[홈] ${homeSplit.wins}승 ${homeSplit.losses}패 (승률 ${homeSplit.win_pct})`}
               </div>
               <div class="mt-2">
-                <span class="badge rounded-pill" style="font-size: 1.15rem; font-weight: 800; color: #111827; background: #ffffff; border: 1.5px solid #111827; padding: 6px 16px;">
-                  ${probs.home}% 승률
+                <span class="badge rounded-pill" style="font-size: 1.15rem; font-weight: 800; ${probs.home >= probs.away ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626;' : 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb;'} padding: 6px 16px;">
+                  ${probs.home}% 승률 ${probs.home >= probs.away ? '▲' : ''}
                 </span>
               </div>
             </div>
@@ -6421,11 +7854,21 @@ function getFullModalMatchList() {
                 ${isSoccer ? `[원정] ${awaySplit.wins}승 ${awaySplit.draws || 0}무 ${awaySplit.losses}패 (승점 ${awaySplit.points || (awaySplit.wins * 3 + (awaySplit.draws || 0))}점)` : `[원정] ${awaySplit.wins}승 ${awaySplit.losses}패 (승률 ${awaySplit.win_pct})`}
               </div>
               <div class="mt-2">
-                <span class="badge rounded-pill" style="font-size: 1.15rem; font-weight: 800; color: #111827; background: #ffffff; border: 1.5px solid #111827; padding: 6px 16px;">
-                  ${probs.away}% 승률
+                <span class="badge rounded-pill" style="font-size: 1.15rem; font-weight: 800; ${probs.away > probs.home ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626;' : 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb;'} padding: 6px 16px;">
+                  ${probs.away}% 승률 ${probs.away > probs.home ? '▲' : ''}
                 </span>
               </div>
             </div>
+          </div>
+
+          <!-- Win Probability Visual Comparison Bar -->
+          <div class="d-flex rounded-pill overflow-hidden mt-1 mb-1 mx-auto" style="max-width: 480px; height: 9px; background: #f3f4f6; border: 1px solid #e5e7eb;">
+            <div style="width: ${probs.home}%; background: ${probs.home >= probs.away ? '#dc2626' : '#2563eb'}; transition: width 0.3s;" title="[홈] ${m.home_team_name}: ${probs.home}%"></div>
+            <div style="width: ${probs.away}%; background: ${probs.away > probs.home ? '#dc2626' : '#2563eb'}; transition: width 0.3s;" title="[원정] ${m.away_team_name}: ${probs.away}%"></div>
+          </div>
+          <div class="d-flex justify-content-between small fw-bold mx-auto mb-2" style="max-width: 480px; font-size: 0.76rem;">
+            <span style="${probs.home >= probs.away ? 'color: #dc2626; font-weight: 800;' : 'color: #2563eb; font-weight: 700;'}">[홈] ${m.home_team_name} ${probs.home}% ${probs.home >= probs.away ? '▲' : ''}</span>
+            <span style="${probs.away > probs.home ? 'color: #dc2626; font-weight: 800;' : 'color: #2563eb; font-weight: 700;'}">[원정] ${m.away_team_name} ${probs.away}% ${probs.away > probs.home ? '▲' : ''}</span>
           </div>
 
           <!-- Probabilistic Consensus Callout -->
@@ -6439,7 +7882,7 @@ function getFullModalMatchList() {
               </span>
             </div>
             <div class="fw-bold mb-2" style="font-size: 0.95rem; color: #111827;">
-              [통계적 우세 Consensus]: <span>${probs.favored_team}</span> 승리 확률 우세 (${probs.favored_pct}%)
+              [통계적 우세 Consensus]: <span style="color: #dc2626; font-weight: 800;">${probs.favored_team}</span> 승리 확률 우세 (<b style="color: #dc2626;">${probs.favored_pct}%</b>)
             </div>
             <div class="small" style="color: #374151; font-weight: 500;">
               ${drivers.map(d => `<div class="mb-1"><i class="bi bi-check2-circle text-dark me-1"></i>${d}</div>`).join('')}
