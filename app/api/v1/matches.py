@@ -56,6 +56,24 @@ def get_match_full(match_id: int, db: Session = Depends(get_db)):
     m = data["match"]
     details_ts = data["details"].get("team_stats") if (data.get("details") and isinstance(data["details"], dict)) else {}
     matchup_analysis = TeamSplitService.get_matchup_analysis(m.home_team_name, m.away_team_name, m.sport_code, match_id=m.id, team_stats=details_ts)
+    
+    h_starter = None
+    a_starter = None
+    if isinstance(details_ts, str):
+        try:
+            details_ts = json.loads(details_ts)
+        except Exception:
+            details_ts = {}
+
+    if isinstance(details_ts, dict):
+        st = details_ts.get("starters", {})
+        h_st = st.get("home", {})
+        a_st = st.get("away", {})
+        if h_st.get("name") and h_st.get("name") not in ["선발 예고", "선발 투수"]:
+            h_starter = h_st.get("name")
+        if a_st.get("name") and a_st.get("name") not in ["선발 예고", "선발 투수"]:
+            a_starter = a_st.get("name")
+
     return {
         "id": m.id,
         "official_id": m.official_id,
@@ -68,6 +86,8 @@ def get_match_full(match_id: int, db: Session = Depends(get_db)):
         "away_team_name": m.away_team_name,
         "home_score": m.home_score,
         "away_score": m.away_score,
+        "home_starter_name": h_starter,
+        "away_starter_name": a_starter,
         "status": m.status,
         "is_customized": m.is_customized,
         "custom_notes": m.custom_notes,

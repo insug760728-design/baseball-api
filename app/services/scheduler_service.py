@@ -285,24 +285,37 @@ class SchedulerService:
 
     @classmethod
     async def execute_betman_10min_sync_job(cls):
-        """10분 주기 베트맨(BETMAN) 공식 발매금액·투표율·이월금 자동 최신화"""
+        """10분 주기 베트맨(BETMAN) 축구 승무패(52회·51회), 야구 승1패, 농구 승5패 공식 발매금액·투표율 자동 최신화"""
         try:
             from app.services.betman_service import BetmanService
-            res = BetmanService.get_round_data(gm_id='G024', gm_ts=260066, force_refresh=True)
-            logger.info(f"[Scheduler] 베트맨 10분 주기 자동 최신화 완료 (총매출: {res.get('total_sell_amount', 0):,}원, 1등누적: {res.get('first_prize_pool', 0):,}원)")
-            try:
-                from app.core.websocket_manager import manager
-                await manager.broadcast({
-                    "type": "BETMAN_10MIN_UPDATED",
-                    "timestamp": res.get("updated_at"),
-                    "gmId": "G024",
-                    "gmTs": 260066,
-                    "first_prize_pool": res.get("first_prize_pool"),
-                    "total_sell_amount": res.get("total_sell_amount"),
-                    "total_sale_cnt": res.get("total_sale_cnt")
-                })
-            except Exception:
-                pass
+            from app.core.websocket_manager import manager
+
+            sync_targets = [
+                ('G011', 260052, '축구 승무패 52회'),
+                ('G011', 260051, '축구 승무패 51회'),
+                ('G024', 260067, '야구 승1패 67회'),
+                ('G024', 260066, '야구 승1패 66회'),
+                ('G027', 260027, '농구 승5패 27회')
+            ]
+
+            for g_id, g_ts, label in sync_targets:
+                try:
+                    res = BetmanService.get_round_data(gm_id=g_id, gm_ts=g_ts, force_refresh=True)
+                    logger.info(f"[Scheduler] 베트맨 10분 주기 최신화: {label} (총매출: {res.get('total_sell_amount', 0):,}원, 1등누적: {res.get('first_prize_pool', 0):,}원, 경기수: {len(res.get('matches', []))})")
+                    try:
+                        await manager.broadcast({
+                            "type": "BETMAN_10MIN_UPDATED",
+                            "timestamp": res.get("updated_at"),
+                            "gmId": g_id,
+                            "gmTs": g_ts,
+                            "first_prize_pool": res.get("first_prize_pool"),
+                            "total_sell_amount": res.get("total_sell_amount"),
+                            "total_sale_cnt": res.get("total_sale_cnt")
+                        })
+                    except Exception:
+                        pass
+                except Exception as ex_target:
+                    logger.warning(f"[Scheduler] 베트맨 개별 회차({label}) 동기화 경고: {ex_target}")
         except Exception as e:
             logger.error(f"[Scheduler] 베트맨 10분 동기화 오류: {e}")
 

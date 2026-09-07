@@ -203,7 +203,7 @@ class MatchService:
         # 리그명에 따라 sport_code 자동 감지
         if league_name:
             ln_upper = league_name.upper()
-            if any(s in ln_upper for s in ["EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "프리미어", "라리가", "분데스", "세리에", "리그 1"]):
+            if any(s in ln_upper for s in ["EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "EREDIVISIE", "CHAMPIONSHIP", "UCL", "UEL", "프리미어", "라리가", "분데스", "세리에", "리그 1", "챔피언십", "챔피언스", "챔스"]):
                 sport_code = "SOCCER"
             elif any(b in ln_upper for b in ["NBA", "KBL", "농구"]):
                 sport_code = "BASKETBALL"

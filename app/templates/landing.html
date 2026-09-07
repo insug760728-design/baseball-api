@@ -448,6 +448,28 @@
       font-weight: 800 !important;
     }
 
+    .league-chip-btn {
+      background: #ffffff !important;
+      color: #374151 !important;
+      border: 1px solid #d1d5db !important;
+      font-weight: 600 !important;
+      font-size: 0.72rem !important;
+      padding: 2px 7px !important;
+      border-radius: 4px !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease;
+    }
+    .league-chip-btn:hover {
+      background: #f3f4f6 !important;
+      color: #111827 !important;
+    }
+    .league-chip-btn.active {
+      background: #111827 !important;
+      color: #ffffff !important;
+      border-color: #111827 !important;
+      font-weight: 800 !important;
+    }
+
     .pred-date-btn {
       background: #ffffff !important;
       color: #374151 !important;
@@ -1309,6 +1331,20 @@
                 <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportBASKETBALL" onclick="filterPredSport('BASKETBALL')">🏀 농구</button>
                 <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportHOCKEY" onclick="filterPredSport('HOCKEY')">🏒 하키</button>
                 <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportVOLLEYBALL" onclick="filterPredSport('VOLLEYBALL')">🏐 배구</button>
+              </div>
+
+              <!-- 리그별 퀵 필터: 🏆 챔스(UCL), 🏴󠁧󠁢󠁥󠁮󠁧󠁿 챔피언십, EPL, 라리가, 분데스 등 -->
+              <div class="d-flex gap-1 overflow-x-auto py-1 my-1" style="scrollbar-width: none; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
+                <button class="btn btn-xs league-chip-btn active text-nowrap fw-bold" id="predLeagueALL" onclick="filterPredLeague('ALL')">전체</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueNBA" onclick="filterPredLeague('NBA')" style="background: #fff7ed; color: #c2410c; border: 1.5px solid #fed7aa;"><i class="bi bi-dribbble me-1"></i>🏀 NBA</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueUCL" onclick="filterPredLeague('UCL')" style="background: #eff6ff; color: #1e3a8a; border: 1.5px solid #bfdbfe;"><i class="bi bi-trophy-fill text-warning me-1"></i>🏆 챔스</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueCHAMPIONSHIP" onclick="filterPredLeague('CHAMPIONSHIP')" style="background: #f8fafc; color: #0f172a; border: 1.5px solid #cbd5e1;"><i class="bi bi-shield-shaded text-primary me-1"></i>🏴󠁧󠁢󠁥󠁮󠁧󠁿 챔피언십</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueEPL" onclick="filterPredLeague('EPL')">EPL</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueLALIGA" onclick="filterPredLeague('LALIGA')">라리가</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueBUNDESLIGA" onclick="filterPredLeague('BUNDESLIGA')">분데스</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueSERIE_A" onclick="filterPredLeague('SERIE_A')">세리에A</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueMLB" onclick="filterPredLeague('MLB')">MLB</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueKBO" onclick="filterPredLeague('KBO')">KBO</button>
               </div>
 
               <!-- 3번 요구사항: 배트맨 공식 14경기 승무패 / 승1패 / 승5패 전용 팝업 퀵 바 (PC/모바일 공통 적용) -->
@@ -2252,7 +2288,7 @@
     async function loadLiveMatches() {
       const container = document.getElementById('stripContainer');
       try {
-        const resp = await fetch('/api/v1/matches?order=asc&limit=600');
+        const resp = await fetch('/api/v1/matches?order=asc&limit=1200');
         if (!resp.ok) throw new Error('Failed to load matches');
         const rawMatches = await resp.json();
 
@@ -2610,8 +2646,23 @@ function getFullModalMatchList() {
       const titleBadge = document.getElementById('matchModalTitleBadge');
 
       const isBaseball = (m.sport_code || '').toUpperCase() === 'BASEBALL';
-      const homeStarter = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
-      const awayStarter = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
+      const rawHStarter = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
+      const rawAStarter = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
+      const MLB_STARTERS_KO_MAP = {
+        'Emmet Sheehan': '에멧 시한(우)',
+        'Chase Burns': '체이스 번스(우)',
+        'Michael McGreevy': '마이클 맥그리비(우)',
+        'Logan Webb': '로건 웹(우)',
+        'Jacob Lopez': '제이콥 로페즈(좌)',
+        'Dylan Cease': '딜런 시즈(우)',
+        'Yoshinobu Yamamoto': '야마모토(우)',
+        'Hunter Greene': '헌터 그린(우)',
+        'Tarik Skubal': '타릭 스쿠발(좌)',
+        'Nick Lodolo': '닉 로돌로(좌)',
+        'Rhett Lowder': '렛 라우더(우)'
+      };
+      const homeStarter = MLB_STARTERS_KO_MAP[rawHStarter] || rawHStarter || (typeof KNOWN_ROTATIONS !== 'undefined' ? KNOWN_ROTATIONS[m.home_team_name] : '');
+      const awayStarter = MLB_STARTERS_KO_MAP[rawAStarter] || rawAStarter || (typeof KNOWN_ROTATIONS !== 'undefined' ? KNOWN_ROTATIONS[m.away_team_name] : '');
 
       if (titleBadge) {
         titleBadge.innerHTML = `<i class="bi bi-cpu-fill me-1"></i>단일 경기 세이버 분석`;
@@ -2880,8 +2931,23 @@ function getFullModalMatchList() {
       const lVotes = tm.vote_rate_l || (tm.votes ? tm.votes.loss : '32.4');
 
       // Pitchers (for Baseball)
-      const homeStarter = m.home_starter_name || (m.home_team_name + ' 선발');
-      const awayStarter = m.away_starter_name || (m.away_team_name + ' 선발');
+      const MLB_MODAL_KO_MAP = {
+        'Emmet Sheehan': '에멧 시한(우)',
+        'Chase Burns': '체이스 번스(우)',
+        'Michael McGreevy': '마이클 맥그리비(우)',
+        'Logan Webb': '로건 웹(우)',
+        'Jacob Lopez': '제이콥 로페즈(좌)',
+        'Dylan Cease': '딜런 시즈(우)',
+        'Yoshinobu Yamamoto': '야마모토(우)',
+        'Hunter Greene': '헌터 그린(우)',
+        'Tarik Skubal': '타릭 스쿠발(좌)',
+        'Nick Lodolo': '닉 로돌로(좌)',
+        'Rhett Lowder': '렛 라우더(우)'
+      };
+      const rawHomeStarter = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
+      const rawAwayStarter = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
+      const homeStarter = MLB_MODAL_KO_MAP[rawHomeStarter] || rawHomeStarter || (m.home_team_name ? m.home_team_name + ' 선발' : '선발');
+      const awayStarter = MLB_MODAL_KO_MAP[rawAwayStarter] || rawAwayStarter || (m.away_team_name ? m.away_team_name + ' 선발' : '선발');
 
       // Core metrics partitioned by Sport
       let barsHtml = '';
@@ -3240,6 +3306,17 @@ function getFullModalMatchList() {
           }
           const hP = (pScores && pScores.home) ? pScores.home : {};
           const aP = (pScores && pScores.away) ? pScores.away : {};
+          const hQ1 = (pScores && pScores.q1 && pScores.q1.home !== undefined) ? pScores.q1.home : (hP.q1 ?? '-');
+          const hQ2 = (pScores && pScores.q2 && pScores.q2.home !== undefined) ? pScores.q2.home : (hP.q2 ?? '-');
+          const hQ3 = (pScores && pScores.q3 && pScores.q3.home !== undefined) ? pScores.q3.home : (hP.q3 ?? '-');
+          const hQ4 = (pScores && pScores.q4 && pScores.q4.home !== undefined) ? pScores.q4.home : (hP.q4 ?? '-');
+          const hOT = (pScores && pScores.ot && pScores.ot.home !== undefined) ? pScores.ot.home : (hP.ot ?? 0);
+
+          const aQ1 = (pScores && pScores.q1 && pScores.q1.away !== undefined) ? pScores.q1.away : (aP.q1 ?? '-');
+          const aQ2 = (pScores && pScores.q2 && pScores.q2.away !== undefined) ? pScores.q2.away : (aP.q2 ?? '-');
+          const aQ3 = (pScores && pScores.q3 && pScores.q3.away !== undefined) ? pScores.q3.away : (aP.q3 ?? '-');
+          const aQ4 = (pScores && pScores.q4 && pScores.q4.away !== undefined) ? pScores.q4.away : (aP.q4 ?? '-');
+          const aOT = (pScores && pScores.ot && pScores.ot.away !== undefined) ? pScores.ot.away : (aP.ot ?? 0);
           scoreboardHtml = `
             <div class="table-responsive mb-2 rounded-2" style="border: 1px solid #e5e7eb; background: #ffffff;">
               <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.80rem; background: #ffffff;">
@@ -3249,12 +3326,12 @@ function getFullModalMatchList() {
                 <tbody style="background: #ffffff;">
                   <tr>
                     <td class="fw-bold text-start ps-2" style="color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}</td>
-                    <td style="color: #111827;">${hP.q1 ?? '-'}</td><td style="color: #111827;">${hP.q2 ?? '-'}</td><td style="color: #111827;">${hP.q3 ?? '-'}</td><td style="color: #111827;">${hP.q4 ?? '-'}</td><td style="color: #111827;">${hP.ot ?? 0}</td>
+                    <td style="color: #111827;">${hQ1}</td><td style="color: #111827;">${hQ2}</td><td style="color: #111827;">${hQ3}</td><td style="color: #111827;">${hQ4}</td><td style="color: #111827;">${hOT}</td>
                     <td class="fw-bold" style="color: #111827; font-weight: 800;">${m.home_score}</td>
                   </tr>
                   <tr>
                     <td class="fw-bold text-start ps-2" style="color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}</td>
-                    <td style="color: #111827;">${aP.q1 ?? '-'}</td><td style="color: #111827;">${aP.q2 ?? '-'}</td><td style="color: #111827;">${aP.q3 ?? '-'}</td><td style="color: #111827;">${aP.q4 ?? '-'}</td><td style="color: #111827;">${aP.ot ?? 0}</td>
+                    <td style="color: #111827;">${aQ1}</td><td style="color: #111827;">${aQ2}</td><td style="color: #111827;">${aQ3}</td><td style="color: #111827;">${aQ4}</td><td style="color: #111827;">${aOT}</td>
                     <td class="fw-bold" style="color: #111827; font-weight: 800;">${m.away_score}</td>
                   </tr>
                 </tbody>
@@ -5015,6 +5092,7 @@ function getFullModalMatchList() {
     let selectedPredMatchId = null;
     let currentPredDate = 'ALL'; // 'ALL' (진행/예정 전체 - 기본값), 'D0' (오늘), 'D1' (내일), 'FINISHED' (지난결과)
     let currentPredSport = 'ALL'; // 'ALL', 'KBO', 'MLB', 'NPB', 'SOCCER'
+    let currentPredLeague = 'ALL'; // 'ALL', 'UCL', 'CHAMPIONSHIP', 'EPL', 'LALIGA', etc.
     let currentPredConfidence = 'ALL'; // 'ALL', '80', '70', '50'
     let syncIntervalSeconds = 10; // 10초 실시간 자동 갱신
     let nextSyncSeconds = 10;
@@ -5201,7 +5279,7 @@ function getFullModalMatchList() {
 
     async function silentLiveRefresh() {
       try {
-        const resp = await fetch('/api/v1/matches?order=asc&limit=350');
+        const resp = await fetch('/api/v1/matches?order=asc&limit=1200');
         if (!resp.ok) return;
         const rawMatches = await resp.json();
 
@@ -5249,7 +5327,7 @@ function getFullModalMatchList() {
       }
     }
 
-    function filterPredDate(dKey) {
+    async function filterPredDate(dKey) {
       currentPredDate = dKey;
       ['D0', 'D1', 'FINISHED', 'ALL'].forEach(k => {
         const btn = document.getElementById('predDate' + k);
@@ -5258,6 +5336,32 @@ function getFullModalMatchList() {
           else btn.classList.remove('active');
         }
       });
+
+      if (dKey === 'FINISHED') {
+        try {
+          let finishedUrl = '/api/v1/matches?status=FINISHED&order=desc&limit=1200';
+          if (currentPredLeague && currentPredLeague !== 'ALL') {
+            const leagueParam = (currentPredLeague === 'UCL') ? 'UCL' : ((currentPredLeague === 'CHAMPIONSHIP') ? 'Championship' : (currentPredLeague === 'NBA' ? 'NBA' : currentPredLeague));
+            finishedUrl += `&league_name=${encodeURIComponent(leagueParam)}`;
+          } else if (currentPredSport && currentPredSport !== 'ALL') {
+            finishedUrl += `&sport_code=${encodeURIComponent(currentPredSport)}`;
+          }
+          const resp = await fetch(finishedUrl);
+          if (resp.ok) {
+            const finishedData = await resp.json();
+            const existingIds = new Set(allMatches.map(m => m.id));
+            for (const fm of finishedData) {
+              if (!existingIds.has(fm.id)) {
+                allMatches.push(fm);
+                existingIds.add(fm.id);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Finished matches fetch error:', e);
+        }
+      }
+
       renderPredMatches();
       const list = getFilteredPredMatches();
       if (list.length > 0) {
@@ -5277,10 +5381,84 @@ function getFullModalMatchList() {
         }
       });
 
+      // Reset league filter if switching sport
+      if (sKey !== 'SOCCER' && ['UCL', 'CHAMPIONSHIP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A'].includes(currentPredLeague)) {
+        filterPredLeague('ALL', false);
+      } else if (sKey !== 'BASEBALL' && ['MLB', 'KBO'].includes(currentPredLeague)) {
+        filterPredLeague('ALL', false);
+      }
+
       renderPredMatches();
       const list = getFilteredPredMatches();
       if (list.length > 0 && currentCenterMode === 'DETAIL') {
         selectPredMatch(list[0].id);
+      }
+    }
+
+    async function filterPredLeague(lKey, autoRender = true) {
+      currentPredLeague = lKey;
+      ['ALL', 'NBA', 'UCL', 'CHAMPIONSHIP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'MLB', 'KBO'].forEach(k => {
+        const chipBtn = document.getElementById('predLeague' + k);
+        if (chipBtn) {
+          if (k === lKey) chipBtn.classList.add('active');
+          else chipBtn.classList.remove('active');
+        }
+      });
+
+      if (['UCL', 'CHAMPIONSHIP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A'].includes(lKey)) {
+        currentPredSport = 'SOCCER';
+        ['ALL', 'SOCCER', 'BASEBALL', 'BASKETBALL', 'HOCKEY', 'VOLLEYBALL'].forEach(k => {
+          const chipBtn = document.getElementById('predSport' + k);
+          if (chipBtn) {
+            if (k === 'SOCCER') chipBtn.classList.add('active');
+            else chipBtn.classList.remove('active');
+          }
+        });
+      } else if (lKey === 'NBA') {
+        currentPredSport = 'BASKETBALL';
+        ['ALL', 'SOCCER', 'BASEBALL', 'BASKETBALL', 'HOCKEY', 'VOLLEYBALL'].forEach(k => {
+          const chipBtn = document.getElementById('predSport' + k);
+          if (chipBtn) {
+            if (k === 'BASKETBALL') chipBtn.classList.add('active');
+            else chipBtn.classList.remove('active');
+          }
+        });
+      } else if (['MLB', 'KBO'].includes(lKey)) {
+        currentPredSport = 'BASEBALL';
+        ['ALL', 'SOCCER', 'BASEBALL', 'BASKETBALL', 'HOCKEY', 'VOLLEYBALL'].forEach(k => {
+          const chipBtn = document.getElementById('predSport' + k);
+          if (chipBtn) {
+            if (k === 'BASEBALL') chipBtn.classList.add('active');
+            else chipBtn.classList.remove('active');
+          }
+        });
+      }
+
+      if (lKey !== 'ALL') {
+        try {
+          const leagueParam = (lKey === 'UCL') ? 'UCL' : ((lKey === 'CHAMPIONSHIP') ? 'Championship' : (lKey === 'NBA' ? 'NBA' : lKey));
+          const resp = await fetch(`/api/v1/matches?league_name=${encodeURIComponent(leagueParam)}&order=desc&limit=800`);
+          if (resp.ok) {
+            const leagueData = await resp.json();
+            const existingIds = new Set(allMatches.map(m => m.id));
+            for (const lm of leagueData) {
+              if (!existingIds.has(lm.id)) {
+                allMatches.push(lm);
+                existingIds.add(lm.id);
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('League match fetch error:', err);
+        }
+      }
+
+      if (autoRender) {
+        renderPredMatches();
+        const list = getFilteredPredMatches();
+        if (list.length > 0 && currentCenterMode === 'DETAIL') {
+          selectPredMatch(list[0].id);
+        }
       }
     }
 
@@ -5330,6 +5508,27 @@ function getFullModalMatchList() {
         list = list.filter(m => m.sport_code === 'HOCKEY' || (m.league_name && (m.league_name.includes('하키') || m.league_name.includes('NHL'))));
       } else if (currentPredSport === 'VOLLEYBALL') {
         list = list.filter(m => m.sport_code === 'VOLLEYBALL' || (m.league_name && (m.league_name.includes('배구') || m.league_name.includes('V-리그'))));
+      }
+
+      // 개별 리그 전용 필터 (NBA, UCL, CHAMPIONSHIP, EPL, LALIGA, BUNDESLIGA, SERIE_A, MLB, KBO)
+      if (currentPredLeague === 'NBA') {
+        list = list.filter(m => m.sport_code === 'BASKETBALL' || (m.league_name && m.league_name.includes('NBA')));
+      } else if (currentPredLeague === 'CHAMPIONSHIP') {
+        list = list.filter(m => m.league_name && (m.league_name.includes('Championship') || m.league_name.includes('챔피언십')));
+      } else if (currentPredLeague === 'UCL') {
+        list = list.filter(m => m.league_name && (m.league_name.includes('UCL') || m.league_name.includes('챔피언스') || m.league_name.includes('Champions League')));
+      } else if (currentPredLeague === 'EPL') {
+        list = list.filter(m => m.league_name && m.league_name.includes('EPL'));
+      } else if (currentPredLeague === 'LALIGA') {
+        list = list.filter(m => m.league_name && (m.league_name.includes('라리가') || m.league_name.includes('La Liga')));
+      } else if (currentPredLeague === 'BUNDESLIGA') {
+        list = list.filter(m => m.league_name && (m.league_name.includes('분데스') || m.league_name.includes('Bundesliga')));
+      } else if (currentPredLeague === 'SERIE_A') {
+        list = list.filter(m => m.league_name && (m.league_name.includes('세리에') || m.league_name.includes('Serie A')));
+      } else if (currentPredLeague === 'MLB') {
+        list = list.filter(m => m.league_name && m.league_name.includes('MLB'));
+      } else if (currentPredLeague === 'KBO') {
+        list = list.filter(m => m.league_name && m.league_name.includes('KBO'));
       }
 
       if (currentPredConfidence === '80') {
@@ -5422,7 +5621,8 @@ function getFullModalMatchList() {
         const margin = 1.06;
         const oddH = (1.0 / (pH * margin)).toFixed(2);
         const oddA = (1.0 / (pA * margin)).toFixed(2);
-        const ouBase = (sport === 'BASEBALL') ? '8.5' : (sport === 'BASKETBALL' ? '158.5' : (sport === 'HOCKEY' ? '5.5' : '182.5'));
+        const isNba = m.league_name && m.league_name.includes('NBA');
+        const ouBase = (sport === 'BASEBALL') ? '8.5' : (sport === 'BASKETBALL' ? (isNba ? '226.5' : '158.5') : (sport === 'HOCKEY' ? '5.5' : '182.5'));
         return {
           type: '2WAY',
           home: oddH, away: oddA, ou: ouBase,
@@ -5749,12 +5949,25 @@ function getFullModalMatchList() {
 
         let leagueTag = m.league_name ? m.league_name.split(' ')[0] : m.sport_code;
         let leagueBadgeClass = 'badge bg-light border text-primary';
+        let leagueBadgeStyle = '';
         if (m.league_name && m.league_name.includes('NPB')) leagueTag = 'NPB(일야)';
         else if (m.league_name && m.league_name.includes('KBO')) leagueTag = 'KBO(한야)';
         else if (m.league_name && m.league_name.includes('MLB')) leagueTag = 'MLB(메이저)';
-        else if (m.league_name && (m.league_name.includes('Eredivisie') || m.league_name.includes('네덜란드'))) {
+        else if (m.league_name && m.league_name.includes('NBA')) {
+          leagueTag = '🏀 NBA';
+          leagueBadgeClass = 'badge text-dark fw-bold';
+          leagueBadgeStyle = 'background: #fff7ed; color: #c2410c !important; border: 1.5px solid #fed7aa;';
+        } else if (m.league_name && (m.league_name.includes('Eredivisie') || m.league_name.includes('네덜란드'))) {
           leagueTag = '🇳🇱 네덜란드 (에레디비시)';
           leagueBadgeClass = 'badge text-dark fw-bold bg-warning';
+        } else if (m.league_name && (m.league_name.includes('Championship') || m.league_name.includes('챔피언십'))) {
+          leagueTag = '🏴󠁧󠁢󠁥󠁮󠁧󠁿 챔피언십';
+          leagueBadgeClass = 'badge text-dark fw-bold bg-white';
+          leagueBadgeStyle = 'border: 1.5px solid #0f172a;';
+        } else if (m.league_name && (m.league_name.includes('UCL') || m.league_name.includes('챔피언스') || m.league_name.includes('Champions League'))) {
+          leagueTag = '🏆 챔스(UCL)';
+          leagueBadgeClass = 'badge text-white fw-bold';
+          leagueBadgeStyle = 'background: #1e3a8a; border: 1px solid #172554;';
         } else if (m.league_name && m.league_name.includes('EPL')) leagueTag = 'EPL(프리미어)';
         else if (m.league_name && m.league_name.includes('La Liga')) leagueTag = '라리가';
         else if (m.league_name && m.league_name.includes('Serie A')) leagueTag = '세리에A';
@@ -5769,7 +5982,7 @@ function getFullModalMatchList() {
           <div class="pred-card-compact ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <div class="d-flex align-items-center">
-                <span class="${leagueBadgeClass}" style="font-size: 0.70rem; font-weight: 700;">
+                <span class="${leagueBadgeClass}" style="font-size: 0.70rem; font-weight: 700; ${leagueBadgeStyle}">
                   ${sportIcon} ${leagueTag}
                 </span>
                 ${sweepBadge}
@@ -7411,8 +7624,19 @@ function getFullModalMatchList() {
           } else {
             clutchText = `종료 버저비터까지 이어진 치열한 공방전 끝에 연장 접전으로 승부를 이어갔습니다.`;
           }
-          const hP = pScores.home || {};
-          const aP = pScores.away || {};
+          const hP = (pScores && pScores.home) ? pScores.home : {};
+          const aP = (pScores && pScores.away) ? pScores.away : {};
+          const hQ1 = (pScores && pScores.q1 && pScores.q1.home !== undefined) ? pScores.q1.home : (hP.q1 ?? '-');
+          const hQ2 = (pScores && pScores.q2 && pScores.q2.home !== undefined) ? pScores.q2.home : (hP.q2 ?? '-');
+          const hQ3 = (pScores && pScores.q3 && pScores.q3.home !== undefined) ? pScores.q3.home : (hP.q3 ?? '-');
+          const hQ4 = (pScores && pScores.q4 && pScores.q4.home !== undefined) ? pScores.q4.home : (hP.q4 ?? '-');
+          const hOT = (pScores && pScores.ot && pScores.ot.home !== undefined) ? pScores.ot.home : (hP.ot ?? 0);
+
+          const aQ1 = (pScores && pScores.q1 && pScores.q1.away !== undefined) ? pScores.q1.away : (aP.q1 ?? '-');
+          const aQ2 = (pScores && pScores.q2 && pScores.q2.away !== undefined) ? pScores.q2.away : (aP.q2 ?? '-');
+          const aQ3 = (pScores && pScores.q3 && pScores.q3.away !== undefined) ? pScores.q3.away : (aP.q3 ?? '-');
+          const aQ4 = (pScores && pScores.q4 && pScores.q4.away !== undefined) ? pScores.q4.away : (aP.q4 ?? '-');
+          const aOT = (pScores && pScores.ot && pScores.ot.away !== undefined) ? pScores.ot.away : (aP.ot ?? 0);
           scoreboardHtml = `
             <div class="table-responsive mb-2">
               <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.82rem; border-color: #e5e7eb; background: #ffffff;">
@@ -7422,12 +7646,12 @@ function getFullModalMatchList() {
                 <tbody style="background: #ffffff;">
                   <tr>
                     <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 140px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}</td>
-                    <td style="color: #111827;">${hP.q1 ?? '-'}</td><td style="color: #111827;">${hP.q2 ?? '-'}</td><td style="color: #111827;">${hP.q3 ?? '-'}</td><td style="color: #111827;">${hP.q4 ?? '-'}</td><td style="color: #111827;">${hP.ot ?? 0}</td>
+                    <td style="color: #111827;">${hQ1}</td><td style="color: #111827;">${hQ2}</td><td style="color: #111827;">${hQ3}</td><td style="color: #111827;">${hQ4}</td><td style="color: #111827;">${hOT}</td>
                     <td class="fw-bold" style="color: #111827; font-size: 1.0rem; font-weight: 800;">${m.home_score}</td>
                   </tr>
                   <tr>
                     <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 140px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}</td>
-                    <td style="color: #111827;">${aP.q1 ?? '-'}</td><td style="color: #111827;">${aP.q2 ?? '-'}</td><td style="color: #111827;">${aP.q3 ?? '-'}</td><td style="color: #111827;">${aP.q4 ?? '-'}</td><td style="color: #111827;">${aP.ot ?? 0}</td>
+                    <td style="color: #111827;">${aQ1}</td><td style="color: #111827;">${aQ2}</td><td style="color: #111827;">${aQ3}</td><td style="color: #111827;">${aQ4}</td><td style="color: #111827;">${aOT}</td>
                     <td class="fw-bold" style="color: #111827; font-size: 1.0rem; font-weight: 800;">${m.away_score}</td>
                   </tr>
                 </tbody>
@@ -7560,6 +7784,43 @@ function getFullModalMatchList() {
               ${makeRealBar('성공 태클 수 (Tackles)', `${sH.effectiveTackles || 0}회`, `${sA.effectiveTackles || 0}회`, sH.effectiveTackles || 0, sA.effectiveTackles || 0)}
               ${makeRealBar('파울 (Fouls - 낮을수록 우수)', `${sH.foulsCommitted || 0}회`, `${sA.foulsCommitted || 0}회`, sH.foulsCommitted || 0, sA.foulsCommitted || 0, true)}
               ${makeRealBar('옐로/레드카드 (Cards - 낮을수록 우수)', `${sH.yellowCards || 0}/${sH.redCards || 0}장`, `${sA.yellowCards || 0}/${sA.redCards || 0}장`, (Number(sH.yellowCards||0)+Number(sH.redCards||0)*2), (Number(sA.yellowCards||0)+Number(sA.redCards||0)*2), true)}
+            </div>
+          `;
+        } else if (m.sport_code === 'BASKETBALL' && tStats.home && tStats.away) {
+          const bH = tStats.home;
+          const bA = tStats.away;
+          inGameStatsHtml = `
+            <div id="statSec_inGame" class="stat-sec-card" style="border-color: #e5e7eb; background: #ffffff; border: 1px solid #e5e7eb;">
+              <div class="stat-sec-header">
+                <span><i class="bi bi-dribbble text-warning me-1"></i>[해당 경기 1:1 공식 경기 기록 (Match Box)]</span>
+                <span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; font-weight: 700;">공식 기록지</span>
+              </div>
+
+              <!-- Home vs Away Points Split Box -->
+              <div class="row g-2 mb-2">
+                <div class="col-6">
+                  <div class="p-2 rounded bg-light border text-start" style="font-size:0.75rem;">
+                    <div class="fw-bold mb-1 text-dark"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}</div>
+                    <div class="text-dark">🏀 <b>최종 득점:</b> <strong class="fs-6">${m.home_score}점</strong></div>
+                    <div class="mt-0.5 text-dark">🎯 야투: <b>${bH.fieldGoalPct || 45.0}%</b> | 3점: <b>${bH.threePointPct || 35.0}%</b></div>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="p-2 rounded bg-light border text-end" style="font-size:0.75rem;">
+                    <div class="fw-bold mb-1 text-dark">${m.away_team_name}<span class="badge ms-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">[원정]</span></div>
+                    <div class="text-dark">🏀 <b>최종 득점:</b> <strong class="fs-6">${m.away_score}점</strong></div>
+                    <div class="mt-0.5 text-dark">🎯 야투: <b>${bA.fieldGoalPct || 45.0}%</b> | 3점: <b>${bA.threePointPct || 35.0}%</b></div>
+                  </div>
+                </div>
+              </div>
+              ${makeRealBar('야투 성공률 (Field Goal %)', `${bH.fieldGoalPct || 45.0}%`, `${bA.fieldGoalPct || 45.0}%`, bH.fieldGoalPct || 45.0, bA.fieldGoalPct || 45.0)}
+              ${makeRealBar('3점슛 성공률 (3-Point %)', `${bH.threePointPct || 35.0}%`, `${bA.threePointPct || 35.0}%`, bH.threePointPct || 35.0, bA.threePointPct || 35.0)}
+              ${makeRealBar('자유투 성공률 (Free Throw %)', `${bH.freeThrowPct || 78.0}%`, `${bA.freeThrowPct || 78.0}%`, bH.freeThrowPct || 78.0, bA.freeThrowPct || 78.0)}
+              ${makeRealBar('총 리바운드 (Rebounds)', `${bH.rebounds || 42}개`, `${bA.rebounds || 40}개`, bH.rebounds || 42, bA.rebounds || 40)}
+              ${makeRealBar('어시스트 (Assists)', `${bH.assists || 24}개`, `${bA.assists || 22}개`, bH.assists || 24, bA.assists || 22)}
+              ${makeRealBar('스틸 (Steals)', `${bH.steals || 7}회`, `${bA.steals || 6}회`, bH.steals || 7, bA.steals || 6)}
+              ${makeRealBar('블록슛 (Blocks)', `${bH.blocks || 5}회`, `${bA.blocks || 4}회`, bH.blocks || 5, bA.blocks || 4)}
+              ${makeRealBar('턴오버 (Turnovers - 낮을수록 우수)', `${bH.turnovers || 12}회`, `${bA.turnovers || 13}회`, bH.turnovers || 12, bA.turnovers || 13, true)}
             </div>
           `;
         }

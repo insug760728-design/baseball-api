@@ -72,6 +72,21 @@ SPORTS_CATALOG = {
             {"id": "EREDIVISIE", "name": "네덜란드 에레디비시 (Eredivisie)", "api_code": "ned.1"}
         ]
     },
+    "CHAMPIONSHIP": {
+        "title": "잉글랜드 챔피언십 (Championship)",
+        "sport_code": "SOCCER",
+        "leagues": [
+            {"id": "CHAMPIONSHIP", "name": "잉글랜드 챔피언십 (Championship)", "api_code": "eng.2"}
+        ]
+    },
+    "UCL": {
+        "title": "UEFA 챔피언스리그 (Champions League)",
+        "sport_code": "SOCCER",
+        "leagues": [
+            {"id": "UCL", "name": "UEFA 챔피언스리그 (UCL)", "api_code": "uefa.champions"},
+            {"id": "UEL", "name": "UEFA 유로파리그 (UEL)", "api_code": "uefa.europa"}
+        ]
+    },
 
     # [농구 리그]
     "NBA": {

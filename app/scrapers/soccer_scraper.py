@@ -16,7 +16,10 @@ SOCCER_LEAGUE_CODES = {
     "BUNDESLIGA": "ger.1",
     "SERIE_A": "ita.1",
     "LIGUE_1": "fra.1",
-    "EREDIVISIE": "ned.1"
+    "EREDIVISIE": "ned.1",
+    "CHAMPIONSHIP": "eng.2",
+    "UCL": "uefa.champions",
+    "UEL": "uefa.europa"
 }
 
 SOCCER_LEAGUE_NAMES = {
@@ -25,7 +28,10 @@ SOCCER_LEAGUE_NAMES = {
     "BUNDESLIGA": "독일 분데스리가 (Bundesliga)",
     "SERIE_A": "이탈리아 세리에 A (Serie A)",
     "LIGUE_1": "프랑스 리그 1 (Ligue 1)",
-    "EREDIVISIE": "네덜란드 에레디비시 (Eredivisie)"
+    "EREDIVISIE": "네덜란드 에레디비시 (Eredivisie)",
+    "CHAMPIONSHIP": "잉글랜드 챔피언십 (Championship)",
+    "UCL": "UEFA 챔피언스리그 (UCL)",
+    "UEL": "UEFA 유로파리그 (UEL)"
 }
 
 class SoccerScraper(BaseScraper):
