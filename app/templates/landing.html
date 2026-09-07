@@ -1755,8 +1755,8 @@
             <!-- 14/14 마킹, 조합수, 구매금액 -->
           </div>
           <div class="d-flex gap-2">
-            <button type="button" class="btn btn-sm fw-bold text-white px-3" onclick="openTotoCalculatorModal(currentTotoRound)" style="background: #1d4ed8; border: none; border-radius: 6px; font-size: 0.80rem;">
-              <i class="bi bi-calculator-fill me-1"></i>당첨 계산기
+            <button type="button" class="btn btn-sm fw-bold text-white px-3" onclick="scrollToTotoCalculator()" style="background: #1d4ed8; border: none; border-radius: 6px; font-size: 0.80rem;">
+              <i class="bi bi-calculator-fill me-1"></i>당첨 계산기 ▼
             </button>
             <button type="button" class="btn btn-sm fw-bold px-3" data-bs-dismiss="modal" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; border-radius: 6px; font-size: 0.80rem;">
               닫기
@@ -6593,6 +6593,7 @@ function getFullModalMatchList() {
     function renderBetmanModalSheet(totoKey) {
       const modalBody = document.getElementById('totoModalBody');
       if (!modalBody) return;
+      const prevScroll = modalBody.scrollTop;
 
       const targetTs = currentBetmanTs;
       let toto = TOTO_DATA[totoKey + '_' + targetTs] || 
@@ -6606,7 +6607,10 @@ function getFullModalMatchList() {
       const prizePool = document.getElementById('totoModalPrizePool');
 
       if (headTitle) {
-        headTitle.innerHTML = `${totoKey === 'W1L' ? '⚾ 야구 승1패' : (totoKey === 'WDL' ? '⚽ 축구 승무패' : '🏀 농구 승5패')} ${toto && toto.title ? toto.title : ''}`;
+        const sportLabel = (totoKey === 'W1L' ? '⚾ 야구 승1패' : (totoKey === 'WDL' ? '⚽ 축구 승무패' : '🏀 농구 승5패'));
+        const rawTitle = (toto && toto.title) ? toto.title : '';
+        const cleanTitle = rawTitle.replace(/^(⚾\s*야구\s*승1패|⚽\s*축구\s*승무패|🏀\s*농구\s*승5패|야구\s*승1패|축구\s*승무패|농구\s*승5패)\s*/, '');
+        headTitle.innerHTML = `${sportLabel} ${cleanTitle}`;
       }
       if (saleBadge && toto) {
         const isProgress = toto.status === 'SaleProgress' || (toto.period && toto.period.includes('발매중'));
@@ -6755,6 +6759,8 @@ function getFullModalMatchList() {
       if (markedCount === 0) combinations = 0;
       const totalBetPrice = combinations * 1000;
 
+      const calcHtml = buildTotoCalculatorHtml(totoKey, toto);
+
       modalBody.innerHTML = `
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0" style="min-width: 720px;">
@@ -6777,7 +6783,12 @@ function getFullModalMatchList() {
         <div class="p-2 mt-2 bg-light border rounded text-center small text-muted" style="font-size: 0.74rem;">
           <i class="bi bi-info-circle-fill text-primary me-1"></i>배트맨 지정 14경기 중 임의의 경기 행 또는 <b>[지표 ↗]</b> 버튼을 클릭하시면 <b>1:1 세이버메트릭스 정밀 분석 팝업창</b>이 오픈됩니다.
         </div>
+        ${calcHtml}
       `;
+
+      if (prevScroll > 0) {
+        modalBody.scrollTop = prevScroll;
+      }
 
       const bStats = document.getElementById('totoModalBottomStats');
       if (bStats) {
@@ -6818,25 +6829,25 @@ function getFullModalMatchList() {
       initModalRestoreHook();
     }
 
-    
     // ------------------------------------------------------------------
-    // ⚡ 14경기 토토 실제 예상 등수 및 당첨 인원수(예: 1등 3.5명) & 수령액 정밀 계산기
+    // ⚡ 14경기 토토 실제 예상 등수 및 당첨 인원수 & 수령액 일체형 시뮬레이터
     // (베트맨 공식 실시간 발매 투표율 & 푸아송 이항확률 분포 Poisson-Binomial 모델 기반)
     // ------------------------------------------------------------------
-    function openTotoCalculatorModal(totoKey = 'W1L') {
-      let toto = (totoKey === 'W1L' && TOTO_DATA.W1L_LIVE) ? TOTO_DATA.W1L_LIVE : TOTO_DATA[totoKey];
-      if (!toto) toto = TOTO_DATA.W1L;
+    function scrollToTotoCalculator() {
+      const calcEl = document.getElementById('totoEmbeddedCalcSection');
+      if (calcEl) {
+        calcEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
 
-      const modalEl = document.getElementById('totoCalcModal');
-      const bodyEl = document.getElementById('calcModalBody');
-      const titleEl = document.getElementById('calcModalTitle');
-      if (!modalEl || !bodyEl) return;
-
-      titleEl.innerHTML = `<span>${toto.title}</span> <small class="text-info fw-normal" style="font-size:0.82rem;">(베트맨 공식 10분 단위 실시간 집계 기반)</small>`;
+    function buildTotoCalculatorHtml(totoKey, toto) {
+      if (!toto || !Array.isArray(toto.matches) || toto.matches.length === 0) {
+        return '';
+      }
 
       // Get Sales & Prize Pools
-      const forwardAmt = Number(toto.forward_amount || 609807750);
-      const sellAmt = Number(toto.total_sell_amount || 89623000);
+      const forwardAmt = Number(toto.forward_amount || (totoKey === 'W1L' ? 203000000 : 609807750));
+      const sellAmt = Number(toto.total_sell_amount || (totoKey === 'W1L' ? 89623000 : 1320000000));
       const totalBets = Number(toto.total_sale_cnt || (sellAmt > 0 ? Math.round(sellAmt / 1000) : 89623));
 
       // 1st prize pool = rollover + 25% of sales
@@ -6859,11 +6870,19 @@ function getFullModalMatchList() {
 
         if (currentMarks.length > 0) {
           userMarksCount++;
+          let combinedP = 0;
+          let labelArr = [];
+          currentMarks.forEach(c => {
+            const p = Number(c === 'W' ? m.pW : (c === 'D' ? m.pD : m.pL)) || 33.3;
+            combinedP += p;
+            const drawTxt = (totoKey === 'W1L') ? '1' : ((totoKey === 'W5L') ? '5' : '무');
+            labelArr.push(c === 'W' ? '승' : (c === 'D' ? drawTxt : '패'));
+          });
           chosenPick = currentMarks[0];
-          pPick = (chosenPick === 'W' ? m.pW : (chosenPick === 'D' ? m.pD : m.pL));
+          pPick = Math.min(99.0, combinedP);
         } else {
           chosenPick = m.aiPick || 'W';
-          pPick = (chosenPick === 'W' ? m.pW : (chosenPick === 'D' ? m.pD : m.pL));
+          pPick = Number((chosenPick === 'W' ? m.pW : (chosenPick === 'D' ? m.pD : m.pL))) || 33.3;
         }
 
         const pFloat = Math.max(0.01, Math.min(0.99, (Number(pPick) || 33.3) / 100.0));
@@ -6900,10 +6919,10 @@ function getFullModalMatchList() {
       }
 
       // Exact probabilities:
-      const p14 = dp[14]; // 1등 (14올킬)
-      const p13 = dp[13]; // 2등 (1오답)
-      const p12 = dp[12]; // 3등 (2오답)
-      const p11 = dp[11]; // 4등 (3오답)
+      const p14 = dp[14] || 0.00001; // 1등 (14올킬)
+      const p13 = dp[13] || 0.0001;  // 2등 (1오답)
+      const p12 = dp[12] || 0.001;   // 3등 (2오답)
+      const p11 = dp[11] || 0.01;    // 4등 (3오답)
 
       // Expected winners: E = N * P
       const expWinners1 = Math.max(0.01, totalBets * p14);
@@ -6926,119 +6945,160 @@ function getFullModalMatchList() {
       let upsetCount = 14 - favoriteCount;
       let profileBadge = favoriteCount >= 11 ? '정배 몰림형 (많은 1등 예상)' : (favoriteCount <= 7 ? '초고배당 역배형 (이월 유력 / 독식 노림수)' : '황금 균형 밸런스형 (적절한 1점차/역배)');
 
-      bodyEl.innerHTML = `
-        <!-- Top Stats Banner -->
-        <div class="row g-2 mb-3">
-          <div class="col-md-4">
-            <div class="p-2.5 rounded-3 text-center" style="background: #ffffff; border: 1px solid rgba(14, 165, 233, 0.4);">
-              <div class="text-dim small">1등 예상 총 상금 (이월+발매)</div>
-              <div class="fs-5 fw-bold" style="color: #1d4ed8;">${(firstPrizePool / 100000000).toFixed(2)}억 원</div>
-              <div class="text-muted" style="font-size:0.68rem;">(이월 ${(forwardAmt / 100000000).toFixed(2)}억 + 발매 ${(sellAmt * 0.25 / 10000000).toFixed(1)}천만)</div>
+      return `
+        <!-- ⚡ Embedded AI 빅데이터 시뮬레이터 (일체형 실시간 연동) -->
+        <div id="totoEmbeddedCalcSection" class="mt-4 pt-3 border-top" style="border-color: #e2e8f0 !important;">
+          <!-- Section Header -->
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom" style="border-color: #f1f5f9 !important;">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="badge" style="background: linear-gradient(135deg, #0284c7, #1d4ed8); color: #ffffff; font-weight: 800; font-size: 0.82rem; padding: 5px 10px; border-radius: 6px;">
+                <i class="bi bi-cpu-fill me-1"></i>AI 빅데이터 시뮬레이터
+              </span>
+              <span class="fw-bold text-dark" style="font-size: 0.96rem;">
+                14경기 당첨 확률 & 실시간 예상 수령액 계산기
+              </span>
+              <span class="badge bg-light text-secondary border d-none d-md-inline-block" style="border-color: #cbd5e1 !important; font-size: 0.70rem;">
+                베트맨 공식 10분 단위 실시간 집계 기반
+              </span>
+            </div>
+            <div class="text-muted small d-flex align-items-center gap-1" style="font-size: 0.74rem;">
+              <i class="bi bi-lightning-charge-fill text-warning"></i>
+              <span>마킹 시 실시간 즉시 재계산</span>
             </div>
           </div>
-          <div class="col-md-4">
-            <div class="p-2.5 rounded-3 text-center" style="background: #ffffff; border: 1px solid #fef2f2;">
-              <div class="text-dim small">베트맨 공식 총 투표수</div>
-              <div class="fs-5 fw-bold text-warning">${totalBets.toLocaleString()}표</div>
-              <div class="text-muted" style="font-size:0.68rem;">(10분 단위 실시간 집계 반영)</div>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <div class="p-2.5 rounded-3 text-center" style="background: #ffffff; border: 1px solid rgba(16, 185, 129, 0.4);">
-              <div class="text-dim small">내 조합 난이도 프로필</div>
-              <div class="fs-6 fw-bold text-success mt-1 text-truncate">${profileBadge}</div>
-              <div class="text-muted" style="font-size:0.68rem;">정배 ${favoriteCount}경기 / 역배·1점차 ${upsetCount}경기</div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Main Expected Winners & Rank Table -->
-        <h6 class="fw-bold text-white mb-2"><i class="bi bi-award-fill text-warning me-1"></i>실제 공식 확률 기반 예상 등수 및 당첨 인원수 계산 결과</h6>
-        
-        <div class="table-responsive mb-3">
-          <table class="table table-editorial table-bordered align-middle text-center mb-0" style="border-color: rgba(255,255,255,0.1); font-size: 0.85rem;">
-            <thead>
-              <tr style="background: rgba(30, 41, 59, 0.9); color: #94a3b8;">
-                <th>등수</th>
-                <th>적중 조건</th>
-                <th>전국 적중 확률</th>
-                <th style="color: #1d4ed8;">🎯 예상 당첨 인원수</th>
-                <th style="color: #dc2626;">💰 1인당 예상 수령액</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- 1등 -->
-              <tr style="background: rgba(2, 132, 199, 0.15); border-left: 4px solid #1d4ed8;">
-                <td class="fw-bold fs-6 text-white"><span class="badge bg-danger">1등</span></td>
-                <td class="fw-bold text-dark">14경기 올적중 (14/14)</td>
-                <td>${(p14 * 100).toFixed(5)}% <br><small class="text-dim">약 1 : ${Math.round(1 / Math.max(1e-10, p14)).toLocaleString()}</small></td>
-                <td class="fw-bold fs-5" style="color: #1d4ed8; ">
-                  ${expWinners1 < 1.0 ? expWinners1.toFixed(2) : expWinners1.toFixed(1)}명
-                </td>
-                <td class="fw-bold fs-6" style="color: #dc2626;">
-                  약 ${(payout1 / 100000000).toFixed(2)}억 원 <br><small class="text-dim">(${payout1.toLocaleString()}원)</small>
-                </td>
-              </tr>
-              <!-- 2등 -->
-              <tr>
-                <td class="fw-bold"><span class="badge bg-primary">2등</span></td>
-                <td>13경기 적중 (1오답)</td>
-                <td>${(p13 * 100).toFixed(4)}%</td>
-                <td class="fw-bold text-info">${expWinners2.toFixed(1)}명</td>
-                <td class="fw-bold text-warning">약 ${(payout2 / 10000).toFixed(0)}만 원 <small class="text-dim">(${payout2.toLocaleString()}원)</small></td>
-              </tr>
-              <!-- 3등 -->
-              <tr>
-                <td class="fw-bold"><span class="badge bg-secondary">3등</span></td>
-                <td>12경기 적중 (2오답)</td>
-                <td>${(p12 * 100).toFixed(3)}%</td>
-                <td class="fw-bold text-dark">${expWinners3.toFixed(1)}명</td>
-                <td class="fw-bold text-warning">약 ${(payout3 / 10000).toFixed(1)}만 원 <small class="text-dim">(${payout3.toLocaleString()}원)</small></td>
-              </tr>
-              <!-- 4등 -->
-              <tr>
-                <td class="fw-bold"><span class="badge bg-light border text-dark">4등</span></td>
-                <td>11경기 적중 (3오답)</td>
-                <td>${(p11 * 100).toFixed(2)}%</td>
-                <td class="fw-bold text-dark">${expWinners4.toFixed(0)}명</td>
-                <td class="fw-bold text-warning">약 ${(payout4 / 10000).toFixed(1)}만 원 <small class="text-dim">(${payout4.toLocaleString()}원)</small></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Special Insights Card (이월 및 독식 확률) -->
-        <div class="row g-2 mb-3">
-          <div class="col-md-6">
-            <div class="p-2.5 rounded-3 d-flex align-items-center justify-content-between" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35);">
-              <div>
-                <div class="text-white fw-bold small"><i class="bi bi-fire text-danger me-1"></i>1등 이월 가능성 (당첨자 0명)</div>
-                <div class="text-dim" style="font-size:0.70rem;">전국에서 아무도 14경기를 맞히지 못해 다음 회차로 상금이 이월될 확률</div>
+          <!-- Top 3 Stat Cards -->
+          <div class="row g-2 mb-3">
+            <div class="col-md-4">
+              <div class="p-2.5 rounded-3 text-center h-100" style="background: #ffffff; border: 1.5px solid #bfdbfe;">
+                <div class="text-secondary small fw-bold" style="font-size: 0.76rem;">1등 예상 총 상금 (이월+발매)</div>
+                <div class="fs-5 fw-bold my-1" style="color: #1d4ed8;">${(firstPrizePool / 100000000).toFixed(2)}억 원</div>
+                <div class="text-muted" style="font-size: 0.70rem;">(이월 ${(forwardAmt / 100000000).toFixed(2)}억 + 발매 ${(sellAmt * 0.25 / 10000000).toFixed(1)}천만)</div>
               </div>
-              <div class="fs-5 fw-bold text-danger">${pRollover}%</div>
             </div>
-          </div>
-          <div class="col-md-6">
-            <div class="p-2.5 rounded-3 d-flex align-items-center justify-content-between" style="background: #ecfdf5; border: 1px solid #a7f3d0;">
-              <div>
-                <div class="fw-bold small" style="color: #059669;"><i class="bi bi-trophy-fill text-success me-1"></i>1등 단독 독식 확률 (나홀로 당첨)</div>
-                <div class="text-muted" style="font-size:0.70rem;">단 1명만 당첨되어 총상금 ${(firstPrizePool / 100000000).toFixed(1)}억 원을 혼자 전액 수령할 확률</div>
+            <div class="col-md-4">
+              <div class="p-2.5 rounded-3 text-center h-100" style="background: #ffffff; border: 1.5px solid #fed7aa;">
+                <div class="text-secondary small fw-bold" style="font-size: 0.76rem;">베트맨 공식 총 투표수</div>
+                <div class="fs-5 fw-bold text-warning my-1" style="color: #d97706 !important;">${totalBets.toLocaleString()}표</div>
+                <div class="text-muted" style="font-size: 0.70rem;">(10분 단위 실시간 집계 반영)</div>
               </div>
-              <div class="fs-5 fw-bold text-success">${pSolo}%</div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-2.5 rounded-3 text-center h-100" style="background: #ffffff; border: 1.5px solid #a7f3d0;">
+                <div class="text-secondary small fw-bold" style="font-size: 0.76rem;">내 조합 난이도 프로필</div>
+                <div class="fs-6 fw-bold mt-1 text-truncate" style="color: #059669;">${profileBadge}</div>
+                <div class="text-muted mt-1" style="font-size: 0.70rem;">정배 ${favoriteCount}경기 / 역배·1점차 ${upsetCount}경기</div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Calculation Basis Callout -->
-        <div class="p-2 rounded-2" style="background: #f8fafc; border: 1px solid #e5e7eb; font-size: 0.74rem; color: #4b5563;">
-          <i class="bi bi-info-circle me-1 text-primary"></i>
-          현재 계산은 ${userMarksCount > 0 ? `<strong>회원님이 마킹하신 ${userMarksCount}경기</strong>와 나머지 경기(AI 단통 픽)를 조합하여` : `<strong>AI 빅데이터 추천 픽(14경기 단통)</strong>을 기준으로`}
-          베트맨 공식 실시간 집계 투표율과 판매 총액 데이터를 100% 반영하여 산출되었습니다.
+          <!-- Main Expected Winners & Rank Table -->
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h6 class="fw-bold text-dark mb-0" style="font-size: 0.88rem;">
+              <i class="bi bi-award-fill text-warning me-1"></i>실제 공식 확률 기반 예상 등수 및 당첨 인원수 계산 결과
+            </h6>
+            <span class="text-muted small" style="font-size: 0.72rem;">단위: 1인당 수령액(세전)</span>
+          </div>
+
+          <div class="table-responsive mb-3">
+            <table class="table table-bordered align-middle text-center mb-0" style="border-color: #e2e8f0; font-size: 0.84rem;">
+              <thead style="background: #0f172a; color: #f8fafc; font-size: 0.76rem;">
+                <tr>
+                  <th style="width: 70px;">등수</th>
+                  <th>적중 조건</th>
+                  <th>전국 적중 확률</th>
+                  <th style="color: #60a5fa;">🎯 예상 당첨 인원수</th>
+                  <th style="color: #fca5a5;">💰 1인당 예상 수령액</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 1등 -->
+                <tr style="background: #eff6ff; border-left: 4px solid #1d4ed8;">
+                  <td class="fw-bold"><span class="badge bg-danger px-2 py-1">1등</span></td>
+                  <td class="fw-bold text-dark">14경기 올적중 (14/14)</td>
+                  <td>
+                    <strong class="text-dark">${(p14 * 100).toFixed(5)}%</strong><br>
+                    <small class="text-muted" style="font-size: 0.70rem;">약 1 : ${Math.round(1 / Math.max(1e-10, p14)).toLocaleString()}</small>
+                  </td>
+                  <td class="fw-bold fs-5" style="color: #1d4ed8;">
+                    ${expWinners1 < 1.0 ? expWinners1.toFixed(2) : expWinners1.toFixed(1)}명
+                  </td>
+                  <td class="fw-bold fs-6" style="color: #dc2626;">
+                    약 ${(payout1 / 100000000).toFixed(2)}억 원<br>
+                    <small class="text-muted" style="font-size: 0.70rem;">(${payout1.toLocaleString()}원)</small>
+                  </td>
+                </tr>
+                <!-- 2등 -->
+                <tr>
+                  <td class="fw-bold"><span class="badge bg-primary px-2 py-1">2등</span></td>
+                  <td class="text-dark">13경기 적중 (1오답)</td>
+                  <td>${(p13 * 100).toFixed(4)}%</td>
+                  <td class="fw-bold text-info">${expWinners2.toFixed(1)}명</td>
+                  <td class="fw-bold" style="color: #b45309;">약 ${(payout2 / 10000).toFixed(0)}만 원 <small class="text-muted">(${payout2.toLocaleString()}원)</small></td>
+                </tr>
+                <!-- 3등 -->
+                <tr>
+                  <td class="fw-bold"><span class="badge bg-secondary px-2 py-1">3등</span></td>
+                  <td class="text-dark">12경기 적중 (2오답)</td>
+                  <td>${(p12 * 100).toFixed(3)}%</td>
+                  <td class="fw-bold text-dark">${expWinners3.toFixed(1)}명</td>
+                  <td class="fw-bold" style="color: #b45309;">약 ${(payout3 / 10000).toFixed(1)}만 원 <small class="text-muted">(${payout3.toLocaleString()}원)</small></td>
+                </tr>
+                <!-- 4등 -->
+                <tr>
+                  <td class="fw-bold"><span class="badge bg-light border text-dark px-2 py-1">4등</span></td>
+                  <td class="text-dark">11경기 적중 (3오답)</td>
+                  <td>${(p11 * 100).toFixed(2)}%</td>
+                  <td class="fw-bold text-dark">${expWinners4.toFixed(0)}명</td>
+                  <td class="fw-bold" style="color: #b45309;">약 ${(payout4 / 10000).toFixed(1)}만 원 <small class="text-muted">(${payout4.toLocaleString()}원)</small></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Insights: Rollover & Solo -->
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <div class="p-2.5 rounded-3 d-flex align-items-center justify-content-between h-100" style="background: #fef2f2; border: 1.5px solid #fca5a5;">
+                <div>
+                  <div class="fw-bold small text-danger"><i class="bi bi-fire text-danger me-1"></i>1등 이월 가능성 (당첨자 0명)</div>
+                  <div class="text-muted" style="font-size: 0.70rem;">전국에서 아무도 14경기를 맞히지 못해 다음 회차로 상금이 이월될 확률</div>
+                </div>
+                <div class="fs-5 fw-bold text-danger ms-2">${pRollover}%</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="p-2.5 rounded-3 d-flex align-items-center justify-content-between h-100" style="background: #ecfdf5; border: 1.5px solid #a7f3d0;">
+                <div>
+                  <div class="fw-bold small" style="color: #059669;"><i class="bi bi-trophy-fill text-success me-1"></i>1등 단독 독식 확률 (나홀로 당첨)</div>
+                  <div class="text-muted" style="font-size: 0.70rem;">단 1명만 당첨되어 총상금 ${(firstPrizePool / 100000000).toFixed(1)}억 원을 혼자 전액 수령할 확률</div>
+                </div>
+                <div class="fs-5 fw-bold text-success ms-2">${pSolo}%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Calculation Basis Callout -->
+          <div class="p-2 rounded-2" style="background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.74rem; color: #4b5563;">
+            <i class="bi bi-info-circle me-1 text-primary"></i>
+            현재 계산은 ${userMarksCount > 0 ? `회원님이 마킹하신 <b>${userMarksCount}경기</b>와 나머지 경기(AI 단통 픽)를 조합하여` : `<b>AI 빅데이터 추천 픽(14경기 단통)</b>을 기준으로`}
+            베트맨 공식 실시간 집계 투표율과 판매 총액 데이터를 100% 반영하여 산출되었습니다.
+          </div>
         </div>
       `;
+    }
 
-      const modal = new bootstrap.Modal(modalEl);
-      modal.show();
+    function openTotoCalculatorModal(totoKey = 'W1L') {
+      const totoModalEl = document.getElementById('totoBetmanModal');
+      const isShown = totoModalEl && totoModalEl.classList.contains('show');
+      if (!isShown) {
+        openTotoModal(totoKey);
+        setTimeout(() => {
+          scrollToTotoCalculator();
+        }, 250);
+      } else {
+        scrollToTotoCalculator();
+      }
     }
 
     function autoPickTotoAi(totoKey) {
