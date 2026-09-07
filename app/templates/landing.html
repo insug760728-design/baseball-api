@@ -3102,9 +3102,14 @@ function getFullModalMatchList() {
                 <span class="text-muted mx-1">vs</span>
                 <span style="color: #111827; font-weight: 800;">[원정선발]</span> <span class="text-dark fw-bold">${awayStarter}</span>
               </div>
-              <button class="btn btn-xs py-0 px-2 fw-bold" onclick="openStarterModal(${m.id || 0}, '${m.home_team_name}', '${m.away_team_name}', '${homeStarter}', '${awayStarter}', ${Boolean(rawHomeStarter)}, ${Boolean(rawAwayStarter)})" style="background: #ffffff; border: 1px solid #d1d5db; color: #111827; font-size: 0.70rem; border-radius: 4px;">
-                <i class="bi bi-pencil-square me-1"></i>선발확인
-              </button>
+              <div class="d-flex align-items-center gap-1">
+                <span class="badge ${rawHomeStarter && rawAwayStarter ? 'bg-success text-white' : 'bg-warning text-dark'}" style="font-size: 0.68rem; font-weight: 700;">
+                  ${rawHomeStarter && rawAwayStarter ? '● 공식선발 자동연동' : '○ 선발 발표대기'}
+                </span>
+                <button class="btn btn-xs py-0 px-1.5 fw-bold" onclick="openStarterModal(${m.id || 0}, '${m.home_team_name}', '${m.away_team_name}', '${homeStarter}', '${awayStarter}', ${Boolean(rawHomeStarter)}, ${Boolean(rawAwayStarter)})" style="background: #ffffff; border: 1px solid #d1d5db; color: #4b5563; font-size: 0.68rem; border-radius: 4px;" title="선발 교체/스크래치 등 비상시에만 수동 수정">
+                  <i class="bi bi-pencil me-1"></i>수동편집
+                </button>
+              </div>
             </div>
           ` : ''}
 
@@ -4133,8 +4138,11 @@ function getFullModalMatchList() {
                 </span>
               </div>
               <div>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-2 fw-bold" style="font-size: 0.72rem; background: #ffffff; color: #111827; border-color: #d1d5db;" onclick="openStarterModal(${m.id}, '${m.home_team_name}', '${m.away_team_name}', '${hSt.name}', '${aSt.name}', ${hSt.is_confirmed}, ${aSt.is_confirmed})">
-                  <i class="bi bi-pencil-square me-1"></i>선발 확정/변경
+                <span class="badge ${hSt.is_confirmed && aSt.is_confirmed ? 'bg-success text-white' : 'bg-warning text-dark'} py-1 px-2 me-1" style="font-size: 0.70rem; font-weight: 700;">
+                  ${hSt.is_confirmed && aSt.is_confirmed ? '● 공식선발 자동연동' : '○ 선발 발표대기'}
+                </span>
+                <button class="btn btn-sm btn-outline-secondary py-0 px-2 fw-bold" style="font-size: 0.72rem; background: #ffffff; color: #4b5563; border-color: #d1d5db;" onclick="openStarterModal(${m.id}, '${m.home_team_name}', '${m.away_team_name}', '${hSt.name}', '${aSt.name}', ${hSt.is_confirmed}, ${aSt.is_confirmed})" title="비상시 수동 편집">
+                  <i class="bi bi-pencil me-1"></i>선발 수동편집
                 </button>
               </div>
             </div>
