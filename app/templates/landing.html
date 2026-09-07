@@ -2946,8 +2946,8 @@ function getFullModalMatchList() {
       };
       const rawHomeStarter = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
       const rawAwayStarter = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
-      const homeStarter = MLB_MODAL_KO_MAP[rawHomeStarter] || rawHomeStarter || (m.home_team_name ? m.home_team_name + ' 선발' : '선발');
-      const awayStarter = MLB_MODAL_KO_MAP[rawAwayStarter] || rawAwayStarter || (m.away_team_name ? m.away_team_name + ' 선발' : '선발');
+      const homeStarter = MLB_MODAL_KO_MAP[rawHomeStarter] || rawHomeStarter || (m.home_team_name ? m.home_team_name + ' 선발(예정)' : '선발(예정)');
+      const awayStarter = MLB_MODAL_KO_MAP[rawAwayStarter] || rawAwayStarter || (m.away_team_name ? m.away_team_name + ' 선발(예정)' : '선발(예정)');
 
       // Core metrics partitioned by Sport
       let barsHtml = '';
@@ -3102,7 +3102,7 @@ function getFullModalMatchList() {
                 <span class="text-muted mx-1">vs</span>
                 <span style="color: #111827; font-weight: 800;">[원정선발]</span> <span class="text-dark fw-bold">${awayStarter}</span>
               </div>
-              <button class="btn btn-xs py-0 px-2 fw-bold" onclick="openStarterModal(${m.id || 0}, '${m.home_team_name}', '${m.away_team_name}', '${homeStarter}', '${awayStarter}', true, true)" style="background: #ffffff; border: 1px solid #d1d5db; color: #111827; font-size: 0.70rem; border-radius: 4px;">
+              <button class="btn btn-xs py-0 px-2 fw-bold" onclick="openStarterModal(${m.id || 0}, '${m.home_team_name}', '${m.away_team_name}', '${homeStarter}', '${awayStarter}', ${Boolean(rawHomeStarter)}, ${Boolean(rawAwayStarter)})" style="background: #ffffff; border: 1px solid #d1d5db; color: #111827; font-size: 0.70rem; border-radius: 4px;">
                 <i class="bi bi-pencil-square me-1"></i>선발확인
               </button>
             </div>
@@ -5687,28 +5687,39 @@ function getFullModalMatchList() {
           'Jacob Lopez': '제이콥 로페즈(좌)',
           'Dylan Cease': '딜런 시즈(우)',
           'Yoshinobu Yamamoto': '야마모토(우)',
-          'Hunter Greene': '헌터 그린(우)'
+          'Hunter Greene': '헌터 그린(우)',
+          'Tarik Skubal': '타릭 스쿠발(좌)',
+          'Nick Lodolo': '닉 로돌로(좌)',
+          'Rhett Lowder': '렛 라우더(우)'
         };
-        let hName = MLB_STARTERS_KO[m.home_starter_name] || m.home_starter_name || KNOWN_ROTATIONS[cleanH];
-        let aName = MLB_STARTERS_KO[m.away_starter_name] || m.away_starter_name || KNOWN_ROTATIONS[cleanA];
+        const rawH = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
+        const rawA = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
+
+        let hName = MLB_STARTERS_KO[rawH] || rawH;
+        let aName = MLB_STARTERS_KO[rawA] || rawA;
+        const isOfficial = Boolean(hName && aName);
 
         if (!hName) {
           for (const [k, v] of Object.entries(KNOWN_ROTATIONS)) {
-            if (cleanH.includes(k) || k.includes(cleanH)) { hName = v; break; }
+            if (cleanH.includes(k) || k.includes(cleanH)) { hName = `${v}(예상)`; break; }
           }
+          if (!hName) hName = '선발 미정(TBD)';
         }
         if (!aName) {
           for (const [k, v] of Object.entries(KNOWN_ROTATIONS)) {
-            if (cleanA.includes(k) || k.includes(cleanA)) { aName = v; break; }
+            if (cleanA.includes(k) || k.includes(cleanA)) { aName = `${v}(예상)`; break; }
           }
+          if (!aName) aName = '선발 미정(TBD)';
         }
-        if (!hName) hName = `${cleanH.slice(0, 3)} 1선발(우)`;
-        if (!aName) aName = `${cleanA.slice(0, 3)} 1선발(우)`;
+
+        const badgeHtml = isOfficial
+          ? `<span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.58rem;">선발확정</span>`
+          : `<span class="badge bg-warning text-dark py-0.5 px-1" style="font-size:0.58rem;">선발예정</span>`;
 
         return {
           title: '선발투수',
           text: `[홈] ${hName} vs [원정] ${aName}`,
-          badge: `<span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.58rem;">선발확정</span>`
+          badge: badgeHtml
         };
       } else if (sport === 'SOCCER') {
         const fH = (m.id % 2 === 0) ? '4-3-3' : '4-2-3-1';
