@@ -1766,10 +1766,10 @@
                   </button>
                 </div>
                 <div class="d-flex gap-1 flex-wrap">
-                  <button class="btn btn-sm pred-date-btn active" id="predDateALL" onclick="filterPredDate('ALL')">전체</button>
-                  <button class="btn btn-sm pred-date-btn" id="predDateD0" onclick="filterPredDate('D0')">오늘</button>
+                  <button class="btn btn-sm pred-date-btn active" id="predDateD0" onclick="filterPredDate('D0')">오늘</button>
                   <button class="btn btn-sm pred-date-btn" id="predDateD1" onclick="filterPredDate('D1')">내일</button>
-                  <button class="btn btn-sm pred-date-btn" id="predDateFINISHED" onclick="filterPredDate('FINISHED')">종료/검증</button>
+                  <button class="btn btn-sm pred-date-btn text-nowrap fw-bold" id="predDateFINISHED" onclick="filterPredDate('FINISHED')" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4);"><i class="bi bi-check2-circle me-1"></i>지난경기결과</button>
+                  <button class="btn btn-sm pred-date-btn" id="predDateALL" onclick="filterPredDate('ALL')">전체</button>
                 </div>
               </div>
 
@@ -4474,7 +4474,7 @@ function getFullModalMatchList() {
     // 3-Day Match Predictor (Strict KST Chronological Stream & Real Official Scores)
     // ----------------------------------------------------
     let selectedPredMatchId = null;
-    let currentPredDate = 'ALL'; // 'ALL', 'D0', 'D1', 'FINISHED'
+    let currentPredDate = 'D0'; // 'D0' (오늘 - 기본값), 'D1' (내일), 'FINISHED' (지난경기결과), 'ALL' (전체)
     let currentPredSport = 'ALL'; // 'ALL', 'KBO', 'MLB', 'NPB', 'SOCCER'
     let currentPredConfidence = 'ALL'; // 'ALL', '80', '70', '50'
     let syncIntervalSeconds = 10; // 10초 실시간 자동 갱신
@@ -4695,7 +4695,7 @@ function getFullModalMatchList() {
 
     function filterPredDate(dKey) {
       currentPredDate = dKey;
-      ['ALL', 'D0', 'D1', 'FINISHED'].forEach(k => {
+      ['D0', 'D1', 'FINISHED', 'ALL'].forEach(k => {
         const btn = document.getElementById('predDate' + k);
         if (btn) {
           if (k === dKey) btn.classList.add('active');
@@ -4783,18 +4783,25 @@ function getFullModalMatchList() {
       }
 
       if (currentPredDate === 'D0') {
+        // [오늘 경기]: 오늘 진행 중인 LIVE 및 오늘 예정 경기만 (어제 지난 경기는 완전히 제외하여 스크롤 쾌적화)
         list = list.filter(m => (m.match_date || '').startsWith(d0Str));
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       } else if (currentPredDate === 'D1') {
+        // [내일 경기]
         list = list.filter(m => (m.match_date || '').startsWith(d1Str));
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       } else if (currentPredDate === 'FINISHED') {
-        list = list.filter(m => m.status === 'FINISHED' || m.status === 'LIVE');
-        list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
-      } else {
+        // [지난경기결과]: 어제 및 과거 종료 경기 결과 전용 (최신 종료순 정렬)
         list = list.filter(m => {
           const mDate = (m.match_date || '').slice(0, 10);
-          return mDate >= yesterdayStr;
+          return m.status === 'FINISHED' || mDate < d0Str;
+        });
+        list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+      } else {
+        // [전체]: 오늘 이후 전체 예정 경기 (어제 종료된 지난 경기는 지난경기결과에서만 보도록 분리)
+        list = list.filter(m => {
+          const mDate = (m.match_date || '').slice(0, 10);
+          return mDate >= d0Str;
         });
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       }
@@ -4827,6 +4834,22 @@ function getFullModalMatchList() {
 
       let dividerInserted = false;
       let html = '';
+
+      // [지난경기결과 전용 상단 안내 배너]
+      if (currentPredDate === 'FINISHED') {
+        html += `
+          <div class="p-2 mb-2 rounded d-flex justify-content-between align-items-center" style="background: rgba(239, 68, 68, 0.12); border: 1.5px solid rgba(239, 68, 68, 0.35); box-shadow: 0 0 10px rgba(239, 68, 68, 0.15);">
+            <div class="d-flex align-items-center gap-1.5 text-truncate">
+              <span class="badge bg-danger text-white" style="font-size:0.68rem;"><i class="bi bi-clock-history me-1"></i>지난경기 결과</span>
+              <span class="text-white small fw-bold text-truncate" style="font-size:0.75rem;">어제 및 이전 종료 경기 모음 (${filtered.length}경기)</span>
+            </div>
+            <button class="btn btn-xs py-0.5 px-2 fw-bold text-nowrap" onclick="filterPredDate('D0')" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; border-radius: 4px; font-size: 0.70rem;">
+              오늘 경기 보기 →
+            </button>
+          </div>
+        `;
+      }
+
       filtered.forEach(m => {
         const isSel = (currentCenterMode === 'DETAIL' && m.id === selectedPredMatchId);
         let sportIcon = '⚾';
@@ -4853,7 +4876,9 @@ function getFullModalMatchList() {
                   <span class="pulse-dot" style="display:inline-block; width:7px; height:7px; min-width:7px; border-radius:50%; background:#00F0FF; box-shadow: 0 0 8px #00F0FF;"></span>
                   <span class="text-white fw-bold" style="font-size: 0.74rem;"><i class="bi bi-clock-history text-warning me-1"></i>현재시간 (${nowKstTimeOnly}) 이후 경기</span>
                 </div>
-                <span class="text-info small fw-bold text-nowrap ms-1" style="font-size: 0.68rem;"><i class="bi bi-arrow-up text-warning me-0.5"></i>지난경기 위로 스크롤</span>
+                <button class="btn btn-xs py-0 px-1.5 text-warning fw-bold border-0 bg-transparent" onclick="filterPredDate('FINISHED')" style="font-size: 0.68rem; text-decoration: underline;" title="어제 및 지난 종료 경기 결과 모아보기">
+                  <i class="bi bi-clock-history me-0.5"></i>어제 지난경기결과 보기→
+                </button>
               </div>
             `;
             dividerInserted = true;
