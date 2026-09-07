@@ -3052,25 +3052,27 @@ function getFullModalMatchList() {
         });
       }
 
+      const modalBody = document.getElementById('matchModalBody');
+
       if (tabKey === 'all') {
-        // In full stream mode: show all panes
+        // 전체 스트림 모드: 모든 탭 콘텐츠 펼침
         tabs.forEach(t => {
           const pane = document.getElementById(`mTab_${t}_${matchId}`);
           if (pane) pane.style.display = 'block';
         });
-        const firstPane = document.getElementById(`mTab_summary_${matchId}`);
-        if (firstPane) firstPane.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (modalBody) {
+          modalBody.scrollTo({ top: 0, behavior: 'smooth' });
+        }
       } else {
-        // Ensure all panes are displayed in DOM and smoothly scroll to target pane
+        // 단일 탭 모드: 선택된 탭만 깔끔하게 단독 표시!
         tabs.forEach(t => {
           const pane = document.getElementById(`mTab_${t}_${matchId}`);
-          if (pane) pane.style.display = 'block';
+          if (pane) {
+            pane.style.display = (t === tabKey) ? 'block' : 'none';
+          }
         });
-        const targetPane = document.getElementById(`mTab_${tabKey}_${matchId}`);
-        if (targetPane) {
-          targetPane.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          targetPane.classList.add('highlighted');
-          setTimeout(() => targetPane.classList.remove('highlighted'), 1200);
+        if (modalBody) {
+          modalBody.scrollTo({ top: 0, behavior: 'smooth' });
         }
       }
     }
@@ -4787,12 +4789,12 @@ function getFullModalMatchList() {
         list = list.filter(m => m.status === 'FINISHED');
         list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
       } else if (currentPredDate === 'D0') {
-        // [오늘 경기]: 오늘 진행 중(LIVE) 및 오늘 예정 경기
-        list = list.filter(m => (m.match_date || '').startsWith(d0Str) && m.status !== 'FINISHED');
+        // [오늘 경기]: 오늘 진행 중(LIVE), 오늘 예정 및 오늘 종료된 전체 경기를 시간순 표시!
+        list = list.filter(m => (m.match_date || '').startsWith(d0Str));
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       } else if (currentPredDate === 'D1') {
         // [내일 경기]: 내일 예정 경기
-        list = list.filter(m => (m.match_date || '').startsWith(d1Str) && m.status !== 'FINISHED');
+        list = list.filter(m => (m.match_date || '').startsWith(d1Str));
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       } else {
         // [진행/예정 전체]: 종료된 경기만 제외하고, 앞으로 진행될 모든 예정 & LIVE 경기를 시간순으로 전부 표시!
@@ -4815,7 +4817,42 @@ function getFullModalMatchList() {
       }
 
       if (filtered.length === 0) {
-        container.innerHTML = '<div class="text-center text-muted py-5">해당 조건의 경기가 없습니다.</div>';
+        let sportName = '해당 조건의';
+        let sportIcon = '📋';
+        if (currentPredSport === 'BASKETBALL') { sportName = '농구'; sportIcon = '🏀'; }
+        else if (currentPredSport === 'HOCKEY') { sportName = '하키'; sportIcon = '🏒'; }
+        else if (currentPredSport === 'VOLLEYBALL') { sportName = '배구'; sportIcon = '🏐'; }
+        else if (currentPredSport === 'BASEBALL') { sportName = '야구'; sportIcon = '⚾'; }
+        else if (currentPredSport === 'SOCCER') { sportName = '축구'; sportIcon = '⚽'; }
+
+        let dateName = '';
+        if (currentPredDate === 'D0') dateName = '오늘 ';
+        else if (currentPredDate === 'D1') dateName = '내일 ';
+        else if (currentPredDate === 'FINISHED') dateName = '종료된 ';
+
+        container.innerHTML = `
+          <div class="text-center py-5 px-3">
+            <div style="font-size: 2.2rem;" class="mb-2">${sportIcon}</div>
+            <div class="fw-bold text-white fs-6 mb-1">현재 ${dateName}${sportName} 경기가 없습니다.</div>
+            <div class="text-muted small mb-3">새로운 시즌 및 공식 라운드 일정이 등록되는 즉시 실시간으로 자동 연동됩니다.</div>
+            <button class="btn btn-sm btn-outline-info px-3 fw-bold" onclick="filterPredSport('ALL'); filterPredDate('ALL');">
+              <i class="bi bi-arrow-repeat me-1"></i>전체 경기 보기
+            </button>
+          </div>
+        `;
+
+        if (currentCenterMode === 'DETAIL') {
+          const detailPanel = document.getElementById('predDetailPanel');
+          if (detailPanel) {
+            detailPanel.innerHTML = `
+              <div class="text-center text-muted py-5 px-3">
+                <div style="font-size: 2.2rem;" class="mb-2">${sportIcon}</div>
+                <div class="fw-bold text-white fs-6">선택 가능한 ${sportName} 상세 데이터가 없습니다.</div>
+                <div class="text-dim small mt-1">좌측 일정 목록에서 다른 경기를 선택해 주세요.</div>
+              </div>
+            `;
+          }
+        }
         return;
       }
 
@@ -4968,7 +5005,7 @@ function getFullModalMatchList() {
             </div>
             <div class="d-flex justify-content-between align-items-center mt-1 pt-1 border-top" style="border-color: rgba(255,255,255,0.06) !important; font-size: 0.70rem;">
               <div>${cardFooterTag}</div>
-              <span class="badge ${isSel ? 'bg-info text-dark fw-bold' : 'bg-dark border text-light'}" style="font-size: 0.70rem; cursor: pointer;">
+              <span class="badge ${isSel ? 'bg-info text-dark fw-bold' : 'bg-dark border text-light'}" style="font-size: 0.70rem; cursor: pointer;" onclick="event.stopPropagation(); openMatchModal(${m.id})">
                 <i class="bi bi-window-stack me-1 text-warning"></i>${isSel ? '상세 팝업 열기' : '상세보기 (팝업)'}
               </span>
             </div>
@@ -5115,7 +5152,9 @@ function getFullModalMatchList() {
       renderPredDetail(target);
 
       if (userClicked) {
-        openMatchModal(matchId);
+        if (window.innerWidth <= 768 || currentViewMode === 'mobile') {
+          openMatchModal(matchId);
+        }
       }
     }
 
@@ -5238,10 +5277,12 @@ function getFullModalMatchList() {
         const b = document.getElementById('roundBtn' + k);
         if (b) {
           if (k === roundKey) {
+            b.classList.add('active');
             b.style.background = 'linear-gradient(135deg, #0284c7, #0ea5e9)';
             b.style.color = '#fff';
             b.style.borderColor = '#38bdf8';
           } else {
+            b.classList.remove('active');
             b.style.background = '#1e293b';
             b.style.color = '#f1f5f9';
             b.style.borderColor = '#475569';
@@ -5258,6 +5299,8 @@ function getFullModalMatchList() {
     function renderTotoSheet(totoKey) {
       const panel = document.getElementById('predDetailPanel');
       if (!panel) return;
+
+      const prevScroll = panel.scrollTop;
 
       let toto = TOTO_DATA[totoKey + '_LIVE'] || TOTO_DATA[totoKey];
       if (!toto) toto = TOTO_DATA.WDL || TOTO_DATA.W1L || TOTO_DATA.W5L;
@@ -5423,7 +5466,18 @@ function getFullModalMatchList() {
                   <button class="btn btn-sm py-0.5 px-2 fw-bold ${currentBetmanTs === 260065 ? 'btn-info text-dark shadow-sm' : 'btn-outline-secondary text-white'}" onclick="selectTotoRound('W1L', 260065)" style="font-size: 0.74rem; border-radius: 6px;">
                     65회차 (종료결과)
                   </button>
-                ` : ''}
+                ` : (totoKey === 'WDL' ? `
+                  <button class="btn btn-sm py-0.5 px-2.5 fw-bold ${currentBetmanTs === 260050 ? 'btn-info text-dark shadow-sm' : 'btn-outline-secondary text-white'}" onclick="selectTotoRound('WDL', 260050)" style="font-size: 0.74rem; border-radius: 6px;">
+                    ⚽ 50회차 (EPL & 세리에A)
+                  </button>
+                  <button class="btn btn-sm py-0.5 px-2 fw-bold ${currentBetmanTs === 260049 ? 'btn-info text-dark shadow-sm' : 'btn-outline-secondary text-white'}" onclick="selectTotoRound('WDL', 260049)" style="font-size: 0.74rem; border-radius: 6px;">
+                    49회차 (종료결과)
+                  </button>
+                ` : `
+                  <button class="btn btn-sm py-0.5 px-2.5 fw-bold ${currentBetmanTs === 260027 ? 'btn-info text-dark shadow-sm' : 'btn-outline-secondary text-white'}" onclick="selectTotoRound('W5L', 260027)" style="font-size: 0.74rem; border-radius: 6px;">
+                    🏀 27회차 (NBA & KBL)
+                  </button>
+                `)}
               </div>
 
               <!-- Quick Action Toolbar -->
@@ -5508,6 +5562,10 @@ function getFullModalMatchList() {
           </div>
         </div>
       `;
+
+      if (prevScroll > 0 && panel.scrollHeight > prevScroll) {
+        panel.scrollTop = prevScroll;
+      }
     }
 
     function openTotoMatchDetail(dbMatchId, homeName, awayName) {
