@@ -1766,10 +1766,10 @@
                   </button>
                 </div>
                 <div class="d-flex gap-1 flex-wrap">
-                  <button class="btn btn-sm pred-date-btn active" id="predDateD0" onclick="filterPredDate('D0')">오늘</button>
+                  <button class="btn btn-sm pred-date-btn active" id="predDateALL" onclick="filterPredDate('ALL')">진행/예정</button>
+                  <button class="btn btn-sm pred-date-btn" id="predDateD0" onclick="filterPredDate('D0')">오늘</button>
                   <button class="btn btn-sm pred-date-btn" id="predDateD1" onclick="filterPredDate('D1')">내일</button>
-                  <button class="btn btn-sm pred-date-btn text-nowrap fw-bold" id="predDateFINISHED" onclick="filterPredDate('FINISHED')" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4);"><i class="bi bi-check2-circle me-1"></i>지난경기결과</button>
-                  <button class="btn btn-sm pred-date-btn" id="predDateALL" onclick="filterPredDate('ALL')">전체</button>
+                  <button class="btn btn-sm pred-date-btn text-nowrap fw-bold" id="predDateFINISHED" onclick="filterPredDate('FINISHED')" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4);"><i class="bi bi-check2-circle me-1"></i>지난결과</button>
                 </div>
               </div>
 
@@ -4474,7 +4474,7 @@ function getFullModalMatchList() {
     // 3-Day Match Predictor (Strict KST Chronological Stream & Real Official Scores)
     // ----------------------------------------------------
     let selectedPredMatchId = null;
-    let currentPredDate = 'D0'; // 'D0' (오늘 - 기본값), 'D1' (내일), 'FINISHED' (지난경기결과), 'ALL' (전체)
+    let currentPredDate = 'ALL'; // 'ALL' (진행/예정 전체 - 기본값), 'D0' (오늘), 'D1' (내일), 'FINISHED' (지난결과)
     let currentPredSport = 'ALL'; // 'ALL', 'KBO', 'MLB', 'NPB', 'SOCCER'
     let currentPredConfidence = 'ALL'; // 'ALL', '80', '70', '50'
     let syncIntervalSeconds = 10; // 10초 실시간 자동 갱신
@@ -4782,27 +4782,21 @@ function getFullModalMatchList() {
         list = list.filter(m => m.prediction && m.prediction.confidence >= 50);
       }
 
-      if (currentPredDate === 'D0') {
-        // [오늘 경기]: 오늘 진행 중인 LIVE 및 오늘 예정 경기만 (어제 지난 경기는 완전히 제외하여 스크롤 쾌적화)
-        list = list.filter(m => (m.match_date || '').startsWith(d0Str));
+      if (currentPredDate === 'FINISHED') {
+        // [지난결과]: 전체 경기 중 종료된 경기만 따로 모아서 최신순 정렬
+        list = list.filter(m => m.status === 'FINISHED');
+        list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+      } else if (currentPredDate === 'D0') {
+        // [오늘 경기]: 오늘 진행 중(LIVE) 및 오늘 예정 경기
+        list = list.filter(m => (m.match_date || '').startsWith(d0Str) && m.status !== 'FINISHED');
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       } else if (currentPredDate === 'D1') {
-        // [내일 경기]
-        list = list.filter(m => (m.match_date || '').startsWith(d1Str));
+        // [내일 경기]: 내일 예정 경기
+        list = list.filter(m => (m.match_date || '').startsWith(d1Str) && m.status !== 'FINISHED');
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
-      } else if (currentPredDate === 'FINISHED') {
-        // [지난경기결과]: 어제 및 과거 종료 경기 결과 전용 (최신 종료순 정렬)
-        list = list.filter(m => {
-          const mDate = (m.match_date || '').slice(0, 10);
-          return m.status === 'FINISHED' || mDate < d0Str;
-        });
-        list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
       } else {
-        // [전체]: 오늘 이후 전체 예정 경기 (어제 종료된 지난 경기는 지난경기결과에서만 보도록 분리)
-        list = list.filter(m => {
-          const mDate = (m.match_date || '').slice(0, 10);
-          return mDate >= d0Str;
-        });
+        // [진행/예정 전체]: 종료된 경기만 제외하고, 앞으로 진행될 모든 예정 & LIVE 경기를 시간순으로 전부 표시!
+        list = list.filter(m => m.status !== 'FINISHED');
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       }
 
@@ -4888,7 +4882,14 @@ function getFullModalMatchList() {
         let dayBadge = '';
         if (rawDate.startsWith(d0Str)) dayBadge = '<span class="badge bg-danger bg-opacity-75 me-1" style="font-size:0.65rem;">오늘</span>';
         else if (rawDate.startsWith(d1Str)) dayBadge = '<span class="badge bg-primary bg-opacity-75 me-1" style="font-size:0.65rem;">내일</span>';
-        else if (rawDate < d0Str) dayBadge = '<span class="badge bg-secondary me-1" style="font-size:0.65rem;">이전</span>';
+        else if (rawDate < d0Str) dayBadge = '<span class="badge bg-secondary me-1" style="font-size:0.65rem;">종료</span>';
+        else {
+          const mPart = parseInt(rawDate.slice(5, 7), 10);
+          const dPart = parseInt(rawDate.slice(8, 10), 10);
+          if (!isNaN(mPart) && !isNaN(dPart)) {
+            dayBadge = `<span class="badge bg-info bg-opacity-50 text-white me-1" style="font-size:0.65rem;">${mPart}/${dPart}</span>`;
+          }
+        }
 
         const pred = m.prediction || {};
         const sCtx = pred.series_context || null;
