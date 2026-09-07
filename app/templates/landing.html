@@ -1702,12 +1702,15 @@
     </div>
   </nav>
 
-  <!-- 📱 핸드폰 모바일 전용 1-Tap 상단 탭 단축키 (고정 네비게이션 - 3대 핵심 탭) -->
+  <!-- 📱 핸드폰 모바일 전용 1-Tap 상단 탭 단축키 (고정 네비게이션 - 4대 핵심 탭) -->
   <div id="mobileTabBar" class="d-none flex-column p-1" style="background: rgba(11, 17, 32, 0.98); border-bottom: 1.5px solid #00F0FF; z-index: 1045; box-shadow: 0 4px 20px rgba(0, 240, 255, 0.35); -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0);">
     <div class="dash-container">
       <div class="d-flex justify-content-between align-items-center gap-1 w-100">
         <button class="btn btn-sm mobile-tab-btn flex-fill active" id="mobTabSchedule" onclick="switchMobileTab('schedule')">
           <i class="bi bi-calendar3 d-block mb-0.5" style="font-size: 1.05rem;"></i>일정/스코어
+        </button>
+        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabToto" onclick="switchMobileTab('toto')">
+          <i class="bi bi-card-checklist d-block mb-0.5 text-warning" style="font-size: 1.05rem;"></i>승무패 경기목록
         </button>
         <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabCommunity" onclick="switchMobileTab('community')">
           <i class="bi bi-chat-dots-fill d-block mb-0.5 text-success" style="font-size: 1.05rem;"></i>실시간 팬톡
@@ -1770,31 +1773,14 @@
                 </div>
               </div>
 
-              <!-- Line 2: Sport / Toto Filter Chips (전종목, 승무패, 승1패, 승5패) -->
-              <div class="d-flex gap-1 mb-2">
-                <button class="btn btn-sm sport-chip-btn active flex-fill" id="predSportALL" onclick="filterPredSport('ALL')">전 종목</button>
-                <button class="btn btn-sm sport-chip-btn flex-fill" id="predSportWDL" onclick="filterPredSport('WDL')" title="축구 14경기 승무패">⚽ 승무패</button>
-                <button class="btn btn-sm sport-chip-btn flex-fill" id="predSportW1L" onclick="filterPredSport('W1L')" title="야구 14경기 승1패 (1점차 분석)">⚾ 승1패</button>
-                <button class="btn btn-sm sport-chip-btn flex-fill" id="predSportW5L" onclick="filterPredSport('W5L')" title="농구 14경기 승5패 (5점차 분석)">🏀 승5패</button>
-              </div>
-
-              <!-- Line 2.5: League Quick Filter Pills (🇳🇱 네덜란드 에레디비시, KBO, MLB, NPB, EPL 등) -->
-              <!-- 14경기 매트릭스 팝업 전체보기 (모바일 세로 스크롤 최적화) -->
-              <button class="btn btn-sm w-100 fw-bold py-1.5 mb-2" id="openMatrixFullModalBtn" onclick="openAllMatchesModal()" style="background: linear-gradient(135deg, rgba(2, 132, 199, 0.35), rgba(0, 240, 255, 0.25)); border: 1.5px solid #00F0FF; color: #00F0FF; border-radius: 6px; box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);">
-                  <i class="bi bi-window-stack me-1"></i>📱 14경기 매트릭스 팝업 전체보기 (세로 스크롤)
-                </button>
-
-              <div class="d-flex gap-1 mb-2 overflow-x-auto py-1" id="leagueFilterRow" style="scrollbar-width: none; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; max-width: 100%;">
-                <button class="btn btn-xs league-pill-btn active" id="lgPillALL" onclick="filterLeague('ALL')">전체 리그</button>
-                <button class="btn btn-xs league-pill-btn" id="lgPillNED" onclick="filterLeague('NED')" style="border-color: #f97316; color: #ffedd5; background: rgba(249, 115, 22, 0.25);" title="네덜란드 에레디비시 5개년 & 실시간 경기"><span class="me-1">🇳🇱</span>네덜란드</button>
-                <button class="btn btn-xs league-pill-btn" id="lgPillKBO" onclick="filterLeague('KBO')" title="한국 프로야구">⚾ KBO</button>
-                <button class="btn btn-xs league-pill-btn" id="lgPillMLB" onclick="filterLeague('MLB')" title="미국 메이저리그">⚾ MLB</button>
-                <button class="btn btn-xs league-pill-btn" id="lgPillNPB" onclick="filterLeague('NPB')" title="일본 프로야구">⚾ NPB</button>
-                <button class="btn btn-xs league-pill-btn" id="lgPillEPL" onclick="filterLeague('EPL')" title="잉글랜드 프리미어리그">⚽ EPL</button>
-                <button class="btn btn-xs league-pill-btn" id="lgPillLALIGA" onclick="filterLeague('LALIGA')" title="스페인 라리가">⚽ 라리가</button>
-                <button class="btn btn-xs league-pill-btn" id="lgPillSERIE" onclick="filterLeague('SERIE')" title="세리에 A">⚽ 세리에</button>
-                <button class="btn btn-xs league-pill-btn" id="lgPillBUNDES" onclick="filterLeague('BUNDES')" title="독일 분데스리가">⚽ 분데스</button>
-                <button class="btn btn-xs league-pill-btn" id="lgPillLIGUE1" onclick="filterLeague('LIGUE1')" title="프랑스 리그 1">⚽ 리그1</button>
+              <!-- Line 2: 6대 스포츠 고정 필터 (전체, 축구, 야구, 농구, 하키, 배구) -->
+              <div class="d-flex gap-1 mb-2 overflow-x-auto py-0.5" style="scrollbar-width: none;">
+                <button class="btn btn-sm sport-chip-btn active flex-fill text-nowrap" id="predSportALL" onclick="filterPredSport('ALL')">전체</button>
+                <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportSOCCER" onclick="filterPredSport('SOCCER')">⚽ 축구</button>
+                <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportBASEBALL" onclick="filterPredSport('BASEBALL')">⚾ 야구</button>
+                <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportBASKETBALL" onclick="filterPredSport('BASKETBALL')">🏀 농구</button>
+                <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportHOCKEY" onclick="filterPredSport('HOCKEY')">🏒 하키</button>
+                <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportVOLLEYBALL" onclick="filterPredSport('VOLLEYBALL')">🏐 배구</button>
               </div>
 
               <!-- Line 3: AI Confidence Filter & 30s Auto Sync -->
@@ -4603,6 +4589,8 @@ function getFullModalMatchList() {
       }
     };
 
+    let initialScheduleAutoScrollDone = false;
+
     function initPredictionSection() {
       const now = new Date();
       const d0Str = getKSTDateString(now);
@@ -4622,9 +4610,12 @@ function getFullModalMatchList() {
       startLiveAutoSync(10);
       startBetman10MinSync();
 
-      // Auto-scroll match list to current time match
+      // Auto-scroll match list to current time match ONCE on initial page load
       setTimeout(() => {
-        scrollToCurrentTimeMatch(false);
+        if (!initialScheduleAutoScrollDone) {
+          scrollToCurrentTimeMatch(false);
+          initialScheduleAutoScrollDone = true;
+        }
       }, 500);
     }
 
@@ -4718,27 +4709,9 @@ function getFullModalMatchList() {
       }
     }
 
-    let currentLeagueFilter = 'ALL';
-
-    function filterLeague(lgKey) {
-      currentLeagueFilter = lgKey;
-      ['ALL', 'NED', 'KBO', 'MLB', 'NPB', 'EPL', 'LALIGA', 'SERIE', 'BUNDES', 'LIGUE1'].forEach(k => {
-        const btn = document.getElementById('lgPill' + k);
-        if (btn) {
-          if (k === lgKey) btn.classList.add('active');
-          else btn.classList.remove('active');
-        }
-      });
-      renderPredMatches();
-      const list = getFilteredPredMatches();
-      if (list.length > 0 && currentCenterMode === 'DETAIL') {
-        selectPredMatch(list[0].id);
-      }
-    }
-
     function filterPredSport(sKey) {
       currentPredSport = sKey;
-      ['ALL', 'WDL', 'W1L', 'W5L'].forEach(k => {
+      ['ALL', 'SOCCER', 'BASEBALL', 'BASKETBALL', 'HOCKEY', 'VOLLEYBALL'].forEach(k => {
         const chipBtn = document.getElementById('predSport' + k);
         if (chipBtn) {
           if (k === sKey) chipBtn.classList.add('active');
@@ -4747,21 +4720,9 @@ function getFullModalMatchList() {
       });
 
       renderPredMatches();
-
-      if (sKey === 'WDL') {
-        switchCenterView('TOTO');
-        selectTotoRound('WDL');
-      } else if (sKey === 'W1L') {
-        switchCenterView('TOTO');
-        selectTotoRound('W1L', 260066);
-      } else if (sKey === 'W5L') {
-        switchCenterView('TOTO');
-        selectTotoRound('W5L');
-      } else {
-        const list = getFilteredPredMatches();
-        if (list.length > 0) {
-          selectPredMatch(list[0].id);
-        }
+      const list = getFilteredPredMatches();
+      if (list.length > 0 && currentCenterMode === 'DETAIL') {
+        selectPredMatch(list[0].id);
       }
     }
 
@@ -4800,35 +4761,17 @@ function getFullModalMatchList() {
 
       let list = [...allMatches];
 
-      if (currentPredSport === 'W1L') {
-        list = list.filter(m => m.sport_code === 'BASEBALL' || (m.league_name && (m.league_name.includes('KBO') || m.league_name.includes('MLB') || m.league_name.includes('NPB'))));
-      } else if (currentPredSport === 'WDL') {
+      // 6대 스포츠 고정 필터 (전체, 축구, 야구, 농구, 하키, 배구)
+      if (currentPredSport === 'SOCCER') {
         list = list.filter(m => m.sport_code === 'SOCCER');
-      } else if (currentPredSport === 'W5L') {
-        list = list.filter(m => m.sport_code === 'BASKETBALL' || (m.league_name && m.league_name.includes('NBA')));
-      }
-
-      // League Quick Filter (네덜란드 Eredivisie, KBO, MLB, NPB, EPL 등)
-      if (currentLeagueFilter && currentLeagueFilter !== 'ALL') {
-        if (currentLeagueFilter === 'NED') {
-          list = list.filter(m => m.league_name && (m.league_name.includes('Eredivisie') || m.league_name.includes('네덜란드')));
-        } else if (currentLeagueFilter === 'KBO') {
-          list = list.filter(m => m.league_name && m.league_name.includes('KBO'));
-        } else if (currentLeagueFilter === 'MLB') {
-          list = list.filter(m => m.league_name && m.league_name.includes('MLB'));
-        } else if (currentLeagueFilter === 'NPB') {
-          list = list.filter(m => m.league_name && m.league_name.includes('NPB'));
-        } else if (currentLeagueFilter === 'EPL') {
-          list = list.filter(m => m.league_name && m.league_name.includes('EPL'));
-        } else if (currentLeagueFilter === 'LALIGA') {
-          list = list.filter(m => m.league_name && (m.league_name.includes('La Liga') || m.league_name.includes('라리가')));
-        } else if (currentLeagueFilter === 'SERIE') {
-          list = list.filter(m => m.league_name && (m.league_name.includes('Serie A') || m.league_name.includes('세리에')));
-        } else if (currentLeagueFilter === 'BUNDES') {
-          list = list.filter(m => m.league_name && (m.league_name.includes('Bundesliga') || m.league_name.includes('분데스')));
-        } else if (currentLeagueFilter === 'LIGUE1') {
-          list = list.filter(m => m.league_name && (m.league_name.includes('Ligue 1') || m.league_name.includes('리그 1')));
-        }
+      } else if (currentPredSport === 'BASEBALL') {
+        list = list.filter(m => m.sport_code === 'BASEBALL');
+      } else if (currentPredSport === 'BASKETBALL') {
+        list = list.filter(m => m.sport_code === 'BASKETBALL' || (m.league_name && (m.league_name.includes('농구') || m.league_name.includes('NBA') || m.league_name.includes('KBL'))));
+      } else if (currentPredSport === 'HOCKEY') {
+        list = list.filter(m => m.sport_code === 'HOCKEY' || (m.league_name && (m.league_name.includes('하키') || m.league_name.includes('NHL'))));
+      } else if (currentPredSport === 'VOLLEYBALL') {
+        list = list.filter(m => m.sport_code === 'VOLLEYBALL' || (m.league_name && (m.league_name.includes('배구') || m.league_name.includes('V-리그'))));
       }
 
       if (currentPredConfidence === '80') {
@@ -5007,14 +4950,23 @@ function getFullModalMatchList() {
         `;
       });
 
+      // Preserve user's scroll position so it NEVER jumps back to current time while user is reading/scrolling
+      const prevContainerScrollTop = container.scrollTop;
+      const prevWindowScrollY = window.pageYOffset || document.documentElement.scrollTop;
+
       container.innerHTML = html;
 
-      // Always automatically position view starting from current time onwards
-      if (currentPredDate !== 'FINISHED') {
+      if (!initialScheduleAutoScrollDone && currentPredDate !== 'FINISHED') {
+        initialScheduleAutoScrollDone = true;
         scrollToCurrentTimeMatch(false);
-        setTimeout(() => scrollToCurrentTimeMatch(false), 80);
       } else {
-        container.scrollTop = 0;
+        // Restore user's exact scroll position
+        if (container.scrollHeight > prevContainerScrollTop) {
+          container.scrollTop = prevContainerScrollTop;
+        }
+        if (window.innerWidth <= 768) {
+          window.scrollTo(0, prevWindowScrollY);
+        }
       }
     }
 
@@ -6872,7 +6824,7 @@ function getFullModalMatchList() {
     }
 
     function switchMobileTab(tabKey) {
-      if (tabKey === 'center') tabKey = 'schedule';
+      if (tabKey === 'center') tabKey = 'toto';
       currentMobileTab = tabKey;
       const p1 = document.getElementById('leftColSchedule');
       const p2 = document.getElementById('centerColMain');
@@ -6882,20 +6834,17 @@ function getFullModalMatchList() {
 
       const panels = {
         schedule: p1,
+        toto: p2,
         community: p3,
         news: p4
       };
 
       const tabs = {
         schedule: 'mobTabSchedule',
+        toto: 'mobTabToto',
         community: 'mobTabCommunity',
         news: 'mobTabNews'
       };
-
-      // In mobile mode, center column is never a top-level tab
-      if (p2) {
-        p2.style.display = 'none';
-      }
 
       Object.keys(panels).forEach(k => {
         const el = panels[k];
@@ -6919,22 +6868,19 @@ function getFullModalMatchList() {
         }
       });
 
+      if (tabKey === 'toto') {
+        switchCenterView('TOTO');
+      }
+
       if (retBtn) {
         retBtn.classList.add('d-none');
       }
 
-      // If schedule tab, position view starting from current time onwards
-      if (tabKey === 'schedule') {
-        setTimeout(() => {
-          scrollToCurrentTimeMatch(false);
-        }, 80);
-      } else {
-        // Smooth scroll to top of content
-        const sec = document.getElementById('prediction-section');
-        if (sec && currentViewMode === 'mobile') {
-          const y = sec.getBoundingClientRect().top + window.pageYOffset - 100;
-          window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
-        }
+      // Smooth scroll to top of content on mobile when switching to tabs other than schedule
+      const sec = document.getElementById('prediction-section');
+      if (sec && currentViewMode === 'mobile' && tabKey !== 'schedule') {
+        const y = sec.getBoundingClientRect().top + window.pageYOffset - 100;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
       }
     }
 
