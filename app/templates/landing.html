@@ -278,42 +278,65 @@
       height: 100%;
     }
     
-    /* 4-Column Width Ratio: 25% | 35% | 22% | 18% */
+    /* 4-Column Width Ratio: 40% | 30% | 20% | 10% (4 : 3 : 2 : 1) */
     @media (min-width: 1200px) {
       .col-dash-left {
-        flex: 0 0 25% !important;
-        max-width: 25% !important;
+        flex: 0 0 40% !important;
+        max-width: 40% !important;
       }
       .col-dash-center {
-        flex: 0 0 35% !important;
-        max-width: 35% !important;
+        flex: 0 0 30% !important;
+        max-width: 30% !important;
       }
       .col-dash-right {
-        flex: 0 0 22% !important;
-        max-width: 22% !important;
+        flex: 0 0 20% !important;
+        max-width: 20% !important;
       }
       .col-dash-news {
-        flex: 0 0 18% !important;
-        max-width: 18% !important;
+        flex: 0 0 10% !important;
+        max-width: 10% !important;
       }
     }
     @media (min-width: 992px) and (max-width: 1199px) {
       .col-dash-left {
-        flex: 0 0 25% !important;
-        max-width: 25% !important;
+        flex: 0 0 40% !important;
+        max-width: 40% !important;
       }
       .col-dash-center {
-        flex: 0 0 36% !important;
-        max-width: 36% !important;
+        flex: 0 0 30% !important;
+        max-width: 30% !important;
       }
       .col-dash-right {
-        flex: 0 0 21% !important;
-        max-width: 21% !important;
+        flex: 0 0 20% !important;
+        max-width: 20% !important;
       }
       .col-dash-news {
-        flex: 0 0 18% !important;
-        max-width: 18% !important;
+        flex: 0 0 10% !important;
+        max-width: 10% !important;
       }
+    }
+    /* 10% News Column Compact Polish */
+    .col-dash-news .dash-card-header {
+      padding: 6px 4px !important;
+    }
+    .col-dash-news .dash-card-header span {
+      font-size: 0.74rem !important;
+    }
+    .col-dash-news .sport-chip-btn {
+      font-size: 0.65rem !important;
+      padding: 2px 3px !important;
+    }
+    .col-dash-news .news-card-compact {
+      padding: 5px 6px !important;
+      margin-bottom: 5px !important;
+    }
+    .col-dash-news .news-card-compact .fw-bold {
+      font-size: 0.75rem !important;
+      line-height: 1.25 !important;
+    }
+    .col-dash-news .news-card-compact .text-truncate-2 {
+      font-size: 0.68rem !important;
+      line-height: 1.2 !important;
     }
     .footer-section {
       display: none !important;
@@ -1043,26 +1066,26 @@
             
             <div class="dash-card-header">
               <!-- Chat Header with Live WebSocket Status -->
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <div class="d-flex align-items-center gap-2">
-                  <span class="fw-bold text-dark" style="font-size: 0.90rem;"><i class="bi bi-chat-square-dots-fill text-primary me-1"></i>실시간 라이브 팬룸 & 승부 투표</span>
-                  <span class="badge" style="background: #eff6ff; border: 1px solid #bfdbfe; font-size: 0.70rem; color: #1d4ed8;">
-                    <span style="width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; display: inline-block; animation: pulseGlow 1.5s infinite;" class="me-1"></span>
-                    <span id="wsStatusBadge">연결됨</span>
+              <div class="d-flex justify-content-between align-items-center mb-1.5 flex-nowrap">
+                <span class="fw-bold text-dark text-nowrap" style="font-size: 0.85rem;"><i class="bi bi-chat-square-dots-fill text-primary me-1"></i>실시간 팬룸</span>
+                <div class="d-flex align-items-center gap-1">
+                  <span class="badge" style="background: #eff6ff; border: 1px solid #bfdbfe; font-size: 0.68rem; color: #1d4ed8; padding: 2px 5px;">
+                    <span style="width: 5px; height: 5px; background-color: #10b981; border-radius: 50%; display: inline-block; animation: pulseGlow 1.5s infinite;" class="me-0.5"></span>
+                    <span id="wsStatusBadge">연결</span>
+                  </span>
+                  <span class="badge bg-light border text-dark px-1.5 py-0.5" style="font-size: 0.68rem;">
+                    <i class="bi bi-people-fill text-info me-0.5"></i><b class="text-dark" id="wsClientCount">664</b>명
                   </span>
                 </div>
-                <span class="badge bg-light border text-dark px-2 py-1" style="font-size: 0.72rem;">
-                  <i class="bi bi-people-fill text-info me-1"></i>접속자: <b class="text-dark" id="wsClientCount">664</b>명
-                </span>
               </div>
 
               <!-- Channel Tabs -->
               <div class="d-flex gap-1 overflow-auto">
-                <button class="btn btn-sm btn-outline-secondary py-0 px-2 active flex-fill fw-bold" id="chatTabALL" onclick="switchCommunityChannel('ALL')" style="font-size: 0.72rem;">💬 전체</button>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-2 flex-fill fw-bold" id="chatTabBASEBALL" onclick="switchCommunityChannel('BASEBALL')" style="font-size: 0.72rem;">⚾ 야구</button>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-2 flex-fill fw-bold" id="chatTabSOCCER" onclick="switchCommunityChannel('SOCCER')" style="font-size: 0.72rem;">⚽ 축구</button>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-2 flex-fill fw-bold" id="chatTabBASKETBALL" onclick="switchCommunityChannel('BASKETBALL')" style="font-size: 0.72rem;">🏀 농구</button>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-2 flex-fill fw-bold" id="chatTabPREDICTION" onclick="switchCommunityChannel('PREDICTION')" style="font-size: 0.72rem;">🔥 AI픽</button>
+                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 active flex-fill fw-bold" id="chatTabALL" onclick="switchCommunityChannel('ALL')" style="font-size: 0.70rem;">💬전체</button>
+                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 flex-fill fw-bold" id="chatTabBASEBALL" onclick="switchCommunityChannel('BASEBALL')" style="font-size: 0.70rem;">⚾야구</button>
+                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 flex-fill fw-bold" id="chatTabSOCCER" onclick="switchCommunityChannel('SOCCER')" style="font-size: 0.70rem;">⚽축구</button>
+                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 flex-fill fw-bold" id="chatTabBASKETBALL" onclick="switchCommunityChannel('BASKETBALL')" style="font-size: 0.70rem;">🏀농구</button>
+                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 flex-fill fw-bold" id="chatTabPREDICTION" onclick="switchCommunityChannel('PREDICTION')" style="font-size: 0.70rem;">🔥AI픽</button>
               </div>
             </div>
 
@@ -1119,27 +1142,27 @@
           </div>
         </div>
 
-        <!-- 4. [우측2 20%] 실시간 스포츠 최신 뉴스 & 심층 분석 (기존 맨 아래에서 4열로 이동) -->
+        <!-- 4. [우측2 10%] 실시간 스포츠 최신 뉴스 & 심층 분석 -->
         <div class="col-dash-news" id="newsColSidebar">
           <div class="dash-card-column">
             <div class="dash-card-header">
-              <div class="d-flex justify-content-between align-items-center mb-1.5">
-                <span class="fw-bold text-dark small" style="font-size: 0.85rem;"><i class="bi bi-newspaper me-1 text-primary"></i>스포츠 뉴스 & 속보</span>
-                <button class="btn btn-xs py-0.5 px-2 text-info" onclick="refreshLiveNews()" title="실시간 언론사 뉴스 최신화" style="background: #eff6ff; border: 1px solid #eff6ff; border-radius: 4px; font-size: 0.70rem;">
-                  <i class="bi bi-arrow-clockwise me-1"></i>새로고침
+              <div class="d-flex justify-content-between align-items-center mb-1 flex-nowrap">
+                <span class="fw-bold text-dark text-nowrap" style="font-size: 0.80rem;"><i class="bi bi-newspaper me-1 text-primary"></i>스포츠속보</span>
+                <button class="btn btn-xs py-0.5 px-1.5 text-info" onclick="refreshLiveNews()" title="실시간 언론사 뉴스 최신화" style="background: #eff6ff; border: 1px solid #eff6ff; border-radius: 4px; font-size: 0.68rem;">
+                  <i class="bi bi-arrow-clockwise"></i>
                 </button>
               </div>
               <!-- Category Filter Chips -->
-              <div class="d-flex gap-1 overflow-auto">
-                <button class="btn btn-sm sport-chip-btn active flex-fill py-0 px-1" onclick="filterNews('ALL', this)" style="font-size: 0.70rem;">전체</button>
-                <button class="btn btn-sm sport-chip-btn flex-fill py-0 px-1" onclick="filterNews('BASEBALL', this)" style="font-size: 0.70rem;">⚾야구</button>
-                <button class="btn btn-sm sport-chip-btn flex-fill py-0 px-1" onclick="filterNews('SOCCER', this)" style="font-size: 0.70rem;">⚽축구</button>
-                <button class="btn btn-sm sport-chip-btn flex-fill py-0 px-1" onclick="filterNews('BASKETBALL', this)" style="font-size: 0.70rem;">🏀농구</button>
-                <button class="btn btn-sm sport-chip-btn flex-fill py-0 px-1" onclick="filterNews('ANALYTICS', this)" style="font-size: 0.70rem;">📊칼럼</button>
+              <div class="d-flex gap-0.5 overflow-x-auto py-0.5" style="scrollbar-width: none;">
+                <button class="btn btn-xs sport-chip-btn active text-nowrap py-0 px-1" onclick="filterNews('ALL', this)" style="font-size: 0.65rem;">전체</button>
+                <button class="btn btn-xs sport-chip-btn text-nowrap py-0 px-1" onclick="filterNews('BASEBALL', this)" style="font-size: 0.65rem;">야구</button>
+                <button class="btn btn-xs sport-chip-btn text-nowrap py-0 px-1" onclick="filterNews('SOCCER', this)" style="font-size: 0.65rem;">축구</button>
+                <button class="btn btn-xs sport-chip-btn text-nowrap py-0 px-1" onclick="filterNews('BASKETBALL', this)" style="font-size: 0.65rem;">농구</button>
+                <button class="btn btn-xs sport-chip-btn text-nowrap py-0 px-1" onclick="filterNews('ANALYTICS', this)" style="font-size: 0.65rem;">칼럼</button>
               </div>
             </div>
             <!-- Body: Scrollable News Cards List -->
-            <div class="dash-card-body p-2" id="newsColumnList">
+            <div class="dash-card-body p-1" id="newsColumnList">
               <div class="text-center text-muted py-5">
                 <div class="spinner-border spinner-border-sm text-primary me-2"></div>실시간 언론사 뉴스를 불러오는 중...
               </div>
