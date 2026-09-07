@@ -2,26 +2,26 @@
   "team_name": "시애틀 매리너스",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-05",
-    "end_date": "2026-09-06"
+    "start_date": "2026-09-06",
+    "end_date": "2026-09-07"
   },
   "total_matches": 2,
-  "hitters_count": 11,
-  "pitchers_count": 9,
+  "hitters_count": 13,
+  "pitchers_count": 5,
   "matches": [
-    {
-      "date": "2026-09-05 11:10",
-      "opponent": "애슬레틱스",
-      "score": "6 : 7",
-      "result": "패",
-      "file": "matches/2026-09-05_1110_vs_애슬레틱스.json"
-    },
     {
       "date": "2026-09-06 10:40",
       "opponent": "애슬레틱스",
       "score": "2 : 6",
       "result": "패",
       "file": "matches/2026-09-06_1040_vs_애슬레틱스.json"
+    },
+    {
+      "date": "2026-09-07 05:10",
+      "opponent": "애슬레틱스",
+      "score": "2 : 0",
+      "result": "승",
+      "file": "matches/2026-09-07_0510_vs_애슬레틱스.json"
     }
   ],
   "hitters": [
@@ -32,7 +32,7 @@
     },
     {
       "name": "Dominic Canzone",
-      "pos": "2번 DH",
+      "pos": "2번 RF",
       "file": "hitters/Dominic_Canzone.json"
     },
     {
@@ -51,67 +51,47 @@
       "file": "hitters/Josh_Naylor.json"
     },
     {
-      "name": "Cole Young",
-      "pos": "6번 2B",
-      "file": "hitters/Cole_Young.json"
-    },
-    {
       "name": "J.P. Crawford",
-      "pos": "7번 SS",
+      "pos": "6번 SS",
       "file": "hitters/J.P._Crawford.json"
     },
     {
-      "name": "Lazaro Montes",
-      "pos": "8번 RF",
-      "file": "hitters/Lazaro_Montes.json"
-    },
-    {
       "name": "Taylor Ward",
-      "pos": "8번 RF",
+      "pos": "7번 DH",
       "file": "hitters/Taylor_Ward.json"
     },
     {
-      "name": "Brock Rodden",
-      "pos": "9번 3B",
-      "file": "hitters/Brock_Rodden.json"
+      "name": "Lazaro Montes",
+      "pos": "7번 DH",
+      "file": "hitters/Lazaro_Montes.json"
+    },
+    {
+      "name": "Cole Young",
+      "pos": "8번 2B",
+      "file": "hitters/Cole_Young.json"
     },
     {
       "name": "Weston Wilson",
       "pos": "9번 3B",
       "file": "hitters/Weston_Wilson.json"
+    },
+    {
+      "name": "Michael Arroyo",
+      "pos": "8번 2B",
+      "file": "hitters/Michael_Arroyo.json"
+    },
+    {
+      "name": "Brock Rodden",
+      "pos": "8번 3B",
+      "file": "hitters/Brock_Rodden.json"
+    },
+    {
+      "name": "Jhonny Pereda",
+      "pos": "9번 C",
+      "file": "hitters/Jhonny_Pereda.json"
     }
   ],
   "pitchers": [
-    {
-      "name": "Patrick Wisdom",
-      "pos": "9번 PH",
-      "file": "pitchers/Patrick_Wisdom.json"
-    },
-    {
-      "name": "Logan Gilbert",
-      "pos": "P",
-      "file": "pitchers/Logan_Gilbert.json"
-    },
-    {
-      "name": "Seranthony Domínguez",
-      "pos": "P",
-      "file": "pitchers/Seranthony_Domínguez.json"
-    },
-    {
-      "name": "José A. Ferrer",
-      "pos": "P",
-      "file": "pitchers/José_A._Ferrer.json"
-    },
-    {
-      "name": "Cooper Criswell",
-      "pos": "P",
-      "file": "pitchers/Cooper_Criswell.json"
-    },
-    {
-      "name": "Andrés Muñoz",
-      "pos": "P",
-      "file": "pitchers/Andrés_Muñoz.json"
-    },
     {
       "name": "George Kirby",
       "pos": "P",
@@ -126,6 +106,16 @@
       "name": "Carlos Vargas",
       "pos": "P",
       "file": "pitchers/Carlos_Vargas.json"
+    },
+    {
+      "name": "Bryan Woo",
+      "pos": "P",
+      "file": "pitchers/Bryan_Woo.json"
+    },
+    {
+      "name": "Andrés Muñoz",
+      "pos": "P",
+      "file": "pitchers/Andrés_Muñoz.json"
     }
   ]
 }

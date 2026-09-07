@@ -2,26 +2,26 @@
   "team_name": "샌디에이고 파드리스",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-05",
-    "end_date": "2026-09-06"
+    "start_date": "2026-09-06",
+    "end_date": "2026-09-07"
   },
   "total_matches": 2,
-  "hitters_count": 12,
-  "pitchers_count": 12,
+  "hitters_count": 11,
+  "pitchers_count": 11,
   "matches": [
-    {
-      "date": "2026-09-05 10:40",
-      "opponent": "뉴욕 양키스",
-      "score": "1 : 5",
-      "result": "패",
-      "file": "matches/2026-09-05_1040_vs_뉴욕_양키스.json"
-    },
     {
       "date": "2026-09-06 08:15",
       "opponent": "뉴욕 양키스",
-      "score": "1 : 5",
-      "result": "패",
+      "score": "4 : 3",
+      "result": "승",
       "file": "matches/2026-09-06_0815_vs_뉴욕_양키스.json"
+    },
+    {
+      "date": "2026-09-07 05:10",
+      "opponent": "뉴욕 양키스",
+      "score": "4 : 3",
+      "result": "승",
+      "file": "matches/2026-09-07_0510_vs_뉴욕_양키스.json"
     }
   ],
   "hitters": [
@@ -31,9 +31,9 @@
       "file": "hitters/Fernando_Tatis_Jr..json"
     },
     {
-      "name": "Samad Taylor",
-      "pos": "2번 LF",
-      "file": "hitters/Samad_Taylor.json"
+      "name": "Xander Bogaerts",
+      "pos": "2번 SS",
+      "file": "hitters/Xander_Bogaerts.json"
     },
     {
       "name": "Manny Machado",
@@ -46,34 +46,14 @@
       "file": "hitters/Ty_France.json"
     },
     {
-      "name": "Sung-Mun Song",
-      "pos": "4번 2B",
-      "file": "hitters/Sung-Mun_Song.json"
-    },
-    {
       "name": "Jackson Merrill",
       "pos": "5번 CF",
       "file": "hitters/Jackson_Merrill.json"
     },
     {
-      "name": "Austin Hays",
-      "pos": "6번 DH",
-      "file": "hitters/Austin_Hays.json"
-    },
-    {
-      "name": "Xander Bogaerts",
-      "pos": "7번 SS",
-      "file": "hitters/Xander_Bogaerts.json"
-    },
-    {
       "name": "Luis Campusano",
-      "pos": "8번 C",
+      "pos": "6번 DH",
       "file": "hitters/Luis_Campusano.json"
-    },
-    {
-      "name": "Jake Cronenworth",
-      "pos": "9번 1B",
-      "file": "hitters/Jake_Cronenworth.json"
     },
     {
       "name": "Freddy Fermin",
@@ -84,43 +64,33 @@
       "name": "Ethan Salas",
       "pos": "7번 C",
       "file": "hitters/Ethan_Salas.json"
+    },
+    {
+      "name": "Jake Cronenworth",
+      "pos": "8번 2B",
+      "file": "hitters/Jake_Cronenworth.json"
+    },
+    {
+      "name": "Samad Taylor",
+      "pos": "9번 LF",
+      "file": "hitters/Samad_Taylor.json"
+    },
+    {
+      "name": "Dustin Harris",
+      "pos": "7번 LF",
+      "file": "hitters/Dustin_Harris.json"
     }
   ],
   "pitchers": [
     {
+      "name": "Austin Hays",
+      "pos": "7번 PH",
+      "file": "pitchers/Austin_Hays.json"
+    },
+    {
       "name": "Jase Bowen",
-      "pos": "4번 PR",
+      "pos": "8번 PH",
       "file": "pitchers/Jase_Bowen.json"
-    },
-    {
-      "name": "Dustin Harris",
-      "pos": "6번 PR",
-      "file": "pitchers/Dustin_Harris.json"
-    },
-    {
-      "name": "Walker Buehler",
-      "pos": "P",
-      "file": "pitchers/Walker_Buehler.json"
-    },
-    {
-      "name": "Yuki Matsui",
-      "pos": "P",
-      "file": "pitchers/Yuki_Matsui.json"
-    },
-    {
-      "name": "Bradgley Rodriguez",
-      "pos": "P",
-      "file": "pitchers/Bradgley_Rodriguez.json"
-    },
-    {
-      "name": "Adrian Morejon",
-      "pos": "P",
-      "file": "pitchers/Adrian_Morejon.json"
-    },
-    {
-      "name": "Mason Miller",
-      "pos": "P",
-      "file": "pitchers/Mason_Miller.json"
     },
     {
       "name": "Robbie Ray",
@@ -146,6 +116,26 @@
       "name": "Jhony Brito",
       "pos": "P",
       "file": "pitchers/Jhony_Brito.json"
+    },
+    {
+      "name": "Michael King",
+      "pos": "P",
+      "file": "pitchers/Michael_King.json"
+    },
+    {
+      "name": "Bradgley Rodriguez",
+      "pos": "P",
+      "file": "pitchers/Bradgley_Rodriguez.json"
+    },
+    {
+      "name": "Adrian Morejon",
+      "pos": "P",
+      "file": "pitchers/Adrian_Morejon.json"
+    },
+    {
+      "name": "Mason Miller",
+      "pos": "P",
+      "file": "pitchers/Mason_Miller.json"
     }
   ]
 }

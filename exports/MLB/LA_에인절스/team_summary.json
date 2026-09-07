@@ -2,26 +2,26 @@
   "team_name": "LA 에인절스",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-05",
-    "end_date": "2026-09-06"
+    "start_date": "2026-09-06",
+    "end_date": "2026-09-07"
   },
   "total_matches": 2,
-  "hitters_count": 12,
-  "pitchers_count": 8,
+  "hitters_count": 11,
+  "pitchers_count": 6,
   "matches": [
-    {
-      "date": "2026-09-05 07:45",
-      "opponent": "피츠버그 파이리츠",
-      "score": "6 : 1",
-      "result": "승",
-      "file": "matches/2026-09-05_0745_vs_피츠버그_파이리츠.json"
-    },
     {
       "date": "2026-09-06 07:40",
       "opponent": "피츠버그 파이리츠",
-      "score": "6 : 1",
-      "result": "승",
+      "score": "0 : 1",
+      "result": "패",
       "file": "matches/2026-09-06_0740_vs_피츠버그_파이리츠.json"
+    },
+    {
+      "date": "2026-09-07 02:35",
+      "opponent": "피츠버그 파이리츠",
+      "score": "0 : 1",
+      "result": "패",
+      "file": "matches/2026-09-07_0235_vs_피츠버그_파이리츠.json"
     }
   ],
   "hitters": [
@@ -34,6 +34,11 @@
       "name": "Mike Trout",
       "pos": "2번 CF",
       "file": "hitters/Mike_Trout.json"
+    },
+    {
+      "name": "Jose Siri",
+      "pos": "2번 CF",
+      "file": "hitters/Jose_Siri.json"
     },
     {
       "name": "Wade Meckler",
@@ -51,19 +56,9 @@
       "file": "hitters/Moisés_Ballesteros.json"
     },
     {
-      "name": "Tyler Heineman",
-      "pos": "5번 C",
-      "file": "hitters/Tyler_Heineman.json"
-    },
-    {
       "name": "Christian Moore",
-      "pos": "6번 2B",
+      "pos": "6번 DH",
       "file": "hitters/Christian_Moore.json"
-    },
-    {
-      "name": "Jose Siri",
-      "pos": "7번 LF",
-      "file": "hitters/Jose_Siri.json"
     },
     {
       "name": "Josh Lowe",
@@ -71,47 +66,22 @@
       "file": "hitters/Josh_Lowe.json"
     },
     {
-      "name": "Adam Frazier",
-      "pos": "8번 DH",
-      "file": "hitters/Adam_Frazier.json"
-    },
-    {
-      "name": "Oswald Peraza",
-      "pos": "9번 3B",
-      "file": "hitters/Oswald_Peraza.json"
-    },
-    {
       "name": "Denzer Guzman",
       "pos": "8번 3B",
       "file": "hitters/Denzer_Guzman.json"
+    },
+    {
+      "name": "Adam Frazier",
+      "pos": "9번 2B",
+      "file": "hitters/Adam_Frazier.json"
+    },
+    {
+      "name": "Tyler Heineman",
+      "pos": "9번 C",
+      "file": "hitters/Tyler_Heineman.json"
     }
   ],
   "pitchers": [
-    {
-      "name": "Kyren Paris",
-      "pos": "5번 PR",
-      "file": "pitchers/Kyren_Paris.json"
-    },
-    {
-      "name": "Travis d'Arnaud",
-      "pos": "5번 PH",
-      "file": "pitchers/Travis_d'Arnaud.json"
-    },
-    {
-      "name": "Ryan Johnson",
-      "pos": "P",
-      "file": "pitchers/Ryan_Johnson.json"
-    },
-    {
-      "name": "José Fermin",
-      "pos": "P",
-      "file": "pitchers/José_Fermin.json"
-    },
-    {
-      "name": "Samy Natera Jr.",
-      "pos": "P",
-      "file": "pitchers/Samy_Natera_Jr..json"
-    },
     {
       "name": "Yusei Kikuchi",
       "pos": "P",
@@ -126,6 +96,21 @@
       "name": "Luke Murphy",
       "pos": "P",
       "file": "pitchers/Luke_Murphy.json"
+    },
+    {
+      "name": "José Fermin",
+      "pos": "P",
+      "file": "pitchers/José_Fermin.json"
+    },
+    {
+      "name": "Kyren Paris",
+      "pos": "7번 PH",
+      "file": "pitchers/Kyren_Paris.json"
+    },
+    {
+      "name": "Walbert Ureña",
+      "pos": "P",
+      "file": "pitchers/Walbert_Ureña.json"
     }
   ]
 }

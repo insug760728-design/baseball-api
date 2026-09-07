@@ -2,26 +2,26 @@
   "team_name": "시카고 컵스",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-05",
-    "end_date": "2026-09-06"
+    "start_date": "2026-09-06",
+    "end_date": "2026-09-07"
   },
   "total_matches": 2,
-  "hitters_count": 11,
-  "pitchers_count": 7,
+  "hitters_count": 13,
+  "pitchers_count": 9,
   "matches": [
-    {
-      "date": "2026-09-05 08:10",
-      "opponent": "마이애미 말린스",
-      "score": "6 : 5",
-      "result": "승",
-      "file": "matches/2026-09-05_0810_vs_마이애미_말린스.json"
-    },
     {
       "date": "2026-09-06 05:10",
       "opponent": "마이애미 말린스",
-      "score": "6 : 5",
-      "result": "승",
+      "score": "3 : 10",
+      "result": "패",
       "file": "matches/2026-09-06_0510_vs_마이애미_말린스.json"
+    },
+    {
+      "date": "2026-09-07 02:40",
+      "opponent": "마이애미 말린스",
+      "score": "3 : 10",
+      "result": "패",
+      "file": "matches/2026-09-07_0240_vs_마이애미_말린스.json"
     }
   ],
   "hitters": [
@@ -66,11 +66,6 @@
       "file": "hitters/Michael_Conforto.json"
     },
     {
-      "name": "Carson Kelly",
-      "pos": "9번 C",
-      "file": "hitters/Carson_Kelly.json"
-    },
-    {
       "name": "Matt Shaw",
       "pos": "8번 DH",
       "file": "hitters/Matt_Shaw.json"
@@ -79,19 +74,24 @@
       "name": "Miguel Amaya",
       "pos": "9번 C",
       "file": "hitters/Miguel_Amaya.json"
+    },
+    {
+      "name": "BJ Murray Jr.",
+      "pos": "4번 1B",
+      "file": "hitters/BJ_Murray_Jr..json"
+    },
+    {
+      "name": "Carson Kelly",
+      "pos": "8번 C",
+      "file": "hitters/Carson_Kelly.json"
+    },
+    {
+      "name": "Tyrone Taylor",
+      "pos": "9번 LF",
+      "file": "hitters/Tyrone_Taylor.json"
     }
   ],
   "pitchers": [
-    {
-      "name": "Shota Imanaga",
-      "pos": "P",
-      "file": "pitchers/Shota_Imanaga.json"
-    },
-    {
-      "name": "Aaron Civale",
-      "pos": "P",
-      "file": "pitchers/Aaron_Civale.json"
-    },
     {
       "name": "Javier Assad",
       "pos": "P",
@@ -116,6 +116,26 @@
       "name": "Ryan Zeferjahn",
       "pos": "P",
       "file": "pitchers/Ryan_Zeferjahn.json"
+    },
+    {
+      "name": "Gabriel Arias",
+      "pos": "6번 PH",
+      "file": "pitchers/Gabriel_Arias.json"
+    },
+    {
+      "name": "Clay Holmes",
+      "pos": "P",
+      "file": "pitchers/Clay_Holmes.json"
+    },
+    {
+      "name": "Colin Rea",
+      "pos": "P",
+      "file": "pitchers/Colin_Rea.json"
+    },
+    {
+      "name": "Daniel Palencia",
+      "pos": "P",
+      "file": "pitchers/Daniel_Palencia.json"
     }
   ]
 }

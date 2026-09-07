@@ -2,26 +2,26 @@
   "team_name": "뉴욕 메츠",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-05",
-    "end_date": "2026-09-06"
+    "start_date": "2026-09-06",
+    "end_date": "2026-09-07"
   },
   "total_matches": 2,
-  "hitters_count": 12,
-  "pitchers_count": 8,
+  "hitters_count": 14,
+  "pitchers_count": 9,
   "matches": [
-    {
-      "date": "2026-09-05 08:10",
-      "opponent": "샌프란시스코 자이언츠",
-      "score": "5 : 9",
-      "result": "패",
-      "file": "matches/2026-09-05_0810_vs_샌프란시스코_자이언츠.json"
-    },
     {
       "date": "2026-09-06 05:10",
       "opponent": "샌프란시스코 자이언츠",
-      "score": "5 : 9",
-      "result": "패",
+      "score": "4 : 2",
+      "result": "승",
       "file": "matches/2026-09-06_0510_vs_샌프란시스코_자이언츠.json"
+    },
+    {
+      "date": "2026-09-07 02:40",
+      "opponent": "샌프란시스코 자이언츠",
+      "score": "4 : 2",
+      "result": "승",
+      "file": "matches/2026-09-07_0240_vs_샌프란시스코_자이언츠.json"
     }
   ],
   "hitters": [
@@ -37,18 +37,18 @@
     },
     {
       "name": "Bo Bichette",
-      "pos": "3번 3B",
+      "pos": "3번 DH",
       "file": "hitters/Bo_Bichette.json"
     },
     {
-      "name": "Mark Vientos",
-      "pos": "4번 DH",
-      "file": "hitters/Mark_Vientos.json"
+      "name": "Carson Benge",
+      "pos": "4번 RF",
+      "file": "hitters/Carson_Benge.json"
     },
     {
-      "name": "Carson Benge",
-      "pos": "5번 RF",
-      "file": "hitters/Carson_Benge.json"
+      "name": "Jared Young",
+      "pos": "5번 1B",
+      "file": "hitters/Jared_Young.json"
     },
     {
       "name": "Marcus Semien",
@@ -56,14 +56,9 @@
       "file": "hitters/Marcus_Semien.json"
     },
     {
-      "name": "Christopher Morel",
-      "pos": "7번 1B",
-      "file": "hitters/Christopher_Morel.json"
-    },
-    {
-      "name": "Jared Young",
-      "pos": "7번 1B",
-      "file": "hitters/Jared_Young.json"
+      "name": "A.J. Ewing",
+      "pos": "7번 CF",
+      "file": "hitters/A.J._Ewing.json"
     },
     {
       "name": "Francisco Alvarez",
@@ -71,47 +66,37 @@
       "file": "hitters/Francisco_Alvarez.json"
     },
     {
-      "name": "Nick Morabito",
-      "pos": "9번 CF",
-      "file": "hitters/Nick_Morabito.json"
-    },
-    {
-      "name": "A.J. Ewing",
-      "pos": "7번 CF",
-      "file": "hitters/A.J._Ewing.json"
-    },
-    {
       "name": "Brett Baty",
       "pos": "9번 3B",
       "file": "hitters/Brett_Baty.json"
+    },
+    {
+      "name": "Mark Vientos",
+      "pos": "5번 1B",
+      "file": "hitters/Mark_Vientos.json"
+    },
+    {
+      "name": "Christopher Morel",
+      "pos": "5번 1B",
+      "file": "hitters/Christopher_Morel.json"
+    },
+    {
+      "name": "Cristian Pache",
+      "pos": "5번 LF",
+      "file": "hitters/Cristian_Pache.json"
+    },
+    {
+      "name": "Nick Morabito",
+      "pos": "7번 LF",
+      "file": "hitters/Nick_Morabito.json"
+    },
+    {
+      "name": "Luis Torrens",
+      "pos": "9번 C",
+      "file": "hitters/Luis_Torrens.json"
     }
   ],
   "pitchers": [
-    {
-      "name": "Nolan McLean",
-      "pos": "P",
-      "file": "pitchers/Nolan_McLean.json"
-    },
-    {
-      "name": "Jefry Yan",
-      "pos": "P",
-      "file": "pitchers/Jefry_Yan.json"
-    },
-    {
-      "name": "Austin Warren",
-      "pos": "P",
-      "file": "pitchers/Austin_Warren.json"
-    },
-    {
-      "name": "Robert Stock",
-      "pos": "P",
-      "file": "pitchers/Robert_Stock.json"
-    },
-    {
-      "name": "Kodai Senga",
-      "pos": "P",
-      "file": "pitchers/Kodai_Senga.json"
-    },
     {
       "name": "Zac Thornton",
       "pos": "P",
@@ -123,9 +108,39 @@
       "file": "pitchers/Chris_Devenski.json"
     },
     {
+      "name": "Jefry Yan",
+      "pos": "P",
+      "file": "pitchers/Jefry_Yan.json"
+    },
+    {
       "name": "Justin Hagenman",
       "pos": "P",
       "file": "pitchers/Justin_Hagenman.json"
+    },
+    {
+      "name": "Christian Scott",
+      "pos": "P",
+      "file": "pitchers/Christian_Scott.json"
+    },
+    {
+      "name": "Nate Lavender",
+      "pos": "P",
+      "file": "pitchers/Nate_Lavender.json"
+    },
+    {
+      "name": "Jonathan Pintaro",
+      "pos": "P",
+      "file": "pitchers/Jonathan_Pintaro.json"
+    },
+    {
+      "name": "Tobias Myers",
+      "pos": "P",
+      "file": "pitchers/Tobias_Myers.json"
+    },
+    {
+      "name": "Kodai Senga",
+      "pos": "P",
+      "file": "pitchers/Kodai_Senga.json"
     }
   ]
 }

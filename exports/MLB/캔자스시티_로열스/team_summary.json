@@ -2,26 +2,26 @@
   "team_name": "캔자스시티 로열스",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-05",
-    "end_date": "2026-09-06"
+    "start_date": "2026-09-06",
+    "end_date": "2026-09-07"
   },
   "total_matches": 2,
   "hitters_count": 13,
-  "pitchers_count": 10,
+  "pitchers_count": 9,
   "matches": [
-    {
-      "date": "2026-09-05 09:10",
-      "opponent": "토론토 블루제이스",
-      "score": "3 : 4",
-      "result": "패",
-      "file": "matches/2026-09-05_0910_vs_토론토_블루제이스.json"
-    },
     {
       "date": "2026-09-06 08:10",
       "opponent": "토론토 블루제이스",
-      "score": "3 : 4",
-      "result": "패",
+      "score": "6 : 1",
+      "result": "승",
       "file": "matches/2026-09-06_0810_vs_토론토_블루제이스.json"
+    },
+    {
+      "date": "2026-09-07 03:10",
+      "opponent": "토론토 블루제이스",
+      "score": "6 : 1",
+      "result": "승",
+      "file": "matches/2026-09-07_0310_vs_토론토_블루제이스.json"
     }
   ],
   "hitters": [
@@ -31,19 +31,9 @@
       "file": "hitters/Carter_Jensen.json"
     },
     {
-      "name": "Luke Maile",
-      "pos": "1번 C",
-      "file": "hitters/Luke_Maile.json"
-    },
-    {
       "name": "Bobby Witt Jr.",
       "pos": "2번 SS",
       "file": "hitters/Bobby_Witt_Jr..json"
-    },
-    {
-      "name": "Tyler Tolbert",
-      "pos": "2번 SS",
-      "file": "hitters/Tyler_Tolbert.json"
     },
     {
       "name": "Jac Caglianone",
@@ -51,9 +41,19 @@
       "file": "hitters/Jac_Caglianone.json"
     },
     {
+      "name": "Nick Loftin",
+      "pos": "3번 3B",
+      "file": "hitters/Nick_Loftin.json"
+    },
+    {
       "name": "Salvador Perez",
       "pos": "4번 DH",
       "file": "hitters/Salvador_Perez.json"
+    },
+    {
+      "name": "Matthew Lugo",
+      "pos": "4번 DH",
+      "file": "hitters/Matthew_Lugo.json"
     },
     {
       "name": "Vinnie Pasquantino",
@@ -61,24 +61,9 @@
       "file": "hitters/Vinnie_Pasquantino.json"
     },
     {
-      "name": "Nick Loftin",
-      "pos": "6번 3B",
-      "file": "hitters/Nick_Loftin.json"
-    },
-    {
       "name": "Michael Massey",
-      "pos": "7번 2B",
+      "pos": "6번 2B",
       "file": "hitters/Michael_Massey.json"
-    },
-    {
-      "name": "Isaac Collins",
-      "pos": "8번 LF",
-      "file": "hitters/Isaac_Collins.json"
-    },
-    {
-      "name": "Kyle Isbel",
-      "pos": "9번 CF",
-      "file": "hitters/Kyle_Isbel.json"
     },
     {
       "name": "John Rave",
@@ -89,28 +74,28 @@
       "name": "Josh Rojas",
       "pos": "8번 3B",
       "file": "hitters/Josh_Rojas.json"
+    },
+    {
+      "name": "Tyler Tolbert",
+      "pos": "8번 RF",
+      "file": "hitters/Tyler_Tolbert.json"
+    },
+    {
+      "name": "Isaac Collins",
+      "pos": "9번 LF",
+      "file": "hitters/Isaac_Collins.json"
+    },
+    {
+      "name": "Luke Maile",
+      "pos": "8번 C",
+      "file": "hitters/Luke_Maile.json"
     }
   ],
   "pitchers": [
     {
-      "name": "Matthew Lugo",
-      "pos": "4번 PH",
-      "file": "pitchers/Matthew_Lugo.json"
-    },
-    {
-      "name": "Daniel Lynch IV",
-      "pos": "P",
-      "file": "pitchers/Daniel_Lynch_IV.json"
-    },
-    {
-      "name": "Nolan Hoffman",
-      "pos": "P",
-      "file": "pitchers/Nolan_Hoffman.json"
-    },
-    {
-      "name": "Easton McGee",
-      "pos": "P",
-      "file": "pitchers/Easton_McGee.json"
+      "name": "Kyle Isbel",
+      "pos": "8번 PH",
+      "file": "pitchers/Kyle_Isbel.json"
     },
     {
       "name": "Seth Lugo",
@@ -141,6 +126,16 @@
       "name": "Alex Lange",
       "pos": "P",
       "file": "pitchers/Alex_Lange.json"
+    },
+    {
+      "name": "Randy Dobnak",
+      "pos": "P",
+      "file": "pitchers/Randy_Dobnak.json"
+    },
+    {
+      "name": "Nolan Hoffman",
+      "pos": "P",
+      "file": "pitchers/Nolan_Hoffman.json"
     }
   ]
 }

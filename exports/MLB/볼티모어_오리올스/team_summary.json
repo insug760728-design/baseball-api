@@ -2,48 +2,43 @@
   "team_name": "볼티모어 오리올스",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-05",
-    "end_date": "2026-09-06"
+    "start_date": "2026-09-06",
+    "end_date": "2026-09-07"
   },
   "total_matches": 2,
-  "hitters_count": 13,
-  "pitchers_count": 7,
+  "hitters_count": 12,
+  "pitchers_count": 9,
   "matches": [
-    {
-      "date": "2026-09-05 08:05",
-      "opponent": "보스턴 레드삭스",
-      "score": "0 : 5",
-      "result": "패",
-      "file": "matches/2026-09-05_0805_vs_보스턴_레드삭스.json"
-    },
     {
       "date": "2026-09-06 08:05",
       "opponent": "보스턴 레드삭스",
-      "score": "0 : 5",
+      "score": "1 : 3",
       "result": "패",
       "file": "matches/2026-09-06_0805_vs_보스턴_레드삭스.json"
+    },
+    {
+      "date": "2026-09-07 02:35",
+      "opponent": "보스턴 레드삭스",
+      "score": "1 : 3",
+      "result": "패",
+      "file": "matches/2026-09-07_0235_vs_보스턴_레드삭스.json"
     }
   ],
   "hitters": [
     {
+      "name": "Jackson Holliday",
+      "pos": "1번 DH",
+      "file": "hitters/Jackson_Holliday.json"
+    },
+    {
       "name": "Blaze Alexander",
-      "pos": "1번 RF",
+      "pos": "2번 2B",
       "file": "hitters/Blaze_Alexander.json"
     },
     {
-      "name": "Coby Mayo",
-      "pos": "2번 DH",
-      "file": "hitters/Coby_Mayo.json"
-    },
-    {
-      "name": "Samuel Basallo",
-      "pos": "2번 DH",
-      "file": "hitters/Samuel_Basallo.json"
-    },
-    {
-      "name": "Luis Robert Jr.",
-      "pos": "3번 CF",
-      "file": "hitters/Luis_Robert_Jr..json"
+      "name": "Gunnar Henderson",
+      "pos": "3번 SS",
+      "file": "hitters/Gunnar_Henderson.json"
     },
     {
       "name": "Pete Alonso",
@@ -51,34 +46,19 @@
       "file": "hitters/Pete_Alonso.json"
     },
     {
-      "name": "Gunnar Henderson",
-      "pos": "5번 SS",
-      "file": "hitters/Gunnar_Henderson.json"
-    },
-    {
-      "name": "Christian Encarnacion-Strand",
-      "pos": "6번 3B",
-      "file": "hitters/Christian_Encarnacion-Strand.json"
-    },
-    {
-      "name": "Jackson Holliday",
-      "pos": "7번 2B",
-      "file": "hitters/Jackson_Holliday.json"
-    },
-    {
-      "name": "Carlos Narváez",
-      "pos": "8번 C",
-      "file": "hitters/Carlos_Narváez.json"
-    },
-    {
-      "name": "Leody Taveras",
-      "pos": "9번 LF",
-      "file": "hitters/Leody_Taveras.json"
+      "name": "Samuel Basallo",
+      "pos": "5번 C",
+      "file": "hitters/Samuel_Basallo.json"
     },
     {
       "name": "Heston Kjerstad",
       "pos": "6번 RF",
       "file": "hitters/Heston_Kjerstad.json"
+    },
+    {
+      "name": "Christian Encarnacion-Strand",
+      "pos": "7번 3B",
+      "file": "hitters/Christian_Encarnacion-Strand.json"
     },
     {
       "name": "Dylan Beavers",
@@ -89,28 +69,28 @@
       "name": "Colton Cowser",
       "pos": "9번 CF",
       "file": "hitters/Colton_Cowser.json"
+    },
+    {
+      "name": "Leody Taveras",
+      "pos": "9번 CF",
+      "file": "hitters/Leody_Taveras.json"
+    },
+    {
+      "name": "Rece Hinds",
+      "pos": "6번 LF",
+      "file": "hitters/Rece_Hinds.json"
+    },
+    {
+      "name": "Carlos Narváez",
+      "pos": "8번 C",
+      "file": "hitters/Carlos_Narváez.json"
     }
   ],
   "pitchers": [
     {
-      "name": "Shane Baz",
-      "pos": "P",
-      "file": "pitchers/Shane_Baz.json"
-    },
-    {
-      "name": "Alex Hoppe",
-      "pos": "P",
-      "file": "pitchers/Alex_Hoppe.json"
-    },
-    {
-      "name": "Josh Walker",
-      "pos": "P",
-      "file": "pitchers/Josh_Walker.json"
-    },
-    {
-      "name": "Cam Sanders",
-      "pos": "P",
-      "file": "pitchers/Cam_Sanders.json"
+      "name": "Coby Mayo",
+      "pos": "9번 PH",
+      "file": "pitchers/Coby_Mayo.json"
     },
     {
       "name": "Chris Bassitt",
@@ -126,6 +106,31 @@
       "name": "Albert Suárez",
       "pos": "P",
       "file": "pitchers/Albert_Suárez.json"
+    },
+    {
+      "name": "Kyle Bradish",
+      "pos": "P",
+      "file": "pitchers/Kyle_Bradish.json"
+    },
+    {
+      "name": "Anthony Nunez",
+      "pos": "P",
+      "file": "pitchers/Anthony_Nunez.json"
+    },
+    {
+      "name": "Luis De León",
+      "pos": "P",
+      "file": "pitchers/Luis_De_León.json"
+    },
+    {
+      "name": "Cam Sanders",
+      "pos": "P",
+      "file": "pitchers/Cam_Sanders.json"
+    },
+    {
+      "name": "Grant Wolfram",
+      "pos": "P",
+      "file": "pitchers/Grant_Wolfram.json"
     }
   ]
 }

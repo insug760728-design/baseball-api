@@ -2,26 +2,26 @@
   "team_name": "필라델피아 필리스",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-05",
-    "end_date": "2026-09-06"
+    "start_date": "2026-09-06",
+    "end_date": "2026-09-07"
   },
   "total_matches": 2,
-  "hitters_count": 11,
-  "pitchers_count": 9,
+  "hitters_count": 13,
+  "pitchers_count": 7,
   "matches": [
-    {
-      "date": "2026-09-05 07:40",
-      "opponent": "애틀랜타 브레이브스",
-      "score": "4 : 2",
-      "result": "승",
-      "file": "matches/2026-09-05_0740_vs_애틀랜타_브레이브스.json"
-    },
     {
       "date": "2026-09-06 07:05",
       "opponent": "애틀랜타 브레이브스",
-      "score": "4 : 2",
-      "result": "승",
+      "score": "4 : 5",
+      "result": "패",
       "file": "matches/2026-09-06_0705_vs_애틀랜타_브레이브스.json"
+    },
+    {
+      "date": "2026-09-07 02:10",
+      "opponent": "애틀랜타 브레이브스",
+      "score": "4 : 5",
+      "result": "패",
+      "file": "matches/2026-09-07_0210_vs_애틀랜타_브레이브스.json"
     }
   ],
   "hitters": [
@@ -52,18 +52,23 @@
     },
     {
       "name": "Edmundo Sosa",
-      "pos": "6번 3B",
+      "pos": "6번 LF",
       "file": "hitters/Edmundo_Sosa.json"
     },
     {
-      "name": "Bryan De La Cruz",
-      "pos": "7번 LF",
-      "file": "hitters/Bryan_De_La_Cruz.json"
+      "name": "Brandon Marsh",
+      "pos": "6번 LF",
+      "file": "hitters/Brandon_Marsh.json"
     },
     {
       "name": "J.T. Realmuto",
-      "pos": "8번 C",
+      "pos": "7번 C",
       "file": "hitters/J.T._Realmuto.json"
+    },
+    {
+      "name": "Bryson Stott",
+      "pos": "8번 3B",
+      "file": "hitters/Bryson_Stott.json"
     },
     {
       "name": "Derek Hill",
@@ -72,41 +77,21 @@
     },
     {
       "name": "Justin Crawford",
-      "pos": "9번 CF",
+      "pos": "8번 CF",
       "file": "hitters/Justin_Crawford.json"
     },
     {
-      "name": "Bryson Stott",
-      "pos": "8번 3B",
-      "file": "hitters/Bryson_Stott.json"
+      "name": "Bryan De La Cruz",
+      "pos": "8번 LF",
+      "file": "hitters/Bryan_De_La_Cruz.json"
+    },
+    {
+      "name": "Garrett Stubbs",
+      "pos": "9번 C",
+      "file": "hitters/Garrett_Stubbs.json"
     }
   ],
   "pitchers": [
-    {
-      "name": "Brandon Marsh",
-      "pos": "7번 PH",
-      "file": "pitchers/Brandon_Marsh.json"
-    },
-    {
-      "name": "Cristopher Sánchez",
-      "pos": "P",
-      "file": "pitchers/Cristopher_Sánchez.json"
-    },
-    {
-      "name": "Alex McFarlane",
-      "pos": "P",
-      "file": "pitchers/Alex_McFarlane.json"
-    },
-    {
-      "name": "Orion Kerkering",
-      "pos": "P",
-      "file": "pitchers/Orion_Kerkering.json"
-    },
-    {
-      "name": "Tim Mayza",
-      "pos": "P",
-      "file": "pitchers/Tim_Mayza.json"
-    },
     {
       "name": "Zack Wheeler",
       "pos": "P",
@@ -126,6 +111,21 @@
       "name": "Jhoan Duran",
       "pos": "P",
       "file": "pitchers/Jhoan_Duran.json"
+    },
+    {
+      "name": "Aaron Nola",
+      "pos": "P",
+      "file": "pitchers/Aaron_Nola.json"
+    },
+    {
+      "name": "Alex McFarlane",
+      "pos": "P",
+      "file": "pitchers/Alex_McFarlane.json"
+    },
+    {
+      "name": "Brooks Raley",
+      "pos": "P",
+      "file": "pitchers/Brooks_Raley.json"
     }
   ]
 }
