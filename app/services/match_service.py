@@ -252,6 +252,21 @@ class MatchService:
                 )
             except Exception:
                 m.prediction = None
+
+            m.home_starter_name = None
+            m.away_starter_name = None
+            if m.details and m.details.team_stats:
+                try:
+                    ts = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
+                    st = ts.get("starters", {})
+                    h_st = st.get("home", {})
+                    a_st = st.get("away", {})
+                    if h_st.get("name") and h_st.get("name") not in ["선발 예고", "선발 투수"]:
+                        m.home_starter_name = h_st.get("name")
+                    if a_st.get("name") and a_st.get("name") not in ["선발 예고", "선발 투수"]:
+                        m.away_starter_name = a_st.get("name")
+                except Exception:
+                    pass
         return matches
 
     @staticmethod

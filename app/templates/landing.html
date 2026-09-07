@@ -5479,8 +5479,18 @@ function getFullModalMatchList() {
       if (sport === 'BASEBALL') {
         const cleanH = (m.home_team_name || '').trim();
         const cleanA = (m.away_team_name || '').trim();
-        let hName = m.home_starter_name || KNOWN_ROTATIONS[cleanH];
-        let aName = m.away_starter_name || KNOWN_ROTATIONS[cleanA];
+        const MLB_STARTERS_KO = {
+          'Emmet Sheehan': '에멧 시한(우)',
+          'Chase Burns': '체이스 번스(우)',
+          'Michael McGreevy': '마이클 맥그리비(우)',
+          'Logan Webb': '로건 웹(우)',
+          'Jacob Lopez': '제이콥 로페즈(좌)',
+          'Dylan Cease': '딜런 시즈(우)',
+          'Yoshinobu Yamamoto': '야마모토(우)',
+          'Hunter Greene': '헌터 그린(우)'
+        };
+        let hName = MLB_STARTERS_KO[m.home_starter_name] || m.home_starter_name || KNOWN_ROTATIONS[cleanH];
+        let aName = MLB_STARTERS_KO[m.away_starter_name] || m.away_starter_name || KNOWN_ROTATIONS[cleanA];
 
         if (!hName) {
           for (const [k, v] of Object.entries(KNOWN_ROTATIONS)) {
