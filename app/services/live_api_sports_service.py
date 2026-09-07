@@ -5,7 +5,7 @@ import urllib.request
 import logging
 from typing import Dict, Any, List, Optional
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import or_
 
 from app.core.config import settings
@@ -216,6 +216,23 @@ def teams_match(api_name: str, db_name: str) -> bool:
     return get_canonical(api_name) == get_canonical(db_name)
 
 
+def parse_utc_to_kst(utc_str: str) -> tuple[Optional[datetime], str]:
+    """Convert API-Sports UTC ISO string (e.g. 2026-09-06T18:10:00+00:00) to KST datetime and string"""
+    if not utc_str or 'T' not in str(utc_str):
+        return None, ''
+    try:
+        clean_str = str(utc_str).replace('Z', '+00:00')
+        dt = datetime.fromisoformat(clean_str)
+        if dt.tzinfo is not None:
+            kst_tz = timezone(timedelta(hours=9))
+            kst_dt = dt.astimezone(kst_tz).replace(tzinfo=None)
+        else:
+            kst_dt = dt + timedelta(hours=9)
+        return kst_dt, kst_dt.strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        return None, ''
+
+
 class LiveApiSportsService:
     @classmethod
     def get_api_key(cls) -> Optional[str]:
@@ -356,14 +373,16 @@ class LiveApiSportsService:
         data_today = cls._make_request(f"/fixtures?date={d_today}", sport="football")
         fixtures_today = (data_today or {}).get("response", [])
 
-        # 3. Fetch tomorrow's matches for late European games crossing into KST
-        fixtures_tomorrow = []
-        if now_dt.hour >= 12 or date_str:
-            data_tom = cls._make_request(f"/fixtures?date={d_tomorrow}", sport="football")
-            fixtures_tomorrow = (data_tom or {}).get("response", [])
+        # 3. Fetch yesterday's soccer matches (for European matches starting late night UTC / early KST)
+        data_yesterday = cls._make_request(f"/fixtures?date={d_yesterday}", sport="football")
+        fixtures_yesterday = (data_yesterday or {}).get("response", [])
+
+        # 4. Fetch tomorrow's matches for late European games crossing into KST
+        data_tomorrow = cls._make_request(f"/fixtures?date={d_tomorrow}", sport="football")
+        fixtures_tomorrow = (data_tomorrow or {}).get("response", [])
 
         all_fixtures_dict = {}
-        for f in (fixtures_today + fixtures_tomorrow + fixtures_live):
+        for f in (fixtures_today + fixtures_yesterday + fixtures_tomorrow + fixtures_live):
             fid = f.get("fixture", {}).get("id")
             if fid:
                 all_fixtures_dict[fid] = f
@@ -401,27 +420,44 @@ class LiveApiSportsService:
                 h_score = goals.get("home") if goals.get("home") is not None else 0
                 a_score = goals.get("away") if goals.get("away") is not None else 0
 
+                kst_dt, _ = parse_utc_to_kst(fixture_info.get("date", ""))
                 canon_h = get_canonical(h_name)
                 candidate_matches = db_by_home.get(canon_h, [])
+
+                # Pick the match candidate with the closest scheduled time (within 14 hours)
+                best_match = None
+                min_diff = float("inf")
                 for m in candidate_matches:
                     if teams_match(a_name, m.away_team_name):
-                        m.home_score = h_score
-                        m.away_score = a_score
-                        m.status = mapped_status
+                        if kst_dt and m.match_date:
+                            try:
+                                db_dt = datetime.strptime(m.match_date[:16], "%Y-%m-%d %H:%M")
+                                diff = abs((db_dt - kst_dt).total_seconds())
+                                if diff < min_diff and diff <= 14 * 3600:
+                                    min_diff = diff
+                                    best_match = m
+                            except Exception:
+                                pass
+                        elif not best_match:
+                            best_match = m
 
-                        # Update periods if detail exists
-                        if not m.details:
-                            m.details = MatchDetail(match_id=m.id)
+                if best_match:
+                    best_match.home_score = h_score
+                    best_match.away_score = a_score
+                    best_match.status = mapped_status
 
-                        halftime = score.get("halftime", {})
-                        fulltime = score.get("fulltime", {})
-                        period_dict = {
-                            "1H": f"{halftime.get('home') or 0}-{halftime.get('away') or 0}",
-                            "2H": f"{fulltime.get('home') or h_score}-{fulltime.get('away') or a_score}"
-                        }
-                        m.details.period_scores = json.dumps(period_dict)
-                        updated += 1
-                        break
+                    # Update periods if detail exists
+                    if not best_match.details:
+                        best_match.details = MatchDetail(match_id=best_match.id)
+
+                    halftime = score.get("halftime", {})
+                    fulltime = score.get("fulltime", {})
+                    period_dict = {
+                        "1H": f"{halftime.get('home') or 0}-{halftime.get('away') or 0}",
+                        "2H": f"{fulltime.get('home') or h_score}-{fulltime.get('away') or a_score}"
+                    }
+                    best_match.details.period_scores = json.dumps(period_dict)
+                    updated += 1
             db.commit()
 
             # Broadcast real-time update via WebSocket if any scores changed
@@ -459,8 +495,12 @@ class LiveApiSportsService:
         data_yesterday = cls._make_request(f"/games?date={d_yesterday}", sport="baseball")
         games_yesterday = (data_yesterday or {}).get("response", [])
 
+        # 4. Fetch tomorrow's games (for games starting early morning KST)
+        data_tomorrow = cls._make_request(f"/games?date={d_tomorrow}", sport="baseball")
+        games_tomorrow = (data_tomorrow or {}).get("response", [])
+
         all_games_dict = {}
-        for g in (games_date + games_yesterday + games_live):
+        for g in (games_date + games_yesterday + games_tomorrow + games_live):
             gid = g.get("id")
             if gid:
                 all_games_dict[gid] = g
@@ -493,26 +533,48 @@ class LiveApiSportsService:
                 status_short = status_info.get("short", "")
 
                 mapped_status = BASEBALL_STATUS_MAP.get(status_short, "SCHEDULED")
-                h_score = scores.get("home", {}).get("total") or 0
-                a_score = scores.get("away", {}).get("total") or 0
+                h_score = scores.get("home", {}).get("total")
+                a_score = scores.get("away", {}).get("total")
+                if h_score is None:
+                    h_score = 0
+                if a_score is None:
+                    a_score = 0
 
+                kst_dt, _ = parse_utc_to_kst(g.get("date", ""))
                 canon_h = get_canonical(h_name)
                 candidate_matches = db_by_home.get(canon_h, [])
+
+                # In baseball, teams play multi-game series against each other on consecutive days.
+                # Pick the match candidate with the closest scheduled time (within 14 hours).
+                best_match = None
+                min_diff = float("inf")
                 for m in candidate_matches:
                     if teams_match(a_name, m.away_team_name):
-                        m.home_score = h_score
-                        m.away_score = a_score
-                        m.status = mapped_status
+                        if kst_dt and m.match_date:
+                            try:
+                                db_dt = datetime.strptime(m.match_date[:16], "%Y-%m-%d %H:%M")
+                                diff = abs((db_dt - kst_dt).total_seconds())
+                                if diff < min_diff and diff <= 14 * 3600:
+                                    min_diff = diff
+                                    best_match = m
+                            except Exception:
+                                pass
+                        elif not best_match:
+                            best_match = m
 
-                        # Store baseball inning scores if available
-                        innings = scores.get("home", {}).get("innings", {})
-                        if innings and not m.details:
-                            m.details = MatchDetail(match_id=m.id)
-                        if innings and m.details:
-                            m.details.period_scores = json.dumps(innings)
+                if best_match:
+                    best_match.home_score = h_score
+                    best_match.away_score = a_score
+                    best_match.status = mapped_status
 
-                        updated += 1
-                        break
+                    # Store baseball inning scores if available
+                    innings = scores.get("home", {}).get("innings", {})
+                    if innings and not best_match.details:
+                        best_match.details = MatchDetail(match_id=best_match.id)
+                    if innings and best_match.details:
+                        best_match.details.period_scores = json.dumps(innings)
+
+                    updated += 1
             db.commit()
 
             if updated > 0:
