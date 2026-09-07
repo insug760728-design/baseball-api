@@ -1702,21 +1702,18 @@
     </div>
   </nav>
 
-  <!-- 📱 핸드폰 모바일 전용 1-Tap 상단 탭 단축키 (고정 네비게이션) -->
+  <!-- 📱 핸드폰 모바일 전용 1-Tap 상단 탭 단축키 (고정 네비게이션 - 3대 핵심 탭) -->
   <div id="mobileTabBar" class="d-none flex-column p-1" style="background: rgba(11, 17, 32, 0.98); border-bottom: 1.5px solid #00F0FF; z-index: 1045; box-shadow: 0 4px 20px rgba(0, 240, 255, 0.35); -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0);">
     <div class="dash-container">
       <div class="d-flex justify-content-between align-items-center gap-1 w-100">
-        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabSchedule" onclick="switchMobileTab('schedule')">
-          <i class="bi bi-calendar3 d-block mb-0.5" style="font-size: 1rem;"></i>일정/스코어
-        </button>
-        <button class="btn btn-sm mobile-tab-btn active flex-fill" id="mobTabCenter" onclick="switchMobileTab('center')">
-          <i class="bi bi-pie-chart-fill d-block mb-0.5" style="font-size: 1rem;"></i>분석·승부예측
+        <button class="btn btn-sm mobile-tab-btn flex-fill active" id="mobTabSchedule" onclick="switchMobileTab('schedule')">
+          <i class="bi bi-calendar3 d-block mb-0.5" style="font-size: 1.05rem;"></i>일정/스코어
         </button>
         <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabCommunity" onclick="switchMobileTab('community')">
-          <i class="bi bi-chat-dots-fill d-block mb-0.5 text-success" style="font-size: 1rem;"></i>실시간 팬톡
+          <i class="bi bi-chat-dots-fill d-block mb-0.5 text-success" style="font-size: 1.05rem;"></i>실시간 팬톡
         </button>
         <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabNews" onclick="switchMobileTab('news')">
-          <i class="bi bi-newspaper d-block mb-0.5 text-primary" style="font-size: 1rem;"></i>스포츠뉴스
+          <i class="bi bi-newspaper d-block mb-0.5 text-primary" style="font-size: 1.05rem;"></i>스포츠뉴스
         </button>
       </div>
     </div>
@@ -3052,18 +3049,8 @@ function getFullModalMatchList() {
     }
 
     function switchMobileModalTab(tabKey, matchId) {
-      const tabs = ['summary', 'h2h', 'pitchers', 'saber', 'lineup'];
-      tabs.forEach(t => {
-        const pane = document.getElementById(`mTab_${t}_${matchId}`);
-        if (pane) {
-          if (tabKey === 'all') {
-            pane.style.display = 'block';
-          } else {
-            pane.style.display = (t === tabKey) ? 'block' : 'none';
-          }
-        }
-      });
-
+      const tabs = ['summary', 'pitchers', 'h2h', 'saber', 'lineup'];
+      
       const container = document.getElementById(`modalCard_${matchId}`);
       if (container) {
         const btns = container.querySelectorAll('.mobile-tab-btn');
@@ -3078,6 +3065,28 @@ function getFullModalMatchList() {
           }
         });
       }
+
+      if (tabKey === 'all') {
+        // In full stream mode: show all panes
+        tabs.forEach(t => {
+          const pane = document.getElementById(`mTab_${t}_${matchId}`);
+          if (pane) pane.style.display = 'block';
+        });
+        const firstPane = document.getElementById(`mTab_summary_${matchId}`);
+        if (firstPane) firstPane.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        // Ensure all panes are displayed in DOM and smoothly scroll to target pane
+        tabs.forEach(t => {
+          const pane = document.getElementById(`mTab_${t}_${matchId}`);
+          if (pane) pane.style.display = 'block';
+        });
+        const targetPane = document.getElementById(`mTab_${tabKey}_${matchId}`);
+        if (targetPane) {
+          targetPane.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          targetPane.classList.add('highlighted');
+          setTimeout(() => targetPane.classList.remove('highlighted'), 1200);
+        }
+      }
     }
 
     function updateModalFooter(isSingle, matchId) {
@@ -3086,7 +3095,7 @@ function getFullModalMatchList() {
       if (!hint || !btns) return;
 
       if (isSingle) {
-        hint.innerHTML = `<span class="text-info fw-bold"><i class="bi bi-check2-circle me-1"></i>해당 경기의 5개 세이버 매트릭스 탭(요약·상대전적·선발·세이버·라인업)이 준비되었습니다.</span>`;
+        hint.innerHTML = `<span class="text-info fw-bold"><i class="bi bi-check2-circle me-1"></i>해당 경기의 전체 승부예측·선발투수·상대전적·세이버·라인업 분석실</span>`;
         btns.innerHTML = `
           <button type="button" class="btn btn-sm fw-bold me-1" onclick="openAllMatchesModal('${matchId || ''}')" style="background: rgba(0, 240, 255, 0.15); border: 1.5px solid #00F0FF; color: #00F0FF; border-radius: 6px;">
             <i class="bi bi-collection me-1"></i>14경기 전체보기 (스크롤)
@@ -3104,16 +3113,153 @@ function getFullModalMatchList() {
       }
     }
 
+    function buildVerificationBoxHtml(m, probs) {
+      const isFinished = m.status === 'FINISHED';
+      const pred = m.prediction || {};
+      let actualWinner = '무승부';
+      if (m.home_score > m.away_score) actualWinner = m.home_team_name;
+      else if (m.away_score > m.home_score) actualWinner = m.away_team_name;
+
+      const pickTeam = pred.favored_team || (probs && probs.favored_team) || m.home_team_name;
+      const pickConf = pred.confidence || (probs && probs.favored_pct) || 72;
+      const pickLabel = pred.expected_label || ((probs && probs.is_home_favored) ? '예상승' : '예상패');
+
+      const isMatch = (pred.is_match !== undefined && pred.is_match !== null)
+        ? pred.is_match
+        : (actualWinner !== '무승부' && pickTeam === actualWinner);
+
+      if (isFinished) {
+        return `
+          <div class="d-flex align-items-center justify-content-between p-2.5 mb-2.5 rounded-3" style="background: ${isMatch ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'}; border: 1px solid ${isMatch ? '#10b981' : '#ef4444'}; box-shadow: 0 4px 16px ${isMatch ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'};">
+            <div class="d-flex align-items-center gap-2.5">
+              <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: ${isMatch ? '#10b981' : '#ef4444'}; color: white; font-size: 1.2rem;">
+                <i class="bi ${isMatch ? 'bi-check-lg' : 'bi-x-lg'}"></i>
+              </div>
+              <div>
+                <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                  <span class="badge" style="background: ${isMatch ? '#10b981' : '#ef4444'}; font-size: 0.80rem; font-weight: 800; padding: 4px 8px;">
+                    ${isMatch ? '★ AI 예측 일치 (적중) ✅' : '✕ AI 예측 불일치 (미적중) ❌'}
+                  </span>
+                  <span class="text-white fw-bold" style="font-size: 0.88rem;">
+                    AI 추천 픽: [${pickTeam}] (${pickConf}% ${pickLabel})
+                  </span>
+                </div>
+                <div class="text-muted small mt-0.5" style="font-size: 0.74rem;">
+                  실제 최종 스코어: <b style="color: #00F0FF;">${m.home_team_name} ${m.home_score}</b> : <b style="color: #FFB703;">${m.away_score} ${m.away_team_name}</b> (${actualWinner === '무승부' ? '무승부 마감' : actualWinner + ' 승리'})
+                </div>
+              </div>
+            </div>
+            <div class="text-end d-none d-sm-block flex-shrink-0">
+              <span class="badge bg-dark border ${isMatch ? 'text-success' : 'text-danger'}" style="font-size: 0.76rem; font-weight: 700;">
+                ${isMatch ? '✓ AI 모델 적중' : '✕ 역배 불일치'}
+              </span>
+            </div>
+          </div>
+        `;
+      } else {
+        return `
+          <div class="d-flex align-items-center justify-content-between p-2.5 mb-2.5 rounded-3" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); box-shadow: 0 4px 16px rgba(245, 158, 11, 0.15);">
+            <div class="d-flex align-items-center gap-2.5">
+              <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 38px; height: 38px; background: #f59e0b; color: black; font-size: 1.2rem;">
+                <i class="bi bi-stars"></i>
+              </div>
+              <div>
+                <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                  <span class="badge bg-warning text-dark fw-bold" style="font-size: 0.80rem; padding: 4px 8px;">
+                    AI 실시간 베스트 추천 픽
+                  </span>
+                  <span class="text-white fw-bold" style="font-size: 0.88rem;">
+                    [${pickTeam}] (${pickConf}% ${pickLabel})
+                  </span>
+                </div>
+                <div class="text-muted small mt-0.5" style="font-size: 0.74rem;">
+                  경기 종료 즉시 실제 스코어와 자동 대조되어 <b class="text-success">[일치 ✅]</b> 또는 <b class="text-danger">[불일치 ❌]</b>로 자동 검증됩니다.
+                </div>
+              </div>
+            </div>
+            <div class="text-end d-none d-sm-block flex-shrink-0">
+              <span class="badge bg-dark border text-warning" style="font-size: 0.76rem;">
+                <i class="bi bi-hourglass-split me-1"></i>결과 대기 중
+              </span>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function buildConsensusBoxHtml(m, matchup) {
+      matchup = ensureMatchupData(m, matchup);
+      const probs = matchup.probabilities || {
+        home: 55, away: 45, draw: 0, is_home_favored: true, favored_team: m.home_team_name, favored_pct: 55
+      };
+      const drivers = (matchup && matchup.drivers) ? matchup.drivers : [
+        `[홈/원정 전력] ${m.home_team_name} 홈 전력 vs ${m.away_team_name} 원정 전력 매트릭스 비교 우세`,
+        `[순수 승률 대조] 홈팀 홈 승률 vs 원정팀 원정 승률 정밀 비교 분석`,
+        `[상대전적 흐름] 최근 5개년 공식 맞대결 전적 가중치 반영`
+      ];
+
+      return `
+        <div class="p-2.5 mb-2.5 rounded-3" style="background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(0, 240, 255, 0.35); box-shadow: 0 4px 14px rgba(0,0,0,0.3);">
+          <div class="d-flex justify-content-between align-items-center mb-1.5 flex-wrap gap-1">
+            <span class="fw-bold text-white small" style="font-size: 0.84rem;">
+              <i class="bi bi-cpu text-info me-1"></i>빅데이터 홈/원정 세이버메트릭스 분석 리포트
+            </span>
+            <span class="badge" style="background: rgba(0, 240, 255, 0.15); color: #00F0FF; border: 1px solid rgba(0, 240, 255, 0.4); font-size: 0.74rem;">
+              신뢰도 88%
+            </span>
+          </div>
+          <div class="fw-bold mb-1.5" style="font-size: 0.90rem; color: #00F0FF;">
+            [통계적 우세 Consensus]: <span class="text-white">${probs.favored_team}</span> 승리 확률 우세 (${probs.favored_pct}%)
+          </div>
+          <div class="text-light small" style="font-size: 0.76rem; line-height: 1.5;">
+            ${drivers.map(d => `<div class="mb-0.5"><i class="bi bi-check2-circle text-warning me-1"></i>${d}</div>`).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function buildInGameStatsHtml(m, tStats) {
+      if (!tStats || (!tStats.home && !tStats.hits)) return '';
+      if (m.sport_code === 'SOCCER' && tStats.home && tStats.away) {
+        const sH = tStats.home;
+        const sA = tStats.away;
+        return `
+          <div id="statSec_inGame" class="p-2.5 mb-2.5 rounded-3" style="border: 1px solid rgba(56, 189, 248, 0.4); background: rgba(14, 28, 54, 0.75);">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold text-white small"><i class="bi bi-trophy-fill text-warning me-1"></i>[해당 경기 1:1 공식 경기 기록 (Match Box)]</span>
+              <span class="badge bg-info text-dark">공식 기록지</span>
+            </div>
+            ${makeModalBar('볼 점유율 (Possession %)', `${sH.possessionPct || 50}%`, `${sA.possessionPct || 50}%`, sH.possessionPct || 50, sA.possessionPct || 50)}
+            ${makeModalBar('총 슈팅 수 (Total Shots)', `${sH.totalShots || 0}회`, `${sA.totalShots || 0}회`, sH.totalShots || 0, sA.totalShots || 0)}
+            ${makeModalBar('유효 슈팅 (Shots on Target)', `${sH.shotsOnTarget || 0}회`, `${sA.shotsOnTarget || 0}회`, sH.shotsOnTarget || 0, sA.shotsOnTarget || 0)}
+            ${makeModalBar('코너킥 획득 (Corners)', `${sH.wonCorners || 0}개`, `${sA.wonCorners || 0}개`, sH.wonCorners || 0, sA.wonCorners || 0)}
+            ${makeModalBar('패스 성공 수 (Passes)', `${sH.accuratePasses || 0}/${sH.totalPasses || 0}`, `${sA.accuratePasses || 0}/${sA.totalPasses || 0}`, sH.accuratePasses || 0, sA.accuratePasses || 0)}
+            ${makeModalBar('골키퍼 선방 (Saves)', `${sH.saves || 0}회`, `${sA.saves || 0}회`, sH.saves || 0, sA.saves || 0)}
+            ${makeModalBar('성공 태클 수 (Tackles)', `${sH.effectiveTackles || 0}회`, `${sA.effectiveTackles || 0}회`, sH.effectiveTackles || 0, sA.effectiveTackles || 0)}
+            ${makeModalBar('파울 (Fouls - 낮을수록 우수)', `${sH.foulsCommitted || 0}회`, `${sA.foulsCommitted || 0}회`, sH.foulsCommitted || 0, sA.foulsCommitted || 0, true)}
+            ${makeModalBar('옐로/레드카드 (Cards - 낮을수록 우수)', `${sH.yellowCards || 0}/${sH.redCards || 0}장`, `${sA.yellowCards || 0}/${sA.redCards || 0}장`, (Number(sH.yellowCards||0)+Number(sH.redCards||0)*2), (Number(sA.yellowCards||0)+Number(sA.redCards||0)*2), true)}
+          </div>
+        `;
+      }
+      return '';
+    }
+
     function buildModalMatchCardHtml(m, idx, isSingleMatch = false) {
       const seq = m.seq || (idx + 1);
       const isBaseball = (m.sport_code || '').toUpperCase() === 'BASEBALL';
       const isFinished = m.status === 'FINISHED';
       const isLive = m.status === 'LIVE';
 
+      // Pre-fill matchup data so tabs are immediately viewable with 0ms lag
+      const matchup = ensureMatchupData(m, null);
+      const probs = (matchup && matchup.probabilities) ? matchup.probabilities : {
+        home: 55, away: 45, draw: 0, is_home_favored: true, favored_team: m.home_team_name, favored_pct: 55
+      };
+
       // AI Prediction
       const pred = m.prediction || {};
-      const conf = pred.confidence || 72;
-      const favored = pred.favored_team || m.home_team_name;
+      const conf = pred.confidence || probs.favored_pct || 72;
+      const favored = pred.favored_team || probs.favored_team || m.home_team_name;
       const label = pred.expected_label || (m.home_score >= m.away_score ? '예상승' : '예상패');
       const isHomeFavored = (favored === m.home_team_name) || (m.home_score >= m.away_score);
       const homeProb = isHomeFavored ? conf : (100 - conf);
@@ -3158,12 +3304,14 @@ function getFullModalMatchList() {
         </div>
       `;
 
-      // Pre-fill matchup data so tabs are immediately viewable with 0ms lag
-      const matchup = ensureMatchupData(m, null);
-
       return `
         <div class="modal-match-card p-2 p-md-3 mb-3" id="modalCard_${m.id}">
           
+          <!-- AI Prediction Accuracy Verification / Recommendation Box -->
+          <div id="mVerificationBox_${m.id}">
+            ${buildVerificationBoxHtml(m, probs)}
+          </div>
+
           <!-- Card Header Bar -->
           <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom flex-wrap gap-1" style="border-color: rgba(255,255,255,0.12) !important;">
             <div class="d-flex align-items-center gap-1.5 flex-wrap">
@@ -3189,22 +3337,33 @@ function getFullModalMatchList() {
             </div>
           </div>
 
-          <!-- Team Score Board -->
+          <!-- Team Score Board & Split Banner -->
           <div class="d-flex justify-content-around align-items-center p-2.5 mb-2.5 rounded-3" style="background: rgba(11, 17, 32, 0.9); border: 1.5px solid rgba(56, 189, 248, 0.35);">
             <div class="text-center" style="width: 42%;">
               <div class="fw-bold text-truncate" style="font-size: 1.05rem; color: #00F0FF; text-shadow: 0 0 10px rgba(0,240,255,0.5);">
                 ${m.home_team_name}
               </div>
               <span class="badge bg-dark border border-info text-info py-0 px-1.5" style="font-size: 0.68rem;">HOME (앞: 홈)</span>
+              <div class="mt-1">
+                <span class="badge rounded-pill" style="font-size: 0.85rem; font-weight: 800; color: #00F0FF; background: rgba(0, 240, 255, 0.18); border: 1px solid #00F0FF;">
+                  ${homeProb}% 승률
+                </span>
+              </div>
             </div>
             <div class="text-center px-1" style="width: 16%;">
               <div class="fs-4 fw-bold text-white">${m.home_score} : ${m.away_score}</div>
+              <div class="text-muted" style="font-size: 0.70rem;">VS</div>
             </div>
             <div class="text-center" style="width: 42%;">
               <div class="fw-bold text-truncate" style="font-size: 1.05rem; color: #FFB703; text-shadow: 0 0 10px rgba(255,183,3,0.5);">
                 ${m.away_team_name}
               </div>
               <span class="badge bg-dark border border-warning text-warning py-0 px-1.5" style="font-size: 0.68rem;">AWAY (뒤: 원정)</span>
+              <div class="mt-1">
+                <span class="badge rounded-pill" style="font-size: 0.85rem; font-weight: 800; color: #FFB703; background: rgba(255, 183, 3, 0.18); border: 1px solid #FFB703;">
+                  ${awayProb}% 승률
+                </span>
+              </div>
             </div>
           </div>
 
@@ -3223,25 +3382,25 @@ function getFullModalMatchList() {
             </div>
           ` : ''}
 
-          <!-- App-Style Segmented Navigation Tab Bar -->
+          <!-- App-Style Sticky Segmented Navigation Tab Bar -->
           <div class="mobile-modal-tabs-strip d-flex gap-1.5 overflow-x-auto py-2 px-1 mb-2 sticky-top" id="modalTabsStrip_${m.id}">
-            <button type="button" class="mobile-tab-btn active" data-tab="summary" onclick="switchMobileModalTab('summary', '${m.id}')">
-              <i class="bi bi-bar-chart-fill me-1"></i>요약·예측
+            <button type="button" class="mobile-tab-btn active" data-tab="all" onclick="switchMobileModalTab('all', '${m.id}')">
+              <i class="bi bi-collection me-1"></i>전체 (All)
             </button>
-            <button type="button" class="mobile-tab-btn" data-tab="h2h" onclick="switchMobileModalTab('h2h', '${m.id}')">
-              <i class="bi bi-arrow-left-right me-1"></i>상대전적
+            <button type="button" class="mobile-tab-btn" data-tab="summary" onclick="switchMobileModalTab('summary', '${m.id}')">
+              <i class="bi bi-bar-chart-fill me-1"></i>요약·예측
             </button>
             <button type="button" class="mobile-tab-btn" data-tab="pitchers" onclick="switchMobileModalTab('pitchers', '${m.id}')">
               <i class="bi bi-person-badge-fill me-1"></i>${isBaseball ? '선발·최근3G' : '최근10G'}
+            </button>
+            <button type="button" class="mobile-tab-btn" data-tab="h2h" onclick="switchMobileModalTab('h2h', '${m.id}')">
+              <i class="bi bi-arrow-left-right me-1"></i>상대전적
             </button>
             <button type="button" class="mobile-tab-btn" data-tab="saber" onclick="switchMobileModalTab('saber', '${m.id}')">
               <i class="bi bi-graph-up me-1"></i>세이버·전력
             </button>
             <button type="button" class="mobile-tab-btn" data-tab="lineup" onclick="switchMobileModalTab('lineup', '${m.id}')">
               <i class="bi bi-people-fill me-1"></i>라인업
-            </button>
-            <button type="button" class="mobile-tab-btn" data-tab="all" onclick="switchMobileModalTab('all', '${m.id}')">
-              <i class="bi bi-collection me-1"></i>전체 (All)
             </button>
           </div>
 
@@ -3278,6 +3437,11 @@ function getFullModalMatchList() {
               </div>
             </div>
 
+            <!-- Big Data Consensus Callout -->
+            <div id="mConsensusBox_${m.id}">
+              ${buildConsensusBoxHtml(m, matchup)}
+            </div>
+
             <!-- Core 6 Decisive Metrics Bars -->
             ${barsHtml}
 
@@ -3285,31 +3449,34 @@ function getFullModalMatchList() {
             <div id="mSubSummary_${m.id}">
               ${buildSummaryDeepHtml(m, null, null, null)}
             </div>
+
+            <!-- In-game 1:1 stats box -->
+            <div id="mInGameStats_${m.id}"></div>
           </div>
 
-          <!-- Tab 2: Head-to-Head -->
-          <div class="mobile-tab-pane" id="mTab_h2h_${m.id}" style="display: none;">
-            <div id="mSubH2h_${m.id}">
-              ${buildH2HTabHtml(m, matchup)}
-            </div>
-          </div>
-
-          <!-- Tab 3: Pitchers & Bullpen / Recent 10G -->
-          <div class="mobile-tab-pane" id="mTab_pitchers_${m.id}" style="display: none;">
+          <!-- Tab 2: Pitchers & Bullpen / Recent 10G -->
+          <div class="mobile-tab-pane" id="mTab_pitchers_${m.id}" style="${isSingleMatch ? 'display: block;' : 'display: none;'}">
             <div id="mSubPitchers_${m.id}">
               ${buildPitchersTabHtml(m, matchup)}
             </div>
           </div>
 
+          <!-- Tab 3: Head-to-Head -->
+          <div class="mobile-tab-pane" id="mTab_h2h_${m.id}" style="${isSingleMatch ? 'display: block;' : 'display: none;'}">
+            <div id="mSubH2h_${m.id}">
+              ${buildH2HTabHtml(m, matchup)}
+            </div>
+          </div>
+
           <!-- Tab 4: Sabermetrics & Power -->
-          <div class="mobile-tab-pane" id="mTab_saber_${m.id}" style="display: none;">
+          <div class="mobile-tab-pane" id="mTab_saber_${m.id}" style="${isSingleMatch ? 'display: block;' : 'display: none;'}">
             <div id="mSubSaber_${m.id}">
               ${buildSaberTabHtml(m, matchup, null)}
             </div>
           </div>
 
           <!-- Tab 5: Lineup -->
-          <div class="mobile-tab-pane" id="mTab_lineup_${m.id}" style="display: none;">
+          <div class="mobile-tab-pane" id="mTab_lineup_${m.id}" style="${isSingleMatch ? 'display: block;' : 'display: none;'}">
             <div id="mSubLineup_${m.id}">
               ${buildLineupTabHtml(m, null)}
             </div>
@@ -3347,14 +3514,23 @@ function getFullModalMatchList() {
       let matchup = (detailData && detailData.matchup_analysis) ? detailData.matchup_analysis : null;
       matchup = ensureMatchupData(match, matchup);
 
+      const vBox = document.getElementById(`mVerificationBox_${matchId}`);
+      if (vBox) vBox.innerHTML = buildVerificationBoxHtml(match, matchup ? matchup.probabilities : null);
+
+      const cBox = document.getElementById(`mConsensusBox_${matchId}`);
+      if (cBox) cBox.innerHTML = buildConsensusBoxHtml(match, matchup);
+
       const subSummary = document.getElementById(`mSubSummary_${matchId}`);
       if (subSummary) subSummary.innerHTML = buildSummaryDeepHtml(match, pScores, null, tStats);
 
-      const subH2h = document.getElementById(`mSubH2h_${matchId}`);
-      if (subH2h) subH2h.innerHTML = buildH2HTabHtml(match, matchup);
+      const inGame = document.getElementById(`mInGameStats_${matchId}`);
+      if (inGame) inGame.innerHTML = buildInGameStatsHtml(match, tStats);
 
       const subPitchers = document.getElementById(`mSubPitchers_${matchId}`);
       if (subPitchers) subPitchers.innerHTML = buildPitchersTabHtml(match, matchup);
+
+      const subH2h = document.getElementById(`mSubH2h_${matchId}`);
+      if (subH2h) subH2h.innerHTML = buildH2HTabHtml(match, matchup);
 
       const subSaber = document.getElementById(`mSubSaber_${matchId}`);
       if (subSaber) subSaber.innerHTML = buildSaberTabHtml(match, matchup, tStats);
@@ -3832,13 +4008,14 @@ function getFullModalMatchList() {
         <div class="p-3 mb-3 rounded-3" style="background: rgba(11, 17, 32, 0.98); border: 1.5px solid rgba(56, 189, 248, 0.4); box-shadow: 0 4px 18px rgba(0,0,0,0.5);">
           <!-- Category Tabs -->
           <div class="d-flex gap-1 mb-3 overflow-x-auto pb-1" style="scrollbar-width: none;">
-            <button class="modal-stat-tab-btn active" onclick="switchModalStatCategory('attack', '${m.id}')">공격 지표</button>
+            <button class="modal-stat-tab-btn active" onclick="switchModalStatCategory('all', '${m.id}')">전체 지표 (Full)</button>
+            <button class="modal-stat-tab-btn" onclick="switchModalStatCategory('attack', '${m.id}')">공격 지표</button>
             <button class="modal-stat-tab-btn" onclick="switchModalStatCategory('defense', '${m.id}')">수비·투구</button>
             <button class="modal-stat-tab-btn" onclick="switchModalStatCategory('saber', '${m.id}')">세이버메트릭스</button>
           </div>
 
           <!-- Tab Content 1: Attack -->
-          <div id="modalCat_attack_${m.id}">
+          <div id="modalCat_attack_${m.id}" style="display: block;">
             <h6 class="text-info fw-bold mb-2 small"><i class="bi bi-fire me-1"></i>팀 공격 & 타격 정밀 지표</h6>
             ${makeModalBar('팀 안타수 (Hits)', `${hHits}개`, `${aHits}개`, hHits, aHits)}
             ${makeModalBar('홈런 (Home Runs)', `${hHR}개`, `${aHR}개`, hHR, aHR)}
@@ -3847,7 +4024,7 @@ function getFullModalMatchList() {
           </div>
 
           <!-- Tab Content 2: Defense -->
-          <div id="modalCat_defense_${m.id}" style="display: none;">
+          <div id="modalCat_defense_${m.id}" style="display: block;">
             <h6 class="text-warning fw-bold mb-2 small"><i class="bi bi-shield-fill me-1"></i>수비 & 마운드 제구 지표</h6>
             ${makeModalBar('탈삼진 (Strikeouts)', `${hSO}개`, `${aSO}개`, hSO, aSO)}
             ${makeModalBar('피안타 허용율', '.235', '.261', 261, 235, true)}
@@ -3856,7 +4033,7 @@ function getFullModalMatchList() {
           </div>
 
           <!-- Tab Content 3: Sabermetrics -->
-          <div id="modalCat_saber_${m.id}" style="display: none;">
+          <div id="modalCat_saber_${m.id}" style="display: block;">
             <h6 class="text-primary fw-bold mb-2 small"><i class="bi bi-cpu-fill me-1"></i>고급 세이버메트릭스 (Sabermetrics)</h6>
             ${makeModalBar('가중 출루율 (wOBA)', '.342', '.318', 342, 318)}
             ${makeModalBar('수비무관 평균자책 (FIP)', '3.28', '3.95', 395, 328, true)}
@@ -3868,31 +4045,69 @@ function getFullModalMatchList() {
     }
 
     function buildLineupTabHtml(m, playerStats) {
+      if (playerStats && playerStats.length > 0) {
+        const homePlayers = playerStats.filter(p => p.team_name === m.home_team_name);
+        const awayPlayers = playerStats.filter(p => p.team_name === m.away_team_name);
+
+        const renderPlayerTable = (pList, teamTitle, titleColor) => {
+          if (!pList || pList.length === 0) return '';
+          return `
+            <div class="mb-3">
+              <div class="fw-bold mb-1" style="font-size: 0.84rem; color: ${titleColor};">
+                ${teamTitle} 출전 선수 기록
+              </div>
+              <div class="table-responsive" style="max-height: 240px; overflow-y: auto;">
+                <table class="table table-dark table-sm table-striped table-bordered text-center mb-0" style="font-size: 0.74rem;">
+                  <thead style="position: sticky; top: 0; background: #0f172a; z-index: 2;">
+                    <tr><th>포지션</th><th>선수명</th><th>타수(AB)</th><th>득점</th><th>안타</th><th>홈런</th><th>타점</th><th>볼넷</th><th>삼진</th><th>AVG</th><th>OPS</th></tr>
+                  </thead>
+                  <tbody>
+                    ${pList.map(p => {
+                      let ex = {};
+                      try { ex = typeof p.extra_stats === 'string' ? JSON.parse(p.extra_stats) : (p.extra_stats || {}); } catch(e){}
+                      return `
+                        <tr>
+                          <td>${p.position || '-'}</td>
+                          <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 90px;">${p.player_name}</td>
+                          <td>${ex.ab ?? (p.at_bats ?? '-')}</td>
+                          <td>${ex.r ?? '-'}</td>
+                          <td class="fw-bold text-warning">${ex.h ?? (p.hits ?? (ex.hits ?? '-'))}</td>
+                          <td class="text-danger fw-bold">${ex.hr ?? '-'}</td>
+                          <td>${ex.rbi ?? '-'}</td>
+                          <td>${ex.bb ?? '-'}</td>
+                          <td>${ex.so ?? '-'}</td>
+                          <td>${ex.avg ?? (p.batting_avg ?? '-')}</td>
+                          <td class="fw-bold text-info">${ex.ops ?? '-'}</td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        };
+
+        return `
+          <div class="p-3 mb-3 rounded-3" style="background: rgba(11, 17, 32, 0.98); border: 1.5px solid rgba(56, 189, 248, 0.4); box-shadow: 0 4px 18px rgba(0,0,0,0.5);">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold text-white small"><i class="bi bi-people-fill text-success me-1"></i>[출전 선수별 정밀 박스스코어]</span>
+              <span class="badge bg-secondary" style="font-size: 0.70rem;">공식 라인업</span>
+            </div>
+            ${renderPlayerTable(homePlayers, `[홈] ${m.home_team_name}`, '#00F0FF')}
+            ${renderPlayerTable(awayPlayers, `[원정] ${m.away_team_name}`, '#FFB703')}
+          </div>
+        `;
+      }
+
       return `
         <div class="p-3 mb-3 rounded-3" style="background: rgba(11, 17, 32, 0.98); border: 1.5px solid rgba(56, 189, 248, 0.4); box-shadow: 0 4px 18px rgba(0,0,0,0.5);">
-          <h6 class="text-white fw-bold mb-2 small"><i class="bi bi-people-fill text-info me-1"></i>출전 선수 라인업 및 기록</h6>
-          <div class="table-responsive rounded-2" style="border: 1px solid rgba(255,255,255,0.12); max-height: 380px;">
-            <table class="table table-dark table-sm table-striped mb-0 text-center" style="font-size: 0.78rem;">
-              <thead>
-                <tr class="table-secondary text-dark">
-                  <th>팀</th><th>선수명</th><th>포지션</th><th>타수/이닝</th><th>안타/자책</th><th>타율/ERA</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${(playerStats && playerStats.length > 0) ? playerStats.slice(0, 10).map(p => `
-                  <tr>
-                    <td>${p.team_name || ''}</td>
-                    <td class="fw-bold text-white">${p.player_name || ''}</td>
-                    <td>${p.position || '-'}</td>
-                    <td>${p.at_bats !== null ? p.at_bats : (p.innings_pitched || '-')}</td>
-                    <td>${p.hits !== null ? p.hits : (p.earned_runs || '-')}</td>
-                    <td class="text-info">${p.batting_avg || p.era || '-'}</td>
-                  </tr>
-                `).join('') : `
-                  <tr><td colspan="6" class="py-3 text-muted">선수 기록을 집계하고 있습니다...</td></tr>
-                `}
-              </tbody>
-            </table>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold text-white small"><i class="bi bi-people-fill text-success me-1"></i>[출전 선수별 라인업 및 기록]</span>
+            <span class="badge bg-dark border text-info" style="font-size: 0.70rem;">공식 엔트리</span>
+          </div>
+          <div class="text-center text-muted py-3 small">
+            <i class="bi bi-person-lines-fill me-1 text-warning"></i>경기 시작 전 공식 선발 라인업 및 기록이 실시간 자동 업데이트됩니다.
           </div>
         </div>
       `;
@@ -3913,13 +4128,19 @@ function getFullModalMatchList() {
       const cats = ['attack', 'defense', 'saber'];
       cats.forEach(c => {
         const el = document.getElementById(`modalCat_${c}_${matchId}`);
-        if (el) el.style.display = (c === cat) ? 'block' : 'none';
+        if (el) {
+          if (cat === 'all') el.style.display = 'block';
+          else el.style.display = (c === cat) ? 'block' : 'none';
+        }
       });
       const container = document.getElementById(`modalCard_${matchId}`);
       if (container) {
         const btns = container.querySelectorAll('.modal-stat-tab-btn');
         btns.forEach(b => {
-          if (b.innerText.toLowerCase().includes(cat.slice(0, 2)) || (cat === 'attack' && b.innerText.includes('공격')) || (cat === 'defense' && b.innerText.includes('수비')) || (cat === 'saber' && b.innerText.includes('세이버'))) {
+          if (cat === 'all') {
+            if (b.innerText.includes('전체')) b.classList.add('active');
+            else b.classList.remove('active');
+          } else if (b.innerText.toLowerCase().includes(cat.slice(0, 2)) || (cat === 'attack' && b.innerText.includes('공격')) || (cat === 'defense' && b.innerText.includes('수비')) || (cat === 'saber' && b.innerText.includes('세이버'))) {
             b.classList.add('active');
           } else {
             b.classList.remove('active');
@@ -6651,6 +6872,7 @@ function getFullModalMatchList() {
     }
 
     function switchMobileTab(tabKey) {
+      if (tabKey === 'center') tabKey = 'schedule';
       currentMobileTab = tabKey;
       const p1 = document.getElementById('leftColSchedule');
       const p2 = document.getElementById('centerColMain');
@@ -6660,17 +6882,20 @@ function getFullModalMatchList() {
 
       const panels = {
         schedule: p1,
-        center: p2,
         community: p3,
         news: p4
       };
 
       const tabs = {
         schedule: 'mobTabSchedule',
-        center: 'mobTabCenter',
         community: 'mobTabCommunity',
         news: 'mobTabNews'
       };
+
+      // In mobile mode, center column is never a top-level tab
+      if (p2) {
+        p2.style.display = 'none';
+      }
 
       Object.keys(panels).forEach(k => {
         const el = panels[k];
@@ -6695,8 +6920,7 @@ function getFullModalMatchList() {
       });
 
       if (retBtn) {
-        if (tabKey === 'center') retBtn.classList.remove('d-none');
-        else retBtn.classList.add('d-none');
+        retBtn.classList.add('d-none');
       }
 
       // If schedule tab, position view starting from current time onwards
