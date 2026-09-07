@@ -225,7 +225,7 @@ class BetmanService:
         now = time.time()
         # Default ts per gm_id
         if not gm_ts:
-            if gm_id == 'G024': gm_ts = 260066
+            if gm_id == 'G024': gm_ts = 260067
             elif gm_id == 'G011': gm_ts = 260050
             elif gm_id == 'G027': gm_ts = 260027
 
@@ -260,7 +260,7 @@ class BetmanService:
         candidates = [
             f'betman_{gm_ts}.json',
             f'betman_{gm_id}_{gm_ts}.json',
-            'betman_260050.json' if gm_id == 'G011' else ('betman_260066.json' if gm_id == 'G024' else 'betman_260027.json')
+            'betman_260050.json' if gm_id == 'G011' else ('betman_260067.json' if gm_id == 'G024' else 'betman_260027.json')
         ]
         for snap_file in candidates:
             if os.path.exists(snap_file):

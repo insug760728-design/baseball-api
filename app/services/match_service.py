@@ -231,7 +231,8 @@ class MatchService:
         else:
             q = query.order_by(Match.match_date.asc(), Match.id.asc())
 
-        matches = q.limit(limit).all() if limit else q.all()
+        target_limit = limit if (limit and limit > 0) else 400
+        matches = q.limit(target_limit).all()
         
         # Deduplicate matches by fixture key (sport, home, away, date)
         unique_matches = []

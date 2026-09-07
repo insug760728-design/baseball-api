@@ -141,7 +141,7 @@ def admin_dashboard(request: Request):
     try:
         with open(dashboard_path, "r", encoding="utf-8") as f:
             content = f.read()
-        return HTMLResponse(content=content)
+        return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
     except Exception as e:
         return HTMLResponse(content=f"<h1>대시보드 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
 

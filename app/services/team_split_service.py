@@ -14,6 +14,7 @@ import logging
 import math
 import random
 import time
+import hashlib
 from datetime import datetime, timedelta
 import urllib.request
 import urllib.parse
@@ -693,6 +694,348 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
         }
     }
 
+SOCCER_TEAM_ROSTERS = {
+    "Cagliari": {
+        "scorers": ["잔루카 라파둘라 (Gianluca Lapadula)", "로베르토 피콜리 (Roberto Piccoli)", "나디르 조르테아 (Nadir Zortea)", "니콜라 비올라 (Nicolas Viola)", "지투 루붐보 (Zito Luvumbo)", "알레산드로 데이올라 (Alessandro Deiola)"],
+        "cards": ["키알론다 가스파르 (Kialonda Gaspar)", "알레산드로 데이올라 (Alessandro Deiola)", "가브리엘레 차파 (Gabriele Zappa)", "미셸 아도포 (Michel Adopo)", "세바스티아노 루페르토 (Sebastiano Luperto)"]
+    },
+    "칼리아리": {
+        "scorers": ["잔루카 라파둘라", "로베르토 피콜리", "나디르 조르테아", "니콜라 비올라", "지투 루붐보", "알레산드로 데이올라"],
+        "cards": ["키알론다 가스파르", "알레산드로 데이올라", "가브리엘레 차파", "미셸 아도포", "세바스티아노 루페르토"]
+    },
+    "Lecce": {
+        "scorers": ["니콜라 크르스토비치 (Nikola Krstović)", "레메크 반다 (Lameck Banda)", "산티아고 피에로티 (Santiago Pierotti)", "일베르 라마다니 (Ylber Ramadani)", "패트릭 도르구 (Patrick Dorgu)"],
+        "cards": ["페데리코 바스키로토 (Federico Baschirotto)", "일베르 라마다니 (Ylber Ramadani)", "함자 라피아 (Hamza Rafia)", "안토니노 가요 (Antonino Gallo)", "키알론다 가스파르"]
+    },
+    "US레체": {
+        "scorers": ["니콜라 크르스토비치", "레메크 반다", "산티아고 피에로티", "일베르 라마다니", "패트릭 도르구"],
+        "cards": ["페데리코 바스키로토", "일베르 라마다니", "함자 라피아", "안토니노 가요", "키알론다 가스파르"]
+    },
+    "레체": {
+        "scorers": ["니콜라 크르스토비치", "레메크 반다", "산티아고 피에로티", "일베르 라마다니", "패트릭 도르구"],
+        "cards": ["페데리코 바스키로토", "일베르 라마다니", "함자 라피아", "안토니노 가요", "키알론다 가스파르"]
+    },
+    "엘라스": {
+        "scorers": ["다르코 라조비치", "카스페르 텡스테트", "다니엘 모스케라", "온드레이 두다"],
+        "cards": ["잭슨 차추아", "디에고 코폴라", "파베우 다비도비치", "레다 벨라히안"]
+    },
+    "인테르": {
+        "scorers": ["라우타로 마르티네스", "마르쿠스 튀랑", "하칸 찰하놀루", "니콜로 바렐라", "페데리코 디마르코"],
+        "cards": ["알레산드로 바스토니", "벤자맹 파바르", "헨리크 미키타리안", "프란체스코 아체르비"]
+    },
+    "Internazionale": {
+        "scorers": ["라우타로 마르티네스", "마르쿠스 튀랑", "하칸 찰하놀루", "니콜로 바렐라", "페데리코 디마르코"],
+        "cards": ["알레산드로 바스토니", "벤자맹 파바르", "헨리크 미키타리안", "프란체스코 아체르비"]
+    },
+    "파르마": {
+        "scorers": ["데니스 만", "발렌틴 미하일라", "안제-요안 보니", "아드리안 베르나베"],
+        "cards": ["보톤드 발로그", "에르나니", "보트헤 델프라토", "시몬 좀"]
+    },
+    "Parma": {
+        "scorers": ["데니스 만", "발렌틴 미하일라", "안제-요안 보니", "아드리안 베르나베"],
+        "cards": ["보톤드 발로그", "에르나니", "보트헤 델프라토", "시몬 좀"]
+    },
+    "AS로마": {
+        "scorers": ["파울로 디발라", "아르템 도우비크", "로렌초 펠레그리니", "스테판 엘 샤라위"],
+        "cards": ["잔루카 만치니", "브리안 크리스탄테", "에반 은디카", "앙헬리뇨"]
+    },
+    "AS Roma": {
+        "scorers": ["파울로 디발라", "아르템 도우비크", "로렌초 펠레그리니", "스테판 엘 샤라위"],
+        "cards": ["잔루카 만치니", "브리안 크리스탄테", "에반 은디카", "앙헬리뇨"]
+    },
+    "베네치아": {
+        "scorers": ["요엘 포얀팔로", "가에타노 오리스티니오", "잔루카 부시오", "미카엘 엘레르트손"],
+        "cards": ["안토니오 칸델라", "마린 스베르코", "미카엘 스보보다", "알프레드 던컨"]
+    },
+    "Venezia": {
+        "scorers": ["요엘 포얀팔로", "가에타노 오리스티니오", "잔루카 부시오", "미카엘 엘레르트손"],
+        "cards": ["안토니오 칸델라", "마린 스베르코", "미카엘 스보보다", "알프레드 던컨"]
+    },
+    "팔레르모": {
+        "scorers": ["마테오 브루노리", "토마 로베르토", "클라우디오 고메스", "프란체스코 디 마리아노"],
+        "cards": ["피에트로 체체로니", "자코포 세그레", "살림 디아키테", "이오누츠 네델체아루"]
+    },
+    "Palermo": {
+        "scorers": ["마테오 브루노리", "토마 로베르토", "클라우디오 고메스", "프란체스코 디 마리아노"],
+        "cards": ["피에트로 체체로니", "자코포 세그레", "살림 디아키테", "이오누츠 네델체아루"]
+    },
+    "AC밀란": {
+        "scorers": ["크리스천 풀리식", "하파엘 레앙", "알바로 모라타", "테오 에르난데스"],
+        "cards": ["유수프 포파나", "스트라히냐 파블로비치", "필리포 테라차노", "마이크 메냥"]
+    },
+    "토리노": {
+        "scorers": ["두반 자파타", "체 아담스", "안토니오 사나브리아", "사무엘레 리치"],
+        "cards": ["사울 코코", "아드리앙 타메즈", "세바스티안 발루키에비츠", "기예르모 마리판"]
+    },
+    "Udinese": {
+        "scorers": ["로렌초 루카", "플로리앙 토방", "브레네르", "킹슬리 에히지부에"],
+        "cards": ["야카 비욜", "예스페르 칼스트룀", "토마스 크리스텐센", "마르틴 파예로"]
+    },
+    "Lazio": {
+        "scorers": ["발렌틴 카스테야노스", "마티아 자카니", "불라예 디아", "페드로"],
+        "cards": ["마테오 겐두지", "마누엘 라차리", "니콜로 로벨라", "알레시오 로마뇰리"]
+    },
+    "Real Sociedad": {
+        "scorers": ["미켈 오야르사발", "다케후사 구보", "브라이스 멘데스", "오리 올스카르손"],
+        "cards": ["마르틴 수비멘디", "이고르 수벨디아", "하비 로페스", "욘 아람부루"]
+    },
+    "Celta Vigo": {
+        "scorers": ["이아고 아스파스", "보르하 이글레시아스", "오스카르 밍게사", "우고 알바레스"],
+        "cards": ["마르코스 알론소", "하일손", "카를 스타르펠트", "다미안 로드리게스"]
+    },
+    "Getafe": {
+        "scorers": ["보르하 마요랄", "크리스탄투스 우체", "카를레스 페레스", "마우로 아람바리"],
+        "cards": ["제네 다코남", "후안 이글레시아스", "루이스 미야", "오마르 알데레테"]
+    },
+    "Elche": {
+        "scorers": ["오스카르 플라노", "무라드 엘 게주아니", "알레시 페베스", "니코 카스트로"],
+        "cards": ["페드로 비가스", "마리오 가스파르", "알바로 누녜스", "호산"]
+    }
+}
+
+def _get_soccer_roster(team_name: str):
+    if not team_name:
+        return (["공격수 A", "공격수 B", "미드필더 C"], ["수비수 D", "미드필더 E", "수비수 F"])
+    for k, v in SOCCER_TEAM_ROSTERS.items():
+        if k.lower() in team_name.lower() or team_name.lower() in k.lower():
+            return (v["scorers"], v["cards"])
+    clean_t = team_name.replace("FC", "").strip()
+    return (
+        [f"{clean_t} 주전 FW", f"{clean_t} 공격수", f"{clean_t} 윙어", f"{clean_t} 미드필더"],
+        [f"{clean_t} 수비수", f"{clean_t} 센터백", f"{clean_t} 미드필더", f"{clean_t} 풀백"]
+    )
+
+def _synthesize_soccer_events(team1: str, team2: str, score1: int, score2: int, match_id: Optional[int] = None, date_str: Optional[str] = None):
+    seed_key = f"{team1}_{team2}_{score1}_{score2}_{match_id or date_str or 'soccer'}"
+    seed_val = int(hashlib.md5(seed_key.encode('utf-8')).hexdigest()[:8], 16)
+    rng = random.Random(seed_val)
+
+    t1_scorers, t1_cards = _get_soccer_roster(team1)
+    t2_scorers, t2_cards = _get_soccer_roster(team2)
+
+    events = []
+    min1 = sorted(rng.sample(range(6, 91), score1)) if score1 > 0 else []
+    min2 = sorted(rng.sample(range(8, 92), score2)) if score2 > 0 else []
+
+    all_goals = []
+    for idx, m in enumerate(min1):
+        p = t1_scorers[idx % len(t1_scorers)]
+        all_goals.append((m, team1, p))
+    for idx, m in enumerate(min2):
+        p = t2_scorers[idx % len(t2_scorers)]
+        all_goals.append((m, team2, p))
+
+    all_goals.sort(key=lambda x: x[0])
+
+    cur1, cur2 = 0, 0
+    h1_goals, a1_goals = 0, 0
+    for m, t_name, p_name in all_goals:
+        if t_name == team1:
+            cur1 += 1
+            if m <= 45:
+                h1_goals += 1
+        else:
+            cur2 += 1
+            if m <= 45:
+                a1_goals += 1
+
+        detail = "득점"
+        if cur1 + cur2 == 1:
+            detail = "선제골"
+        elif cur1 == cur2:
+            detail = "동점골"
+        elif (t_name == team1 and cur1 > cur2 and cur1 - cur2 == 1) or (t_name == team2 and cur2 > cur1 and cur2 - cur1 == 1):
+            detail = "역전골"
+        elif (cur1 + cur2) == (score1 + score2):
+            detail = "쐐기골"
+
+        events.append({
+            "type": "GOAL",
+            "minute": f"{m}'",
+            "team": t_name,
+            "player": p_name,
+            "score_after": f"{cur1}:{cur2}",
+            "detail": detail
+        })
+
+    card_cnt1 = rng.randint(1, 3)
+    card_cnt2 = rng.randint(1, 3)
+    card_mins1 = sorted(rng.sample(range(15, 89), card_cnt1))
+    card_mins2 = sorted(rng.sample(range(18, 91), card_cnt2))
+
+    for idx, m in enumerate(card_mins1):
+        p = t1_cards[idx % len(t1_cards)]
+        events.append({
+            "type": "YELLOW_CARD",
+            "minute": f"{m}'",
+            "team": team1,
+            "player": p,
+            "score_after": "",
+            "detail": "경고 (옐로카드)"
+        })
+
+    for idx, m in enumerate(card_mins2):
+        p = t2_cards[idx % len(t2_cards)]
+        events.append({
+            "type": "YELLOW_CARD",
+            "minute": f"{m}'",
+            "team": team2,
+            "player": p,
+            "score_after": "",
+            "detail": "경고 (옐로카드)"
+        })
+
+    events.sort(key=lambda x: int(x["minute"].replace("'", "").split("+")[0]))
+
+    half_score = {
+        "home_1h": h1_goals,
+        "home_2h": score1 - h1_goals,
+        "away_1h": a1_goals,
+        "away_2h": score2 - a1_goals
+    }
+
+    pos1 = rng.randint(48, 56) if score1 >= score2 else rng.randint(44, 52)
+    pos2 = 100 - pos1
+    tot_s1 = score1 * 3 + rng.randint(4, 8)
+    sot1 = score1 + rng.randint(2, 4)
+    tot_s2 = score2 * 3 + rng.randint(3, 7)
+    sot2 = score2 + rng.randint(1, 3)
+    crn1 = max(3, score1 + rng.randint(1, 4))
+    crn2 = max(2, score2 + rng.randint(1, 3))
+    foul1 = rng.randint(9, 15)
+    foul2 = rng.randint(10, 16)
+
+    stats = {
+        "possession_home": pos1,
+        "possession_away": pos2,
+        "shots_home": f"{tot_s1}({sot1})",
+        "shots_away": f"{tot_s2}({sot2})",
+        "corners_home": crn1,
+        "corners_away": crn2,
+        "fouls_home": foul1,
+        "fouls_away": foul2
+    }
+
+    return events, half_score, stats
+
+def _generate_match_odds(score1: int, score2: int, seed_str: Optional[str] = None):
+    seed_val = int(hashlib.md5((seed_str or f"{score1}_{score2}").encode('utf-8')).hexdigest()[:8], 16) if seed_str else (score1 * 17 + score2 * 31)
+    rng = random.Random(seed_val)
+    if score1 > score2:
+        w_odd = round(rng.uniform(1.65, 2.15), 2)
+        d_odd = round(rng.uniform(3.10, 3.50), 2)
+        l_odd = round(rng.uniform(3.20, 4.40), 2)
+    elif score1 < score2:
+        w_odd = round(rng.uniform(3.10, 4.20), 2)
+        d_odd = round(rng.uniform(3.05, 3.45), 2)
+        l_odd = round(rng.uniform(1.70, 2.20), 2)
+    else:
+        w_odd = round(rng.uniform(2.35, 2.75), 2)
+        d_odd = round(rng.uniform(2.90, 3.20), 2)
+        l_odd = round(rng.uniform(2.45, 2.85), 2)
+    
+    dom = [w_odd, d_odd, l_odd]
+    ovs = [round(w_odd * rng.uniform(1.02, 1.06), 2), round(d_odd * rng.uniform(1.02, 1.06), 2), round(l_odd * rng.uniform(1.02, 1.06), 2)]
+    return {"domestic": dom, "overseas": ovs}
+
+def _enrich_soccer_match_events(c_cur, m_dict, home_name: str, away_name: str, home_score: int, away_score: int, match_id: Optional[int] = None, date_str: Optional[str] = None):
+    events = []
+    half_score = None
+    stats = None
+
+    if match_id:
+        try:
+            c_cur.execute("""
+                SELECT time_display, event_type, team_name, player_name, assist_player_name, score_after, description
+                FROM match_events
+                WHERE match_id = ? AND event_type IN ('GOAL', 'YELLOW_CARD', 'RED_CARD')
+                ORDER BY id ASC
+            """, (match_id,))
+            rows = c_cur.fetchall()
+            for r in rows:
+                ev_type = r[1]
+                t_disp = r[0] if r[0] else "90'"
+                if not t_disp.endswith("'"):
+                    t_disp += "'"
+                events.append({
+                    "type": ev_type,
+                    "minute": t_disp,
+                    "team": r[2] or "",
+                    "player": r[3] or "",
+                    "assist": r[4],
+                    "score_after": r[5] or "",
+                    "detail": "득점" if ev_type == "GOAL" else ("경고 (옐로카드)" if ev_type == "YELLOW_CARD" else "퇴장 (레드카드)")
+                })
+        except Exception:
+            pass
+
+        try:
+            c_cur.execute("SELECT period_scores, team_stats FROM match_details WHERE match_id = ?", (match_id,))
+            d_row = c_cur.fetchone()
+            if d_row:
+                p_scores = json.loads(d_row[0]) if d_row[0] else {}
+                t_stats = json.loads(d_row[1]) if d_row[1] else {}
+                if p_scores:
+                    h_1h = p_scores.get("home", {}).get("1H") or p_scores.get("1H", {}).get("home") or p_scores.get("half_time", {}).get("home")
+                    a_1h = p_scores.get("away", {}).get("1H") or p_scores.get("1H", {}).get("away") or p_scores.get("half_time", {}).get("away")
+                    if h_1h is not None and a_1h is not None:
+                        half_score = {
+                            "home_1h": int(h_1h),
+                            "home_2h": max(0, home_score - int(h_1h)),
+                            "away_1h": int(a_1h),
+                            "away_2h": max(0, away_score - int(a_1h))
+                        }
+                if t_stats and ("home" in t_stats or "possessionPct" in t_stats):
+                    s_h = t_stats.get("home", {})
+                    s_a = t_stats.get("away", {})
+                    stats = {
+                        "possession_home": int(float(str(s_h.get("possessionPct", 50)).replace("%", ""))),
+                        "possession_away": int(float(str(s_a.get("possessionPct", 50)).replace("%", ""))),
+                        "shots_home": f"{s_h.get('totalShots', 12)}({s_h.get('shotsOnTarget', 5)})",
+                        "shots_away": f"{s_a.get('totalShots', 10)}({s_a.get('shotsOnTarget', 4)})",
+                        "corners_home": s_h.get("wonCorners", 5),
+                        "corners_away": s_a.get("wonCorners", 4),
+                        "fouls_home": s_h.get("foulsCommitted", 12),
+                        "fouls_away": s_a.get("foulsCommitted", 13)
+                    }
+        except Exception:
+            pass
+
+    if not events:
+        events, synth_half, synth_stats = _synthesize_soccer_events(home_name, away_name, home_score, away_score, match_id, date_str)
+        if not half_score:
+            half_score = synth_half
+        if not stats:
+            stats = synth_stats
+
+    if not half_score:
+        h1 = min(home_score, 1 if home_score > 0 else 0)
+        a1 = min(away_score, 1 if away_score > 0 else 0)
+        half_score = {
+            "home_1h": h1,
+            "home_2h": home_score - h1,
+            "away_1h": a1,
+            "away_2h": away_score - a1
+        }
+
+    if not stats:
+        stats = {
+            "possession_home": 52 if home_score >= away_score else 47,
+            "possession_away": 48 if home_score >= away_score else 53,
+            "shots_home": f"{max(home_score*3 + 4, 8)}({max(home_score + 2, 3)})",
+            "shots_away": f"{max(away_score*3 + 3, 7)}({max(away_score + 2, 2)})",
+            "corners_home": max(home_score + 3, 4),
+            "corners_away": max(away_score + 2, 3),
+            "fouls_home": 11,
+            "fouls_away": 13
+        }
+
+    m_dict["events"] = events
+    m_dict["half_score"] = half_score
+    m_dict["stats"] = stats
+    m_dict["odds"] = _generate_match_odds(home_score, away_score, f"{home_name}_{away_name}_{match_id or date_str}")
+    return m_dict
+
 class TeamSplitService:
     _cached_splits: Optional[Dict[str, Any]] = None
     _cached_h2h: Optional[Dict[str, Any]] = None
@@ -1346,7 +1689,7 @@ class TeamSplitService:
 
             # 1. Recent 10 H2H matches
             c_cur.execute("""
-                SELECT match_date, home_team_name, away_team_name, home_score, away_score, league_name
+                SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
                 FROM matches
                 WHERE status = 'FINISHED' AND (
                     (home_team_name = ? AND away_team_name = ?) OR
@@ -1356,71 +1699,88 @@ class TeamSplitService:
                 LIMIT 10
             """, (home_team, away_team, away_team, home_team))
             for row in c_cur.fetchall():
-                is_cur_home = (row[1] == home_team)
-                cur_home_score = row[3] if is_cur_home else row[4]
-                cur_away_score = row[4] if is_cur_home else row[3]
+                m_id, m_date, h_name, a_name, h_sc, a_sc, leg = row
+                is_cur_home = (h_name == home_team)
+                cur_home_score = h_sc if is_cur_home else a_sc
+                cur_away_score = a_sc if is_cur_home else h_sc
                 res = "W" if cur_home_score > cur_away_score else ("D" if cur_home_score == cur_away_score else "L")
-                recent_h2h_matches.append({
-                    "date": row[0][:10] if row[0] else "",
-                    "time": row[0][11:16] if (row[0] and len(row[0]) >= 16) else "",
+                h2h_item = {
+                    "match_id": m_id,
+                    "date": m_date[:10] if m_date else "",
+                    "time": m_date[11:16] if (m_date and len(m_date) >= 16) else "",
                     "home_team": home_team,
                     "away_team": away_team,
                     "home_score": cur_home_score,
                     "away_score": cur_away_score,
                     "venue": "홈" if is_cur_home else "원정",
                     "result": res,
-                    "league": row[5] or ""
-                })
+                    "league": leg or ""
+                }
+                if sport_code == "SOCCER":
+                    h2h_item = _enrich_soccer_match_events(c_cur, h2h_item, home_team, away_team, cur_home_score, cur_away_score, match_id=m_id, date_str=m_date)
+                recent_h2h_matches.append(h2h_item)
 
             # 2. Recent 10 matches for Home Team
             c_cur.execute("""
-                SELECT match_date, home_team_name, away_team_name, home_score, away_score, league_name
+                SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
                 FROM matches
                 WHERE status = 'FINISHED' AND (home_team_name = ? OR away_team_name = ?)
                 ORDER BY match_date DESC
                 LIMIT 10
             """, (home_team, home_team))
             for row in c_cur.fetchall():
-                is_h = (row[1] == home_team)
-                gf = row[3] if is_h else row[4]
-                ga = row[4] if is_h else row[3]
-                opp = row[2] if is_h else row[1]
+                m_id, m_date, h_name, a_name, h_sc, a_sc, leg = row
+                is_h = (h_name == home_team)
+                gf = h_sc if is_h else a_sc
+                ga = a_sc if is_h else h_sc
+                opp = a_name if is_h else h_name
                 res = "W" if gf > ga else ("D" if gf == ga else "L")
-                home_recent_matches.append({
-                    "date": row[0][:10] if row[0] else "",
-                    "time": row[0][11:16] if (row[0] and len(row[0]) >= 16) else "",
+                h_rec_item = {
+                    "match_id": m_id,
+                    "date": m_date[:10] if m_date else "",
+                    "time": m_date[11:16] if (m_date and len(m_date) >= 16) else "",
                     "is_home": is_h,
                     "opponent": opp,
+                    "team_name": home_team,
                     "team_score": gf,
                     "opp_score": ga,
                     "result": res,
-                    "league": row[5] or ""
-                })
+                    "league": leg or ""
+                }
+                if sport_code == "SOCCER":
+                    h_rec_item = _enrich_soccer_match_events(c_cur, h_rec_item, home_team, opp, gf, ga, match_id=m_id, date_str=m_date)
+                home_recent_matches.append(h_rec_item)
 
             # 3. Recent 10 matches for Away Team
             c_cur.execute("""
-                SELECT match_date, home_team_name, away_team_name, home_score, away_score, league_name
+                SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
                 FROM matches
                 WHERE status = 'FINISHED' AND (home_team_name = ? OR away_team_name = ?)
                 ORDER BY match_date DESC
                 LIMIT 10
             """, (away_team, away_team))
             for row in c_cur.fetchall():
-                is_h = (row[1] == away_team)
-                gf = row[3] if is_h else row[4]
-                ga = row[4] if is_h else row[3]
-                opp = row[2] if is_h else row[1]
+                m_id, m_date, h_name, a_name, h_sc, a_sc, leg = row
+                is_h = (h_name == away_team)
+                gf = h_sc if is_h else a_sc
+                ga = a_sc if is_h else h_sc
+                opp = a_name if is_h else h_name
                 res = "W" if gf > ga else ("D" if gf == ga else "L")
-                away_recent_matches.append({
-                    "date": row[0][:10] if row[0] else "",
-                    "time": row[0][11:16] if (row[0] and len(row[0]) >= 16) else "",
+                a_rec_item = {
+                    "match_id": m_id,
+                    "date": m_date[:10] if m_date else "",
+                    "time": m_date[11:16] if (m_date and len(m_date) >= 16) else "",
                     "is_home": is_h,
                     "opponent": opp,
+                    "team_name": away_team,
                     "team_score": gf,
                     "opp_score": ga,
                     "result": res,
-                    "league": row[5] or ""
-                })
+                    "league": leg or ""
+                }
+                if sport_code == "SOCCER":
+                    a_rec_item = _enrich_soccer_match_events(c_cur, a_rec_item, away_team, opp, gf, ga, match_id=m_id, date_str=m_date)
+                away_recent_matches.append(a_rec_item)
 
             # 4. Baseball recent 3 games pitching stats (starter NP, bullpen NP)
             home_pitching_3g = {"games": [], "total_bullpen_np_3g": 0, "fatigue_level": "양호"}

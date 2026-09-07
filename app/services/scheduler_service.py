@@ -245,6 +245,19 @@ class SchedulerService:
                     summary[lid] = f"ERR: {str(ex)}"
 
             logger.info(f"[Scheduler Hourly] 1시간 주기 동기화 완료: {summary}")
+
+            # Auto-resolve past scheduled matches older than 4 hours to FINISHED
+            try:
+                from app.models.models import Match
+                cutoff_4h = (datetime.now() - timedelta(hours=4)).strftime("%Y-%m-%d %H:%M")
+                past_sched = db.query(Match).filter(Match.status == "SCHEDULED", Match.match_date < cutoff_4h).all()
+                for pm in past_sched:
+                    pm.status = "FINISHED"
+                if past_sched:
+                    db.commit()
+                    logger.info(f"[Scheduler Hourly] 과거 미종료 경기 {len(past_sched)}건 FINISHED로 자동 정리 완료")
+            except Exception as pe:
+                logger.warning(f"[Scheduler Hourly] 과거 경기 정리 중 경고: {pe}")
             try:
                 from app.services.live_api_sports_service import LiveApiSportsService
                 if LiveApiSportsService.is_configured():

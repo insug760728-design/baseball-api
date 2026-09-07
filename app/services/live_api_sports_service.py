@@ -430,7 +430,7 @@ class LiveApiSportsService:
                 canon_h = get_canonical(h_name)
                 candidate_matches = db_by_home.get(canon_h, [])
 
-                # Pick the match candidate with the closest scheduled time (within 14 hours)
+                # Pick the match candidate with the closest scheduled time (within 6 hours)
                 best_match = None
                 min_diff = float("inf")
                 for m in candidate_matches:
@@ -439,13 +439,11 @@ class LiveApiSportsService:
                             try:
                                 db_dt = datetime.strptime(m.match_date[:16], "%Y-%m-%d %H:%M")
                                 diff = abs((db_dt - kst_dt).total_seconds())
-                                if diff < min_diff and diff <= 14 * 3600:
+                                if diff < min_diff and diff <= 6 * 3600:
                                     min_diff = diff
                                     best_match = m
                             except Exception:
                                 pass
-                        elif not best_match:
-                            best_match = m
 
                 if best_match:
                     best_match.home_score = h_score
@@ -557,7 +555,7 @@ class LiveApiSportsService:
                 candidate_matches = db_by_home.get(canon_h, [])
 
                 # In baseball, teams play multi-game series against each other on consecutive days.
-                # Pick the match candidate with the closest scheduled time (within 14 hours).
+                # Pick the match candidate with the closest scheduled time (strictly within 8 hours).
                 best_match = None
                 min_diff = float("inf")
                 for m in candidate_matches:
@@ -566,13 +564,11 @@ class LiveApiSportsService:
                             try:
                                 db_dt = datetime.strptime(m.match_date[:16], "%Y-%m-%d %H:%M")
                                 diff = abs((db_dt - kst_dt).total_seconds())
-                                if diff < min_diff and diff <= 14 * 3600:
+                                if diff < min_diff and diff <= 8 * 3600:
                                     min_diff = diff
                                     best_match = m
                             except Exception:
                                 pass
-                        elif not best_match:
-                            best_match = m
 
                 if best_match:
                     best_match.home_score = h_score

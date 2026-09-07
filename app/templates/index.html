@@ -14,7 +14,7 @@
     .match-card.active { border: 2px solid #2563eb; background-color: #eff6ff; }
     .score-badge { font-size: 1.5rem; font-weight: 800; min-width: 90px; text-align: center; }
     .scoreboard-table th, .scoreboard-table td { text-align: center; vertical-align: middle; padding: 6px 8px; font-size: 0.88rem; }
-    .scoreboard-table th { background-color: #1e293b; color: white; font-weight: 600; }
+    .scoreboard-table th { background-color: #ffffff; color: #111827; font-weight: 700; border-bottom: 2px solid #111827; }
     .scoreboard-total { font-weight: bold; background-color: #f8fafc; }
     .table-stats th { font-size: 0.82rem; text-align: center; background-color: #f8fafc; }
     .table-stats td { font-size: 0.85rem; text-align: center; vertical-align: middle; }
@@ -172,17 +172,17 @@
                 <span class="text-muted small" id="detailTime"></span>
                 <span id="detailStatusBadge" class="badge"></span>
               </div>
-              <div class="d-flex justify-content-around align-items-center text-center my-3">
+              <div class="d-flex justify-content-around align-items-center text-center my-3" style="background: #ffffff;">
                 <div style="flex: 1;">
-                  <h4 class="fw-bold mb-1 text-truncate text-primary" id="detailHomeTeam"></h4>
-                  <span class="badge bg-light text-muted border">말공 (HOME)</span>
+                  <h4 class="fw-bold mb-1 text-truncate" id="detailHomeTeam" style="color: #111827 !important; font-weight: 800;"></h4>
+                  <span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800;">[홈]</span>
                 </div>
                 <div class="px-3">
-                  <div class="badge bg-dark score-badge px-4 py-2 text-white shadow-sm" id="detailScore">0 : 0</div>
+                  <div class="badge score-badge px-4 py-2 shadow-sm" id="detailScore" style="background: #ffffff; color: #111827; border: 2px solid #111827; font-size: 1.5rem; font-weight: 900;">0 : 0</div>
                 </div>
                 <div style="flex: 1;">
-                  <h4 class="fw-bold mb-1 text-truncate text-danger" id="detailAwayTeam"></h4>
-                  <span class="badge bg-light text-muted border">초공 (AWAY)</span>
+                  <h4 class="fw-bold mb-1 text-truncate" id="detailAwayTeam" style="color: #111827 !important; font-weight: 800;"></h4>
+                  <span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800;">[원정]</span>
                 </div>
               </div>
 
@@ -238,7 +238,7 @@
 
           <!-- 축구 5대 리그 현대 어드밴스드 전술 & 기대 지표 패널 (xG, xGOT, PPDA, Field Tilt, Prevented Goals) -->
           <div class="card border-0 shadow-sm mb-4" id="soccerAdvancedMetricsPanel" style="display: none;">
-            <div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
+            <div class="card-header bg-white text-dark py-2 d-flex justify-content-between align-items-center border-bottom">
               <span class="fw-bold" id="advMetricsPanelTitle"><i class="bi bi-diagram-3-fill text-warning me-2"></i>어드밴스드 전술 및 기대 지표 분석</span>
               <span class="badge bg-warning text-dark" id="advMetricsBadge">공식 계량 모델</span>
             </div>
@@ -339,7 +339,7 @@
               <button class="btn btn-sm btn-outline-secondary" onclick="copyApiJson()"><i class="bi bi-clipboard me-1"></i>JSON 복사</button>
             </div>
             <div class="card-body p-0">
-              <pre id="apiJsonPreview" class="bg-dark text-light p-3 m-0" style="max-height: 280px; overflow-y: auto; font-size: 0.82rem; border-radius: 0 0 12px 12px;"></pre>
+              <pre id="apiJsonPreview" class="bg-white text-dark border p-3 m-0" style="max-height: 280px; overflow-y: auto; font-size: 0.82rem; border-radius: 0 0 12px 12px;"></pre>
             </div>
           </div>
         </div>
@@ -361,7 +361,7 @@
       <div class="modal-content">
         <div class="modal-header bg-primary text-white">
           <h5 class="modal-title fw-bold" id="playerModalTitle"><i class="bi bi-pencil-square me-2"></i>야구 선수 세부 지표 수정</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close " data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-4">
           <input type="hidden" id="modalStatId">
@@ -568,9 +568,9 @@
   <div class="modal fade" id="folderExportModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content">
-        <div class="modal-header bg-dark text-white">
+        <div class="modal-header bg-white text-dark border-bottom">
           <h5 class="modal-title fw-bold"><i class="bi bi-folder-symlink-fill text-warning me-2"></i>야구단 & 선수별 폴더 구조 파일 생성</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close " data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-4">
           <div class="alert alert-primary d-flex align-items-center mb-3">
@@ -653,9 +653,9 @@
   <div class="modal fade" id="domainEmbedModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content">
-        <div class="modal-header bg-dark text-white">
+        <div class="modal-header bg-white text-dark border-bottom">
           <h5 class="modal-title fw-bold"><i class="bi bi-globe me-2 text-warning"></i>내 도메인/웹사이트에 타점·홈런 타임라인 올리기</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close " data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-4">
           <div class="alert alert-info d-flex align-items-center mb-3">
@@ -673,7 +673,7 @@
             </div>
             <div class="card-body p-3">
               <p class="small text-muted mb-2">내 홈페이지, 워드프레스, 블로그, 쇼핑몰의 원하는 위치에 아래 태그를 붙여넣기만 하면 실시간 타임라인 위젯이 바로 뜹니다:</p>
-              <pre class="bg-dark text-light p-2 rounded small m-0" id="embedIframePreview" style="font-family: monospace; white-space: pre-wrap;"></pre>
+              <pre class="bg-white text-dark border p-2 rounded small m-0" id="embedIframePreview" style="font-family: monospace; white-space: pre-wrap;"></pre>
               <div class="mt-2 text-end">
                 <a id="btnPreviewWidget" href="/embed/timeline/latest" target="_blank" class="btn btn-sm btn-outline-success">
                   <i class="bi bi-box-arrow-up-right me-1"></i>위젯 새 창 미리보기
@@ -690,7 +690,7 @@
             </div>
             <div class="card-body p-3">
               <p class="small text-muted mb-2">React, Vue, Node.js, PHP 등 내 백엔드/프론트엔드에서 실시간 JSON 데이터를 받아와 자유롭게 디자인할 수 있습니다 (CORS 허용됨):</p>
-              <pre class="bg-dark text-light p-2 rounded small m-0" id="embedApiPreview" style="font-family: monospace; white-space: pre-wrap;"></pre>
+              <pre class="bg-white text-dark border p-2 rounded small m-0" id="embedApiPreview" style="font-family: monospace; white-space: pre-wrap;"></pre>
             </div>
           </div>
 
@@ -715,9 +715,9 @@
   <div class="modal fade" id="playerTrendModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content border-0 shadow">
-        <div class="modal-header bg-dark text-white">
+        <div class="modal-header bg-white text-dark border-bottom">
           <h5 class="modal-title fw-bold" id="trendModalTitle"><i class="bi bi-graph-up-arrow text-warning me-2"></i>선수 롤링 평균 지표 분석</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close " data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body p-4" id="trendModalBody">
           <!-- 상단 듀얼 모드 토글 (경기수 / 일수) -->
@@ -1064,9 +1064,13 @@ fetch('${apiUrl}')
               <div>${statusBadge}${customBadge}</div>
             </div>
             <div class="d-flex justify-content-between align-items-center my-1">
-              <div class="fw-bold text-truncate" style="max-width: 42%; font-size: 1.05rem;">${m.home_team_name}</div>
-              <div class="badge ${isFinished ? 'bg-dark' : 'bg-secondary'} px-3 py-2 text-white fs-6">${m.home_score} : ${m.away_score}</div>
-              <div class="fw-bold text-truncate text-end" style="max-width: 42%; font-size: 1.05rem;">${m.away_team_name}</div>
+              <div class="fw-bold text-truncate" style="max-width: 42%; font-size: 1.05rem; color: #111827;">
+                <span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}
+              </div>
+              <div class="badge px-3 py-2 fs-6 fw-bold" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 1.05rem; font-weight: 800;">${m.home_score} : ${m.away_score}</div>
+              <div class="fw-bold text-truncate text-end" style="max-width: 42%; font-size: 1.05rem; color: #111827;">
+                <span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}
+              </div>
             </div>
             <div class="text-muted small text-end mt-2">${m.stadium || '스타디움'}</div>
           </div>
@@ -1106,8 +1110,8 @@ fetch('${apiUrl}')
         document.getElementById('detailLeagueBadge').innerText = m.league_name;
         document.getElementById('detailTime').innerText = `${m.match_date} (${m.season} ${m.round_name || ''})`;
         document.getElementById('detailStadium').innerText = `경기장: ${m.stadium || '정보 없음'}`;
-        document.getElementById('detailHomeTeam').innerText = m.home_team_name;
-        document.getElementById('detailAwayTeam').innerText = m.away_team_name;
+        document.getElementById('detailHomeTeam').innerHTML = `<span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.75rem; padding: 2px 5px; font-weight: 800;">[홈]</span>` + m.home_team_name;
+        document.getElementById('detailAwayTeam').innerHTML = `<span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.75rem; padding: 2px 5px; font-weight: 800;">[원정]</span>` + m.away_team_name;
         document.getElementById('detailScore').innerText = `${m.home_score} : ${m.away_score}`;
 
         const isFinished = m.status === 'FINISHED';
@@ -1191,57 +1195,57 @@ fetch('${apiUrl}')
         container.innerHTML = `
           <!-- 1. xG (기대 득점) vs 실제 스코어 -->
           <div class="col-md-2 col-4">
-            <div class="card h-100 border bg-light shadow-sm">
+            <div class="card h-100 border shadow-sm" style="background: #ffffff;">
               <div class="card-header bg-white py-1 small fw-bold text-dark">기대 득점 (xG)</div>
               <div class="card-body p-2">
-                <div class="fw-bold fs-5 text-primary">${h.xg !== undefined ? h.xg : '-'} <span class="text-muted fs-6">:</span> ${a.xg !== undefined ? a.xg : '-'}</div>
+                <div class="fw-bold fs-5" style="color: #111827 !important;">${h.xg !== undefined ? h.xg : '-'} <span class="text-muted fs-6">:</span> ${a.xg !== undefined ? a.xg : '-'}</div>
                 <div class="small text-muted" style="font-size: 0.72rem;">실제 ${h.score ?? 0} : ${a.score ?? 0}</div>
               </div>
             </div>
           </div>
           <!-- 2. xGOT (유효슈팅 기대 득점) -->
           <div class="col-md-2 col-4">
-            <div class="card h-100 border bg-light shadow-sm">
+            <div class="card h-100 border shadow-sm" style="background: #ffffff;">
               <div class="card-header bg-white py-1 small fw-bold text-dark">유효슈팅 xG (xGOT)</div>
               <div class="card-body p-2">
-                <div class="fw-bold fs-5 text-danger">${h.xgot !== undefined ? h.xgot : '-'} <span class="text-muted fs-6">:</span> ${a.xgot !== undefined ? a.xgot : '-'}</div>
+                <div class="fw-bold fs-5" style="color: #111827 !important;">${h.xgot !== undefined ? h.xgot : '-'} <span class="text-muted fs-6">:</span> ${a.xgot !== undefined ? a.xgot : '-'}</div>
                 <div class="small text-muted" style="font-size: 0.72rem;">유효슛 ${h.shots_on_target ?? 0} : ${a.shots_on_target ?? 0}</div>
               </div>
             </div>
           </div>
           <!-- 3. PPDA (압박 강도) -->
           <div class="col-md-2 col-4">
-            <div class="card h-100 border bg-light shadow-sm">
+            <div class="card h-100 border shadow-sm" style="background: #ffffff;">
               <div class="card-header bg-white py-1 small fw-bold text-dark">압박 강도 (PPDA)</div>
               <div class="card-body p-2">
-                <div class="fw-bold fs-5 text-success">${h.ppda !== undefined ? h.ppda : '-'} <span class="text-muted fs-6">:</span> ${a.ppda !== undefined ? a.ppda : '-'}</div>
+                <div class="fw-bold fs-5" style="color: #111827 !important;">${h.ppda !== undefined ? h.ppda : '-'} <span class="text-muted fs-6">:</span> ${a.ppda !== undefined ? a.ppda : '-'}</div>
                 <div class="small text-muted" style="font-size: 0.72rem;">낮을수록 전방압박 우수</div>
               </div>
             </div>
           </div>
           <!-- 4. Field Tilt (파이널 서드 점유율) -->
           <div class="col-md-2 col-4">
-            <div class="card h-100 border bg-light shadow-sm">
+            <div class="card h-100 border shadow-sm" style="background: #ffffff;">
               <div class="card-header bg-white py-1 small fw-bold text-dark">필드 틸트 (Field Tilt)</div>
               <div class="card-body p-2">
-                <div class="fw-bold fs-5 text-warning-emphasis">${h.field_tilt ?? '-'} <span class="text-muted fs-6">:</span> ${a.field_tilt ?? '-'}</div>
+                <div class="fw-bold fs-5" style="color: #111827 !important;">${h.field_tilt ?? '-'} <span class="text-muted fs-6">:</span> ${a.field_tilt ?? '-'}</div>
                 <div class="small text-muted" style="font-size: 0.72rem;">공격 진영 주도권</div>
               </div>
             </div>
           </div>
           <!-- 5. 골키퍼 PSxG & 방어 골수 (Goals Prevented) -->
           <div class="col-md-2 col-4">
-            <div class="card h-100 border bg-light shadow-sm">
+            <div class="card h-100 border shadow-sm" style="background: #ffffff;">
               <div class="card-header bg-white py-1 small fw-bold text-dark">GK 방어 골수</div>
               <div class="card-body p-2">
-                <div class="fw-bold fs-5 text-info-emphasis">${h.gk_prevented_goals ?? '-'} <span class="text-muted fs-6">:</span> ${a.gk_prevented_goals ?? '-'}</div>
+                <div class="fw-bold fs-5" style="color: #111827 !important;">${h.gk_prevented_goals ?? '-'} <span class="text-muted fs-6">:</span> ${a.gk_prevented_goals ?? '-'}</div>
                 <div class="small text-muted" style="font-size: 0.72rem;">PSxG-실점 선방 기여</div>
               </div>
             </div>
           </div>
           <!-- 6. 볼 점유율 & 태클 성공률 -->
           <div class="col-md-2 col-4">
-            <div class="card h-100 border bg-light shadow-sm">
+            <div class="card h-100 border shadow-sm" style="background: #ffffff;">
               <div class="card-header bg-white py-1 small fw-bold text-dark">점유율 · 태클성공</div>
               <div class="card-body p-2">
                 <div class="fw-bold fs-6 text-dark">${h.possession ?? '50%'} : ${a.possession ?? '50%'}</div>
@@ -1274,57 +1278,57 @@ fetch('${apiUrl}')
         container.innerHTML = `
           <!-- 1. Pace (경기 템포) -->
           <div class="col-md-2 col-4">
-            <div class="card h-100 border bg-light shadow-sm">
+            <div class="card h-100 border shadow-sm" style="background: #ffffff;">
               <div class="card-header bg-white py-1 small fw-bold text-dark">경기 템포 (Pace)</div>
               <div class="card-body p-2">
-                <div class="fw-bold fs-5 text-primary">${h.pace ?? '-'} <span class="text-muted fs-6">포제션</span></div>
+                <div class="fw-bold fs-5" style="color: #111827 !important;">${h.pace ?? '-'} <span class="text-muted fs-6">포제션</span></div>
                 <div class="small text-muted" style="font-size: 0.72rem;">48분당 공격권 횟수</div>
               </div>
             </div>
           </div>
           <!-- 2. ORtg (공격 효율) -->
           <div class="col-md-2 col-4">
-            <div class="card h-100 border bg-light shadow-sm">
+            <div class="card h-100 border shadow-sm" style="background: #ffffff;">
               <div class="card-header bg-white py-1 small fw-bold text-dark">공격 효율 (ORtg)</div>
               <div class="card-body p-2">
-                <div class="fw-bold fs-5 text-danger">${h.ortg ?? '-'} <span class="text-muted fs-6">:</span> ${a.ortg ?? '-'}</div>
+                <div class="fw-bold fs-5" style="color: #111827 !important;">${h.ortg ?? '-'} <span class="text-muted fs-6">:</span> ${a.ortg ?? '-'}</div>
                 <div class="small text-muted" style="font-size: 0.72rem;">100포제션당 득점 기대치</div>
               </div>
             </div>
           </div>
           <!-- 3. DRtg (수비 효율) -->
           <div class="col-md-2 col-4">
-            <div class="card h-100 border bg-light shadow-sm">
+            <div class="card h-100 border shadow-sm" style="background: #ffffff;">
               <div class="card-header bg-white py-1 small fw-bold text-dark">수비 효율 (DRtg)</div>
               <div class="card-body p-2">
-                <div class="fw-bold fs-5 text-success">${h.drtg ?? '-'} <span class="text-muted fs-6">:</span> ${a.drtg ?? '-'}</div>
+                <div class="fw-bold fs-5" style="color: #111827 !important;">${h.drtg ?? '-'} <span class="text-muted fs-6">:</span> ${a.drtg ?? '-'}</div>
                 <div class="small text-muted" style="font-size: 0.72rem;">낮을수록 실점 억제 우수</div>
               </div>
             </div>
           </div>
           <!-- 4. Net Rating (공수 마진) -->
           <div class="col-md-2 col-4">
-            <div class="card h-100 border bg-light shadow-sm">
+            <div class="card h-100 border shadow-sm" style="background: #ffffff;">
               <div class="card-header bg-white py-1 small fw-bold text-dark">공수 마진 (Net Rtg)</div>
               <div class="card-body p-2">
-                <div class="fw-bold fs-5 text-warning-emphasis">${h.net_rating !== undefined ? (h.net_rating > 0 ? '+' + h.net_rating : h.net_rating) : '-'} <span class="text-muted fs-6">:</span> ${a.net_rating !== undefined ? (a.net_rating > 0 ? '+' + a.net_rating : a.net_rating) : '-'}</div>
+                <div class="fw-bold fs-5" style="color: #111827 !important;">${h.net_rating !== undefined ? (h.net_rating > 0 ? '+' + h.net_rating : h.net_rating) : '-'} <span class="text-muted fs-6">:</span> ${a.net_rating !== undefined ? (a.net_rating > 0 ? '+' + a.net_rating : a.net_rating) : '-'}</div>
                 <div class="small text-muted" style="font-size: 0.72rem;">ORtg - DRtg 순수 마진</div>
               </div>
             </div>
           </div>
           <!-- 5. eFG% (유효 야투율) -->
           <div class="col-md-2 col-4">
-            <div class="card h-100 border bg-light shadow-sm">
+            <div class="card h-100 border shadow-sm" style="background: #ffffff;">
               <div class="card-header bg-white py-1 small fw-bold text-dark">유효 야투율 (eFG%)</div>
               <div class="card-body p-2">
-                <div class="fw-bold fs-5 text-info-emphasis">${h.efg_pct ?? '-'}% <span class="text-muted fs-6">:</span> ${a.efg_pct ?? '-'}%</div>
+                <div class="fw-bold fs-5" style="color: #111827 !important;">${h.efg_pct ?? '-'}% <span class="text-muted fs-6">:</span> ${a.efg_pct ?? '-'}%</div>
                 <div class="small text-muted" style="font-size: 0.72rem;">3점 가중치 반영 슛효율</div>
               </div>
             </div>
           </div>
           <!-- 6. TS% (진짜 슛 성공률) -->
           <div class="col-md-2 col-4">
-            <div class="card h-100 border bg-light shadow-sm">
+            <div class="card h-100 border shadow-sm" style="background: #ffffff;">
               <div class="card-header bg-white py-1 small fw-bold text-dark">진짜 성공률 (TS%)</div>
               <div class="card-body p-2">
                 <div class="fw-bold fs-5 text-dark">${h.ts_pct ?? '-'}% <span class="text-muted fs-6">:</span> ${a.ts_pct ?? '-'}%</div>
@@ -1400,7 +1404,7 @@ fetch('${apiUrl}')
           <th>3Q</th>
           <th>4Q</th>
           ${hasOt ? '<th>OT</th>' : ''}
-          <th class="scoreboard-total text-danger">총점 (PTS)</th>
+          <th class="scoreboard-total" style="color: #111827 !important; font-weight: 800;">총점 (PTS)</th>
           <th>야투 (FG%)</th>
           <th>3점슛 (3P%)</th>
           <th>자유투 (FT%)</th>
@@ -1412,39 +1416,39 @@ fetch('${apiUrl}')
         </tr>`;
 
         let awayHtml = `<tr>
-          <td class="fw-bold text-start ps-3">${m.away_team_name} (원정)</td>
+          <td class="fw-bold text-start ps-3"><span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}</td>
           <td class="fw-semibold">${aQ.q1 ?? '-'}</td>
           <td class="fw-semibold">${aQ.q2 ?? '-'}</td>
           <td class="fw-semibold">${aQ.q3 ?? '-'}</td>
           <td class="fw-semibold">${aQ.q4 ?? '-'}</td>
           ${hasOt ? `<td class="fw-semibold">${aQ.ot ?? 0}</td>` : ''}
-          <td class="scoreboard-total text-danger fw-bold fs-6">${m.away_score}</td>
+          <td class="scoreboard-total fw-bold fs-6" style="color: #111827 !important; font-weight: 800;">${m.away_score}</td>
           <td>${aStats.fgm !== undefined ? aStats.fgm + '/' + aStats.fga + ' (' + (aStats.fg_pct || 0) + '%)' : '-'}</td>
           <td>${aStats.fg3m !== undefined ? aStats.fg3m + '/' + aStats.fg3a + ' (' + (aStats.fg3_pct || 0) + '%)' : '-'}</td>
           <td>${aStats.ftm !== undefined ? aStats.ftm + '/' + aStats.fta + ' (' + (aStats.ft_pct || 0) + '%)' : '-'}</td>
           <td class="fw-bold">${aStats.reb || 0}</td>
-          <td class="fw-bold text-primary">${aStats.ast || 0}</td>
+          <td class="fw-bold" style="color: #111827 !important;">${aStats.ast || 0}</td>
           <td>${aStats.stl || 0}</td>
           <td>${aStats.blk || 0}</td>
-          <td class="text-danger">${aStats.to || 0}</td>
+          <td style="color: #111827 !important;">${aStats.to || 0}</td>
         </tr>`;
 
         let homeHtml = `<tr>
-          <td class="fw-bold text-start ps-3">${m.home_team_name} (홈)</td>
+          <td class="fw-bold text-start ps-3"><span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}</td>
           <td class="fw-semibold">${hQ.q1 ?? '-'}</td>
           <td class="fw-semibold">${hQ.q2 ?? '-'}</td>
           <td class="fw-semibold">${hQ.q3 ?? '-'}</td>
           <td class="fw-semibold">${hQ.q4 ?? '-'}</td>
           ${hasOt ? `<td class="fw-semibold">${hQ.ot ?? 0}</td>` : ''}
-          <td class="scoreboard-total text-danger fw-bold fs-6">${m.home_score}</td>
+          <td class="scoreboard-total fw-bold fs-6" style="color: #111827 !important; font-weight: 800;">${m.home_score}</td>
           <td>${hStats.fgm !== undefined ? hStats.fgm + '/' + hStats.fga + ' (' + (hStats.fg_pct || 0) + '%)' : '-'}</td>
           <td>${hStats.fg3m !== undefined ? hStats.fg3m + '/' + hStats.fg3a + ' (' + (hStats.fg3_pct || 0) + '%)' : '-'}</td>
           <td>${hStats.ftm !== undefined ? hStats.ftm + '/' + hStats.fta + ' (' + (hStats.ft_pct || 0) + '%)' : '-'}</td>
           <td class="fw-bold">${hStats.reb || 0}</td>
-          <td class="fw-bold text-primary">${hStats.ast || 0}</td>
+          <td class="fw-bold" style="color: #111827 !important;">${hStats.ast || 0}</td>
           <td>${hStats.stl || 0}</td>
           <td>${hStats.blk || 0}</td>
-          <td class="text-danger">${hStats.to || 0}</td>
+          <td style="color: #111827 !important;">${hStats.to || 0}</td>
         </tr>`;
 
         el.innerHTML = `<thead>${thHtml}</thead><tbody>${awayHtml}${homeHtml}</tbody>`;
@@ -1471,7 +1475,7 @@ fetch('${apiUrl}')
           <th style="width: 150px;">팀 명</th>
           <th>전반 (1H)</th>
           <th>후반 (2H)</th>
-          <th class="scoreboard-total text-danger">최종 (FT)</th>
+          <th class="scoreboard-total" style="color: #111827 !important; font-weight: 800;">최종 (FT)</th>
           <th>점유율</th>
           <th>슈팅 (유효)</th>
           <th>코너킥</th>
@@ -1480,10 +1484,10 @@ fetch('${apiUrl}')
         </tr>`;
 
         let awayHtml = `<tr>
-          <td class="fw-bold text-start ps-3">${m.away_team_name} (원정)</td>
+          <td class="fw-bold text-start ps-3"><span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}</td>
           <td class="fw-semibold">${away1H}</td>
           <td class="fw-semibold">${away2H}</td>
-          <td class="scoreboard-total text-danger fw-bold fs-6">${m.away_score}</td>
+          <td class="scoreboard-total fw-bold fs-6" style="color: #111827 !important; font-weight: 800;">${m.away_score}</td>
           <td>${aStats.possessionPct ? aStats.possessionPct + '%' : '-'}</td>
           <td>${aStats.totalShots || 0} (${aStats.shotsOnTarget || 0})</td>
           <td>${aStats.wonCorners || 0}</td>
@@ -1492,10 +1496,10 @@ fetch('${apiUrl}')
         </tr>`;
 
         let homeHtml = `<tr>
-          <td class="fw-bold text-start ps-3">${m.home_team_name} (홈)</td>
+          <td class="fw-bold text-start ps-3"><span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}</td>
           <td class="fw-semibold">${home1H}</td>
           <td class="fw-semibold">${home2H}</td>
-          <td class="scoreboard-total text-danger fw-bold fs-6">${m.home_score}</td>
+          <td class="scoreboard-total fw-bold fs-6" style="color: #111827 !important; font-weight: 800;">${m.home_score}</td>
           <td>${hStats.possessionPct ? hStats.possessionPct + '%' : '-'}</td>
           <td>${hStats.totalShots || 0} (${hStats.shotsOnTarget || 0})</td>
           <td>${hStats.wonCorners || 0}</td>
@@ -1522,26 +1526,26 @@ fetch('${apiUrl}')
 
       let thHtml = '<tr><th style="width: 140px;">팀 명</th>';
       inKeys.forEach(k => { thHtml += `<th>${k}</th>`; });
-      thHtml += '<th class="scoreboard-total text-danger">R</th><th class="scoreboard-total">H</th><th class="scoreboard-total">E</th><th class="scoreboard-total">B</th></tr>';
+      thHtml += '<th class="scoreboard-total" style="color: #111827 !important; font-weight: 800;">R</th><th class="scoreboard-total">H</th><th class="scoreboard-total">E</th><th class="scoreboard-total">B</th></tr>';
 
       // 초공 (Away) 먼저 표시
-      let awayHtml = `<tr><td class="fw-bold text-start ps-3">${m.away_team_name} (원정)</td>`;
+      let awayHtml = `<tr><td class="fw-bold text-start ps-3"><span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}</td>`;
       inKeys.forEach(k => {
         const v = innings[k].away !== undefined ? innings[k].away : '-';
         awayHtml += `<td>${v}</td>`;
       });
-      awayHtml += `<td class="scoreboard-total text-danger fw-bold fs-6">${summary.away.R}</td>`;
+      awayHtml += `<td class="scoreboard-total fw-bold fs-6" style="color: #111827 !important; font-weight: 800;">${summary.away.R}</td>`;
       awayHtml += `<td class="scoreboard-total">${summary.away.H}</td>`;
       awayHtml += `<td class="scoreboard-total">${summary.away.E}</td>`;
       awayHtml += `<td class="scoreboard-total">${summary.away.B}</td></tr>`;
 
       // 말공 (Home)
-      let homeHtml = `<tr><td class="fw-bold text-start ps-3">${m.home_team_name} (홈)</td>`;
+      let homeHtml = `<tr><td class="fw-bold text-start ps-3"><span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}</td>`;
       inKeys.forEach(k => {
         const v = innings[k].home !== undefined ? innings[k].home : '-';
         homeHtml += `<td>${v}</td>`;
       });
-      homeHtml += `<td class="scoreboard-total text-danger fw-bold fs-6">${summary.home.R}</td>`;
+      homeHtml += `<td class="scoreboard-total fw-bold fs-6" style="color: #111827 !important; font-weight: 800;">${summary.home.R}</td>`;
       homeHtml += `<td class="scoreboard-total">${summary.home.H}</td>`;
       homeHtml += `<td class="scoreboard-total">${summary.home.E}</td>`;
       homeHtml += `<td class="scoreboard-total">${summary.home.B}</td></tr>`;
@@ -1622,7 +1626,7 @@ fetch('${apiUrl}')
             <th style="width: 60px;">포지션</th>
             <th>선수명</th>
             <th>출전시간</th>
-            <th class="text-danger fw-bold">득점 (PTS)</th>
+            <th class="fw-bold" style="color: #111827;">득점 (PTS)</th>
             <th>야투 (FGM-A)</th>
             <th>야투율 (FG%)</th>
             <th>3점 (3PM-A)</th>
@@ -1635,22 +1639,22 @@ fetch('${apiUrl}')
             <th>턴오버 (TO)</th>
             <th>파울 (PF)</th>
             <th>득실차 (+/-)</th>
-            <th class="bg-primary-subtle text-primary fw-bold text-center">선수 롤링 지표</th>
+            <th class="fw-bold text-center" style="background: #ffffff; color: #111827; border: 1px solid #d1d5db;">선수 롤링 지표</th>
           </tr>
         `;
         startersHead.innerHTML = headerHtml;
         benchHead.innerHTML = headerHtml;
       } else {
         const headerHtml = `
-          <tr class="table-dark">
+          <tr class="table-light" style="background: #ffffff; color: #111827; border-bottom: 2px solid #111827;">
             <th style="width: 50px;">팀</th>
             <th style="width: 60px;">포지션</th>
             <th>선수명</th>
             <th>출전시간</th>
-            <th class="text-danger fw-bold">득점 (PTS)</th>
-            <th class="text-danger fw-bold" title="진짜 슛 효율 (True Shooting %)">TS%</th>
-            <th class="text-primary fw-bold" title="유효 야투율 (Effective FG%)">eFG%</th>
-            <th class="text-success fw-bold" title="홀린저 경기 종합 기여도">Game Score</th>
+            <th class="fw-bold" style="color: #111827;">득점 (PTS)</th>
+            <th class="fw-bold" style="color: #111827;" title="진짜 슛 효율 (True Shooting %)">TS%</th>
+            <th class="fw-bold" style="color: #111827;" title="유효 야투율 (Effective FG%)">eFG%</th>
+            <th class="fw-bold" style="color: #111827;" title="홀린저 경기 종합 기여도">Game Score</th>
             <th>AST/TO 비율</th>
             <th>PTS/36분</th>
             <th>REB/36분</th>
@@ -1670,7 +1674,7 @@ fetch('${apiUrl}')
         const extra = typeof p.extra_stats === 'string' ? JSON.parse(p.extra_stats || '{}') : (p.extra_stats || {});
         const pos = (p.position || 'G').toUpperCase();
         const isStarter = extra.starter === true || (idx < 5 && extra.starter === undefined);
-        const teamBadge = p.team_name === homeTeam ? '<span class="badge bg-primary-subtle text-primary border">홈</span>' : '<span class="badge bg-danger-subtle text-danger border">원정</span>';
+        const teamBadge = p.team_name === homeTeam ? '<span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[홈] ' + p.team_name + '</span>' : '<span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[원정] ' + p.team_name + '</span>';
 
         const pts = p.points || extra.pts || 0;
         const minutes = p.minutes_played || extra.minutes || 0;
@@ -1722,17 +1726,17 @@ fetch('${apiUrl}')
               <td><span class="badge bg-secondary">${pos}</span></td>
               <td class="fw-bold text-start ps-3">${p.player_name}</td>
               <td>${minStr}</td>
-              <td class="fw-bold text-danger fs-6">${pts}</td>
+              <td class="fw-bold fs-6" style="color: #111827 !important;">${pts}</td>
               <td>${fgm}-${fga}</td>
               <td class="fw-semibold">${fgPct}%</td>
               <td>${fg3m}-${fg3a}</td>
-              <td class="fw-semibold text-primary">${fg3Pct}%</td>
+              <td class="fw-semibold" style="color: #111827 !important;">${fg3Pct}%</td>
               <td>${ftm}-${fta} (${ftPct}%)</td>
               <td class="fw-bold">${reb} <small class="text-muted">(${oreb}/${dreb})</small></td>
-              <td class="fw-bold text-primary">${ast}</td>
+              <td class="fw-bold" style="color: #111827 !important;">${ast}</td>
               <td>${stl}</td>
               <td>${blk}</td>
-              <td class="text-danger">${to}</td>
+              <td style="color: #111827 !important;">${to}</td>
               <td>${pf}</td>
               <td>${pmBadge}</td>
               <td>${rollBadge}</td>
@@ -1745,9 +1749,9 @@ fetch('${apiUrl}')
               <td><span class="badge bg-secondary">${pos}</span></td>
               <td class="fw-bold text-start ps-3">${p.player_name}</td>
               <td>${minStr}</td>
-              <td class="fw-bold text-danger fs-6">${pts}</td>
-              <td class="fw-bold text-danger">${tsPct}%</td>
-              <td class="fw-bold text-primary">${efgPct}%</td>
+              <td class="fw-bold fs-6" style="color: #111827 !important;">${pts}</td>
+              <td class="fw-bold" style="color: #111827 !important;">${tsPct}%</td>
+              <td class="fw-bold" style="color: #111827 !important;">${efgPct}%</td>
               <td class="fw-bold text-success">${gameScore}</td>
               <td>${astToRatio}</td>
               <td class="text-muted">${pts36}</td>
@@ -1786,14 +1790,14 @@ fetch('${apiUrl}')
             <th style="width: 60px;">등번호</th>
             <th>선수명</th>
             <th>출전시간</th>
-            <th class="text-danger fw-bold">골 (Goals)</th>
-            <th class="text-primary fw-bold">도움 (Assists)</th>
+            <th class="fw-bold" style="color: #111827;">골 (Goals)</th>
+            <th class="fw-bold" style="color: #111827;">도움 (Assists)</th>
             <th>유효슈팅 (SoT)</th>
             <th>전체슈팅</th>
             <th>파울 (피파울)</th>
             <th>경고</th>
             <th>퇴장</th>
-            <th class="bg-primary-subtle text-primary fw-bold text-center">선수 롤링 지표</th>
+            <th class="fw-bold text-center" style="background: #ffffff; color: #111827; border: 1px solid #d1d5db;">선수 롤링 지표</th>
             <th style="width: 60px;">관리</th>
           </tr>
         `;
@@ -1805,26 +1809,26 @@ fetch('${apiUrl}')
             <th>선수명</th>
             <th>출전시간</th>
             <th class="text-success fw-bold">선방 (Saves)</th>
-            <th class="text-danger fw-bold">실점 (GA)</th>
+            <th class="fw-bold" style="color: #111827;">실점 (GA)</th>
             <th>태클</th>
             <th>가로채기</th>
             <th>걷어내기</th>
             <th>파울</th>
             <th>경고</th>
-            <th class="bg-primary-subtle text-primary fw-bold text-center">선수 롤링 지표</th>
+            <th class="fw-bold text-center" style="background: #ffffff; color: #111827; border: 1px solid #d1d5db;">선수 롤링 지표</th>
             <th style="width: 60px;">관리</th>
           </tr>
         `;
       } else {
         hittersHead.innerHTML = `
-          <tr class="table-dark">
+          <tr class="table-light" style="background: #ffffff; color: #111827; border-bottom: 2px solid #111827;">
             <th style="width: 50px;">팀</th>
             <th style="width: 70px;">포지션</th>
             <th style="width: 60px;">등번호</th>
             <th>선수명</th>
             <th title="기대 득점 (Expected Goals)" class="text-warning">xG</th>
             <th title="기대 어시스트 (Expected Assists)" class="text-warning">xA</th>
-            <th title="유효슈팅 기대 득점 (xG on Target)" class="text-danger">xGOT</th>
+            <th title="유효슈팅 기대 득점 (xG on Target)" style="color: #111827 !important;">xGOT</th>
             <th title="키패스 (Key Passes)" class="text-info">KP</th>
             <th title="전진 패스 (Progressive Passes)">전진패스</th>
             <th title="전진 운반 (Progressive Carries)">전진운반</th>
@@ -1835,7 +1839,7 @@ fetch('${apiUrl}')
           </tr>
         `;
         pitchersHead.innerHTML = `
-          <tr class="table-dark">
+          <tr class="table-light" style="background: #ffffff; color: #111827; border-bottom: 2px solid #111827;">
             <th style="width: 50px;">팀</th>
             <th style="width: 70px;">포지션</th>
             <th style="width: 60px;">등번호</th>
@@ -1861,7 +1865,7 @@ fetch('${apiUrl}')
         const pos = (p.position || '').toUpperCase();
         const pType = (extra.player_type || '').toUpperCase();
         const isDFGK = pType === 'DEFENDER' || pType === 'GOALKEEPER' || pos.includes('GK') || pos.includes('DF') || pos.includes('CB') || pos.includes('LB') || pos.includes('RB') || pos.includes('B');
-        const teamBadge = p.team_name === homeTeam ? '<span class="badge bg-primary-subtle text-primary border">홈</span>' : '<span class="badge bg-danger-subtle text-danger border">원정</span>';
+        const teamBadge = p.team_name === homeTeam ? '<span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[홈] ' + p.team_name + '</span>' : '<span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[원정] ' + p.team_name + '</span>';
         const overrideBadge = p.is_override ? '<span class="badge bg-warning text-dark ms-1">수정</span>' : '';
 
         const goals = extra.goals !== undefined ? extra.goals : (p.points || 0);
@@ -1906,10 +1910,10 @@ fetch('${apiUrl}')
                 <td>${teamBadge}</td>
                 <td><span class="badge ${isGk ? 'bg-warning text-dark' : 'bg-light text-dark border'}">${p.position || (isGk ? 'GK' : 'DF')}</span></td>
                 <td>${p.back_number || '-'}</td>
-                <td class="fw-bold cursor-pointer text-primary" onclick="showPlayerTrendModal('${p.player_name}', 'defender', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
+                <td class="fw-bold cursor-pointer text-dark text-decoration-underline" onclick="showPlayerTrendModal('${p.player_name}', 'defender', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
                 <td>${minutes}</td>
                 <td class="text-success fw-bold">${saves}</td>
-                <td class="text-danger fw-bold">${ga}</td>
+                <td class="fw-bold" style="color: #111827 !important;">${ga}</td>
                 <td>${tackles}</td>
                 <td>${intercepts}</td>
                 <td>${clearances}</td>
@@ -1925,14 +1929,14 @@ fetch('${apiUrl}')
                 <td>${teamBadge}</td>
                 <td><span class="badge ${isGk ? 'bg-warning text-dark' : 'bg-light text-dark border'}">${p.position || (isGk ? 'GK' : 'DF')}</span></td>
                 <td>${p.back_number || '-'}</td>
-                <td class="fw-bold cursor-pointer text-primary" onclick="showPlayerTrendModal('${p.player_name}', 'defender', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
+                <td class="fw-bold cursor-pointer text-dark text-decoration-underline" onclick="showPlayerTrendModal('${p.player_name}', 'defender', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
                 <td class="fw-bold text-warning-emphasis">${psxg}</td>
                 <td class="fw-bold text-success">${prevented}</td>
                 <td class="fw-semibold">${tacklePct}</td>
                 <td>${aerialPct}</td>
                 <td>${intercepts}</td>
                 <td>${blocks}</td>
-                <td class="text-danger fw-bold">${ga}</td>
+                <td class="fw-bold" style="color: #111827 !important;">${ga}</td>
                 <td class="text-center">${rollBadge}</td>
                 <td><button class="btn btn-sm btn-outline-primary" onclick="openPlayerEditModal(${p.id})"><i class="bi bi-pencil-fill"></i></button></td>
               </tr>
@@ -1948,10 +1952,10 @@ fetch('${apiUrl}')
                 <td>${teamBadge}</td>
                 <td><span class="badge bg-light text-dark border">${p.position || 'FW/MF'}</span></td>
                 <td>${p.back_number || '-'}</td>
-                <td class="fw-bold cursor-pointer text-primary" onclick="showPlayerTrendModal('${p.player_name}', 'attacker', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
+                <td class="fw-bold cursor-pointer text-dark text-decoration-underline" onclick="showPlayerTrendModal('${p.player_name}', 'attacker', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
                 <td>${minutes}</td>
-                <td class="text-danger fw-bold fs-6">${goals}</td>
-                <td class="text-primary fw-bold fs-6">${assists}</td>
+                <td class="fw-bold fs-6" style="color: #111827 !important;">${goals}</td>
+                <td class="fw-bold fs-6" style="color: #111827 !important;">${assists}</td>
                 <td class="fw-semibold">${sot}</td>
                 <td>${shots}</td>
                 <td>${foulsC} (${foulsS})</td>
@@ -1967,9 +1971,9 @@ fetch('${apiUrl}')
                 <td>${teamBadge}</td>
                 <td><span class="badge bg-light text-dark border">${p.position || 'FW/MF'}</span></td>
                 <td>${p.back_number || '-'}</td>
-                <td class="fw-bold cursor-pointer text-primary" onclick="showPlayerTrendModal('${p.player_name}', 'attacker', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
-                <td class="fw-bold text-danger fs-6">${calcXg}</td>
-                <td class="fw-bold text-primary fs-6">${calcXa}</td>
+                <td class="fw-bold cursor-pointer text-dark text-decoration-underline" onclick="showPlayerTrendModal('${p.player_name}', 'attacker', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
+                <td class="fw-bold fs-6" style="color: #111827 !important;">${calcXg}</td>
+                <td class="fw-bold fs-6" style="color: #111827 !important;">${calcXa}</td>
                 <td class="fw-semibold text-warning-emphasis">${calcXgot}</td>
                 <td class="fw-bold text-success">${kp}</td>
                 <td>${progP}</td>
@@ -2043,7 +2047,7 @@ fetch('${apiUrl}')
         `;
       } else {
         hittersHead.innerHTML = `
-          <tr class="table-dark">
+          <tr class="table-light" style="background: #ffffff; color: #111827; border-bottom: 2px solid #111827;">
             <th style="width: 50px;">팀</th>
             <th style="width: 70px;">포지션</th>
             <th style="width: 60px;">등번호</th>
@@ -2068,7 +2072,7 @@ fetch('${apiUrl}')
           </tr>
         `;
         pitchersHead.innerHTML = `
-          <tr class="table-dark">
+          <tr class="table-light" style="background: #ffffff; color: #111827; border-bottom: 2px solid #111827;">
             <th style="width: 50px;">팀</th>
             <th style="width: 70px;">포지션</th>
             <th style="width: 60px;">등번호</th>
@@ -2100,7 +2104,7 @@ fetch('${apiUrl}')
         const extra = p.extra_stats || {};
         const isPitcher = extra.type === 'PITCHER' || (p.position && p.position.includes('P'));
         const overrideBadge = p.is_override ? '<span class="badge bg-warning text-dark ms-1">수정</span>' : '';
-        const teamBadge = p.team_name === homeTeam ? '<span class="badge bg-primary-subtle text-primary border">홈</span>' : '<span class="badge bg-danger-subtle text-danger border">원정</span>';
+        const teamBadge = p.team_name === homeTeam ? '<span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[홈] ' + p.team_name + '</span>' : '<span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[원정] ' + p.team_name + '</span>';
 
         const pAnalytics = currentMatchRolling[p.id] || {};
         const sMetrics = pAnalytics.sabermetrics || {};
@@ -2161,14 +2165,14 @@ fetch('${apiUrl}')
                 <td>${teamBadge}</td>
                 <td><span class="badge bg-light text-dark border">${p.position || '투수'}</span></td>
                 <td>${p.back_number || '-'}</td>
-                <td class="fw-bold cursor-pointer text-primary" onclick="showPlayerTrendModal('${p.player_name}', 'pitcher', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
-                <td class="fw-semibold text-primary">${extra.ip || '-'}</td>
+                <td class="fw-bold cursor-pointer text-dark text-decoration-underline" onclick="showPlayerTrendModal('${p.player_name}', 'pitcher', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
+                <td class="fw-semibold" style="color: #111827 !important;">${extra.ip || '-'}</td>
                 <td>${extra.np || '-'}</td>
                 <td>${extra.h !== undefined ? extra.h : '-'}</td>
                 <td>${extra.r !== undefined ? extra.r : '-'}</td>
                 <td>${extra.er !== undefined ? extra.er : '-'}</td>
                 <td>${extra.bb !== undefined ? extra.bb : '-'}</td>
-                <td class="text-danger fw-bold">${extra.so !== undefined ? extra.so : p.points}</td>
+                <td class="fw-bold" style="color: #111827 !important;">${extra.so !== undefined ? extra.so : p.points}</td>
                 <td>${extra.hr !== undefined ? extra.hr : '-'}</td>
                 <td>${extra.era || '-'}</td>
                 <td>${extra.whip || '-'}</td>
@@ -2187,12 +2191,12 @@ fetch('${apiUrl}')
                 <td>${teamBadge}</td>
                 <td><span class="badge bg-light text-dark border">${p.position || '투수'}</span></td>
                 <td>${p.back_number || '-'}</td>
-                <td class="fw-bold cursor-pointer text-primary" onclick="showPlayerTrendModal('${p.player_name}', 'pitcher', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
+                <td class="fw-bold cursor-pointer text-dark text-decoration-underline" onclick="showPlayerTrendModal('${p.player_name}', 'pitcher', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
                 <td class="fw-bold text-warning-emphasis">${saberWar}</td>
-                <td class="fw-bold text-danger">${saberFip}</td>
+                <td class="fw-bold" style="color: #111827 !important;">${saberFip}</td>
                 <td>${saberDice}</td>
                 <td class="fw-semibold">${saberWhip}</td>
-                <td class="fw-bold text-primary">${saberKBBPct}</td>
+                <td class="fw-bold" style="color: #111827 !important;">${saberKBBPct}</td>
                 <td class="text-info-emphasis fw-bold">${saberSwStr}</td>
                 <td class="fw-semibold">${saberRV}</td>
                 <td>${saberOppEV}</td>
@@ -2266,13 +2270,13 @@ fetch('${apiUrl}')
                 <td>${teamBadge}</td>
                 <td><span class="badge bg-light text-dark border">${p.position || '타자'}</span></td>
                 <td>${p.back_number || '-'}</td>
-                <td class="fw-bold cursor-pointer text-primary" onclick="showPlayerTrendModal('${p.player_name}', 'hitter', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
+                <td class="fw-bold cursor-pointer text-dark text-decoration-underline" onclick="showPlayerTrendModal('${p.player_name}', 'hitter', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
                 <td>${extra.ab !== undefined ? extra.ab : p.shots}</td>
                 <td>${extra.r !== undefined ? extra.r : '-'}</td>
-                <td class="text-primary fw-bold">${extra.h !== undefined ? extra.h : '-'}</td>
+                <td class="fw-bold" style="color: #111827 !important;">${extra.h !== undefined ? extra.h : '-'}</td>
                 <td>${extra['2b'] !== undefined ? extra['2b'] : '-'}</td>
                 <td>${extra['3b'] !== undefined ? extra['3b'] : '-'}</td>
-                <td class="text-danger fw-bold">${extra.hr !== undefined ? extra.hr : '-'}</td>
+                <td class="fw-bold" style="color: #111827 !important;">${extra.hr !== undefined ? extra.hr : '-'}</td>
                 <td class="text-success fw-bold">${extra.rbi !== undefined ? extra.rbi : p.points}</td>
                 <td>${extra.bb !== undefined ? extra.bb : '-'}</td>
                 <td>${extra.so !== undefined ? extra.so : '-'}</td>
@@ -2293,13 +2297,13 @@ fetch('${apiUrl}')
                 <td>${teamBadge}</td>
                 <td><span class="badge bg-light text-dark border">${p.position || '타자'}</span></td>
                 <td>${p.back_number || '-'}</td>
-                <td class="fw-bold cursor-pointer text-primary" onclick="showPlayerTrendModal('${p.player_name}', 'hitter', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
+                <td class="fw-bold cursor-pointer text-dark text-decoration-underline" onclick="showPlayerTrendModal('${p.player_name}', 'hitter', '${p.team_name}')">${p.player_name}${overrideBadge}</td>
                 <td class="fw-bold text-warning-emphasis">${sWrcPlus}</td>
                 <td class="fw-bold text-success-emphasis">${sWar}</td>
-                <td class="fw-bold text-danger">${sWoba}</td>
+                <td class="fw-bold" style="color: #111827 !important;">${sWoba}</td>
                 <td class="fw-semibold">${sIso}</td>
                 <td>${sBabip}</td>
-                <td class="fw-bold text-primary">${sRc}</td>
+                <td class="fw-bold" style="color: #111827 !important;">${sRc}</td>
                 <td>${sWraa}</td>
                 <td>${sGpa}</td>
                 <td class="text-info-emphasis">${sEV}</td>
@@ -2632,10 +2636,10 @@ fetch('${apiUrl}')
           let trendBadge = '<span class="badge bg-secondary">보통</span>';
           let borderClass = 'border';
           if (pts >= 25 || gs >= 20) {
-            trendBadge = '<span class="badge bg-danger">🔥 득점 폭발</span>';
+            trendBadge = '<span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800;">🔥 득점 폭발</span>';
             borderClass = 'border-danger border-2';
           } else if (pts >= 18 || gs >= 15) {
-            trendBadge = '<span class="badge bg-primary">⚡ 에이스 활약</span>';
+            trendBadge = '<span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800;">⚡ 에이스 활약</span>';
             borderClass = 'border-primary border-2';
           }
 
@@ -2650,19 +2654,19 @@ fetch('${apiUrl}')
                   <div class="row g-1 mb-2">
                     <div class="col-4">
                       <div class="text-muted" style="font-size: 0.68rem;">평균득점</div>
-                      <div class="fw-bold text-danger fs-5">${pts}</div>
+                      <div class="fw-bold fs-5" style="color: #111827 !important;">${pts}</div>
                     </div>
                     <div class="col-4">
                       <div class="text-muted" style="font-size: 0.68rem;">리바운드</div>
-                      <div class="fw-bold text-primary fs-5">${reb}</div>
+                      <div class="fw-bold fs-5" style="color: #111827 !important;">${reb}</div>
                     </div>
                     <div class="col-4">
                       <div class="text-muted" style="font-size: 0.68rem;">어시스트</div>
-                      <div class="fw-bold text-success fs-5">${ast}</div>
+                      <div class="fw-bold fs-5" style="color: #111827 !important;">${ast}</div>
                     </div>
                   </div>
                   <div class="row g-1 mb-1 text-muted" style="font-size: 0.72rem;">
-                    <div class="col-6">TS% (진짜효율): <b class="text-danger">${ts}</b></div>
+                    <div class="col-6">TS% (진짜효율): <b style="color: #111827 !important;">${ts}</b></div>
                     <div class="col-6">eFG% (유효야투): <b class="text-primary">${efg}</b></div>
                   </div>
                   <div class="row g-1 mb-1 text-muted" style="font-size: 0.72rem;">
@@ -2703,10 +2707,10 @@ fetch('${apiUrl}')
           let trendBadge = '<span class="badge bg-secondary">보통</span>';
           let borderClass = 'border';
           if (goals >= 2 || parseFloat(xg) >= 1.5) {
-            trendBadge = '<span class="badge bg-danger">🔥 폼 절정</span>';
+            trendBadge = '<span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800;">🔥 폼 절정</span>';
             borderClass = 'border-danger border-2';
           } else if (parseFloat(xg) >= 0.8) {
-            trendBadge = '<span class="badge bg-primary">⚡ 활약</span>';
+            trendBadge = '<span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800;">⚡ 활약</span>';
             borderClass = 'border-primary border-2';
           }
 
@@ -2721,11 +2725,11 @@ fetch('${apiUrl}')
                   <div class="row g-1 mb-2">
                     <div class="col-3">
                       <div class="text-muted" style="font-size: 0.68rem;">xG</div>
-                      <div class="fw-bold text-danger fs-6">${xg}</div>
+                      <div class="fw-bold fs-6" style="color: #111827 !important;">${xg}</div>
                     </div>
                     <div class="col-3">
                       <div class="text-muted" style="font-size: 0.68rem;">xA</div>
-                      <div class="fw-bold text-primary fs-6">${xa}</div>
+                      <div class="fw-bold fs-6" style="color: #111827 !important;">${xa}</div>
                     </div>
                     <div class="col-3">
                       <div class="text-muted" style="font-size: 0.68rem;">xGOT</div>
@@ -2733,7 +2737,7 @@ fetch('${apiUrl}')
                     </div>
                     <div class="col-3">
                       <div class="text-muted" style="font-size: 0.68rem;">KP</div>
-                      <div class="fw-bold text-success fs-6">${kp}</div>
+                      <div class="fw-bold fs-6" style="color: #111827 !important;">${kp}</div>
                     </div>
                   </div>
                   <div class="row g-1 mb-1 text-muted" style="font-size: 0.72rem;">
@@ -2742,7 +2746,7 @@ fetch('${apiUrl}')
                   </div>
                   <div class="row g-1 mb-1 text-muted" style="font-size: 0.72rem;">
                     <div class="col-6">유효슛율: <b class="text-primary">${sotPct}</b></div>
-                    <div class="col-6">전환율: <b class="text-danger">${convPct}</b></div>
+                    <div class="col-6">전환율: <b style="color: #111827 !important;">${convPct}</b></div>
                   </div>
                   <hr class="my-1">
                   <div class="small text-secondary" style="font-size: 0.72rem;">
@@ -2763,7 +2767,7 @@ fetch('${apiUrl}')
           let trendBadge = '<span class="badge bg-secondary">보통</span>';
           let borderClass = 'border';
           if (prevented !== '-' && parseFloat(prevented) > 0) {
-            trendBadge = '<span class="badge bg-success">⚡ 선방 방어</span>';
+            trendBadge = '<span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800;">⚡ 선방 방어</span>';
             borderClass = 'border-success border-2';
           }
 
@@ -2782,7 +2786,7 @@ fetch('${apiUrl}')
                     </div>
                     <div class="col-6">
                       <div class="text-muted" style="font-size: 0.68rem;">방어골(Prevented)</div>
-                      <div class="fw-bold text-success fs-6">${prevented}</div>
+                      <div class="fw-bold fs-6" style="color: #111827 !important;">${prevented}</div>
                     </div>
                   </div>
                   <div class="row g-1 mb-1 text-muted" style="font-size: 0.72rem;">
@@ -2791,7 +2795,7 @@ fetch('${apiUrl}')
                   </div>
                   <hr class="my-1">
                   <div class="small text-secondary" style="font-size: 0.72rem;">
-                    선방: <b class="text-success">${saves}</b> | 실점: <b class="text-danger">${ga}</b>
+                    선방: <b class="text-success">${saves}</b> | 실점: <b style="color: #111827 !important;">${ga}</b>
                   </div>
                 </div>
               </div>
@@ -2818,10 +2822,10 @@ fetch('${apiUrl}')
           let trendBadge = '<span class="badge bg-secondary">보통</span>';
           let borderClass = 'border';
           if (trend === 'DOMINANT') {
-            trendBadge = '<span class="badge bg-success">⚡ 짠물투</span>';
+            trendBadge = '<span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800;">⚡ 짠물투</span>';
             borderClass = 'border-success border-2';
           } else if (trend === 'STRUGGLING') {
-            trendBadge = '<span class="badge bg-danger">⚠️ 난조</span>';
+            trendBadge = '<span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800;">⚠️ 난조</span>';
             borderClass = 'border-danger border-2';
           }
 
@@ -2836,11 +2840,11 @@ fetch('${apiUrl}')
                   <div class="row g-1 mb-2">
                     <div class="col-3">
                       <div class="text-muted" style="font-size: 0.68rem;">ERA</div>
-                      <div class="fw-bold text-danger fs-6">${era}</div>
+                      <div class="fw-bold fs-6" style="color: #111827 !important;">${era}</div>
                     </div>
                     <div class="col-3">
                       <div class="text-muted" style="font-size: 0.68rem;">FIP</div>
-                      <div class="fw-bold text-primary fs-6">${fip}</div>
+                      <div class="fw-bold fs-6" style="color: #111827 !important;">${fip}</div>
                     </div>
                     <div class="col-3">
                       <div class="text-muted" style="font-size: 0.68rem;">WHIP</div>
@@ -2892,10 +2896,10 @@ fetch('${apiUrl}')
           let trendBadge = '<span class="badge bg-secondary">보통</span>';
           let borderClass = 'border';
           if (trend === 'HOT') {
-            trendBadge = '<span class="badge bg-danger">🔥 맹타</span>';
+            trendBadge = '<span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800;">🔥 맹타</span>';
             borderClass = 'border-danger border-2';
           } else if (trend === 'COLD') {
-            trendBadge = '<span class="badge bg-info-subtle text-primary border">❄️ 슬럼프</span>';
+            trendBadge = '<span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800;">❄️ 슬럼프</span>';
             borderClass = 'border-info border-2';
           }
 
@@ -2910,7 +2914,7 @@ fetch('${apiUrl}')
                   <div class="row g-1 mb-2">
                     <div class="col-3">
                       <div class="text-muted" style="font-size: 0.68rem;">타율</div>
-                      <div class="fw-bold text-danger fs-6">${avg}</div>
+                      <div class="fw-bold fs-6" style="color: #111827 !important;">${avg}</div>
                     </div>
                     <div class="col-3">
                       <div class="text-muted" style="font-size: 0.68rem;">wRC+</div>
@@ -2918,7 +2922,7 @@ fetch('${apiUrl}')
                     </div>
                     <div class="col-3">
                       <div class="text-muted" style="font-size: 0.68rem;">wOBA</div>
-                      <div class="fw-bold text-primary fs-6">${woba}</div>
+                      <div class="fw-bold fs-6" style="color: #111827 !important;">${woba}</div>
                     </div>
                     <div class="col-3">
                       <div class="text-muted" style="font-size: 0.68rem;">WAR</div>
@@ -2934,7 +2938,7 @@ fetch('${apiUrl}')
                   <div class="row g-1 mb-1 text-muted" style="font-size: 0.72rem;">
                     <div class="col-4">타구속도: <b class="text-primary">${ev}</b></div>
                     <div class="col-4">발사각: <b class="text-dark">${la}</b></div>
-                    <div class="col-4">배럴%: <b class="text-danger">${brl}</b></div>
+                    <div class="col-4">배럴%: <b style="color: #111827 !important;">${brl}</b></div>
                   </div>
                   <hr class="my-1">
                   <div class="small text-secondary" style="font-size: 0.72rem;">
@@ -3011,16 +3015,16 @@ fetch('${apiUrl}')
               <td>${l.match_date}</td>
               <td>${l.opponent || '-'}</td>
               <td>${l.minutes ? l.minutes + "분" : "-"}</td>
-              <td class="fw-bold text-danger">${l.pts || 0}</td>
+              <td class="fw-bold" style="color: #111827;">${l.pts || 0}</td>
               <td><b>${l.reb || 0}</b> <span class="small text-muted">(${l.oreb || 0}/${l.dreb || 0})</span></td>
-              <td class="fw-bold text-primary">${l.ast || 0}</td>
+              <td class="fw-bold" style="color: #111827;">${l.ast || 0}</td>
               <td>${l.stl || 0}</td>
               <td>${l.blk || 0}</td>
-              <td class="text-danger">${l.to || 0}</td>
+              <td style="color: #111827;">${l.to || 0}</td>
               <td>${l.fg_str || '-'} (${l.fg_pct || 0}%)</td>
               <td>${l.fg3_str || '-'} (${l.fg3_pct || 0}%)</td>
               <td>${l.ft_str || '-'} (${l.ft_pct || 0}%)</td>
-              <td class="fw-bold text-danger">${l.ts_pct || 0}%</td>
+              <td class="fw-bold" style="color: #111827;">${l.ts_pct || 0}%</td>
               <td class="fw-bold text-success">${l.game_score || 0}</td>
               <td><span class="badge ${l.plus_minus >= 0 ? 'bg-success' : 'bg-danger'}">${l.plus_minus > 0 ? '+' + l.plus_minus : l.plus_minus}</span></td>
             </tr>`;
@@ -3036,10 +3040,10 @@ fetch('${apiUrl}')
               <td>${l.match_date}</td>
               <td>${l.opponent || '-'}</td>
               <td>${l.minutes ? l.minutes + "'" : "90'"}</td>
-              <td class="fw-bold text-danger">${l.goals || 0}</td>
-              <td class="fw-bold text-primary">${l.assists || 0}</td>
-              <td class="fw-bold text-danger">${l.xg || '0.00'}</td>
-              <td class="fw-bold text-primary">${l.xa || '0.00'}</td>
+              <td class="fw-bold" style="color: #111827;">${l.goals || 0}</td>
+              <td class="fw-bold" style="color: #111827;">${l.assists || 0}</td>
+              <td class="fw-bold" style="color: #111827;">${l.xg || '0.00'}</td>
+              <td class="fw-bold" style="color: #111827;">${l.xa || '0.00'}</td>
               <td>${l.shots || 0} (${l.sot || 0})</td>
               <td class="fw-bold text-success">${l.kp || 0}</td>
               <td>${l.saves || 0} / ${l.goals_conceded || 0}</td>
@@ -3056,11 +3060,11 @@ fetch('${apiUrl}')
             logsHtml += `<tr>
               <td>${l.match_date}</td>
               <td>${l.opponent || '-'}</td>
-              <td class="fw-bold text-primary">${l.ip_str || '-'}</td>
+              <td class="fw-bold" style="color: #111827;">${l.ip_str || '-'}</td>
               <td>${l.np || 0}</td>
               <td>${l.h || 0}</td>
               <td>${l.r || 0}</td>
-              <td class="fw-bold text-danger">${l.er || 0}</td>
+              <td class="fw-bold" style="color: #111827;">${l.er || 0}</td>
               <td>${l.bb || 0}</td>
               <td class="fw-bold text-success">${l.so || 0}</td>
               <td>${l.hr || 0}</td>
@@ -3079,11 +3083,11 @@ fetch('${apiUrl}')
               <td>${l.opponent || '-'}</td>
               <td>${l.ab || 0}</td>
               <td>${l.r || 0}</td>
-              <td class="fw-bold text-primary">${l.h || 0}</td>
+              <td class="fw-bold" style="color: #111827;">${l.h || 0}</td>
               <td>${l['2b'] || 0}</td>
               <td>${l['3b'] || 0}</td>
-              <td class="fw-bold text-danger">${l.hr || 0}</td>
-              <td class="fw-bold text-success">${l.rbi || 0}</td>
+              <td class="fw-bold" style="color: #111827;">${l.hr || 0}</td>
+              <td class="fw-bold" style="color: #111827;">${l.rbi || 0}</td>
               <td>${l.bb || 0}</td>
               <td>${l.so || 0}</td>
               <td>${l.sb || 0}</td>
