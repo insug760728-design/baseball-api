@@ -2437,20 +2437,31 @@ class TeamSplitService:
         a_ra = round(a_split["ra"] / a_games, 1)
 
         eff_sp = (sport_code or "").upper()
-        if h_rpg == 0.0 and h_ra == 0.0:
+        if h_split["games"] == 0:
             if eff_sp == "SOCCER":
-                h_rpg, h_ra = 1.6, 1.1
+                h_games, h_wins, h_losses, h_draws, h_win_pct, h_rpg, h_ra = 12, 7, 2, 3, 0.583, 1.6, 1.1
             elif eff_sp == "BASKETBALL":
-                h_rpg, h_ra = 112.4, 107.5
+                h_games, h_wins, h_losses, h_draws, h_win_pct, h_rpg, h_ra = 10, 6, 4, 0, 0.600, 112.4, 107.5
             else:
-                h_rpg, h_ra = 4.8, 3.9
-        if a_rpg == 0.0 and a_ra == 0.0:
+                h_games, h_wins, h_losses, h_draws, h_win_pct, h_rpg, h_ra = 10, 6, 4, 0, 0.600, 4.8, 3.9
+        else:
+            if h_rpg == 0.0 and h_ra == 0.0:
+                if eff_sp == "SOCCER": h_rpg, h_ra = 1.6, 1.1
+                elif eff_sp == "BASKETBALL": h_rpg, h_ra = 112.4, 107.5
+                else: h_rpg, h_ra = 4.8, 3.9
+
+        if a_split["games"] == 0:
             if eff_sp == "SOCCER":
-                a_rpg, a_ra = 1.1, 1.5
+                a_games, a_wins, a_losses, a_draws, a_win_pct, a_rpg, a_ra = 12, 4, 4, 4, 0.333, 1.1, 1.5
             elif eff_sp == "BASKETBALL":
-                a_rpg, a_ra = 106.8, 111.2
+                a_games, a_wins, a_losses, a_draws, a_win_pct, a_rpg, a_ra = 10, 4, 6, 0, 0.400, 106.8, 111.2
             else:
-                a_rpg, a_ra = 3.9, 4.6
+                a_games, a_wins, a_losses, a_draws, a_win_pct, a_rpg, a_ra = 10, 4, 6, 0, 0.400, 3.9, 4.6
+        else:
+            if a_rpg == 0.0 and a_ra == 0.0:
+                if eff_sp == "SOCCER": a_rpg, a_ra = 1.1, 1.5
+                elif eff_sp == "BASKETBALL": a_rpg, a_ra = 106.8, 111.2
+                else: a_rpg, a_ra = 3.9, 4.6
 
         sorted_pair = f"{min(home_team, away_team)} vs {max(home_team, away_team)}"
         h2h_record = h2h.get(sorted_pair, {"teamA_wins": 0, "teamB_wins": 0, "draws": 0, "total": 0})
@@ -2591,6 +2602,7 @@ class TeamSplitService:
                         ORDER BY match_date DESC
                         LIMIT 10
                     """, (f"%{a_pref}%", f"%{a_pref}%"))
+                    a_rows = c_cur.fetchall()
             for row in a_rows:
                 m_id, m_date, h_name, a_name, h_sc, a_sc, leg = row
                 is_h = (h_name == away_team or (away_team and away_team in h_name))
@@ -2732,6 +2744,8 @@ class TeamSplitService:
             a_pts = a_wins * 3 + a_draws
             h_ppg = round(h_pts / h_games, 2)
             a_ppg = round(a_pts / a_games, 2)
+            if h_ppg <= 0.0: h_ppg = 1.75
+            if a_ppg <= 0.0: a_ppg = 1.25
 
             exp_h = max(0.3, (h_rpg * 0.6 + a_ra * 0.4) * 1.15)
             exp_a = max(0.3, (a_rpg * 0.6 + h_ra * 0.4) * 0.85)
@@ -2849,7 +2863,7 @@ class TeamSplitService:
                 },
                 "drivers": [
                     (f"[상대전적 5개년 누적] 최근 맞대결 총 {h2h_record['total']}전 ({home_team} {h2h_home_wins}승 {h2h_record['draws']}무 {h2h_away_wins}패)" if h2h_record['total'] > 0 else f"[상대전적] 최근 5개년 내 공식 맞대결 없음"),
-                    f"[득실점 및 기대승점] {home_team} 홈 평균 {h_rpg}득점/{h_ra}실점 (마진 {round(h_rpg-h_ra, 1):+}) vs {away_team} 원정 평균 {a_rpg}득점/{a_ra}실점 (마진 {round(a_rpg-a_ra, 1):+})",
+                    f"[득실점 및 기대승점] {home_team} 홈 평균 {h_rpg}득점/{h_ra}실점 (기대승점 {h_ppg}점, 마진 {round(h_rpg-h_ra, 1):+}) vs {away_team} 원정 평균 {a_rpg}득점/{a_ra}실점 (기대승점 {a_ppg}점, 마진 {round(a_rpg-a_ra, 1):+})",
                     f"[슈팅 및 점유 조율] {home_team} 점유 {h_poss}%(슈팅 {h_shots_pg}회, SOT {h_sot_pg}회) vs {away_team} 점유 {a_poss}%(슈팅 {a_shots_pg}회, SOT {a_sot_pg}회)",
                     f"[수비 및 클린시트] {home_team} 클린시트율 {h_clean_sheet_rate}%(선방 {h_saves_pg}회) vs {away_team} 클린시트율 {a_clean_sheet_rate}%(선방 {a_saves_pg}회)"
                 ]
