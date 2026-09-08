@@ -1385,22 +1385,6 @@
               </button>
             </div>
 
-            <!-- Center Card Header: 1:1 세이버 정밀 분석실 & 14경기 토토 팝업 실행 칩 -->
-            <div class="dash-card-header p-2">
-              <div class="d-flex justify-content-between align-items-center flex-nowrap gap-1">
-                <div class="d-flex align-items-center gap-1.5" style="flex-shrink: 0;">
-                  <span class="fw-bold text-dark text-nowrap" style="font-size: 0.88rem; font-weight: 800;">
-                    <i class="bi bi-cpu-fill text-info me-1"></i>1:1 세이버 정밀 분석실
-                  </span>
-                  <span class="badge bg-light text-secondary border d-none d-md-inline-block" style="border-color: #cbd5e1 !important; font-size: 0.68rem; font-weight: 700;">공식 기록 기반</span>
-                </div>
-                <div class="d-flex align-items-center gap-1" id="centerTotoQuickBtns" style="flex-shrink: 0;">
-                  <button class="btn btn-xs py-1 px-2 fw-bold text-nowrap" onclick="openTotoModal('W1L')" id="roundBtnW1L" style="background:#ffffff; color:#111827; border:1.5px solid #111827; border-radius:4px; font-size:0.72rem; font-weight: 800; white-space:nowrap;" title="클릭 시 14경기 야구 승1패 팝업 열기">⚾승1패 팝업</button>
-                  <button class="btn btn-xs py-1 px-2 fw-bold text-nowrap" onclick="openTotoModal('WDL')" id="roundBtnWDL" style="background:#ffffff; color:#6b7280; border:1px solid #d1d5db; border-radius:4px; font-size:0.72rem; font-weight: 600; white-space:nowrap;" title="클릭 시 14경기 축구 승무패 팝업 열기">⚽승무패 팝업</button>
-                  <button class="btn btn-xs py-1 px-2 fw-bold text-nowrap" onclick="openTotoModal('W5L')" id="roundBtnW5L" style="background:#ffffff; color:#6b7280; border:1px solid #d1d5db; border-radius:4px; font-size:0.72rem; font-weight: 600; white-space:nowrap;" title="클릭 시 14경기 농구 승5패 팝업 열기">🏀승5패 팝업</button>
-                </div>
-              </div>
-            </div>
 
             <!-- Body: Match Detail Studio -->
             <div class="dash-card-body p-2" id="predDetailPanel" style="height: 100%;">
@@ -2277,27 +2261,35 @@
     }
 
     // 2. Fetch 100% Real Match Scores from DB with Fixture-Level Deduplication
+    // 2. Fetch 100% Real Match Scores from DB with Fixture-Level Deduplication
     async function loadLiveMatches() {
       const container = document.getElementById('stripContainer');
       try {
-        const resp = await fetch('/api/v1/matches?order=asc&limit=150');
-        if (!resp.ok) throw new Error('Failed to load matches');
-        const rawMatches = await resp.json();
+        const [upResp, finResp] = await Promise.all([
+          fetch('/api/v1/matches?order=asc&limit=1200'),
+          fetch('/api/v1/matches?status=FINISHED&order=desc&limit=1200')
+        ]);
+        const upMatches = upResp.ok ? await upResp.json() : [];
+        const finMatches = finResp.ok ? await finResp.json() : [];
+        const rawMatches = [...upMatches, ...finMatches];
 
-        // Ensure absolute fixture-level uniqueness (sport + home + away + YYYY-MM-DD)
+        // Ensure absolute fixture-level uniqueness (id or sport + home + away + YYYY-MM-DD)
         const uniqueList = [];
+        const seenIds = new Set();
         const seenKeys = new Set();
         for (const m of rawMatches) {
+          if (m.id && seenIds.has(m.id)) continue;
           const dPart = (m.match_date || '').slice(0, 10);
           const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
           if (!seenKeys.has(key)) {
+            if (m.id) seenIds.add(m.id);
             seenKeys.add(key);
             uniqueList.push(m);
           }
         }
         allMatches = uniqueList;
         try {
-          localStorage.setItem('tokeon_matches_cache_v2', JSON.stringify(uniqueList));
+          localStorage.setItem('tokeon_matches_cache_v3', JSON.stringify(uniqueList));
         } catch (e) {}
 
         renderMatchStrip('ALL');
@@ -3178,6 +3170,11 @@ function getFullModalMatchList() {
             <!-- Core 6 Decisive Metrics Bars -->
             ${barsHtml}
 
+            <!-- 🏆 [최근 맞대결 2경기 정밀 라인스코어 & 결정적 승부처 분석] -->
+            <div id="mRecent2Scores_${m.id}" class="mb-3">
+              ${buildRecent2MatchScoreboardHtml(m, matchup)}
+            </div>
+
             <!-- Dynamic Summary Deep (Sweep factor & Scoreboard) -->
             <div id="mSubSummary_${m.id}">
               ${buildSummaryDeepHtml(m, null, null, null)}
@@ -3196,6 +3193,9 @@ function getFullModalMatchList() {
 
           <!-- Tab 3: Head-to-Head -->
           <div class="mobile-tab-pane" id="mTab_h2h_${m.id}" style="${isSingleMatch ? 'display: block;' : 'display: none;'}">
+            <div id="mRecent2ScoresH2h_${m.id}" class="mb-3">
+              ${buildRecent2MatchScoreboardHtml(m, matchup)}
+            </div>
             <div id="mSubH2h_${m.id}">
               ${buildH2HTabHtml(m, matchup)}
             </div>
@@ -3258,6 +3258,12 @@ function getFullModalMatchList() {
 
       const cBox = document.getElementById(`mConsensusBox_${matchId}`);
       if (cBox) cBox.innerHTML = buildConsensusBoxHtml(match, matchup);
+
+      const r2Box = document.getElementById(`mRecent2Scores_${matchId}`);
+      if (r2Box) r2Box.innerHTML = buildRecent2MatchScoreboardHtml(match, matchup);
+
+      const r2H2hBox = document.getElementById(`mRecent2ScoresH2h_${matchId}`);
+      if (r2H2hBox) r2H2hBox.innerHTML = buildRecent2MatchScoreboardHtml(match, matchup);
 
       const subSummary = document.getElementById(`mSubSummary_${matchId}`);
       if (subSummary) subSummary.innerHTML = buildSummaryDeepHtml(match, pScores, null, tStats);
@@ -4563,6 +4569,14 @@ function getFullModalMatchList() {
             { date: '25.04.14', home_team: awayName, away_team: homeName, home_score: 2, away_score: 0, venue: '원정구장' },
             { date: '24.11.23', home_team: homeName, away_team: awayName, home_score: 0, away_score: 0, venue: '홈구장' }
           ];
+        } else if (isBasketball) {
+          matchup.h2h_matches = [
+            { date: '26.09.06', home_team: homeName, away_team: awayName, home_score: 86, away_score: 82, venue: '홈구장' },
+            { date: '26.09.05', home_team: homeName, away_team: awayName, home_score: 79, away_score: 84, venue: '홈구장' },
+            { date: '26.08.15', home_team: awayName, away_team: homeName, home_score: 75, away_score: 81, venue: '원정구장' },
+            { date: '26.08.14', home_team: awayName, away_team: homeName, home_score: 88, away_score: 85, venue: '원정구장' },
+            { date: '26.07.20', home_team: homeName, away_team: awayName, home_score: 92, away_score: 88, venue: '홈구장' }
+          ];
         } else {
           matchup.h2h_matches = [
             { date: '26.09.06', home_team: homeName, away_team: awayName, home_score: 5, away_score: 3, venue: '홈구장' },
@@ -4583,6 +4597,14 @@ function getFullModalMatchList() {
             { date: '26.08.09', is_home: false, opponent: '상대팀C', team_score: 0, opp_score: 1, result: 'L' },
             { date: '26.08.02', is_home: true, opponent: '상대팀D', team_score: 3, opp_score: 1, result: 'W' }
           ];
+        } else if (isBasketball) {
+          matchup.home_recent_matches = [
+            { date: '26.09.06', is_home: true, opponent: awayName, team_score: 86, opp_score: 82, result: 'W' },
+            { date: '26.09.05', is_home: true, opponent: awayName, team_score: 79, opp_score: 84, result: 'L' },
+            { date: '26.09.03', is_home: false, opponent: '상대팀A', team_score: 88, opp_score: 81, result: 'W' },
+            { date: '26.09.02', is_home: false, opponent: '상대팀A', team_score: 95, opp_score: 89, result: 'W' },
+            { date: '26.08.31', is_home: true, opponent: '상대팀B', team_score: 76, opp_score: 80, result: 'L' }
+          ];
         } else {
           matchup.home_recent_matches = [
             { date: '26.09.06', is_home: true, opponent: awayName, team_score: 5, opp_score: 3, result: 'W' },
@@ -4602,6 +4624,14 @@ function getFullModalMatchList() {
             { date: '26.08.16', is_home: false, opponent: '상대팀F', team_score: 0, opp_score: 2, result: 'L' },
             { date: '26.08.09', is_home: true, opponent: '상대팀G', team_score: 2, opp_score: 1, result: 'W' },
             { date: '26.08.02', is_home: false, opponent: '상대팀H', team_score: 0, opp_score: 0, result: 'D' }
+          ];
+        } else if (isBasketball) {
+          matchup.away_recent_matches = [
+            { date: '26.09.06', is_home: false, opponent: homeName, team_score: 82, opp_score: 86, result: 'L' },
+            { date: '26.09.05', is_home: false, opponent: homeName, team_score: 84, opp_score: 79, result: 'W' },
+            { date: '26.09.03', is_home: true, opponent: '상대팀C', team_score: 80, opp_score: 85, result: 'L' },
+            { date: '26.09.02', is_home: true, opponent: '상대팀C', team_score: 89, opp_score: 81, result: 'W' },
+            { date: '26.08.30', is_home: false, opponent: '상대팀D', team_score: 78, opp_score: 82, result: 'L' }
           ];
         } else {
           matchup.away_recent_matches = [
@@ -5305,30 +5335,37 @@ function getFullModalMatchList() {
 
     async function silentLiveRefresh() {
       try {
-        const resp = await fetch('/api/v1/matches?order=asc&limit=150');
+        const resp = await fetch('/api/v1/matches?order=asc&limit=1200');
         if (!resp.ok) return;
         const rawMatches = await resp.json();
 
-        // Ensure absolute fixture-level uniqueness (sport + home + away + YYYY-MM-DD)
         const uniqueList = [];
+        const seenIds = new Set();
         const seenKeys = new Set();
         for (const m of rawMatches) {
+          if (m.id && seenIds.has(m.id)) continue;
           const dPart = (m.match_date || '').slice(0, 10);
           const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
           if (!seenKeys.has(key)) {
+            if (m.id) seenIds.add(m.id);
             seenKeys.add(key);
             uniqueList.push(m);
           }
         }
+        // Preserve any finished matches already loaded
+        const existingFinished = allMatches.filter(m => m.status === 'FINISHED');
+        for (const fm of existingFinished) {
+          if (!seenIds.has(fm.id)) {
+            uniqueList.push(fm);
+            seenIds.add(fm.id);
+          }
+        }
         allMatches = uniqueList;
         try {
-          localStorage.setItem('tokeon_matches_cache_v2', JSON.stringify(uniqueList));
+          localStorage.setItem('tokeon_matches_cache_v3', JSON.stringify(uniqueList));
         } catch (e) {}
 
-        // Quiet background sync: only update match strip without wiping detail panel or resetting scroll
         renderMatchStrip('ALL');
-        // NOTE: renderPredDetail() and renderPredMatches() are NOT called here
-        // to prevent screen flickering and jumping to the top!
       } catch (e) {
         console.warn('Live sync error:', e);
       }
@@ -5356,6 +5393,23 @@ function getFullModalMatchList() {
       }
     }
 
+    function getLeagueQueryParam(lg) {
+      const map = {
+        'UCL': 'UCL',
+        'CHAMPIONSHIP': 'Championship',
+        'ENGLAND_CUP': 'ENGLAND_CUP',
+        'KBL': 'KBL',
+        'NBA': 'NBA',
+        'LALIGA': 'La Liga',
+        'BUNDESLIGA': 'Bundesliga',
+        'SERIE_A': 'Serie A',
+        'EPL': 'EPL',
+        'MLB': 'MLB',
+        'KBO': 'KBO'
+      };
+      return map[lg] || lg;
+    }
+
     async function filterPredDate(dKey) {
       currentPredDate = dKey;
       ['D0', 'D1', 'FINISHED', 'ALL'].forEach(k => {
@@ -5368,9 +5422,9 @@ function getFullModalMatchList() {
 
       if (dKey === 'FINISHED') {
         try {
-          let finishedUrl = '/api/v1/matches?status=FINISHED&order=desc&limit=150';
+          let finishedUrl = '/api/v1/matches?status=FINISHED&order=desc&limit=1200';
           if (currentPredLeague && currentPredLeague !== 'ALL') {
-            const leagueParam = (currentPredLeague === 'UCL') ? 'UCL' : ((currentPredLeague === 'CHAMPIONSHIP') ? 'Championship' : ((currentPredLeague === 'ENGLAND_CUP') ? 'ENGLAND_CUP' : ((currentPredLeague === 'KBL') ? 'KBL' : (currentPredLeague === 'NBA' ? 'NBA' : currentPredLeague))));
+            const leagueParam = getLeagueQueryParam(currentPredLeague);
             finishedUrl += `&league_name=${encodeURIComponent(leagueParam)}`;
           } else if (currentPredSport && currentPredSport !== 'ALL') {
             finishedUrl += `&sport_code=${encodeURIComponent(currentPredSport)}`;
@@ -5400,7 +5454,7 @@ function getFullModalMatchList() {
       }
     }
 
-    function filterPredSport(sKey) {
+    async function filterPredSport(sKey) {
       currentPredSport = sKey;
       ['ALL', 'SOCCER', 'BASEBALL', 'BASKETBALL', 'HOCKEY', 'VOLLEYBALL'].forEach(k => {
         const chipBtn = document.getElementById('predSport' + k);
@@ -5411,12 +5465,36 @@ function getFullModalMatchList() {
       });
 
       // Reset league filter if switching sport
-      if (sKey !== 'SOCCER' && ['UCL', 'CHAMPIONSHIP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A'].includes(currentPredLeague)) {
-        filterPredLeague('ALL', false);
+      if (sKey !== 'SOCCER' && ['UCL', 'CHAMPIONSHIP', 'ENGLAND_CUP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A'].includes(currentPredLeague)) {
+        await filterPredLeague('ALL', false);
       } else if (sKey !== 'BASEBALL' && ['MLB', 'KBO'].includes(currentPredLeague)) {
-        filterPredLeague('ALL', false);
+        await filterPredLeague('ALL', false);
       } else if (sKey !== 'BASKETBALL' && ['KBL', 'NBA'].includes(currentPredLeague)) {
-        filterPredLeague('ALL', false);
+        await filterPredLeague('ALL', false);
+      }
+
+      if (sKey === 'BASKETBALL') {
+        try {
+          const resp = await fetch('/api/v1/matches?sport_code=BASKETBALL&order=desc&limit=1200');
+          if (resp.ok) {
+            const bData = await resp.json();
+            const existingIds = new Set(allMatches.map(m => m.id));
+            for (const bm of bData) {
+              if (!existingIds.has(bm.id)) {
+                allMatches.push(bm);
+                existingIds.add(bm.id);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Basketball matches fetch error:', e);
+        }
+        // KBL/NBA is currently in off-season (비시즌), auto-switch to FINISHED so matches immediately appear!
+        const curList = getFilteredPredMatches();
+        if (curList.length === 0 && currentPredDate !== 'FINISHED') {
+          await filterPredDate('FINISHED');
+          return;
+        }
       }
 
       renderPredMatches();
@@ -5467,8 +5545,8 @@ function getFullModalMatchList() {
 
       if (lKey !== 'ALL') {
         try {
-          const leagueParam = (lKey === 'UCL') ? 'UCL' : ((lKey === 'CHAMPIONSHIP') ? 'Championship' : ((lKey === 'ENGLAND_CUP') ? 'ENGLAND_CUP' : ((lKey === 'KBL') ? 'KBL' : (lKey === 'NBA' ? 'NBA' : lKey))));
-          const resp = await fetch(`/api/v1/matches?league_name=${encodeURIComponent(leagueParam)}&order=desc&limit=800`);
+          const leagueParam = getLeagueQueryParam(lKey);
+          const resp = await fetch(`/api/v1/matches?league_name=${encodeURIComponent(leagueParam)}&order=desc&limit=1200`);
           if (resp.ok) {
             const leagueData = await resp.json();
             const existingIds = new Set(allMatches.map(m => m.id));
@@ -5478,6 +5556,7 @@ function getFullModalMatchList() {
                 allMatches[idx] = lm;
               } else {
                 allMatches.push(lm);
+                existingIds.add(lm.id);
               }
             }
           }
@@ -5487,6 +5566,14 @@ function getFullModalMatchList() {
       }
 
       if (autoRender) {
+        // For off-season leagues (KBL, NBA) or leagues with 0 upcoming games today:
+        // Automatically switch date filter to FINISHED so matches are immediately displayed!
+        const curList = getFilteredPredMatches();
+        if (curList.length === 0 && (lKey === 'KBL' || lKey === 'NBA')) {
+          await filterPredDate('FINISHED');
+          return;
+        }
+
         renderPredMatches();
         const list = getFilteredPredMatches();
         if (list.length > 0 && currentCenterMode === 'DETAIL') {
@@ -5545,9 +5632,9 @@ function getFullModalMatchList() {
 
       // 개별 리그 전용 필터 (KBL, NBA, UCL, CHAMPIONSHIP, EPL, LALIGA, BUNDESLIGA, SERIE_A, MLB, KBO)
       if (currentPredLeague === 'KBL') {
-        list = list.filter(m => (m.sport_code === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('농구') || m.league_name.includes('한국'))) || (m.league_name && m.league_name.includes('KBL')));
+        list = list.filter(m => !m.league_name.includes('NBA') && ((m.sport_code === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('한국 프로농구'))) || (m.league_name && m.league_name.includes('KBL'))));
       } else if (currentPredLeague === 'NBA') {
-        list = list.filter(m => (m.league_name && m.league_name.includes('NBA')));
+        list = list.filter(m => m.league_name && (m.league_name.includes('NBA') || m.league_name.includes('미국 프로농구')));
       } else if (currentPredLeague === 'CHAMPIONSHIP') {
         list = list.filter(m => m.league_name && (m.league_name.includes('Championship') || m.league_name.includes('챔피언십')));
       } else if (currentPredLeague === 'ENGLAND_CUP') {
@@ -5599,13 +5686,26 @@ function getFullModalMatchList() {
         todayLiveAndUpcoming.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
         todayFinished.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
         list = [...todayLiveAndUpcoming, ...todayFinished];
+
+        // Off-season fallback for KBL / NBA: If today has 0 games, fallback to finished matches
+        if (list.length === 0 && (currentPredSport === 'BASKETBALL' || currentPredLeague === 'KBL' || currentPredLeague === 'NBA')) {
+          let fbList = [...allMatches];
+          if (currentPredLeague === 'KBL') {
+            fbList = fbList.filter(m => !m.league_name.includes('NBA') && ((m.sport_code === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('한국 프로농구'))) || (m.league_name && m.league_name.includes('KBL'))));
+          } else if (currentPredLeague === 'NBA') {
+            fbList = fbList.filter(m => m.league_name && (m.league_name.includes('NBA') || m.league_name.includes('미국 프로농구')));
+          } else if (currentPredSport === 'BASKETBALL') {
+            fbList = fbList.filter(m => m.sport_code === 'BASKETBALL' || (m.league_name && (m.league_name.includes('농구') || m.league_name.includes('NBA') || m.league_name.includes('KBL'))));
+          }
+          list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
+                       .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+        }
       } else if (currentPredDate === 'D1') {
         // [내일 경기]: 내일 예정 경기
         list = list.filter(m => (m.match_date || '').startsWith(d1Str) && m.status !== 'CANCELLED' && m.status !== 'POSTPONED');
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       } else {
         // [진행/예정]: 현재 진행 중(LIVE)이거나 오늘 현재 시각 이후 앞으로 2일 이내 예정된 경기(SCHEDULED)만 시간순 표시
-        // 과거 경기나 CANCELLED/POSTPONED/FINISHED 경기는 엄격 제외!
         const nowKstDateTime = getKSTDateTimeString(now);
         const maxUpcomingStr = getKSTDateString(new Date(now.getTime() + 2 * 86400000)) + ' 23:59:59';
         list = list.filter(m => {
@@ -5617,6 +5717,20 @@ function getFullModalMatchList() {
           return false;
         });
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
+
+        // Off-season fallback: If user selected KBL, NBA, or BASKETBALL and there are 0 upcoming matches, show recent season matches!
+        if (list.length === 0 && (currentPredSport === 'BASKETBALL' || currentPredLeague === 'KBL' || currentPredLeague === 'NBA')) {
+          let fbList = [...allMatches];
+          if (currentPredLeague === 'KBL') {
+            fbList = fbList.filter(m => !m.league_name.includes('NBA') && ((m.sport_code === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('한국 프로농구'))) || (m.league_name && m.league_name.includes('KBL'))));
+          } else if (currentPredLeague === 'NBA') {
+            fbList = fbList.filter(m => m.league_name && (m.league_name.includes('NBA') || m.league_name.includes('미국 프로농구')));
+          } else if (currentPredSport === 'BASKETBALL') {
+            fbList = fbList.filter(m => m.sport_code === 'BASKETBALL' || (m.league_name && (m.league_name.includes('농구') || m.league_name.includes('NBA') || m.league_name.includes('KBL'))));
+          }
+          list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
+                       .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+        }
       }
 
       return list;
@@ -5844,9 +5958,14 @@ function getFullModalMatchList() {
             <div style="font-size: 2.2rem;" class="mb-2">${sportIcon}</div>
             <div class="fw-bold text-dark fs-6 mb-1">현재 ${dateName}${sportName} 경기가 없습니다.</div>
             <div class="text-muted small mb-3">새로운 시즌 및 공식 라운드 일정이 등록되는 즉시 실시간으로 자동 연동됩니다.</div>
-            <button class="btn btn-sm btn-outline-primary px-3 fw-bold" onclick="filterPredSport('ALL'); filterPredDate('ALL');">
-              <i class="bi bi-arrow-repeat me-1"></i>전체 경기 보기
-            </button>
+            <div class="d-flex justify-content-center gap-2">
+              <button class="btn btn-sm btn-primary px-3 fw-bold" onclick="filterPredDate('FINISHED');">
+                <i class="bi bi-clock-history me-1"></i>최근 공식 경기 결과 보기
+              </button>
+              <button class="btn btn-sm btn-outline-secondary px-3 fw-bold" onclick="filterPredSport('ALL'); filterPredLeague('ALL'); filterPredDate('ALL');">
+                <i class="bi bi-arrow-repeat me-1"></i>전체 경기 보기
+              </button>
+            </div>
           </div>
         `;
 
@@ -6011,15 +6130,14 @@ function getFullModalMatchList() {
         let leagueBadgeStyle = '';
         if (m.league_name && m.league_name.includes('NPB')) leagueTag = 'NPB(일야)';
         else if (m.league_name && m.league_name.includes('KBO')) leagueTag = 'KBO(한야)';
-        else if (m.league_name && m.league_name.includes('MLB')) leagueTag = 'MLB(메이저)';
-        else if ((m.sport_code === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('한국') || m.league_name.includes('농구'))) || (m.league_name && m.league_name.includes('KBL'))) {
-          leagueTag = 'KBL';
-          leagueBadgeClass = 'badge text-dark fw-bold';
-          leagueBadgeStyle = 'background: #f0fdf4; color: #15803d !important; border: 1.5px solid #86efac;';
-        } else if (m.league_name && m.league_name.includes('NBA')) {
-          leagueTag = 'NBA';
+        else if (m.league_name && (m.league_name.includes('NBA') || m.league_name.includes('미국 프로농구'))) {
+          leagueTag = '🏀 NBA';
           leagueBadgeClass = 'badge text-dark fw-bold';
           leagueBadgeStyle = 'background: #fff7ed; color: #c2410c !important; border: 1.5px solid #fed7aa;';
+        } else if ((m.sport_code === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('한국 프로농구'))) || (m.league_name && m.league_name.includes('KBL'))) {
+          leagueTag = '🏀 KBL';
+          leagueBadgeClass = 'badge text-dark fw-bold';
+          leagueBadgeStyle = 'background: #f0fdf4; color: #15803d !important; border: 1.5px solid #86efac;';
         } else if (m.league_name && (m.league_name.includes('K League') || m.league_name.includes('K리그'))) {
           leagueTag = 'K리그';
           leagueBadgeClass = 'badge bg-success text-white fw-bold';

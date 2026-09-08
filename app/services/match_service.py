@@ -214,8 +214,35 @@ class MatchService:
         if sport_code and sport_code.upper() not in ["ALL", "NONE", ""]:
             query = query.filter(Match.sport_code == sport_code.upper())
         if league_name:
-            if league_name.upper() in ["ENGLAND_CUP", "FA_CUP", "CARABAO_CUP", "CUP"]:
-                query = query.filter(or_(Match.league_name.contains("FA컵"), Match.league_name.contains("카라바오컵"), Match.league_name.contains("잉글랜드 컵")))
+            ln_u = league_name.upper()
+            if ln_u in ["ENGLAND_CUP", "FA_CUP", "CARABAO_CUP", "CUP"]:
+                query = query.filter(or_(Match.league_name.contains("FA컵"), Match.league_name.contains("카라바오"), Match.league_name.contains("잉글랜드 컵"), Match.league_name.contains("EFL")))
+            elif ln_u in ["LALIGA", "LA_LIGA", "LA LIGA"]:
+                query = query.filter(or_(Match.league_name.contains("라리가"), Match.league_name.contains("La Liga")))
+            elif ln_u in ["BUNDESLIGA", "BUNDES"]:
+                query = query.filter(or_(Match.league_name.contains("분데스"), Match.league_name.contains("Bundesliga")))
+            elif ln_u in ["SERIE_A", "SERIEA", "SERIE", "SERIE A"]:
+                query = query.filter(or_(Match.league_name.contains("세리에"), Match.league_name.contains("Serie A")))
+            elif ln_u in ["LIGUE_1", "LIGUE1", "LIGUE 1"]:
+                query = query.filter(or_(Match.league_name.contains("리그 1"), Match.league_name.contains("Ligue 1")))
+            elif ln_u in ["EREDIVISIE"]:
+                query = query.filter(or_(Match.league_name.contains("에레디비시"), Match.league_name.contains("Eredivisie")))
+            elif ln_u in ["KBL"]:
+                query = query.filter(or_(Match.league_name.contains("KBL"), Match.league_name.contains("한국 프로농구")))
+            elif ln_u in ["NBA"]:
+                query = query.filter(or_(Match.league_name.contains("NBA"), Match.league_name.contains("미국 프로농구")))
+            elif ln_u in ["CHAMPIONSHIP"]:
+                query = query.filter(or_(Match.league_name.contains("챔피언십"), Match.league_name.contains("Championship")))
+            elif ln_u in ["UCL"]:
+                query = query.filter(or_(Match.league_name.contains("챔피언스"), Match.league_name.contains("UCL")))
+            elif ln_u in ["EPL"]:
+                query = query.filter(or_(Match.league_name.contains("EPL"), Match.league_name.contains("프리미어리그")))
+            elif ln_u in ["KBO"]:
+                query = query.filter(or_(Match.league_name.contains("KBO"), Match.league_name.contains("한국 프로야구")))
+            elif ln_u in ["MLB"]:
+                query = query.filter(or_(Match.league_name.contains("MLB"), Match.league_name.contains("메이저리그")))
+            elif ln_u in ["NPB"]:
+                query = query.filter(or_(Match.league_name.contains("NPB"), Match.league_name.contains("일본 프로야구")))
             else:
                 query = query.filter(Match.league_name.contains(league_name))
         if status:
