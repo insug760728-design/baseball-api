@@ -1458,7 +1458,7 @@
         <button class="btn btn-sm mobile-tab-btn flex-fill active" id="mobTabSchedule" onclick="switchMobileTab('schedule')">
           <i class="bi bi-calendar3 d-block mb-0.5" style="font-size: 1.05rem;"></i>일정/스코어
         </button>
-        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabToto" onclick="switchMobileTab('toto'); openTotoModal(currentTotoRound)">
+        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabToto" onclick="openTotoModal(currentTotoRound)">
           <i class="bi bi-card-checklist d-block mb-0.5 text-warning" style="font-size: 1.05rem;"></i>승무패 경기목록
         </button>
         <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabCommunity" onclick="switchMobileTab('community')">
@@ -4875,20 +4875,23 @@ function getFullModalMatchList() {
       // SPORT-SPECIFIC DRAWER RENDERING
       let drawerContentHtml = '';
       if (curSport === 'BASEBALL') {
-        const b = item.baseball_stats || {
-          home_hits: Math.max(score1 + 2, Math.round(score1 * 1.4)),
-          away_hits: Math.max(score2 + 2, Math.round(score2 * 1.4)),
-          home_errors: (score2 > score1 && score2 - score1 >= 2) ? 1 : 0,
-          away_errors: (score1 > score2 && score1 - score2 >= 2) ? 1 : 0,
-          home_bb: Math.max(2, Math.min(6, score1)),
-          away_bb: Math.max(2, Math.min(6, score2)),
-          home_so: Math.max(4, Math.min(12, 9 - score1 + score2)),
-          away_so: Math.max(4, Math.min(12, 9 - score2 + score1)),
-          home_starter: `${team1} 선발 ${score1 >= score2 ? '6.0이닝 2자책 QS (승)' : '5.0이닝 4자책 (패)'}`,
-          away_starter: `${team2} 선발 ${score2 >= score1 ? '6.1이닝 1자책 QS (승)' : '4.2이닝 5자책 (패)'}`,
-          clutch_note: (item.summary || item.custom_notes) 
-            ? (item.summary || item.custom_notes)
-            : generateClutchSummary({ sport_code: 'BASEBALL', status: 'FINISHED', home_team_name: team1, away_team_name: team2, home_score: score1, away_score: score2 }, null, item.events || [])
+        const rawB = item.baseball_stats || {};
+        const hObj = rawB.home_starter_obj || {};
+        const aObj = rawB.away_starter_obj || {};
+
+        const b = {
+          home_hits: rawB.home_hits ?? Math.max(score1 + 2, Math.round(score1 * 1.4)),
+          away_hits: rawB.away_hits ?? Math.max(score2 + 2, Math.round(score2 * 1.4)),
+          home_errors: rawB.home_errors ?? ((score2 > score1 && score2 - score1 >= 2) ? 1 : 0),
+          away_errors: rawB.away_errors ?? ((score1 > score2 && score1 - score2 >= 2) ? 1 : 0),
+          home_bb: rawB.home_bb ?? hObj.bb ?? Math.max(2, Math.min(6, score1)),
+          away_bb: rawB.away_bb ?? aObj.bb ?? Math.max(2, Math.min(6, score2)),
+          home_so: rawB.home_so ?? hObj.so ?? Math.max(4, Math.min(12, 9 - score1 + score2)),
+          away_so: rawB.away_so ?? aObj.so ?? Math.max(4, Math.min(12, 9 - score2 + score1)),
+          home_starter: rawB.home_starter || (hObj.name ? `${hObj.name} (${hObj.ip || '6.0'}이닝 ${hObj.er ?? 2}자책)` : `${team1} 선발 ${score1 >= score2 ? '6.0이닝 2자책 QS (승)' : '5.0이닝 4자책 (패)'}`),
+          away_starter: rawB.away_starter || (aObj.name ? `${aObj.name} (${aObj.ip || '6.0'}이닝 ${aObj.er ?? 2}자책)` : `${team2} 선발 ${score2 >= score1 ? '6.1이닝 1자책 QS (승)' : '4.2이닝 5자책 (패)'}`),
+          clutch_note: rawB.clutch_note || (item.summary || item.custom_notes) 
+            || (typeof generateClutchSummary === 'function' ? generateClutchSummary({ sport_code: 'BASEBALL', status: 'FINISHED', home_team_name: team1, away_team_name: team2, home_score: score1, away_score: score2 }, null, item.events || []) : `${team1}의 투타 밸런스 우세`)
         };
 
         drawerContentHtml = `
@@ -4949,14 +4952,22 @@ function getFullModalMatchList() {
           </div>
         `;
       } else if (curSport === 'BASKETBALL') {
-        const bk = item.basketball_stats || {
-          q1_home: Math.round(score1 * 0.24), q2_home: Math.round(score1 * 0.26), q3_home: Math.round(score1 * 0.25), q4_home: score1 - Math.round(score1 * 0.75),
-          q1_away: Math.round(score2 * 0.24), q2_away: Math.round(score2 * 0.26), q3_away: Math.round(score2 * 0.25), q4_away: score2 - Math.round(score2 * 0.75),
-          rebounds_home: 38 + Math.round(score1 * 0.05), rebounds_away: 36 + Math.round(score2 * 0.05),
-          assists_home: 18 + Math.round(score1 * 0.05), assists_away: 17 + Math.round(score2 * 0.05),
-          clutch_note: (item.summary || item.custom_notes) 
-            ? (item.summary || item.custom_notes)
-            : generateClutchSummary({ sport_code: 'BASKETBALL', status: 'FINISHED', home_team_name: team1, away_team_name: team2, home_score: score1, away_score: score2 }, { q1: { home: Math.round(score1 * 0.24), away: Math.round(score2 * 0.24) }, q2: { home: Math.round(score1 * 0.26), away: Math.round(score2 * 0.26) }, q3: { home: Math.round(score1 * 0.25), away: Math.round(score2 * 0.25) }, q4: { home: score1 - Math.round(score1 * 0.75), away: score2 - Math.round(score2 * 0.75) } }, item.events || [])
+        const rawBk = item.basketball_stats || {};
+        const bk = {
+          q1_home: rawBk.q1_home ?? Math.round(score1 * 0.24),
+          q2_home: rawBk.q2_home ?? Math.round(score1 * 0.26),
+          q3_home: rawBk.q3_home ?? Math.round(score1 * 0.25),
+          q4_home: rawBk.q4_home ?? (score1 - Math.round(score1 * 0.75)),
+          q1_away: rawBk.q1_away ?? Math.round(score2 * 0.24),
+          q2_away: rawBk.q2_away ?? Math.round(score2 * 0.26),
+          q3_away: rawBk.q3_away ?? Math.round(score2 * 0.25),
+          q4_away: rawBk.q4_away ?? (score2 - Math.round(score2 * 0.75)),
+          rebounds_home: rawBk.rebounds_home ?? (38 + Math.round(score1 * 0.05)),
+          rebounds_away: rawBk.rebounds_away ?? (36 + Math.round(score2 * 0.05)),
+          assists_home: rawBk.assists_home ?? (18 + Math.round(score1 * 0.05)),
+          assists_away: rawBk.assists_away ?? (17 + Math.round(score2 * 0.05)),
+          clutch_note: rawBk.clutch_note || (item.summary || item.custom_notes) 
+            || (typeof generateClutchSummary === 'function' ? generateClutchSummary({ sport_code: 'BASKETBALL', status: 'FINISHED', home_team_name: team1, away_team_name: team2, home_score: score1, away_score: score2 }, { q1: { home: Math.round(score1 * 0.24), away: Math.round(score2 * 0.24) }, q2: { home: Math.round(score1 * 0.26), away: Math.round(score2 * 0.26) }, q3: { home: Math.round(score1 * 0.25), away: Math.round(score2 * 0.25) }, q4: { home: score1 - Math.round(score1 * 0.75), away: score2 - Math.round(score2 * 0.75) } }, item.events || []) : `${team1} 클러치 득점 우세`)
         };
 
         drawerContentHtml = `
@@ -5689,6 +5700,11 @@ function getFullModalMatchList() {
         name: m.away_team_name, split_type: 'AWAY', games: 10, wins: 4, losses: 6, win_pct: '.400', rpg: 3.8, ra: 4.4, diff: -0.6, recent_5: 'L-L-W-L-W'
       };
 
+      const hWinPct = (homeSplit.win_pct && homeSplit.win_pct !== 'undefined') ? homeSplit.win_pct : (homeSplit.games ? ((homeSplit.wins + (homeSplit.draws || 0) * 0.5) / homeSplit.games).toFixed(3).replace(/^0/, '') : '.500');
+      const aWinPct = (awaySplit.win_pct && awaySplit.win_pct !== 'undefined') ? awaySplit.win_pct : (awaySplit.games ? ((awaySplit.wins + (awaySplit.draws || 0) * 0.5) / awaySplit.games).toFixed(3).replace(/^0/, '') : '.500');
+      const hRecordStr = `${homeSplit.wins || 0}승 ${homeSplit.draws !== undefined && homeSplit.draws > 0 ? homeSplit.draws + '무 ' : ''}${homeSplit.losses || 0}패`;
+      const aRecordStr = `${awaySplit.wins || 0}승 ${awaySplit.draws !== undefined && awaySplit.draws > 0 ? awaySplit.draws + '무 ' : ''}${awaySplit.losses || 0}패`;
+
       const splitsHtml = `
         <div class="p-2.5 mb-3 rounded-3" style="background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
           <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: #e5e7eb !important;">
@@ -5698,15 +5714,15 @@ function getFullModalMatchList() {
           <div class="row g-2 text-center" style="font-size: 0.80rem;">
             <div class="col-6 text-start ps-2" style="border-right: 1px solid #e5e7eb;">
               <div class="fw-bold mb-1" style="color: #111827; font-size: 0.85rem;">[홈] ${m.home_team_name}</div>
-              <div class="text-dark small">홈 승률: <b style="color: #111827; font-weight: 700;">${homeSplit.win_pct}</b> (${homeSplit.wins}승 ${homeSplit.losses}패)</div>
-              <div class="text-muted small">홈 평균: <b class="text-dark">${homeSplit.rpg}득</b> / <b class="text-dark">${homeSplit.ra}실</b> (마진 +${homeSplit.diff})</div>
-              <div class="text-dark small mt-0.5 fw-bold">최근 5G: <span style="color: #111827;">${homeSplit.recent_5}</span></div>
+              <div class="text-dark small">홈 승률: <b style="color: #111827; font-weight: 700;">${hWinPct}</b> (${hRecordStr})</div>
+              <div class="text-muted small">홈 평균: <b class="text-dark">${homeSplit.rpg ?? 1.4}득</b> / <b class="text-dark">${homeSplit.ra ?? 1.2}실</b> (마진 ${homeSplit.diff !== undefined ? (homeSplit.diff >= 0 ? '+' + homeSplit.diff : homeSplit.diff) : '+0.2'})</div>
+              <div class="text-dark small mt-0.5 fw-bold">최근 5G: <span style="color: #111827;">${homeSplit.recent_5 || 'W-D-W-L-W'}</span></div>
             </div>
             <div class="col-6 text-start ps-2">
               <div class="fw-bold mb-1" style="color: #111827; font-size: 0.85rem;">[원정] ${m.away_team_name}</div>
-              <div class="text-dark small">원정 승률: <b style="color: #111827; font-weight: 700;">${awaySplit.win_pct}</b> (${awaySplit.wins}승 ${awaySplit.losses}패)</div>
-              <div class="text-muted small">원정 평균: <b class="text-dark">${awaySplit.rpg}득</b> / <b class="text-dark">${awaySplit.ra}실</b> (마진 ${awaySplit.diff})</div>
-              <div class="text-dark small mt-0.5 fw-bold">최근 5G: <span style="color: #111827;">${awaySplit.recent_5}</span></div>
+              <div class="text-dark small">원정 승률: <b style="color: #111827; font-weight: 700;">${aWinPct}</b> (${aRecordStr})</div>
+              <div class="text-muted small">원정 평균: <b class="text-dark">${awaySplit.rpg ?? 1.1}득</b> / <b class="text-dark">${awaySplit.ra ?? 1.5}실</b> (마진 ${awaySplit.diff !== undefined ? (awaySplit.diff >= 0 ? '+' + awaySplit.diff : awaySplit.diff) : '-0.4'})</div>
+              <div class="text-dark small mt-0.5 fw-bold">최근 5G: <span style="color: #111827;">${awaySplit.recent_5 || 'D-L-W-D-L'}</span></div>
             </div>
           </div>
         </div>
@@ -6275,14 +6291,14 @@ function getFullModalMatchList() {
 
       if (!matchup.home_team) {
         matchup.home_team = isSoccer ? {
-          name: homeName, split_type: 'HOME (홈 경기 성적)', games: 12, wins: 7, draws: 3, losses: 2, points: 24, ppg: 2.0, rpg: 1.75, ra: 0.92, diff: 0.83, recent_5: 'W-W-D-W-L'
+          name: homeName, split_type: 'HOME (홈 경기 성적)', games: 12, wins: 7, draws: 3, losses: 2, win_pct: '.708', points: 24, ppg: 2.0, rpg: 1.75, ra: 0.92, diff: 0.83, recent_5: 'W-W-D-W-L'
         } : {
           name: homeName, split_type: 'HOME (홈 경기 성적)', games: 10, wins: 6, losses: 4, draws: 0, win_pct: '.600', rpg: 4.5, ra: 3.8, diff: 0.7, points: 18, ppg: 1.8, recent_5: 'W-W-L-W-W'
         };
       }
       if (!matchup.away_team) {
         matchup.away_team = isSoccer ? {
-          name: awayName, split_type: 'AWAY (원정 경기 성적)', games: 12, wins: 4, draws: 4, losses: 4, points: 16, ppg: 1.33, rpg: 1.25, ra: 1.33, diff: -0.08, recent_5: 'D-W-L-D-W'
+          name: awayName, split_type: 'AWAY (원정 경기 성적)', games: 12, wins: 4, draws: 4, losses: 4, win_pct: '.500', points: 16, ppg: 1.33, rpg: 1.25, ra: 1.33, diff: -0.08, recent_5: 'D-W-L-D-W'
         } : {
           name: awayName, split_type: 'AWAY (원정 경기 성적)', games: 10, wins: 4, losses: 6, draws: 0, win_pct: '.400', rpg: 3.8, ra: 4.4, diff: -0.6, points: 12, ppg: 1.2, recent_5: 'L-L-W-L-W'
         };
@@ -9552,7 +9568,7 @@ function getFullModalMatchList() {
       }
     }
 
-    // Modal restore hook: when matchModal closes, restore totoBetmanModal if opened from it
+    // Modal restore hook: when matchModal closes, restore totoBetmanModal if opened from it; and return to schedule on mobile
     function initModalRestoreHook() {
       const matchModalEl = document.getElementById('matchModal');
       if (matchModalEl && !matchModalEl._hasRestoreHook) {
@@ -9565,6 +9581,21 @@ function getFullModalMatchList() {
               const totoInst = bootstrap.Modal.getOrCreateInstance(totoModalEl);
               totoInst.show();
             }, 80);
+          }
+        });
+      }
+
+      const totoModalEl = document.getElementById('totoBetmanModal');
+      if (totoModalEl && !totoModalEl._hasCloseHook) {
+        totoModalEl._hasCloseHook = true;
+        totoModalEl.addEventListener('hidden.bs.modal', function () {
+          // If modal was temporarily closed to open match detail modal, don't reset view
+          if (totoModalEl.getAttribute('data-reopen') === 'true') {
+            return;
+          }
+          // On mobile, closing toto modal safely returns to the schedule tab
+          if (window.innerWidth <= 768 || currentViewMode === 'mobile') {
+            switchMobileTab('schedule');
           }
         });
       }
@@ -12321,12 +12352,24 @@ function getFullModalMatchList() {
         }
       });
 
-      if (tabKey === 'toto') {
-        switchCenterView('TOTO');
-      }
-
-      if (retBtn) {
-        retBtn.classList.add('d-none');
+      if (tabKey === 'toto' || tabKey === 'center') {
+        let target = null;
+        if (selectedPredMatchId && typeof allMatches !== 'undefined') {
+          target = allMatches.find(m => m.id === selectedPredMatchId);
+        }
+        if (!target && typeof allMatches !== 'undefined' && allMatches.length > 0) {
+          target = allMatches[0];
+        }
+        if (target) {
+          renderPredDetail(target);
+        }
+        if (retBtn) {
+          retBtn.classList.remove('d-none');
+        }
+      } else {
+        if (retBtn) {
+          retBtn.classList.add('d-none');
+        }
       }
 
       // Smooth scroll to top of content on mobile when switching to tabs other than schedule
