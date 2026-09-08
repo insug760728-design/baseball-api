@@ -5,6 +5,7 @@ import time
 import os
 import sqlite3
 from datetime import datetime
+from functools import lru_cache
 
 BETMAN_TOTO_URL = 'https://www.betman.co.kr/buyPsblGame/totoGameData.do'
 BETMAN_BUYABLE_URL = 'https://www.betman.co.kr/buyPsblGame/inqBuyAbleGameInfoList.do'
@@ -19,7 +20,7 @@ HEADERS = {
 }
 
 _CACHE = {}
-CACHE_TTL = 25 # 25 seconds for real-time live Betman prize & vote updates
+CACHE_TTL = 1800 # 30 minutes cache: Betman data is mostly static between rounds
 
 def format_kr_money(amount: int) -> str:
     """Format Korean won amount into readable eok/man string (e.g., 2억 8,249만 원)"""
@@ -128,9 +129,16 @@ TEAM_SYNONYMS = {
     "일본여자": ["일본(여)", "일본 여자", "japan women", "japan w", "일본"]
 }
 
+@lru_cache(maxsize=4096)
 def clean_name(n):
     if not n: return ''
     return str(n).replace(' ', '').replace('·', '').replace('.', '').replace('-', '').replace('/', '').replace('&', '').lower()
+
+# Pre-compile cleaned synonym groups once at module load
+_PRECOMPUTED_SYNONYM_GROUPS = [
+    tuple([clean_name(k)] + [clean_name(a) for a in aliases])
+    for k, aliases in TEAM_SYNONYMS.items()
+]
 
 def teams_match(api_name: str, db_name: str) -> bool:
     norm_api = clean_name(api_name)
@@ -138,20 +146,13 @@ def teams_match(api_name: str, db_name: str) -> bool:
 
     if not norm_api or not norm_db:
         return False
-    if norm_api == norm_db:
-        return True
-    if norm_api in norm_db or norm_db in norm_api:
+    if norm_api == norm_db or norm_api in norm_db or norm_db in norm_api:
         return True
 
-    for k, aliases in TEAM_SYNONYMS.items():
-        norm_k = clean_name(k)
-        norm_aliases = [clean_name(a) for a in aliases]
-        all_group = [norm_k] + norm_aliases
-
-        api_in_group = any(g in norm_api or norm_api in g for g in all_group)
-        db_in_group = any(g in norm_db or norm_db in g for g in all_group)
-
-        if api_in_group and db_in_group:
+    for grp in _PRECOMPUTED_SYNONYM_GROUPS:
+        if not any(g in norm_api or norm_api in g for g in grp):
+            continue
+        if any(g in norm_db or norm_db in g for g in grp):
             return True
 
     return False
@@ -256,7 +257,7 @@ class BetmanService:
         cache_key = 'live_toto_summary'
         if not force_refresh and cache_key in _CACHE:
             ts_cached, data = _CACHE[cache_key]
-            if now - ts_cached < 15: # 15s cache
+            if now - ts_cached < CACHE_TTL:
                 return data
 
         summary = {
@@ -271,7 +272,7 @@ class BetmanService:
                 data=json.dumps(params).encode('utf-8'),
                 headers=HEADERS
             )
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            with urllib.request.urlopen(req, timeout=2.0) as resp:
                 raw = resp.read().decode('utf-8', errors='ignore')
                 res = json.loads(raw)
 
@@ -309,41 +310,34 @@ class BetmanService:
         except Exception as e:
             print(f"[WARN] Failed to fetch live toto summary: {e}")
 
-        # Fallback default live summary if Betman connection drops
-        summary['games'] = {
-            'G011': {
-                'gmId': 'G011',
-                'sport': '축구 승무패',
-                'gmTs': 260051,
-                'round_no': '51',
-                'title': '축구 승무패 51회차',
-                'total_sell_amount': 282496000,
-                'total_sale_cnt': 282496,
-                'forward_amount': 0,
-                'first_prize_pool': 70624000,
-                'first_prize_text': '7,062만 원',
-                'total_sell_text': '2억 8,249만 원',
-                'forward_text': '이월 없음',
-                'status': 'SaleProgress',
-                'is_live': True
-            },
-            'G024': {
-                'gmId': 'G024',
-                'sport': '야구 승1패',
-                'gmTs': 260067,
-                'round_no': '67',
-                'title': '야구 승1패 67회차',
-                'total_sell_amount': 50610000,
-                'total_sale_cnt': 50610,
-                'forward_amount': 0,
-                'first_prize_pool': 12652500,
-                'first_prize_text': '1,265만 원',
-                'total_sell_text': '5,061만 원',
-                'forward_text': '이월 없음',
-                'status': 'SaleProgress',
-                'is_live': True
-            }
-        }
+        # Fallback default live summary built dynamically from local files
+        for gid, fts in [('G011', 260051), ('G024', 260067), ('G027', 260027)]:
+            fn = f'betman_{fts}.json'
+            if os.path.exists(fn):
+                try:
+                    with open(fn, 'r', encoding='utf-8') as f:
+                        d = json.load(f)
+                        summary['games'][gid] = {
+                            'gmId': gid,
+                            'sport': '야구 승1패' if gid == 'G024' else ('축구 승무패' if gid == 'G011' else '농구 승5패'),
+                            'gmTs': fts,
+                            'round_no': str(fts)[-2:],
+                            'title': d.get('title') or f"{str(fts)[-2:]}회차",
+                            'total_sell_amount': d.get('total_sell_amount', 0),
+                            'total_sale_cnt': d.get('total_sale_cnt', 0),
+                            'forward_amount': d.get('forward_amount', 0),
+                            'forward_cnt': d.get('forward_cnt', 0),
+                            'first_prize_pool': d.get('first_prize_pool', 0),
+                            'first_prize_text': d.get('first_prize_text', '0원'),
+                            'total_sell_text': d.get('total_sell_text', '0원'),
+                            'forward_text': d.get('forward_text', '이월 없음'),
+                            'status': d.get('sale_status', 'SaleProgress'),
+                            'is_live': d.get('is_live', True)
+                        }
+                except Exception:
+                    pass
+
+        _CACHE[cache_key] = (now, summary)
         return summary
 
     @staticmethod
@@ -356,12 +350,34 @@ class BetmanService:
             elif gm_id == 'G027': gm_ts = 260027
 
         cache_key = f'{gm_id}_{gm_ts}'
+
+        # 1. In-memory cache check (0.0001s)
         if not force_refresh and cache_key in _CACHE:
             ts_cached, data = _CACHE[cache_key]
             if now - ts_cached < CACHE_TTL:
                 return data
 
-        # 1. Try Betman live totoGameData API
+        # Local snapshot candidates
+        candidates = [
+            f'betman_{gm_ts}.json',
+            f'betman_{gm_id}_{gm_ts}.json',
+            'betman_260051.json' if gm_id == 'G011' else ('betman_260067.json' if gm_id == 'G024' else 'betman_260027.json'),
+            'betman_260050.json' if gm_id == 'G011' else 'betman_260066.json'
+        ]
+
+        # 2. Local-First: Read local snapshot file immediately (0.005s) - no external network call!
+        if not force_refresh:
+            for snap_file in candidates:
+                if os.path.exists(snap_file):
+                    try:
+                        with open(snap_file, 'r', encoding='utf-8') as f:
+                            snap_data = json.load(f)
+                            _CACHE[cache_key] = (now, snap_data)
+                            return snap_data
+                    except Exception:
+                        pass
+
+        # 3. Only if force_refresh=True or no local file exists: Try Betman live API with strict 2.0s timeout
         try:
             params = {
                 'gmId': gm_id,
@@ -377,7 +393,7 @@ class BetmanService:
                 data=json.dumps(params).encode('utf-8'),
                 headers=HEADERS
             )
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            with urllib.request.urlopen(req, timeout=2.0) as resp:
                 raw = resp.read().decode('utf-8', errors='ignore')
                 res = json.loads(raw)
 
@@ -395,43 +411,12 @@ class BetmanService:
         except Exception as e:
             print(f"[WARN] Betman totoGameData live fetch error ({gm_id} {gm_ts}): {e}")
 
-        # 2. Try Betman buyable list API for live sales amount
-        live_sales = None
-        try:
-            live_summary = BetmanService.get_live_toto_summary()
-            if live_summary and 'games' in live_summary and gm_id in live_summary['games']:
-                live_sales = live_summary['games'][gm_id]
-        except Exception:
-            pass
-
-        # 3. Fallback to local snapshot if exists
-        candidates = [
-            f'betman_{gm_ts}.json',
-            f'betman_{gm_id}_{gm_ts}.json',
-            'betman_260051.json' if gm_id == 'G011' else ('betman_260067.json' if gm_id == 'G024' else 'betman_260027.json'),
-            'betman_260050.json' if gm_id == 'G011' else 'betman_260066.json'
-        ]
+        # 4. Fallback to local snapshot if external fetch fails
         for snap_file in candidates:
             if os.path.exists(snap_file):
                 try:
                     with open(snap_file, 'r', encoding='utf-8') as f:
                         snap_data = json.load(f)
-                        # Patch with live sales if available!
-                        if live_sales and live_sales.get('total_sell_amount', 0) > 0:
-                            s_amt = live_sales['total_sell_amount']
-                            f_amt = live_sales.get('forward_amount', snap_data.get('forward_amount', 0))
-                            winner_prize = live_sales.get('first_prize_pool') or int(f_amt + s_amt * 0.25)
-                            snap_data['total_sell_amount'] = s_amt
-                            snap_data['total_sale_cnt'] = live_sales.get('total_sale_cnt', s_amt // 1000)
-                            snap_data['forward_amount'] = f_amt
-                            snap_data['forward_cnt'] = live_sales.get('forward_cnt', snap_data.get('forward_cnt', 0))
-                            snap_data['first_prize_pool'] = winner_prize
-                            snap_data['second_prize_pool'] = int(s_amt * 0.10)
-                            snap_data['third_prize_pool'] = int(s_amt * 0.05)
-                            snap_data['fourth_prize_pool'] = int(s_amt * 0.10)
-                            snap_data['first_prize_text'] = format_kr_money(winner_prize)
-                            snap_data['total_sell_text'] = format_kr_money(s_amt)
-                            snap_data['forward_text'] = format_kr_money(f_amt) if f_amt > 0 else '이월 없음'
                         _CACHE[cache_key] = (now, snap_data)
                         return snap_data
                 except Exception as ex:

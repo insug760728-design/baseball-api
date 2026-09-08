@@ -295,15 +295,15 @@
       height: 100%;
     }
     
-    /* 3-Column Width Ratio: 40% | 30% | 30% (우측 채팅창 30%로 확장) */
+    /* 3-Column Width Ratio: 32% | 38% | 30% (중앙 실시간 라이브 중계센터 최적화) */
     @media (min-width: 1200px) {
       .col-dash-left {
-        flex: 0 0 40% !important;
-        max-width: 40% !important;
+        flex: 0 0 32% !important;
+        max-width: 32% !important;
       }
       .col-dash-center {
-        flex: 0 0 30% !important;
-        max-width: 30% !important;
+        flex: 0 0 38% !important;
+        max-width: 38% !important;
       }
       .col-dash-right {
         flex: 0 0 30% !important;
@@ -312,12 +312,12 @@
     }
     @media (min-width: 992px) and (max-width: 1199px) {
       .col-dash-left {
-        flex: 0 0 40% !important;
-        max-width: 40% !important;
+        flex: 0 0 33% !important;
+        max-width: 33% !important;
       }
       .col-dash-center {
-        flex: 0 0 30% !important;
-        max-width: 30% !important;
+        flex: 0 0 37% !important;
+        max-width: 37% !important;
       }
       .col-dash-right {
         flex: 0 0 30% !important;
@@ -397,13 +397,94 @@
     /* 중앙 세이버메트릭스 상세 분석 패널 (#predDetailPanel) 반응형 전폭 정렬 */
     /* ------------------------------------------------------------- */
     #centerColMain,
-    #predDetailPanel {
+    #predDetailPanel,
+    #liveRelayContainer {
       width: 100% !important;
       max-width: 100% !important;
       box-sizing: border-box !important;
     }
-    #predDetailPanel * {
+    #predDetailPanel *,
+    #liveRelayContainer * {
       box-sizing: border-box !important;
+    }
+
+    /* ------------------------------------------------------------- */
+    /* 실시간 라이브 중계센터 (Live Relay Center) 전용 스타일 */
+    /* ------------------------------------------------------------- */
+    .relay-chip-btn {
+      background: #ffffff !important;
+      color: #475569 !important;
+      border: 1px solid #cbd5e1 !important;
+      font-weight: 700 !important;
+      font-size: 0.70rem !important;
+      padding: 2px 8px !important;
+      border-radius: 5px !important;
+      cursor: pointer !important;
+      white-space: nowrap !important;
+      transition: all 0.15s ease;
+    }
+    .relay-chip-btn:hover {
+      background: #f1f5f9 !important;
+      color: #0f172a !important;
+      border-color: #94a3b8 !important;
+    }
+    .relay-chip-btn.active {
+      background: #1e293b !important;
+      color: #ffffff !important;
+      border-color: #0f172a !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .bso-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #334155;
+      border: 1px solid rgba(255,255,255,0.25);
+    }
+    .bso-dot.dot-ball {
+      background: #22c55e !important;
+      box-shadow: 0 0 6px #22c55e;
+    }
+    .bso-dot.dot-strike {
+      background: #eab308 !important;
+      box-shadow: 0 0 6px #eab308;
+    }
+    .bso-dot.dot-out {
+      background: #ef4444 !important;
+      box-shadow: 0 0 6px #ef4444;
+    }
+    @keyframes basePulseGlow {
+      0% { filter: drop-shadow(0 0 3px #f59e0b); }
+      50% { filter: drop-shadow(0 0 10px #fef08a); }
+      100% { filter: drop-shadow(0 0 3px #f59e0b); }
+    }
+    .pulse-base-glow {
+      animation: basePulseGlow 1.2s infinite ease-in-out;
+    }
+    @keyframes goalFlashBanner {
+      0% { transform: scale(0.85); opacity: 0; }
+      20% { transform: scale(1.06); opacity: 1; }
+      40% { transform: scale(0.98); }
+      60% { transform: scale(1.02); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .goal-banner-anim {
+      animation: goalFlashBanner 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    .live-blink-dot {
+      animation: pulseGlow 1.2s infinite ease-in-out;
+    }
+    .multi-relay-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 9px;
+      padding: 8px;
+      transition: all 0.15s ease;
+    }
+    .multi-relay-card:hover {
+      border-color: #1d4ed8;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
 
     /* 내부 부모 컨테이너 및 섹션 박스 전폭 확보 */
@@ -1473,9 +1554,9 @@
           </div>
         </div>
 
-        <!-- 2. [중앙 30%] 메인 세부 분석창 & 14경기 토토 마킹표 -->
+        <!-- 2. [중앙 38%] 실시간 중계센터 & 1:1 세부 분석창 -->
         <div class="col-dash-center" id="centerColMain">
-          <div class="dash-card-column" style="background: #ffffff;">
+          <div class="dash-card-column" style="background: #ffffff; display: flex; flex-direction: column; height: 100%;">
             
             <!-- Mobile Return Helper Button (모바일 모드에서만 표시) -->
             <div class="p-1 pb-0 d-none" id="mobileReturnToScheduleBtn">
@@ -1484,14 +1565,54 @@
               </button>
             </div>
 
+            <!-- Header: Live Relay & Saber Analysis Switcher -->
+            <div class="dash-card-header p-2 pb-1 border-bottom" style="background: #ffffff; border-color: #e5e7eb !important;">
+              <div class="d-flex justify-content-between align-items-center mb-1.5 gap-1">
+                <div class="btn-group btn-group-sm flex-fill" role="group">
+                  <button type="button" class="btn btn-sm fw-bold btn-dark active text-white" id="tabBtnLiveRelay" onclick="switchCenterViewMode('RELAY')" style="font-size: 0.76rem; border-radius: 6px 0 0 6px;">
+                    <span class="live-blink-dot me-1" style="display:inline-block; width:6px; height:6px; background:#ef4444; border-radius:50%;"></span>실시간 중계센터
+                  </button>
+                  <button type="button" class="btn btn-sm fw-bold btn-outline-secondary" id="tabBtnSaberDetail" onclick="switchCenterViewMode('SABER')" style="font-size: 0.76rem; border-radius: 0 6px 6px 0;">
+                    <i class="bi bi-bar-chart-line-fill me-1"></i>1:1 세이버 분석실
+                  </button>
+                </div>
+                <!-- Multi-Play Toggle Button -->
+                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 fw-bold text-nowrap" id="btnToggleMultiPlay" onclick="toggleMultiPlayMode()" style="font-size: 0.72rem; border-radius: 6px;" title="2~4개 경기 동시 멀티 중계 시청">
+                  <i class="bi bi-grid-fill me-1"></i><span id="multiPlayBtnText">멀티플레이</span>
+                </button>
+              </div>
 
-            <!-- Body: Match Detail Studio -->
-            <div class="dash-card-body p-2" id="predDetailPanel" style="height: 100%; width: 100%; box-sizing: border-box;">
+              <!-- Relay Sub-Control Bar: Sport Filter Chips & Live Simulator Toggle -->
+              <div class="d-flex justify-content-between align-items-center gap-1 overflow-x-auto py-0.5" id="relaySubControlBar" style="scrollbar-width: none;">
+                <div class="d-flex gap-1" id="relaySportChips">
+                  <button class="btn btn-sm relay-chip-btn active" id="chipRelayALL" onclick="setRelaySportFilter('ALL')">전체</button>
+                  <button class="btn btn-sm relay-chip-btn" id="chipRelayBASEBALL" onclick="setRelaySportFilter('BASEBALL')">⚾ 야구</button>
+                  <button class="btn btn-sm relay-chip-btn" id="chipRelaySOCCER" onclick="setRelaySportFilter('SOCCER')">⚽ 축구</button>
+                  <button class="btn btn-sm relay-chip-btn" id="chipRelayBASKETBALL" onclick="setRelaySportFilter('BASKETBALL')">🏀 농구</button>
+                  <button class="btn btn-sm relay-chip-btn" id="chipRelayVOLLEYBALL" onclick="setRelaySportFilter('VOLLEYBALL')">🏐 배구</button>
+                </div>
+                <button class="btn btn-sm py-0.5 px-2 fw-bold text-nowrap border" id="btnLiveDemoMode" onclick="toggleLiveDemoSimulator()" style="font-size: 0.68rem; border-radius: 6px; background: #f8fafc; color: #475569;" title="야간/휴식 시간에도 주자 진루 및 골 애니메이션을 시뮬레이션 체험">
+                  <i class="bi bi-play-circle-fill text-danger me-0.5" id="demoIcon"></i><span id="demoText">시뮬 데모</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Body 1: Live Relay Center Container (기본 활성화) -->
+            <div class="dash-card-body p-2" id="liveRelayContainer" style="flex: 1; overflow-y: auto; height: 100%;">
+              <div class="text-center text-muted py-5">
+                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                <div>실시간 중계센터 로딩 중...</div>
+              </div>
+            </div>
+
+            <!-- Body 2: Match Detail Studio (세이버 분석실 탭 선택 시 활성화) -->
+            <div class="dash-card-body p-2 d-none" id="predDetailPanel" style="flex: 1; width: 100%; box-sizing: border-box; overflow-y: auto; height: 100%;">
               <div class="text-center text-muted py-5">
                 <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
                 <div>1:1 세이버 정밀 분석실 데이터를 불러오는 중...</div>
               </div>
             </div>
+
           </div>
         </div>
 
@@ -8680,12 +8801,23 @@ function getFullModalMatchList() {
       // 🚀 모바일 성능 최적화: 모바일 화면에서는 중앙 상세 패널(#predDetailPanel)이 숨겨져 있으므로 렌더링을 건너뛰어 CPU/통신 절약
       const isMobileView = (window.innerWidth <= 768 || currentViewMode === 'mobile');
       if (!isMobileView) {
-        renderPredDetail(target);
+        if (typeof currentCenterSubTab !== 'undefined' && currentCenterSubTab === 'RELAY') {
+          renderLiveRelayCenter(target);
+        } else {
+          renderPredDetail(target);
+        }
       }
 
       if (userClicked) {
-        // [Requirement 2]: PC & Mobile 모두 경기바 클릭 시 상세 분석 팝업창(모달) 오픈
-        openMatchModal(matchId);
+        if (isMobileView) {
+          openMatchModal(matchId);
+        } else {
+          if (typeof currentCenterSubTab !== 'undefined' && currentCenterSubTab === 'RELAY') {
+            renderLiveRelayCenter(target);
+          } else {
+            renderPredDetail(target);
+          }
+        }
       }
     }
 
@@ -8939,19 +9071,8 @@ function getFullModalMatchList() {
     }
 
     function initTotoLiveSync() {
-      // 1. Initial quick sync
+      // 1회 초기 동기화만 수행 (불필요한 25초 주기 반복 호출 제거하여 모바일 렉 및 서버 부하 원천 차단)
       syncTotoLiveSummary();
-      // 2. Periodic sync every 25 seconds
-      if (_totoLivePollTimer) clearInterval(_totoLivePollTimer);
-      _totoLivePollTimer = setInterval(async () => {
-        // If Toto modal is open, silently re-fetch live round data
-        const modalEl = document.getElementById('totoBetmanModal');
-        if (modalEl && modalEl.classList.contains('show')) {
-          await loadBetmanToto(currentTotoRound, currentBetmanTs, true);
-        }
-        // Always refresh quick badges
-        await syncTotoLiveSummary();
-      }, 25000);
     }
 
     function selectTotoRound(roundKey, gmTs = null) {
@@ -10785,6 +10906,820 @@ function getFullModalMatchList() {
 
       if (prevScrollTop > 0) {
         panel.scrollTop = prevScrollTop;
+      }
+    }
+
+    // -------------------------------------------------------------
+    // ⚡ [실시간 라이브 중계센터 (Live Match Center) 시스템]
+    // -------------------------------------------------------------
+    let currentCenterSubTab = 'RELAY'; // 'RELAY' (실시간 중계) or 'SABER' (세이버 정밀 분석)
+    let relaySportFilter = 'ALL';      // 'ALL', 'BASEBALL', 'SOCCER', 'BASKETBALL', 'VOLLEYBALL'
+    let isMultiPlayMode = false;       // true: 멀티플레이 2~4분할 시청, false: 단일 집중 시청
+    let isLiveDemoMode = false;        // 실시간 가상 경기 시뮬레이터 데모 모드
+    let liveDemoInterval = null;
+    const liveDemoStateMap = new Map();
+
+    function switchCenterViewMode(mode) {
+      currentCenterSubTab = mode;
+      const tabRelay = document.getElementById('tabBtnLiveRelay');
+      const tabSaber = document.getElementById('tabBtnSaberDetail');
+      const relayContainer = document.getElementById('liveRelayContainer');
+      const saberPanel = document.getElementById('predDetailPanel');
+      const subControlBar = document.getElementById('relaySubControlBar');
+      const multiPlayBtn = document.getElementById('btnToggleMultiPlay');
+
+      if (mode === 'RELAY') {
+        if (tabRelay) {
+          tabRelay.className = 'btn btn-sm fw-bold btn-dark active text-white';
+        }
+        if (tabSaber) {
+          tabSaber.className = 'btn btn-sm fw-bold btn-outline-secondary';
+        }
+        if (relayContainer) relayContainer.classList.remove('d-none');
+        if (saberPanel) saberPanel.classList.add('d-none');
+        if (subControlBar) subControlBar.classList.remove('d-none');
+        if (multiPlayBtn) multiPlayBtn.classList.remove('d-none');
+        renderLiveRelayCenter();
+      } else {
+        if (tabSaber) {
+          tabSaber.className = 'btn btn-sm fw-bold btn-dark active text-white';
+        }
+        if (tabRelay) {
+          tabRelay.className = 'btn btn-sm fw-bold btn-outline-secondary';
+        }
+        if (saberPanel) saberPanel.classList.remove('d-none');
+        if (relayContainer) relayContainer.classList.add('d-none');
+        if (subControlBar) subControlBar.classList.add('d-none');
+        if (multiPlayBtn) multiPlayBtn.classList.add('d-none');
+        
+        let target = null;
+        if (selectedPredMatchId && typeof allMatches !== 'undefined') {
+          target = allMatches.find(m => m.id === selectedPredMatchId);
+        }
+        if (!target && typeof allMatches !== 'undefined' && allMatches.length > 0) {
+          target = allMatches[0];
+        }
+        if (target) {
+          renderPredDetail(target);
+        }
+      }
+    }
+
+    function setRelaySportFilter(sport) {
+      relaySportFilter = sport;
+      const chips = ['ALL', 'BASEBALL', 'SOCCER', 'BASKETBALL', 'VOLLEYBALL'];
+      chips.forEach(s => {
+        const btn = document.getElementById('chipRelay' + s);
+        if (btn) {
+          if (s === sport) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
+      renderLiveRelayCenter();
+    }
+
+    function toggleMultiPlayMode() {
+      isMultiPlayMode = !isMultiPlayMode;
+      const btn = document.getElementById('btnToggleMultiPlay');
+      const text = document.getElementById('multiPlayBtnText');
+      if (isMultiPlayMode) {
+        if (btn) {
+          btn.className = 'btn btn-sm btn-primary py-1 px-2 fw-bold text-nowrap';
+          btn.style.boxShadow = '0 0 8px rgba(29, 78, 216, 0.4)';
+        }
+        if (text) text.innerText = '멀티 (ON)';
+      } else {
+        if (btn) {
+          btn.className = 'btn btn-sm btn-outline-primary py-1 px-2 fw-bold text-nowrap';
+          btn.style.boxShadow = '';
+        }
+        if (text) text.innerText = '멀티플레이';
+      }
+      renderLiveRelayCenter();
+    }
+
+    function toggleLiveDemoSimulator() {
+      isLiveDemoMode = !isLiveDemoMode;
+      const btn = document.getElementById('btnLiveDemoMode');
+      const icon = document.getElementById('demoIcon');
+      const text = document.getElementById('demoText');
+
+      if (isLiveDemoMode) {
+        if (btn) {
+          btn.className = 'btn btn-sm py-0.5 px-2 fw-bold text-nowrap border text-white';
+          btn.style.background = '#16a34a';
+          btn.style.borderColor = '#15803d';
+        }
+        if (icon) icon.className = 'bi bi-stop-circle-fill text-white me-0.5';
+        if (text) text.innerText = '시뮬 중지';
+
+        // 3.5초마다 가상 진루 및 골/득점 실시간 시뮬레이션
+        if (liveDemoInterval) clearInterval(liveDemoInterval);
+        liveDemoInterval = setInterval(() => {
+          advanceDemoLiveStates();
+          renderLiveRelayCenter();
+        }, 3500);
+      } else {
+        if (liveDemoInterval) {
+          clearInterval(liveDemoInterval);
+          liveDemoInterval = null;
+        }
+        if (btn) {
+          btn.className = 'btn btn-sm py-0.5 px-2 fw-bold text-nowrap border';
+          btn.style.background = '#f8fafc';
+          btn.style.borderColor = '#cbd5e1';
+          btn.style.color = '#475569';
+        }
+        if (icon) icon.className = 'bi bi-play-circle-fill text-danger me-0.5';
+        if (text) text.innerText = '시뮬 데모';
+      }
+      renderLiveRelayCenter();
+    }
+
+    function getLiveMatchState(m) {
+      if (!m) return {};
+      const mid = Number(m.id) || 0;
+      if (liveDemoStateMap.has(mid)) {
+        return liveDemoStateMap.get(mid);
+      }
+
+      const sport = (m.sport_code || 'SOCCER').toUpperCase();
+      let state = {};
+
+      if (sport === 'BASEBALL') {
+        const seed = mid % 5;
+        state = {
+          sport: 'BASEBALL',
+          inning_text: seed === 0 ? '5회말 ▾' : (seed === 1 ? '7회초 ▲' : (seed === 2 ? '3회말 ▾' : '8회말 ▾')),
+          outs: (seed % 3),
+          balls: (seed % 4),
+          strikes: (seed % 3),
+          base1: true,
+          base2: (seed % 2 === 0),
+          base3: true, // 3루 점등 (사용자 요청 예시 충족)
+          pitcher_name: (m.home_starter_name && isStarterAnnounced(m.home_starter_name)) ? m.home_starter_name : `${m.home_team_name} 선발`,
+          pitcher_np: 68 + (seed * 7),
+          pitcher_so: 4 + seed,
+          batter_name: `${m.away_team_name} 4번타자`,
+          recent_play: '풀카운트 승부 끝 좌중간 1타점 적시 2루타! 🏃‍♂️',
+          score_h: Number(m.home_score ?? 4),
+          score_a: Number(m.away_score ?? 3)
+        };
+      } else if (sport === 'BASKETBALL') {
+        state = {
+          sport: 'BASKETBALL',
+          quarter: 'Q3',
+          clock: '04:18',
+          shot_clock: '12',
+          possession: 'HOME',
+          score_h: Number(m.home_score ?? 76),
+          score_a: Number(m.away_score ?? 72),
+          recent_event: '3PT! 🎯 외곽 클린 3점슛 작렬 (3점차 맹추격)'
+        };
+      } else if (sport === 'VOLLEYBALL') {
+        state = {
+          sport: 'VOLLEYBALL',
+          set_scores: '1S 25:22 | 2S 23:25 | 3S 25:21',
+          current_set: '4세트',
+          set_points: '21 - 19',
+          serve_team: m.home_team_name,
+          score_h: Number(m.home_score ?? 2),
+          score_a: Number(m.away_score ?? 1),
+          recent_event: '네트 정면 강력한 블로킹 득점 성공! ✋'
+        };
+      } else {
+        // SOCCER
+        state = {
+          sport: 'SOCCER',
+          match_minute: m.status === 'FINISHED' ? '종료' : (m.status === 'SCHEDULED' ? '전반' : "74'"),
+          half: m.status === 'FINISHED' ? 'FT' : '후반전',
+          ball_x: 168,
+          ball_y: 65,
+          is_goal: false,
+          score_h: Number(m.home_score ?? 2),
+          score_a: Number(m.away_score ?? 1),
+          recent_event: '페널티 아크 정면 날카로운 왼발 중거리 슛! ⚽'
+        };
+      }
+
+      liveDemoStateMap.set(mid, state);
+      return state;
+    }
+
+    function advanceDemoLiveStates() {
+      liveDemoStateMap.forEach((st, mid) => {
+        if (st.sport === 'BASEBALL') {
+          // 야구 시뮬레이션: 볼카운트 변경 및 주자 진루
+          st.balls = (st.balls + 1) % 4;
+          if (st.balls === 0) {
+            st.strikes = (st.strikes + 1) % 3;
+            if (st.strikes === 0) {
+              st.outs = (st.outs + 1) % 3;
+              if (st.outs === 0) {
+                // 이닝 전환
+                st.inning_text = st.inning_text.includes('초') ? st.inning_text.replace('초 ▲', '말 ▾') : (parseInt(st.inning_text) + 1) + '회초 ▲';
+                st.base1 = false; st.base2 = false; st.base3 = false;
+                st.recent_play = '공수교대! 투수 삼진으로 이닝 마무리 ⚾';
+              } else {
+                st.recent_play = '3구 헛스윙 삼진 아웃! (OUT 카운트 추가)';
+              }
+            } else {
+              st.recent_play = '148km 패스트볼 스트라이크 판정 ⚡';
+            }
+          } else {
+            // 안타 및 진루
+            if (Math.random() > 0.4) {
+              st.base3 = st.base2;
+              st.base2 = st.base1;
+              st.base1 = true;
+              if (st.base3) {
+                st.recent_play = '우중간 깔끔한 안타! 주자 3루 진루 성공 (득점권 찬스!) 🔥';
+              } else {
+                st.recent_play = '볼넷 출루로 1루 주자 진루!';
+              }
+            } else {
+              st.recent_play = '바깥쪽 빠지는 유인구 (볼 카운트)';
+            }
+          }
+        } else if (st.sport === 'SOCCER') {
+          // 축구 시뮬레이션: 볼 이동 및 골 알림
+          st.ball_x = 40 + Math.floor(Math.random() * 160);
+          st.ball_y = 25 + Math.floor(Math.random() * 100);
+          const goalChance = Math.random();
+          if (goalChance > 0.75) {
+            st.is_goal = true;
+            st.score_h += 1;
+            st.goal_player = '환상적인 감아차기 원더골';
+            st.recent_event = '골망을 가르는 벼락같은 득점! GOOOAL~~! ⚽';
+            setTimeout(() => { st.is_goal = false; }, 3000);
+          } else if (goalChance > 0.4) {
+            st.recent_event = '측면 크로스 연결 ➡️ 헤더 슛 골대 살짝 빗나감!';
+          } else {
+            st.recent_event = '치열한 중원 압박 및 패스 플레이 전개';
+          }
+        } else if (st.sport === 'BASKETBALL') {
+          if (Math.random() > 0.5) {
+            st.score_h += 2;
+            st.recent_event = '골밑 돌파 레이업 득점 성공! 🏀';
+            st.possession = 'AWAY';
+          } else {
+            st.score_a += 3;
+            st.recent_event = '3PT! 🎯 통렬한 버저비터 3점슛 작렬!';
+            st.possession = 'HOME';
+          }
+        } else if (st.sport === 'VOLLEYBALL') {
+          const pts = st.set_points.split('-').map(x => parseInt(x.trim()));
+          if (Math.random() > 0.5) {
+            st.set_points = `${pts[0] + 1} - ${pts[1]}`;
+            st.recent_event = '상대 빈틈을 찌르는 강력한 오픈 스파이크 득점! 🏐';
+          } else {
+            st.set_points = `${pts[0]} - ${pts[1] + 1}`;
+            st.recent_event = '철벽 블로킹 성공으로 연속 득점!';
+          }
+        }
+      });
+    }
+
+    function getFilteredRelayMatches() {
+      if (typeof allMatches === 'undefined' || !allMatches) return [];
+      let list = allMatches;
+      if (relaySportFilter && relaySportFilter !== 'ALL') {
+        list = list.filter(m => (m.sport_code || '').toUpperCase() === relaySportFilter);
+      }
+      return list;
+    }
+
+    function renderLiveRelayCenter(targetMatch) {
+      const container = document.getElementById('liveRelayContainer');
+      if (!container) return;
+
+      const filtered = getFilteredRelayMatches();
+      if (!targetMatch) {
+        if (selectedPredMatchId) {
+          targetMatch = filtered.find(m => m.id === selectedPredMatchId);
+        }
+        if (!targetMatch && filtered.length > 0) {
+          targetMatch = filtered[0];
+        }
+      }
+
+      if (!targetMatch) {
+        container.innerHTML = `
+          <div class="text-center text-muted py-5 px-3">
+            <div style="font-size: 2.2rem;" class="mb-2">📡</div>
+            <div class="fw-bold text-dark fs-6">현재 선택된 종목의 실시간 중계 경기가 없습니다.</div>
+            <div class="text-muted small mt-1">상단 스포츠 필터 또는 좌측 경기 목록을 선택해 주세요.</div>
+          </div>
+        `;
+        return;
+      }
+
+      // If Multi-Play mode is active:
+      if (isMultiPlayMode) {
+        container.innerHTML = renderLiveMultiPlayGrid(filtered);
+        return;
+      }
+
+      // Single Focus Mode:
+      const st = getLiveMatchState(targetMatch);
+      const sport = (targetMatch.sport_code || 'SOCCER').toUpperCase();
+      const isLive = targetMatch.status === 'LIVE' || isLiveDemoMode;
+      const statusBadge = isLive 
+        ? `<span class="badge" style="background:#ef4444; color:#fff; font-size:0.75rem; font-weight:800; padding:3px 8px;"><span class="live-blink-dot me-1" style="display:inline-block; width:6px; height:6px; background:#fff; border-radius:50%;"></span>LIVE 중계중</span>`
+        : (targetMatch.status === 'FINISHED' 
+            ? `<span class="badge bg-secondary text-white" style="font-size:0.75rem; font-weight:700;">경기 종료</span>`
+            : `<span class="badge bg-primary text-white" style="font-size:0.75rem; font-weight:700;">경기 예정</span>`);
+
+      let widgetHtml = '';
+      if (sport === 'BASEBALL') {
+        widgetHtml = renderLiveBaseballDiamond(targetMatch, st);
+      } else if (sport === 'BASKETBALL') {
+        widgetHtml = renderLiveBasketballCourt(targetMatch, st);
+      } else if (sport === 'VOLLEYBALL') {
+        widgetHtml = renderLiveVolleyballCourt(targetMatch, st);
+      } else {
+        widgetHtml = renderLiveSoccerPitch(targetMatch, st);
+      }
+
+      const scoreH = st.score_h ?? (targetMatch.home_score ?? 0);
+      const scoreA = st.score_a ?? (targetMatch.away_score ?? 0);
+
+      container.innerHTML = `
+        <div class="live-relay-wrapper">
+          <!-- 1. Top Match Score Card -->
+          <div class="p-2.5 rounded-3 mb-2" style="background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom" style="border-color: #f1f5f9 !important;">
+              <span class="badge bg-light text-dark border fw-bold" style="font-size: 0.72rem;">
+                ${targetMatch.league_name || sport} · ${targetMatch.match_date ? targetMatch.match_date.slice(5, 16) : ''}
+              </span>
+              <div class="d-flex align-items-center gap-1.5">
+                ${statusBadge}
+                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 fw-bold" onclick="openMatchModal(${targetMatch.id})" style="font-size: 0.70rem; border-radius: 4px;" title="상세 모달 팝업으로 보기">
+                  <i class="bi bi-arrows-fullscreen me-0.5"></i>확대
+                </button>
+              </div>
+            </div>
+
+            <!-- Teams & Big Scoreboard -->
+            <div class="row align-items-center text-center g-1 py-1">
+              <div class="col-5">
+                <div class="fw-bold text-truncate" style="font-size: 1.05rem; color: #0f172a;">
+                  <span class="badge me-1" style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; font-size:0.68rem; padding:2px 4px;">홈</span>${targetMatch.home_team_name}
+                </div>
+              </div>
+              <div class="col-2">
+                <div class="fw-bold text-danger fs-4" style="letter-spacing: 1px; font-family: 'Segoe UI', system-ui, sans-serif;">
+                  ${scoreH} <span class="text-muted fs-6">:</span> ${scoreA}
+                </div>
+              </div>
+              <div class="col-5">
+                <div class="fw-bold text-truncate" style="font-size: 1.05rem; color: #0f172a;">
+                  ${targetMatch.away_team_name}<span class="badge ms-1" style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; font-size:0.68rem; padding:2px 4px;">원정</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Interactive Sports Visualizer Widget (야구 다이아몬드 / 축구 피치 등) -->
+          ${widgetHtml}
+
+          <!-- 3. Bottom Action & Analysis Quick-link -->
+          <div class="p-2 rounded-2 mt-2 d-flex justify-content-between align-items-center" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+            <span class="small text-secondary fw-bold" style="font-size: 0.74rem;">
+              <i class="bi bi-info-circle me-1 text-primary"></i>선수별 상세 기록과 배당 분석이 필요하신가요?
+            </span>
+            <button class="btn btn-sm btn-outline-dark py-1 px-2.5 fw-bold" onclick="switchCenterViewMode('SABER')" style="font-size: 0.74rem; border-radius: 6px;">
+              📊 1:1 세이버 분석실 보기 →
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLiveBaseballDiamond(m, st) {
+      const b1Active = st.base1;
+      const b2Active = st.base2;
+      const b3Active = st.base3;
+      const baseStateText = (b1Active && b2Active && b3Active) ? '만루' :
+        (b1Active && b2Active ? '1·2루' :
+        (b1Active && b3Active ? '1·3루' :
+        (b2Active && b3Active ? '2·3루' :
+        (b3Active ? '3루' :
+        (b2Active ? '2루' :
+        (b1Active ? '1루' : '주자없음'))))));
+
+      return `
+        <div class="baseball-diamond-wrapper text-center my-1 position-relative" style="background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; padding: 12px 10px; border: 1.5px solid #334155; box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
+          <!-- Top Board: Inning, Outs, BSO LEDs -->
+          <div class="d-flex justify-content-between align-items-center px-2.5 py-1 mb-2 rounded" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.12);">
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge" style="background: #dc2626; color: white; font-weight: 800; font-size: 0.78rem; padding: 3px 8px; border-radius: 4px;">
+                ${st.inning_text}
+              </span>
+              <span class="text-white fw-bold" style="font-size: 0.80rem;">
+                <b style="color: #ef4444;">${st.outs}</b> OUT
+              </span>
+              <span class="badge" style="background: ${b3Active ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255,255,255,0.08)'}; color: ${b3Active ? '#fef08a' : '#94a3b8'}; border: 1px solid ${b3Active ? '#f59e0b' : 'transparent'}; font-size: 0.72rem;">
+                주자 ${baseStateText}
+              </span>
+            </div>
+
+            <!-- B S O LED Display -->
+            <div class="d-flex align-items-center gap-2" style="font-family: monospace; font-size: 0.74rem; font-weight: 800;">
+              <div class="d-flex align-items-center gap-0.5">
+                <span style="color: #4ade80;">B</span>
+                <span class="bso-dot ${st.balls >= 1 ? 'dot-ball' : ''}"></span>
+                <span class="bso-dot ${st.balls >= 2 ? 'dot-ball' : ''}"></span>
+                <span class="bso-dot ${st.balls >= 3 ? 'dot-ball' : ''}"></span>
+              </div>
+              <div class="d-flex align-items-center gap-0.5">
+                <span style="color: #facc15;">S</span>
+                <span class="bso-dot ${st.strikes >= 1 ? 'dot-strike' : ''}"></span>
+                <span class="bso-dot ${st.strikes >= 2 ? 'dot-strike' : ''}"></span>
+              </div>
+              <div class="d-flex align-items-center gap-0.5">
+                <span style="color: #f87171;">O</span>
+                <span class="bso-dot ${st.outs >= 1 ? 'dot-out' : ''}"></span>
+                <span class="bso-dot ${st.outs >= 2 ? 'dot-out' : ''}"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SVG Diamond Ground with Bases -->
+          <div class="d-flex justify-content-center position-relative py-1">
+            <svg width="220" height="185" viewBox="0 0 220 185" style="filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6));">
+              <defs>
+                <linearGradient id="grassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#15803d" />
+                  <stop offset="100%" stop-color="#166534" />
+                </linearGradient>
+                <linearGradient id="dirtGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#a16207" />
+                  <stop offset="100%" stop-color="#78350f" />
+                </linearGradient>
+              </defs>
+
+              <!-- Outfield Grass Arc -->
+              <path d="M 12 155 A 120 120 0 0 1 208 155 Z" fill="url(#grassGrad)" opacity="0.92" />
+              
+              <!-- Infield Dirt Diamond -->
+              <polygon points="110,35 180,105 110,165 40,105" fill="url(#dirtGrad)" />
+              <!-- Infield Grass -->
+              <polygon points="110,55 160,105 110,145 60,105" fill="url(#grassGrad)" />
+
+              <!-- Base Paths (Foul Lines) -->
+              <line x1="110" y1="165" x2="20" y2="75" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.65" />
+              <line x1="110" y1="165" x2="200" y2="75" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.65" />
+
+              <!-- Pitcher's Mound -->
+              <circle cx="110" cy="105" r="9" fill="#78350f" stroke="#d97706" stroke-width="1" />
+              <rect x="106" y="103" width="8" height="3" fill="#ffffff" rx="1" />
+
+              <!-- 2루 (Second Base - Top) -->
+              <g transform="translate(110, 35)">
+                <polygon points="0,-9 9,0 0,9 -9,0" 
+                         fill="${b2Active ? '#f59e0b' : '#334155'}" 
+                         stroke="${b2Active ? '#fef08a' : '#64748b'}" 
+                         stroke-width="${b2Active ? '2.5' : '1.5'}"
+                         class="${b2Active ? 'pulse-base-glow' : ''}" />
+                <text x="0" y="3.5" text-anchor="middle" font-size="8" font-weight="bold" fill="${b2Active ? '#000000' : '#cbd5e1'}">2</text>
+              </g>
+
+              <!-- 3루 (Third Base - Left) -->
+              <g transform="translate(40, 105)">
+                <polygon points="0,-9 9,0 0,9 -9,0" 
+                         fill="${b3Active ? '#f59e0b' : '#334155'}" 
+                         stroke="${b3Active ? '#fef08a' : '#64748b'}" 
+                         stroke-width="${b3Active ? '2.5' : '1.5'}"
+                         class="${b3Active ? 'pulse-base-glow' : ''}" />
+                <text x="0" y="3.5" text-anchor="middle" font-size="8" font-weight="bold" fill="${b3Active ? '#000000' : '#cbd5e1'}">3</text>
+              </g>
+
+              <!-- 1루 (First Base - Right) -->
+              <g transform="translate(180, 105)">
+                <polygon points="0,-9 9,0 0,9 -9,0" 
+                         fill="${b1Active ? '#f59e0b' : '#334155'}" 
+                         stroke="${b1Active ? '#fef08a' : '#64748b'}" 
+                         stroke-width="${b1Active ? '2.5' : '1.5'}"
+                         class="${b1Active ? 'pulse-base-glow' : ''}" />
+                <text x="0" y="3.5" text-anchor="middle" font-size="8" font-weight="bold" fill="${b1Active ? '#000000' : '#cbd5e1'}">1</text>
+              </g>
+
+              <!-- 홈플레이트 (Home Plate - Bottom) -->
+              <g transform="translate(110, 165)">
+                <polygon points="0,-5 6,-1 4,6 -4,6 -6,-1" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5" />
+              </g>
+            </svg>
+          </div>
+
+          <!-- Pitcher & Batter Info Cards -->
+          <div class="row g-1 text-white small px-1 mb-2 text-start" style="font-size: 0.72rem;">
+            <div class="col-6">
+              <div class="p-1.5 rounded" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);">
+                <div class="text-white-50"><i class="bi bi-person-fill text-warning me-1"></i>투수: <strong class="text-white">${st.pitcher_name}</strong></div>
+                <div class="text-secondary mt-0.5">${st.pitcher_np}구 · ${st.pitcher_so}K</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-1.5 rounded" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);">
+                <div class="text-white-50"><i class="bi bi-person-badge text-info me-1"></i>타자: <strong class="text-white">${st.batter_name}</strong></div>
+                <div class="text-secondary mt-0.5">${st.balls}B ${st.strikes}S 접전</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Play Text Banner & Chat Link Button -->
+          <div class="py-1.5 px-2.5 rounded d-flex justify-content-between align-items-center" style="background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.18);">
+            <span class="text-warning fw-bold small text-truncate text-start" style="font-size: 0.78rem;">
+              <i class="bi bi-broadcast me-1 text-danger"></i>${st.recent_play}
+            </span>
+            <button class="btn btn-sm btn-primary py-0.5 px-2 text-nowrap fw-bold" onclick="quickSendLiveToChat('${m.home_team_name} vs ${m.away_team_name}', '${st.inning_text} ${st.outs}사 ${baseStateText} - ${st.recent_play}')" style="font-size: 0.72rem; border-radius: 4px;">
+              💬 톡방에 중계
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLiveSoccerPitch(m, st) {
+      return `
+        <div class="soccer-pitch-wrapper text-center my-1 position-relative" style="background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; padding: 12px 10px; border: 1.5px solid #334155; box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
+          <!-- Top Header: Time & Game Clock -->
+          <div class="d-flex justify-content-between align-items-center px-2.5 py-1 mb-2 rounded" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.12);">
+            <div class="d-flex align-items-center gap-1.5">
+              <span class="badge" style="background: #dc2626; color: white; font-weight: 800; font-size: 0.76rem; padding: 3px 8px; border-radius: 4px;">
+                ● LIVE ${st.match_minute}
+              </span>
+              <span class="text-white-50 small fw-bold">${st.half}</span>
+            </div>
+            <div class="text-white-50 small">
+              공격 방향: <strong class="text-white">우측 공격 ➡️</strong>
+            </div>
+          </div>
+
+          <!-- SVG Soccer Pitch -->
+          <div class="d-flex justify-content-center position-relative py-1">
+            <svg width="240" height="150" viewBox="0 0 240 150" style="border-radius: 8px; border: 2px solid #334155; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));">
+              <!-- Pitch Grass Stripes -->
+              <rect x="0" y="0" width="240" height="150" fill="#15803d" />
+              <rect x="24" y="0" width="24" height="150" fill="#166534" opacity="0.65" />
+              <rect x="72" y="0" width="24" height="150" fill="#166534" opacity="0.65" />
+              <rect x="120" y="0" width="24" height="150" fill="#166534" opacity="0.65" />
+              <rect x="168" y="0" width="24" height="150" fill="#166534" opacity="0.65" />
+              <rect x="216" y="0" width="24" height="150" fill="#166534" opacity="0.65" />
+
+              <!-- Field White Lines -->
+              <rect x="10" y="10" width="220" height="130" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.85" />
+              <line x1="120" y1="10" x2="120" y2="140" stroke="#ffffff" stroke-width="1.5" opacity="0.85" />
+              <circle cx="120" cy="75" r="25" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.85" />
+              <circle cx="120" cy="75" r="2.5" fill="#ffffff" opacity="0.85" />
+
+              <!-- Home Penalty Box (Left) -->
+              <rect x="10" y="35" width="35" height="80" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.85" />
+              <rect x="10" y="55" width="14" height="40" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.85" />
+
+              <!-- Away Penalty Box (Right) -->
+              <rect x="195" y="35" width="35" height="80" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.85" />
+              <rect x="216" y="55" width="14" height="40" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.85" />
+
+              <!-- Ball Attack Position -->
+              <g transform="translate(${st.ball_x || 165}, ${st.ball_y || 68})">
+                <circle cx="0" cy="0" r="8" fill="#ffffff" stroke="#000000" stroke-width="1.5" class="pulse-base-glow" />
+                <text x="0" y="3.5" text-anchor="middle" font-size="9">⚽</text>
+              </g>
+            </svg>
+
+            <!-- Goal Pop-up Flash Banner (골 발생 시 역동적 표출) -->
+            ${st.is_goal ? `
+              <div class="position-absolute top-50 start-50 translate-middle py-2 px-4 rounded-3 text-white text-center shadow-lg goal-banner-anim" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); border: 2.5px solid #fef08a; z-index: 15; min-width: 200px;">
+                <div class="fw-bold fs-5 text-warning tracking-wide"><i class="bi bi-fire me-1"></i>GOOOAL~~~! ⚽</div>
+                <div class="small fw-bold text-white mt-0.5">${st.goal_player || '득점 작렬!'}</div>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Live Play Text Banner & Chat Link Button -->
+          <div class="mt-2 py-1.5 px-2.5 rounded d-flex justify-content-between align-items-center" style="background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.18);">
+            <span class="text-warning fw-bold small text-truncate text-start" style="font-size: 0.78rem;">
+              <i class="bi bi-broadcast me-1 text-danger"></i>${st.recent_event || '중원 볼 경합 치열'}
+            </span>
+            <button class="btn btn-sm btn-primary py-0.5 px-2 text-nowrap fw-bold" onclick="quickSendLiveToChat('${m.home_team_name} vs ${m.away_team_name}', '${st.match_minute} ${st.recent_event}')" style="font-size: 0.72rem; border-radius: 4px;">
+              💬 톡방에 중계
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLiveBasketballCourt(m, st) {
+      return `
+        <div class="basketball-court-wrapper text-center my-1 position-relative" style="background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; padding: 12px 10px; border: 1.5px solid #334155; box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
+          <!-- Top Header: Quarter & Shot Clock -->
+          <div class="d-flex justify-content-between align-items-center px-2.5 py-1 mb-2 rounded" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.12);">
+            <div class="d-flex align-items-center gap-1.5">
+              <span class="badge bg-danger text-white fw-bold" style="font-size: 0.76rem; padding: 3px 8px;">
+                ● LIVE ${st.quarter}
+              </span>
+              <span class="text-warning fw-bold small">${st.clock}</span>
+            </div>
+            <div class="text-white-50 small">
+              샷클락: <strong class="text-warning font-monospace">${st.shot_clock}초</strong> | 공격권: <strong class="text-white">${st.possession === 'HOME' ? m.home_team_name : m.away_team_name}</strong>
+            </div>
+          </div>
+
+          <!-- SVG Hardwood Basketball Court -->
+          <div class="d-flex justify-content-center position-relative py-1">
+            <svg width="240" height="140" viewBox="0 0 240 140" style="border-radius: 8px; border: 2px solid #334155; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));">
+              <!-- Hardwood Court Background -->
+              <rect x="0" y="0" width="240" height="140" fill="#b45309" />
+              <rect x="10" y="10" width="220" height="120" fill="#d97706" stroke="#ffffff" stroke-width="1.5" opacity="0.9" />
+              <line x1="120" y1="10" x2="120" y2="130" stroke="#ffffff" stroke-width="1.5" opacity="0.9" />
+              <circle cx="120" cy="70" r="20" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.9" />
+
+              <!-- Left Paint & 3pt Arc -->
+              <rect x="10" y="45" width="40" height="50" fill="#92400e" stroke="#ffffff" stroke-width="1.2" opacity="0.9" />
+              <path d="M 10 25 A 50 50 0 0 1 10 115" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.9" />
+              <!-- Left Hoop -->
+              <circle cx="25" cy="70" r="5" fill="none" stroke="#ef4444" stroke-width="2" />
+
+              <!-- Right Paint & 3pt Arc -->
+              <rect x="190" y="45" width="40" height="50" fill="#92400e" stroke="#ffffff" stroke-width="1.2" opacity="0.9" />
+              <path d="M 230 25 A 50 50 0 0 0 230 115" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.9" />
+              <!-- Right Hoop -->
+              <circle cx="215" cy="70" r="5" fill="none" stroke="#ef4444" stroke-width="2" />
+
+              <!-- Basketball Icon -->
+              <g transform="translate(${st.possession === 'HOME' ? 190 : 50}, 70)">
+                <circle cx="0" cy="0" r="7" fill="#ea580c" stroke="#ffffff" stroke-width="1.5" class="pulse-base-glow" />
+                <text x="0" y="3.5" text-anchor="middle" font-size="8">🏀</text>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Live Play Text Banner & Chat Link Button -->
+          <div class="mt-2 py-1.5 px-2.5 rounded d-flex justify-content-between align-items-center" style="background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.18);">
+            <span class="text-warning fw-bold small text-truncate text-start" style="font-size: 0.78rem;">
+              <i class="bi bi-broadcast me-1 text-danger"></i>${st.recent_event}
+            </span>
+            <button class="btn btn-sm btn-primary py-0.5 px-2 text-nowrap fw-bold" onclick="quickSendLiveToChat('${m.home_team_name} vs ${m.away_team_name}', '${st.quarter} - ${st.recent_event}')" style="font-size: 0.72rem; border-radius: 4px;">
+              💬 톡방에 중계
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLiveVolleyballCourt(m, st) {
+      return `
+        <div class="volleyball-court-wrapper text-center my-1 position-relative" style="background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); border-radius: 12px; padding: 12px 10px; border: 1.5px solid #334155; box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
+          <!-- Top Header: Sets & Current Set Rally -->
+          <div class="d-flex justify-content-between align-items-center px-2.5 py-1 mb-2 rounded" style="background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.12);">
+            <div class="d-flex align-items-center gap-1.5">
+              <span class="badge bg-danger text-white fw-bold" style="font-size: 0.76rem; padding: 3px 8px;">
+                ● LIVE ${st.current_set}
+              </span>
+              <span class="text-warning fw-bold fs-6 font-monospace">${st.set_points}</span>
+            </div>
+            <div class="text-white-50 small">
+              서브권: <strong class="text-warning">🏐 ${st.serve_team}</strong>
+            </div>
+          </div>
+
+          <!-- SVG Volleyball Court -->
+          <div class="d-flex justify-content-center position-relative py-1">
+            <svg width="240" height="135" viewBox="0 0 240 135" style="border-radius: 8px; border: 2px solid #334155; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));">
+              <!-- Court Blue Border & Orange Floor -->
+              <rect x="0" y="0" width="240" height="135" fill="#1e40af" />
+              <rect x="15" y="15" width="210" height="105" fill="#ea580c" stroke="#ffffff" stroke-width="1.5" />
+              <!-- Center Net Line -->
+              <line x1="120" y1="10" x2="120" y2="125" stroke="#ffffff" stroke-width="3" />
+              <!-- Attack Lines (3m) -->
+              <line x1="85" y1="15" x2="85" y2="120" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.9" />
+              <line x1="155" y1="15" x2="155" y2="120" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.9" />
+
+              <!-- Ball Icon -->
+              <g transform="translate(135, 67)">
+                <circle cx="0" cy="0" r="7" fill="#ffffff" stroke="#1d4ed8" stroke-width="1.5" class="pulse-base-glow" />
+                <text x="0" y="3.5" text-anchor="middle" font-size="8">🏐</text>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Set Scores Summary -->
+          <div class="py-1 px-2 mb-2 rounded text-white-50 small" style="background: rgba(255,255,255,0.06); font-size: 0.72rem;">
+            세트 전적: <strong class="text-white">${st.set_scores}</strong>
+          </div>
+
+          <!-- Live Play Text Banner & Chat Link Button -->
+          <div class="py-1.5 px-2.5 rounded d-flex justify-content-between align-items-center" style="background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.18);">
+            <span class="text-warning fw-bold small text-truncate text-start" style="font-size: 0.78rem;">
+              <i class="bi bi-broadcast me-1 text-danger"></i>${st.recent_event}
+            </span>
+            <button class="btn btn-sm btn-primary py-0.5 px-2 text-nowrap fw-bold" onclick="quickSendLiveToChat('${m.home_team_name} vs ${m.away_team_name}', '${st.current_set} (${st.set_points}) - ${st.recent_event}')" style="font-size: 0.72rem; border-radius: 4px;">
+              💬 톡방에 중계
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderLiveMultiPlayGrid(matches) {
+      if (!matches || matches.length === 0) {
+        return `<div class="text-center text-muted py-5">선택된 종목의 진행 중인 경기가 없습니다.</div>`;
+      }
+
+      // Take top 4 matches for the multi-play grid
+      const targets = matches.slice(0, 4);
+
+      const cardsHtml = targets.map((m, idx) => {
+        const st = getLiveMatchState(m);
+        const sport = (m.sport_code || 'SOCCER').toUpperCase();
+        const scoreH = st.score_h ?? (m.home_score ?? 0);
+        const scoreA = st.score_a ?? (m.away_score ?? 0);
+
+        let miniVisual = '';
+        if (sport === 'BASEBALL') {
+          miniVisual = `
+            <div class="d-flex justify-content-center align-items-center my-1">
+              <svg width="70" height="60" viewBox="0 0 100 85">
+                <polygon points="50,15 80,45 50,75 20,45" fill="#15803d" stroke="#d97706" stroke-width="2" />
+                <polygon points="50,15 57,22 50,29 43,22" fill="${st.base2 ? '#f59e0b' : '#475569'}" />
+                <polygon points="20,45 27,52 20,59 13,52" fill="${st.base3 ? '#f59e0b' : '#475569'}" />
+                <polygon points="80,45 87,52 80,59 73,52" fill="${st.base1 ? '#f59e0b' : '#475569'}" />
+              </svg>
+            </div>
+          `;
+        } else {
+          miniVisual = `
+            <div class="d-flex justify-content-center align-items-center my-1">
+              <div class="rounded py-1 px-3" style="background:#166534; border:1px solid #ffffff; font-size:0.75rem; color:#fff;">
+                ⚽ <strong>${st.match_minute || '74\''}</strong>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="col-12 col-md-6 mb-2">
+            <div class="multi-relay-card h-100 d-flex flex-column justify-content-between p-2 rounded border" style="background:#ffffff; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="badge bg-light text-dark border" style="font-size:0.68rem;">${m.league_name || sport}</span>
+                  <span class="badge bg-danger text-white" style="font-size:0.65rem;">● LIVE</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center text-center my-1">
+                  <div class="fw-bold text-truncate" style="font-size:0.85rem; max-width:40%;">${m.home_team_name}</div>
+                  <div class="fw-bold text-danger fs-5 font-monospace">${scoreH}:${scoreA}</div>
+                  <div class="fw-bold text-truncate" style="font-size:0.85rem; max-width:40%;">${m.away_team_name}</div>
+                </div>
+                ${miniVisual}
+                <div class="small text-muted text-truncate my-1 text-center" style="font-size:0.72rem;">
+                  ${st.recent_play || st.recent_event || '치열한 접전 중'}
+                </div>
+              </div>
+              <div class="d-flex gap-1 mt-1 pt-1 border-top">
+                <button class="btn btn-sm btn-outline-primary py-0.5 px-2 flex-fill fw-bold" onclick="selectPredMatch(${m.id}, false); switchCenterViewMode('RELAY');" style="font-size:0.70rem;">
+                  단일 집중
+                </button>
+                <button class="btn btn-sm btn-primary py-0.5 px-2 fw-bold" onclick="quickSendLiveToChat('${m.home_team_name} vs ${m.away_team_name}', '${st.recent_play || st.recent_event || '실시간 경기 중계'}')" style="font-size:0.70rem;">
+                  💬 톡방
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="multi-play-container">
+          <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+            <span class="fw-bold text-dark" style="font-size: 0.82rem;">
+              <i class="bi bi-grid-3x3-gap-fill text-primary me-1"></i>멀티플레이 동시 중계 모드
+            </span>
+            <span class="badge bg-primary text-white" style="font-size: 0.68rem;">${targets.length}개 경기 동시 시청</span>
+          </div>
+          <div class="row g-2">
+            ${cardsHtml}
+          </div>
+        </div>
+      `;
+    }
+
+    function quickSendLiveToChat(matchTitle, eventText) {
+      const chatInput = document.getElementById('chatContentInput');
+      if (chatInput) {
+        chatInput.value = `[${matchTitle}] ${eventText} 🔥`;
+        chatInput.focus();
+        chatInput.style.borderColor = '#1d4ed8';
+        chatInput.style.boxShadow = '0 0 8px rgba(29, 78, 216, 0.4)';
+        setTimeout(() => {
+          chatInput.style.borderColor = '';
+          chatInput.style.boxShadow = '';
+        }, 1500);
+
+        if (window.innerWidth <= 768) {
+          switchMobileTab('community');
+        }
       }
     }
 

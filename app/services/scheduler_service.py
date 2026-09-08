@@ -298,12 +298,10 @@ class SchedulerService:
             from app.services.betman_service import BetmanService
             from app.core.websocket_manager import manager
 
+            # 이미 종료된 과거 회차(66회, 27회 등)는 재수집하지 않고, 현재 발매 중인 활성 회차만 최신화
             sync_targets = [
-                ('G011', 260052, '축구 승무패 52회'),
                 ('G011', 260051, '축구 승무패 51회'),
-                ('G024', 260067, '야구 승1패 67회'),
-                ('G024', 260066, '야구 승1패 66회'),
-                ('G027', 260027, '농구 승5패 27회')
+                ('G024', 260067, '야구 승1패 67회')
             ]
 
             for g_id, g_ts, label in sync_targets:
