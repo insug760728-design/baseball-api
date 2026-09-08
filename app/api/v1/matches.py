@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.services.match_service import MatchService
 from app.services.team_split_service import TeamSplitService
+from app.services.player_translation import translate_player_name
 from app.schemas.schemas import MatchResponse, MatchUpdate, DateRangeSyncRequest, PlayerMatchStatUpdate
 
 router = APIRouter(prefix="/matches", tags=["야구 경기 일정 및 결과"])
@@ -104,8 +105,8 @@ def get_match_full(match_id: int, db: Session = Depends(get_db)):
         "away_team_name": m.away_team_name,
         "home_score": m.home_score,
         "away_score": m.away_score,
-        "home_starter_name": h_starter,
-        "away_starter_name": a_starter,
+        "home_starter_name": translate_player_name(h_starter) if h_starter else None,
+        "away_starter_name": translate_player_name(a_starter) if a_starter else None,
         "status": m.status,
         "is_customized": m.is_customized,
         "custom_notes": m.custom_notes,

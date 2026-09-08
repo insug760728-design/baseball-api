@@ -10,6 +10,7 @@ from app.scrapers.soccer_scraper import SoccerScraper, SOCCER_LEAGUE_CODES
 from app.scrapers.basketball_scraper import BasketballScraper
 from app.core.sports_catalog import SPORTS_CATALOG
 from app.services.team_split_service import TeamSplitService
+from app.services.player_translation import translate_player_name
 
 class MatchService:
 
@@ -297,9 +298,9 @@ class MatchService:
                     h_st = st.get("home", {})
                     a_st = st.get("away", {})
                     if h_st.get("name") and h_st.get("name") not in ["선발 예고", "선발 투수"]:
-                        m.home_starter_name = h_st.get("name")
+                        m.home_starter_name = translate_player_name(h_st.get("name"))
                     if a_st.get("name") and a_st.get("name") not in ["선발 예고", "선발 투수"]:
-                        m.away_starter_name = a_st.get("name")
+                        m.away_starter_name = translate_player_name(a_st.get("name"))
                 except Exception:
                     pass
         return matches
@@ -334,11 +335,13 @@ class MatchService:
                 extra = json.loads(ps.extra_stats or "{}")
             except:
                 extra = {}
+            orig_pname = ps.player_name or ""
             player_stats_list.append({
                 "id": ps.id,
                 "match_id": ps.match_id,
                 "team_name": ps.team_name,
-                "player_name": ps.player_name,
+                "player_name": translate_player_name(orig_pname) if orig_pname else "",
+                "player_name_en": orig_pname,
                 "back_number": ps.back_number,
                 "position": ps.position,
                 "points": ps.points, # 타점 또는 삼진
@@ -351,14 +354,17 @@ class MatchService:
 
         events_list = []
         for ev in match.events:
+            ev_pname = ev.player_name or ""
+            ev_asst = ev.assist_player_name or ""
             events_list.append({
                 "id": ev.id,
                 "match_id": ev.match_id,
                 "time_display": ev.time_display,
                 "event_type": ev.event_type,
                 "team_name": ev.team_name,
-                "player_name": ev.player_name,
-                "assist_player_name": ev.assist_player_name,
+                "player_name": translate_player_name(ev_pname) if ev_pname else "",
+                "player_name_en": ev_pname,
+                "assist_player_name": translate_player_name(ev_asst) if ev_asst else "",
                 "score_after": ev.score_after,
                 "description": ev.description,
                 "is_customized": ev.is_customized

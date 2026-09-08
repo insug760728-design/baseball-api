@@ -21,6 +21,7 @@ import urllib.parse
 from collections import defaultdict
 from typing import Dict, Any, Optional, Tuple
 from app.scrapers.official_mlb_live_scraper import get_team_name_ko
+from app.services.player_translation import translate_player_name
 
 logger = logging.getLogger("team_split_service")
 
@@ -102,16 +103,39 @@ def _get_baseball_recent_pitching(conn, team_name: str, limit: int = 3, league_n
         starter = None
         bullpen = []
         if pitchers:
-            starter_cand = next((p for p in pitchers if p.get('is_starter')), None)
+            merged_pitchers = {}
+            for p in pitchers:
+                pname = p['name']
+                if pname not in merged_pitchers:
+                    merged_pitchers[pname] = dict(p)
+                else:
+                    if p['np'] > merged_pitchers[pname]['np']:
+                        merged_pitchers[pname]['np'] = p['np']
+                    if p['is_starter']:
+                        merged_pitchers[pname]['is_starter'] = True
+            
+            pitcher_list = list(merged_pitchers.values())
+            starter_cand = next((p for p in pitcher_list if p.get('is_starter')), None)
             if not starter_cand:
                 # If no pitcher is marked 선발, pick the one with >= 45 pitches or max np
-                max_np_p = max(pitchers, key=lambda x: x['np'])
+                max_np_p = max(pitcher_list, key=lambda x: x['np'])
                 if max_np_p['np'] >= 45:
                     starter_cand = max_np_p
                 else:
-                    starter_cand = pitchers[0]
-            starter = starter_cand
-            bullpen = [p for p in pitchers if p != starter]
+                    starter_cand = pitcher_list[0]
+            starter = dict(starter_cand)
+            starter['name_en'] = starter['name']
+            starter['name'] = translate_player_name(starter['name'])
+            # Bullpen should exclude the starter and pitchers with 0 np (if any active pitched)
+            bullpen_active = [p for p in pitcher_list if p['name'] != starter_cand['name'] and p['np'] > 0]
+            if not bullpen_active:
+                bullpen_active = [p for p in pitcher_list if p['name'] != starter_cand['name']]
+            bullpen = []
+            for bp in bullpen_active:
+                bp_item = dict(bp)
+                bp_item['name_en'] = bp_item['name']
+                bp_item['name'] = translate_player_name(bp_item['name'])
+                bullpen.append(bp_item)
             bullpen_np = sum(p['np'] for p in bullpen)
         else:
             starter = {'name': '선발 투수', 'ip': '5.2', 'np': 88, 'er': min(3, opp_score), 'so': 5, 'bb': 2}
@@ -675,9 +699,13 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
     home_data = _get_pitcher_recent_3_starts(conn, home_name, home_team, home_throws, league_name=league_name)
     away_data = _get_pitcher_recent_3_starts(conn, away_name, away_team, away_throws, league_name=league_name)
     
+    home_name_ko = translate_player_name(home_name)
+    away_name_ko = translate_player_name(away_name)
+
     return {
         "home": {
-            "name": home_name,
+            "name": home_name_ko,
+            "name_en": home_name,
             "throws": home_throws,
             "is_confirmed": home_confirmed,
             "status_label": "선발 확정" if home_confirmed else "선발 예고 (예상)",
@@ -685,7 +713,8 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
             "recent_3_starts": home_data["starts"]
         },
         "away": {
-            "name": away_name,
+            "name": away_name_ko,
+            "name_en": away_name,
             "throws": away_throws,
             "is_confirmed": away_confirmed,
             "status_label": "선발 확정" if away_confirmed else "선발 예고 (예상)",
