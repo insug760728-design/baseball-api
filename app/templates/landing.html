@@ -2067,54 +2067,16 @@
       return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
     }
 
-    const KNOWN_ROTATIONS = {
-      // KBO (한국 프로야구 10개 구단 정식 1선발 에이스)
-      'LG': '임찬규(우)', 'LG 트윈스': '임찬규(우)',
-      '키움': '하영민(우)', '키움 히어로즈': '하영민(우)',
-      'KIA': '양현종(좌)', 'KIA 타이거즈': '양현종(좌)',
-      'NC': '신민혁(우)', 'NC 다이노스': '신민혁(우)',
-      '한화': '류현진(좌)', '한화 이글스': '류현진(좌)',
-      '삼성': '원태인(우)', '삼성 라이온즈': '원태인(우)',
-      '두산': '곽빈(우)', '두산 베어스': '곽빈(우)',
-      'KT': '고영표(언)', 'KT 위즈': '고영표(언)',
-      'SSG': '김광현(좌)', 'SSG 랜더스': '김광현(좌)',
-      '롯데': '박세웅(우)', '롯데 자이언츠': '박세웅(우)',
-      // NPB (일본 프로야구 12개 구단)
-      '지바 롯데 마린스': '타나카 세이야(우)', '지바 롯데': '타나카 세이야(우)', '지바롯데': '타나카 세이야(우)',
-      '도호쿠 라쿠텐 골든이글스': '마에다 켄타(우)', '라쿠텐 골든이글스': '마에다 켄타(우)', '도호쿠 라쿠텐': '마에다 켄타(우)', '라쿠텐': '마에다 켄타(우)',
-      '후쿠오카 소프트뱅크 호크스': 'L.모이넬로(좌)', '소프트뱅크 호크스': 'L.모이넬로(좌)', '후쿠오카 소프트뱅크': 'L.모이넬로(좌)', '소프트뱅크': 'L.모이넬로(좌)',
-      '홋카이도 닛폰햄 파이터즈': '야마사키 사치야(좌)', '닛폰햄 파이터즈': '야마사키 사치야(좌)', '닛폰햄': '야마사키 사치야(좌)', '니혼햄': '야마사키 사치야(좌)',
-      '오릭스 버펄로스': 'S.젤리(우)', '오릭스 버팔로스': 'S.젤리(우)', '오릭스': 'S.젤리(우)',
-      '사이타마 세이부 라이온즈': '타이라 카이마(우)', '세이부 라이온즈': '타이라 카이마(우)', '세이부': '타이라 카이마(우)',
-      '요미우리 자이언츠': '토고 쇼세이(우)', '요미우리': '토고 쇼세이(우)',
-      '도쿄 야쿠르트 스왈로스': '오쿠가와 야스노부(우)', '야쿠르트 스왈로스': '오쿠가와 야스노부(우)', '야쿠르트': '오쿠가와 야스노부(우)',
-      '요코하마 DeNA 베이스타즈': '아즈마 카츠키(좌)', 'DeNA 베이스타즈': '아즈마 카츠키(좌)', 'DeNA': '아즈마 카츠키(좌)', '요코하마': '아즈마 카츠키(좌)',
-      '주니치 드래곤즈': '야나기 유야(우)', '주니치': '야나기 유야(우)',
-      '한신 타이거스': '사이키 히로토(우)', '한신': '사이키 히로토(우)',
-      '히로시마 도요 카프': '토코다 히로키(좌)', '히로시마 카프': '토코다 히로키(좌)', '히로시마': '토코다 히로키(좌)',
-      // MLB (Official Matchups)
-      '디트로이트 타이거스': '타릭 스쿠발(좌)', '디트로이트': '타릭 스쿠발(좌)',
-      '미네소타 트윈스': '파블로 로페즈(우)', '미네소타': '파블로 로페즈(우)',
-      '샌디에이고 파드리스': '다르빗슈 유(우)', '샌디에이고': '다르빗슈 유(우)',
-      '워싱턴 내셔널스': '매켄지 고어(좌)', '워싱턴': '매켄지 고어(좌)',
-      '샌프란시스코 자이언츠': '로건 웹(우)', '샌프란시스코': '로건 웹(우)',
-      '세인트루이스 카디널스': '소니 그레이(우)', '세인트루이스': '소니 그레이(우)',
-      'LA 다저스': '야마모토(우)', '다저스': '야마모토(우)',
-      '신시내티 레즈': '헌터 그린(우)', '신시내티': '헌터 그린(우)',
-      '뉴욕 양키스': '게릿 콜(우)', '양키스': '게릿 콜(우)',
-      '보스턴 레드삭스': '태너 하우크(우)', '보스턴': '태너 하우크(우)',
-      '토론토 블루제이스': '케빈 가우스먼(우)', '토론토': '케빈 가우스먼(우)',
-      '볼티모어 오리올스': '코빈 번스(우)', '볼티모어': '코빈 번스(우)',
-      '필라델피아 필리스': '잭 휠러(우)', '필라델피아': '잭 휠러(우)',
-      '애틀랜타 브레이브스': '크리스 세일(좌)', '애틀랜타': '크리스 세일(좌)',
-      '뉴욕 메츠': '센가 코다이(우)', '메츠': '센가 코다이(우)',
-      '시카고 컵스': '이마нага 쇼타(좌)', '시카고 컵스': '이마нага 쇼타(좌)',
-      '밀워키 브루어스': '프레디 페랄타(우)', '밀워키': '프레디 페랄타(우)',
-      '휴스턴 애스트로스': '프람버 발데스(좌)', '휴스턴': '프람버 발데스(좌)',
-      '시애틀 매리너스': '조지 커비(우)', '시애틀': '조지 커비(우)',
-      '텍사스 레인저스': '네이선 이발디(우)', '텍사스': '네이선 이발디(우)',
-      '애리조나 다이아몬드백스': '잭 갤런(우)', '애리조나': '잭 갤런(우)'
-    };
+    function isStarterAnnounced(name) {
+      if (!name || typeof name !== 'string') return false;
+      const n = name.trim().toLowerCase();
+      if (!n || n === 'null' || n === 'undefined' || n === 'tbd' || n === 'tba' || n === '미정' || n === '선발미정' || n === '미확정' || n === '미확정 (tbd)' || n === '선발 미정 (tbd)' || n === '선발 미정' || n === '선발' || n === '선발 투수' || n === '선발 예고' || n === '홈 선발' || n === '원정 선발' || n === '홈선발' || n === '원정선발' || n === '예정' || n === '미발표') return false;
+      if (n.endsWith('선발') && (n.includes('팀') || n.includes('구단') || n.includes('베어스') || n.includes('트윈스') || n.includes('라이온즈') || n.includes('타이거즈') || n.includes('이글스') || n.includes('랜더스') || n.includes('위즈') || n.includes('자이언츠') || n.includes('히어로즈') || n.includes('다이노스'))) return false;
+      return true;
+    }
+
+    // 선발 미확정 경기 더미 데이터 자동 생성 전면 차단 (공식 발표 시에만 실시간 연동)
+    const KNOWN_ROTATIONS = {};
 
     // =============================================================
     // 🛡️ 외국인 선수 이름 및 데이터 문자열 정제(Sanitization) 함수
@@ -3085,10 +3047,30 @@
     }
 
     function renderBaseballStarterBlock(pitcher, isHome, compact = false) {
-      if (!pitcher) return '';
-      const trend = getPitcherFormTrend(pitcher);
       const sideLabel = isHome ? '[홈선발]' : '[원정선발]';
-      const rawPName = formatPlayerKorean(pitcher.name || (isHome ? '홈 선발' : '원정 선발'));
+      const isUnannounced = !pitcher || !isStarterAnnounced(pitcher.name) || pitcher.is_unannounced || (pitcher.name && pitcher.name.includes('미정'));
+      
+      if (isUnannounced) {
+        return `
+          <div class="baseball-starter-widget p-2 rounded-2 text-center" style="background: #f8fafc; border: 1.5px dashed #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+            <div class="d-flex align-items-center justify-content-center gap-1 mb-1" style="min-width: 0;">
+              <span class="badge flex-shrink-0" style="background:#64748b; color:#ffffff; font-size:0.64rem; font-weight:800; padding: 2px 5px;">${sideLabel}</span>
+              <strong class="text-secondary" style="font-size:0.86rem;">선발 미정</strong>
+              <span class="text-muted small flex-shrink-0">(TBD)</span>
+            </div>
+            <div class="d-flex align-items-center justify-content-center gap-1 mb-1 flex-wrap">
+              <span class="badge bg-secondary text-white py-0.5 px-1.5" style="font-size:0.62rem; font-weight:700;">○ 미확정 (TBD)</span>
+              <span class="badge bg-white text-muted border py-0.5 px-1.5" style="font-size:0.62rem; border-color: #cbd5e1 !important;">공식발표 대기</span>
+            </div>
+            <div class="py-1 px-1.5 rounded bg-light border d-flex justify-content-center align-items-center gap-1 text-muted fw-normal" style="border-color: #e2e8f0 !important; font-size: 0.68rem; letter-spacing: -0.2px;">
+              <span>공식 선발투수 발표 대기 중</span>
+            </div>
+          </div>
+        `;
+      }
+
+      const trend = getPitcherFormTrend(pitcher);
+      const rawPName = formatPlayerKorean(pitcher.name);
       const pThrows = pitcher.throws && pitcher.throws !== '우완' ? pitcher.throws : (rawPName.includes('(좌)') ? '좌완' : (rawPName.includes('(언)') ? '언더' : (pitcher.throws || '우완')));
       const cleanPName = rawPName.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
       const isConfirmed = Boolean(pitcher.is_confirmed !== false && !cleanPName.includes('미정'));
@@ -3329,32 +3311,14 @@ function getFullModalMatchList() {
       const isBaseball = (m.sport_code || '').toUpperCase() === 'BASEBALL';
       const rawHStarter = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
       const rawAStarter = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
-      let homeStarter = formatPlayerKorean(rawHStarter);
-      let awayStarter = formatPlayerKorean(rawAStarter);
-      if (!homeStarter && typeof KNOWN_ROTATIONS !== 'undefined') {
-        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
-        for (const k of sortedKeys) {
-          if ((m.home_team_name || '').includes(k) || k.includes(m.home_team_name || '')) {
-            homeStarter = KNOWN_ROTATIONS[k];
-            break;
-          }
-        }
-      }
-      if (!awayStarter && typeof KNOWN_ROTATIONS !== 'undefined') {
-        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
-        for (const k of sortedKeys) {
-          if ((m.away_team_name || '').includes(k) || k.includes(m.away_team_name || '')) {
-            awayStarter = KNOWN_ROTATIONS[k];
-            break;
-          }
-        }
-      }
+      let homeStarter = isStarterAnnounced(rawHStarter) ? formatPlayerKorean(rawHStarter) : '';
+      let awayStarter = isStarterAnnounced(rawAStarter) ? formatPlayerKorean(rawAStarter) : '';
 
       const cachedDetail = (typeof matchDetailCache !== 'undefined') ? matchDetailCache.get(m.id) : null;
       const cachedSP = (cachedDetail && cachedDetail.matchup_analysis && cachedDetail.matchup_analysis.starting_pitchers) ? cachedDetail.matchup_analysis.starting_pitchers : null;
       if (cachedSP) {
-        if (cachedSP.home && cachedSP.home.name) homeStarter = homeStarter || formatPlayerKorean(cachedSP.home.name);
-        if (cachedSP.away && cachedSP.away.name) awayStarter = awayStarter || formatPlayerKorean(cachedSP.away.name);
+        if (cachedSP.home && isStarterAnnounced(cachedSP.home.name) && !cachedSP.home.is_unannounced) homeStarter = formatPlayerKorean(cachedSP.home.name);
+        if (cachedSP.away && isStarterAnnounced(cachedSP.away.name) && !cachedSP.away.is_unannounced) awayStarter = formatPlayerKorean(cachedSP.away.name);
       }
 
       if (titleBadge) {
@@ -3365,8 +3329,10 @@ function getFullModalMatchList() {
       }
       if (titleEl) {
         let teamVsTeam = '';
-        if (isBaseball && (homeStarter || awayStarter)) {
-          teamVsTeam = `[홈] ${m.home_team_name}(선발: ${homeStarter || '미정'}) vs [원정] ${m.away_team_name}(선발: ${awayStarter || '미정'})`;
+        if (isBaseball) {
+          const hDisp = isStarterAnnounced(homeStarter) ? homeStarter : '미정 (TBD)';
+          const aDisp = isStarterAnnounced(awayStarter) ? awayStarter : '미정 (TBD)';
+          teamVsTeam = `[홈] ${m.home_team_name}(선발: ${hDisp}) vs [원정] ${m.away_team_name}(선발: ${aDisp})`;
         } else {
           teamVsTeam = `[홈] ${m.home_team_name} vs [원정] ${m.away_team_name}`;
         }
@@ -3695,26 +3661,14 @@ function getFullModalMatchList() {
       // Pitchers (for Baseball)
       const rawHomeStarter = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
       const rawAwayStarter = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
-      let homeStarter = formatPlayerKorean(rawHomeStarter);
-      let awayStarter = formatPlayerKorean(rawAwayStarter);
-      if (!homeStarter && typeof KNOWN_ROTATIONS !== 'undefined') {
-        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
-        for (const k of sortedKeys) {
-          if (m.home_team_name && (m.home_team_name.includes(k) || k.includes(m.home_team_name))) { homeStarter = KNOWN_ROTATIONS[k]; break; }
-        }
-      }
-      if (!awayStarter && typeof KNOWN_ROTATIONS !== 'undefined') {
-        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
-        for (const k of sortedKeys) {
-          if (m.away_team_name && (m.away_team_name.includes(k) || k.includes(m.away_team_name))) { awayStarter = KNOWN_ROTATIONS[k]; break; }
-        }
-      }
-      homeStarter = homeStarter || (m.home_team_name ? m.home_team_name + ' 선발' : '선발');
-      awayStarter = awayStarter || (m.away_team_name ? m.away_team_name + ' 선발' : '선발');
+      const hAnnounced = isStarterAnnounced(rawHomeStarter);
+      const aAnnounced = isStarterAnnounced(rawAwayStarter);
+      let homeStarter = hAnnounced ? formatPlayerKorean(rawHomeStarter) : '선발 미정';
+      let awayStarter = aAnnounced ? formatPlayerKorean(rawAwayStarter) : '선발 미정';
 
       const stObj = (matchup && matchup.starting_pitchers) ? matchup.starting_pitchers : {};
-      const hPitcher = stObj.home || { name: homeStarter, throws: '우완', is_confirmed: true };
-      const aPitcher = stObj.away || { name: awayStarter, throws: '우완', is_confirmed: true };
+      const hPitcher = stObj.home || (hAnnounced ? { name: homeStarter, throws: '우완', is_confirmed: true, is_unannounced: false } : { name: '선발 미정', throws: '미정', is_confirmed: false, is_unannounced: true });
+      const aPitcher = stObj.away || (aAnnounced ? { name: awayStarter, throws: '우완', is_confirmed: true, is_unannounced: false } : { name: '선발 미정', throws: '미정', is_confirmed: false, is_unannounced: true });
 
       // Core metrics partitioned by Sport
       let barsHtml = '';
@@ -3897,24 +3851,43 @@ function getFullModalMatchList() {
           </div>
 
           <!-- Pitchers Preview Line (Baseball) -->
-          ${isBaseball ? `
-            <div class="p-2 mb-2 rounded-2 d-flex justify-content-between align-items-center flex-wrap gap-1" id="modalStartersPreview_${m.id}" style="background: #ffffff; border: 1px solid #e5e7eb;">
+          ${isBaseball ? (() => {
+            const hValid = isStarterAnnounced(hPitcher.name) && !hPitcher.is_unannounced;
+            const aValid = isStarterAnnounced(aPitcher.name) && !aPitcher.is_unannounced;
+            const bothAnnounced = hValid && aValid;
+            const hTr = hValid ? getPitcherFormTrend(hPitcher) : { label: '미확정 (TBD)' };
+            const aTr = aValid ? getPitcherFormTrend(aPitcher) : { label: '미확정 (TBD)' };
+
+            let matchText = '';
+            if (bothAnnounced) {
+              matchText = `<span class="text-dark fw-bold">${hPitcher.name}</span> <span class="text-secondary small">(${hTr.label})</span> <span class="text-muted mx-1">vs</span> <span class="text-dark fw-bold">${aPitcher.name}</span> <span class="text-secondary small">(${aTr.label})</span>`;
+            } else if (hValid) {
+              matchText = `<span class="text-dark fw-bold">${hPitcher.name}</span> <span class="text-secondary small">(${hTr.label})</span> <span class="text-muted mx-1">vs</span> <span class="text-secondary fw-bold">선발 미정 (TBD)</span>`;
+            } else if (aValid) {
+              matchText = `<span class="text-secondary fw-bold">선발 미정 (TBD)</span> <span class="text-muted mx-1">vs</span> <span class="text-dark fw-bold">${aPitcher.name}</span> <span class="text-secondary small">(${aTr.label})</span>`;
+            } else {
+              matchText = `<span class="text-secondary fw-semibold">공식 선발투수 발표 대기 중 (양 팀 선발 미확정 TBD)</span>`;
+            }
+
+            const badgeHtml = bothAnnounced
+              ? `<span class="badge bg-success text-white" style="font-size: 0.68rem; font-weight: 700;">● 공식선발 자동연동</span>`
+              : `<span class="badge bg-secondary text-white" style="font-size: 0.68rem; font-weight: 700;">○ 미확정 (TBD)</span>`;
+
+            return `
+            <div class="p-2 mb-2 rounded-2 d-flex justify-content-between align-items-center flex-wrap gap-1" id="modalStartersPreview_${m.id}" style="background: ${bothAnnounced ? '#ffffff' : '#f8fafc'}; border: 1px ${bothAnnounced ? 'solid #e5e7eb' : 'dashed #cbd5e1'};">
               <div class="small text-truncate" style="font-size: 0.80rem; color: #111827;">
-                <i class="bi bi-person-lines-fill text-dark me-1"></i>
-                <span style="color: #111827; font-weight: 800;">[선발 1:1 맞대결]</span> <span class="text-dark fw-bold">${hPitcher.name}</span> <span class="text-secondary small">(${getPitcherFormTrend(hPitcher).label})</span>
-                <span class="text-muted mx-1">vs</span>
-                <span class="text-dark fw-bold">${aPitcher.name}</span> <span class="text-secondary small">(${getPitcherFormTrend(aPitcher).label})</span>
+                <i class="bi bi-person-lines-fill ${bothAnnounced ? 'text-dark' : 'text-secondary'} me-1"></i>
+                <span style="color: #111827; font-weight: 800;">[선발 1:1 맞대결]</span> ${matchText}
               </div>
               <div class="d-flex align-items-center gap-1">
-                <span class="badge ${hPitcher.is_confirmed && aPitcher.is_confirmed ? 'bg-success text-white' : 'bg-warning text-dark'}" style="font-size: 0.68rem; font-weight: 700;">
-                  ${hPitcher.is_confirmed && aPitcher.is_confirmed ? '● 공식선발 자동연동' : '○ 선발 발표대기'}
-                </span>
-                <button class="btn btn-xs py-0 px-1.5 fw-bold" onclick="openStarterModal(${m.id || 0}, '${m.home_team_name}', '${m.away_team_name}', '${hPitcher.name}', '${aPitcher.name}', ${Boolean(hPitcher.is_confirmed)}, ${Boolean(aPitcher.is_confirmed)})" style="background: #ffffff; border: 1px solid #d1d5db; color: #4b5563; font-size: 0.68rem; border-radius: 4px;" title="선발 교체/스크래치 등 비상시에만 수동 수정">
+                ${badgeHtml}
+                <button class="btn btn-xs py-0 px-1.5 fw-bold" onclick="openStarterModal(${m.id || 0}, '${m.home_team_name}', '${m.away_team_name}', '${hPitcher.name || ''}', '${aPitcher.name || ''}', ${Boolean(hPitcher.is_confirmed)}, ${Boolean(aPitcher.is_confirmed)})" style="background: #ffffff; border: 1px solid #d1d5db; color: #4b5563; font-size: 0.68rem; border-radius: 4px;" title="선발 교체/스크래치 등 비상시에만 수동 수정">
                   <i class="bi bi-pencil me-1"></i>수동편집
                 </button>
               </div>
             </div>
-          ` : ''}
+            `;
+          })() : ''}
 
           <!-- Tab Panes -->
           <!-- Tab 1: Summary & Prediction -->
@@ -4065,21 +4038,12 @@ function getFullModalMatchList() {
 
       const titleEl = document.getElementById('matchModalRoundTitle');
       if (titleEl && currentModalMatchList && currentModalMatchList.length === 1 && (match.sport_code || '').toUpperCase() === 'BASEBALL') {
-        let hSt = (matchup && matchup.starting_pitchers && matchup.starting_pitchers.home) ? matchup.starting_pitchers.home.name : (match.home_starter_name || '');
-        let aSt = (matchup && matchup.starting_pitchers && matchup.starting_pitchers.away) ? matchup.starting_pitchers.away.name : (match.away_starter_name || '');
-        if (!hSt && typeof KNOWN_ROTATIONS !== 'undefined') {
-          for (const k of Object.keys(KNOWN_ROTATIONS)) {
-            if ((match.home_team_name || '').includes(k)) { hSt = KNOWN_ROTATIONS[k]; break; }
-          }
-        }
-        if (!aSt && typeof KNOWN_ROTATIONS !== 'undefined') {
-          for (const k of Object.keys(KNOWN_ROTATIONS)) {
-            if ((match.away_team_name || '').includes(k)) { aSt = KNOWN_ROTATIONS[k]; break; }
-          }
-        }
-        if (hSt || aSt) {
-          titleEl.innerHTML = `${match.seq ? '<span class="badge bg-white border text-dark me-1" style="border: 1.5px solid #111827; font-weight: 800;">#' + match.seq + ' 경기</span>' : ''}<span style="color: #111827; font-weight: 800; font-size: 0.95rem;">[홈] ${match.home_team_name}(선발: ${hSt || '미정'}) vs [원정] ${match.away_team_name}(선발: ${aSt || '미정'})</span>`;
-        }
+        const hStName = (matchup && matchup.starting_pitchers && matchup.starting_pitchers.home && isStarterAnnounced(matchup.starting_pitchers.home.name) && !matchup.starting_pitchers.home.is_unannounced) ? matchup.starting_pitchers.home.name : (isStarterAnnounced(match.home_starter_name) ? match.home_starter_name : '');
+        const aStName = (matchup && matchup.starting_pitchers && matchup.starting_pitchers.away && isStarterAnnounced(matchup.starting_pitchers.away.name) && !matchup.starting_pitchers.away.is_unannounced) ? matchup.starting_pitchers.away.name : (isStarterAnnounced(match.away_starter_name) ? match.away_starter_name : '');
+        
+        const hDisp = hStName ? formatPlayerKorean(hStName) : '미정 (TBD)';
+        const aDisp = aStName ? formatPlayerKorean(aStName) : '미정 (TBD)';
+        titleEl.innerHTML = `${match.seq ? '<span class="badge bg-white border text-dark me-1" style="border: 1.5px solid #111827; font-weight: 800;">#' + match.seq + ' 경기</span>' : ''}<span style="color: #111827; font-weight: 800; font-size: 0.95rem;">[홈] ${match.home_team_name}(선발: ${hDisp}) vs [원정] ${match.away_team_name}(선발: ${aDisp})</span>`;
       }
 
       // ⚾ 야구 선발투수 100% 실시간 동기화: 상단 선발 위젯 & 프리뷰 라인 서버 데이터로 즉시 갱신
@@ -4103,20 +4067,36 @@ function getFullModalMatchList() {
         // 2. 선발 1:1 맞대결 프리뷰 라인 재렌더링
         const stPrev = document.getElementById(`modalStartersPreview_${matchId}`);
         if (stPrev) {
-          const hTr = getPitcherFormTrend(hPitcher) || {};
-          const aTr = getPitcherFormTrend(aPitcher) || {};
-          const isConf = Boolean(hPitcher.is_confirmed !== false && aPitcher.is_confirmed !== false);
+          const hValid = isStarterAnnounced(hPitcher.name) && !hPitcher.is_unannounced;
+          const aValid = isStarterAnnounced(aPitcher.name) && !aPitcher.is_unannounced;
+          const bothAnnounced = hValid && aValid;
+          const hTr = hValid ? getPitcherFormTrend(hPitcher) : { label: '미확정 (TBD)' };
+          const aTr = aValid ? getPitcherFormTrend(aPitcher) : { label: '미확정 (TBD)' };
+
+          let matchText = '';
+          if (bothAnnounced) {
+            matchText = `<span class="text-dark fw-bold">${hPitcher.name}</span> <span class="text-secondary small">(${hTr.label})</span> <span class="text-muted mx-1">vs</span> <span class="text-dark fw-bold">${aPitcher.name}</span> <span class="text-secondary small">(${aTr.label})</span>`;
+          } else if (hValid) {
+            matchText = `<span class="text-dark fw-bold">${hPitcher.name}</span> <span class="text-secondary small">(${hTr.label})</span> <span class="text-muted mx-1">vs</span> <span class="text-secondary fw-bold">선발 미정 (TBD)</span>`;
+          } else if (aValid) {
+            matchText = `<span class="text-secondary fw-bold">선발 미정 (TBD)</span> <span class="text-muted mx-1">vs</span> <span class="text-dark fw-bold">${aPitcher.name}</span> <span class="text-secondary small">(${aTr.label})</span>`;
+          } else {
+            matchText = `<span class="text-secondary fw-semibold">공식 선발투수 발표 대기 중 (양 팀 선발 미확정 TBD)</span>`;
+          }
+
+          const badgeHtml = bothAnnounced
+            ? `<span class="badge bg-success text-white" style="font-size: 0.68rem; font-weight: 700;">● 공식선발 자동연동</span>`
+            : `<span class="badge bg-secondary text-white" style="font-size: 0.68rem; font-weight: 700;">○ 미확정 (TBD)</span>`;
+
+          stPrev.style.background = bothAnnounced ? '#ffffff' : '#f8fafc';
+          stPrev.style.border = bothAnnounced ? '1px solid #e5e7eb' : '1px dashed #cbd5e1';
           stPrev.innerHTML = `
             <div class="small text-truncate" style="font-size: 0.80rem; color: #111827;">
-              <i class="bi bi-person-lines-fill text-dark me-1"></i>
-              <span style="color: #111827; font-weight: 800;">[선발 1:1 맞대결]</span> <span class="text-dark fw-bold">${hPitcher.name || ''}</span> <span class="text-secondary small">(${hTr.label || ''})</span>
-              <span class="text-muted mx-1">vs</span>
-              <span class="text-dark fw-bold">${aPitcher.name || ''}</span> <span class="text-secondary small">(${aTr.label || ''})</span>
+              <i class="bi bi-person-lines-fill ${bothAnnounced ? 'text-dark' : 'text-secondary'} me-1"></i>
+              <span style="color: #111827; font-weight: 800;">[선발 1:1 맞대결]</span> ${matchText}
             </div>
             <div class="d-flex align-items-center gap-1">
-              <span class="badge ${isConf ? 'bg-success text-white' : 'bg-warning text-dark'}" style="font-size: 0.68rem; font-weight: 700;">
-                ${isConf ? '● 공식선발 자동연동' : '○ 선발 발표대기'}
-              </span>
+              ${badgeHtml}
               <button class="btn btn-xs py-0 px-1.5 fw-bold" onclick="openStarterModal(${match.id || 0}, '${match.home_team_name}', '${match.away_team_name}', '${hPitcher.name || ''}', '${aPitcher.name || ''}', ${Boolean(hPitcher.is_confirmed)}, ${Boolean(aPitcher.is_confirmed)})" style="background: #ffffff; border: 1px solid #d1d5db; color: #4b5563; font-size: 0.68rem; border-radius: 4px;" title="선발 교체/스크래치 등 비상시에만 수동 수정">
                 <i class="bi bi-pencil me-1"></i>수동편집
               </button>
@@ -5345,6 +5325,31 @@ function getFullModalMatchList() {
       const sp = matchup.starting_pitchers;
       const hSt = sp.home || {};
       const aSt = sp.away || {};
+      const hValid = isStarterAnnounced(hSt.name) && !hSt.is_unannounced;
+      const aValid = isStarterAnnounced(aSt.name) && !aSt.is_unannounced;
+
+      // 양 팀 모두 선발 미확정인 경우: 가상 더미 데이터를 전면 차단하고 공식 안내 배너 표출
+      if (!hValid && !aValid) {
+        return `
+          <div class="p-3 mb-3 rounded-3" style="background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" style="border-color: #e5e7eb !important;">
+              <span class="fw-bold text-dark" style="font-size: 0.90rem; font-weight: 800;">
+                <i class="bi bi-person-badge-fill text-dark me-1"></i>[⚾ 선발투수 1:1 맞대결 & 최근 3경기 등판 상세 분석]
+              </span>
+              <span class="badge bg-secondary text-white" style="font-size: 0.70rem; font-weight: 700;">○ 선발 미확정 (TBD)</span>
+            </div>
+            <div class="p-3 rounded-3 text-center my-2" style="background: #f8fafc; border: 1.5px dashed #cbd5e1;">
+              <div class="text-secondary fw-bold mb-1" style="font-size: 0.88rem;">
+                <i class="bi bi-hourglass-split me-1"></i>현재 양 팀 모두 공식 선발투수 발표 대기 중입니다.
+              </div>
+              <p class="text-muted small mb-0" style="font-size: 0.75rem;">
+                KBO · NPB · MLB 공식 선발투수 예고가 인입되면 1:1 세이버메트릭스 비교 분석 및 최근 3경기 등판 일지가 실시간으로 자동 연동됩니다.
+              </p>
+            </div>
+          </div>
+        `;
+      }
+
       const hSum = hSt.summary || {};
       const aSum = aSt.summary || {};
       const hStarts = hSt.recent_3_starts || [];
@@ -5352,12 +5357,29 @@ function getFullModalMatchList() {
 
       const renderPitcherCard = (pInfo, sum, starts, teamName, isHome) => {
         const sideLabel = isHome ? '[홈]' : '[원정]';
+        const isAnnounced = isStarterAnnounced(pInfo.name) && !pInfo.is_unannounced;
+
+        if (!isAnnounced) {
+          return `
+            <div class="col-md-6 col-12">
+              <div class="p-3 rounded-3 h-100 d-flex flex-column justify-content-center align-items-center text-center" style="background: #f8fafc; border: 1.5px dashed #cbd5e1; min-height: 180px;">
+                <span class="badge mb-2" style="background:#64748b; color:#ffffff; font-size:0.75rem;">${sideLabel} ${teamName}</span>
+                <div class="fw-bold text-secondary fs-6 mb-1">
+                  <i class="bi bi-question-circle me-1"></i>선발 미정
+                </div>
+                <span class="badge bg-secondary text-white mb-2" style="font-size:0.70rem;">○ 미확정 (TBD)</span>
+                <p class="text-muted small mb-0" style="font-size: 0.74rem;">공식 선발투수 발표 대기 중입니다.<br>(발표 시 실시간 자동 반영)</p>
+              </div>
+            </div>
+          `;
+        }
+
         const isConf = !!pInfo.is_confirmed;
         const confBadge = isConf
           ? `<span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; font-weight: 700;"><i class="bi bi-check-circle-fill me-1"></i>선발 확정</span>`
           : `<span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; font-weight: 700;"><i class="bi bi-hourglass-split me-1"></i>선발 예고</span>`;
 
-        const startsListHtml = starts.map((s, idx) => {
+        const startsListHtml = (starts && starts.length > 0) ? starts.map((s, idx) => {
           const isHomeVenue = (s.venue === '홈');
           const hTeamStr = isHomeVenue ? teamName : s.opponent;
           const aTeamStr = isHomeVenue ? s.opponent : teamName;
@@ -5393,7 +5415,7 @@ function getFullModalMatchList() {
               </div>
             </div>
           `;
-        }).join('');
+        }).join('') : `<div class="p-2 text-muted text-center small">공식 최근 3경기 등판 기록 집계 대기 중</div>`;
 
         return `
           <div class="col-md-6 col-12">
@@ -5948,22 +5970,8 @@ function getFullModalMatchList() {
       const isBasketball = (m.sport_code || '').toUpperCase() === 'BASKETBALL';
       const homeName = m.home_team_name || '홈팀';
       const awayName = m.away_team_name || '원정팀';
-      let homeStarter = m.home_starter_name;
-      let awayStarter = m.away_starter_name;
-      if (!homeStarter && typeof KNOWN_ROTATIONS !== 'undefined') {
-        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
-        for (const k of sortedKeys) {
-          if (homeName.includes(k) || k.includes(homeName)) { homeStarter = KNOWN_ROTATIONS[k]; break; }
-        }
-      }
-      if (!awayStarter && typeof KNOWN_ROTATIONS !== 'undefined') {
-        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
-        for (const k of sortedKeys) {
-          if (awayName.includes(k) || k.includes(awayName)) { awayStarter = KNOWN_ROTATIONS[k]; break; }
-        }
-      }
-      homeStarter = homeStarter || (homeName + ' 선발');
-      awayStarter = awayStarter || (awayName + ' 선발');
+      let homeStarter = isStarterAnnounced(m.home_starter_name) ? m.home_starter_name : '';
+      let awayStarter = isStarterAnnounced(m.away_starter_name) ? m.away_starter_name : '';
 
       const hOpps = getRealisticOpponents(m, homeName, 10, awayName);
       const aOpps = getRealisticOpponents(m, awayName, 10, homeName);
@@ -6195,16 +6203,19 @@ function getFullModalMatchList() {
 
       if (isBaseball) {
         if (!matchup.starting_pitchers) {
-          const hClean = homeStarter.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
-          const aClean = awayStarter.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
-          const hTrend = typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: hClean }) : null;
-          const aTrend = typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: aClean }) : null;
+          const hAnnounced = isStarterAnnounced(homeStarter);
+          const aAnnounced = isStarterAnnounced(awayStarter);
+          const hClean = hAnnounced ? homeStarter.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim() : '선발 미정';
+          const aClean = aAnnounced ? awayStarter.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim() : '선발 미정';
+          const hTrend = (hAnnounced && typeof getPitcherFormTrend === 'function') ? getPitcherFormTrend({ name: hClean }) : null;
+          const aTrend = (aAnnounced && typeof getPitcherFormTrend === 'function') ? getPitcherFormTrend({ name: aClean }) : null;
 
           matchup.starting_pitchers = {
-            home: {
+            home: hAnnounced ? {
               name: hClean,
               throws: homeStarter.includes('(좌)') ? '좌완' : (homeStarter.includes('(언)') ? '언더' : '우완'),
               is_confirmed: true,
+              is_unannounced: false,
               summary: {
                 avg_ip: hTrend ? hTrend.avgIp : '5.8이닝',
                 avg_np: '95',
@@ -6219,11 +6230,31 @@ function getFullModalMatchList() {
                 total_bb: hTrend ? hTrend.bb : 5
               },
               recent_3_starts: []
+            } : {
+              name: '선발 미정',
+              throws: '미정',
+              is_confirmed: false,
+              is_unannounced: true,
+              summary: {
+                avg_ip: '-',
+                avg_np: '-',
+                total_np: 0,
+                era_3g: '-',
+                season_era: '-',
+                trend: '미정',
+                trend_icon: '─',
+                trend_label: '선발 미정 (TBD)',
+                record: '기록 없음',
+                total_so: 0,
+                total_bb: 0
+              },
+              recent_3_starts: []
             },
-            away: {
+            away: aAnnounced ? {
               name: aClean,
               throws: awayStarter.includes('(좌)') ? '좌완' : (awayStarter.includes('(언)') ? '언더' : '우완'),
               is_confirmed: true,
+              is_unannounced: false,
               summary: {
                 avg_ip: aTrend ? aTrend.avgIp : '5.8이닝',
                 avg_np: '95',
@@ -6236,6 +6267,25 @@ function getFullModalMatchList() {
                 record: aTrend ? aTrend.record : '1승 1패',
                 total_so: aTrend ? aTrend.so : 15,
                 total_bb: aTrend ? aTrend.bb : 6
+              },
+              recent_3_starts: []
+            } : {
+              name: '선발 미정',
+              throws: '미정',
+              is_confirmed: false,
+              is_unannounced: true,
+              summary: {
+                avg_ip: '-',
+                avg_np: '-',
+                total_np: 0,
+                era_3g: '-',
+                season_era: '-',
+                trend: '미정',
+                trend_icon: '─',
+                trend_label: '선발 미정 (TBD)',
+                record: '기록 없음',
+                total_so: 0,
+                total_bb: 0
               },
               recent_3_starts: []
             }
@@ -6314,11 +6364,27 @@ function getFullModalMatchList() {
       const hBatGames = hBat.games || [];
       const aBatGames = aBat.games || [];
 
+      const hAnnounced = isStarterAnnounced(hSt.name) && !hSt.is_unannounced;
+      const aAnnounced = isStarterAnnounced(aSt.name) && !aSt.is_unannounced;
+      const bothUnannounced = !hAnnounced && !aAnnounced;
+
+      const formatNp = (np, announced) => (!announced || !np || np === '-' || isNaN(Number(np))) ? '-' : `${Math.round(Number(np))}구`;
+      const formatIp = (ip, announced) => (!announced || !ip || ip === '-' || isNaN(parseFloat(ip))) ? '-' : `${ip}이닝`;
+      const formatSoBb = (sum, announced) => (!announced) ? '-' : `${sum.total_so ?? 0}K / ${sum.total_bb ?? 0}BB`;
+      const formatRecord = (rec, announced) => (!announced) ? '기록 없음' : (rec || '-');
+
+      const hNameDisp = hAnnounced ? hSt.name : '선발 미정';
+      const aNameDisp = aAnnounced ? aSt.name : '선발 미정';
+      const hThrowsDisp = hAnnounced ? `(${hSt.throws || '우완'})` : '';
+      const aThrowsDisp = aAnnounced ? `(${aSt.throws || '우완'})` : '';
+      const hBadge = !hAnnounced ? `<span class="badge bg-secondary text-white ms-1" style="font-size: 0.62rem;">○ 미확정 (TBD)</span>` : (hSt.is_confirmed ? `<span class="badge bg-success text-white ms-1" style="font-size: 0.62rem;"><i class="bi bi-check-circle-fill me-0.5"></i>선발확정</span>` : `<span class="badge bg-primary text-white ms-1" style="font-size: 0.62rem;">선발예고</span>`);
+      const aBadge = !aAnnounced ? `<span class="badge bg-secondary text-white me-1" style="font-size: 0.62rem;">○ 미확정 (TBD)</span>` : (aSt.is_confirmed ? `<span class="badge bg-success text-white me-1" style="font-size: 0.62rem;"><i class="bi bi-check-circle-fill me-0.5"></i>선발확정</span>` : `<span class="badge bg-primary text-white me-1" style="font-size: 0.62rem;">선발예고</span>`);
+
       // Stat comparisons
-      const hEra = parseFloat(hStSum.era_3g || 3.50);
-      const aEra = parseFloat(aStSum.era_3g || 3.50);
-      const eraHomeAdv = hEra < aEra;
-      const eraAwayAdv = aEra < hEra;
+      const hEra = (hAnnounced && hStSum.era_3g && hStSum.era_3g !== '-') ? parseFloat(hStSum.era_3g) : null;
+      const aEra = (aAnnounced && aStSum.era_3g && aStSum.era_3g !== '-') ? parseFloat(aStSum.era_3g) : null;
+      const eraHomeAdv = (hEra !== null && aEra !== null) ? hEra < aEra : false;
+      const eraAwayAdv = (hEra !== null && aEra !== null) ? aEra < hEra : false;
 
       const hAvg = parseFloat((hBatSum.avg_3g || '.250').replace('.', '0.'));
       const aAvg = parseFloat((aBatSum.avg_3g || '.250').replace('.', '0.'));
@@ -6329,6 +6395,142 @@ function getFullModalMatchList() {
       const aRpg = parseFloat((aBatSum.rpg_3g || '4.0').replace('점', ''));
       const rpgHomeAdv = hRpg > aRpg;
       const rpgAwayAdv = aRpg > hRpg;
+
+      const pitcherColHtml = bothUnannounced ? `
+        <div class="col-12 col-lg-6">
+          <div class="p-3 rounded-2 h-100 d-flex flex-column justify-content-center align-items-center text-center" style="background: #f8fafc; border: 1.5px dashed #cbd5e1; min-height: 240px;">
+            <span class="badge bg-secondary text-white mb-2" style="font-size: 0.72rem; font-weight: 700;">○ 선발 미확정 (TBD)</span>
+            <div class="fw-bold text-dark mb-1" style="font-size: 0.88rem;"><i class="bi bi-hourglass-split me-1"></i>공식 선발투수 발표 대기 중</div>
+            <p class="text-muted small mb-0" style="font-size: 0.74rem;">
+              양 팀의 공식 선발투수가 예고되면<br>
+              최근 3경기 등판 일지 및 세이버 지표가 실시간으로 자동 연동됩니다.
+            </p>
+          </div>
+        </div>
+      ` : `
+        <div class="col-12 col-lg-6">
+          <div class="p-2.5 rounded-2 h-100" style="background: #f9fafb; border: 1px solid #e5e7eb;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold small" style="color: #111827; font-size: 0.82rem;">
+                🎯 <b>선발투수 최근 3경기 등판 비교</b>
+              </span>
+              <span class="badge bg-white border text-secondary" style="font-size: 0.68rem;">
+                선발 3G 누적
+              </span>
+            </div>
+
+            <!-- 선발 이름 및 투타 정보 헤더 -->
+            <div class="d-flex justify-content-between align-items-center p-1.5 mb-2 bg-white rounded border" style="font-size: 0.76rem;">
+              <div class="text-start">
+                <span class="badge me-1" style="background:#fef2f2; color:#dc2626; border:1px solid #dc2626; font-size:0.62rem; padding: 1px 4px; font-weight: 800;">[홈 선발]</span>
+                <b class="text-dark" style="font-size: 0.82rem;">${hNameDisp}</b>
+                <span class="text-muted small">${hThrowsDisp}</span>
+                ${hBadge}
+              </div>
+              <div class="text-muted fw-bold small px-1">VS</div>
+              <div class="text-end">
+                ${aBadge}
+                <b class="text-dark" style="font-size: 0.82rem;">${aNameDisp}</b>
+                <span class="text-muted small">${aThrowsDisp}</span>
+                <span class="badge ms-1" style="background:#eff6ff; color:#2563eb; border:1px solid #2563eb; font-size:0.62rem; padding: 1px 4px; font-weight: 800;">[원정 선발]</span>
+              </div>
+            </div>
+
+            <!-- 1:1 선발 지표 요약 테이블 -->
+            <div class="table-responsive mb-2">
+              <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.74rem; background: #ffffff; border-color: #e5e7eb;">
+                <thead style="background: #f3f4f6; color: #374151;">
+                  <tr style="font-weight: 700;">
+                    <th style="width: 38%;">[홈] ${hNameDisp}</th>
+                    <th style="width: 24%;">선발 3G 지표</th>
+                    <th style="width: 38%;">[원정] ${aNameDisp}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="fw-bold" style="${eraHomeAdv ? 'color: #dc2626; font-weight: 800;' : 'color: #374151;'}">
+                      ${hAnnounced ? `ERA ${hStSum.era_3g || '-'} ${eraHomeAdv ? '▲' : ''}` : '-'}
+                    </td>
+                    <td class="text-muted fw-bold">3G 평균자책</td>
+                    <td class="fw-bold" style="${eraAwayAdv ? 'color: #dc2626; font-weight: 800;' : 'color: #374151;'}">
+                      ${aAnnounced ? `ERA ${aStSum.era_3g || '-'} ${eraAwayAdv ? '▲' : ''}` : '-'}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="fw-bold">${formatIp(hStSum.avg_ip, hAnnounced)}</td>
+                    <td class="text-muted fw-bold">평균 소화이닝</td>
+                    <td class="fw-bold">${formatIp(aStSum.avg_ip, aAnnounced)}</td>
+                  </tr>
+                  <tr>
+                    <td class="fw-bold">${formatNp(hStSum.avg_np, hAnnounced)}</td>
+                    <td class="text-muted fw-bold">평균 투구수</td>
+                    <td class="fw-bold">${formatNp(aStSum.avg_np, aAnnounced)}</td>
+                  </tr>
+                  <tr>
+                    <td class="fw-bold">${formatSoBb(hStSum, hAnnounced)}</td>
+                    <td class="text-muted fw-bold">탈삼진/사사구</td>
+                    <td class="fw-bold">${formatSoBb(aStSum, aAnnounced)}</td>
+                  </tr>
+                  <tr>
+                    <td class="fw-bold">${formatRecord(hStSum.record, hAnnounced)}</td>
+                    <td class="text-muted fw-bold">3G 등판결과</td>
+                    <td class="fw-bold">${formatRecord(aStSum.record, aAnnounced)}</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <span class="badge ${hAnnounced ? (hStSum.trend === 'UP' ? 'bg-success' : (hStSum.trend === 'DOWN' ? 'bg-danger' : 'bg-secondary')) : 'bg-secondary'}" style="font-size: 0.65rem;">
+                        ${hAnnounced ? (hStSum.trend_label || '최근3G 안정') : '선발 미정 (TBD)'}
+                      </span>
+                    </td>
+                    <td class="text-muted fw-bold">최근 흐름</td>
+                    <td>
+                      <span class="badge ${aAnnounced ? (aStSum.trend === 'UP' ? 'bg-success' : (aStSum.trend === 'DOWN' ? 'bg-danger' : 'bg-secondary')) : 'bg-secondary'}" style="font-size: 0.65rem;">
+                        ${aAnnounced ? (aStSum.trend_label || '최근3G 안정') : '선발 미정 (TBD)'}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 선발 최근 3경기 미니 등판 로그 -->
+            <div class="accordion" id="accPitcher3G_${m.id || 0}">
+              <div class="accordion-item border-0 bg-transparent">
+                <button class="accordion-button collapsed p-1.5 small text-muted bg-white border rounded" type="button" data-bs-toggle="collapse" data-bs-target="#colPitcher3G_${m.id || 0}" style="font-size: 0.72rem; font-weight: 600;">
+                  <i class="bi bi-list-task me-1"></i>선발 최근 3경기 세부 등판 일지 펼치기
+                </button>
+                <div id="colPitcher3G_${m.id || 0}" class="accordion-collapse collapse mt-1.5" data-bs-parent="#accPitcher3G_${m.id || 0}">
+                  <div class="row g-1.5">
+                    <div class="col-6">
+                      <div class="p-1.5 bg-white border rounded" style="font-size: 0.68rem;">
+                        <div class="fw-bold text-truncate text-danger mb-1">[홈] ${hNameDisp}</div>
+                        ${(hAnnounced && hStarts.length > 0) ? hStarts.slice(0, 3).map(s => `
+                          <div class="d-flex justify-content-between border-bottom py-0.5">
+                            <span>${(s.date||'').slice(5)} vs ${s.opponent||'상대'}</span>
+                            <span class="fw-bold ${s.result && s.result.includes('(W)') ? 'text-danger' : (s.result && s.result.includes('(L)') ? 'text-primary' : 'text-dark')}">${s.ip}이닝 ${s.er}자책 (${s.np}구)</span>
+                          </div>
+                        `).join('') : '<div class="text-muted">공식 등판 기록 없음</div>'}
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="p-1.5 bg-white border rounded" style="font-size: 0.68rem;">
+                        <div class="fw-bold text-truncate text-primary mb-1">[원정] ${aNameDisp}</div>
+                        ${(aAnnounced && aStarts.length > 0) ? aStarts.slice(0, 3).map(s => `
+                          <div class="d-flex justify-content-between border-bottom py-0.5">
+                            <span>${(s.date||'').slice(5)} vs ${s.opponent||'상대'}</span>
+                            <span class="fw-bold ${s.result && s.result.includes('(W)') ? 'text-danger' : (s.result && s.result.includes('(L)') ? 'text-primary' : 'text-dark')}">${s.ip}이닝 ${s.er}자책 (${s.np}구)</span>
+                          </div>
+                        `).join('') : '<div class="text-muted">공식 등판 기록 없음</div>'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      `;
 
       return `
         <div class="p-3 mb-3 rounded-3" style="background: #ffffff; border: 1px solid #e5e7eb; width: 100%; box-sizing: border-box;">
@@ -6343,129 +6545,7 @@ function getFullModalMatchList() {
           </div>
 
           <div class="row g-2.5">
-            <!-- 1. 선발투수 최근 3경기 정밀 등판 지표 -->
-            <div class="col-12 col-lg-6">
-              <div class="p-2.5 rounded-2 h-100" style="background: #f9fafb; border: 1px solid #e5e7eb;">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <span class="fw-bold small" style="color: #111827; font-size: 0.82rem;">
-                    🎯 <b>선발투수 최근 3경기 등판 비교</b>
-                  </span>
-                  <span class="badge bg-white border text-secondary" style="font-size: 0.68rem;">
-                    선발 3G 누적
-                  </span>
-                </div>
-
-                <!-- 선발 이름 및 투타 정보 헤더 -->
-                <div class="d-flex justify-content-between align-items-center p-1.5 mb-2 bg-white rounded border" style="font-size: 0.76rem;">
-                  <div class="text-start">
-                    <span class="badge me-1" style="background:#fef2f2; color:#dc2626; border:1px solid #dc2626; font-size:0.62rem; padding: 1px 4px; font-weight: 800;">[홈 선발]</span>
-                    <b class="text-dark" style="font-size: 0.82rem;">${hSt.name || `${m.home_team_name} 선발`}</b>
-                    <span class="text-muted small">(${hSt.throws || '우완'})</span>
-                    <span class="badge ms-1 ${hSt.is_confirmed ? 'bg-success text-white' : 'bg-secondary text-white'}" style="font-size: 0.62rem;">${hSt.is_confirmed ? '선발확정' : '선발예고'}</span>
-                  </div>
-                  <div class="text-muted fw-bold small px-1">VS</div>
-                  <div class="text-end">
-                    <span class="badge me-1 ${aSt.is_confirmed ? 'bg-success text-white' : 'bg-secondary text-white'}" style="font-size: 0.62rem;">${aSt.is_confirmed ? '선발확정' : '선발예고'}</span>
-                    <b class="text-dark" style="font-size: 0.82rem;">${aSt.name || `${m.away_team_name} 선발`}</b>
-                    <span class="text-muted small">(${aSt.throws || '우완'})</span>
-                    <span class="badge ms-1" style="background:#eff6ff; color:#2563eb; border:1px solid #2563eb; font-size:0.62rem; padding: 1px 4px; font-weight: 800;">[원정 선발]</span>
-                  </div>
-                </div>
-
-                <!-- 1:1 선발 지표 요약 테이블 -->
-                <div class="table-responsive mb-2">
-                  <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.74rem; background: #ffffff; border-color: #e5e7eb;">
-                    <thead style="background: #f3f4f6; color: #374151;">
-                      <tr style="font-weight: 700;">
-                        <th style="width: 38%;">[홈] ${hSt.name || '홈 선발'}</th>
-                        <th style="width: 24%;">선발 3G 지표</th>
-                        <th style="width: 38%;">[원정] ${aSt.name || '원정 선발'}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td class="fw-bold" style="${eraHomeAdv ? 'color: #dc2626; font-weight: 800;' : 'color: #374151;'}">
-                          ERA ${hStSum.era_3g || '-'} ${eraHomeAdv ? '▲' : ''}
-                        </td>
-                        <td class="text-muted fw-bold">3G 평균자책</td>
-                        <td class="fw-bold" style="${eraAwayAdv ? 'color: #dc2626; font-weight: 800;' : 'color: #374151;'}">
-                          ERA ${aStSum.era_3g || '-'} ${eraAwayAdv ? '▲' : ''}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td class="fw-bold">${hStSum.avg_ip ? `${hStSum.avg_ip}이닝` : '-'}</td>
-                        <td class="text-muted fw-bold">평균 소화이닝</td>
-                        <td class="fw-bold">${aStSum.avg_ip ? `${aStSum.avg_ip}이닝` : '-'}</td>
-                      </tr>
-                      <tr>
-                        <td class="fw-bold">${hStSum.avg_np ? `${Math.round(hStSum.avg_np)}구` : '-'}</td>
-                        <td class="text-muted fw-bold">평균 투구수</td>
-                        <td class="fw-bold">${aStSum.avg_np ? `${Math.round(aStSum.avg_np)}구` : '-'}</td>
-                      </tr>
-                      <tr>
-                        <td class="fw-bold">${hStSum.total_so ?? 0}K / ${hStSum.total_bb ?? 0}BB</td>
-                        <td class="text-muted fw-bold">탈삼진/사사구</td>
-                        <td class="fw-bold">${aStSum.total_so ?? 0}K / ${aStSum.total_bb ?? 0}BB</td>
-                      </tr>
-                      <tr>
-                        <td class="fw-bold">${hStSum.record || '-'}</td>
-                        <td class="text-muted fw-bold">3G 등판결과</td>
-                        <td class="fw-bold">${aStSum.record || '-'}</td>
-                      </tr>
-                      <tr>
-                        <td>
-                          <span class="badge ${hStSum.trend === 'UP' ? 'bg-success' : (hStSum.trend === 'DOWN' ? 'bg-danger' : 'bg-secondary')}" style="font-size: 0.65rem;">
-                            ${hStSum.trend_label || '최근3G 안정'}
-                          </span>
-                        </td>
-                        <td class="text-muted fw-bold">최근 흐름</td>
-                        <td>
-                          <span class="badge ${aStSum.trend === 'UP' ? 'bg-success' : (aStSum.trend === 'DOWN' ? 'bg-danger' : 'bg-secondary')}" style="font-size: 0.65rem;">
-                            ${aStSum.trend_label || '최근3G 안정'}
-                          </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <!-- 선발 최근 3경기 미니 등판 로그 -->
-                <div class="accordion" id="accPitcher3G_${m.id || 0}">
-                  <div class="accordion-item border-0 bg-transparent">
-                    <button class="accordion-button collapsed p-1.5 small text-muted bg-white border rounded" type="button" data-bs-toggle="collapse" data-bs-target="#colPitcher3G_${m.id || 0}" style="font-size: 0.72rem; font-weight: 600;">
-                      <i class="bi bi-list-task me-1"></i>선발 최근 3경기 세부 등판 일지 펼치기
-                    </button>
-                    <div id="colPitcher3G_${m.id || 0}" class="accordion-collapse collapse mt-1.5" data-bs-parent="#accPitcher3G_${m.id || 0}">
-                      <div class="row g-1.5">
-                        <div class="col-6">
-                          <div class="p-1.5 bg-white border rounded" style="font-size: 0.68rem;">
-                            <div class="fw-bold text-truncate text-danger mb-1">[홈] ${hSt.name || '홈 선발'}</div>
-                            ${hStarts.length > 0 ? hStarts.slice(0, 3).map(s => `
-                              <div class="d-flex justify-content-between border-bottom py-0.5">
-                                <span>${(s.date||'').slice(5)} vs ${s.opponent||'상대'}</span>
-                                <span class="fw-bold ${s.result && s.result.includes('(W)') ? 'text-danger' : (s.result && s.result.includes('(L)') ? 'text-primary' : 'text-dark')}">${s.ip}이닝 ${s.er}자책 (${s.np}구)</span>
-                              </div>
-                            `).join('') : '<div class="text-muted">이전 등판 기록 없음</div>'}
-                          </div>
-                        </div>
-                        <div class="col-6">
-                          <div class="p-1.5 bg-white border rounded" style="font-size: 0.68rem;">
-                            <div class="fw-bold text-truncate text-primary mb-1">[원정] ${aSt.name || '원정 선발'}</div>
-                            ${aStarts.length > 0 ? aStarts.slice(0, 3).map(s => `
-                              <div class="d-flex justify-content-between border-bottom py-0.5">
-                                <span>${(s.date||'').slice(5)} vs ${s.opponent||'상대'}</span>
-                                <span class="fw-bold ${s.result && s.result.includes('(W)') ? 'text-danger' : (s.result && s.result.includes('(L)') ? 'text-primary' : 'text-dark')}">${s.ip}이닝 ${s.er}자책 (${s.np}구)</span>
-                              </div>
-                            `).join('') : '<div class="text-muted">이전 등판 기록 없음</div>'}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
+            ${pitcherColHtml}
 
             <!-- 2. 팀 타선 최근 3경기 타격·타율 지표 -->
             <div class="col-12 col-lg-6">
@@ -6945,9 +7025,10 @@ function getFullModalMatchList() {
           let aStObj = bs.away_starter_obj || (typeof bs.away_starter === 'object' ? bs.away_starter : null);
           if (!hStObj && item.starter) hStObj = item.starter;
 
-          let hStarterName = (hStObj && hStObj.name) ? hStObj.name : '';
+          let hStarterName = (hStObj && hStObj.name && isStarterAnnounced(hStObj.name)) ? hStObj.name : '';
           if (!hStarterName) {
-            hStarterName = (idx === 0 ? ((matchup.starting_pitchers && matchup.starting_pitchers.home && matchup.starting_pitchers.home.name) || m.home_starter_name || (teamH + ' 1선발')) : (teamH + ' 2선발'));
+            const mHome = (matchup.starting_pitchers && matchup.starting_pitchers.home && isStarterAnnounced(matchup.starting_pitchers.home.name)) ? matchup.starting_pitchers.home.name : (isStarterAnnounced(m.home_starter_name) ? m.home_starter_name : '');
+            hStarterName = (idx === 0) ? (mHome || '선발 미정 (TBD)') : (teamH + ' 선발');
           }
           const hStarterEr = (hStObj && hStObj.er !== undefined) ? Number(hStObj.er) : Math.min(aSc, (idx === 0 ? 2 : 3));
           const hStarterIp = (hStObj && hStObj.ip) ? hStObj.ip : (idx === 0 ? '6.0' : '5.1');
@@ -6958,9 +7039,10 @@ function getFullModalMatchList() {
           const hStarterBb = (hStObj && hStObj.bb !== undefined) ? Number(hStObj.bb) : (idx === 0 ? 2 : 1);
           const hStarterH = (hStObj && hStObj.h !== undefined) ? Number(hStObj.h) : Math.max(hStarterEr + 2, 4);
 
-          let aStarterName = (aStObj && aStObj.name) ? aStObj.name : '';
+          let aStarterName = (aStObj && aStObj.name && isStarterAnnounced(aStObj.name)) ? aStObj.name : '';
           if (!aStarterName) {
-            aStarterName = (idx === 0 ? ((matchup.starting_pitchers && matchup.starting_pitchers.away && matchup.starting_pitchers.away.name) || m.away_starter_name || (teamA + ' 1선발')) : (teamA + ' 2선발'));
+            const mAway = (matchup.starting_pitchers && matchup.starting_pitchers.away && isStarterAnnounced(matchup.starting_pitchers.away.name)) ? matchup.starting_pitchers.away.name : (isStarterAnnounced(m.away_starter_name) ? m.away_starter_name : '');
+            aStarterName = (idx === 0) ? (mAway || '선발 미정 (TBD)') : (teamA + ' 선발');
           }
           const aStarterEr = (aStObj && aStObj.er !== undefined) ? Number(aStObj.er) : Math.min(hSc, (idx === 0 ? 3 : 2));
           const aStarterIp = (aStObj && aStObj.ip) ? aStObj.ip : (idx === 0 ? '5.2' : '6.0');
@@ -8080,71 +8162,52 @@ function getFullModalMatchList() {
     function getMatchStarters(m) {
       const sport = (m.sport_code || 'BASEBALL').toUpperCase();
       if (sport === 'BASEBALL') {
-        const cleanH = (m.home_team_name || '').trim();
-        const cleanA = (m.away_team_name || '').trim();
         const rawH = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
         const rawA = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
-
-        let hName = formatPlayerKorean(rawH);
-        let aName = formatPlayerKorean(rawA);
-
-        // 긴 구단명부터 우선 매칭 (예: '지바 롯데'가 KBO '롯데'에 오인 매칭되는 문제 완벽 방지)
-        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
-
-        if (!hName) {
-          for (const k of sortedKeys) {
-            if (cleanH.includes(k) || k.includes(cleanH)) { hName = KNOWN_ROTATIONS[k]; break; }
-          }
-          if (!hName) hName = '선발 미정(TBD)';
-        }
-        if (!aName) {
-          for (const k of sortedKeys) {
-            if (cleanA.includes(k) || k.includes(cleanA)) { aName = KNOWN_ROTATIONS[k]; break; }
-          }
-          if (!aName) aName = '선발 미정(TBD)';
-        }
-
-        let hDisp = hName;
-        let aDisp = aName;
-        if (!hDisp.includes('(')) {
-          for (const k of sortedKeys) {
-            if (cleanH.includes(k) || k.includes(cleanH)) {
-              const rot = KNOWN_ROTATIONS[k];
-              const matchTh = rot.match(/\([우좌언양]\)/);
-              if (matchTh) { hDisp += matchTh[0]; break; }
-            }
-          }
-        }
-        if (!aDisp.includes('(')) {
-          for (const k of sortedKeys) {
-            if (cleanA.includes(k) || k.includes(cleanA)) {
-              const rot = KNOWN_ROTATIONS[k];
-              const matchTh = rot.match(/\([우좌언양]\)/);
-              if (matchTh) { aDisp += matchTh[0]; break; }
-            }
-          }
-        }
-
-        const isOfficial = !hName.includes('미정') && !aName.includes('미정');
-
-        const badgeHtml = isOfficial
-          ? `<span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:700;"><i class="bi bi-check-circle-fill me-0.5"></i>선발확정</span>`
-          : `<span class="badge bg-warning text-dark py-0.5 px-1" style="font-size:0.58rem; font-weight:700;">선발예정</span>`;
-
-        const hClean = hDisp.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
-        const aClean = aDisp.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
 
         const cachedDetail = (typeof matchDetailCache !== 'undefined') ? matchDetailCache.get(m.id) : null;
         const cachedPitchers = (cachedDetail && cachedDetail.matchup_analysis && cachedDetail.matchup_analysis.starting_pitchers) ? cachedDetail.matchup_analysis.starting_pitchers : null;
 
-        const hTrend = (cachedPitchers && cachedPitchers.home) ? getPitcherFormTrend(cachedPitchers.home) : (typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: hClean }) : null);
-        const aTrend = (cachedPitchers && cachedPitchers.away) ? getPitcherFormTrend(cachedPitchers.away) : (typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: aClean }) : null);
-        const hTrendStr = hTrend ? `(ERA ${hTrend.era3g} ${hTrend.icon})` : '';
-        const aTrendStr = aTrend ? `(ERA ${aTrend.era3g} ${aTrend.icon})` : '';
+        const effectiveRawH = (cachedPitchers && cachedPitchers.home && cachedPitchers.home.name) ? cachedPitchers.home.name : rawH;
+        const effectiveRawA = (cachedPitchers && cachedPitchers.away && cachedPitchers.away.name) ? cachedPitchers.away.name : rawA;
+
+        const hAnnounced = isStarterAnnounced(effectiveRawH) && !(cachedPitchers && cachedPitchers.home && cachedPitchers.home.is_unannounced);
+        const aAnnounced = isStarterAnnounced(effectiveRawA) && !(cachedPitchers && cachedPitchers.away && cachedPitchers.away.is_unannounced);
+
+        let hDisp = hAnnounced ? formatPlayerKorean(effectiveRawH) : '선발 미정';
+        let aDisp = aAnnounced ? formatPlayerKorean(effectiveRawA) : '선발 미정';
+
+        const hClean = hAnnounced ? hDisp.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim() : '';
+        const aClean = aAnnounced ? aDisp.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim() : '';
+
+        const hTrend = (hAnnounced && cachedPitchers && cachedPitchers.home && cachedPitchers.home.summary) ? getPitcherFormTrend(cachedPitchers.home) : (hAnnounced && typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: hClean }) : null);
+        const aTrend = (aAnnounced && cachedPitchers && cachedPitchers.away && cachedPitchers.away.summary) ? getPitcherFormTrend(cachedPitchers.away) : (aAnnounced && typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: aClean }) : null);
+        const hTrendStr = (hAnnounced && hTrend && hTrend.era3g && hTrend.era3g !== '-') ? `(ERA ${hTrend.era3g} ${hTrend.icon})` : '';
+        const aTrendStr = (aAnnounced && aTrend && aTrend.era3g && aTrend.era3g !== '-') ? `(ERA ${aTrend.era3g} ${aTrend.icon})` : '';
+
+        let badgeHtml = '';
+        let text = '';
+
+        if (!hAnnounced && !aAnnounced) {
+          badgeHtml = `<span class="badge bg-secondary text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:700;">○ 미확정 (TBD)</span>`;
+          text = `공식 선발투수 발표 대기 중 (양 팀 선발 미확정 TBD)`;
+        } else if (!hAnnounced) {
+          badgeHtml = `<span class="badge bg-secondary text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:700;">○ 미확정 (TBD)</span>`;
+          text = `[홈] 선발 미정 vs [원정] ${aDisp} ${aTrendStr}`.trim();
+        } else if (!aAnnounced) {
+          badgeHtml = `<span class="badge bg-secondary text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:700;">○ 미확정 (TBD)</span>`;
+          text = `[홈] ${hDisp} ${hTrendStr} vs [원정] 선발 미정`.trim();
+        } else {
+          const isConf = !!m.starters_confirmed || (cachedPitchers && cachedPitchers.home && cachedPitchers.home.is_confirmed && cachedPitchers.away && cachedPitchers.away.is_confirmed);
+          badgeHtml = isConf
+            ? `<span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:700;"><i class="bi bi-check-circle-fill me-0.5"></i>선발확정</span>`
+            : `<span class="badge bg-primary text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:700;">선발예고</span>`;
+          text = `[홈] ${hDisp} ${hTrendStr} vs [원정] ${aDisp} ${aTrendStr}`.trim();
+        }
 
         return {
           title: '선발투수',
-          text: `[홈] ${hDisp} ${hTrendStr} vs [원정] ${aDisp} ${aTrendStr}`,
+          text: text,
           badge: badgeHtml
         };
       } else if (sport === 'SOCCER') {
@@ -10617,26 +10680,14 @@ function getFullModalMatchList() {
       // Unpack baseball starting pitchers for team header blocks
       const rawHomeStarter = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
       const rawAwayStarter = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
-      let homeStarter = formatPlayerKorean(rawHomeStarter);
-      let awayStarter = formatPlayerKorean(rawAwayStarter);
-      if (!homeStarter && typeof KNOWN_ROTATIONS !== 'undefined') {
-        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
-        for (const k of sortedKeys) {
-          if (m.home_team_name && (m.home_team_name.includes(k) || k.includes(m.home_team_name))) { homeStarter = KNOWN_ROTATIONS[k]; break; }
-        }
-      }
-      if (!awayStarter && typeof KNOWN_ROTATIONS !== 'undefined') {
-        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
-        for (const k of sortedKeys) {
-          if (m.away_team_name && (m.away_team_name.includes(k) || k.includes(m.away_team_name))) { awayStarter = KNOWN_ROTATIONS[k]; break; }
-        }
-      }
-      homeStarter = homeStarter || (m.home_team_name ? m.home_team_name + ' 선발' : '선발');
-      awayStarter = awayStarter || (m.away_team_name ? m.away_team_name + ' 선발' : '선발');
+      const hAnnounced = isStarterAnnounced(rawHomeStarter);
+      const aAnnounced = isStarterAnnounced(rawAwayStarter);
+      let homeStarter = hAnnounced ? formatPlayerKorean(rawHomeStarter) : '선발 미정';
+      let awayStarter = aAnnounced ? formatPlayerKorean(rawAwayStarter) : '선발 미정';
 
       const stObj = (matchup && matchup.starting_pitchers) ? matchup.starting_pitchers : {};
-      const hPitcher = stObj.home || { name: homeStarter, throws: '우완', is_confirmed: true };
-      const aPitcher = stObj.away || { name: awayStarter, throws: '우완', is_confirmed: true };
+      const hPitcher = stObj.home || (hAnnounced ? { name: homeStarter, throws: '우완', is_confirmed: true, is_unannounced: false } : { name: '선발 미정', throws: '미정', is_confirmed: false, is_unannounced: true, status_label: '선발 미정 (TBD)' });
+      const aPitcher = stObj.away || (aAnnounced ? { name: awayStarter, throws: '우완', is_confirmed: true, is_unannounced: false } : { name: '선발 미정', throws: '미정', is_confirmed: false, is_unannounced: true, status_label: '선발 미정 (TBD)' });
 
       // Render Final Assembled Dashboard
       panel.innerHTML = `

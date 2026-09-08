@@ -9,7 +9,7 @@ from app.scrapers.baseball_scraper import BaseballScraper
 from app.scrapers.soccer_scraper import SoccerScraper, SOCCER_LEAGUE_CODES
 from app.scrapers.basketball_scraper import BasketballScraper
 from app.core.sports_catalog import SPORTS_CATALOG
-from app.services.team_split_service import TeamSplitService, DEFAULT_ROTATION_STARTERS
+from app.services.team_split_service import TeamSplitService, is_valid_starter_name
 from app.services.player_translation import translate_player_name, sanitize_player_name, sanitize_text
 
 class MatchService:
@@ -308,43 +308,53 @@ class MatchService:
             m.home_starter_name = None
             m.away_starter_name = None
             m.starters_confirmed = False
+            h_confirmed = False
+            a_confirmed = False
+
             if m.details and m.details.team_stats:
                 try:
                     ts = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
                     st = ts.get("starters", {})
                     h_st = st.get("home", {})
                     a_st = st.get("away", {})
-                    if h_st.get("name") and h_st.get("name") not in ["선발 예고", "선발 투수"]:
-                        m.home_starter_name = translate_player_name(h_st.get("name"))
-                    if a_st.get("name") and a_st.get("name") not in ["선발 예고", "선발 투수"]:
-                        m.away_starter_name = translate_player_name(a_st.get("name"))
-                    if m.home_starter_name or m.away_starter_name:
-                        m.starters_confirmed = bool(h_st.get("confirmed", True) or a_st.get("confirmed", True))
+                    h_raw = h_st.get("name")
+                    a_raw = a_st.get("name")
+                    if is_valid_starter_name(h_raw):
+                        m.home_starter_name = translate_player_name(h_raw.strip())
+                        h_confirmed = bool(h_st.get("confirmed", True))
+                    if is_valid_starter_name(a_raw):
+                        m.away_starter_name = translate_player_name(a_raw.strip())
+                        a_confirmed = bool(a_st.get("confirmed", True))
                 except Exception:
                     pass
 
-            # 야구 경기 선발투수 Fallback 보강 (KBO, NPB, MLB 12+10+30 구단 전원 대응)
+            # 진행 중/종료된 야구 경기의 경우 player_match_stats 박스스코어에서 실제 등판 투수 우선 식별
+            if m.sport_code == "BASEBALL" and (not m.home_starter_name or not m.away_starter_name) and m.status in ["FINISHED", "LIVE"]:
+                try:
+                    p_rows = db.query(PlayerMatchStat).filter(
+                        PlayerMatchStat.match_id == m.id,
+                        or_(PlayerMatchStat.position.like("%투수%"), PlayerMatchStat.position.like("%선발%"))
+                    ).order_by(PlayerMatchStat.id.asc()).all()
+                    for p in p_rows:
+                        if is_valid_starter_name(p.player_name):
+                            if p.team_name == m.home_team_name and not m.home_starter_name:
+                                m.home_starter_name = translate_player_name(p.player_name)
+                                h_confirmed = True
+                            elif p.team_name == m.away_team_name and not m.away_starter_name:
+                                m.away_starter_name = translate_player_name(p.player_name)
+                                a_confirmed = True
+                except Exception:
+                    pass
+
+            # 선발 미확정 경기: 공식 발표된 선발이 없는 경우 더미 생성을 전면 차단하고 None (미정 TBD)으로 보존
             if m.sport_code == "BASEBALL":
-                if not m.home_starter_name:
-                    d_h = DEFAULT_ROTATION_STARTERS.get(m.home_team_name)
-                    if not d_h and m.home_team_name:
-                        for k, v in DEFAULT_ROTATION_STARTERS.items():
-                            if k in m.home_team_name or m.home_team_name in k:
-                                d_h = v
-                                break
-                    if d_h:
-                        m.home_starter_name = d_h.get("name_en") if "MLB" in (m.league_name or "") else d_h["name"]
-                if not m.away_starter_name:
-                    d_a = DEFAULT_ROTATION_STARTERS.get(m.away_team_name)
-                    if not d_a and m.away_team_name:
-                        for k, v in DEFAULT_ROTATION_STARTERS.items():
-                            if k in m.away_team_name or m.away_team_name in k:
-                                d_a = v
-                                break
-                    if d_a:
-                        m.away_starter_name = d_a.get("name_en") if "MLB" in (m.league_name or "") else d_a["name"]
-                if m.home_starter_name and m.away_starter_name:
-                    m.starters_confirmed = True
+                if not is_valid_starter_name(m.home_starter_name):
+                    m.home_starter_name = None
+                    h_confirmed = False
+                if not is_valid_starter_name(m.away_starter_name):
+                    m.away_starter_name = None
+                    a_confirmed = False
+                m.starters_confirmed = bool(m.home_starter_name and m.away_starter_name and h_confirmed and a_confirmed)
         return matches
 
     @staticmethod

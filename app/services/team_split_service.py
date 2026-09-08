@@ -22,8 +22,35 @@ from collections import defaultdict
 from typing import Dict, Any, Optional, Tuple
 from app.scrapers.official_mlb_live_scraper import get_team_name_ko
 from app.services.player_translation import translate_player_name
+from app.services.live_api_sports_service import TEAM_SYNONYMS
 
 logger = logging.getLogger("team_split_service")
+
+def get_all_team_aliases(team_name: str) -> list:
+    if not team_name:
+        return []
+    aliases = {team_name.strip()}
+    norm = team_name.replace(" ", "").replace("FC", "").replace("에프씨", "").strip()
+    if norm:
+        aliases.add(norm)
+    t_lower = team_name.lower().strip()
+    
+    for k, syn_list in TEAM_SYNONYMS.items():
+        k_clean = k.lower().replace(" ", "")
+        matched = False
+        if k_clean == t_lower or k_clean in t_lower or t_lower in k_clean:
+            matched = True
+        else:
+            for syn in syn_list:
+                s_clean = syn.lower().replace(" ", "")
+                if s_clean == t_lower or s_clean in t_lower or t_lower in s_clean:
+                    matched = True
+                    break
+        if matched:
+            aliases.add(k)
+            for syn in syn_list:
+                aliases.add(syn)
+    return list(aliases)
 
 def _init_stat_dict():
     return {
@@ -892,6 +919,23 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
         }
     }
 
+UNANNOUNCED_STARTER_TERMS = {
+    "", "none", "null", "undefined", "tbd", "tba", "미정", "선발 미정", "미확정", "미확정 (tbd)",
+    "선발 미정 (tbd)", "선발예정", "선발 예고", "선발 투수", "선발", "홈 선발", "원정 선발",
+    "홈선발", "원정선발", "예정", "미발표"
+}
+
+def is_valid_starter_name(name: Optional[str]) -> bool:
+    if not name or not isinstance(name, str):
+        return False
+    clean = name.strip()
+    clean_lower = clean.lower()
+    if clean_lower in UNANNOUNCED_STARTER_TERMS:
+        return False
+    if clean.endswith("선발") and any(t in clean for t in ["팀", "구단", "홈", "원정", "베어스", "트윈스", "라이온즈", "타이거즈", "이글스", "랜더스", "위즈", "자이언츠", "히어로즈", "다이노스"]):
+        return False
+    return True
+
 def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], home_team: str, away_team: str, sport_code: str, team_stats: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     if sport_code != "BASEBALL":
         return None
@@ -924,16 +968,18 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
         st = team_stats.get("starters") or {}
         h_st = st.get("home") or {}
         a_st = st.get("away") or {}
-        if h_st.get("name") and h_st.get("name") not in ["선발 예고", "선발 투수"]:
-            home_name = h_st.get("name")
-            home_confirmed = bool(h_st.get("confirmed", False))
-            home_throws = h_st.get("throws") or DEFAULT_ROTATION_STARTERS.get(home_team, {}).get("throws", "우완")
-        if a_st.get("name") and a_st.get("name") not in ["선발 예고", "선발 투수"]:
-            away_name = a_st.get("name")
-            away_confirmed = bool(a_st.get("confirmed", False))
-            away_throws = a_st.get("throws") or DEFAULT_ROTATION_STARTERS.get(away_team, {}).get("throws", "우완")
+        h_cand = h_st.get("name")
+        a_cand = a_st.get("name")
+        if is_valid_starter_name(h_cand):
+            home_name = h_cand.strip()
+            home_confirmed = bool(h_st.get("confirmed", True))
+            home_throws = h_st.get("throws") or ("좌완" if "(좌)" in home_name else ("언더" if "(언)" in home_name else "우완"))
+        if is_valid_starter_name(a_cand):
+            away_name = a_cand.strip()
+            away_confirmed = bool(a_st.get("confirmed", True))
+            away_throws = a_st.get("throws") or ("좌완" if "(좌)" in away_name else ("언더" if "(언)" in away_name else "우완"))
 
-    # 2. Check if match has boxscore in player_match_stats
+    # 2. Check if match has boxscore in player_match_stats (for finished / live games)
     if match_id and (not home_name or not away_name):
         c.execute("""
             SELECT team_name, player_name, position, extra_stats
@@ -949,7 +995,7 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
                 ex = json.loads(ex_str) if isinstance(ex_str, str) else (ex_str or {})
             except:
                 ex = {}
-            if "선발" in str(pos) or ex.get("is_starter") is True:
+            if ("선발" in str(pos) or ex.get("is_starter") is True) and is_valid_starter_name(p_name):
                 if t_name == home_team and not home_name:
                     home_name = p_name
                     home_confirmed = True
@@ -967,10 +1013,11 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
                 except:
                     ex = {}
                 np_v = ex.get("np") or ex.get("pitches") or 0
-                if t_name == home_team:
-                    h_cands.append((p_name, np_v))
-                elif t_name == away_team:
-                    a_cands.append((p_name, np_v))
+                if is_valid_starter_name(p_name):
+                    if t_name == home_team:
+                        h_cands.append((p_name, np_v))
+                    elif t_name == away_team:
+                        a_cands.append((p_name, np_v))
             if not home_name and h_cands:
                 h_cands.sort(key=lambda x: x[1], reverse=True)
                 if h_cands[0][1] >= 45:
@@ -982,76 +1029,100 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
                     away_name = a_cands[0][0]
                     away_confirmed = True
 
-        # 3차: 첫 번째 투수
+        # 3차: 첫 번째 유효 투수
         if not home_name or not away_name:
             for t_name, p_name, pos, ex_str in p_rows:
-                if t_name == home_team and not home_name:
-                    home_name = p_name
-                    home_confirmed = True
-                elif t_name == away_team and not away_name:
-                    away_name = p_name
-                    away_confirmed = True
-                
-    # 3. Fallback to DEFAULT_ROTATION_STARTERS
-    if not home_name:
-        d_h = DEFAULT_ROTATION_STARTERS.get(home_team)
-        if not d_h and home_team:
-            for k, v in DEFAULT_ROTATION_STARTERS.items():
-                if k in home_team or home_team in k:
-                    d_h = v
-                    break
-        if d_h:
-            home_name = d_h.get("name_en") if "MLB" in (league_name or "") else d_h["name"]
-            home_throws = d_h.get("throws", "우완")
-            home_confirmed = True
-        else:
-            home_name = f"{home_team} 선발"
-            
-    if not away_name:
-        d_a = DEFAULT_ROTATION_STARTERS.get(away_team)
-        if not d_a and away_team:
-            for k, v in DEFAULT_ROTATION_STARTERS.items():
-                if k in away_team or away_team in k:
-                    d_a = v
-                    break
-        if d_a:
-            away_name = d_a.get("name_en") if "MLB" in (league_name or "") else d_a["name"]
-            away_throws = d_a.get("throws", "우완")
-            away_confirmed = True
-        else:
-            away_name = f"{away_team} 선발"
+                if is_valid_starter_name(p_name):
+                    if t_name == home_team and not home_name:
+                        home_name = p_name
+                        home_confirmed = True
+                    elif t_name == away_team and not away_name:
+                        away_name = p_name
+                        away_confirmed = True
 
-    # Known confirmed today's games (2026-09-06 KBO & MLB)
-    confirmed_today_mids = [1343, 3972, 3974, 3975, 5630, 40, 49, 51]
-    if match_id in confirmed_today_mids:
-        home_confirmed = True
-        away_confirmed = True
-        
-    home_data = _get_pitcher_recent_3_starts(conn, home_name, home_team, home_throws, league_name=league_name)
-    away_data = _get_pitcher_recent_3_starts(conn, away_name, away_team, away_throws, league_name=league_name)
-    
-    home_name_ko = translate_player_name(home_name)
-    away_name_ko = translate_player_name(away_name)
-
-    return {
-        "home": {
+    # 3. 선발 미확정 엄격 판정: 공식 발표가 없는 경우 임의 더미 데이터 생성을 전면 차단하고 '선발 미정 (TBD)' 반환
+    # (절대 DEFAULT_ROTATION_STARTERS나 '팀명 선발'과 같은 가상 데이터를 주입하지 않음)
+    if is_valid_starter_name(home_name):
+        home_name_clean = home_name.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
+        home_name_ko = translate_player_name(home_name_clean)
+        home_data = _get_pitcher_recent_3_starts(conn, home_name_clean, home_team, home_throws, league_name=league_name)
+        home_res = {
             "name": home_name_ko,
-            "name_en": home_name,
+            "name_en": home_name_clean,
             "throws": home_throws,
             "is_confirmed": home_confirmed,
-            "status_label": "선발 확정" if home_confirmed else "선발 예고 (예상)",
+            "is_unannounced": False,
+            "status_label": "선발 확정" if home_confirmed else "선발 예고",
             "summary": home_data["summary"],
             "recent_3_starts": home_data["starts"]
-        },
-        "away": {
+        }
+    else:
+        home_res = {
+            "name": "선발 미정",
+            "name_en": "TBD",
+            "throws": "미정",
+            "is_confirmed": False,
+            "is_unannounced": True,
+            "status_label": "선발 미정 (TBD)",
+            "summary": {
+                "avg_ip": "-",
+                "avg_np": "-",
+                "total_np": 0,
+                "era_3g": "-",
+                "season_era": "-",
+                "trend": "미정",
+                "trend_icon": "─",
+                "trend_label": "선발 미정 (TBD)",
+                "record": "기록 없음",
+                "total_so": 0,
+                "total_bb": 0,
+                "total_h": 0
+            },
+            "recent_3_starts": []
+        }
+
+    if is_valid_starter_name(away_name):
+        away_name_clean = away_name.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
+        away_name_ko = translate_player_name(away_name_clean)
+        away_data = _get_pitcher_recent_3_starts(conn, away_name_clean, away_team, away_throws, league_name=league_name)
+        away_res = {
             "name": away_name_ko,
-            "name_en": away_name,
+            "name_en": away_name_clean,
             "throws": away_throws,
             "is_confirmed": away_confirmed,
-            "status_label": "선발 확정" if away_confirmed else "선발 예고 (예상)",
+            "is_unannounced": False,
+            "status_label": "선발 확정" if away_confirmed else "선발 예고",
             "summary": away_data["summary"],
             "recent_3_starts": away_data["starts"]
         }
+    else:
+        away_res = {
+            "name": "선발 미정",
+            "name_en": "TBD",
+            "throws": "미정",
+            "is_confirmed": False,
+            "is_unannounced": True,
+            "status_label": "선발 미정 (TBD)",
+            "summary": {
+                "avg_ip": "-",
+                "avg_np": "-",
+                "total_np": 0,
+                "era_3g": "-",
+                "season_era": "-",
+                "trend": "미정",
+                "trend_icon": "─",
+                "trend_label": "선발 미정 (TBD)",
+                "record": "기록 없음",
+                "total_so": 0,
+                "total_bb": 0,
+                "total_h": 0
+            },
+            "recent_3_starts": []
+        }
+
+    return {
+        "home": home_res,
+        "away": away_res
     }
 
 SOCCER_TEAM_ROSTERS = {
@@ -2962,9 +3033,20 @@ class TeamSplitService:
             ast = starting_pitchers_analysis.get("away", {})
             hsum = hst.get("summary", {})
             asum = ast.get("summary", {})
-            h_b = "[선발 확정]" if hst.get("is_confirmed") else "[선발 예고]"
-            a_b = "[선발 확정]" if ast.get("is_confirmed") else "[선발 예고]"
-            drivers_list.insert(0, f"[선발 매치업] {h_b} [홈] {hst.get('name')}({hst.get('throws')}, 3G 평균 {hsum.get('avg_ip')}이닝 {hsum.get('avg_np')}구 ERA {hsum.get('era_3g')}) vs {a_b} [원정] {ast.get('name')}({ast.get('throws')}, 3G 평균 {asum.get('avg_ip')}이닝 {asum.get('avg_np')}구 ERA {asum.get('era_3g')})")
+            h_un = hst.get("is_unannounced") or not is_valid_starter_name(hst.get("name"))
+            a_un = ast.get("is_unannounced") or not is_valid_starter_name(ast.get("name"))
+            if h_un and a_un:
+                drivers_list.insert(0, "[선발 매치업] 양 팀 선발투수 공식 발표 전 (선발 미확정 TBD 상태)")
+            elif h_un:
+                a_b = "[선발 확정]" if ast.get("is_confirmed") else "[선발 예고]"
+                drivers_list.insert(0, f"[선발 매치업] [홈] 선발 미확정 (TBD) vs {a_b} [원정] {ast.get('name')}({ast.get('throws')}, 3G 평균 {asum.get('avg_ip')}이닝 {asum.get('avg_np')}구 ERA {asum.get('era_3g')})")
+            elif a_un:
+                h_b = "[선발 확정]" if hst.get("is_confirmed") else "[선발 예고]"
+                drivers_list.insert(0, f"[선발 매치업] {h_b} [홈] {hst.get('name')}({hst.get('throws')}, 3G 평균 {hsum.get('avg_ip')}이닝 {hsum.get('avg_np')}구 ERA {hsum.get('era_3g')}) vs [원정] 선발 미확정 (TBD)")
+            else:
+                h_b = "[선발 확정]" if hst.get("is_confirmed") else "[선발 예고]"
+                a_b = "[선발 확정]" if ast.get("is_confirmed") else "[선발 예고]"
+                drivers_list.insert(0, f"[선발 매치업] {h_b} [홈] {hst.get('name')}({hst.get('throws')}, 3G 평균 {hsum.get('avg_ip')}이닝 {hsum.get('avg_np')}구 ERA {hsum.get('era_3g')}) vs {a_b} [원정] {ast.get('name')}({ast.get('throws')}, 3G 평균 {asum.get('avg_ip')}이닝 {asum.get('avg_np')}구 ERA {asum.get('era_3g')})")
 
         baseball_res = {
             "sport_code": "BASEBALL",
