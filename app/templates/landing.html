@@ -278,7 +278,7 @@
       height: 100%;
     }
     
-    /* 4-Column Width Ratio: 40% | 30% | 20% | 10% (4 : 3 : 2 : 1) */
+    /* 3-Column Width Ratio: 40% | 30% | 30% (우측 채팅창 30%로 확장) */
     @media (min-width: 1200px) {
       .col-dash-left {
         flex: 0 0 40% !important;
@@ -289,12 +289,8 @@
         max-width: 30% !important;
       }
       .col-dash-right {
-        flex: 0 0 20% !important;
-        max-width: 20% !important;
-      }
-      .col-dash-news {
-        flex: 0 0 10% !important;
-        max-width: 10% !important;
+        flex: 0 0 30% !important;
+        max-width: 30% !important;
       }
     }
     @media (min-width: 992px) and (max-width: 1199px) {
@@ -307,36 +303,9 @@
         max-width: 30% !important;
       }
       .col-dash-right {
-        flex: 0 0 20% !important;
-        max-width: 20% !important;
+        flex: 0 0 30% !important;
+        max-width: 30% !important;
       }
-      .col-dash-news {
-        flex: 0 0 10% !important;
-        max-width: 10% !important;
-      }
-    }
-    /* 10% News Column Compact Polish */
-    .col-dash-news .dash-card-header {
-      padding: 6px 4px !important;
-    }
-    .col-dash-news .dash-card-header span {
-      font-size: 0.74rem !important;
-    }
-    .col-dash-news .sport-chip-btn {
-      font-size: 0.65rem !important;
-      padding: 2px 3px !important;
-    }
-    .col-dash-news .news-card-compact {
-      padding: 5px 6px !important;
-      margin-bottom: 5px !important;
-    }
-    .col-dash-news .news-card-compact .fw-bold {
-      font-size: 0.75rem !important;
-      line-height: 1.25 !important;
-    }
-    .col-dash-news .news-card-compact .text-truncate-2 {
-      font-size: 0.68rem !important;
-      line-height: 1.2 !important;
     }
     .footer-section {
       display: none !important;
@@ -344,8 +313,7 @@
 
     .col-dash-left,
     .col-dash-center,
-    .col-dash-right,
-    .col-dash-news {
+    .col-dash-right {
       padding-left: 4px;
       padding-right: 4px;
       margin-bottom: 0;
@@ -1257,7 +1225,7 @@
     </div>
   </nav>
 
-  <!-- 📱 핸드폰 모바일 전용 1-Tap 상단 탭 단축키 (고정 네비게이션 - 4대 핵심 탭) -->
+  <!-- 📱 핸드폰 모바일 전용 1-Tap 상단 탭 단축키 (고정 네비게이션 - 3대 핵심 탭) -->
   <div id="mobileTabBar" class="d-none flex-column p-1" style="background: #ffffff; border-bottom: 2px solid #111827; z-index: 1045;">
     <div class="dash-container">
       <div class="d-flex justify-content-between align-items-center gap-1 w-100">
@@ -1269,9 +1237,6 @@
         </button>
         <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabCommunity" onclick="switchMobileTab('community')">
           <i class="bi bi-chat-dots-fill d-block mb-0.5 text-success" style="font-size: 1.05rem;"></i>실시간 팬톡
-        </button>
-        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabNews" onclick="switchMobileTab('news')">
-          <i class="bi bi-newspaper d-block mb-0.5 text-primary" style="font-size: 1.05rem;"></i>스포츠뉴스
         </button>
       </div>
     </div>
@@ -1480,33 +1445,6 @@
           </div>
         </div>
 
-        <!-- 4. [우측2 10%] 실시간 스포츠 최신 뉴스 & 심층 분석 -->
-        <div class="col-dash-news" id="newsColSidebar">
-          <div class="dash-card-column">
-            <div class="dash-card-header">
-              <div class="d-flex justify-content-between align-items-center mb-1 flex-nowrap">
-                <span class="fw-bold text-dark text-nowrap" style="font-size: 0.80rem;"><i class="bi bi-newspaper me-1 text-primary"></i>스포츠속보</span>
-                <button class="btn btn-xs py-0.5 px-1.5 text-info" onclick="refreshLiveNews()" title="실시간 언론사 뉴스 최신화" style="background: #eff6ff; border: 1px solid #eff6ff; border-radius: 4px; font-size: 0.68rem;">
-                  <i class="bi bi-arrow-clockwise"></i>
-                </button>
-              </div>
-              <!-- Category Filter Chips -->
-              <div class="d-flex gap-0.5 overflow-x-auto py-0.5" style="scrollbar-width: none;">
-                <button class="btn btn-xs sport-chip-btn active text-nowrap py-0 px-1" onclick="filterNews('ALL', this)" style="font-size: 0.65rem;">전체</button>
-                <button class="btn btn-xs sport-chip-btn text-nowrap py-0 px-1" onclick="filterNews('BASEBALL', this)" style="font-size: 0.65rem;">야구</button>
-                <button class="btn btn-xs sport-chip-btn text-nowrap py-0 px-1" onclick="filterNews('SOCCER', this)" style="font-size: 0.65rem;">축구</button>
-                <button class="btn btn-xs sport-chip-btn text-nowrap py-0 px-1" onclick="filterNews('BASKETBALL', this)" style="font-size: 0.65rem;">농구</button>
-                <button class="btn btn-xs sport-chip-btn text-nowrap py-0 px-1" onclick="filterNews('ANALYTICS', this)" style="font-size: 0.65rem;">칼럼</button>
-              </div>
-            </div>
-            <!-- Body: Scrollable News Cards List -->
-            <div class="dash-card-body p-1" id="newsColumnList">
-              <div class="text-center text-muted py-5">
-                <div class="spinner-border spinner-border-sm text-primary me-2"></div>실시간 언론사 뉴스를 불러오는 중...
-              </div>
-            </div>
-          </div>
-        </div>
 
       </div>
     </div>
@@ -1547,7 +1485,7 @@
         <div class="col-lg-2 col-6">
           <h6 class="fw-bold text-white mb-3">서비스 바로가기</h6>
           <ul class="list-unstyled d-flex flex-column gap-2" style="font-size: 0.88rem;">
-            <li><a href="#newsColSidebar" class="footer-link">스포츠 뉴스</a></li>
+            <li><a href="#rightColCommunity" class="footer-link">실시간 팬룸 & 채팅</a></li>
             <li><a href="#match-strip" class="footer-link">라이브 스코어</a></li>
             <li><a href="#analytics-section" class="footer-link">세이버메트릭스</a></li>
             <li><a href="#betmanSection" class="footer-link">승무패·승1패 분석</a></li>
@@ -8525,25 +8463,23 @@ function getFullModalMatchList() {
 
     function switchMobileTab(tabKey) {
       if (tabKey === 'center') tabKey = 'toto';
+      if (tabKey === 'news') tabKey = 'community';
       currentMobileTab = tabKey;
       const p1 = document.getElementById('leftColSchedule');
       const p2 = document.getElementById('centerColMain');
       const p3 = document.getElementById('rightColCommunity');
-      const p4 = document.getElementById('newsColSidebar');
       const retBtn = document.getElementById('mobileReturnToScheduleBtn');
 
       const panels = {
         schedule: p1,
         toto: p2,
-        community: p3,
-        news: p4
+        community: p3
       };
 
       const tabs = {
         schedule: 'mobTabSchedule',
         toto: 'mobTabToto',
-        community: 'mobTabCommunity',
-        news: 'mobTabNews'
+        community: 'mobTabCommunity'
       };
 
       Object.keys(panels).forEach(k => {
@@ -8598,7 +8534,6 @@ function getFullModalMatchList() {
       const p1 = document.getElementById('leftColSchedule');
       const p2 = document.getElementById('centerColMain');
       const p3 = document.getElementById('rightColCommunity');
-      const p4 = document.getElementById('newsColSidebar');
       const retBtn = document.getElementById('mobileReturnToScheduleBtn');
 
       const isRealPhone = window.innerWidth <= 768;
@@ -8667,7 +8602,7 @@ function getFullModalMatchList() {
           row.classList.remove('mobile-view-active');
         }
 
-        [p1, p2, p3, p4].forEach(p => {
+        [p1, p2, p3].forEach(p => {
           if (p) {
             p.style.display = '';
             p.style.flex = '';
