@@ -1,6 +1,6 @@
 import time
 from typing import List, Optional, Dict, Tuple, Any
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -17,6 +17,7 @@ def clear_matches_cache():
 
 @router.get("", response_model=List[MatchResponse], summary="경기 일정 및 결과 목록 조회 (종목/기간 필터 포함)")
 def list_matches(
+    response: Response,
     sport_code: Optional[str] = Query(None, description="스포츠 종목 코드 (BASEBALL, SOCCER, BASKETBALL 또는 ALL)"),
     league_name: Optional[str] = Query(None, description="리그명 (MLB, KBO, NPB, EPL, LALIGA, NBA 등)"),
     status: Optional[str] = Query(None, description="상태 필터 (SCHEDULED, LIVE, FINISHED)"),
@@ -27,6 +28,7 @@ def list_matches(
     db: Session = Depends(get_db)
 ):
     """지정된 종목 및 조건에 맞는 경기 일정/결과 목록을 조회합니다."""
+    response.headers["Cache-Control"] = "public, max-age=5, s-maxage=10"
     cache_key = f"{sport_code}:{league_name}:{status}:{start_date}:{end_date}:{limit}:{order}"
     now = time.time()
     if cache_key in _MATCHES_CACHE:
