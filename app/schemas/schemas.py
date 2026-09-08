@@ -89,6 +89,7 @@ class MatchResponse(MatchBase):
     id: int
     is_customized: bool = False
     custom_notes: Optional[str] = None
+    summary: Optional[str] = None
     prediction: Optional[Dict[str, Any]] = None
     home_starter_name: Optional[str] = None
     away_starter_name: Optional[str] = None

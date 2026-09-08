@@ -110,6 +110,7 @@ def get_match_full(match_id: int, db: Session = Depends(get_db)):
         "status": m.status,
         "is_customized": m.is_customized,
         "custom_notes": m.custom_notes,
+        "summary": m.custom_notes,
         "details": data["details"],
         "events": data["events"],
         "player_stats": data["player_stats"],

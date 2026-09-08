@@ -1342,6 +1342,11 @@ def _enrich_baseball_match_events(c_cur, m_dict, home_name: str, away_name: str,
     h_bb = max(2, min(6, home_score))
     a_bb = max(2, min(6, away_score))
 
+    h_starter_obj = None
+    a_starter_obj = None
+    h_bullpen = []
+    a_bullpen = []
+
     if match_id:
         try:
             c_cur.execute("SELECT team_stats FROM match_details WHERE match_id = ?", (match_id,))
@@ -1370,29 +1375,120 @@ def _enrich_baseball_match_events(c_cur, m_dict, home_name: str, away_name: str,
 
         try:
             c_cur.execute("""
-                SELECT team_name, player_name, innings_pitched, earned_runs, strikeouts, walks, pitches
+                SELECT team_name, player_name, position, extra_stats
                 FROM player_match_stats
-                WHERE match_id = ? AND is_pitcher = 1
-                ORDER BY innings_pitched DESC
+                WHERE match_id = ?
+                ORDER BY id ASC
             """, (match_id,))
             p_rows = c_cur.fetchall()
-            for pr in p_rows:
-                t_nm, p_nm, ip, er, so, bb, np = pr
-                kor_name = translate_player_name(p_nm)
-                is_h = (t_nm == home_name)
-                qs = "QS " if (float(ip or 0) >= 6.0 and int(er or 0) <= 3) else ""
-                dec = " (승)" if (is_h and home_score > away_score) or (not is_h and away_score > home_score) else " (패)"
-                desc = f"{kor_name} {ip}이닝 {er}자책 {qs}{dec}"
-                if is_h and (h_starter_txt.startswith(home_name) or len(h_starter_txt) < 10):
-                    h_starter_txt = desc
-                    if so is not None: h_so = so
-                    if bb is not None: h_bb = bb
-                elif not is_h and (a_starter_txt.startswith(away_name) or len(a_starter_txt) < 10):
-                    a_starter_txt = desc
-                    if so is not None: a_so = so
-                    if bb is not None: a_bb = bb
+            h_p_list = []
+            a_p_list = []
+            for t_nm, p_nm, pos, ex_str in p_rows:
+                try:
+                    ex = json.loads(ex_str) if isinstance(ex_str, str) else (ex_str or {})
+                except Exception:
+                    ex = {}
+                if ex.get('type') == 'PITCHER' or ex.get('player_type') == 'PITCHER' or '투수' in str(pos) or 'P' in str(pos):
+                    np_val = int(ex.get('np') or ex.get('pitches') or 0)
+                    is_st = '선발' in str(pos) or (ex.get('is_starter') is True) or (ex.get('starter') is True)
+                    p_item = {
+                        'name': translate_player_name(p_nm),
+                        'raw_name': p_nm,
+                        'pos': pos,
+                        'ip': str(ex.get('ip', '1.0')),
+                        'np': np_val,
+                        'er': int(ex.get('er') or 0),
+                        'so': int(ex.get('so') or 0),
+                        'bb': int(ex.get('bb') or 0),
+                        'h': int(ex.get('h') or 0),
+                        'is_starter': is_st,
+                        'decision': ex.get('decision', '')
+                    }
+                    if t_nm == home_name:
+                        h_p_list.append(p_item)
+                    elif t_nm == away_name:
+                        a_p_list.append(p_item)
+
+            if h_p_list:
+                h_cand = next((p for p in h_p_list if p.get('is_starter')), None) or max(h_p_list, key=lambda x: x['np'])
+                h_starter_obj = dict(h_cand)
+                h_bullpen = [p for p in h_p_list if p['name'] != h_starter_obj['name'] and p['np'] > 0]
+                h_so = sum(p['so'] for p in h_p_list)
+                h_bb = sum(p['bb'] for p in h_p_list)
+            if a_p_list:
+                a_cand = next((p for p in a_p_list if p.get('is_starter')), None) or max(a_p_list, key=lambda x: x['np'])
+                a_starter_obj = dict(a_cand)
+                a_bullpen = [p for p in a_p_list if p['name'] != a_starter_obj['name'] and p['np'] > 0]
+                a_so = sum(p['so'] for p in a_p_list)
+                a_bb = sum(p['bb'] for p in a_p_list)
         except Exception:
             pass
+
+    # Deterministic fallback when DB does not contain player_match_stats
+    seed_val = int(hashlib.md5(f"{match_id}_{date_str}_{home_name}_{away_name}_bb".encode('utf-8')).hexdigest()[:8], 16)
+    rng = random.Random(seed_val)
+
+    if not h_starter_obj:
+        h_np = rng.randint(86, 102)
+        h_ip = rng.choice(['5.2', '6.0', '6.1', '6.2', '7.0']) if home_score >= away_score else rng.choice(['4.1', '5.0', '5.1'])
+        h_er = min(away_score, rng.randint(1, 3) if home_score >= away_score else rng.randint(3, 5))
+        h_so = rng.randint(4, 9)
+        h_bb = rng.randint(1, 3)
+        h_h = max(h_er + 2, rng.randint(4, 7))
+        h_dec = " (승)" if home_score > away_score else (" (패)" if away_score > home_score and h_er >= 3 else "")
+        h_starter_obj = {
+            'name': f"{home_name} 선발",
+            'ip': h_ip,
+            'np': h_np,
+            'er': h_er,
+            'so': h_so,
+            'bb': h_bb,
+            'h': h_h,
+            'decision': h_dec
+        }
+    if not h_bullpen:
+        bp_names = [f'{home_name} 필승조', f'{home_name} 셋업맨', f'{home_name} 마무리']
+        h_bullpen = [
+            {'name': bp_names[0], 'np': rng.randint(15, 23), 'er': 0 if home_score >= away_score else 1, 'so': rng.randint(1, 2)},
+            {'name': bp_names[1], 'np': rng.randint(12, 18), 'er': 0, 'so': 1},
+            {'name': bp_names[2], 'np': rng.randint(10, 16), 'er': 0 if home_score >= away_score else 1, 'so': 1}
+        ]
+
+    if not a_starter_obj:
+        a_np = rng.randint(84, 100)
+        a_ip = rng.choice(['5.2', '6.0', '6.1', '6.2']) if away_score >= home_score else rng.choice(['4.0', '4.2', '5.0', '5.1'])
+        a_er = min(home_score, rng.randint(1, 3) if away_score >= home_score else rng.randint(3, 5))
+        a_so = rng.randint(3, 8)
+        a_bb = rng.randint(1, 4)
+        a_h = max(a_er + 2, rng.randint(4, 8))
+        a_dec = " (승)" if away_score > home_score else (" (패)" if home_score > away_score and a_er >= 3 else "")
+        a_starter_obj = {
+            'name': f"{away_name} 선발",
+            'ip': a_ip,
+            'np': a_np,
+            'er': a_er,
+            'so': a_so,
+            'bb': a_bb,
+            'h': a_h,
+            'decision': a_dec
+        }
+    if not a_bullpen:
+        bp_names_a = [f'{away_name} 필승조', f'{away_name} 셋업맨', f'{away_name} 마무리']
+        a_bullpen = [
+            {'name': bp_names_a[0], 'np': rng.randint(16, 24), 'er': 0 if away_score >= home_score else 1, 'so': rng.randint(1, 2)},
+            {'name': bp_names_a[1], 'np': rng.randint(13, 19), 'er': 0, 'so': 1},
+            {'name': bp_names_a[2], 'np': rng.randint(9, 15), 'er': 0 if away_score >= home_score else 1, 'so': 1}
+        ]
+
+    h_starter_obj['strikes'] = round(h_starter_obj['np'] * 0.64)
+    h_starter_obj['balls'] = h_starter_obj['np'] - h_starter_obj['strikes']
+    a_starter_obj['strikes'] = round(a_starter_obj['np'] * 0.63)
+    a_starter_obj['balls'] = a_starter_obj['np'] - a_starter_obj['strikes']
+
+    qs_h = "QS " if (float(h_starter_obj.get('ip', '0').replace('이닝', '')) >= 6.0 and int(h_starter_obj.get('er', 0)) <= 3) else ""
+    h_starter_txt = f"{h_starter_obj['name']} {h_starter_obj['ip']}이닝 {h_starter_obj['er']}자책 {qs_h}{h_starter_obj.get('decision', '')}".strip()
+    qs_a = "QS " if (float(a_starter_obj.get('ip', '0').replace('이닝', '')) >= 6.0 and int(a_starter_obj.get('er', 0)) <= 3) else ""
+    a_starter_txt = f"{a_starter_obj['name']} {a_starter_obj['ip']}이닝 {a_starter_obj['er']}자책 {qs_a}{a_starter_obj.get('decision', '')}".strip()
 
     clutch_note = f"[홈] {home_name} 7회말 집중 3안타 득점 찬스 성공 및 필승조 무실점 계투 승리" if home_score > away_score else (
         f"[원정] {away_name} 5회초 클러치 2루타와 상대 실책 틈탄 역전 빅이닝 승리" if away_score > home_score else "연장 접전 끝에 팽팽한 투수전 무승부 기록"
@@ -1409,6 +1505,12 @@ def _enrich_baseball_match_events(c_cur, m_dict, home_name: str, away_name: str,
         "away_so": a_so,
         "home_starter": h_starter_txt,
         "away_starter": a_starter_txt,
+        "home_starter_obj": h_starter_obj,
+        "away_starter_obj": a_starter_obj,
+        "home_bullpen": h_bullpen,
+        "away_bullpen": a_bullpen,
+        "home_bullpen_np": sum(p.get('np', 0) for p in h_bullpen),
+        "away_bullpen_np": sum(p.get('np', 0) for p in a_bullpen),
         "clutch_note": clutch_note
     }
     m_dict["odds"] = _generate_baseball_odds(home_score, away_score, f"{home_name}_{away_name}_{match_id or date_str}")
@@ -1456,6 +1558,21 @@ def _enrich_basketball_match_events(c_cur, m_dict, home_name: str, away_name: st
         except Exception:
             pass
 
+    seed_val = int(hashlib.md5(f"{match_id}_{date_str}_{home_name}_{away_name}_bball".encode('utf-8')).hexdigest()[:8], 16)
+
+    h_starters_mins = 156 + (seed_val % 17)
+    h_bench_mins = 240 - h_starters_mins
+    a_starters_mins = 153 + ((seed_val >> 4) % 17)
+    a_bench_mins = 240 - a_starters_mins
+
+    h_pct = 0.69 + ((seed_val % 9) * 0.01)
+    h_starters_pts = round(home_score * h_pct)
+    h_bench_pts = home_score - h_starters_pts
+
+    a_pct = 0.68 + (((seed_val >> 3) % 9) * 0.01)
+    a_starters_pts = round(away_score * a_pct)
+    a_bench_pts = away_score - a_starters_pts
+
     clutch_note = f"[홈] {home_name} 4쿼터 종료 2분전 연속 3점슛 및 리바운드 사수로 승리 결정" if home_score > away_score else f"[원정] {away_name} 빠른 속공 트랜지션 및 외곽포 폭발로 역전승"
 
     m_dict["basketball_stats"] = {
@@ -1463,7 +1580,15 @@ def _enrich_basketball_match_events(c_cur, m_dict, home_name: str, away_name: st
         "q1_away": q1_a, "q2_away": q2_a, "q3_away": q3_a, "q4_away": q4_a,
         "rebounds_home": reb_h, "rebounds_away": reb_a,
         "assists_home": ast_h, "assists_away": ast_a,
-        "clutch_note": clutch_note
+        "clutch_note": clutch_note,
+        "home_starters_mins": h_starters_mins,
+        "home_bench_mins": h_bench_mins,
+        "away_starters_mins": a_starters_mins,
+        "away_bench_mins": a_bench_mins,
+        "home_starters_pts": h_starters_pts,
+        "home_bench_pts": h_bench_pts,
+        "away_starters_pts": a_starters_pts,
+        "away_bench_pts": a_bench_pts
     }
     m_dict["odds"] = _generate_basketball_odds(home_score, away_score, f"{home_name}_{away_name}_{match_id or date_str}")
     return m_dict
@@ -1472,13 +1597,15 @@ def _enrich_soccer_match_events(c_cur, m_dict, home_name: str, away_name: str, h
     events = []
     half_score = None
     stats = None
+    home_subs = []
+    away_subs = []
 
     if match_id:
         try:
             c_cur.execute("""
                 SELECT time_display, event_type, team_name, player_name, assist_player_name, score_after, description
                 FROM match_events
-                WHERE match_id = ? AND event_type IN ('GOAL', 'YELLOW_CARD', 'RED_CARD')
+                WHERE match_id = ? AND event_type IN ('GOAL', 'YELLOW_CARD', 'RED_CARD', 'SUBSTITUTION')
                 ORDER BY id ASC
             """, (match_id,))
             rows = c_cur.fetchall()
@@ -1487,15 +1614,22 @@ def _enrich_soccer_match_events(c_cur, m_dict, home_name: str, away_name: str, h
                 t_disp = r[0] if r[0] else "90'"
                 if not t_disp.endswith("'"):
                     t_disp += "'"
-                events.append({
-                    "type": ev_type,
-                    "minute": t_disp,
-                    "team": r[2] or "",
-                    "player": r[3] or "",
-                    "assist": r[4],
-                    "score_after": r[5] or "",
-                    "detail": "득점" if ev_type == "GOAL" else ("경고 (옐로카드)" if ev_type == "YELLOW_CARD" else "퇴장 (레드카드)")
-                })
+                if ev_type == 'SUBSTITUTION':
+                    sub_item = {'minute': t_disp, 'player': r[3] or '', 'desc': r[6] or ''}
+                    if r[2] == home_name:
+                        home_subs.append(sub_item)
+                    elif r[2] == away_name:
+                        away_subs.append(sub_item)
+                else:
+                    events.append({
+                        "type": ev_type,
+                        "minute": t_disp,
+                        "team": r[2] or "",
+                        "player": r[3] or "",
+                        "assist": r[4],
+                        "score_after": r[5] or "",
+                        "detail": "득점" if ev_type == "GOAL" else ("경고 (옐로카드)" if ev_type == "YELLOW_CARD" else "퇴장 (레드카드)")
+                    })
         except Exception:
             pass
 
@@ -1531,6 +1665,36 @@ def _enrich_soccer_match_events(c_cur, m_dict, home_name: str, away_name: str, h
         except Exception:
             pass
 
+    seed_val = int(hashlib.md5(f"{match_id}_{date_str}_{home_name}_{away_name}_soccer".encode('utf-8')).hexdigest()[:8], 16)
+    rng = random.Random(seed_val)
+
+    if not home_subs:
+        count_h = rng.randint(3, 5)
+        avail_mins = sorted(rng.sample(range(54, 90), count_h))
+        home_subs = [{'minute': f"{m}'", 'player': f"선수 {i+1}"} for i, m in enumerate(avail_mins)]
+
+    if not away_subs:
+        count_a = rng.randint(3, 5)
+        avail_mins_a = sorted(rng.sample(range(52, 90), count_a))
+        away_subs = [{'minute': f"{m}'", 'player': f"선수 {i+1}"} for i, m in enumerate(avail_mins_a)]
+
+    def calc_sub_details(subs):
+        clean_mins = []
+        for s in subs:
+            m_str = str(s.get('minute', '')).replace("'", "").split('+')[0].strip()
+            try:
+                clean_mins.append(int(m_str))
+            except Exception:
+                clean_mins.append(70)
+        tot_mins = (11 - len(subs)) * 90 + sum(clean_mins)
+        avg_min = round(tot_mins / 11.0, 1)
+        mins_text = ", ".join([f"후반 {m}'" if m > 45 else f"전반 {m}'" for m in clean_mins])
+        text = f"{len(subs)}명 교체 ({mins_text})"
+        return text, avg_min
+
+    h_subs_text, h_avg_mins = calc_sub_details(home_subs)
+    a_subs_text, a_avg_mins = calc_sub_details(away_subs)
+
     if not events:
         events, synth_half, synth_stats = _synthesize_soccer_events(home_name, away_name, home_score, away_score, match_id, date_str)
         if not half_score:
@@ -1563,6 +1727,14 @@ def _enrich_soccer_match_events(c_cur, m_dict, home_name: str, away_name: str, h
     m_dict["events"] = events
     m_dict["half_score"] = half_score
     m_dict["stats"] = stats
+    m_dict["soccer_stats"] = {
+        "home_subs_text": h_subs_text,
+        "away_subs_text": a_subs_text,
+        "home_starter_avg_mins": h_avg_mins,
+        "away_starter_avg_mins": a_avg_mins,
+        "home_subs_count": len(home_subs),
+        "away_subs_count": len(away_subs)
+    }
     m_dict["odds"] = _generate_match_odds(home_score, away_score, f"{home_name}_{away_name}_{match_id or date_str}")
     return m_dict
 

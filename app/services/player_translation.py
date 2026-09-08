@@ -162,9 +162,21 @@ FULL_NAMES = {
     "Ji Hwan Bae": "배지환"
 }
 
+PROTECTED_TERMS = {
+    'LG', 'SSG', 'NC', 'KT', 'KIA', 'DeNA', 'PSG', 'FC', 'AC', 'AS', 'CF', 'RB',
+    'LA', 'NY', 'SF', 'SD', 'TB', 'KC', 'CWS', 'CHC', 'MIA', 'BAL', 'BOS', 'HOU', 'WSH', 'OAK', 'DET', 'MIN', 'CLE', 'TEX', 'SEA', 'LAA', 'LAD', 'COL', 'ARI', 'STL', 'MIL', 'PIT', 'CIN', 'PHI', 'NYM', 'ATL', 'TOR',
+    'ERA', 'WHIP', 'OPS', 'AVG', 'OBP', 'SLG', 'RPG', 'GAPG', 'PPG', 'PAPG', 'TOTAL', 'LIVE',
+    'MLB', 'NPB', 'KBO', 'EPL', 'NBA', 'KBL', 'WKBL', 'KOVO', 'UCL', 'UEL',
+    'OFFICIAL', 'SCHEDULED', 'FINISHED', 'VS', 'HOME', 'AWAY', 'H2H',
+    'WAR', 'FIP', 'BABIP', 'QS', 'LOB', 'ISO', 'TBD', 'K', 'BB', 'SO', 'HR', 'RBI', 'IP', 'ER', 'NP'
+}
+
 def translate_player_name(raw: str) -> str:
     if not raw: return ""
     raw = raw.strip()
+    # Protected team acronym or stat abbreviation?
+    if raw.upper() in PROTECTED_TERMS or re.match(r'^[A-Z0-9_-]{1,5}$', raw):
+        return raw
     # Already Korean?
     if re.search(r'[가-힣]', raw):
         return raw
@@ -174,7 +186,10 @@ def translate_player_name(raw: str) -> str:
     
     parts = raw.split()
     if len(parts) == 1:
-        return FIRST_NAMES.get(parts[0]) or LAST_NAMES.get(parts[0]) or parts[0]
+        p0 = parts[0]
+        if p0.upper() in PROTECTED_TERMS or re.match(r'^[A-Z0-9_-]{1,5}$', p0):
+            return p0
+        return FIRST_NAMES.get(p0) or LAST_NAMES.get(p0) or p0
     
     first = parts[0]
     last = " ".join(parts[1:])
@@ -192,6 +207,8 @@ def translate_player_name(raw: str) -> str:
 
 def rule_transliterate_word(word: str) -> str:
     if not word: return ''
+    if word.upper() in PROTECTED_TERMS or (len(word) <= 5 and not re.search(r'[aeiouyAEIOUY]', word)):
+        return word
     import unicodedata, re
     clean = unicodedata.normalize('NFKD', word)
     clean = ''.join(ch for ch in clean if not unicodedata.combining(ch)).lower()

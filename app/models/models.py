@@ -29,6 +29,10 @@ class Match(Base):
     # 관리자 커스텀 수정 여부
     is_customized = Column(Boolean, default=False)
     custom_notes = Column(Text, nullable=True)
+
+    @property
+    def summary(self):
+        return self.custom_notes
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
