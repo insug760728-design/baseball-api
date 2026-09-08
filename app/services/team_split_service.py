@@ -2415,12 +2415,20 @@ class TeamSplitService:
             rec_diff = (h_rec_w - a_rec_w) * 0.015
             prob_home = min(0.89, max(0.11, prob_home + rec_diff))
 
-            # Detect Baseball 3-Game Series Context & Sweep Resistance
-            try:
-                c_conn_ctx = sqlite3.connect("sports_data.db", timeout=15.0)
-                series_ctx = _detect_baseball_series_context(c_conn_ctx, home_team, away_team, match_date)
-                c_conn_ctx.close()
-            except Exception as e:
+            # Detect Baseball 3-Game Series Context & Sweep Resistance (Skip for FINISHED matches and use fast memory cache)
+            if status != "FINISHED":
+                try:
+                    target_dt_str = (match_date or "")[:10]
+                    cache_key_ctx = (home_team, away_team, target_dt_str)
+                    if cache_key_ctx in _series_context_cache:
+                        series_ctx = _series_context_cache[cache_key_ctx]
+                    else:
+                        c_conn_ctx = sqlite3.connect("sports_data.db", timeout=3.0)
+                        series_ctx = _detect_baseball_series_context(c_conn_ctx, home_team, away_team, match_date)
+                        c_conn_ctx.close()
+                except Exception as e:
+                    series_ctx = None
+            else:
                 series_ctx = None
 
             if series_ctx and series_ctx.get("is_sweep_game"):

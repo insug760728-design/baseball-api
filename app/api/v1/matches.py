@@ -36,12 +36,12 @@ def list_matches(
         if not end_date:
             end_date = date
 
-    response.headers["Cache-Control"] = "public, max-age=5, s-maxage=10"
+    response.headers["Cache-Control"] = "public, max-age=15, s-maxage=30"
     cache_key = f"{sport_code}:{league_name}:{status}:{start_date}:{end_date}:{limit}:{order}"
     now = time.time()
     if cache_key in _MATCHES_CACHE:
         cache_time, cached_res = _MATCHES_CACHE[cache_key]
-        if now - cache_time < 15: # 15초 초고속 인메모리 반환 (<0.001s)
+        if now - cache_time < 30: # 30초 초고속 인메모리 반환 (<0.001s)
             return cached_res
 
     res = MatchService.get_matches(

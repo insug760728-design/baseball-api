@@ -336,8 +336,8 @@ class MatchService:
                 except Exception:
                     pass
 
-            # 진행 중/종료된 야구 경기의 경우 player_match_stats 박스스코어에서 실제 등판 투수 우선 식별
-            if m.sport_code == "BASEBALL" and (not m.home_starter_name or not m.away_starter_name) and m.status in ["FINISHED", "LIVE"]:
+            # 진행 중인 LIVE 야구 경기의 경우 player_match_stats 박스스코어에서 실제 등판 투수 식별 (종료된 대량 경기는 상세 모달 조회 시 로드하여 목록 N+1 쿼리 폭주 방지)
+            if m.sport_code == "BASEBALL" and (not m.home_starter_name or not m.away_starter_name) and m.status == "LIVE":
                 try:
                     p_rows = db.query(PlayerMatchStat).filter(
                         PlayerMatchStat.match_id == m.id,
