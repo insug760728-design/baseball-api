@@ -1320,13 +1320,13 @@
                   <i class="bi bi-trophy-fill me-1"></i>BETMAN 14경기
                 </span>
                 <button type="button" class="btn btn-xs fw-bold flex-fill py-1 text-white border-0" onclick="openTotoModal('WDL')" style="background: #1e293b; border-radius: 4px; font-size: 0.76rem;" title="클릭 시 배트맨 공식 14경기 축구 승무패 팝업창 오픈">
-                  ⚽ 축구 승무패 <span class="badge bg-danger ms-0.5" style="font-size:0.60rem;">51회</span>
+                  ⚽ 축구 승무패 <span class="badge bg-danger ms-0.5" id="quickBadgeTotoWDL" style="font-size:0.60rem;">51회 (7,109만)</span>
                 </button>
                 <button type="button" class="btn btn-xs fw-bold flex-fill py-1 text-white border-0" onclick="openTotoModal('W1L')" style="background: #1e293b; border-radius: 4px; font-size: 0.76rem;" title="클릭 시 배트맨 공식 14경기 야구 승1패 팝업창 오픈">
-                  ⚾ 야구 승1패 <span class="badge bg-secondary ms-0.5" style="font-size:0.60rem;">67회</span>
+                  ⚾ 야구 승1패 <span class="badge bg-danger ms-0.5" id="quickBadgeTotoW1L" style="font-size:0.60rem;">67회 (1,274만)</span>
                 </button>
                 <button type="button" class="btn btn-xs fw-bold flex-fill py-1 text-white border-0" onclick="openTotoModal('W5L')" style="background: #1e293b; border-radius: 4px; font-size: 0.76rem;" title="클릭 시 배트맨 공식 14경기 농구 승5패 팝업창 오픈">
-                  🏀 농구 승5패 <span class="badge bg-secondary ms-0.5" style="font-size:0.60rem;">27회</span>
+                  🏀 농구 승5패 <span class="badge bg-secondary ms-0.5" id="quickBadgeTotoW5L" style="font-size:0.60rem;">27회</span>
                 </button>
               </div>
             </div>
@@ -1645,6 +1645,56 @@
               1등 예상: <strong id="totoModalPrizePool" style="font-family: monospace; font-size: 0.88rem; color: #fef08a;">939,525,000원</strong>
             </span>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+        </div>
+
+        <!-- ⚡ 배트맨 실시간 당첨금 & 발매 현황 전광판 (Real-time Live Prize & Dividend Board) -->
+        <div class="px-3 py-2" id="totoModalLivePrizeBoard" style="background: linear-gradient(135deg, #0b1329 0%, #1e293b 100%); border-bottom: 2px solid #f59e0b;">
+          <div class="row g-2 align-items-center">
+            <!-- 1등 예상 당첨금 카드 -->
+            <div class="col-12 col-md-4">
+              <div class="d-flex align-items-center gap-2.5 p-2 rounded-2" style="background: rgba(245, 158, 11, 0.12); border: 1.5px solid #f59e0b;">
+                <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 40px; height: 40px; background: linear-gradient(135deg, #f59e0b, #d97706); color: #ffffff; font-size: 1.15rem; box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);">
+                  🏆
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <span class="text-warning small fw-bold" style="font-size: 0.72rem;">1등 예상 당첨금</span>
+                    <span class="badge bg-danger text-white px-1.5 py-0.5" id="totoLivePulsingBadge" style="font-size: 0.60rem; font-weight: 800;">LIVE 🟢</span>
+                  </div>
+                  <div class="fw-black text-truncate" id="totoLiveFirstPrizeText" style="color: #fef08a; font-size: 1.25rem; font-weight: 900; letter-spacing: -0.5px; text-shadow: 0 1px 4px rgba(0,0,0,0.6);">
+                    7,109만 원
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 총 발매금액 & 투표수 카드 -->
+            <div class="col-6 col-md-4">
+              <div class="p-2 rounded-2 h-100" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);">
+                <div class="d-flex align-items-center justify-content-between text-secondary" style="font-size: 0.72rem;">
+                  <span class="text-white-50"><i class="bi bi-cash-stack text-warning me-1"></i>총 발매금액</span>
+                  <span class="badge bg-secondary text-white" id="totoLiveSaleCountBadge" style="font-size: 0.62rem;">284,382표</span>
+                </div>
+                <div class="fw-bold text-white text-truncate mt-0.5" id="totoLiveSellAmtText" style="font-size: 1.02rem; font-family: monospace;">
+                  2억 8,438만 원
+                </div>
+              </div>
+            </div>
+
+            <!-- 이월금액 & 등수별 배분 요약 카드 -->
+            <div class="col-6 col-md-4">
+              <div class="p-2 rounded-2 h-100" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);">
+                <div class="d-flex align-items-center justify-content-between text-secondary" style="font-size: 0.72rem;">
+                  <span class="text-white-50"><i class="bi bi-arrow-repeat text-info me-1"></i>이월 / 배분 비율</span>
+                  <span class="text-white-50 small" id="totoLiveSyncTimeText" style="font-size: 0.62rem;">실시간 집계</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between mt-0.5 text-truncate">
+                  <span class="fw-bold text-warning" id="totoLiveForwardText" style="font-size: 0.90rem;">이월 없음</span>
+                  <span class="text-white-50 small" style="font-size: 0.68rem;">(1등 25% · 2등 10% · 3등 5% · 4등 10%)</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -3490,16 +3540,46 @@ function getFullModalMatchList() {
       const el = document.getElementById('drawer_' + drawerId);
       const chev = document.getElementById('chev_' + drawerId);
       const row = document.getElementById('row_' + drawerId);
+      const btn = document.getElementById('btnChev_' + drawerId);
       if (!el) return;
-      const isCurrentlyOpen = (el.style.display !== 'none' && el.style.display !== '');
-      el.style.display = isCurrentlyOpen ? 'none' : 'block';
-      if (chev) {
-        chev.style.transform = isCurrentlyOpen ? 'rotate(0deg)' : 'rotate(180deg)';
-      }
-      if (row) {
-        row.style.backgroundColor = isCurrentlyOpen ? '#ffffff' : '#f8fafc';
+      const isClosed = (el.style.display === 'none' || window.getComputedStyle(el).display === 'none');
+      if (isClosed) {
+        el.style.display = 'block';
+        if (chev) {
+          chev.style.transform = 'rotate(180deg)';
+          chev.classList.remove('text-dark');
+          chev.classList.add('text-white');
+        }
+        if (btn) {
+          btn.style.background = '#111827';
+          btn.style.color = '#ffffff';
+          btn.style.borderColor = '#111827';
+          const span = btn.querySelector('span');
+          if (span) span.innerText = '접기';
+        }
+        if (row) {
+          row.style.backgroundColor = '#f8fafc';
+        }
+      } else {
+        el.style.display = 'none';
+        if (chev) {
+          chev.style.transform = 'rotate(0deg)';
+          chev.classList.remove('text-white');
+          chev.classList.add('text-dark');
+        }
+        if (btn) {
+          btn.style.background = '#f9fafb';
+          btn.style.color = '#111827';
+          btn.style.borderColor = '#d1d5db';
+          const span = btn.querySelector('span');
+          if (span) span.innerText = '상세';
+        }
+        if (row) {
+          row.style.backgroundColor = '#ffffff';
+        }
       }
     }
+
 
     let globalActiveOddsMode = 'none'; // 'none', 'dom', 'ovs'
     function toggleSoccerOdds(mode, prefix) {
@@ -3811,16 +3891,16 @@ function getFullModalMatchList() {
         drawerContentHtml = `
           <div class="row g-2">
             <div class="col-md-6 col-12">
-              <div class="p-2 rounded bg-white border h-100" style="font-size: 0.78rem; border-color: #e5e7eb !important;">
+              <div class="p-2.5 rounded bg-white border h-100" style="font-size: 0.78rem; border-color: #e5e7eb !important;">
                 <div class="fw-bold text-dark mb-1.5 pb-1 border-bottom d-flex align-items-center justify-content-between" style="border-color: #e5e7eb !important;">
                   <span class="text-truncate">
                     <span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">[홈]</span>
                     <b>${team1}</b>
                   </span>
-                  <span class="badge bg-light text-dark border" style="font-size: 0.70rem;">안타 ${b.home_hits} · 실책 ${b.home_errors}</span>
+                  <span class="badge bg-light text-dark border" style="font-size: 0.70rem;">득점 ${score1} · 안타 ${b.home_hits} · 실책 ${b.home_errors}</span>
                 </div>
                 <div class="mb-1">
-                  <span class="fw-bold text-dark small" style="font-size: 0.72rem;">⚾ 선발 투구 결과:</span>
+                  <span class="fw-bold text-dark small" style="font-size: 0.72rem;">⚾ 선발 투수 기록:</span>
                   <div class="text-dark small mt-0.5">${formatPlayerKorean(b.home_starter)}</div>
                 </div>
                 <div class="d-flex align-items-center gap-2 small text-muted">
@@ -3831,16 +3911,16 @@ function getFullModalMatchList() {
               </div>
             </div>
             <div class="col-md-6 col-12">
-              <div class="p-2 rounded bg-white border h-100" style="font-size: 0.78rem; border-color: #e5e7eb !important;">
+              <div class="p-2.5 rounded bg-white border h-100" style="font-size: 0.78rem; border-color: #e5e7eb !important;">
                 <div class="fw-bold text-dark mb-1.5 pb-1 border-bottom d-flex align-items-center justify-content-between" style="border-color: #e5e7eb !important;">
                   <span class="text-truncate">
                     <span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">[원정]</span>
                     <b>${team2}</b>
                   </span>
-                  <span class="badge bg-light text-dark border" style="font-size: 0.70rem;">안타 ${b.away_hits} · 실책 ${b.away_errors}</span>
+                  <span class="badge bg-light text-dark border" style="font-size: 0.70rem;">득점 ${score2} · 안타 ${b.away_hits} · 실책 ${b.away_errors}</span>
                 </div>
                 <div class="mb-1">
-                  <span class="fw-bold text-dark small" style="font-size: 0.72rem;">⚾ 선발 투구 결과:</span>
+                  <span class="fw-bold text-dark small" style="font-size: 0.72rem;">⚾ 선발 투수 기록:</span>
                   <div class="text-dark small mt-0.5">${formatPlayerKorean(b.away_starter)}</div>
                 </div>
                 <div class="d-flex align-items-center gap-2 small text-muted">
@@ -3851,11 +3931,18 @@ function getFullModalMatchList() {
               </div>
             </div>
           </div>
-          <div class="mt-2 p-2 rounded bg-white border d-flex align-items-center justify-content-between gap-2" style="font-size: 0.76rem; border-color: #e5e7eb !important;">
+          <div class="mt-2 p-2 rounded bg-white border d-flex flex-wrap align-items-center justify-content-between gap-2" style="font-size: 0.76rem; border-color: #e5e7eb !important;">
             <div class="d-flex align-items-center gap-1.5">
               <span class="badge text-dark border" style="background: #ffffff; border-color: #d1d5db !important; font-size: 0.7rem; font-weight: 700;">결정적 승부처</span>
               <span class="text-dark fw-bold">${b.clutch_note}</span>
             </div>
+            ${item.match_id ? `
+              <button type="button" class="btn btn-sm btn-dark py-1 px-2.5 d-inline-flex align-items-center gap-1 fw-bold" style="font-size: 0.72rem; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);" onclick="event.stopPropagation(); openMatchModal(${item.match_id})">
+                <i class="bi bi-bar-chart-line-fill"></i>
+                <span>해당 경기 세이버 상세분석 열기</span>
+                <i class="bi bi-arrow-right-short"></i>
+              </button>
+            ` : ''}
           </div>
         `;
       } else if (curSport === 'BASKETBALL') {
@@ -3870,7 +3957,7 @@ function getFullModalMatchList() {
         drawerContentHtml = `
           <div class="row g-2">
             <div class="col-md-6 col-12">
-              <div class="p-2 rounded bg-white border h-100" style="font-size: 0.78rem; border-color: #e5e7eb !important;">
+              <div class="p-2.5 rounded bg-white border h-100" style="font-size: 0.78rem; border-color: #e5e7eb !important;">
                 <div class="fw-bold text-dark mb-1.5 pb-1 border-bottom d-flex align-items-center justify-content-between" style="border-color: #e5e7eb !important;">
                   <span class="text-truncate">
                     <span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">[홈]</span>
@@ -3878,7 +3965,7 @@ function getFullModalMatchList() {
                   </span>
                   <span class="badge bg-light text-dark border" style="font-size: 0.70rem;">리바운드 ${bk.rebounds_home} · 어시스트 ${bk.assists_home}</span>
                 </div>
-                <div class="d-flex justify-content-between text-center small text-dark p-1 rounded mb-1" style="background: #f8fafc;">
+                <div class="d-flex justify-content-between text-center small text-dark p-1.5 rounded mb-1" style="background: #f8fafc; border: 1px solid #e5e7eb;">
                   <div>1Q: <b>${bk.q1_home}</b></div>
                   <div>2Q: <b>${bk.q2_home}</b></div>
                   <div>3Q: <b>${bk.q3_home}</b></div>
@@ -3887,7 +3974,7 @@ function getFullModalMatchList() {
               </div>
             </div>
             <div class="col-md-6 col-12">
-              <div class="p-2 rounded bg-white border h-100" style="font-size: 0.78rem; border-color: #e5e7eb !important;">
+              <div class="p-2.5 rounded bg-white border h-100" style="font-size: 0.78rem; border-color: #e5e7eb !important;">
                 <div class="fw-bold text-dark mb-1.5 pb-1 border-bottom d-flex align-items-center justify-content-between" style="border-color: #e5e7eb !important;">
                   <span class="text-truncate">
                     <span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">[원정]</span>
@@ -3895,7 +3982,7 @@ function getFullModalMatchList() {
                   </span>
                   <span class="badge bg-light text-dark border" style="font-size: 0.70rem;">리바운드 ${bk.rebounds_away} · 어시스트 ${bk.assists_away}</span>
                 </div>
-                <div class="d-flex justify-content-between text-center small text-dark p-1 rounded mb-1" style="background: #f8fafc;">
+                <div class="d-flex justify-content-between text-center small text-dark p-1.5 rounded mb-1" style="background: #f8fafc; border: 1px solid #e5e7eb;">
                   <div>1Q: <b>${bk.q1_away}</b></div>
                   <div>2Q: <b>${bk.q2_away}</b></div>
                   <div>3Q: <b>${bk.q3_away}</b></div>
@@ -3904,11 +3991,60 @@ function getFullModalMatchList() {
               </div>
             </div>
           </div>
-          <div class="mt-2 p-2 rounded bg-white border d-flex align-items-center justify-content-between gap-2" style="font-size: 0.76rem; border-color: #e5e7eb !important;">
+          <div class="mt-2 p-2 rounded bg-white border d-flex flex-wrap align-items-center justify-content-between gap-2" style="font-size: 0.76rem; border-color: #e5e7eb !important;">
             <div class="d-flex align-items-center gap-1.5">
               <span class="badge text-dark border" style="background: #ffffff; border-color: #d1d5db !important; font-size: 0.7rem; font-weight: 700;">결정적 승부처</span>
               <span class="text-dark fw-bold">${bk.clutch_note}</span>
             </div>
+            ${item.match_id ? `
+              <button type="button" class="btn btn-sm btn-dark py-1 px-2.5 d-inline-flex align-items-center gap-1 fw-bold" style="font-size: 0.72rem; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);" onclick="event.stopPropagation(); openMatchModal(${item.match_id})">
+                <i class="bi bi-bar-chart-line-fill"></i>
+                <span>해당 경기 세이버 상세분석 열기</span>
+                <i class="bi bi-arrow-right-short"></i>
+              </button>
+            ` : ''}
+          </div>
+        `;
+      } else if (curSport === 'VOLLEYBALL') {
+        const setScores = item.volleyball_stats || {
+          s1_home: 25, s1_away: 22, s2_home: 23, s2_away: 25, s3_home: 25, s3_away: 20, s4_home: 25, s4_away: 19,
+          attacks_home: 54, attacks_away: 48, blocks_home: 11, blocks_away: 8, aces_home: 5, aces_away: 3,
+          clutch_note: score1 > score2 ? `[홈] ${team1} 3~4세트 블로킹 우위 및 서브 에이스 폭발로 승리` : `[원정] ${team2} 끈질긴 디그 수비 후 역습 성공으로 승리`
+        };
+
+        drawerContentHtml = `
+          <div class="row g-2">
+            <div class="col-md-6 col-12">
+              <div class="p-2.5 rounded bg-white border h-100" style="font-size: 0.78rem; border-color: #e5e7eb !important;">
+                <div class="fw-bold text-dark mb-1.5 pb-1 border-bottom d-flex align-items-center justify-content-between" style="border-color: #e5e7eb !important;">
+                  <span><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">[홈]</span><b>${team1}</b></span>
+                  <span class="badge bg-light text-dark border" style="font-size: 0.70rem;">공격 ${setScores.attacks_home} · 블로킹 ${setScores.blocks_home} · 서브 ${setScores.aces_home}</span>
+                </div>
+                <div class="small text-dark p-1.5 rounded" style="background: #f8fafc; border: 1px solid #e5e7eb;">세트 스코어: <b>${score1} : ${score2}</b></div>
+              </div>
+            </div>
+            <div class="col-md-6 col-12">
+              <div class="p-2.5 rounded bg-white border h-100" style="font-size: 0.78rem; border-color: #e5e7eb !important;">
+                <div class="fw-bold text-dark mb-1.5 pb-1 border-bottom d-flex align-items-center justify-content-between" style="border-color: #e5e7eb !important;">
+                  <span><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">[원정]</span><b>${team2}</b></span>
+                  <span class="badge bg-light text-dark border" style="font-size: 0.70rem;">공격 ${setScores.attacks_away} · 블로킹 ${setScores.blocks_away} · 서브 ${setScores.aces_away}</span>
+                </div>
+                <div class="small text-dark p-1.5 rounded" style="background: #f8fafc; border: 1px solid #e5e7eb;">세트 스코어: <b>${score2} : ${score1}</b></div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2 p-2 rounded bg-white border d-flex flex-wrap align-items-center justify-content-between gap-2" style="font-size: 0.76rem; border-color: #e5e7eb !important;">
+            <div class="d-flex align-items-center gap-1.5">
+              <span class="badge text-dark border" style="background: #ffffff; border-color: #d1d5db !important; font-size: 0.7rem; font-weight: 700;">결정적 승부처</span>
+              <span class="text-dark fw-bold">${setScores.clutch_note}</span>
+            </div>
+            ${item.match_id ? `
+              <button type="button" class="btn btn-sm btn-dark py-1 px-2.5 d-inline-flex align-items-center gap-1 fw-bold" style="font-size: 0.72rem; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);" onclick="event.stopPropagation(); openMatchModal(${item.match_id})">
+                <i class="bi bi-bar-chart-line-fill"></i>
+                <span>해당 경기 세이버 상세분석 열기</span>
+                <i class="bi bi-arrow-right-short"></i>
+              </button>
+            ` : ''}
           </div>
         `;
       } else {
@@ -3965,7 +4101,7 @@ function getFullModalMatchList() {
           }
 
           return `
-            <div class="p-2 rounded bg-white border h-100" style="font-size: 0.78rem; border-color: #e5e7eb !important;">
+            <div class="p-2.5 rounded bg-white border h-100" style="font-size: 0.78rem; border-color: #e5e7eb !important;">
               <div class="fw-bold text-dark mb-1.5 pb-1 border-bottom d-flex align-items-center justify-content-between" style="border-color: #e5e7eb !important;">
                 <span class="text-truncate" style="max-width: 70%;">
                   <span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">${isHome ? '[홈]' : '[원정]'}</span>
@@ -4011,6 +4147,15 @@ function getFullModalMatchList() {
               <span>·</span>
               <span>파울 <strong style="color: #111827;">${stats.fouls_home}:${stats.fouls_away}</strong></span>
             </div>
+            ${item.match_id ? `
+              <div class="ms-auto">
+                <button type="button" class="btn btn-sm btn-dark py-1 px-2.5 d-inline-flex align-items-center gap-1 fw-bold" style="font-size: 0.72rem; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);" onclick="event.stopPropagation(); openMatchModal(${item.match_id})">
+                  <i class="bi bi-bar-chart-line-fill"></i>
+                  <span>해당 경기 세이버 상세분석 열기</span>
+                  <i class="bi bi-arrow-right-short"></i>
+                </button>
+              </div>
+            ` : ''}
           </div>
         `;
       }
@@ -4020,7 +4165,7 @@ function getFullModalMatchList() {
              style="${rowDisplay} cursor: pointer; transition: background 0.15s ease; font-size: 0.82rem; border-color: #e5e7eb; background: #ffffff;"
              onclick="toggleMatchEventDrawer('${drawerId}')"
              onmouseenter="this.style.background='#f9fafb'"
-             onmouseleave="if(document.getElementById('drawer_${drawerId}').style.display==='none' || !document.getElementById('drawer_${drawerId}').style.display) this.style.background='#ffffff'">
+             onmouseleave="if(document.getElementById('drawer_${drawerId}') && (document.getElementById('drawer_${drawerId}').style.display==='none' || !document.getElementById('drawer_${drawerId}').style.display)) this.style.background='#ffffff'">
           
           <div class="d-flex align-items-center" style="width: 22px;">
             <span style="font-size: 0.95rem; color: #9ca3af; line-height: 1;">⦿</span>
@@ -4044,10 +4189,16 @@ function getFullModalMatchList() {
             <span class="text-truncate" style="color: #111827; font-weight: 700;">${team2}</span>
           </div>
 
-          <div class="text-end text-muted d-flex align-items-center justify-content-end gap-1" style="width: 105px; font-size: 0.74rem; flex-shrink: 0;">
-            <span class="soccer-info-date text-nowrap" style="color: #4b5563;">${item.date || ''}</span>
+          <div class="text-end text-muted d-flex align-items-center justify-content-end gap-1.5" style="min-width: 125px; flex-shrink: 0;">
+            <span class="soccer-info-date text-nowrap" style="color: #4b5563; font-size: 0.74rem;">${item.date || ''}</span>
             <span class="soccer-odds-pill badge bg-white border text-dark fw-bold" style="display: none; font-size: 0.7rem; border-color: #d1d5db !important;" data-dom="${domOddsStr}" data-ovs="${ovsOddsStr}"></span>
-            <i id="chev_${drawerId}" class="bi bi-chevron-down ms-1 text-muted" style="transition: transform 0.2s ease; font-size: 0.72rem;"></i>
+            <button type="button" id="btnChev_${drawerId}" class="btn btn-sm py-0.5 px-1.5 border d-inline-flex align-items-center gap-0.5"
+                    style="font-size: 0.70rem; line-height: 1; border-radius: 4px; background: #f9fafb; color: #111827; border-color: #d1d5db; cursor: pointer; transition: all 0.15s ease;"
+                    onclick="event.stopPropagation(); toggleMatchEventDrawer('${drawerId}')"
+                    title="상세보기">
+              <span style="font-weight: 700; font-size: 0.68rem;">상세</span>
+              <i id="chev_${drawerId}" class="bi bi-chevron-down text-dark" style="transition: transform 0.2s ease; font-size: 0.70rem;"></i>
+            </button>
           </div>
         </div>
 
@@ -7037,8 +7188,8 @@ function getFullModalMatchList() {
               gmTs: data.gmTs,
               period: data.status_message,
               totalVotes: Number(data.total_sale_cnt || 0).toLocaleString(),
-              prize: Number(data.first_prize_pool || 0).toLocaleString() + '원',
-              rollover: Number(data.forward_amount || 0) > 0 ? (Number(data.forward_amount).toLocaleString() + `원 (${data.forward_cnt || 1}회 이월🔥)`) : '',
+              prize: data.first_prize_text || (Number(data.first_prize_pool || 0).toLocaleString() + '원'),
+              rollover: Number(data.forward_amount || 0) > 0 ? (data.forward_text || (Number(data.forward_amount).toLocaleString() + `원 (${data.forward_cnt || 1}회 이월🔥)`)) : '',
               forward_amount: data.forward_amount,
               total_sell_amount: data.total_sell_amount,
               total_sale_cnt: data.total_sale_cnt,
@@ -7046,6 +7197,13 @@ function getFullModalMatchList() {
               second_prize_pool: data.second_prize_pool,
               third_prize_pool: data.third_prize_pool,
               fourth_prize_pool: data.fourth_prize_pool,
+              first_prize_text: data.first_prize_text || (Number(data.first_prize_pool || 0).toLocaleString() + '원'),
+              second_prize_text: data.second_prize_text || (Number(data.second_prize_pool || 0).toLocaleString() + '원'),
+              third_prize_text: data.third_prize_text || (Number(data.third_prize_pool || 0).toLocaleString() + '원'),
+              fourth_prize_text: data.fourth_prize_text || (Number(data.fourth_prize_pool || 0).toLocaleString() + '원'),
+              total_sell_text: data.total_sell_text || (Number(data.total_sell_amount || 0).toLocaleString() + '원'),
+              forward_text: data.forward_text || '이월 없음',
+              is_live: data.is_live,
               updated_at: data.updated_at || new Date().toTimeString().slice(0, 8),
               status: data.sale_status,
               matches: data.matches.map(m => ({
@@ -7094,6 +7252,55 @@ function getFullModalMatchList() {
         renderTotoSheet(roundKey);
       }
       renderBetmanModalSheet(roundKey);
+    }
+
+    // ------------------------------------------------------------------
+    // 실시간 배트맨 토토 당첨금 & 발매현황 자동 동기화 엔진
+    // ------------------------------------------------------------------
+    let _totoLivePollTimer = null;
+
+    async function syncTotoLiveSummary() {
+      try {
+        const resp = await fetch('/api/v1/toto/live-summary');
+        if (resp.ok) {
+          const res = await resp.json();
+          if (res && res.games) {
+            updateQuickTotoBadges(res.games);
+          }
+        }
+      } catch (e) {
+        console.debug('Failed to sync toto live summary:', e);
+      }
+    }
+
+    function updateQuickTotoBadges(games) {
+      if (!games) return;
+      if (games['G011']) {
+        const g = games['G011'];
+        const b = document.getElementById('quickBadgeTotoWDL');
+        if (b) b.innerText = `${g.round_no}회 (${g.first_prize_text})`;
+      }
+      if (games['G024']) {
+        const g = games['G024'];
+        const b = document.getElementById('quickBadgeTotoW1L');
+        if (b) b.innerText = `${g.round_no}회 (${g.first_prize_text})`;
+      }
+    }
+
+    function initTotoLiveSync() {
+      // 1. Initial quick sync
+      syncTotoLiveSummary();
+      // 2. Periodic sync every 25 seconds
+      if (_totoLivePollTimer) clearInterval(_totoLivePollTimer);
+      _totoLivePollTimer = setInterval(async () => {
+        // If Toto modal is open, silently re-fetch live round data
+        const modalEl = document.getElementById('totoBetmanModal');
+        if (modalEl && modalEl.classList.contains('show')) {
+          await loadBetmanToto(currentTotoRound, currentBetmanTs, true);
+        }
+        // Always refresh quick badges
+        await syncTotoLiveSummary();
+      }, 25000);
     }
 
     function selectTotoRound(roundKey, gmTs = null) {
@@ -7229,9 +7436,31 @@ function getFullModalMatchList() {
     // ------------------------------------------------------------------
     function openTotoModal(roundKey = null, gmTs = null) {
       if (roundKey) currentTotoRound = roundKey;
-      if (gmTs) currentBetmanTs = gmTs;
+      const defaultTs = (currentTotoRound === 'WDL') ? 260051 : ((currentTotoRound === 'W1L') ? 260067 : 260027);
+      if (gmTs) {
+        currentBetmanTs = gmTs;
+      } else if (!currentBetmanTs || !(TOTO_ROUNDS[currentTotoRound] || []).some(r => r.gmTs === currentBetmanTs)) {
+        currentBetmanTs = defaultTs;
+      }
       selectTotoRound(currentTotoRound, currentBetmanTs);
       renderBetmanModalSheet(currentTotoRound);
+
+      // Update Modal Sport Tabs
+      ['WDL', 'W1L', 'W5L'].forEach(k => {
+        const btn = document.getElementById('totoModalTab' + k);
+        if (btn) {
+          if (k === currentTotoRound) {
+            btn.style.background = '#0f172a';
+            btn.style.color = '#f8fafc';
+            btn.style.border = '1.5px solid #0f172a';
+          } else {
+            btn.style.background = '#ffffff';
+            btn.style.color = '#475569';
+            btn.style.border = '1px solid #cbd5e1';
+          }
+        }
+      });
+
       const modalEl = document.getElementById('totoBetmanModal');
       if (modalEl) {
         const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -7241,8 +7470,26 @@ function getFullModalMatchList() {
 
     function switchTotoModalGame(gameKey) {
       currentTotoRound = gameKey;
-      selectTotoRound(gameKey);
+      const defaultTs = (gameKey === 'WDL') ? 260051 : ((gameKey === 'W1L') ? 260067 : 260027);
+      currentBetmanTs = defaultTs;
+      selectTotoRound(gameKey, currentBetmanTs);
       renderBetmanModalSheet(gameKey);
+
+      // Update Modal Sport Tabs
+      ['WDL', 'W1L', 'W5L'].forEach(k => {
+        const btn = document.getElementById('totoModalTab' + k);
+        if (btn) {
+          if (k === gameKey) {
+            btn.style.background = '#0f172a';
+            btn.style.color = '#f8fafc';
+            btn.style.border = '1.5px solid #0f172a';
+          } else {
+            btn.style.background = '#ffffff';
+            btn.style.color = '#475569';
+            btn.style.border = '1px solid #cbd5e1';
+          }
+        }
+      });
     }
 
     function renderTotoModalRoundScrollBar(roundKey, activeTs) {
@@ -7329,7 +7576,39 @@ function getFullModalMatchList() {
         periodText.innerText = toto.period || '';
       }
       if (prizePool && toto) {
-        prizePool.innerText = toto.prize || (Number(toto.first_prize_pool || 939525000).toLocaleString() + '원');
+        prizePool.innerText = toto.first_prize_text || toto.prize || (Number(toto.first_prize_pool || 939525000).toLocaleString() + '원');
+      }
+
+      // Update Real-time Live Prize Board in Modal
+      const liveFirstPrize = document.getElementById('totoLiveFirstPrizeText');
+      const liveSellAmt = document.getElementById('totoLiveSellAmtText');
+      const liveSaleCount = document.getElementById('totoLiveSaleCountBadge');
+      const liveForward = document.getElementById('totoLiveForwardText');
+      const liveSyncTime = document.getElementById('totoLiveSyncTimeText');
+      const livePulsing = document.getElementById('totoLivePulsingBadge');
+
+      if (toto) {
+        if (liveFirstPrize) {
+          liveFirstPrize.innerText = toto.first_prize_text || (Number(toto.first_prize_pool || 0).toLocaleString() + '원');
+        }
+        if (liveSellAmt) {
+          liveSellAmt.innerText = toto.total_sell_text || (Number(toto.total_sell_amount || 0).toLocaleString() + '원');
+        }
+        if (liveSaleCount) {
+          const sCnt = toto.total_sale_cnt || (toto.total_sell_amount ? Math.round(toto.total_sell_amount / 1000) : 0);
+          liveSaleCount.innerText = `${Number(sCnt).toLocaleString()}표`;
+        }
+        if (liveForward) {
+          liveForward.innerText = toto.forward_text || (toto.forward_amount > 0 ? (Number(toto.forward_amount).toLocaleString() + '원') : '이월 없음');
+        }
+        if (liveSyncTime) {
+          liveSyncTime.innerText = `${toto.updated_at || '실시간'} 갱신`;
+        }
+        if (livePulsing) {
+          const isProgress = toto.status === 'SaleProgress' || (toto.period && toto.period.includes('발매중'));
+          livePulsing.className = `badge ${isProgress ? 'bg-danger' : 'bg-secondary'} text-white px-1.5 py-0.5`;
+          livePulsing.innerText = isProgress ? 'LIVE 🟢' : (toto.status === 'Finished' ? '종료' : '대기');
+        }
       }
 
       // Update Sport Tabs in Modal
@@ -9006,6 +9285,8 @@ function getFullModalMatchList() {
       loadLiveMatches().catch(err => console.error('Matches load error:', err));
       startLiveUsersFluctuation();
       start4MinAiChatTimer();
+      // 4. 배트맨 실시간 승무패/승1패 당첨금 백그라운드 동기화 시작
+      initTotoLiveSync();
     });
 
   
