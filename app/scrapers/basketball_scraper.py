@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional
 
 from app.scrapers.base import BaseScraper
+from app.services.player_translation import sanitize_player_name, sanitize_text
 
 logger = logging.getLogger("basketball_scraper")
 logger.setLevel(logging.INFO)
@@ -281,7 +282,7 @@ class BasketballScraper(BaseScraper):
 
             for ath in athletes:
                 athlete_info = ath.get("athlete", {})
-                p_name = athlete_info.get("displayName", "Unknown Player")
+                p_name = sanitize_player_name(athlete_info.get("displayName", "Unknown Player"))
                 p_pos = athlete_info.get("position", {}).get("abbreviation", "G")
                 is_starter = ath.get("starter", False)
                 raw_stats = ath.get("stats", [])

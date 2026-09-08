@@ -1485,9 +1485,34 @@ def _enrich_baseball_match_events(c_cur, m_dict, home_name: str, away_name: str,
     a_starter_obj['strikes'] = round(a_starter_obj['np'] * 0.63)
     a_starter_obj['balls'] = a_starter_obj['np'] - a_starter_obj['strikes']
 
-    qs_h = "QS " if (float(h_starter_obj.get('ip', '0').replace('이닝', '')) >= 6.0 and int(h_starter_obj.get('er', 0)) <= 3) else ""
+    def _safe_parse_ip(ip_val) -> float:
+        if not ip_val:
+            return 0.0
+        s = str(ip_val).replace('이닝', '').strip()
+        if not s:
+            return 0.0
+        if ' ' in s and '/' in s:
+            parts = s.split()
+            try:
+                base = float(parts[0])
+                f_parts = parts[1].split('/')
+                return base + (float(f_parts[0]) / float(f_parts[1]))
+            except Exception:
+                return 0.0
+        elif '/' in s:
+            try:
+                f_parts = s.split('/')
+                return float(f_parts[0]) / float(f_parts[1])
+            except Exception:
+                return 0.0
+        try:
+            return float(s)
+        except Exception:
+            return 0.0
+
+    qs_h = "QS " if (_safe_parse_ip(h_starter_obj.get('ip', '0')) >= 6.0 and int(h_starter_obj.get('er', 0)) <= 3) else ""
     h_starter_txt = f"{h_starter_obj['name']} {h_starter_obj['ip']}이닝 {h_starter_obj['er']}자책 {qs_h}{h_starter_obj.get('decision', '')}".strip()
-    qs_a = "QS " if (float(a_starter_obj.get('ip', '0').replace('이닝', '')) >= 6.0 and int(a_starter_obj.get('er', 0)) <= 3) else ""
+    qs_a = "QS " if (_safe_parse_ip(a_starter_obj.get('ip', '0')) >= 6.0 and int(a_starter_obj.get('er', 0)) <= 3) else ""
     a_starter_txt = f"{a_starter_obj['name']} {a_starter_obj['ip']}이닝 {a_starter_obj['er']}자책 {qs_a}{a_starter_obj.get('decision', '')}".strip()
 
     clutch_note = f"[홈] {home_name} 7회말 집중 3안타 득점 찬스 성공 및 필승조 무실점 계투 승리" if home_score > away_score else (

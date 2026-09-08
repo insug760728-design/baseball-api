@@ -1,5 +1,56 @@
-import sys, re, unicodedata
+import sys, re, unicodedata, html
 sys.stdout.reconfigure(encoding='utf-8')
+
+def fix_mojibake(text: str) -> str:
+    """Fix common Mojibake caused by UTF-8 bytes being decoded as Latin-1 (ISO-8859-1) or CP1252."""
+    if not text or not isinstance(text, str):
+        return ""
+    if any(ch in text for ch in ('Ã', 'Â', 'Å', 'Î', 'â', 'é', 'è', 'ï', '\xc3', '\xc2')):
+        # Try full string conversion first
+        try:
+            return text.encode('latin-1').decode('utf-8')
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            pass
+        try:
+            return text.encode('cp1252').decode('utf-8')
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            pass
+        # Fallback: decode token by token for mixed CJK + Mojibake strings
+        def _sub_token(m):
+            token = m.group(0)
+            try:
+                return token.encode('latin-1').decode('utf-8')
+            except Exception:
+                try:
+                    return token.encode('cp1252').decode('utf-8')
+                except Exception:
+                    return token
+        text = re.sub(r'[\u0080-\u00FF]+', _sub_token, text)
+    return text
+
+def sanitize_text(raw: str) -> str:
+    """Comprehensive text sanitization for descriptions, timelines, team names, and notes."""
+    if not raw or not isinstance(raw, str):
+        return ""
+    # 1. Unescape HTML entities (e.g. &amp;, &#39;, &quot;, &nbsp;)
+    text = html.unescape(raw)
+    # 2. Remove zero-width characters, BOM, replacement chars (\ufffd), and unprintable control characters
+    text = re.sub(r'[\u200B-\u200D\uFEFF\uFFFD\x00-\x1F\x7F]', '', text)
+    # 3. Standardize quotes, apostrophes and hyphens
+    text = re.sub(r'[\u2018\u2019\u00b4`\u2032]', "'", text)
+    text = re.sub(r'[\u2013\u2014\u2212]', '-', text)
+    # 4. Fix Mojibake (UTF-8 bytes erroneously decoded as Latin-1/CP1252)
+    text = fix_mojibake(text)
+    # 5. Unicode NFC normalization (recombine separated accents/diacritics e.g. e + \u0301 -> é)
+    text = unicodedata.normalize('NFC', text)
+    # 6. Normalize all whitespaces (including \xa0, \u3000 Japanese full-width space) to standard single space
+    text = re.sub(r'[\s\u00a0\u3000]+', ' ', text).strip()
+    return text
+
+def sanitize_player_name(raw: str) -> str:
+    """Sanitize player names from external APIs, web scraping, and user queries."""
+    return sanitize_text(raw)
+
 
 # Comprehensive First Name Dict
 FIRST_NAMES = {
@@ -15,7 +66,7 @@ FIRST_NAMES = {
     "Colin": "콜린", "Collin": "콜린", "Colt": "콜트", "Colton": "콜턴", "Connor": "코너", 
     "Cooper": "쿠퍼", "Corbin": "코빈", "Corey": "코리", "Craig": "크레이그", "Cristian": "크리스티안", 
     "Dakota": "다코타", "Dane": "데인", "Daniel": "대니얼", "Danny": "대니", "David": "데이비드", 
-    "Davis": "데이비스", "Dean": "딘", "Derek": "데릭", "Devin": "데빈", "Drew": "드류", 
+    "Davis": "데이비스", "Dean": "딘", "Derek": "데릭", "Devin": "데빈", "De": "데", "Del": "델", "Drew": "드류", 
     "Dustin": "더스틴", "Dylan": "딜런", "Edward": "에드워드", "Edwin": "에드윈", "Eli": "엘리", 
     "Elieser": "엘리에세르", "Emilio": "에밀리오", "Emmanuel": "엠마누엘", "Emmet": "에멧", "Eric": "에릭", 
     "Erik": "에릭", "Evan": "에반", "Felix": "펠릭스", "Fernando": "페르난도", "Framber": "프람버", 
@@ -31,12 +82,12 @@ FIRST_NAMES = {
     "Jose": "호세", "José": "호세", "Josh": "조시", "Joshua": "조슈아", "Josiah": "조사이어", 
     "Juan": "후안", "Julian": "줄리안", "Julio": "훌리오", "Justin": "저스틴", "Keaton": "키튼", 
     "Ken": "켄", "Kevin": "케빈", "Kyle": "카일", "Lance": "랜스", "Lane": "레인", 
-    "Logan": "로건", "Lucas": "루카스", "Luis": "루이스", "Luke": "루크", "Mackenzie": "맥켄지", 
+    "La": "라", "Le": "르", "Logan": "로건", "Lucas": "루카스", "Luis": "루이스", "Luke": "루크", "Mackenzie": "맥켄지", 
     "MacKenzie": "맥켄지", "Manny": "매니", "Marcus": "마커스", "Mark": "마크", "Mason": "메이슨", 
     "Matt": "맷", "Matthew": "매튜", "Max": "맥스", "Michael": "마이클", "Mick": "믹", 
     "Mickey": "미키", "Mike": "마이크", "Miles": "마일스", "Mitch": "미치", "Mitchell": "미첼", 
     "Mookie": "무키", "Nathan": "네이선", "Nestor": "네스터", "Nick": "닉", "Nico": "니코", 
-    "Noah": "노아", "Pablo": "파블로", "Patrick": "패트릭", "Paul": "폴", "Pete": "피트", 
+    "Noah": "노아", "Oneil": "오닐", "O'Neil": "오닐", "O'Neill": "오닐", "Adley": "애들리", "Elly": "엘리", "Ketel": "케텔", "Teoscar": "테오스카", "Marcell": "마르셀", "Jurickson": "주릭슨", "Gleyber": "글레이버", "Pablo": "파블로", "Patrick": "패트릭", "Paul": "폴", "Pete": "피트", 
     "Peter": "피터", "Pierce": "피어스", "Quinn": "퀸", "Rafael": "라파엘", "Ranger": "레인저", 
     "Randy": "랜디", "Reese": "리스", "Reid": "리드", "Reiver": "레이버", "Reynaldo": "레이날도", 
     "Rhett": "렛", "Rich": "리치", "Richie": "리치", "Ricky": "리키", "Riley": "라일리", 
@@ -111,7 +162,7 @@ LAST_NAMES = {
     "Munoz": "무뇨스", "Muñoz": "무뇨스", "Murphy": "머피", "Musgrove": "머스그로브", "Nardi": "나르디", 
     "Naylor": "네일러", "Nelson": "넬슨", "Neris": "네리스", "Nevin": "네빈", "Nimmala": "니말라", 
     "Nimmo": "니모", "Noda": "노다", "Nola": "놀라", "Ober": "오버", "O'Brien": "오브라이언", 
-    "O'Hoppe": "오호피", "Ohtani": "오타니", "Ortiz": "오르티스", "Ottavino": "오타비노", "Outman": "아웃맨", 
+    "O'Hoppe": "오호피", "O'Neill": "오닐", "ONeill": "오닐", "Oneill": "오닐", "Ohtani": "오타니", "Ortiz": "오르티스", "Ottavino": "오타비노", "Outman": "아웃맨", 
     "Ozuna": "오주나", "Paddack": "패댁", "Pagan": "파간", "Pagán": "파간", "Painter": "페인터", 
     "Pallante": "팔란테", "Paredes": "파레데스", "Pavin": "파빈", "Pena": "페냐", "Peña": "페냐", 
     "Peralta": "페랄타", "Perdomo": "페르도모", "Perez": "페레즈", "Pérez": "페레즈", "Pfaadt": "팟", 
@@ -173,43 +224,75 @@ PROTECTED_TERMS = {
 
 def translate_player_name(raw: str) -> str:
     if not raw: return ""
-    raw = raw.strip()
+    raw = sanitize_player_name(raw)
+    if not raw: return ""
+    
+    suffix = ""
+    if raw.endswith('(R)') or raw.endswith('(우)'):
+        suffix = ' (우)'
+        raw = re.sub(r'\(R\)|\(우\)', '', raw).strip()
+    elif raw.endswith('(L)') or raw.endswith('(좌)'):
+        suffix = ' (좌)'
+        raw = re.sub(r'\(L\)|\(좌\)', '', raw).strip()
+    elif raw.endswith('(언)'):
+        suffix = ' (언)'
+        raw = re.sub(r'\(언\)', '', raw).strip()
+
     # Protected team acronym or stat abbreviation?
     if raw.upper() in PROTECTED_TERMS or re.match(r'^[A-Z0-9_-]{1,5}$', raw):
-        return raw
+        return raw + suffix
     # Already Korean?
     if re.search(r'[가-힣]', raw):
-        return raw
+        return raw + suffix
     
     if raw in FULL_NAMES:
-        return FULL_NAMES[raw]
-    
+        return FULL_NAMES[raw] + suffix
+
+    # Handle Jr., Sr., II, III, IV suffix
+    jr_suffix = ""
     parts = raw.split()
+    if len(parts) >= 2 and parts[-1].rstrip('.').upper() in ('JR', 'SR', 'II', 'III', 'IV'):
+        jr_suffix = " " + parts[-1]
+        parts = parts[:-1]
+        raw = " ".join(parts)
+
+    if raw in FULL_NAMES:
+        return FULL_NAMES[raw] + jr_suffix + suffix
+    if raw in LAST_NAMES:
+        return LAST_NAMES[raw] + jr_suffix + suffix
+    if raw in FIRST_NAMES:
+        return FIRST_NAMES[raw] + jr_suffix + suffix
+    
     if len(parts) == 1:
         p0 = parts[0]
         if p0.upper() in PROTECTED_TERMS or re.match(r'^[A-Z0-9_-]{1,5}$', p0):
-            return p0
-        return FIRST_NAMES.get(p0) or LAST_NAMES.get(p0) or p0
+            return p0 + jr_suffix + suffix
+        cap = p0.capitalize()
+        single = FIRST_NAMES.get(p0) or FIRST_NAMES.get(cap) or LAST_NAMES.get(p0) or LAST_NAMES.get(cap) or rule_transliterate_word(p0)
+        return single + jr_suffix + suffix
     
     first = parts[0]
     last = " ".join(parts[1:])
     
-    first_ko = FIRST_NAMES.get(first) or FIRST_NAMES.get(first.capitalize()) or first
-    last_ko = LAST_NAMES.get(last) or LAST_NAMES.get(last.capitalize()) or last
+    first_ko = FIRST_NAMES.get(first) or FIRST_NAMES.get(first.capitalize()) or rule_transliterate_word(first)
+    last_ko = LAST_NAMES.get(last) or LAST_NAMES.get(last.capitalize())
     
-    # If compound last name or middle name
-    if last_ko == last and len(parts) == 3:
-        mid_ko = FIRST_NAMES.get(parts[1]) or LAST_NAMES.get(parts[1]) or parts[1]
-        end_ko = LAST_NAMES.get(parts[2]) or parts[2]
-        last_ko = f"{mid_ko} {end_ko}"
+    if not last_ko:
+        # If compound last name or middle name (e.g. De La Cruz or Middle + Last)
+        if len(parts) == 3:
+            mid_ko = FIRST_NAMES.get(parts[1]) or LAST_NAMES.get(parts[1]) or rule_transliterate_word(parts[1])
+            end_ko = LAST_NAMES.get(parts[2]) or LAST_NAMES.get(parts[2].capitalize()) or rule_transliterate_word(parts[2])
+            last_ko = f"{mid_ko} {end_ko}"
+        else:
+            last_parts = [LAST_NAMES.get(p) or LAST_NAMES.get(p.capitalize()) or FIRST_NAMES.get(p) or FIRST_NAMES.get(p.capitalize()) or rule_transliterate_word(p) for p in parts[1:]]
+            last_ko = " ".join(last_parts)
         
-    return f"{first_ko} {last_ko}".strip()
+    return f"{first_ko} {last_ko}".strip() + jr_suffix + suffix
 
 def rule_transliterate_word(word: str) -> str:
     if not word: return ''
     if word.upper() in PROTECTED_TERMS or (len(word) <= 5 and not re.search(r'[aeiouyAEIOUY]', word)):
         return word
-    import unicodedata, re
     clean = unicodedata.normalize('NFKD', word)
     clean = ''.join(ch for ch in clean if not unicodedata.combining(ch)).lower()
     clean = re.sub(r'tion$', '션', clean)
@@ -264,7 +347,6 @@ def rule_transliterate_word(word: str) -> str:
     ]
     for eng, kor in replacements:
         w = w.replace(eng, kor)
-    import re
     w = re.sub(r'[^가-힣]', '', w)
     return w or word
 

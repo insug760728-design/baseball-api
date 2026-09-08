@@ -10,7 +10,7 @@ from app.scrapers.soccer_scraper import SoccerScraper, SOCCER_LEAGUE_CODES
 from app.scrapers.basketball_scraper import BasketballScraper
 from app.core.sports_catalog import SPORTS_CATALOG
 from app.services.team_split_service import TeamSplitService, DEFAULT_ROTATION_STARTERS
-from app.services.player_translation import translate_player_name
+from app.services.player_translation import translate_player_name, sanitize_player_name, sanitize_text
 
 class MatchService:
 
@@ -105,8 +105,8 @@ class MatchService:
                         except:
                             ts = {}
                     if not detail.is_customized:
-                        h_p = m_data.get("probable_pitcher_home")
-                        a_p = m_data.get("probable_pitcher_away")
+                        h_p = sanitize_player_name(m_data.get("probable_pitcher_home") or "") or None
+                        a_p = sanitize_player_name(m_data.get("probable_pitcher_away") or "") or None
                         if h_p or a_p:
                             ts["starters"] = {
                                 "home": {"name": h_p or "선발 예고", "confirmed": bool(h_p), "throws": "우완"},
@@ -161,10 +161,13 @@ class MatchService:
             db.commit()
 
         for ev in detail_data.get("events", []):
+            ev_pname = sanitize_player_name(ev.get("player_name") or "")
+            ev_asst = sanitize_player_name(ev.get("assist_player_name") or "") if ev.get("assist_player_name") else None
+            ev_desc = sanitize_text(ev.get("description") or "")
             existing_event = db.query(MatchEvent).filter(
                 MatchEvent.match_id == match.id,
                 MatchEvent.time_display == ev["time_display"],
-                MatchEvent.player_name == ev["player_name"]
+                MatchEvent.player_name == ev_pname
             ).first()
             if not existing_event:
                 new_event = MatchEvent(
@@ -172,19 +175,20 @@ class MatchService:
                     time_display=ev["time_display"],
                     event_type=ev["event_type"],
                     team_name=ev["team_name"],
-                    player_name=ev["player_name"],
-                    assist_player_name=ev.get("assist_player_name"),
+                    player_name=ev_pname,
+                    assist_player_name=ev_asst,
                     score_after=ev.get("score_after"),
-                    description=ev.get("description")
+                    description=ev_desc
                 )
                 db.add(new_event)
 
         for p_stat in detail_data.get("player_stats", []):
             extra_str = json.dumps(p_stat.get("extra_stats", {}), ensure_ascii=False)
+            clean_pname = sanitize_player_name(p_stat.get("player_name") or "")
             new_stat = PlayerMatchStat(
                 match_id=match.id,
                 team_name=p_stat["team_name"],
-                player_name=p_stat["player_name"],
+                player_name=clean_pname,
                 back_number=p_stat.get("back_number"),
                 position=p_stat.get("position"),
                 minutes_played=0,
@@ -361,7 +365,7 @@ class MatchService:
                 extra = json.loads(ps.extra_stats or "{}")
             except:
                 extra = {}
-            orig_pname = ps.player_name or ""
+            orig_pname = sanitize_player_name(ps.player_name or "")
             player_stats_list.append({
                 "id": ps.id,
                 "match_id": ps.match_id,
@@ -380,8 +384,8 @@ class MatchService:
 
         events_list = []
         for ev in match.events:
-            ev_pname = ev.player_name or ""
-            ev_asst = ev.assist_player_name or ""
+            ev_pname = sanitize_player_name(ev.player_name or "")
+            ev_asst = sanitize_player_name(ev.assist_player_name or "")
             events_list.append({
                 "id": ev.id,
                 "match_id": ev.match_id,
@@ -392,7 +396,7 @@ class MatchService:
                 "player_name_en": ev_pname,
                 "assist_player_name": translate_player_name(ev_asst) if ev_asst else "",
                 "score_after": ev.score_after,
-                "description": ev.description,
+                "description": sanitize_text(ev.description or ""),
                 "is_customized": ev.is_customized
             })
 

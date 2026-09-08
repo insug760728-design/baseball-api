@@ -10,6 +10,8 @@ import json
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 
+from app.services.player_translation import sanitize_player_name, sanitize_text
+
 MLB_API_BASE = "https://statsapi.mlb.com/api/v1"
 
 MLB_TEAMS_KO = {
@@ -110,8 +112,8 @@ class MlbOfficialScraper:
             home_score = g["teams"]["home"].get("score", 0)
 
             # 공식 선발 예고 투수 (probablePitcher)
-            h_prob_p = g.get("teams", {}).get("home", {}).get("probablePitcher", {}).get("fullName")
-            a_prob_p = g.get("teams", {}).get("away", {}).get("probablePitcher", {}).get("fullName")
+            h_prob_p = sanitize_player_name(g.get("teams", {}).get("home", {}).get("probablePitcher", {}).get("fullName") or "") or None
+            a_prob_p = sanitize_player_name(g.get("teams", {}).get("away", {}).get("probablePitcher", {}).get("fullName") or "") or None
 
             # 상태 (FINAL, IN_PROGRESS, SCHEDULED)
             raw_state = g.get("status", {}).get("abstractGameState", "Scheduled")
@@ -229,8 +231,8 @@ class MlbOfficialScraper:
                 team_name_raw = boxscore_data.get("teams", {}).get("home" if batting_team_is_home else "away", {}).get("team", {}).get("name", "MLB")
                 team_name_ko = get_team_name_ko(team_name_raw)
 
-                batter_name = play.get("matchup", {}).get("batter", {}).get("fullName", "타자")
-                desc = play.get("result", {}).get("description", "")
+                batter_name = sanitize_player_name(play.get("matchup", {}).get("batter", {}).get("fullName", "타자"))
+                desc = sanitize_text(play.get("result", {}).get("description", ""))
                 event_type = play.get("result", {}).get("event", "득점")
 
                 away_s = play.get("result", {}).get("awayScore", 0)
@@ -262,7 +264,7 @@ class MlbOfficialScraper:
                 if not p:
                     continue
                 seen_batters.add(f"ID{b_id}")
-                p_name = p.get("person", {}).get("fullName")
+                p_name = sanitize_player_name(p.get("person", {}).get("fullName") or "")
                 if not p_name:
                     continue
 
@@ -319,7 +321,7 @@ class MlbOfficialScraper:
                 if not p:
                     continue
                 seen_pitchers.add(f"ID{p_id}")
-                p_name = p.get("person", {}).get("fullName")
+                p_name = sanitize_player_name(p.get("person", {}).get("fullName") or "")
                 if not p_name:
                     continue
 

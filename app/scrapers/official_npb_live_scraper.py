@@ -6,6 +6,7 @@ import ssl
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from bs4 import BeautifulSoup
+from app.services.player_translation import sanitize_player_name, sanitize_text
 
 def clean_int(val: Any) -> int:
     try:
@@ -115,14 +116,14 @@ NPB_PLAYER_KO_MAP = {
 def translate_npb_player_name(raw: str) -> str:
     if not raw:
         return ""
-    clean = re.sub(r'\s+', ' ', raw).strip()
+    clean = sanitize_player_name(raw)
     if clean in NPB_PLAYER_KO_MAP:
         return NPB_PLAYER_KO_MAP[clean]
     no_space = clean.replace(' ', '')
     if no_space in NPB_PLAYER_KO_MAP:
         return NPB_PLAYER_KO_MAP[no_space]
     # Fallback: clean symbols
-    return clean.replace('　', ' ')
+    return clean
 
 class NpbOfficialScraper:
     """
@@ -414,7 +415,7 @@ class NpbOfficialScraper:
 
                 order_raw = cells[0].strip()
                 pos_raw = cells[1].strip()
-                p_name = cells[2].strip()
+                p_name = sanitize_player_name(cells[2].strip())
 
                 pos_kor = translate_npb_position(pos_raw)
                 pos_label = f"{order_raw}번 {pos_kor}" if order_raw and order_raw.isdigit() else pos_kor
@@ -458,7 +459,7 @@ class NpbOfficialScraper:
                 dec_raw = cells[0].strip()
                 dec_label = "승리투수 (W)" if dec_raw == "○" else ("패전투수 (L)" if dec_raw == "●" else ("세이브 (SV)" if dec_raw == "S" else ("홀드 (HD)" if dec_raw == "H" else "")))
 
-                p_name = cells[1].strip()
+                p_name = sanitize_player_name(cells[1].strip())
                 np = clean_int(cells[2])
                 bf = clean_int(cells[3]) if len(cells) > 3 else 0
                 ip_raw = cells[4].replace(' ', '').replace('\xa0', '').replace('+', '.0') if len(cells) > 4 else "1.0"

@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 
 from app.scrapers.base import BaseScraper
+from app.services.player_translation import sanitize_player_name, sanitize_text
 
 logger = logging.getLogger("soccer_scraper")
 logger.setLevel(logging.INFO)
@@ -223,6 +224,9 @@ class SoccerScraper(BaseScraper):
             if not t_name:
                 t_name = home_team_name if home_team_name in desc else away_team_name
 
+            p_name = sanitize_player_name(p_name)
+            desc = sanitize_text(desc)
+
             events_list.append({
                 "time_display": clock,
                 "event_type": ev_type,
@@ -264,7 +268,7 @@ class SoccerScraper(BaseScraper):
             t_name = team_roster.get("team", {}).get("displayName", "")
             for p in team_roster.get("roster", []):
                 athlete = p.get("athlete", {})
-                p_name = athlete.get("displayName", "")
+                p_name = sanitize_player_name(athlete.get("displayName", ""))
                 jersey = athlete.get("jersey", p.get("jersey", "-"))
                 pos_name = p.get("position", {}).get("displayName", "Player")
 
