@@ -1510,6 +1510,22 @@
                 <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportHOCKEY" onclick="filterPredSport('HOCKEY')">🏒 하키</button>
                 <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportVOLLEYBALL" onclick="filterPredSport('VOLLEYBALL')">🏐 배구</button>
               </div>
+
+              <!-- 🏆 배트맨 공식 14경기 승무패 / 승1패 / 승5패 전용 팝업 퀵 바 -->
+              <div class="d-flex align-items-center gap-1 mt-1.5 p-1 rounded-2" style="background: #0f172a; border: 1.5px solid #0f172a; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);">
+                <span class="badge bg-warning text-dark fw-bold px-1.5 py-1 text-nowrap flex-shrink-0" style="font-size: 0.68rem; letter-spacing: -0.3px;">
+                  <i class="bi bi-trophy-fill me-0.5"></i>14경기
+                </span>
+                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 px-1 text-white border-0 text-nowrap" onclick="openTotoModal('WDL')" style="background: #1e293b; border-radius: 4px; font-size: 0.73rem;" title="클릭 시 배트맨 공식 14경기 축구 승무패 마킹표 오픈">
+                  ⚽ 승무패 <span class="badge bg-danger ms-0.5" id="quickBadgeTotoWDL" style="font-size:0.58rem;">51회</span>
+                </button>
+                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 px-1 text-white border-0 text-nowrap" onclick="openTotoModal('W1L')" style="background: #1e293b; border-radius: 4px; font-size: 0.73rem;" title="클릭 시 배트맨 공식 14경기 야구 승1패 마킹표 오픈">
+                  ⚾ 승1패 <span class="badge bg-danger ms-0.5" id="quickBadgeTotoW1L" style="font-size:0.58rem;">67회</span>
+                </button>
+                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 px-1 text-white border-0 text-nowrap" onclick="openTotoModal('W5L')" style="background: #1e293b; border-radius: 4px; font-size: 0.73rem;" title="클릭 시 배트맨 공식 14경기 농구 승5패 마킹표 오픈">
+                  🏀 승5패 <span class="badge bg-secondary ms-0.5" id="quickBadgeTotoW5L" style="font-size:0.58rem;">27회</span>
+                </button>
+              </div>
             </div>
 
             <!-- Body: Scrollable Match List -->
@@ -9068,12 +9084,12 @@ function getFullModalMatchList() {
       if (games['G011']) {
         const g = games['G011'];
         const b = document.getElementById('quickBadgeTotoWDL');
-        if (b) b.innerText = `${g.round_no}회 (${g.first_prize_text})`;
+        if (b) b.innerText = `${g.round_no}회`;
       }
       if (games['G024']) {
         const g = games['G024'];
         const b = document.getElementById('quickBadgeTotoW1L');
-        if (b) b.innerText = `${g.round_no}회 (${g.first_prize_text})`;
+        if (b) b.innerText = `${g.round_no}회`;
       }
     }
 
