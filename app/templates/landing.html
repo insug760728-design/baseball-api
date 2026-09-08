@@ -1577,8 +1577,8 @@
                   </button>
                 </div>
                 <!-- Multi-Play Toggle Button -->
-                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 fw-bold text-nowrap" id="btnToggleMultiPlay" onclick="toggleMultiPlayMode()" style="font-size: 0.72rem; border-radius: 6px;" title="2~4개 경기 동시 멀티 중계 시청">
-                  <i class="bi bi-grid-fill me-1"></i><span id="multiPlayBtnText">멀티플레이</span>
+                <button type="button" class="btn btn-sm btn-primary py-1 px-2 fw-bold text-nowrap" id="btnToggleMultiPlay" onclick="toggleMultiPlayMode()" style="font-size: 0.72rem; border-radius: 6px; box-shadow: 0 0 8px rgba(29, 78, 216, 0.4);" title="최대 6개 경기 동시 멀티 중계 시청">
+                  <i class="bi bi-grid-fill me-1"></i><span id="multiPlayBtnText">6경기 동시 (ON)</span>
                 </button>
               </div>
 
@@ -4598,10 +4598,10 @@ function getFullModalMatchList() {
 
     let globalActiveOddsMode = 'none'; // 'none', 'dom', 'ovs'
     function toggleSoccerOdds(mode, prefix) {
-      if (globalActiveOddsMode === mode) {
+      if (globalActiveOddsMode === 'ovs') {
         globalActiveOddsMode = 'none';
       } else {
-        globalActiveOddsMode = mode;
+        globalActiveOddsMode = 'ovs';
       }
       const rows = document.querySelectorAll(`[id^="row_${prefix}_"]`);
       rows.forEach(r => {
@@ -4617,19 +4617,18 @@ function getFullModalMatchList() {
           if (dateEl) dateEl.style.display = 'none';
           if (oddsEl) {
             oddsEl.style.display = 'inline-block';
-            const domVal = oddsEl.getAttribute('data-dom') || '2.15 | 3.20 | 2.85';
             const ovsVal = oddsEl.getAttribute('data-ovs') || '2.22 | 3.25 | 3.10';
-            oddsEl.innerText = (globalActiveOddsMode === 'dom') ? `[국내 ${domVal}]` : `[해외 ${ovsVal}]`;
+            oddsEl.innerText = `[해외 ${ovsVal}]`;
           }
         }
       });
 
       const btns = document.querySelectorAll(`.btn-odds-${prefix}`);
       btns.forEach(b => {
-        if ((b.classList.contains('btn-dom') && globalActiveOddsMode === 'dom') || (b.classList.contains('btn-ovs') && globalActiveOddsMode === 'ovs')) {
-          b.style.background = '#111827';
+        if (globalActiveOddsMode === 'ovs') {
+          b.style.background = '#1d4ed8';
           b.style.color = '#ffffff';
-          b.style.borderColor = '#111827';
+          b.style.borderColor = '#1d4ed8';
         } else {
           b.style.background = '#ffffff';
           b.style.color = '#111827';
@@ -5253,8 +5252,9 @@ function getFullModalMatchList() {
               ${secBadge}
             </span>
             <div class="d-flex gap-1">
-              <button type="button" class="btn btn-sm py-0.5 px-2.5 text-dark border bg-white btn-odds-${prefix} btn-dom" onclick="toggleSoccerOdds('dom', '${prefix}')" style="font-size: 0.72rem; border-radius: 6px; border-color: #d1d5db !important; font-weight: 600;">국내배당</button>
-              <button type="button" class="btn btn-sm py-0.5 px-2.5 text-dark border bg-white btn-odds-${prefix} btn-ovs" onclick="toggleSoccerOdds('ovs', '${prefix}')" style="font-size: 0.72rem; border-radius: 6px; border-color: #d1d5db !important; font-weight: 600;">해외배당</button>
+              <button type="button" class="btn btn-sm py-0.5 px-2.5 text-dark border bg-white btn-odds-${prefix} btn-ovs" onclick="toggleSoccerOdds('ovs', '${prefix}')" style="font-size: 0.72rem; border-radius: 6px; border-color: #d1d5db !important; font-weight: 600;">
+                <i class="bi bi-graph-up me-0.5 text-primary"></i>해외배당
+              </button>
             </div>
           </div>
 
@@ -8186,7 +8186,7 @@ function getFullModalMatchList() {
     }
 
     // ------------------------------------------------------------------
-    // 메인 경기바 전용 지표 헬퍼: 배당, 결장, 선발 (승무패 표에는 미적용)
+    // 메인 경기바 전용 지표 헬퍼: 해외배당 (유럽 북메이커 Bet365 / Pinnacle 기준)
     // ------------------------------------------------------------------
     function getMatchOdds(m) {
       const pred = m.prediction || {};
@@ -8196,21 +8196,24 @@ function getFullModalMatchList() {
       const isDraw = pred.pick_type === 'DRAW';
 
       if (sport === 'SOCCER') {
-        let pH = 0.42, pD = 0.28, pA = 0.30;
+        let pH = 0.40, pD = 0.28, pA = 0.32;
         if (isDraw) {
-          pD = Math.min(0.38, (conf / 100) * 0.4 + 0.18);
-          pH = (1.0 - pD) * 0.52;
-          pA = 1.0 - pD - pH;
+          pD = 0.31;
+          pH = 0.36;
+          pA = 0.33;
         } else if (isHomeFav) {
-          pH = Math.min(0.70, Math.max(0.42, conf / 100));
-          pD = 0.26;
-          pA = Math.max(0.12, 1.0 - pH - pD);
+          const hRate = Math.min(0.80, Math.max(0.42, conf / 100));
+          pH = hRate;
+          pD = Math.max(0.14, 0.28 - (hRate - 0.42) * 0.28);
+          pA = Math.max(0.06, 1.0 - pH - pD);
         } else {
-          pA = Math.min(0.70, Math.max(0.42, conf / 100));
-          pD = 0.26;
-          pH = Math.max(0.12, 1.0 - pA - pD);
+          const aRate = Math.min(0.80, Math.max(0.42, conf / 100));
+          pA = aRate;
+          pD = Math.max(0.14, 0.28 - (aRate - 0.42) * 0.28);
+          pH = Math.max(0.06, 1.0 - pA - pD);
         }
-        const margin = 1.08;
+        // 환급률 95% (해외 북메이커 마진 약 5%)
+        const margin = 1.05;
         const oddH = (1.0 / (pH * margin)).toFixed(2);
         const oddD = (1.0 / (pD * margin)).toFixed(2);
         const oddA = (1.0 / (pA * margin)).toFixed(2);
@@ -8221,14 +8224,14 @@ function getFullModalMatchList() {
         };
       } else {
         // BASEBALL, BASKETBALL, HOCKEY, VOLLEYBALL (2-WAY)
-        let pH = 0.52;
+        let pH = 0.50;
         if (isHomeFav) {
           pH = Math.min(0.78, Math.max(0.50, conf / 100));
         } else {
           pH = Math.max(0.22, Math.min(0.50, 1.0 - conf / 100));
         }
         const pA = 1.0 - pH;
-        const margin = 1.06;
+        const margin = 1.05;
         const oddH = (1.0 / (pH * margin)).toFixed(2);
         const oddA = (1.0 / (pA * margin)).toFixed(2);
         const isNba = m.league_name && m.league_name.includes('NBA');
@@ -8625,7 +8628,7 @@ function getFullModalMatchList() {
             <!-- 1번 지표: 배당 및 결장 정보 바 (메인 경기바 전용, PC/모바일 전체 적용) -->
             <div class="d-flex align-items-center justify-content-between my-1 px-1.5 py-1 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.68rem;">
               <div class="d-flex align-items-center gap-1 text-truncate" style="min-width: 0;">
-                <span class="badge bg-primary text-white fw-bold py-0.5 px-1" style="font-size:0.58rem; letter-spacing: -0.3px;">배당</span>
+                <span class="badge text-white fw-bold py-0.5 px-1" style="background: #2563eb; font-size:0.58rem; letter-spacing: -0.3px;">해외배당</span>
                 <div class="d-flex align-items-center gap-0.5" style="font-family: monospace; font-size: 0.68rem;">
                   ${oddsInfo.html}
                 </div>
@@ -8809,6 +8812,10 @@ function getFullModalMatchList() {
       }
 
       if (userClicked) {
+        if (typeof isMultiPlayMode !== 'undefined' && isMultiPlayMode) {
+          isMultiPlayMode = false;
+          if (typeof updateMultiPlayBtnState === 'function') updateMultiPlayBtnState();
+        }
         if (isMobileView) {
           openMatchModal(matchId);
         } else {
@@ -10914,7 +10921,7 @@ function getFullModalMatchList() {
     // -------------------------------------------------------------
     let currentCenterSubTab = 'RELAY'; // 'RELAY' (실시간 중계) or 'SABER' (세이버 정밀 분석)
     let relaySportFilter = 'ALL';      // 'ALL', 'BASEBALL', 'SOCCER', 'BASKETBALL', 'VOLLEYBALL'
-    let isMultiPlayMode = false;       // true: 멀티플레이 2~4분할 시청, false: 단일 집중 시청
+    let isMultiPlayMode = true;        // true: 멀티플레이 최대 6경기 동시 시청, false: 단일 집중 시청
     let isLiveDemoMode = false;        // 실시간 가상 경기 시뮬레이터 데모 모드
     let liveDemoInterval = null;
     const liveDemoStateMap = new Map();
@@ -10978,8 +10985,7 @@ function getFullModalMatchList() {
       renderLiveRelayCenter();
     }
 
-    function toggleMultiPlayMode() {
-      isMultiPlayMode = !isMultiPlayMode;
+    function updateMultiPlayBtnState() {
       const btn = document.getElementById('btnToggleMultiPlay');
       const text = document.getElementById('multiPlayBtnText');
       if (isMultiPlayMode) {
@@ -10987,15 +10993,31 @@ function getFullModalMatchList() {
           btn.className = 'btn btn-sm btn-primary py-1 px-2 fw-bold text-nowrap';
           btn.style.boxShadow = '0 0 8px rgba(29, 78, 216, 0.4)';
         }
-        if (text) text.innerText = '멀티 (ON)';
+        if (text) text.innerText = '6경기 동시 (ON)';
       } else {
         if (btn) {
           btn.className = 'btn btn-sm btn-outline-primary py-1 px-2 fw-bold text-nowrap';
           btn.style.boxShadow = '';
         }
-        if (text) text.innerText = '멀티플레이';
+        if (text) text.innerText = '6경기 동시보기';
       }
+    }
+
+    function toggleMultiPlayMode() {
+      isMultiPlayMode = !isMultiPlayMode;
+      updateMultiPlayBtnState();
       renderLiveRelayCenter();
+    }
+
+    function focusSingleMatchRelay(matchId) {
+      isMultiPlayMode = false;
+      updateMultiPlayBtnState();
+      selectedPredMatchId = matchId;
+      const target = (typeof allMatches !== 'undefined' && allMatches) ? allMatches.find(m => m.id === matchId) : null;
+      switchCenterViewMode('RELAY');
+      if (target) {
+        renderLiveRelayCenter(target);
+      }
     }
 
     function toggleLiveDemoSimulator() {
@@ -11189,6 +11211,145 @@ function getFullModalMatchList() {
       return list;
     }
 
+    function renderPreMatchWidget(m) {
+      const sport = (m.sport_code || 'SOCCER').toUpperCase();
+      const odds = getMatchOdds(m);
+      const starters = getMatchStarters(m);
+      const absences = getMatchAbsences(m);
+      const dateText = m.match_date ? formatKSTDateTime(m.match_date) : '경기 시작 대기';
+
+      let oddsBox = '';
+      if (odds.type === '3WAY') {
+        oddsBox = `
+          <div class="row g-1.5 text-center my-2">
+            <div class="col-4">
+              <div class="p-2 rounded border" style="background:#ffffff; border-color:#e2e8f0;">
+                <div class="text-muted fw-bold" style="font-size:0.68rem;">홈승 (1)</div>
+                <div class="fw-bold text-primary fs-5 font-monospace">${odds.home}</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="p-2 rounded border" style="background:#ffffff; border-color:#e2e8f0;">
+                <div class="text-muted fw-bold" style="font-size:0.68rem;">무승부 (X)</div>
+                <div class="fw-bold text-secondary fs-5 font-monospace">${odds.draw}</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="p-2 rounded border" style="background:#ffffff; border-color:#e2e8f0;">
+                <div class="text-muted fw-bold" style="font-size:0.68rem;">원정승 (2)</div>
+                <div class="fw-bold text-danger fs-5 font-monospace">${odds.away}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        oddsBox = `
+          <div class="row g-1.5 text-center my-2">
+            <div class="col-6">
+              <div class="p-2 rounded border" style="background:#ffffff; border-color:#e2e8f0;">
+                <div class="text-muted fw-bold" style="font-size:0.68rem;">홈팀 승</div>
+                <div class="fw-bold text-primary fs-5 font-monospace">${odds.home}</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 rounded border" style="background:#ffffff; border-color:#e2e8f0;">
+                <div class="text-muted fw-bold" style="font-size:0.68rem;">원정팀 승</div>
+                <div class="fw-bold text-danger fs-5 font-monospace">${odds.away}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="pre-match-box text-center p-3 rounded-3" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border: 1.5px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+          <!-- Top Info Banner -->
+          <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill mb-2.5" style="background: #eff6ff; color: #1d4ed8; font-size: 0.78rem; font-weight: 700; border: 1px solid #bfdbfe;">
+            <i class="bi bi-clock-history"></i><span>${dateText} 킥오프 예정</span>
+          </div>
+
+          <!-- Overseas Odds Card -->
+          <div class="text-start mb-2 px-1">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-bold text-dark" style="font-size: 0.82rem;">
+                <i class="bi bi-globe2 text-primary me-1"></i>해외 공식 배당 (Overseas Odds)
+              </span>
+              <span class="badge text-white fw-bold" style="background: #2563eb; font-size: 0.65rem;">유럽 북메이커 기준</span>
+            </div>
+            ${oddsBox}
+          </div>
+
+          <!-- Lineups & Pre-match Info -->
+          <div class="text-start p-2 rounded mb-2.5" style="background: #ffffff; border: 1px solid #e2e8f0; font-size: 0.74rem;">
+            <div class="d-flex align-items-center justify-content-between mb-1">
+              <span class="text-muted"><i class="bi bi-shield-check me-1"></i>선발 정보:</span>
+              <span class="fw-bold text-dark text-truncate" style="max-width: 70%;">${starters.text || '출전 명단 확정 대기'}</span>
+            </div>
+            <div class="d-flex align-items-center justify-content-between">
+              <span class="text-muted"><i class="bi bi-person-x me-1"></i>결장 정보:</span>
+              <span>${absences.badge || '<span class="badge bg-light text-muted">결장 확인중</span>'}</span>
+            </div>
+          </div>
+
+          <!-- Live Graphic Demo Notice -->
+          <div class="p-2 rounded mb-2.5 d-flex align-items-center justify-content-between text-start" style="background: #f0fdf4; border: 1px solid #bbf7d0; font-size: 0.74rem;">
+            <div class="text-success" style="line-height: 1.3;">
+              <strong>📡 라이브 중계 대기 중</strong><br>
+              <span class="text-muted" style="font-size: 0.70rem;">경기 킥오프 시 실시간 볼/주자 그래픽이 자동 개시됩니다.</span>
+            </div>
+            <button class="btn btn-sm btn-outline-success py-1 px-2.5 fw-bold text-nowrap" onclick="toggleLiveDemoSimulator()" style="font-size: 0.70rem; border-radius: 4px;">
+              <i class="bi bi-play-circle-fill me-1"></i>데모 체험
+            </button>
+          </div>
+
+          <!-- Chat Sharing -->
+          <button class="btn btn-sm btn-primary w-100 py-1.5 fw-bold" onclick="quickSendLiveToChat('${m.home_team_name} vs ${m.away_team_name}', '${dateText} 해외배당 [승 ${odds.home} / 무 ${odds.draw || '-'} / 패 ${odds.away}] - 경기 시작 전 라인업 분석!')" style="font-size: 0.78rem; border-radius: 6px;">
+            💬 톡방에 프리뷰 및 해외배당 공유하기
+          </button>
+        </div>
+      `;
+    }
+
+    function renderFinishedMatchWidget(m) {
+      const sport = (m.sport_code || 'SOCCER').toUpperCase();
+      const scoreH = m.home_score ?? 0;
+      const scoreA = m.away_score ?? 0;
+      const winner = scoreH > scoreA ? m.home_team_name : (scoreA > scoreH ? m.away_team_name : '무승부');
+      const dateText = m.match_date ? formatKSTDateTime(m.match_date) : '종료';
+
+      return `
+        <div class="finished-match-box text-center p-3 rounded-3" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border: 1.5px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+          <!-- Top Info Banner -->
+          <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill mb-2.5" style="background: #f1f5f9; color: #475569; font-size: 0.78rem; font-weight: 700; border: 1px solid #cbd5e1;">
+            <i class="bi bi-check-circle-fill text-secondary"></i><span>${dateText} 경기 공식 종료 (FINAL)</span>
+          </div>
+
+          <!-- Final Big Score -->
+          <div class="p-3 rounded-3 my-2" style="background: #0f172a; color: #ffffff;">
+            <div class="text-white-50 small mb-1">최종 공식 스코어 결과</div>
+            <div class="d-flex justify-content-center align-items-center gap-3">
+              <span class="fw-bold fs-5 text-truncate" style="max-width: 35%;">${m.home_team_name}</span>
+              <span class="fw-bold fs-2 font-monospace ${scoreH > scoreA ? 'text-warning' : 'text-white'}">${scoreH} : ${scoreA}</span>
+              <span class="fw-bold fs-5 text-truncate" style="max-width: 35%;">${m.away_team_name}</span>
+            </div>
+            <div class="text-warning small mt-1 fw-bold">
+              ${winner === '무승부' ? '치열한 접전 끝 무승부 마감' : `승리팀: ${winner}`}
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="d-flex gap-1.5 mt-2.5">
+            <button class="btn btn-sm btn-outline-dark flex-fill py-1.5 fw-bold" onclick="openMatchModal(${m.id})" style="font-size: 0.76rem; border-radius: 6px;">
+              📊 상대전적 & 세이버 상세분석
+            </button>
+            <button class="btn btn-sm btn-primary flex-fill py-1.5 fw-bold" onclick="quickSendLiveToChat('${m.home_team_name} vs ${m.away_team_name}', '최종 스코어 [${scoreH} : ${scoreA}] 경기 종료 - ${winner}!')" style="font-size: 0.76rem; border-radius: 6px;">
+              💬 톡방에 결과 공유
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
     function renderLiveRelayCenter(targetMatch) {
       const container = document.getElementById('liveRelayContainer');
       if (!container) return;
@@ -11227,18 +11388,40 @@ function getFullModalMatchList() {
       const statusBadge = isLive 
         ? `<span class="badge" style="background:#ef4444; color:#fff; font-size:0.75rem; font-weight:800; padding:3px 8px;"><span class="live-blink-dot me-1" style="display:inline-block; width:6px; height:6px; background:#fff; border-radius:50%;"></span>LIVE 중계중</span>`
         : (targetMatch.status === 'FINISHED' 
-            ? `<span class="badge bg-secondary text-white" style="font-size:0.75rem; font-weight:700;">경기 종료</span>`
-            : `<span class="badge bg-primary text-white" style="font-size:0.75rem; font-weight:700;">경기 예정</span>`);
+            ? `<span class="badge bg-secondary text-white" style="font-size:0.75rem; font-weight:700;">경기 종료 (FINAL)</span>`
+            : `<span class="badge bg-primary text-white" style="font-size:0.75rem; font-weight:700;">경기 시작 전 (대기)</span>`);
 
       let widgetHtml = '';
-      if (sport === 'BASEBALL') {
-        widgetHtml = renderLiveBaseballDiamond(targetMatch, st);
-      } else if (sport === 'BASKETBALL') {
-        widgetHtml = renderLiveBasketballCourt(targetMatch, st);
-      } else if (sport === 'VOLLEYBALL') {
-        widgetHtml = renderLiveVolleyballCourt(targetMatch, st);
+      if (isLiveDemoMode) {
+        const demoNotice = `
+          <div class="py-1.5 px-2.5 mb-2 rounded d-flex justify-content-between align-items-center" style="background: #fef3c7; border: 1.5px solid #f59e0b; color: #92400e; font-size: 0.74rem;">
+            <span><i class="bi bi-play-circle-fill text-danger me-1"></i><b>실시간 가상 시뮬레이터 데모 실행 중</b> (3.5초 주기 실시간 변화)</span>
+            <button class="btn btn-sm btn-outline-danger py-0 px-2 fw-bold" onclick="toggleLiveDemoSimulator()" style="font-size: 0.68rem; border-radius: 4px;">데모 종료</button>
+          </div>
+        `;
+        if (sport === 'BASEBALL') {
+          widgetHtml = demoNotice + renderLiveBaseballDiamond(targetMatch, st);
+        } else if (sport === 'BASKETBALL') {
+          widgetHtml = demoNotice + renderLiveBasketballCourt(targetMatch, st);
+        } else if (sport === 'VOLLEYBALL') {
+          widgetHtml = demoNotice + renderLiveVolleyballCourt(targetMatch, st);
+        } else {
+          widgetHtml = demoNotice + renderLiveSoccerPitch(targetMatch, st);
+        }
+      } else if (targetMatch.status === 'LIVE') {
+        if (sport === 'BASEBALL') {
+          widgetHtml = renderLiveBaseballDiamond(targetMatch, st);
+        } else if (sport === 'BASKETBALL') {
+          widgetHtml = renderLiveBasketballCourt(targetMatch, st);
+        } else if (sport === 'VOLLEYBALL') {
+          widgetHtml = renderLiveVolleyballCourt(targetMatch, st);
+        } else {
+          widgetHtml = renderLiveSoccerPitch(targetMatch, st);
+        }
+      } else if (targetMatch.status === 'FINISHED') {
+        widgetHtml = renderFinishedMatchWidget(targetMatch);
       } else {
-        widgetHtml = renderLiveSoccerPitch(targetMatch, st);
+        widgetHtml = renderPreMatchWidget(targetMatch);
       }
 
       const scoreH = st.score_h ?? (targetMatch.home_score ?? 0);
@@ -11268,9 +11451,10 @@ function getFullModalMatchList() {
                 </div>
               </div>
               <div class="col-2">
-                <div class="fw-bold text-danger fs-4" style="letter-spacing: 1px; font-family: 'Segoe UI', system-ui, sans-serif;">
-                  ${scoreH} <span class="text-muted fs-6">:</span> ${scoreA}
-                </div>
+                ${(targetMatch.status === 'SCHEDULED' && !isLiveDemoMode)
+                  ? `<span class="badge bg-light text-primary border fw-bold px-2 py-1" style="font-size: 0.85rem;">VS</span>`
+                  : `<div class="fw-bold text-danger fs-4" style="letter-spacing: 1px; font-family: 'Segoe UI', system-ui, sans-serif;">${scoreH} <span class="text-muted fs-6">:</span> ${scoreA}</div>`
+                }
               </div>
               <div class="col-5">
                 <div class="fw-bold text-truncate" style="font-size: 1.05rem; color: #0f172a;">
@@ -11286,7 +11470,7 @@ function getFullModalMatchList() {
           <!-- 3. Bottom Action & Analysis Quick-link -->
           <div class="p-2 rounded-2 mt-2 d-flex justify-content-between align-items-center" style="background: #f8fafc; border: 1px solid #e2e8f0;">
             <span class="small text-secondary fw-bold" style="font-size: 0.74rem;">
-              <i class="bi bi-info-circle me-1 text-primary"></i>선수별 상세 기록과 배당 분석이 필요하신가요?
+              <i class="bi bi-info-circle me-1 text-primary"></i>선수별 상세 기록과 세이버메트릭스 분석이 필요하신가요?
             </span>
             <button class="btn btn-sm btn-outline-dark py-1 px-2.5 fw-bold" onclick="switchCenterViewMode('SABER')" style="font-size: 0.74rem; border-radius: 6px;">
               📊 1:1 세이버 분석실 보기 →
@@ -11628,60 +11812,157 @@ function getFullModalMatchList() {
         return `<div class="text-center text-muted py-5">선택된 종목의 진행 중인 경기가 없습니다.</div>`;
       }
 
-      // Take top 4 matches for the multi-play grid
-      const targets = matches.slice(0, 4);
+      // 최대 6경기 동시 시청 (2열 3행 그리드)
+      const targets = matches.slice(0, 6);
 
       const cardsHtml = targets.map((m, idx) => {
         const st = getLiveMatchState(m);
         const sport = (m.sport_code || 'SOCCER').toUpperCase();
-        const scoreH = st.score_h ?? (m.home_score ?? 0);
-        const scoreA = st.score_a ?? (m.away_score ?? 0);
+        const odds = getMatchOdds(m);
+        const isLive = m.status === 'LIVE' || isLiveDemoMode;
+        const isSched = m.status === 'SCHEDULED' && !isLiveDemoMode;
+        const isFin = m.status === 'FINISHED' && !isLiveDemoMode;
 
-        let miniVisual = '';
-        if (sport === 'BASEBALL') {
-          miniVisual = `
-            <div class="d-flex justify-content-center align-items-center my-1">
-              <svg width="70" height="60" viewBox="0 0 100 85">
-                <polygon points="50,15 80,45 50,75 20,45" fill="#15803d" stroke="#d97706" stroke-width="2" />
-                <polygon points="50,15 57,22 50,29 43,22" fill="${st.base2 ? '#f59e0b' : '#475569'}" />
-                <polygon points="20,45 27,52 20,59 13,52" fill="${st.base3 ? '#f59e0b' : '#475569'}" />
-                <polygon points="80,45 87,52 80,59 73,52" fill="${st.base1 ? '#f59e0b' : '#475569'}" />
-              </svg>
+        const scoreH = isLive ? (st.score_h ?? (m.home_score ?? 0)) : (m.home_score ?? 0);
+        const scoreA = isLive ? (st.score_a ?? (m.away_score ?? 0)) : (m.away_score ?? 0);
+
+        const statusBadge = isLive 
+          ? `<span class="badge bg-danger text-white py-0 px-1" style="font-size:0.60rem;"><span class="live-blink-dot me-0.5" style="display:inline-block;width:4px;height:4px;background:#fff;border-radius:50%;"></span>LIVE</span>`
+          : (isFin 
+              ? `<span class="badge bg-secondary text-white py-0 px-1" style="font-size:0.60rem;">종료</span>` 
+              : `<span class="badge text-white py-0 px-1" style="background:#2563eb; font-size:0.60rem;">해외배당</span>`);
+
+        let centerContent = '';
+        if (isSched) {
+          centerContent = `
+            <div class="d-flex justify-content-between align-items-center text-center my-0.5">
+              <div class="fw-bold text-truncate" style="font-size:0.75rem; max-width:44%; color:#0f172a;" title="${m.home_team_name}">${m.home_team_name}</div>
+              <span class="badge bg-light text-primary border px-1 py-0 fw-bold" style="font-size:0.62rem;">VS</span>
+              <div class="fw-bold text-truncate" style="font-size:0.75rem; max-width:44%; color:#0f172a;" title="${m.away_team_name}">${m.away_team_name}</div>
+            </div>
+            <div class="rounded py-0.5 px-1 my-1 text-center font-monospace fw-bold" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.66rem; color:#1e293b;">
+              ${odds.type === '3WAY' 
+                ? `<span class="text-primary">승 ${odds.home}</span> / <span class="text-secondary">무 ${odds.draw}</span> / <span class="text-danger">패 ${odds.away}</span>` 
+                : `<span class="text-primary">승 ${odds.home}</span> / <span class="text-danger">패 ${odds.away}</span> <span class="text-muted" style="font-size:0.58rem;">(기준 ${odds.ou})</span>`
+              }
+            </div>
+            <div class="text-muted text-truncate text-center" style="font-size:0.65rem;">
+              <i class="bi bi-clock me-0.5 text-primary"></i>${m.match_date ? formatKSTDateTime(m.match_date) : '시작 대기'}
+            </div>
+          `;
+        } else if (isFin) {
+          centerContent = `
+            <div class="d-flex justify-content-between align-items-center text-center my-0.5">
+              <div class="fw-bold text-truncate" style="font-size:0.75rem; max-width:40%; color:#0f172a;" title="${m.home_team_name}">${m.home_team_name}</div>
+              <div class="fw-bold text-dark fs-6 font-monospace">${scoreH}:${scoreA}</div>
+              <div class="fw-bold text-truncate" style="font-size:0.75rem; max-width:40%; color:#0f172a;" title="${m.away_team_name}">${m.away_team_name}</div>
+            </div>
+            <div class="rounded py-0.5 my-1 text-center text-muted fw-bold" style="background:#f1f5f9; font-size:0.65rem;">
+              공식 경기 종료 (FINAL)
+            </div>
+            <div class="text-muted text-truncate text-center" style="font-size:0.65rem;">
+              최종 스코어 [${scoreH} : ${scoreA}]
             </div>
           `;
         } else {
-          miniVisual = `
-            <div class="d-flex justify-content-center align-items-center my-1">
-              <div class="rounded py-1 px-3" style="background:#166534; border:1px solid #ffffff; font-size:0.75rem; color:#fff;">
-                ⚽ <strong>${st.match_minute || '74\''}</strong>
+          // LIVE or DEMO
+          let miniVisual = '';
+          if (sport === 'BASEBALL') {
+            miniVisual = `
+              <div class="d-flex justify-content-center align-items-center gap-2 my-0.5">
+                <svg width="48" height="38" viewBox="0 0 80 65">
+                  <polygon points="40,12 66,36 40,60 14,36" fill="#15803d" stroke="#a16207" stroke-width="2" />
+                  <polygon points="40,12 45,17 40,22 35,17" fill="${st.base2 ? '#f59e0b' : '#334155'}" />
+                  <polygon points="14,36 19,41 14,46 9,41" fill="${st.base3 ? '#f59e0b' : '#334155'}" class="${st.base3 ? 'pulse-base-glow' : ''}" />
+                  <polygon points="66,36 71,41 66,46 61,41" fill="${st.base1 ? '#f59e0b' : '#334155'}" />
+                  <circle cx="40" cy="36" r="3" fill="#78350f" />
+                </svg>
+                <div class="d-flex flex-column text-start" style="font-size:0.62rem; line-height:1.2;">
+                  <span class="badge bg-danger text-white py-0 px-1" style="font-size:0.58rem;">${st.inning_text || '5회말'}</span>
+                  <span class="fw-bold text-dark mt-0.5"><b class="text-danger">${st.outs || 2}</b> OUT</span>
+                  <span class="text-muted" style="font-size:0.58rem;">${st.base3 ? '3루점등' : '주자진루'}</span>
+                </div>
               </div>
+            `;
+          } else if (sport === 'BASKETBALL') {
+            miniVisual = `
+              <div class="d-flex justify-content-center align-items-center gap-2 my-0.5">
+                <svg width="48" height="28" viewBox="0 0 90 50" style="border-radius:3px; background:#c2410c; border:1px solid #9a3412;">
+                  <rect x="4" y="4" width="82" height="42" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.8" />
+                  <line x1="45" y1="4" x2="45" y2="46" stroke="#ffffff" stroke-width="1.2" opacity="0.8" />
+                  <circle cx="45" cy="25" r="8" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.8" />
+                  <text x="45" y="29" text-anchor="middle" font-size="10">🏀</text>
+                </svg>
+                <div class="d-flex flex-column text-start" style="font-size:0.62rem; line-height:1.2;">
+                  <span class="badge bg-dark text-warning py-0 px-1" style="font-size:0.58rem;">🏀 ${st.quarter || 'Q3'}</span>
+                  <span class="fw-bold text-dark mt-0.5">${st.clock || '04:18'}</span>
+                </div>
+              </div>
+            `;
+          } else if (sport === 'VOLLEYBALL') {
+            miniVisual = `
+              <div class="d-flex justify-content-center align-items-center gap-2 my-0.5">
+                <svg width="46" height="26" viewBox="0 0 80 44" style="border-radius:3px; background:#1e40af; border:1px solid #1d4ed8;">
+                  <rect x="4" y="4" width="72" height="36" fill="#ea580c" opacity="0.85" />
+                  <rect x="4" y="4" width="72" height="36" fill="none" stroke="#ffffff" stroke-width="1.2" />
+                  <line x1="40" y1="4" x2="40" y2="40" stroke="#ffffff" stroke-width="2" />
+                  <text x="40" y="26" text-anchor="middle" font-size="9">🏐</text>
+                </svg>
+                <div class="d-flex flex-column text-start" style="font-size:0.62rem; line-height:1.2;">
+                  <span class="badge text-white py-0 px-1" style="background:#1e40af; font-size:0.58rem;">🏐 ${st.current_set || '4세트'}</span>
+                  <span class="fw-bold text-dark mt-0.5">${st.set_points || '21-19'}</span>
+                </div>
+              </div>
+            `;
+          } else {
+            // SOCCER
+            const soccerMin = (st.match_minute && st.match_minute !== '종료' && st.match_minute !== '전반') ? st.match_minute : "72'";
+            miniVisual = `
+              <div class="d-flex justify-content-center align-items-center gap-2 my-0.5">
+                <svg width="52" height="28" viewBox="0 0 100 60" style="border-radius:3px; background:#15803d; border:1px solid #166534;">
+                  <rect x="5" y="5" width="90" height="50" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.8" />
+                  <line x1="50" y1="5" x2="50" y2="55" stroke="#ffffff" stroke-width="1.2" opacity="0.8" />
+                  <circle cx="50" cy="30" r="10" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.8" />
+                  ${st.is_goal 
+                    ? `<text x="50" y="34" text-anchor="middle" font-size="11" font-weight="bold" fill="#facc15">⚽ GOAL!</text>`
+                    : `<circle cx="${st.ball_x ? Math.min(85, Math.max(15, st.ball_x / 2.5)) : 50}" cy="${st.ball_y ? Math.min(45, Math.max(15, st.ball_y / 2.5)) : 30}" r="3.5" fill="#ffffff" stroke="#000" stroke-width="0.8" />`
+                  }
+                </svg>
+                <div class="d-flex flex-column text-start" style="font-size:0.62rem; line-height:1.2;">
+                  <span class="badge text-white py-0 px-1" style="background:#166534; font-size:0.58rem;">⚽ ${soccerMin}</span>
+                  <span class="fw-bold text-dark mt-0.5">${st.is_goal ? '<span class="text-danger">💥 골!</span>' : '<span class="text-muted">공방전</span>'}</span>
+                </div>
+              </div>
+            `;
+          }
+          centerContent = `
+            <div class="d-flex justify-content-between align-items-center text-center my-0.5">
+              <div class="fw-bold text-truncate" style="font-size:0.75rem; max-width:40%; color:#0f172a;" title="${m.home_team_name}">${m.home_team_name}</div>
+              <div class="fw-bold text-danger fs-6 font-monospace">${scoreH}:${scoreA}</div>
+              <div class="fw-bold text-truncate" style="font-size:0.75rem; max-width:40%; color:#0f172a;" title="${m.away_team_name}">${m.away_team_name}</div>
+            </div>
+            ${miniVisual}
+            <div class="text-muted text-truncate text-center" style="font-size:0.64rem;">
+              ${st.recent_play || st.recent_event || '실시간 경기 중'}
             </div>
           `;
         }
 
         return `
-          <div class="col-12 col-md-6 mb-2">
-            <div class="multi-relay-card h-100 d-flex flex-column justify-content-between p-2 rounded border" style="background:#ffffff; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
+          <div class="col-6 mb-1.5">
+            <div class="multi-relay-card h-100 d-flex flex-column justify-content-between p-1.5 rounded-3 border" style="background:#ffffff; border-color:#e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
               <div>
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                  <span class="badge bg-light text-dark border" style="font-size:0.68rem;">${m.league_name || sport}</span>
-                  <span class="badge bg-danger text-white" style="font-size:0.65rem;">● LIVE</span>
+                  <span class="badge bg-light text-dark border text-truncate" style="font-size:0.62rem; max-width:58%;">${m.league_name || sport}</span>
+                  ${statusBadge}
                 </div>
-                <div class="d-flex justify-content-between align-items-center text-center my-1">
-                  <div class="fw-bold text-truncate" style="font-size:0.85rem; max-width:40%;">${m.home_team_name}</div>
-                  <div class="fw-bold text-danger fs-5 font-monospace">${scoreH}:${scoreA}</div>
-                  <div class="fw-bold text-truncate" style="font-size:0.85rem; max-width:40%;">${m.away_team_name}</div>
-                </div>
-                ${miniVisual}
-                <div class="small text-muted text-truncate my-1 text-center" style="font-size:0.72rem;">
-                  ${st.recent_play || st.recent_event || '치열한 접전 중'}
-                </div>
+                ${centerContent}
               </div>
-              <div class="d-flex gap-1 mt-1 pt-1 border-top">
-                <button class="btn btn-sm btn-outline-primary py-0.5 px-2 flex-fill fw-bold" onclick="selectPredMatch(${m.id}, false); switchCenterViewMode('RELAY');" style="font-size:0.70rem;">
+              <div class="d-flex gap-1 mt-1 pt-1 border-top" style="border-color:#f1f5f9 !important;">
+                <button class="btn btn-sm btn-outline-primary py-0 px-1 flex-fill fw-bold" onclick="focusSingleMatchRelay(${m.id})" style="font-size:0.67rem; border-radius:4px;">
                   단일 집중
                 </button>
-                <button class="btn btn-sm btn-primary py-0.5 px-2 fw-bold" onclick="quickSendLiveToChat('${m.home_team_name} vs ${m.away_team_name}', '${st.recent_play || st.recent_event || '실시간 경기 중계'}')" style="font-size:0.70rem;">
+                <button class="btn btn-sm btn-primary py-0 px-1.5 fw-bold" onclick="quickSendLiveToChat('${m.home_team_name} vs ${m.away_team_name}', '${isSched ? '해외배당 [승 ' + odds.home + ' / 무 ' + (odds.draw||'-') + ' / 패 ' + odds.away + ']' : (isFin ? '최종 ' + scoreH + ':' + scoreA + ' 공식종료' : (st.recent_play || st.recent_event || '실시간 경기 정보'))}')" style="font-size:0.67rem; border-radius:4px;">
                   💬 톡방
                 </button>
               </div>
@@ -11692,13 +11973,15 @@ function getFullModalMatchList() {
 
       return `
         <div class="multi-play-container">
-          <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-            <span class="fw-bold text-dark" style="font-size: 0.82rem;">
-              <i class="bi bi-grid-3x3-gap-fill text-primary me-1"></i>멀티플레이 동시 중계 모드
+          <div class="d-flex justify-content-between align-items-center mb-1.5 px-1">
+            <span class="fw-bold text-dark" style="font-size: 0.80rem;">
+              <i class="bi bi-grid-3x3-gap-fill text-primary me-1"></i>실시간 중계센터 멀티플레이
             </span>
-            <span class="badge bg-primary text-white" style="font-size: 0.68rem;">${targets.length}개 경기 동시 시청</span>
+            <span class="badge text-white fw-bold" style="background: #2563eb; font-size: 0.66rem;">
+              최대 6경기 동시 시청 (${targets.length}/6)
+            </span>
           </div>
-          <div class="row g-2">
+          <div class="row g-1.5">
             ${cardsHtml}
           </div>
         </div>
