@@ -209,7 +209,7 @@ class MatchService:
         # 리그명에 따라 sport_code 자동 감지
         if league_name:
             ln_upper = league_name.upper()
-            if any(s in ln_upper for s in ["EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "EREDIVISIE", "CHAMPIONSHIP", "UCL", "UEL", "LIBERTADORES", "ENGLAND_CUP", "FA_CUP", "CARABAO", "CUP", "프리미어", "라리가", "분데스", "세리에", "리그 1", "에레디비시", "리베르타도레스", "코파", "남미", "챔피언십", "챔피언스", "챔스", "FA컵", "카라바오", "리그컵", "컵대회"]):
+            if any(s in ln_upper for s in ["EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "EREDIVISIE", "CHAMPIONSHIP", "UCL", "UEL", "LIBERTADORES", "JLEAGUE", "J_LEAGUE", "KLEAGUE", "K_LEAGUE", "ENGLAND_CUP", "FA_CUP", "CARABAO", "CUP", "프리미어", "라리가", "분데스", "세리에", "리그 1", "에레디비시", "리베르타도레스", "코파", "남미", "챔피언십", "챔피언스", "챔스", "J리그", "K리그", "FA컵", "카라바오", "리그컵", "컵대회"]):
                 sport_code = "SOCCER"
             elif any(b in ln_upper for b in ["NBA", "KBL", "FIBA", "농구", "월드컵", "여자농구"]):
                 sport_code = "BASKETBALL"
@@ -232,8 +232,16 @@ class MatchService:
                 query = query.filter(or_(Match.league_name.contains("리그 1"), Match.league_name.contains("Ligue 1")))
             elif ln_u in ["EREDIVISIE"]:
                 query = query.filter(or_(Match.league_name.contains("에레디비시"), Match.league_name.contains("Eredivisie")))
-            elif ln_u in ["LIBERTADORES", "COPA_LIBERTADORES"]:
+            elif ln_u in ["LIBERTADORES", "COPA_LIBERTADORES", "COPA"]:
                 query = query.filter(or_(Match.league_name.contains("리베르타도레스"), Match.league_name.contains("Libertadores")))
+            elif ln_u in ["JLEAGUE", "J_LEAGUE", "J1", "J1_LEAGUE"]:
+                query = query.filter(or_(Match.league_name.contains("J리그"), Match.league_name.contains("J.League")))
+            elif ln_u in ["KLEAGUE", "K_LEAGUE", "KLEAGUE_ALL"]:
+                query = query.filter(Match.league_name.contains("K리그"))
+            elif ln_u in ["KLEAGUE_1", "K_LEAGUE_1", "KLEAGUE1", "K1"]:
+                query = query.filter(Match.league_name.contains("K리그 1"))
+            elif ln_u in ["KLEAGUE_2", "K_LEAGUE_2", "KLEAGUE2", "K2"]:
+                query = query.filter(Match.league_name.contains("K리그 2"))
             elif ln_u in ["KBL"]:
                 query = query.filter(or_(Match.league_name.contains("KBL"), Match.league_name.contains("한국 프로농구")))
             elif ln_u in ["NBA"]:

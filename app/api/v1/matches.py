@@ -20,8 +20,9 @@ def clear_matches_cache():
 def list_matches(
     response: Response,
     sport_code: Optional[str] = Query(None, description="스포츠 종목 코드 (BASEBALL, SOCCER, BASKETBALL 또는 ALL)"),
-    league_name: Optional[str] = Query(None, description="리그명 (MLB, KBO, NPB, EPL, LALIGA, NBA 등)"),
+    league_name: Optional[str] = Query(None, description="리그명 (MLB, KBO, NPB, EPL, LALIGA, NBA, KLEAGUE, JLEAGUE 등)"),
     status: Optional[str] = Query(None, description="상태 필터 (SCHEDULED, LIVE, FINISHED)"),
+    date: Optional[str] = Query(None, description="특정 일자 조회 (YYYY-MM-DD)"),
     start_date: Optional[str] = Query(None, description="시작일 (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="종료일 (YYYY-MM-DD)"),
     limit: Optional[int] = Query(None, description="조회 개수 제한"),
@@ -29,6 +30,12 @@ def list_matches(
     db: Session = Depends(get_db)
 ):
     """지정된 종목 및 조건에 맞는 경기 일정/결과 목록을 조회합니다."""
+    if date:
+        if not start_date:
+            start_date = date
+        if not end_date:
+            end_date = date
+
     response.headers["Cache-Control"] = "public, max-age=5, s-maxage=10"
     cache_key = f"{sport_code}:{league_name}:{status}:{start_date}:{end_date}:{limit}:{order}"
     now = time.time()
