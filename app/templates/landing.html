@@ -5133,7 +5133,8 @@ function getFullModalMatchList() {
       if (!matches || matches.length === 0) {
         rowsHtml = '<div class="text-center text-muted py-3 small bg-white">최근 경기 데이터가 없습니다.</div>';
       } else {
-        rowsHtml = matches.map((item, idx) => renderSoccerMatchRowWithDrawer(item, idx, prefix, secKey, isH2H, baseTeamName, sportCode)).join('');
+        const sortedMatches = [...matches].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        rowsHtml = sortedMatches.map((item, idx) => renderSoccerMatchRowWithDrawer(item, idx, prefix, secKey, isH2H, baseTeamName, sportCode)).join('');
       }
 
       let secBadge = '';
@@ -5173,9 +5174,9 @@ function getFullModalMatchList() {
     function buildSoccerMobileAppFullHtml(m, matchup, prefix) {
       matchup = ensureMatchupData(m, matchup);
       const sportCode = (m.sport_code || (matchup && matchup.sport_code) || 'SOCCER').toUpperCase();
-      const h2hMatches = matchup.h2h_matches || [];
-      const homeRecent = matchup.home_recent_matches || [];
-      const awayRecent = matchup.away_recent_matches || [];
+      const h2hMatches = [...(matchup.h2h_matches || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      const homeRecent = [...(matchup.home_recent_matches || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      const awayRecent = [...(matchup.away_recent_matches || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
       // 1. H2H summary
       let hWins = 0, draws = 0, aWins = 0, totalGF = 0, totalGA = 0;
@@ -5241,7 +5242,7 @@ function getFullModalMatchList() {
     function buildSoccerMobileAppH2HOnlyHtml(m, matchup, prefix) {
       matchup = ensureMatchupData(m, matchup);
       const sportCode = (m.sport_code || (matchup && matchup.sport_code) || 'SOCCER').toUpperCase();
-      const h2hMatches = matchup.h2h_matches || [];
+      const h2hMatches = [...(matchup.h2h_matches || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
       let hWins = 0, draws = 0, aWins = 0, totalGF = 0, totalGA = 0;
       h2hMatches.forEach(hm => {
         if (hm.home_score > hm.away_score) hWins++;
@@ -5269,8 +5270,8 @@ function getFullModalMatchList() {
     function buildSoccerMobileAppRecentOnlyHtml(m, matchup, prefix) {
       matchup = ensureMatchupData(m, matchup);
       const sportCode = (m.sport_code || (matchup && matchup.sport_code) || 'SOCCER').toUpperCase();
-      const homeRecent = matchup.home_recent_matches || [];
-      const awayRecent = matchup.away_recent_matches || [];
+      const homeRecent = [...(matchup.home_recent_matches || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      const awayRecent = [...(matchup.away_recent_matches || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
       let hRecW = 0, hRecD = 0, hRecL = 0, hRecGF = 0, hRecGA = 0;
       homeRecent.forEach(rm => {
@@ -5984,16 +5985,16 @@ function getFullModalMatchList() {
       if (!matchup.h2h_matches || matchup.h2h_matches.length === 0) {
         if (isSoccer) {
           matchup.h2h_matches = [
-            { date: '26.05.10', home_team: homeName, away_team: awayName, home_score: 2, away_score: 1, venue: '홈구장' },
-            { date: '25.12.02', home_team: homeName, away_team: awayName, home_score: 1, away_score: 1, venue: '홈구장' },
-            { date: '25.08.18', home_team: awayName, away_team: homeName, home_score: 0, away_score: 1, venue: '원정구장' },
-            { date: '25.04.14', home_team: awayName, away_team: homeName, home_score: 2, away_score: 0, venue: '원정구장' },
-            { date: '24.11.23', home_team: homeName, away_team: awayName, home_score: 0, away_score: 0, venue: '홈구장' },
-            { date: '24.08.12', home_team: awayName, away_team: homeName, home_score: 1, away_score: 3, venue: '원정구장' },
-            { date: '24.03.05', home_team: homeName, away_team: awayName, home_score: 2, away_score: 1, venue: '홈구장' },
-            { date: '23.10.29', home_team: awayName, away_team: homeName, home_score: 2, away_score: 2, venue: '원정구장' },
-            { date: '23.05.17', home_team: homeName, away_team: awayName, home_score: 1, away_score: 0, venue: '홈구장' },
-            { date: '23.01.21', home_team: awayName, away_team: homeName, home_score: 1, away_score: 2, venue: '원정구장' }
+            { date: '26.09.04', home_team: homeName, away_team: awayName, home_score: 2, away_score: 1, venue: '홈구장' },
+            { date: '26.08.28', home_team: awayName, away_team: homeName, home_score: 1, away_score: 1, venue: '원정구장' },
+            { date: '26.08.15', home_team: homeName, away_team: awayName, home_score: 3, away_score: 0, venue: '홈구장' },
+            { date: '26.07.25', home_team: awayName, away_team: homeName, home_score: 0, away_score: 2, venue: '원정구장' },
+            { date: '26.07.10', home_team: homeName, away_team: awayName, home_score: 1, away_score: 0, venue: '홈구장' },
+            { date: '26.06.20', home_team: awayName, away_team: homeName, home_score: 2, away_score: 2, venue: '원정구장' },
+            { date: '26.05.15', home_team: homeName, away_team: awayName, home_score: 2, away_score: 1, venue: '홈구장' },
+            { date: '26.04.22', home_team: awayName, away_team: homeName, home_score: 1, away_score: 3, venue: '원정구장' },
+            { date: '26.03.18', home_team: homeName, away_team: awayName, home_score: 1, away_score: 1, venue: '홈구장' },
+            { date: '26.02.14', home_team: awayName, away_team: homeName, home_score: 0, away_score: 1, venue: '원정구장' }
           ];
         } else if (isBasketball) {
           matchup.h2h_matches = [
@@ -6679,9 +6680,9 @@ function getFullModalMatchList() {
 
     function buildRecent2MatchScoreboardHtml(m, matchup) {
       matchup = ensureMatchupData(m, matchup);
-      const h2hMatches = matchup.h2h_matches || [];
-      const homeRecent = matchup.home_recent_matches || [];
-      const awayRecent = matchup.away_recent_matches || [];
+      const h2hMatches = [...(matchup.h2h_matches || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      const homeRecent = [...(matchup.home_recent_matches || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      const awayRecent = [...(matchup.away_recent_matches || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
       let targetList = [];
       if (h2hMatches.length >= 2) {

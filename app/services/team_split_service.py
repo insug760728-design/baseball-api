@@ -75,13 +75,15 @@ def _get_baseball_recent_pitching(conn, team_name: str, limit: int = 3, league_n
     야구 전용: 팀의 최근 3경기 선발 투구수 및 불펜 투수진 투구수 상세 추출
     """
     c = conn.cursor()
-    query = """
+    t_aliases = get_all_team_aliases(team_name)
+    placeholders = ",".join(["?"] * len(t_aliases))
+    query = f"""
         SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
         FROM matches
         WHERE sport_code = 'BASEBALL' AND status = 'FINISHED'
-          AND (home_team_name = ? OR away_team_name = ?)
+          AND (home_team_name COLLATE NOCASE IN ({placeholders}) OR away_team_name COLLATE NOCASE IN ({placeholders}))
     """
-    params = [team_name, team_name]
+    params = list(t_aliases) + list(t_aliases)
     if league_name:
         query += " AND (league_name = ? OR league_name LIKE ?)"
         params.append(league_name)
@@ -94,19 +96,19 @@ def _get_baseball_recent_pitching(conn, team_name: str, limit: int = 3, league_n
     results = []
     total_bp_pitches_all_3 = 0
     for mid, mdate, hteam, ateam, hscore, ascore, lg in matches:
-        is_home = (hteam == team_name)
+        is_home = any(hteam.lower() == x.lower() for x in t_aliases)
         opp = ateam if is_home else hteam
         team_score = hscore if is_home else ascore
         opp_score = ascore if is_home else hscore
         res = "W" if team_score > opp_score else ("D" if team_score == opp_score else "L")
         
         # Query pitcher stats
-        c.execute("""
+        c.execute(f"""
             SELECT player_name, position, extra_stats
             FROM player_match_stats
-            WHERE match_id = ? AND team_name = ?
+            WHERE match_id = ? AND team_name COLLATE NOCASE IN ({placeholders})
             ORDER BY id ASC
-        """, (mid, team_name))
+        """, [mid] + list(t_aliases))
         p_rows = c.fetchall()
         pitchers = []
         for pname, pos, ex_str in p_rows:
@@ -198,13 +200,15 @@ def _get_baseball_recent_batting(conn, team_name: str, limit: int = 3, league_na
     야구 전용: 팀의 최근 3경기 타격/타율, 득점력, 홈런, 타격감 트렌드 집계
     """
     c = conn.cursor()
-    query = """
+    t_aliases = get_all_team_aliases(team_name)
+    placeholders = ",".join(["?"] * len(t_aliases))
+    query = f"""
         SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
         FROM matches
         WHERE sport_code = 'BASEBALL' AND status = 'FINISHED'
-          AND (home_team_name = ? OR away_team_name = ?)
+          AND (home_team_name COLLATE NOCASE IN ({placeholders}) OR away_team_name COLLATE NOCASE IN ({placeholders}))
     """
-    params = [team_name, team_name]
+    params = list(t_aliases) + list(t_aliases)
     if league_name:
         query += " AND (league_name = ? OR league_name LIKE ?)"
         params.append(league_name)
@@ -224,18 +228,18 @@ def _get_baseball_recent_batting(conn, team_name: str, limit: int = 3, league_na
     total_so = 0
     
     for mid, mdate, hteam, ateam, hscore, ascore, lg in matches:
-        is_home = (hteam == team_name)
+        is_home = any(hteam.lower() == x.lower() for x in t_aliases)
         opp = ateam if is_home else hteam
         team_score = hscore if is_home else ascore
         opp_score = ascore if is_home else hscore
         res = "W" if team_score > opp_score else ("D" if team_score == opp_score else "L")
         
-        c.execute("""
+        c.execute(f"""
             SELECT player_name, position, extra_stats
             FROM player_match_stats
-            WHERE match_id = ? AND team_name = ?
+            WHERE match_id = ? AND team_name COLLATE NOCASE IN ({placeholders})
             ORDER BY id ASC
-        """, (mid, team_name))
+        """, [mid] + list(t_aliases))
         p_rows = c.fetchall()
         
         hitters = []
@@ -350,8 +354,12 @@ def _detect_baseball_series_context(conn, home_team: str, away_team: str, match_
     earliest_dt_str = (target_dt - timedelta(days=5)).strftime("%Y-%m-%d 00:00")
     
     c = conn.cursor()
+    h_aliases = get_all_team_aliases(home_team)
+    a_aliases = get_all_team_aliases(away_team)
+    placeholders_h = ",".join(["?"] * len(h_aliases))
+    placeholders_a = ",".join(["?"] * len(a_aliases))
 
-    c.execute("""
+    c.execute(f"""
         SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, status
         FROM matches
         WHERE sport_code = 'BASEBALL'
@@ -359,12 +367,12 @@ def _detect_baseball_series_context(conn, home_team: str, away_team: str, match_
           AND match_date < ?
           AND match_date >= ?
           AND (
-              (home_team_name = ? AND away_team_name = ?) OR
-              (home_team_name = ? AND away_team_name = ?)
+              (home_team_name COLLATE NOCASE IN ({placeholders_h}) AND away_team_name COLLATE NOCASE IN ({placeholders_a})) OR
+              (home_team_name COLLATE NOCASE IN ({placeholders_a}) AND away_team_name COLLATE NOCASE IN ({placeholders_h}))
           )
         ORDER BY match_date DESC
         LIMIT 4
-    """, (match_date, earliest_dt_str, home_team, away_team, away_team, home_team))
+    """, [match_date, earliest_dt_str] + list(h_aliases) + list(a_aliases) + list(a_aliases) + list(h_aliases))
     
     rows = c.fetchall()
     
@@ -772,23 +780,26 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
     # 실제 소속 구단의 최근 실제 경기에서 상대팀 및 경기 정보 추출
     team_recent_opps = []
     try:
-        c.execute("""
+        t_aliases = get_all_team_aliases(team_name)
+        placeholders = ",".join(["?"] * len(t_aliases))
+        c.execute(f"""
             SELECT match_date, home_team_name, away_team_name, home_score, away_score
             FROM matches
-            WHERE (home_team_name = ? OR away_team_name = ?) AND status = 'FINISHED'
+            WHERE (home_team_name COLLATE NOCASE IN ({placeholders}) OR away_team_name COLLATE NOCASE IN ({placeholders})) AND status = 'FINISHED'
             ORDER BY match_date DESC
             LIMIT 10
-        """, (team_name, team_name))
+        """, list(t_aliases) + list(t_aliases))
         for m_row in c.fetchall():
             m_dt, m_h, m_a, m_hs, m_as = m_row
-            m_opp = m_a if m_h == team_name else m_h
-            if m_opp and m_opp != team_name and not any(x["opp"] == m_opp for x in team_recent_opps):
+            is_cur_h = any(m_h.lower() == x.lower() for x in t_aliases)
+            m_opp = m_a if is_cur_h else m_h
+            if m_opp and not any(m_opp.lower() == x.lower() for x in t_aliases) and not any(x["opp"] == m_opp for x in team_recent_opps):
                 team_recent_opps.append({
                     "date": m_dt[:10] if m_dt else sample_dates[len(team_recent_opps) % 3],
                     "opp": m_opp,
-                    "is_home": (m_h == team_name),
-                    "team_score": m_hs if m_h == team_name else m_as,
-                    "opp_score": m_as if m_h == team_name else m_hs
+                    "is_home": is_cur_h,
+                    "team_score": m_hs if is_cur_h else m_as,
+                    "opp_score": m_as if is_cur_h else m_hs
                 })
     except Exception:
         pass
@@ -1847,24 +1858,24 @@ class TeamSplitService:
         conn = sqlite3.connect("sports_data.db", timeout=15.0)
         c = conn.cursor()
 
-        h_pref = home_team.replace(" ", "").replace("FC", "").replace("에프씨", "")[:3] if home_team else ""
-        a_pref = away_team.replace(" ", "").replace("FC", "").replace("에프씨", "")[:3] if away_team else ""
-        c.execute("""
+        h_aliases = get_all_team_aliases(home_team)
+        a_aliases = get_all_team_aliases(away_team)
+        placeholders_h = ",".join(["?"] * len(h_aliases))
+        placeholders_a = ",".join(["?"] * len(a_aliases))
+
+        c.execute(f"""
             SELECT m.id, m.sport_code, m.league_name, m.home_team_name, m.away_team_name, 
                    m.home_score, m.away_score, m.match_date, md.team_stats
             FROM matches m
             LEFT JOIN match_details md ON m.id = md.match_id
             WHERE m.status = 'FINISHED'
-              AND m.sport_code = ?
+              AND (m.sport_code = ? OR ? IN ('ALL', 'NONE', ''))
               AND (
-                  m.home_team_name IN (?, ?) OR m.away_team_name IN (?, ?) OR
-                  (length(?) >= 2 AND (m.home_team_name LIKE ? OR m.away_team_name LIKE ?)) OR
-                  (length(?) >= 2 AND (m.home_team_name LIKE ? OR m.away_team_name LIKE ?))
+                  m.home_team_name COLLATE NOCASE IN ({placeholders_h}) OR m.away_team_name COLLATE NOCASE IN ({placeholders_h}) OR
+                  m.home_team_name COLLATE NOCASE IN ({placeholders_a}) OR m.away_team_name COLLATE NOCASE IN ({placeholders_a})
               )
             ORDER BY m.match_date ASC
-        """, (sport_code, home_team, away_team, home_team, away_team,
-              h_pref, f"%{h_pref}%", f"%{h_pref}%",
-              a_pref, f"%{a_pref}%", f"%{a_pref}%"))
+        """, [sport_code, sport_code] + list(h_aliases) + list(h_aliases) + list(a_aliases) + list(a_aliases))
         rows = c.fetchall()
 
         team_splits = defaultdict(lambda: {
@@ -2053,18 +2064,33 @@ class TeamSplitService:
                 team_splits[away_name]["recent_5"].append('D')
                 team_splits[away_name]["recent_10"].append('D')
 
-            # H2H tracking
-            if (home_name == home_team and away_name == away_team) or (home_name == away_team and away_name == home_team):
-                sorted_pair = f"{min(home_name, away_name)} vs {max(home_name, away_name)}"
+            # H2H tracking with alias awareness
+            is_h2h_match = (
+                (any(home_name.lower() == x.lower() for x in h_aliases) and any(away_name.lower() == x.lower() for x in a_aliases)) or
+                (any(home_name.lower() == x.lower() for x in a_aliases) and any(away_name.lower() == x.lower() for x in h_aliases))
+            )
+            if is_h2h_match:
+                sorted_pair = f"{min(home_team, away_team)} vs {max(home_team, away_team)}"
                 h2h[sorted_pair]["total"] += 1
-                if h_score > a_score:
-                    if home_name < away_name: h2h[sorted_pair]["teamA_wins"] += 1
-                    else: h2h[sorted_pair]["teamB_wins"] += 1
-                elif a_score > h_score:
-                    if away_name < home_name: h2h[sorted_pair]["teamA_wins"] += 1
-                    else: h2h[sorted_pair]["teamB_wins"] += 1
+                cur_h_is_home = any(home_name.lower() == x.lower() for x in h_aliases)
+                h_wins_this = (h_score > a_score and cur_h_is_home) or (a_score > h_score and not cur_h_is_home)
+                a_wins_this = (a_score > h_score and cur_h_is_home) or (h_score > a_score and not cur_h_is_home)
+                if home_team < away_team:
+                    if h_wins_this: h2h[sorted_pair]["teamA_wins"] += 1
+                    elif a_wins_this: h2h[sorted_pair]["teamB_wins"] += 1
+                    else: h2h[sorted_pair]["draws"] += 1
                 else:
-                    h2h[sorted_pair]["draws"] += 1
+                    if h_wins_this: h2h[sorted_pair]["teamB_wins"] += 1
+                    elif a_wins_this: h2h[sorted_pair]["teamA_wins"] += 1
+                    else: h2h[sorted_pair]["draws"] += 1
+
+        # Copy data to canonical home_team and away_team keys if only alias was accumulated
+        for canonical, aliases in [(home_team, h_aliases), (away_team, a_aliases)]:
+            if canonical not in team_splits or team_splits[canonical]["overall"]["games"] == 0:
+                for alias in aliases:
+                    if alias in team_splits and team_splits[alias]["overall"]["games"] > 0:
+                        team_splits[canonical] = team_splits[alias]
+                        break
 
         for t in [home_team, away_team]:
             if t in team_splits:
@@ -2551,20 +2577,25 @@ class TeamSplitService:
             c_conn = sqlite3.connect("sports_data.db", timeout=15.0)
             c_cur = c_conn.cursor()
 
-            # 1. Recent 10 H2H matches
-            c_cur.execute("""
+            h_aliases = get_all_team_aliases(home_team)
+            a_aliases = get_all_team_aliases(away_team)
+            placeholders_h = ",".join(["?"] * len(h_aliases))
+            placeholders_a = ",".join(["?"] * len(a_aliases))
+
+            # 1. Recent 10 H2H matches (strictly sorted DESC by match_date)
+            c_cur.execute(f"""
                 SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
                 FROM matches
                 WHERE status = 'FINISHED' AND (
-                    (home_team_name = ? AND away_team_name = ?) OR
-                    (home_team_name = ? AND away_team_name = ?)
+                    (home_team_name COLLATE NOCASE IN ({placeholders_h}) AND away_team_name COLLATE NOCASE IN ({placeholders_a})) OR
+                    (home_team_name COLLATE NOCASE IN ({placeholders_a}) AND away_team_name COLLATE NOCASE IN ({placeholders_h}))
                 )
                 ORDER BY match_date DESC
                 LIMIT 10
-            """, (home_team, away_team, away_team, home_team))
+            """, list(h_aliases) + list(a_aliases) + list(a_aliases) + list(h_aliases))
             for row in c_cur.fetchall():
                 m_id, m_date, h_name, a_name, h_sc, a_sc, leg = row
-                is_cur_home = (h_name == home_team)
+                is_cur_home = any(h_name.lower() == x.lower() for x in h_aliases)
                 cur_home_score = h_sc if is_cur_home else a_sc
                 cur_away_score = a_sc if is_cur_home else h_sc
                 res = "W" if cur_home_score > cur_away_score else ("D" if cur_home_score == cur_away_score else "L")
@@ -2572,8 +2603,8 @@ class TeamSplitService:
                     "match_id": m_id,
                     "date": m_date[:10] if m_date else "",
                     "time": m_date[11:16] if (m_date and len(m_date) >= 16) else "",
-                    "home_team": home_team,
-                    "away_team": away_team,
+                    "home_team": home_team if is_cur_home else away_team,
+                    "away_team": away_team if is_cur_home else home_team,
                     "home_score": cur_home_score,
                     "away_score": cur_away_score,
                     "venue": "홈" if is_cur_home else "원정",
@@ -2588,39 +2619,30 @@ class TeamSplitService:
                     else: eff_sport = 'SOCCER'
 
                 if eff_sport == "SOCCER":
-                    h2h_item = _enrich_soccer_match_events(c_cur, h2h_item, home_team, away_team, cur_home_score, cur_away_score, match_id=m_id, date_str=m_date)
+                    h2h_item = _enrich_soccer_match_events(c_cur, h2h_item, home_team if is_cur_home else away_team, away_team if is_cur_home else home_team, cur_home_score, cur_away_score, match_id=m_id, date_str=m_date)
                 elif eff_sport == "BASEBALL":
-                    h2h_item = _enrich_baseball_match_events(c_cur, h2h_item, home_team, away_team, cur_home_score, cur_away_score, match_id=m_id, date_str=m_date)
+                    h2h_item = _enrich_baseball_match_events(c_cur, h2h_item, home_team if is_cur_home else away_team, away_team if is_cur_home else home_team, cur_home_score, cur_away_score, match_id=m_id, date_str=m_date)
                 elif eff_sport == "BASKETBALL":
-                    h2h_item = _enrich_basketball_match_events(c_cur, h2h_item, home_team, away_team, cur_home_score, cur_away_score, match_id=m_id, date_str=m_date)
+                    h2h_item = _enrich_basketball_match_events(c_cur, h2h_item, home_team if is_cur_home else away_team, away_team if is_cur_home else home_team, cur_home_score, cur_away_score, match_id=m_id, date_str=m_date)
                 else:
                     h2h_item["odds"] = _generate_match_odds(cur_home_score, cur_away_score, f"{home_team}_{away_team}_{m_id}")
                 recent_h2h_matches.append(h2h_item)
 
-            # 2. Recent 10 matches for Home Team
-            c_cur.execute("""
+            # 2. Recent 10 matches for Home Team (strictly sorted DESC by match_date)
+            c_cur.execute(f"""
                 SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
                 FROM matches
-                WHERE status = 'FINISHED' AND (home_team_name = ? OR away_team_name = ?)
+                WHERE status = 'FINISHED' AND (
+                    home_team_name COLLATE NOCASE IN ({placeholders_h}) OR
+                    away_team_name COLLATE NOCASE IN ({placeholders_h})
+                )
                 ORDER BY match_date DESC
                 LIMIT 10
-            """, (home_team, home_team))
+            """, list(h_aliases) + list(h_aliases))
             h_rows = c_cur.fetchall()
-            if not h_rows and home_team and len(home_team) >= 2:
-                h_pref = home_team.replace(" ", "").replace("FC", "").replace("에프씨", "")[:3]
-                if h_pref:
-                    c_cur.execute("""
-                        SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
-                        FROM matches
-                        WHERE status = 'FINISHED' AND (home_team_name LIKE ? OR away_team_name LIKE ?)
-                        ORDER BY match_date DESC
-                        LIMIT 10
-                    """, (f"%{h_pref}%", f"%{h_pref}%"))
-                    h_rows = c_cur.fetchall()
-
             for row in h_rows:
                 m_id, m_date, h_name, a_name, h_sc, a_sc, leg = row
-                is_h = (h_name == home_team or (home_team and home_team in h_name))
+                is_h = any(h_name.lower() == x.lower() for x in h_aliases)
                 gf = h_sc if is_h else a_sc
                 ga = a_sc if is_h else h_sc
                 opp = a_name if is_h else h_name
@@ -2654,29 +2676,21 @@ class TeamSplitService:
                     h_rec_item["odds"] = _generate_match_odds(gf, ga, f"{home_team}_{opp}_{m_id}")
                 home_recent_matches.append(h_rec_item)
 
-            # 3. Recent 10 matches for Away Team
-            c_cur.execute("""
+            # 3. Recent 10 matches for Away Team (strictly sorted DESC by match_date)
+            c_cur.execute(f"""
                 SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
                 FROM matches
-                WHERE status = 'FINISHED' AND (home_team_name = ? OR away_team_name = ?)
+                WHERE status = 'FINISHED' AND (
+                    home_team_name COLLATE NOCASE IN ({placeholders_a}) OR
+                    away_team_name COLLATE NOCASE IN ({placeholders_a})
+                )
                 ORDER BY match_date DESC
                 LIMIT 10
-            """, (away_team, away_team))
+            """, list(a_aliases) + list(a_aliases))
             a_rows = c_cur.fetchall()
-            if not a_rows and away_team and len(away_team) >= 2:
-                a_pref = away_team.replace(" ", "").replace("FC", "").replace("에프씨", "")[:3]
-                if a_pref:
-                    c_cur.execute("""
-                        SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
-                        FROM matches
-                        WHERE status = 'FINISHED' AND (home_team_name LIKE ? OR away_team_name LIKE ?)
-                        ORDER BY match_date DESC
-                        LIMIT 10
-                    """, (f"%{a_pref}%", f"%{a_pref}%"))
-                    a_rows = c_cur.fetchall()
             for row in a_rows:
                 m_id, m_date, h_name, a_name, h_sc, a_sc, leg = row
-                is_h = (h_name == away_team or (away_team and away_team in h_name))
+                is_h = any(h_name.lower() == x.lower() for x in a_aliases)
                 gf = h_sc if is_h else a_sc
                 ga = a_sc if is_h else h_sc
                 opp = a_name if is_h else h_name
@@ -2709,6 +2723,11 @@ class TeamSplitService:
                 else:
                     a_rec_item["odds"] = _generate_match_odds(gf, ga, f"{away_team}_{opp}_{m_id}")
                 away_recent_matches.append(a_rec_item)
+
+            # Ensure all lists are strictly sorted by date and time DESC
+            recent_h2h_matches.sort(key=lambda x: (x.get("date", ""), x.get("time", "")), reverse=True)
+            home_recent_matches.sort(key=lambda x: (x.get("date", ""), x.get("time", "")), reverse=True)
+            away_recent_matches.sort(key=lambda x: (x.get("date", ""), x.get("time", "")), reverse=True)
 
             # 4. Baseball recent 3 games pitching & batting stats (starter NP, bullpen NP, team batting)
             home_pitching_3g = {"games": [], "total_bullpen_np_3g": 0, "fatigue_level": "양호"}

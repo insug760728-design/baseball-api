@@ -264,17 +264,25 @@ class MatchService:
                 query = query.filter(Match.league_name.contains(league_name))
         if status:
             query = query.filter(Match.status == status)
+
+        current_year = datetime.now().year
+        today_str = datetime.now().strftime("%Y-%m-%d")
+
         if start_date:
-            if start_date.upper() != "ALL":
-                query = query.filter(Match.match_date >= f"{start_date} 00:00")
-        elif not end_date and not league_name:
-            today_str = datetime.now().strftime("%Y-%m-%d")
-            if order and order.lower() == "desc":
-                # 내림차순(종료 경기 조회 등)일 때는 오늘 밤 이전 경기 반환
-                query = query.filter(Match.match_date <= f"{today_str} 23:59")
+            if start_date.upper() == "ALL":
+                query = query.filter(Match.match_date >= f"{current_year}-01-01 00:00")
             else:
-                # 오름차순(기본 일정표/라이브 조회)일 때는 오늘 00:00부터 미래(오늘, 내일, 예정 및 라이브) 일정 반환
+                query = query.filter(Match.match_date >= f"{start_date} 00:00")
+        else:
+            if status == "FINISHED" or (order and order.lower() == "desc"):
+                # 최근 종료 경기 또는 내림차순(최신순) 조회: 현재 연도(2026년) 1월 1일 이후 및 오늘 밤 이전
+                query = query.filter(Match.match_date >= f"{current_year}-01-01 00:00")
+                if not end_date:
+                    query = query.filter(Match.match_date <= f"{today_str} 23:59")
+            else:
+                # 오름차순(기본 일정표/라이브 조회): 오늘 00:00부터 미래(오늘, 내일, 예정 및 라이브) 일정 반환
                 query = query.filter(Match.match_date >= f"{today_str} 00:00")
+
         if end_date:
             query = query.filter(Match.match_date <= f"{end_date} 23:59")
         

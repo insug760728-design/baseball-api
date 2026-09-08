@@ -4,6 +4,7 @@ import json
 import time
 import os
 import sqlite3
+from datetime import datetime
 
 BETMAN_TOTO_URL = 'https://www.betman.co.kr/buyPsblGame/totoGameData.do'
 BETMAN_BUYABLE_URL = 'https://www.betman.co.kr/buyPsblGame/inqBuyAbleGameInfoList.do'
@@ -180,6 +181,7 @@ class BetmanService:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
 
+            current_year = datetime.now().year
             date_param = None
             if match_date_str:
                 import re
@@ -188,10 +190,10 @@ class BetmanService:
                     date_param = f"%{m.group(1)}-{m.group(2)}%"
 
             if date_param:
-                cursor.execute('SELECT id, match_date, sport_code, league_name, home_team_name, away_team_name, home_score, away_score, status FROM matches WHERE sport_code = ? AND match_date LIKE ?', (sport_code, date_param))
+                cursor.execute(f"SELECT id, match_date, sport_code, league_name, home_team_name, away_team_name, home_score, away_score, status FROM matches WHERE sport_code = ? AND match_date LIKE ? AND match_date >= '{current_year}-01-01 00:00' ORDER BY match_date DESC", (sport_code, date_param))
                 rows = cursor.fetchall()
             else:
-                cursor.execute('SELECT id, match_date, sport_code, league_name, home_team_name, away_team_name, home_score, away_score, status FROM matches WHERE sport_code = ? ORDER BY id DESC LIMIT 50', (sport_code,))
+                cursor.execute(f"SELECT id, match_date, sport_code, league_name, home_team_name, away_team_name, home_score, away_score, status FROM matches WHERE sport_code = ? AND match_date >= '{current_year}-01-01 00:00' ORDER BY match_date DESC LIMIT 50", (sport_code,))
                 rows = cursor.fetchall()
             conn.close()
 
