@@ -20,7 +20,8 @@ SOCCER_LEAGUE_CODES = {
     "EREDIVISIE": "ned.1",
     "CHAMPIONSHIP": "eng.2",
     "UCL": "uefa.champions",
-    "UEL": "uefa.europa"
+    "UEL": "uefa.europa",
+    "LIBERTADORES": "conmebol.libertadores"
 }
 
 SOCCER_LEAGUE_NAMES = {
@@ -32,7 +33,8 @@ SOCCER_LEAGUE_NAMES = {
     "EREDIVISIE": "네덜란드 에레디비시 (Eredivisie)",
     "CHAMPIONSHIP": "잉글랜드 챔피언십 (Championship)",
     "UCL": "UEFA 챔피언스리그 (UCL)",
-    "UEL": "UEFA 유로파리그 (UEL)"
+    "UEL": "UEFA 유로파리그 (UEL)",
+    "LIBERTADORES": "코파 리베르타도레스 (Copa Libertadores)"
 }
 
 class SoccerScraper(BaseScraper):

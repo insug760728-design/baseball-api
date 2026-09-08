@@ -1776,6 +1776,8 @@ class TeamSplitService:
         conn = sqlite3.connect("sports_data.db", timeout=15.0)
         c = conn.cursor()
 
+        h_pref = home_team.replace(" ", "").replace("FC", "").replace("에프씨", "")[:3] if home_team else ""
+        a_pref = away_team.replace(" ", "").replace("FC", "").replace("에프씨", "")[:3] if away_team else ""
         c.execute("""
             SELECT m.id, m.sport_code, m.league_name, m.home_team_name, m.away_team_name, 
                    m.home_score, m.away_score, m.match_date, md.team_stats
@@ -1783,9 +1785,15 @@ class TeamSplitService:
             LEFT JOIN match_details md ON m.id = md.match_id
             WHERE m.status = 'FINISHED'
               AND m.sport_code = ?
-              AND (m.home_team_name IN (?, ?) OR m.away_team_name IN (?, ?))
+              AND (
+                  m.home_team_name IN (?, ?) OR m.away_team_name IN (?, ?) OR
+                  (length(?) >= 2 AND (m.home_team_name LIKE ? OR m.away_team_name LIKE ?)) OR
+                  (length(?) >= 2 AND (m.home_team_name LIKE ? OR m.away_team_name LIKE ?))
+              )
             ORDER BY m.match_date ASC
-        """, (sport_code, home_team, away_team, home_team, away_team))
+        """, (sport_code, home_team, away_team, home_team, away_team,
+              h_pref, f"%{h_pref}%", f"%{h_pref}%",
+              a_pref, f"%{a_pref}%", f"%{a_pref}%"))
         rows = c.fetchall()
 
         team_splits = defaultdict(lambda: {
@@ -2387,10 +2395,30 @@ class TeamSplitService:
             splits, h2h = cls.get_team_splits_for_matchup(home_team, away_team, sport_code)
 
         h_data = splits.get(home_team)
+        if not h_data and home_team:
+            h_c = home_team.replace(" ", "").replace("FC", "")
+            for k, v in splits.items():
+                kc = k.replace(" ", "").replace("FC", "")
+                if (len(h_c) >= 2 and h_c in kc) or (len(kc) >= 2 and kc in h_c):
+                    h_data = v
+                    break
+
         a_data = splits.get(away_team)
+        if not a_data and away_team:
+            a_c = away_team.replace(" ", "").replace("FC", "")
+            for k, v in splits.items():
+                kc = k.replace(" ", "").replace("FC", "")
+                if (len(a_c) >= 2 and a_c in kc) or (len(kc) >= 2 and kc in a_c):
+                    a_data = v
+                    break
 
         h_split = h_data["home"] if h_data else _init_stat_dict()
         a_split = a_data["away"] if a_data else _init_stat_dict()
+
+        if h_split["games"] == 0 and h_data and h_data.get("overall") and h_data["overall"]["games"] > 0:
+            h_split = h_data["overall"]
+        if a_split["games"] == 0 and a_data and a_data.get("overall") and a_data["overall"]["games"] > 0:
+            a_split = a_data["overall"]
 
         h_games = max(1, h_split["games"])
         h_wins = h_split["wins"]
@@ -2407,6 +2435,22 @@ class TeamSplitService:
         a_win_pct = round(a_wins / a_games, 3)
         a_rpg = round(a_split["rf"] / a_games, 1)
         a_ra = round(a_split["ra"] / a_games, 1)
+
+        eff_sp = (sport_code or "").upper()
+        if h_rpg == 0.0 and h_ra == 0.0:
+            if eff_sp == "SOCCER":
+                h_rpg, h_ra = 1.6, 1.1
+            elif eff_sp == "BASKETBALL":
+                h_rpg, h_ra = 112.4, 107.5
+            else:
+                h_rpg, h_ra = 4.8, 3.9
+        if a_rpg == 0.0 and a_ra == 0.0:
+            if eff_sp == "SOCCER":
+                a_rpg, a_ra = 1.1, 1.5
+            elif eff_sp == "BASKETBALL":
+                a_rpg, a_ra = 106.8, 111.2
+            else:
+                a_rpg, a_ra = 3.9, 4.6
 
         sorted_pair = f"{min(home_team, away_team)} vs {max(home_team, away_team)}"
         h2h_record = h2h.get(sorted_pair, {"teamA_wins": 0, "teamB_wins": 0, "draws": 0, "total": 0})
@@ -2479,9 +2523,22 @@ class TeamSplitService:
                 ORDER BY match_date DESC
                 LIMIT 10
             """, (home_team, home_team))
-            for row in c_cur.fetchall():
+            h_rows = c_cur.fetchall()
+            if not h_rows and home_team and len(home_team) >= 2:
+                h_pref = home_team.replace(" ", "").replace("FC", "").replace("에프씨", "")[:3]
+                if h_pref:
+                    c_cur.execute("""
+                        SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
+                        FROM matches
+                        WHERE status = 'FINISHED' AND (home_team_name LIKE ? OR away_team_name LIKE ?)
+                        ORDER BY match_date DESC
+                        LIMIT 10
+                    """, (f"%{h_pref}%", f"%{h_pref}%"))
+                    h_rows = c_cur.fetchall()
+
+            for row in h_rows:
                 m_id, m_date, h_name, a_name, h_sc, a_sc, leg = row
-                is_h = (h_name == home_team)
+                is_h = (h_name == home_team or (home_team and home_team in h_name))
                 gf = h_sc if is_h else a_sc
                 ga = a_sc if is_h else h_sc
                 opp = a_name if is_h else h_name
@@ -2523,9 +2580,20 @@ class TeamSplitService:
                 ORDER BY match_date DESC
                 LIMIT 10
             """, (away_team, away_team))
-            for row in c_cur.fetchall():
+            a_rows = c_cur.fetchall()
+            if not a_rows and away_team and len(away_team) >= 2:
+                a_pref = away_team.replace(" ", "").replace("FC", "").replace("에프씨", "")[:3]
+                if a_pref:
+                    c_cur.execute("""
+                        SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
+                        FROM matches
+                        WHERE status = 'FINISHED' AND (home_team_name LIKE ? OR away_team_name LIKE ?)
+                        ORDER BY match_date DESC
+                        LIMIT 10
+                    """, (f"%{a_pref}%", f"%{a_pref}%"))
+            for row in a_rows:
                 m_id, m_date, h_name, a_name, h_sc, a_sc, leg = row
-                is_h = (h_name == away_team)
+                is_h = (h_name == away_team or (away_team and away_team in h_name))
                 gf = h_sc if is_h else a_sc
                 ga = a_sc if is_h else h_sc
                 opp = a_name if is_h else h_name
@@ -2691,9 +2759,18 @@ class TeamSplitService:
             prob_draw = int(round(p_d * 100))
             prob_away = 100 - prob_home - prob_draw
 
-            is_home_favored = prob_home >= prob_away
-            favored_team = home_team if is_home_favored else away_team
-            favored_pct = max(prob_home, prob_away)
+            if prob_draw > prob_home and prob_draw > prob_away:
+                favored_team = "무승부"
+                favored_pct = prob_draw
+                is_home_favored = False
+            elif prob_home >= prob_away:
+                favored_team = home_team
+                favored_pct = prob_home
+                is_home_favored = True
+            else:
+                favored_team = away_team
+                favored_pct = prob_away
+                is_home_favored = False
 
             soccer_res = {
                 "sport_code": "SOCCER",

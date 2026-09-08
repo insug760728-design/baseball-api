@@ -79,6 +79,13 @@ SPORTS_CATALOG = {
             {"id": "CHAMPIONSHIP", "name": "잉글랜드 챔피언십 (Championship)", "api_code": "eng.2"}
         ]
     },
+    "LIBERTADORES": {
+        "title": "코파 리베르타도레스 (Copa Libertadores)",
+        "sport_code": "SOCCER",
+        "leagues": [
+            {"id": "LIBERTADORES", "name": "코파 리베르타도레스 (Copa Libertadores)", "api_code": "conmebol.libertadores"}
+        ]
+    },
     "UCL": {
         "title": "UEFA 챔피언스리그 (Champions League)",
         "sport_code": "SOCCER",
@@ -107,6 +114,13 @@ SPORTS_CATALOG = {
         "sport_code": "BASKETBALL",
         "leagues": [
             {"id": "NBA", "name": "미국 프로농구 (NBA)", "api_code": "nba"}
+        ]
+    },
+    "FIBA_WOMEN": {
+        "title": "FIBA 여자농구 월드컵 (Women's World Cup)",
+        "sport_code": "BASKETBALL",
+        "leagues": [
+            {"id": "FIBA_WOMEN", "name": "FIBA 여자농구 월드컵 (Women's World Cup)", "api_code": "fiba.women"}
         ]
     },
 

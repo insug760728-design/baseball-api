@@ -114,7 +114,17 @@ TEAM_SYNONYMS = {
     "엠폴리": ["empoli"],
     "레체": ["lecce"],
     "베로나": ["hellas verona", "verona", "헬라스"],
-    "코모": ["como"]
+    "코모": ["como"],
+
+    # Soccer (Eredivisie / Libertadores / Global)
+    "네이메헌": ["nec 네이메헌", "nec nijmegen", "nijmegen", "네이메헌"],
+    "엑셀시오르": ["excelsior", "sbv excelsior", "엑셀시오르"],
+    "플루미넨시": ["fluminense", "fluminense fc", "플루미넨세", "플루미넨시"],
+    "플라텐세": ["ca platense", "platense", "플라텐세", "ca플라텐세"],
+
+    # Basketball (International / FIBA Women)
+    "헝가리여자": ["헝가리(여)", "헝가리 여자", "hungary women", "hungary w", "헝가리"],
+    "일본여자": ["일본(여)", "일본 여자", "japan women", "japan w", "일본"]
 }
 
 def clean_name(n):
@@ -540,6 +550,8 @@ class BetmanService:
                     ai_pick = '승'
                 elif fav == db_match['away_team_name']:
                     ai_pick = '패'
+                elif fav == '무승부' or db_pred.get('pick_type') == 'DRAW' or db_pred.get('expected_label') == '예상무':
+                    ai_pick = '1' if gm_id == 'G024' else ('5' if gm_id == 'G027' else '무')
                 ai_conf = db_pred.get('confidence', votes['win'])
             else:
                 if votes['loss'] > votes['win'] and votes['loss'] > votes['draw']:
