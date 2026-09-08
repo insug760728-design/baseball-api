@@ -1336,6 +1336,7 @@
               <!-- 리그별 퀵 필터: 🏆 챔스(UCL), 🏴󠁧󠁢󠁥󠁮󠁧󠁿 챔피언십, EPL, 라리가, 분데스 등 -->
               <div class="d-flex gap-1 overflow-x-auto py-1 my-1" style="scrollbar-width: none; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
                 <button class="btn btn-xs league-chip-btn active text-nowrap fw-bold" id="predLeagueALL" onclick="filterPredLeague('ALL')">전체</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueKBL" onclick="filterPredLeague('KBL')" style="background: #f0fdf4; color: #15803d; border: 1.5px solid #bbf7d0;"><i class="bi bi-dribbble me-1"></i>🏀 KBL</button>
                 <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueNBA" onclick="filterPredLeague('NBA')" style="background: #fff7ed; color: #c2410c; border: 1.5px solid #fed7aa;"><i class="bi bi-dribbble me-1"></i>🏀 NBA</button>
                 <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueUCL" onclick="filterPredLeague('UCL')" style="background: #eff6ff; color: #1e3a8a; border: 1.5px solid #bfdbfe;"><i class="bi bi-trophy-fill text-warning me-1"></i>🏆 챔스</button>
                 <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueCHAMPIONSHIP" onclick="filterPredLeague('CHAMPIONSHIP')" style="background: #f8fafc; color: #0f172a; border: 1.5px solid #cbd5e1;"><i class="bi bi-shield-shaded text-primary me-1"></i>🏴󠁧󠁢󠁥󠁮󠁧󠁿 챔피언십</button>
@@ -1383,41 +1384,29 @@
               </button>
             </div>
 
-            <!-- Center Card Header: Mode Switch & Toto Round Buttons + Horizontal Scroll Round Bar -->
+            <!-- Center Card Header: 1:1 세이버 정밀 분석실 & 14경기 토토 팝업 실행 칩 -->
             <div class="dash-card-header p-2">
               <div class="d-flex justify-content-between align-items-center flex-nowrap gap-1">
-                <div class="d-flex gap-1" id="centerModeTabs" style="flex-shrink: 0;">
-                  <button class="btn btn-sm sport-chip-btn active text-nowrap" id="btnModeToto" onclick="openTotoModal(currentTotoRound)" style="white-space: nowrap; font-size: 0.76rem; padding: 4px 8px;">
-                    <i class="bi bi-card-checklist me-1 text-warning"></i>14경기 토토 마킹표 (배트맨 팝업)
-                  </button>
-                  <button class="btn btn-sm sport-chip-btn text-nowrap" id="btnModeDetail" onclick="switchCenterView('DETAIL')" style="white-space: nowrap; font-size: 0.76rem; padding: 4px 8px;">
-                    <i class="bi bi-cpu-fill me-1 text-info"></i>1:1 세이버 분석실
-                  </button>
+                <div class="d-flex align-items-center gap-1.5" style="flex-shrink: 0;">
+                  <span class="fw-bold text-dark text-nowrap" style="font-size: 0.88rem; font-weight: 800;">
+                    <i class="bi bi-cpu-fill text-info me-1"></i>1:1 세이버 정밀 분석실
+                  </span>
+                  <span class="badge bg-light text-secondary border d-none d-md-inline-block" style="border-color: #cbd5e1 !important; font-size: 0.68rem; font-weight: 700;">공식 기록 기반</span>
                 </div>
                 <div class="d-flex align-items-center gap-1" id="centerTotoQuickBtns" style="flex-shrink: 0;">
-                  <button class="btn btn-xs py-1 px-2 fw-bold text-nowrap" onclick="openTotoModal('W1L')" id="roundBtnW1L" style="background:#ffffff; color:#111827; border:2px solid #111827; border-radius:4px; font-size:0.74rem; font-weight: 800; white-space:nowrap;">⚾승1패</button>
-                  <button class="btn btn-xs py-1 px-2 fw-bold text-nowrap" onclick="openTotoModal('WDL')" id="roundBtnWDL" style="background:#ffffff; color:#6b7280; border:1px solid #d1d5db; border-radius:4px; font-size:0.74rem; font-weight: 600; white-space:nowrap;">⚽승무패</button>
-                  <button class="btn btn-xs py-1 px-2 fw-bold text-nowrap" onclick="openTotoModal('W5L')" id="roundBtnW5L" style="background:#ffffff; color:#6b7280; border:1px solid #d1d5db; border-radius:4px; font-size:0.74rem; font-weight: 600; white-space:nowrap;">🏀승5패</button>
+                  <button class="btn btn-xs py-1 px-2 fw-bold text-nowrap" onclick="openTotoModal('W1L')" id="roundBtnW1L" style="background:#ffffff; color:#111827; border:1.5px solid #111827; border-radius:4px; font-size:0.72rem; font-weight: 800; white-space:nowrap;" title="클릭 시 14경기 야구 승1패 팝업 열기">⚾승1패 팝업</button>
+                  <button class="btn btn-xs py-1 px-2 fw-bold text-nowrap" onclick="openTotoModal('WDL')" id="roundBtnWDL" style="background:#ffffff; color:#6b7280; border:1px solid #d1d5db; border-radius:4px; font-size:0.72rem; font-weight: 600; white-space:nowrap;" title="클릭 시 14경기 축구 승무패 팝업 열기">⚽승무패 팝업</button>
+                  <button class="btn btn-xs py-1 px-2 fw-bold text-nowrap" onclick="openTotoModal('W5L')" id="roundBtnW5L" style="background:#ffffff; color:#6b7280; border:1px solid #d1d5db; border-radius:4px; font-size:0.72rem; font-weight: 600; white-space:nowrap;" title="클릭 시 14경기 농구 승5패 팝업 열기">🏀승5패 팝업</button>
                 </div>
-              </div>
-
-              <!-- Dedicated Horizontal Scroll Round Bar (각각 아래에 예를들면 50회 51회 52회 스크롤 방식으로 볼 수 있는 영역) -->
-              <div id="totoRoundScrollBarRow" class="d-flex align-items-center gap-1 mt-1.5 pt-1 border-top" style="border-color: #e5e7eb !important;">
-                <button class="btn btn-xs p-1 text-secondary" onclick="scrollTotoRounds(-1)" title="이전 회차" style="border:1px solid #d1d5db; border-radius:4px; line-height:1; flex-shrink: 0; background:#fff;">
-                  <i class="bi bi-chevron-left" style="font-size:0.72rem;"></i>
-                </button>
-                <div id="totoRoundScrollTrack" class="d-flex align-items-center gap-1.5 overflow-auto no-scrollbar py-0.5" style="white-space: nowrap; scroll-behavior: smooth; flex-grow: 1; -webkit-overflow-scrolling: touch;">
-                  <!-- Dynamically rendered per sport: 50회, 51회, 52회... -->
-                </div>
-                <button class="btn btn-xs p-1 text-secondary" onclick="scrollTotoRounds(1)" title="다음 회차" style="border:1px solid #d1d5db; border-radius:4px; line-height:1; flex-shrink: 0; background:#fff;">
-                  <i class="bi bi-chevron-right" style="font-size:0.72rem;"></i>
-                </button>
               </div>
             </div>
 
-            <!-- Body: Either Toto Sheet or Match Detail Studio -->
+            <!-- Body: Match Detail Studio -->
             <div class="dash-card-body p-2" id="predDetailPanel" style="height: 100%;">
-              <!-- Rendered immediately with zero delay via renderTotoSheet('WDL') -->
+              <div class="text-center text-muted py-5">
+                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                <div>1:1 세이버 정밀 분석실 데이터를 불러오는 중...</div>
+              </div>
             </div>
           </div>
         </div>
@@ -1471,7 +1460,8 @@
                       <option value="NPB">⚾ NPB (일야)</option>
                       <option value="EPL">⚽ EPL (프리미어)</option>
                       <option value="LALIGA">⚽ 라리가</option>
-                      <option value="NBA">🏀 NBA (농구)</option>
+                      <option value="NBA">🏀 NBA (미국농구)</option>
+                      <option value="KBL">🏀 KBL (한국농구)</option>
                       <option value="PREDICTION">🔥 AI 픽 토론</option>
                     </select>
                   </div>
@@ -1586,7 +1576,7 @@
             <li><span class="text-muted">EPL (프리미어리그)</span></li>
             <li><span class="text-muted">라리가 / 분데스리가</span></li>
             <li><span class="text-muted">세리에A / 리그1</span></li>
-            <li><span class="text-muted">NBA (프로농구)</span></li>
+            <li><span class="text-muted">KBL / NBA (프로농구)</span></li>
           </ul>
         </div>
 
@@ -5106,8 +5096,8 @@ function getFullModalMatchList() {
     let nextSyncSeconds = 10;
     let syncIntervalId = null;
 
-    let currentCenterMode = 'TOTO'; // 'TOTO' or 'DETAIL'
-    let currentTotoRound = 'WDL'; // 'W1L' (야구), 'WDL' (축구), 'W5L' (농구)
+    let currentCenterMode = 'DETAIL'; // Always 'DETAIL' (Match Studio)
+    let currentTotoRound = 'W1L'; // 'W1L' (야구), 'WDL' (축구), 'W5L' (농구)
     let currentBetmanTs = 260051; // Current active Betman round: 51회차 (축구 승무패 오늘 23:00 마감🔥)
     let userTotoMarks = {}; // key: `${totoKey}_${seq}`, value: ['W', 'D', 'L']
 
@@ -5229,9 +5219,13 @@ function getFullModalMatchList() {
 
       renderPredMatches();
 
-      // Automatically select initial view: 14경기 토토 마킹표 (베트맨 축구 승무패 51회차)
-      switchCenterView('TOTO');
-      selectTotoRound('WDL', 260051);
+      // Automatically select initial view: 1:1 세이버 정밀 분석실
+      currentCenterMode = 'DETAIL';
+      const initMatches = getFilteredPredMatches();
+      if (initMatches.length > 0) {
+        selectPredMatch(initMatches[0].id);
+      }
+      loadBetmanToto('W1L', 260067);
 
       startLiveAutoSync(30);
       startBetman10MinSync();
@@ -5349,7 +5343,7 @@ function getFullModalMatchList() {
         try {
           let finishedUrl = '/api/v1/matches?status=FINISHED&order=desc&limit=1200';
           if (currentPredLeague && currentPredLeague !== 'ALL') {
-            const leagueParam = (currentPredLeague === 'UCL') ? 'UCL' : ((currentPredLeague === 'CHAMPIONSHIP') ? 'Championship' : (currentPredLeague === 'NBA' ? 'NBA' : currentPredLeague));
+            const leagueParam = (currentPredLeague === 'UCL') ? 'UCL' : ((currentPredLeague === 'CHAMPIONSHIP') ? 'Championship' : ((currentPredLeague === 'KBL') ? 'KBL' : (currentPredLeague === 'NBA' ? 'NBA' : currentPredLeague)));
             finishedUrl += `&league_name=${encodeURIComponent(leagueParam)}`;
           } else if (currentPredSport && currentPredSport !== 'ALL') {
             finishedUrl += `&sport_code=${encodeURIComponent(currentPredSport)}`;
@@ -5394,6 +5388,8 @@ function getFullModalMatchList() {
         filterPredLeague('ALL', false);
       } else if (sKey !== 'BASEBALL' && ['MLB', 'KBO'].includes(currentPredLeague)) {
         filterPredLeague('ALL', false);
+      } else if (sKey !== 'BASKETBALL' && ['KBL', 'NBA'].includes(currentPredLeague)) {
+        filterPredLeague('ALL', false);
       }
 
       renderPredMatches();
@@ -5405,7 +5401,7 @@ function getFullModalMatchList() {
 
     async function filterPredLeague(lKey, autoRender = true) {
       currentPredLeague = lKey;
-      ['ALL', 'NBA', 'UCL', 'CHAMPIONSHIP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'MLB', 'KBO'].forEach(k => {
+      ['ALL', 'KBL', 'NBA', 'UCL', 'CHAMPIONSHIP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'MLB', 'KBO'].forEach(k => {
         const chipBtn = document.getElementById('predLeague' + k);
         if (chipBtn) {
           if (k === lKey) chipBtn.classList.add('active');
@@ -5422,7 +5418,7 @@ function getFullModalMatchList() {
             else chipBtn.classList.remove('active');
           }
         });
-      } else if (lKey === 'NBA') {
+      } else if (lKey === 'NBA' || lKey === 'KBL') {
         currentPredSport = 'BASKETBALL';
         ['ALL', 'SOCCER', 'BASEBALL', 'BASKETBALL', 'HOCKEY', 'VOLLEYBALL'].forEach(k => {
           const chipBtn = document.getElementById('predSport' + k);
@@ -5444,15 +5440,17 @@ function getFullModalMatchList() {
 
       if (lKey !== 'ALL') {
         try {
-          const leagueParam = (lKey === 'UCL') ? 'UCL' : ((lKey === 'CHAMPIONSHIP') ? 'Championship' : (lKey === 'NBA' ? 'NBA' : lKey));
+          const leagueParam = (lKey === 'UCL') ? 'UCL' : ((lKey === 'CHAMPIONSHIP') ? 'Championship' : ((lKey === 'KBL') ? 'KBL' : (lKey === 'NBA' ? 'NBA' : lKey)));
           const resp = await fetch(`/api/v1/matches?league_name=${encodeURIComponent(leagueParam)}&order=desc&limit=800`);
           if (resp.ok) {
             const leagueData = await resp.json();
             const existingIds = new Set(allMatches.map(m => m.id));
             for (const lm of leagueData) {
-              if (!existingIds.has(lm.id)) {
+              const idx = allMatches.findIndex(m => m.id === lm.id);
+              if (idx >= 0) {
+                allMatches[idx] = lm;
+              } else {
                 allMatches.push(lm);
-                existingIds.add(lm.id);
               }
             }
           }
@@ -5518,9 +5516,11 @@ function getFullModalMatchList() {
         list = list.filter(m => m.sport_code === 'VOLLEYBALL' || (m.league_name && (m.league_name.includes('배구') || m.league_name.includes('V-리그'))));
       }
 
-      // 개별 리그 전용 필터 (NBA, UCL, CHAMPIONSHIP, EPL, LALIGA, BUNDESLIGA, SERIE_A, MLB, KBO)
-      if (currentPredLeague === 'NBA') {
-        list = list.filter(m => m.sport_code === 'BASKETBALL' || (m.league_name && m.league_name.includes('NBA')));
+      // 개별 리그 전용 필터 (KBL, NBA, UCL, CHAMPIONSHIP, EPL, LALIGA, BUNDESLIGA, SERIE_A, MLB, KBO)
+      if (currentPredLeague === 'KBL') {
+        list = list.filter(m => (m.sport_code === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('농구') || m.league_name.includes('한국'))) || (m.league_name && m.league_name.includes('KBL')));
+      } else if (currentPredLeague === 'NBA') {
+        list = list.filter(m => (m.league_name && m.league_name.includes('NBA')));
       } else if (currentPredLeague === 'CHAMPIONSHIP') {
         list = list.filter(m => m.league_name && (m.league_name.includes('Championship') || m.league_name.includes('챔피언십')));
       } else if (currentPredLeague === 'UCL') {
@@ -5553,10 +5553,20 @@ function getFullModalMatchList() {
         list = list.filter(m => m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED' || (m.match_date || '') < nowKstDateTime);
         list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
       } else if (currentPredDate === 'D0') {
-        // [오늘 경기]: 오늘 진행 중(LIVE) 또는 현재 시각 이후 예정된 경기를 우선 표시하고, 이미 지난 경기 및 종료 경기는 뒤에 최신순 배치
+        // [오늘 경기]: 오늘 진행 중(LIVE), 오늘 예정 경기, 및 오늘 밤에 이어지는 내일 새벽(00:00~06:00) 유럽 축구(챔스, 챔피언십 등) 경기를 우선 표시
         const nowKstDateTime = getKSTDateTimeString(now);
-        const todayLiveAndUpcoming = list.filter(m => (m.match_date || '').startsWith(d0Str) && m.status !== 'CANCELLED' && m.status !== 'POSTPONED' && m.status !== 'FINISHED' && (m.status === 'LIVE' || (m.match_date || '') >= nowKstDateTime));
-        const todayFinished = list.filter(m => (m.match_date || '').startsWith(d0Str) && (m.status === 'FINISHED' || (m.status !== 'LIVE' && (m.match_date || '') < nowKstDateTime)));
+        const todayLiveAndUpcoming = list.filter(m => {
+          const raw = m.match_date || '';
+          if (m.status === 'CANCELLED' || m.status === 'POSTPONED' || m.status === 'FINISHED') return false;
+          if (m.status === 'LIVE') return true;
+          const isTodayUpcoming = raw.startsWith(d0Str) && raw >= nowKstDateTime;
+          const isTonightDawn = raw.startsWith(d1Str) && raw.slice(11, 16) < '06:00';
+          return isTodayUpcoming || isTonightDawn;
+        });
+        const todayFinished = list.filter(m => {
+          const raw = m.match_date || '';
+          return raw.startsWith(d0Str) && (m.status === 'FINISHED' || (m.status !== 'LIVE' && raw < nowKstDateTime));
+        });
         todayLiveAndUpcoming.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
         todayFinished.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
         list = [...todayLiveAndUpcoming, ...todayFinished];
@@ -5630,7 +5640,8 @@ function getFullModalMatchList() {
         const oddH = (1.0 / (pH * margin)).toFixed(2);
         const oddA = (1.0 / (pA * margin)).toFixed(2);
         const isNba = m.league_name && m.league_name.includes('NBA');
-        const ouBase = (sport === 'BASEBALL') ? '8.5' : (sport === 'BASKETBALL' ? (isNba ? '226.5' : '158.5') : (sport === 'HOCKEY' ? '5.5' : '182.5'));
+        const isKbl = (sport === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('한국') || m.league_name.includes('농구'))) || (m.league_name && m.league_name.includes('KBL'));
+        const ouBase = (sport === 'BASEBALL') ? '8.5' : (sport === 'BASKETBALL' ? (isNba ? '226.5' : (isKbl ? '162.5' : '158.5')) : (sport === 'HOCKEY' ? '5.5' : '182.5'));
         return {
           type: '2WAY',
           home: oddH, away: oddA, ou: ouBase,
@@ -5972,10 +5983,18 @@ function getFullModalMatchList() {
         if (m.league_name && m.league_name.includes('NPB')) leagueTag = 'NPB(일야)';
         else if (m.league_name && m.league_name.includes('KBO')) leagueTag = 'KBO(한야)';
         else if (m.league_name && m.league_name.includes('MLB')) leagueTag = 'MLB(메이저)';
-        else if (m.league_name && m.league_name.includes('NBA')) {
-          leagueTag = '🏀 NBA';
+        else if ((m.sport_code === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('한국') || m.league_name.includes('농구'))) || (m.league_name && m.league_name.includes('KBL'))) {
+          leagueTag = 'KBL';
+          leagueBadgeClass = 'badge text-dark fw-bold';
+          leagueBadgeStyle = 'background: #f0fdf4; color: #15803d !important; border: 1.5px solid #86efac;';
+        } else if (m.league_name && m.league_name.includes('NBA')) {
+          leagueTag = 'NBA';
           leagueBadgeClass = 'badge text-dark fw-bold';
           leagueBadgeStyle = 'background: #fff7ed; color: #c2410c !important; border: 1.5px solid #fed7aa;';
+        } else if (m.league_name && (m.league_name.includes('K League') || m.league_name.includes('K리그'))) {
+          leagueTag = 'K리그';
+          leagueBadgeClass = 'badge bg-success text-white fw-bold';
+          leagueBadgeStyle = '';
         } else if (m.league_name && (m.league_name.includes('Eredivisie') || m.league_name.includes('네덜란드'))) {
           leagueTag = '🇳🇱 네덜란드 (에레디비시)';
           leagueBadgeClass = 'badge text-dark fw-bold bg-warning';
@@ -6060,6 +6079,14 @@ function getFullModalMatchList() {
       const prevWindowScrollY = window.pageYOffset || document.documentElement.scrollTop;
 
       container.innerHTML = html;
+
+      if (!selectedPredMatchId && filtered.length > 0) {
+        const bestCard = findCurrentOrNextMatchCard(Array.from(container.querySelectorAll('.pred-card-compact')));
+        const matchId = bestCard ? bestCard.id.replace('predMatchCard_', '') : filtered[0].id;
+        if (matchId) {
+          selectPredMatch(Number(matchId), false);
+        }
+      }
 
       if (!initialScheduleAutoScrollDone && currentPredDate !== 'FINISHED') {
         initialScheduleAutoScrollDone = true;
@@ -6198,19 +6225,17 @@ function getFullModalMatchList() {
     }
 
     function switchCenterView(mode) {
-      currentCenterMode = mode;
-      updateCenterTabs();
-
       if (mode === 'TOTO') {
-        selectTotoRound(currentTotoRound, currentBetmanTs);
+        openTotoModal(currentTotoRound);
+        return;
+      }
+      currentCenterMode = 'DETAIL';
+      if (selectedPredMatchId) {
+        const target = allMatches.find(m => m.id === selectedPredMatchId);
+        if (target) renderPredDetail(target);
       } else {
-        if (selectedPredMatchId) {
-          const target = allMatches.find(m => m.id === selectedPredMatchId);
-          if (target) renderPredDetail(target);
-        } else {
-          const list = getFilteredPredMatches();
-          if (list.length > 0) selectPredMatch(list[0].id);
-        }
+        const list = getFilteredPredMatches();
+        if (list.length > 0) selectPredMatch(list[0].id);
       }
     }
 
@@ -6443,228 +6468,16 @@ function getFullModalMatchList() {
     }
 
     // ------------------------------------------------------------------
-    // 초슬림 14경기 인터랙티브 토토 마킹표 (스크롤 없이 14경기 전체 단일 화면 조망)
+    // 14경기 토토 마킹 화면은 독립 팝업 모달(totoBetmanModal)로 전담 분리되었습니다.
+    // 메인 화면 중앙 패널(predDetailPanel)에는 항상 1:1 세이버 정밀 분석실이 유지됩니다.
     // ------------------------------------------------------------------
     function renderTotoSheet(totoKey) {
-      const panel = document.getElementById('predDetailPanel');
-      if (!panel) return;
-
-      const prevScroll = panel.scrollTop;
-
-      const targetTs = currentBetmanTs;
-      let toto = TOTO_DATA[totoKey + '_' + targetTs] || 
-                 (TOTO_DATA[totoKey + '_LIVE'] && TOTO_DATA[totoKey + '_LIVE'].gmTs === targetTs ? TOTO_DATA[totoKey + '_LIVE'] : null) || 
-                 TOTO_DATA[totoKey + '_LIVE'] || 
-                 TOTO_DATA[totoKey];
-
-      if (!toto || !Array.isArray(toto.matches) || toto.matches.length === 0) {
-        panel.innerHTML = `
-          <div class="d-flex flex-column align-items-center justify-content-center h-100 text-center py-5">
-            <div class="badge bg-secondary mb-2 px-2.5 py-1" style="font-size:0.82rem;">발매 준비 중</div>
-            <div class="fw-bold text-dark mb-1" style="font-size:0.95rem;">${toto ? toto.title : '토토 회차'}</div>
-            <div class="text-muted small">${toto && toto.period ? toto.period : '베트맨 공식 사이트에서 회차 경기 정보가 등록되는 즉시 자동으로 반영됩니다.'}</div>
-          </div>
-        `;
-        return;
-      }
-
-      const drawLabel = (totoKey === 'W1L') ? '1 (1점차)' : ((totoKey === 'W5L') ? '5 (5점이내)' : '무 (무)');
-      const drawBtnTxt = (totoKey === 'W1L') ? '1' : ((totoKey === 'W5L') ? '5' : '무');
-
-      let cardsHtml = '';
-      (toto.matches || []).forEach(m => {
-        const markKey = `${totoKey}_${m.seq}`;
-        const currentMarks = userTotoMarks[markKey] || [];
-
-        const isMarkW = currentMarks.includes('W');
-        const isMarkD = currentMarks.includes('D');
-        const isMarkL = currentMarks.includes('L');
-        const hasPick = isMarkW || isMarkD || isMarkL;
-
-        const isAiW = m.aiPick === 'W';
-        const isAiD = m.aiPick === 'D';
-        const isAiL = m.aiPick === 'L';
-
-        // Clean time format (e.g. 18:30)
-        let timeClean = m.time || '';
-        let timeShort = timeClean;
-        if (timeClean.includes(' ')) {
-          const parts = timeClean.split(' ');
-          timeShort = parts[parts.length - 1];
-        }
-
-        // Check if match is in the future
-        const isFutureGame = (m.time && (m.time.includes('09.07') || m.time.includes('09-07') || m.time.includes('09.08') || m.time.includes('26.09.08') || m.time.includes('09.09') || m.time.includes('09.10') || m.time.includes('09.12')));
-        if (isFutureGame) {
-          m.result = null;
-        }
-
-        // Live Match Score Sync Check
-        let liveMatch = null;
-        if (m.db_match_id && typeof allMatches !== 'undefined' && allMatches) {
-          liveMatch = allMatches.find(x => x.id === m.db_match_id);
-        }
-        if (!liveMatch && typeof allMatches !== 'undefined' && allMatches) {
-          const ch = (m.home || '').replace(/[\s\.\·-]/g, '').toLowerCase();
-          const ca = (m.away || '').replace(/[\s\.\·-]/g, '').toLowerCase();
-          const mDateMatch = (m.time || '').match(/(\d{2})\.(\d{2})/);
-          const targetMMDD = mDateMatch ? `${mDateMatch[1]}-${mDateMatch[2]}` : '';
-
-          liveMatch = allMatches.find(x => {
-            if (targetMMDD && x.match_date && !x.match_date.includes(targetMMDD)) {
-              return false;
-            }
-            const xh = (x.home_team_name || '').replace(/[\s\.\·-]/g, '').toLowerCase();
-            const xa = (x.away_team_name || '').replace(/[\s\.\·-]/g, '').toLowerCase();
-            return (xh.includes(ch) || ch.includes(xh)) && (xa.includes(ca) || ca.includes(xa));
-          });
-        }
-
-        // Result badge: only display when LIVE or Result decided
-        let resultBadge = '';
-        if (liveMatch && liveMatch.status === 'LIVE') {
-          resultBadge = `<span class="badge bg-danger animate-pulse py-0 px-1" style="font-size:0.60rem; font-weight:800;">LIVE</span>`;
-        } else if (liveMatch && liveMatch.status === 'FINISHED') {
-          resultBadge = `<span class="badge bg-light border text-dark py-0 px-1" style="font-size:0.60rem; border-color:#d1d5db!important;">${liveMatch.home_score}:${liveMatch.away_score}</span>`;
-        } else if (m.result) {
-          resultBadge = `<span class="badge ${m.result === 'W' ? 'bg-info text-dark' : (m.result === 'D' ? 'bg-warning text-dark' : 'bg-danger text-white')} py-0 px-1" style="font-size: 0.60rem; font-weight:800;">${m.result === 'W' ? '승' : (m.result === 'D' ? drawBtnTxt : '패')}</span>`;
-        }
-
-        const probHome = m.db_prob_home || (Math.round((Number(m.pW) || 45) * 1.05));
-        const probAway = m.db_prob_away || (100 - probHome);
-        const homeFav = probHome > probAway;
-        const awayFav = probAway > probHome;
-        const homeProbStyle = homeFav 
-          ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626; font-weight: 800;' 
-          : (awayFav ? 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb; font-weight: 700;' : '');
-        const awayProbStyle = awayFav 
-          ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626; font-weight: 800;' 
-          : (homeFav ? 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb; font-weight: 700;' : '');
-
-        cardsHtml += `
-          <div class="toto-slip-row ${hasPick ? 'has-user-pick' : ''}" onclick="openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" title="클릭 시 [${m.home} vs ${m.away}] 1:1 세이버 분석실 열기">
-            <!-- Left Info: Seq, League, Time -->
-            <div class="slip-meta">
-              <span class="slip-seq">${String(m.seq).padStart(2, '0')}</span>
-              <span class="slip-league">${m.league}</span>
-              <span class="slip-time">${timeShort}</span>
-              ${resultBadge}
-            </div>
-
-            <!-- Home Team (with prob) -->
-            <div class="slip-team-home">
-              <span class="slip-team-name text-truncate" title="${m.home}">${m.home}</span>
-              <span class="slip-prob-badge" style="${homeProbStyle}">${probHome}%</span>
-            </div>
-
-            <!-- Center 3 Chips (승 / 무(1/5) / 패) -->
-            <div class="slip-chips" onclick="event.stopPropagation()">
-              <button class="slip-chip ${isMarkW ? 'active' : ''} ${isAiW ? 'ai-pick' : ''}" onclick="toggleTotoChoice('${totoKey}', ${m.seq}, 'W')" title="홈팀 승 (${m.pW}%)">
-                <span class="lbl">승</span><span class="pct">${m.pW}%</span>
-              </button>
-              <button class="slip-chip ${isMarkD ? 'active' : ''} ${isAiD ? 'ai-pick' : ''}" onclick="toggleTotoChoice('${totoKey}', ${m.seq}, 'D')" title="${drawLabel} (${m.pD}%)">
-                <span class="lbl">${drawBtnTxt}</span><span class="pct">${m.pD}%</span>
-              </button>
-              <button class="slip-chip ${isMarkL ? 'active' : ''} ${isAiL ? 'ai-pick' : ''}" onclick="toggleTotoChoice('${totoKey}', ${m.seq}, 'L')" title="원정팀 승 (${m.pL}%)">
-                <span class="lbl">패</span><span class="pct">${m.pL}%</span>
-              </button>
-            </div>
-
-            <!-- Away Team (with prob) -->
-            <div class="slip-team-away">
-              <span class="slip-prob-badge" style="${awayProbStyle}">${probAway}%</span>
-              <span class="slip-team-name text-truncate" title="${m.away}">${m.away}</span>
-            </div>
-
-            <!-- Quick Action: Saber Detail Link -->
-            <div class="text-end">
-              <button class="slip-stat-btn" onclick="event.stopPropagation(); openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" title="1:1 세이버 정밀 통계 지표 열기">
-                지표↗
-              </button>
-            </div>
-          </div>
-        `;
-      });
-
-      // Calculate Combination Stats
-      const totalMatches = (toto.matches || []).length;
-      let markedCount = 0;
-      let combinations = 1;
-      (toto.matches || []).forEach(m => {
-        const marks = userTotoMarks[`${totoKey}_${m.seq}`] || [];
-        if (marks.length > 0) {
-          markedCount++;
-          combinations *= marks.length;
-        }
-      });
-      if (markedCount === 0) combinations = 0;
-      const totalBetPrice = combinations * 1000;
-
-      panel.innerHTML = `
-        <div class="toto-sheet-wrapper d-flex flex-column h-100" style="min-height: 100%;">
-          <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom flex-nowrap gap-1" style="border-color: #e5e7eb !important; flex-shrink: 0; min-height: 28px;">
-            <div class="d-flex align-items-center gap-1.5 flex-wrap" style="min-width: 0;">
-              <span class="badge" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-weight:800; font-size:0.74rem; padding: 2px 6px; white-space:nowrap;">
-                <i class="bi bi-trophy-fill text-dark me-1"></i>${toto.title || (totoKey === 'W1L' ? '야구 승1패' : (totoKey === 'WDL' ? '축구 승무패' : '농구 승5패'))}
-              </span>
-              <span class="text-dark fw-bold text-nowrap" style="font-size: 0.74rem;">
-                1등: <strong style="color: #dc2626; font-family: monospace; font-size: 0.76rem;">${Number(toto.first_prize_pool || (totoKey === 'W1L' ? 226090000 : (totoKey === 'WDL' ? 939525000 : 52327250))).toLocaleString()}원</strong>
-              </span>
-              ${toto.period ? `<span class="badge bg-light border text-secondary px-1.5 py-0.5" style="font-size:0.62rem; font-weight:700; border-color:#e5e7eb!important; white-space:nowrap;">${toto.period}</span>` : ''}
-              ${toto.rollover ? `<span class="badge bg-warning text-dark px-1 py-0.5" style="font-size:0.62rem; font-weight:800; white-space:nowrap;">${toto.rollover}</span>` : ''}
-              <button class="btn btn-xs fw-bold px-2 py-0.5 text-white" onclick="openTotoModal('${totoKey}')" style="background:#0f172a; border-radius:4px; font-size:0.68rem; white-space:nowrap;" title="배트맨 공식 14경기 풀스크린 팝업창 열기">
-                <i class="bi bi-window-stack me-1 text-warning"></i>14경기 팝업 열기 ↗
-              </button>
-            </div>
-
-            <div class="d-flex align-items-center gap-1 flex-shrink-0">
-              <button class="btn btn-xs py-0.5 px-1.5 text-primary fw-bold" onclick="loadBetmanToto(currentTotoRound, currentBetmanTs, true)" title="베트맨 공식 최신 데이터 새로고침" style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:4px; font-size:0.68rem; white-space:nowrap;">
-                <i class="bi bi-arrow-clockwise"></i> 최신화
-              </button>
-              <button class="btn btn-xs py-0.5 px-1.5 fw-bold text-white" onclick="autoPickTotoAi('${totoKey}')" style="background: linear-gradient(135deg, #0284c7, #06b6d4); border:none; border-radius:4px; font-size:0.68rem; white-space:nowrap;" title="AI 최고 확률 14경기 단통 자동 마킹">
-                <i class="bi bi-robot"></i> AI 올픽
-              </button>
-              <button class="btn btn-xs py-0.5 px-1.5 fw-bold text-dark" onclick="randomPickToto('${totoKey}')" style="background:#f3f4f6; border:1px solid #d1d5db; border-radius:4px; font-size:0.68rem; white-space:nowrap;" title="랜덤 조합 자동 선택">
-                <i class="bi bi-dice-5"></i> 랜덤픽
-              </button>
-              <button class="btn btn-xs py-0.5 px-1.5 fw-bold text-danger" onclick="resetTotoMarks('${totoKey}')" style="background:#fef2f2; border:1px solid #fca5a5; border-radius:4px; font-size:0.68rem; white-space:nowrap;" title="마킹 초기화">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- 14 Matches Slip Container (Fills screen without scroll!) -->
-          <div class="toto-slip-container">
-            ${cardsHtml}
-          </div>
-
-          <!-- Compact Bottom Action Dock -->
-          <div class="d-flex justify-content-between align-items-center mt-1 pt-1 border-top" style="border-color: #e5e7eb !important; flex-shrink: 0; min-height: 32px;">
-            <div class="d-flex align-items-center gap-1.5">
-              <span class="badge ${markedCount === 14 ? 'bg-success text-white' : 'bg-warning text-dark'} fw-bold px-2 py-1" style="font-size: 0.70rem;">
-                <i class="bi bi-check2-circle me-0.5"></i>${markedCount} / 14 마킹
-              </span>
-              <span class="text-dark fw-bold" style="font-size: 0.74rem;">
-                <b class="text-primary">${combinations.toLocaleString()}</b> 조합
-              </span>
-              <span class="badge bg-light border text-dark fw-bold px-2 py-0.5" style="border-color: #e5e7eb !important; font-size: 0.74rem;">
-                <b style="color: #1d4ed8;">${totalBetPrice.toLocaleString()}</b>원
-              </span>
-            </div>
-            <div class="d-flex align-items-center gap-1">
-              <button class="btn btn-xs fw-bold text-white px-2 py-1" onclick="openTotoCalculatorModal('${totoKey}')" style="background: #1d4ed8; border: none; border-radius: 4px; font-size: 0.70rem;">
-                <i class="bi bi-calculator-fill me-0.5"></i>계산기
-              </button>
-              <button class="btn btn-xs fw-bold text-success px-2 py-1" onclick="shareTotoToChat('${totoKey}')" style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 4px; font-size: 0.70rem;">
-                <i class="bi bi-chat-dots-fill me-0.5"></i>팬룸 공유
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      if (prevScroll > 0 && panel.scrollHeight > prevScroll) {
-        panel.scrollTop = prevScroll;
+      if (selectedPredMatchId) {
+        const target = allMatches.find(m => m.id === selectedPredMatchId);
+        if (target) renderPredDetail(target);
+      } else {
+        const list = getFilteredPredMatches();
+        if (list.length > 0) selectPredMatch(list[0].id);
       }
     }
 
