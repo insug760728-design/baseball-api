@@ -2573,7 +2573,7 @@
       archiveLoadingPromise = (async () => {
         try {
           const [upResp, finResp] = await Promise.all([
-            fetch('/api/v1/matches?order=asc&limit=1200'),
+            fetch('/api/v1/matches?start_date=ALL&order=asc&limit=1200'),
             fetch('/api/v1/matches?status=FINISHED&order=desc&limit=1200')
           ]);
           const upMatches = upResp.ok ? await upResp.json() : [];
@@ -2619,9 +2619,10 @@
     async function loadLiveMatches() {
       const container = document.getElementById('stripContainer');
       try {
+        const d0Str = getKSTDateString(new Date());
         // Fast Phase 1: Only today's upcoming & recent finished matches (~50KB JSON for instant 50ms render)
         const [upResp, finResp] = await Promise.all([
-          fetch('/api/v1/matches?order=asc&limit=100'),
+          fetch(`/api/v1/matches?start_date=${d0Str}&order=asc&limit=100`),
           fetch('/api/v1/matches?status=FINISHED&order=desc&limit=30')
         ]);
         const upMatches = upResp.ok ? await upResp.json() : [];
@@ -2643,6 +2644,7 @@
           }
         }
         allMatches = uniqueList;
+        window.matchesLoadedInitial = true;
         try {
           localStorage.setItem('tokeon_matches_cache_v3', JSON.stringify(uniqueList));
         } catch (e) {}
@@ -6918,6 +6920,7 @@ function getFullModalMatchList() {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
             allMatches = parsed;
+            window.matchesLoadedInitial = true;
             renderMatchStrip('ALL');
           }
         }
@@ -6932,13 +6935,13 @@ function getFullModalMatchList() {
       if (b0) b0.innerText = `오늘 (${parseInt(d0Str.slice(5,7),10)}/${parseInt(d0Str.slice(8,10),10)})`;
       if (b1) b1.innerText = `내일 (${parseInt(d1Str.slice(5,7),10)}/${parseInt(d1Str.slice(8,10),10)})`;
 
-      renderPredMatches();
-
-      // Automatically select initial view: 1:1 세이버 정밀 분석실
-      currentCenterMode = 'DETAIL';
-      const initMatches = getFilteredPredMatches();
-      if (initMatches.length > 0) {
-        selectPredMatch(initMatches[0].id);
+      if (allMatches && allMatches.length > 0) {
+        renderPredMatches();
+        currentCenterMode = 'DETAIL';
+        const initMatches = getFilteredPredMatches();
+        if (initMatches.length > 0) {
+          selectPredMatch(initMatches[0].id);
+        }
       }
       loadBetmanToto('W1L', 260067);
 
@@ -6996,7 +6999,8 @@ function getFullModalMatchList() {
 
     async function silentLiveRefresh() {
       try {
-        const resp = await fetch('/api/v1/matches?order=asc&limit=100');
+        const d0Str = getKSTDateString(new Date());
+        const resp = await fetch(`/api/v1/matches?start_date=${d0Str}&order=asc&limit=100`);
         if (!resp.ok) return;
         const rawMatches = await resp.json();
 
@@ -7383,7 +7387,7 @@ function getFullModalMatchList() {
         });
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
 
-        // Off-season fallback: If user selected KBL, NBA, or BASKETBALL and there are 0 upcoming matches, show recent season matches!
+        // Off-season or night-time fallback: If 0 upcoming matches, show today's/recent season matches!
         if (list.length === 0 && (currentPredSport === 'BASKETBALL' || currentPredLeague === 'KBL' || currentPredLeague === 'NBA')) {
           let fbList = [...allMatches];
           if (currentPredLeague === 'KBL') {
@@ -7397,6 +7401,17 @@ function getFullModalMatchList() {
                        .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
         } else if (list.length === 0 && (currentPredSport === 'BASEBALL' || currentPredLeague === 'MLB' || currentPredLeague === 'KBO' || currentPredLeague === 'NPB')) {
           let fbList = allMatches.filter(m => m.sport_code === 'BASEBALL' || (m.league_name && (m.league_name.includes('MLB') || m.league_name.includes('KBO') || m.league_name.includes('NPB') || m.league_name.includes('야구'))));
+          list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
+                       .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+        } else if (list.length === 0) {
+          // General fallback for ALL or any sport: show today's finished matches so the screen is never blank!
+          let fbList = [...allMatches];
+          if (currentPredSport !== 'ALL') {
+            fbList = fbList.filter(m => m.sport_code === currentPredSport);
+          }
+          if (currentPredLeague !== 'ALL') {
+            fbList = fbList.filter(m => m.league_name && m.league_name.includes(currentPredLeague));
+          }
           list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
                        .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
         }
@@ -7597,10 +7612,19 @@ function getFullModalMatchList() {
 
       const badge = document.getElementById('predCountBadge');
       if (badge) {
-        badge.innerText = `${filtered.length}경기`;
+        if (!window.matchesLoadedInitial && (!allMatches || allMatches.length === 0)) {
+          badge.innerText = `로딩중...`;
+        } else {
+          badge.innerText = `${filtered.length}경기`;
+        }
       }
 
       if (filtered.length === 0) {
+        // Initial network fetch is still in flight: preserve the loading skeleton placeholders!
+        if (!window.matchesLoadedInitial && (!allMatches || allMatches.length === 0)) {
+          return;
+        }
+
         let sportName = '해당 조건의';
         let sportIcon = '📋';
         if (currentPredSport === 'BASKETBALL') { sportName = '농구'; sportIcon = '🏀'; }
