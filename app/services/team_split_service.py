@@ -559,7 +559,7 @@ def fetch_mlb_pitcher_official_starts(pitcher_name: str, limit: int = 3) -> list
     url = f"https://statsapi.mlb.com/api/v1/people/search?names={encoded}"
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     try:
-        with urllib.request.urlopen(req, timeout=1.5) as resp:
+        with urllib.request.urlopen(req, timeout=0.6) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             people = data.get("people", [])
             if not people:
@@ -569,9 +569,10 @@ def fetch_mlb_pitcher_official_starts(pitcher_name: str, limit: int = 3) -> list
             
             log_url = f"https://statsapi.mlb.com/api/v1/people/{pid}/stats?stats=gameLog&group=pitching&season=2026"
             log_req = urllib.request.Request(log_url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(log_req, timeout=1.5) as log_resp:
+            with urllib.request.urlopen(log_req, timeout=0.6) as log_resp:
                 log_data = json.loads(log_resp.read().decode("utf-8"))
-                splits = log_data.get("stats", [{}])[0].get("splits", [])
+                stats_list = log_data.get("stats", [])
+                splits = stats_list[0].get("splits", []) if stats_list else []
                 
                 # 선발 등판 기록만 필터링 (선발 기록 없으면 전체 등판)
                 starts = [s for s in splits if s.get("stat", {}).get("gamesStarted", 0) >= 1 or float(s.get("stat", {}).get("inningsPitched", 0)) >= 3.0]

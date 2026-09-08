@@ -73,8 +73,28 @@ def sync_matches(payload: DateRangeSyncRequest, db: Session = Depends(get_db)):
     clear_matches_cache()
     return result
 
+_MATCH_FULL_CACHE: Dict[int, Tuple[float, Any]] = {}
+
+def clear_matches_cache():
+    _MATCHES_CACHE.clear()
+    _MATCH_FULL_CACHE.clear()
+
+def clear_match_full_cache(match_id: Optional[int] = None):
+    if match_id:
+        _MATCH_FULL_CACHE.pop(match_id, None)
+    else:
+        _MATCH_FULL_CACHE.clear()
+
 @router.get("/{match_id}", summary="경기 상세 정보, 1~9회 스코어보드, 타자/투수 세부 기록 종합 조회")
-def get_match_full(match_id: int, db: Session = Depends(get_db)):
+def get_match_full(match_id: int, response: Response, db: Session = Depends(get_db)):
+    now = time.time()
+    if match_id in _MATCH_FULL_CACHE:
+        cache_time, cached_res = _MATCH_FULL_CACHE[match_id]
+        ttl = 10 if (cached_res.get("status") == "LIVE") else (180 if cached_res.get("status") == "SCHEDULED" else 1800)
+        if now - cache_time < ttl:
+            response.headers["Cache-Control"] = "public, max-age=10, s-maxage=30"
+            return cached_res
+
     data = MatchService.get_match_full_detail(db, match_id)
     if not data:
         raise HTTPException(status_code=404, detail="경기를 찾을 수 없습니다.")
@@ -100,7 +120,7 @@ def get_match_full(match_id: int, db: Session = Depends(get_db)):
         if a_st.get("name") and a_st.get("name") not in ["선발 예고", "선발 투수"]:
             a_starter = a_st.get("name")
 
-    return {
+    res = {
         "id": m.id,
         "official_id": m.official_id,
         "sport_code": m.sport_code,
@@ -123,10 +143,14 @@ def get_match_full(match_id: int, db: Session = Depends(get_db)):
         "player_stats": data["player_stats"],
         "matchup_analysis": matchup_analysis
     }
+    _MATCH_FULL_CACHE[match_id] = (now, res)
+    response.headers["Cache-Control"] = "public, max-age=10, s-maxage=30"
+    return res
 
 @router.put("/{match_id}/score", response_model=MatchResponse, summary="경기 스코어 및 상태 직접 수정 (PUT)")
 @router.patch("/{match_id}", response_model=MatchResponse, summary="경기 스코어 및 상태 직접 수정 (PATCH)")
 def update_match(match_id: int, payload: MatchUpdate, db: Session = Depends(get_db)):
+    clear_match_full_cache(match_id)
     updated = MatchService.update_match_score(
         db,
         match_id=match_id,

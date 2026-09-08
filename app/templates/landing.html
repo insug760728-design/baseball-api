@@ -3205,7 +3205,7 @@ function getFullModalMatchList() {
       return (typeof getFilteredPredMatches === 'function') ? getFilteredPredMatches() : (allMatches || []).slice(0, 14);
     }
 
-    async function openMatchModal(targetMatchId, customMatchList) {
+    function openMatchModal(targetMatchId, customMatchList) {
       const allList = getFullModalMatchList();
 
       if (targetMatchId) {
@@ -3218,65 +3218,80 @@ function getFullModalMatchList() {
           target = allList.find(x => x.seq == targetMatchId);
         }
 
-        if (!isNaN(Number(targetMatchId)) && Number(targetMatchId) > 0) {
-          if (!matchDetailCache.has(Number(targetMatchId))) {
-            try {
-              const resp = await fetch(`/api/v1/matches/${targetMatchId}`);
-              if (resp.ok) {
-                const d = await resp.json();
-                matchDetailCache.set(Number(targetMatchId), d);
-                matchDetailCache.set(targetMatchId, d);
-                if (target) {
-                  target.details = d.details;
-                  target.matchup_analysis = d.matchup_analysis;
-                  target.summary = d.summary;
-                  target.custom_notes = d.custom_notes;
-                  target.events = d.events;
-                } else {
-                  target = {
-                    id: d.id,
-                    sport_code: d.sport_code,
-                    league_name: d.league_name,
-                    match_date: d.match_date,
-                    home_team_name: d.home_team_name,
-                    away_team_name: d.away_team_name,
-                    home_score: d.home_score ?? 0,
-                    away_score: d.away_score ?? 0,
-                    status: d.status || 'FINISHED',
-                    home_starter_name: d.home_starter_name,
-                    away_starter_name: d.away_starter_name,
-                    details: d.details,
-                    matchup_analysis: d.matchup_analysis,
-                    summary: d.summary,
-                    custom_notes: d.custom_notes,
-                    events: d.events
-                  };
-                  if (typeof allMatches !== 'undefined' && allMatches) {
-                    allMatches.push(target);
-                  }
-                }
-              }
-            } catch (e) {
-              console.warn('Failed to fetch match for modal:', e);
-            }
-          } else if (target) {
-            const d = matchDetailCache.get(Number(targetMatchId)) || matchDetailCache.get(targetMatchId);
-            if (d) {
-              if (d.matchup_analysis) target.matchup_analysis = d.matchup_analysis;
-              if (d.details) target.details = d.details;
-              if (d.summary) target.summary = d.summary;
-              if (d.custom_notes) target.custom_notes = d.custom_notes;
-              if (d.events) target.events = d.events;
-            }
-          }
+        // 1. 캐시가 이미 존재한다면 타겟에 즉시 병합
+        const d = matchDetailCache.get(Number(targetMatchId)) || matchDetailCache.get(targetMatchId);
+        if (d && target) {
+          if (d.matchup_analysis) target.matchup_analysis = d.matchup_analysis;
+          if (d.details) target.details = d.details;
+          if (d.summary) target.summary = d.summary;
+          if (d.custom_notes) target.custom_notes = d.custom_notes;
+          if (d.events) target.events = d.events;
         }
 
         if (target) {
           currentModalMatchList = [target];
+          // 🚀 [초고속 0ms 즉시 오픈] 네트워크 응답 대기 없이 팝업창을 0.01초만에 즉시 표출!
           renderSingleMatchInModal(target);
           const modalEl = document.getElementById('matchModal');
           const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
           modal.show();
+
+          // 🚀 백그라운드 비동기 최신화 (팝업이 열려있는 상태에서 세부 지표가 백그라운드로 로드되어 자연스럽게 갱신)
+          if (!matchDetailCache.has(Number(targetMatchId)) && !isNaN(Number(targetMatchId)) && Number(targetMatchId) > 0) {
+            fetch(`/api/v1/matches/${targetMatchId}`).then(resp => {
+              if (resp.ok) return resp.json();
+            }).then(data => {
+              if (data) {
+                matchDetailCache.set(Number(targetMatchId), data);
+                matchDetailCache.set(targetMatchId, data);
+                if (target) {
+                  target.details = data.details;
+                  target.matchup_analysis = data.matchup_analysis;
+                  target.summary = data.summary;
+                  target.custom_notes = data.custom_notes;
+                  target.events = data.events;
+                }
+                toggleModalMatchDeepDetail(targetMatchId, true);
+              }
+            }).catch(e => console.warn('Background match detail fetch error:', e));
+          }
+          return;
+        } else if (!isNaN(Number(targetMatchId)) && Number(targetMatchId) > 0) {
+          // target이 로컬 목록에 전혀 없는 예외적인 경우에만 비동기 로드 후 표출
+          fetch(`/api/v1/matches/${targetMatchId}`).then(resp => {
+            if (resp.ok) return resp.json();
+          }).then(d => {
+            if (d) {
+              matchDetailCache.set(Number(targetMatchId), d);
+              matchDetailCache.set(targetMatchId, d);
+              target = {
+                id: d.id,
+                sport_code: d.sport_code,
+                league_name: d.league_name,
+                match_date: d.match_date,
+                home_team_name: d.home_team_name,
+                away_team_name: d.away_team_name,
+                home_score: d.home_score ?? 0,
+                away_score: d.away_score ?? 0,
+                status: d.status || 'FINISHED',
+                home_starter_name: d.home_starter_name,
+                away_starter_name: d.away_starter_name,
+                details: d.details,
+                matchup_analysis: d.matchup_analysis,
+                summary: d.summary,
+                custom_notes: d.custom_notes,
+                events: d.events
+              };
+              if (typeof allMatches !== 'undefined' && allMatches) {
+                allMatches.push(target);
+              }
+              currentModalMatchList = [target];
+              renderSingleMatchInModal(target);
+              const modalEl = document.getElementById('matchModal');
+              const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+              modal.show();
+            }
+          }).catch(e => console.warn('Failed to fetch match for modal:', e));
           return;
         }
       }
