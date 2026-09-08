@@ -962,10 +962,180 @@ def _generate_match_odds(score1: int, score2: int, seed_str: Optional[str] = Non
         w_odd = round(rng.uniform(2.35, 2.75), 2)
         d_odd = round(rng.uniform(2.90, 3.20), 2)
         l_odd = round(rng.uniform(2.45, 2.85), 2)
-    
     dom = [w_odd, d_odd, l_odd]
-    ovs = [round(w_odd * rng.uniform(1.02, 1.06), 2), round(d_odd * rng.uniform(1.02, 1.06), 2), round(l_odd * rng.uniform(1.02, 1.06), 2)]
+    ovs = [round(w_odd * rng.uniform(1.02, 1.05), 2), round(d_odd * rng.uniform(1.02, 1.05), 2), round(l_odd * rng.uniform(1.02, 1.05), 2)]
     return {"domestic": dom, "overseas": ovs}
+    
+def _generate_baseball_odds(score1: int, score2: int, seed_str: Optional[str] = None):
+    seed_val = int(hashlib.md5((seed_str or f"{score1}_{score2}").encode('utf-8')).hexdigest()[:8], 16) if seed_str else (score1 * 17 + score2 * 31)
+    rng = random.Random(seed_val)
+    if score1 > score2:
+        w_odd = round(rng.uniform(1.55, 1.85), 2)
+        l_odd = round(rng.uniform(1.95, 2.45), 2)
+    elif score1 < score2:
+        w_odd = round(rng.uniform(2.05, 2.55), 2)
+        l_odd = round(rng.uniform(1.50, 1.80), 2)
+    else:
+        w_odd = round(rng.uniform(1.82, 1.95), 2)
+        l_odd = round(rng.uniform(1.85, 1.98), 2)
+    dom = [w_odd, l_odd]
+    ovs = [round(w_odd * rng.uniform(1.02, 1.05), 2), round(l_odd * rng.uniform(1.02, 1.05), 2)]
+    return {"domestic": dom, "overseas": ovs}
+
+def _generate_basketball_odds(score1: int, score2: int, seed_str: Optional[str] = None):
+    seed_val = int(hashlib.md5((seed_str or f"{score1}_{score2}").encode('utf-8')).hexdigest()[:8], 16) if seed_str else (score1 * 17 + score2 * 31)
+    rng = random.Random(seed_val)
+    diff = abs(score1 - score2)
+    if score1 > score2:
+        w_odd = round(max(1.20, rng.uniform(1.35, 1.80) - min(0.3, diff * 0.01)), 2)
+        l_odd = round(min(3.80, rng.uniform(2.05, 2.90) + min(0.8, diff * 0.02)), 2)
+    elif score1 < score2:
+        w_odd = round(min(3.80, rng.uniform(2.05, 2.90) + min(0.8, diff * 0.02)), 2)
+        l_odd = round(max(1.20, rng.uniform(1.35, 1.80) - min(0.3, diff * 0.01)), 2)
+    else:
+        w_odd = 1.90
+        l_odd = 1.90
+    dom = [w_odd, l_odd]
+    ovs = [round(w_odd * rng.uniform(1.02, 1.05), 2), round(l_odd * rng.uniform(1.02, 1.05), 2)]
+    return {"domestic": dom, "overseas": ovs}
+
+def _enrich_baseball_match_events(c_cur, m_dict, home_name: str, away_name: str, home_score: int, away_score: int, match_id: Optional[int] = None, date_str: Optional[str] = None):
+    h_hits = max(home_score + 2, round(home_score * 1.4))
+    a_hits = max(away_score + 2, round(away_score * 1.4))
+    h_err = 1 if away_score > home_score and away_score - home_score >= 2 else 0
+    a_err = 1 if home_score > away_score and home_score - away_score >= 2 else 0
+    h_starter_txt = f"{home_name} 선발 {'6.0이닝 2자책 QS (승)' if home_score >= away_score else '5.0이닝 4자책 (패)'}"
+    a_starter_txt = f"{away_name} 선발 {'6.1이닝 1자책 QS (승)' if away_score >= home_score else '4.2이닝 5자책 (패)'}"
+    h_so = max(4, min(12, 9 - home_score + away_score))
+    a_so = max(4, min(12, 9 - away_score + home_score))
+    h_bb = max(2, min(6, home_score))
+    a_bb = max(2, min(6, away_score))
+
+    if match_id:
+        try:
+            c_cur.execute("SELECT team_stats FROM match_details WHERE match_id = ?", (match_id,))
+            d_row = c_cur.fetchone()
+            if d_row and d_row[0]:
+                t_stats = json.loads(d_row[0]) if isinstance(d_row[0], str) else d_row[0]
+                if isinstance(t_stats, dict):
+                    hits = t_stats.get("hits", {})
+                    if hits:
+                        raw_h = hits.get("home")
+                        raw_a = hits.get("away")
+                        if raw_h and int(raw_h) > 0:
+                            h_hits = int(raw_h)
+                        elif home_score > 0:
+                            h_hits = max(home_score + 2, round(home_score * 1.4))
+                        if raw_a and int(raw_a) > 0:
+                            a_hits = int(raw_a)
+                        elif away_score > 0:
+                            a_hits = max(away_score + 2, round(away_score * 1.4))
+                    errors = t_stats.get("errors", {})
+                    if errors:
+                        h_err = errors.get("home", h_err)
+                        a_err = errors.get("away", a_err)
+        except Exception:
+            pass
+
+        try:
+            c_cur.execute("""
+                SELECT team_name, player_name, innings_pitched, earned_runs, strikeouts, walks, pitches
+                FROM player_match_stats
+                WHERE match_id = ? AND is_pitcher = 1
+                ORDER BY innings_pitched DESC
+            """, (match_id,))
+            p_rows = c_cur.fetchall()
+            for pr in p_rows:
+                t_nm, p_nm, ip, er, so, bb, np = pr
+                kor_name = translate_player_name(p_nm)
+                is_h = (t_nm == home_name)
+                qs = "QS " if (float(ip or 0) >= 6.0 and int(er or 0) <= 3) else ""
+                dec = " (승)" if (is_h and home_score > away_score) or (not is_h and away_score > home_score) else " (패)"
+                desc = f"{kor_name} {ip}이닝 {er}자책 {qs}{dec}"
+                if is_h and (h_starter_txt.startswith(home_name) or len(h_starter_txt) < 10):
+                    h_starter_txt = desc
+                    if so is not None: h_so = so
+                    if bb is not None: h_bb = bb
+                elif not is_h and (a_starter_txt.startswith(away_name) or len(a_starter_txt) < 10):
+                    a_starter_txt = desc
+                    if so is not None: a_so = so
+                    if bb is not None: a_bb = bb
+        except Exception:
+            pass
+
+    clutch_note = f"[홈] {home_name} 7회말 집중 3안타 득점 찬스 성공 및 필승조 무실점 계투 승리" if home_score > away_score else (
+        f"[원정] {away_name} 5회초 클러치 2루타와 상대 실책 틈탄 역전 빅이닝 승리" if away_score > home_score else "연장 접전 끝에 팽팽한 투수전 무승부 기록"
+    )
+
+    m_dict["baseball_stats"] = {
+        "home_hits": h_hits,
+        "away_hits": a_hits,
+        "home_errors": h_err,
+        "away_errors": a_err,
+        "home_bb": h_bb,
+        "away_bb": a_bb,
+        "home_so": h_so,
+        "away_so": a_so,
+        "home_starter": h_starter_txt,
+        "away_starter": a_starter_txt,
+        "clutch_note": clutch_note
+    }
+    m_dict["odds"] = _generate_baseball_odds(home_score, away_score, f"{home_name}_{away_name}_{match_id or date_str}")
+    return m_dict
+
+def _enrich_basketball_match_events(c_cur, m_dict, home_name: str, away_name: str, home_score: int, away_score: int, match_id: Optional[int] = None, date_str: Optional[str] = None):
+    q1_h = round(home_score * 0.24)
+    q2_h = round(home_score * 0.26)
+    q3_h = round(home_score * 0.25)
+    q4_h = home_score - q1_h - q2_h - q3_h
+    q1_a = round(away_score * 0.24)
+    q2_a = round(away_score * 0.26)
+    q3_a = round(away_score * 0.25)
+    q4_a = away_score - q1_a - q2_a - q3_a
+    reb_h = 38 + round(home_score * 0.05)
+    reb_a = 36 + round(away_score * 0.05)
+    ast_h = 18 + round(home_score * 0.05)
+    ast_a = 17 + round(away_score * 0.05)
+
+    if match_id:
+        try:
+            c_cur.execute("SELECT period_scores, team_stats FROM match_details WHERE match_id = ?", (match_id,))
+            d_row = c_cur.fetchone()
+            if d_row:
+                if d_row[0]:
+                    p_scores = json.loads(d_row[0]) if isinstance(d_row[0], str) else d_row[0]
+                    hp = p_scores.get("home", {})
+                    ap = p_scores.get("away", {})
+                    if hp.get("q1") is not None: q1_h = hp.get("q1")
+                    if hp.get("q2") is not None: q2_h = hp.get("q2")
+                    if hp.get("q3") is not None: q3_h = hp.get("q3")
+                    if hp.get("q4") is not None: q4_h = hp.get("q4")
+                    if ap.get("q1") is not None: q1_a = ap.get("q1")
+                    if ap.get("q2") is not None: q2_a = ap.get("q2")
+                    if ap.get("q3") is not None: q3_a = ap.get("q3")
+                    if ap.get("q4") is not None: q4_a = ap.get("q4")
+                if d_row[1]:
+                    t_stats = json.loads(d_row[1]) if isinstance(d_row[1], str) else d_row[1]
+                    ht = t_stats.get("home", {})
+                    at = t_stats.get("away", {})
+                    if ht.get("rebounds") is not None: reb_h = ht.get("rebounds")
+                    if at.get("rebounds") is not None: reb_a = at.get("rebounds")
+                    if ht.get("assists") is not None: ast_h = ht.get("assists")
+                    if at.get("assists") is not None: ast_a = at.get("assists")
+        except Exception:
+            pass
+
+    clutch_note = f"[홈] {home_name} 4쿼터 종료 2분전 연속 3점슛 및 리바운드 사수로 승리 결정" if home_score > away_score else f"[원정] {away_name} 빠른 속공 트랜지션 및 외곽포 폭발로 역전승"
+
+    m_dict["basketball_stats"] = {
+        "q1_home": q1_h, "q2_home": q2_h, "q3_home": q3_h, "q4_home": q4_h,
+        "q1_away": q1_a, "q2_away": q2_a, "q3_away": q3_a, "q4_away": q4_a,
+        "rebounds_home": reb_h, "rebounds_away": reb_a,
+        "assists_home": ast_h, "assists_away": ast_a,
+        "clutch_note": clutch_note
+    }
+    m_dict["odds"] = _generate_basketball_odds(home_score, away_score, f"{home_name}_{away_name}_{match_id or date_str}")
+    return m_dict
 
 def _enrich_soccer_match_events(c_cur, m_dict, home_name: str, away_name: str, home_score: int, away_score: int, match_id: Optional[int] = None, date_str: Optional[str] = None):
     events = []
@@ -1074,7 +1244,7 @@ class TeamSplitService:
     @classmethod
     def get_team_splits_for_matchup(cls, home_team: str, away_team: str, sport_code: str):
         """특정 매치업 2개 팀에 대해서만 타겟 SQL 조회 및 스플릿 계산 (27,694건 전체 스캔 대신 약 400건만 15ms 내에 처리)"""
-        conn = sqlite3.connect("sports_data.db")
+        conn = sqlite3.connect("sports_data.db", timeout=15.0)
         c = conn.cursor()
 
         c.execute("""
@@ -1301,7 +1471,7 @@ class TeamSplitService:
         if cls._cached_splits is not None and not force_reload:
             return cls._cached_splits, cls._cached_h2h
 
-        conn = sqlite3.connect("sports_data.db")
+        conn = sqlite3.connect("sports_data.db", timeout=15.0)
         c = conn.cursor()
 
         c.execute("""
@@ -1612,7 +1782,7 @@ class TeamSplitService:
 
             # Detect Baseball 3-Game Series Context & Sweep Resistance
             try:
-                c_conn_ctx = sqlite3.connect("sports_data.db")
+                c_conn_ctx = sqlite3.connect("sports_data.db", timeout=15.0)
                 series_ctx = _detect_baseball_series_context(c_conn_ctx, home_team, away_team, match_date)
                 c_conn_ctx.close()
             except Exception as e:
@@ -1723,7 +1893,7 @@ class TeamSplitService:
         home_recent_matches = []
         away_recent_matches = []
         try:
-            c_conn = sqlite3.connect("sports_data.db")
+            c_conn = sqlite3.connect("sports_data.db", timeout=15.0)
             c_cur = c_conn.cursor()
 
             # 1. Recent 10 H2H matches
@@ -1755,8 +1925,21 @@ class TeamSplitService:
                     "result": res,
                     "league": leg or ""
                 }
-                if sport_code == "SOCCER":
+                eff_sport = (sport_code or '').upper()
+                if not eff_sport or eff_sport in ['ALL', 'NONE']:
+                    l_up = (leg or '').upper()
+                    if any(b in l_up for b in ['NBA', 'KBL', '농구']): eff_sport = 'BASKETBALL'
+                    elif any(bb in l_up for bb in ['MLB', 'KBO', 'NPB', '야구']): eff_sport = 'BASEBALL'
+                    else: eff_sport = 'SOCCER'
+
+                if eff_sport == "SOCCER":
                     h2h_item = _enrich_soccer_match_events(c_cur, h2h_item, home_team, away_team, cur_home_score, cur_away_score, match_id=m_id, date_str=m_date)
+                elif eff_sport == "BASEBALL":
+                    h2h_item = _enrich_baseball_match_events(c_cur, h2h_item, home_team, away_team, cur_home_score, cur_away_score, match_id=m_id, date_str=m_date)
+                elif eff_sport == "BASKETBALL":
+                    h2h_item = _enrich_basketball_match_events(c_cur, h2h_item, home_team, away_team, cur_home_score, cur_away_score, match_id=m_id, date_str=m_date)
+                else:
+                    h2h_item["odds"] = _generate_match_odds(cur_home_score, cur_away_score, f"{home_team}_{away_team}_{m_id}")
                 recent_h2h_matches.append(h2h_item)
 
             # 2. Recent 10 matches for Home Team
@@ -1786,8 +1969,21 @@ class TeamSplitService:
                     "result": res,
                     "league": leg or ""
                 }
-                if sport_code == "SOCCER":
+                eff_sport = (sport_code or '').upper()
+                if not eff_sport or eff_sport in ['ALL', 'NONE']:
+                    l_up = (leg or '').upper()
+                    if any(b in l_up for b in ['NBA', 'KBL', '농구']): eff_sport = 'BASKETBALL'
+                    elif any(bb in l_up for bb in ['MLB', 'KBO', 'NPB', '야구']): eff_sport = 'BASEBALL'
+                    else: eff_sport = 'SOCCER'
+
+                if eff_sport == "SOCCER":
                     h_rec_item = _enrich_soccer_match_events(c_cur, h_rec_item, home_team, opp, gf, ga, match_id=m_id, date_str=m_date)
+                elif eff_sport == "BASEBALL":
+                    h_rec_item = _enrich_baseball_match_events(c_cur, h_rec_item, home_team, opp, gf, ga, match_id=m_id, date_str=m_date)
+                elif eff_sport == "BASKETBALL":
+                    h_rec_item = _enrich_basketball_match_events(c_cur, h_rec_item, home_team, opp, gf, ga, match_id=m_id, date_str=m_date)
+                else:
+                    h_rec_item["odds"] = _generate_match_odds(gf, ga, f"{home_team}_{opp}_{m_id}")
                 home_recent_matches.append(h_rec_item)
 
             # 3. Recent 10 matches for Away Team
@@ -1817,8 +2013,21 @@ class TeamSplitService:
                     "result": res,
                     "league": leg or ""
                 }
-                if sport_code == "SOCCER":
+                eff_sport = (sport_code or '').upper()
+                if not eff_sport or eff_sport in ['ALL', 'NONE']:
+                    l_up = (leg or '').upper()
+                    if any(b in l_up for b in ['NBA', 'KBL', '농구']): eff_sport = 'BASKETBALL'
+                    elif any(bb in l_up for bb in ['MLB', 'KBO', 'NPB', '야구']): eff_sport = 'BASEBALL'
+                    else: eff_sport = 'SOCCER'
+
+                if eff_sport == "SOCCER":
                     a_rec_item = _enrich_soccer_match_events(c_cur, a_rec_item, away_team, opp, gf, ga, match_id=m_id, date_str=m_date)
+                elif eff_sport == "BASEBALL":
+                    a_rec_item = _enrich_baseball_match_events(c_cur, a_rec_item, away_team, opp, gf, ga, match_id=m_id, date_str=m_date)
+                elif eff_sport == "BASKETBALL":
+                    a_rec_item = _enrich_basketball_match_events(c_cur, a_rec_item, away_team, opp, gf, ga, match_id=m_id, date_str=m_date)
+                else:
+                    a_rec_item["odds"] = _generate_match_odds(gf, ga, f"{away_team}_{opp}_{m_id}")
                 away_recent_matches.append(a_rec_item)
 
             # 4. Baseball recent 3 games pitching stats (starter NP, bullpen NP)
@@ -2104,7 +2313,7 @@ class TeamSplitService:
         starting_pitchers_analysis = None
         if sport_code == "BASEBALL":
             try:
-                c_conn_st = sqlite3.connect("sports_data.db")
+                c_conn_st = sqlite3.connect("sports_data.db", timeout=15.0)
                 starting_pitchers_analysis = _resolve_match_starters(c_conn_st, match_id, home_team, away_team, sport_code, team_stats)
                 c_conn_st.close()
             except Exception as e:
