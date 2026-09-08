@@ -1412,17 +1412,12 @@
           <div class="dash-card-column">
             
             <div class="dash-card-header pb-2">
-              <!-- Top Row: 일정·스코어·승무패 경기목록 & Date Filters -->
-              <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
-                <span class="fw-bold text-dark" style="font-size: 0.88rem; font-weight: 800;">
-                  <i class="bi bi-calendar-check-fill text-primary me-1"></i>일정·스코어·승무패 경기목록
-                </span>
-                <div class="d-flex gap-1 flex-wrap">
-                  <button class="btn btn-sm pred-date-btn active" id="predDateALL" onclick="filterPredDate('ALL')">진행/예정</button>
-                  <button class="btn btn-sm pred-date-btn" id="predDateD0" onclick="filterPredDate('D0')">오늘</button>
-                  <button class="btn btn-sm pred-date-btn" id="predDateD1" onclick="filterPredDate('D1')">내일</button>
-                  <button class="btn btn-sm pred-date-btn text-nowrap fw-bold" id="predDateFINISHED" onclick="filterPredDate('FINISHED')" style="color: #dc2626; border-color: #fecaca; background: #fef2f2;"><i class="bi bi-check2-circle me-1"></i>지난결과</button>
-                </div>
+              <!-- Date Filters (진행/예정, 오늘, 내일, 지난결과) -->
+              <div class="d-flex gap-1 mb-2 overflow-x-auto" style="scrollbar-width: none;">
+                <button class="btn btn-sm pred-date-btn active flex-fill text-nowrap" id="predDateALL" onclick="filterPredDate('ALL')">진행/예정</button>
+                <button class="btn btn-sm pred-date-btn flex-fill text-nowrap" id="predDateD0" onclick="filterPredDate('D0')">오늘</button>
+                <button class="btn btn-sm pred-date-btn flex-fill text-nowrap" id="predDateD1" onclick="filterPredDate('D1')">내일</button>
+                <button class="btn btn-sm pred-date-btn flex-fill text-nowrap fw-bold" id="predDateFINISHED" onclick="filterPredDate('FINISHED')" style="color: #dc2626; border-color: #fecaca; background: #fef2f2;"><i class="bi bi-check2-circle me-1"></i>지난결과</button>
               </div>
 
               <!-- 6대 스포츠 고정 필터 (전체, 축구, 야구, 농구, 하키, 배구) -->
@@ -1433,38 +1428,6 @@
                 <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportBASKETBALL" onclick="filterPredSport('BASKETBALL')">🏀 농구</button>
                 <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportHOCKEY" onclick="filterPredSport('HOCKEY')">🏒 하키</button>
                 <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportVOLLEYBALL" onclick="filterPredSport('VOLLEYBALL')">🏐 배구</button>
-              </div>
-
-              <!-- 리그별 퀵 필터: 🏆 챔스(UCL), 🏴󠁧󠁢󠁥󠁮󠁧󠁿 챔피언십, EPL, 라리가, 분데스 등 -->
-              <div class="d-flex gap-1 overflow-x-auto py-1 my-1" style="scrollbar-width: none; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9;">
-                <button class="btn btn-xs league-chip-btn active text-nowrap fw-bold" id="predLeagueALL" onclick="filterPredLeague('ALL')">전체</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueKBL" onclick="filterPredLeague('KBL')" style="background: #f0fdf4; color: #15803d; border: 1.5px solid #bbf7d0;"><i class="bi bi-dribbble me-1"></i>🏀 KBL</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueNBA" onclick="filterPredLeague('NBA')" style="background: #fff7ed; color: #c2410c; border: 1.5px solid #fed7aa;"><i class="bi bi-dribbble me-1"></i>🏀 NBA</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueUCL" onclick="filterPredLeague('UCL')" style="background: #eff6ff; color: #1e3a8a; border: 1.5px solid #bfdbfe;"><i class="bi bi-trophy-fill text-warning me-1"></i>🏆 챔스</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueCHAMPIONSHIP" onclick="filterPredLeague('CHAMPIONSHIP')" style="background: #f8fafc; color: #0f172a; border: 1.5px solid #cbd5e1;"><i class="bi bi-shield-shaded text-primary me-1"></i>🏴󠁧󠁢󠁥󠁮󠁧󠁿 챔피언십</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueENGLAND_CUP" onclick="filterPredLeague('ENGLAND_CUP')" style="background: #faf5ff; color: #7e22ce; border: 1.5px solid #d8b4fe;"><i class="bi bi-trophy-fill text-warning me-1"></i>🏆 잉글랜드컵</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueEPL" onclick="filterPredLeague('EPL')">EPL</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueLALIGA" onclick="filterPredLeague('LALIGA')">라리가</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueBUNDESLIGA" onclick="filterPredLeague('BUNDESLIGA')">분데스</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueSERIE_A" onclick="filterPredLeague('SERIE_A')">세리에A</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueMLB" onclick="filterPredLeague('MLB')">MLB</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueKBO" onclick="filterPredLeague('KBO')">KBO</button>
-              </div>
-
-              <!-- 3번 요구사항: 배트맨 공식 14경기 승무패 / 승1패 / 승5패 전용 팝업 퀵 바 (PC/모바일 공통 적용) -->
-              <div class="d-flex align-items-center gap-1.5 mt-2 p-1.5 rounded-2 overflow-x-auto" style="background: #0f172a; border: 1.5px solid #0f172a; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25); max-width: 100%; scrollbar-width: none;">
-                <span class="badge bg-warning text-dark fw-bold px-2 py-1 text-nowrap flex-shrink-0" style="font-size: 0.70rem; letter-spacing: -0.3px;">
-                  <i class="bi bi-trophy-fill me-1"></i>BETMAN 14경기
-                </span>
-                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 text-white border-0 text-nowrap flex-shrink-0" onclick="openTotoModal('WDL')" style="background: #1e293b; border-radius: 4px; font-size: 0.76rem;" title="클릭 시 배트맨 공식 14경기 축구 승무패 팝업창 오픈">
-                  ⚽ 축구 승무패 <span class="badge bg-danger ms-0.5" id="quickBadgeTotoWDL" style="font-size:0.60rem;">51회 (7,109만)</span>
-                </button>
-                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 text-white border-0 text-nowrap flex-shrink-0" onclick="openTotoModal('W1L')" style="background: #1e293b; border-radius: 4px; font-size: 0.76rem;" title="클릭 시 배트맨 공식 14경기 야구 승1패 팝업창 오픈">
-                  ⚾ 야구 승1패 <span class="badge bg-danger ms-0.5" id="quickBadgeTotoW1L" style="font-size:0.60rem;">67회 (1,274만)</span>
-                </button>
-                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 text-white border-0 text-nowrap flex-shrink-0" onclick="openTotoModal('W5L')" style="background: #1e293b; border-radius: 4px; font-size: 0.76rem;" title="클릭 시 배트맨 공식 14경기 농구 승5패 팝업창 오픈">
-                  🏀 농구 승5패 <span class="badge bg-secondary ms-0.5" id="quickBadgeTotoW5L" style="font-size:0.60rem;">27회</span>
-                </button>
               </div>
             </div>
 
