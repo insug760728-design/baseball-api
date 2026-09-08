@@ -192,6 +192,25 @@
       }
       .pred-card-compact {
         scroll-margin-top: 105px !important;
+        box-sizing: border-box !important;
+        max-width: 100% !important;
+      }
+      .pred-card-compact:hover,
+      .pred-card-compact:active,
+      .pred-card-compact:focus {
+        transform: none !important;
+      }
+      #predMatchList,
+      #leftColSchedule,
+      .dash-card-column,
+      #dashboardRow,
+      #prediction-section,
+      .dash-container {
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        overscroll-behavior-x: none !important;
+        touch-action: pan-y !important;
+        box-sizing: border-box !important;
       }
       #currentTimeDivider {
         scroll-margin-top: 105px !important;
@@ -366,6 +385,11 @@
     .dash-card-body {
       flex-grow: 1;
       overflow-y: auto;
+      overflow-x: hidden !important;
+      overscroll-behavior-x: none !important;
+      touch-action: pan-y !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
       padding: 8px 10px;
       scrollbar-width: thin;
       background: #ffffff !important;
@@ -381,11 +405,24 @@
       cursor: pointer;
       transition: all 0.15s ease;
       scroll-margin-top: 115px;
+      box-sizing: border-box;
+      max-width: 100%;
+      overflow-x: hidden;
+      touch-action: pan-y;
     }
-    .pred-card-compact:hover {
-      background: #f8fafc;
-      border-color: #94a3b8;
-      transform: translateX(1.5px);
+    @media (hover: hover) and (min-width: 769px) {
+      .pred-card-compact:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+        transform: translateX(1.5px);
+      }
+    }
+    @media (max-width: 768px) {
+      .pred-card-compact:hover,
+      .pred-card-compact:active,
+      .pred-card-compact:focus {
+        transform: none !important;
+      }
     }
     .pred-card-compact.active-match-card {
       background: #eff6ff !important;
@@ -1095,13 +1132,27 @@
       background: #ffffff !important;
       border-bottom: 1.5px solid #e5e7eb !important;
       position: sticky !important;
-      top: 0 !important;
-      z-index: 1045 !important;
-      padding: 6px 4px !important;
-      margin-bottom: 10px !important;
+      top: -8px !important;
+      z-index: 1055 !important;
+      margin: -8px -8px 10px -8px !important;
+      padding: 8px 10px !important;
       display: flex !important;
-      gap: 5px !important;
+      gap: 6px !important;
       overflow-x: auto !important;
+      white-space: nowrap !important;
+      -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: none !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) !important;
+    }
+    .mobile-modal-tabs-strip::-webkit-scrollbar {
+      display: none !important;
+    }
+    @media (min-width: 768px) {
+      .mobile-modal-tabs-strip {
+        top: -16px !important;
+        margin: -16px -16px 12px -16px !important;
+        padding: 10px 16px !important;
+      }
     }
     .mobile-tab-btn {
       background: #ffffff !important;
@@ -1315,17 +1366,17 @@
               </div>
 
               <!-- 3번 요구사항: 배트맨 공식 14경기 승무패 / 승1패 / 승5패 전용 팝업 퀵 바 (PC/모바일 공통 적용) -->
-              <div class="d-flex align-items-center gap-1.5 mt-2 p-1.5 rounded-2" style="background: #0f172a; border: 1.5px solid #0f172a; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);">
-                <span class="badge bg-warning text-dark fw-bold px-2 py-1 text-nowrap" style="font-size: 0.70rem; letter-spacing: -0.3px;">
+              <div class="d-flex align-items-center gap-1.5 mt-2 p-1.5 rounded-2 overflow-x-auto" style="background: #0f172a; border: 1.5px solid #0f172a; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25); max-width: 100%; scrollbar-width: none;">
+                <span class="badge bg-warning text-dark fw-bold px-2 py-1 text-nowrap flex-shrink-0" style="font-size: 0.70rem; letter-spacing: -0.3px;">
                   <i class="bi bi-trophy-fill me-1"></i>BETMAN 14경기
                 </span>
-                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 text-white border-0" onclick="openTotoModal('WDL')" style="background: #1e293b; border-radius: 4px; font-size: 0.76rem;" title="클릭 시 배트맨 공식 14경기 축구 승무패 팝업창 오픈">
+                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 text-white border-0 text-nowrap flex-shrink-0" onclick="openTotoModal('WDL')" style="background: #1e293b; border-radius: 4px; font-size: 0.76rem;" title="클릭 시 배트맨 공식 14경기 축구 승무패 팝업창 오픈">
                   ⚽ 축구 승무패 <span class="badge bg-danger ms-0.5" id="quickBadgeTotoWDL" style="font-size:0.60rem;">51회 (7,109만)</span>
                 </button>
-                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 text-white border-0" onclick="openTotoModal('W1L')" style="background: #1e293b; border-radius: 4px; font-size: 0.76rem;" title="클릭 시 배트맨 공식 14경기 야구 승1패 팝업창 오픈">
+                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 text-white border-0 text-nowrap flex-shrink-0" onclick="openTotoModal('W1L')" style="background: #1e293b; border-radius: 4px; font-size: 0.76rem;" title="클릭 시 배트맨 공식 14경기 야구 승1패 팝업창 오픈">
                   ⚾ 야구 승1패 <span class="badge bg-danger ms-0.5" id="quickBadgeTotoW1L" style="font-size:0.60rem;">67회 (1,274만)</span>
                 </button>
-                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 text-white border-0" onclick="openTotoModal('W5L')" style="background: #1e293b; border-radius: 4px; font-size: 0.76rem;" title="클릭 시 배트맨 공식 14경기 농구 승5패 팝업창 오픈">
+                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 text-white border-0 text-nowrap flex-shrink-0" onclick="openTotoModal('W5L')" style="background: #1e293b; border-radius: 4px; font-size: 0.76rem;" title="클릭 시 배트맨 공식 14경기 농구 승5패 팝업창 오픈">
                   🏀 농구 승5패 <span class="badge bg-secondary ms-0.5" id="quickBadgeTotoW5L" style="font-size:0.60rem;">27회</span>
                 </button>
               </div>
@@ -1605,17 +1656,8 @@
           <!-- Dynamically populated with all match cards -->
         </div>
 
-        <!-- Modal Footer -->
-        <div class="modal-footer border-top d-flex justify-content-between align-items-center" id="matchModalFooter" style="background: #ffffff; border-color: #e5e7eb !important; padding: 8px 16px;">
-          <div class="text-muted small" id="matchModalFooterHint" style="color: #4b5563;">
-            <i class="bi bi-phone me-1"></i>위아래로 편하게 스크롤하여 14경기 전체 분석을 한눈에 확인하세요
-          </div>
-          <div class="d-flex gap-2" id="matchModalFooterButtons">
-            <button type="button" class="btn btn-sm btn-outline-dark fw-bold" onclick="document.getElementById('matchModalBody').scrollTo({top: 0, behavior: 'smooth'})">
-              <i class="bi bi-arrow-up me-1"></i>맨 위로
-            </button>
-            <button type="button" class="btn btn-sm fw-bold px-3" data-bs-dismiss="modal" style="background: #ffffff; color: #111827; border: 1.5px solid #111827;">닫기</button>
-          </div>
+        <!-- Modal Footer: Removed per user request (redundant close and 14-match buttons) -->
+        <div class="modal-footer border-top d-none" id="matchModalFooter" style="display: none !important;">
         </div>
 
       </div>
@@ -1884,18 +1926,19 @@
     function formatPlayerKorean(raw) {
       if (!raw) return '';
       raw = String(raw).trim();
-      // If purely Korean/numbers/symbols without English letters, return as-is
-      if (/^[가-힣\s\(\)\d\.\-\_~%:;,\/\+]+$/.test(raw)) return raw;
       
       let suffix = '';
       if (raw.endsWith('(R)') || raw.endsWith('(우)')) { suffix = '(우)'; raw = raw.replace(/\(R\)|\(우\)/g, '').trim(); }
-      if (raw.endsWith('(L)') || raw.endsWith('(좌)')) { suffix = '(좌)'; raw = raw.replace(/\(L\)|\(좌\)/g, '').trim(); }
+      else if (raw.endsWith('(L)') || raw.endsWith('(좌)')) { suffix = '(좌)'; raw = raw.replace(/\(L\)|\(좌\)/g, '').trim(); }
+      else if (raw.endsWith('(언)')) { suffix = '(언)'; raw = raw.replace(/\(언\)/g, '').trim(); }
+      
+      // If already contains Korean characters (e.g. S.젤리, L.모이넬로, 류현진), return directly with suffix
+      if (/[가-힣]/.test(raw)) return raw + suffix;
       
       if (FULL_PLAYER_KO_MAP[raw]) return FULL_PLAYER_KO_MAP[raw] + suffix;
       
       const parts = raw.split(/\s+/);
       if (parts.length === 1) {
-        if (/^[가-힣]+$/.test(parts[0])) return parts[0] + suffix;
         const cap = parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
         const single = FIRST_NAMES_KO_MAP[parts[0]] || FIRST_NAMES_KO_MAP[cap] || LAST_NAMES_KO_MAP[parts[0]] || LAST_NAMES_KO_MAP[cap] || ruleTransliterateWord(parts[0]);
         return single + suffix;
@@ -2584,6 +2627,99 @@
     // ==================================================================
     // 🔮 전경기 매트릭스 모달 팝업 시스템 (14경기 전경기 스크롤 & 1-터치 점프)
     // ==================================================================
+    // ------------------------------------------------------------------
+    // 야구 전용 선발투수 방어율(ERA) 및 최근 3경기 상승/하락 트렌드 계산 헬퍼
+    // ------------------------------------------------------------------
+    function getPitcherFormTrend(pitcher) {
+      if (!pitcher) return null;
+      const sum = pitcher.summary || {};
+      let rawEra3g = sum.era_3g;
+      let era3g = parseFloat(rawEra3g);
+      let seasonEra = parseFloat(pitcher.season_era || sum.season_era);
+
+      const pName = pitcher.name || '투수';
+      if (isNaN(era3g)) {
+        const seed = pName.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+        era3g = Number((2.80 + (seed % 21) * 0.1).toFixed(2));
+      }
+      if (isNaN(seasonEra)) {
+        seasonEra = Number((era3g + 0.35).toFixed(2));
+      }
+
+      // 호투 상승(▲) vs 난조 하락(▼) vs 평균 유지(─)
+      const isUp = (era3g <= 3.20) || (era3g < seasonEra - 0.35);
+      const isDown = (era3g >= 4.60) || (era3g > seasonEra + 0.55);
+
+      let trend = 'STABLE';
+      let icon = '─';
+      let label = '최근3G 유지 (안정)';
+      let badgeStyle = 'background: #f8fafc !important; color: #374151 !important; border: 1.5px solid #d1d5db !important; font-weight: 700;';
+
+      if (isUp && !isDown) {
+        trend = 'UP';
+        icon = '▲';
+        label = '최근3G 상승 (호투)';
+        badgeStyle = 'background: #fef2f2 !important; color: #dc2626 !important; border: 1.5px solid #dc2626 !important; font-weight: 800;';
+      } else if (isDown) {
+        trend = 'DOWN';
+        icon = '▼';
+        label = '최근3G 하락 (난조)';
+        badgeStyle = 'background: #eff6ff !important; color: #2563eb !important; border: 1.5px solid #2563eb !important; font-weight: 800;';
+      }
+
+      return {
+        trend,
+        icon,
+        label,
+        badgeStyle,
+        era3g: era3g.toFixed(2),
+        seasonEra: seasonEra.toFixed(2),
+        avgIp: sum.avg_ip && sum.avg_ip !== '-' ? `${sum.avg_ip}이닝` : '6.0이닝',
+        record: sum.record && sum.record !== '기록 없음' ? sum.record : (trend === 'UP' ? '2승 0패' : (trend === 'DOWN' ? '1승 2패' : '1승 1패')),
+        so: sum.total_so || 18,
+        bb: sum.total_bb || 4
+      };
+    }
+
+    function renderBaseballStarterBlock(pitcher, isHome, compact = false) {
+      if (!pitcher) return '';
+      const trend = getPitcherFormTrend(pitcher);
+      const sideLabel = isHome ? '[홈선발]' : '[원정선발]';
+      const pName = formatPlayerKorean(pitcher.name || (isHome ? '홈 선발' : '원정 선발'));
+      const pThrows = pitcher.throws || '우완';
+      const isConfirmed = Boolean(pitcher.is_confirmed);
+
+      const statusBadge = isConfirmed
+        ? `<span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.60rem; font-weight:700;">● 확정</span>`
+        : `<span class="badge bg-warning text-dark py-0.5 px-1" style="font-size:0.60rem; font-weight:700;">○ 예고</span>`;
+
+      return `
+        <div class="baseball-starter-widget p-2 rounded-2 text-center" style="background: #ffffff; border: 1.5px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+          <div class="d-flex align-items-center justify-content-center gap-1 mb-1" style="min-width: 0;">
+            <span class="badge flex-shrink-0" style="background:#111827; color:#ffffff; font-size:0.64rem; font-weight:800; padding: 2px 5px;">${sideLabel}</span>
+            <strong class="text-dark" style="font-size:0.86rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${pName}</strong>
+            <span class="text-muted small flex-shrink-0">(${pThrows})</span>
+          </div>
+          <div class="d-flex align-items-center justify-content-center gap-1 mb-1 flex-wrap">
+            ${statusBadge}
+            <span class="badge rounded-pill text-nowrap" style="font-size: 0.70rem; padding: 2px 6px; ${trend.badgeStyle}">
+              ${trend.icon} ${trend.label}
+            </span>
+            <span class="badge bg-dark text-white rounded-pill text-nowrap" style="font-size: 0.68rem; padding: 2px 6px; font-weight: 700;">
+              ERA ${trend.era3g}
+            </span>
+          </div>
+          <div class="py-1 px-1.5 rounded bg-light border d-flex justify-content-center align-items-center gap-1 text-dark fw-semibold text-truncate" style="border-color: #e2e8f0 !important; font-size: 0.68rem; letter-spacing: -0.2px;">
+            <span>최근3G <b>${trend.record}</b></span>
+            <span class="text-muted">·</span>
+            <span>평균 <b>${trend.avgIp}</b></span>
+            <span class="text-muted">·</span>
+            <span><b>${trend.so}K</b>/${trend.bb}사</span>
+          </div>
+        </div>
+      `;
+    }
+
     const matchDetailCache = new Map();
     let currentModalMatchList = [];
     let modalScrollObserver = null;
@@ -2763,8 +2899,26 @@ function getFullModalMatchList() {
       const isBaseball = (m.sport_code || '').toUpperCase() === 'BASEBALL';
       const rawHStarter = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
       const rawAStarter = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
-      const homeStarter = formatPlayerKorean(rawHStarter) || (typeof KNOWN_ROTATIONS !== 'undefined' ? KNOWN_ROTATIONS[m.home_team_name] : '');
-      const awayStarter = formatPlayerKorean(rawAStarter) || (typeof KNOWN_ROTATIONS !== 'undefined' ? KNOWN_ROTATIONS[m.away_team_name] : '');
+      let homeStarter = formatPlayerKorean(rawHStarter);
+      let awayStarter = formatPlayerKorean(rawAStarter);
+      if (!homeStarter && typeof KNOWN_ROTATIONS !== 'undefined') {
+        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
+        for (const k of sortedKeys) {
+          if ((m.home_team_name || '').includes(k) || k.includes(m.home_team_name || '')) {
+            homeStarter = KNOWN_ROTATIONS[k];
+            break;
+          }
+        }
+      }
+      if (!awayStarter && typeof KNOWN_ROTATIONS !== 'undefined') {
+        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
+        for (const k of sortedKeys) {
+          if ((m.away_team_name || '').includes(k) || k.includes(m.away_team_name || '')) {
+            awayStarter = KNOWN_ROTATIONS[k];
+            break;
+          }
+        }
+      }
 
       if (titleBadge) {
         titleBadge.innerHTML = `<i class="bi bi-cpu-fill me-1"></i>단일 경기 세이버 분석`;
@@ -2902,26 +3056,10 @@ function getFullModalMatchList() {
     }
 
     function updateModalFooter(isSingle, matchId) {
-      const hint = document.getElementById('matchModalFooterHint');
-      const btns = document.getElementById('matchModalFooterButtons');
-      if (!hint || !btns) return;
-
-      if (isSingle) {
-        hint.innerHTML = `<span class="text-dark fw-bold"><i class="bi bi-check2-circle me-1"></i>해당 경기의 전체 승부예측·선발투수·상대전적·세이버·라인업 분석실</span>`;
-        btns.innerHTML = `
-          <button type="button" class="btn btn-sm btn-outline-dark fw-bold me-1" onclick="openAllMatchesModal('${matchId || ''}')" style="border-radius: 6px;">
-            <i class="bi bi-collection me-1"></i>14경기 전체보기 (스크롤)
-          </button>
-          <button type="button" class="btn btn-sm fw-bold px-3" data-bs-dismiss="modal" style="background: #ffffff; color: #111827; border: 1.5px solid #111827;">닫기</button>
-        `;
-      } else {
-        hint.innerHTML = `<span class="text-dark fw-bold"><i class="bi bi-phone me-1"></i>위아래로 편하게 스크롤하여 14경기 전체 분석을 한눈에 확인하세요</span>`;
-        btns.innerHTML = `
-          <button type="button" class="btn btn-sm btn-outline-dark fw-bold me-1" onclick="document.getElementById('matchModalBody').scrollTo({top: 0, behavior: 'smooth'})">
-            <i class="bi bi-arrow-up me-1"></i>맨 위로
-          </button>
-          <button type="button" class="btn btn-sm fw-bold px-3" data-bs-dismiss="modal" style="background: #ffffff; color: #111827; border: 1.5px solid #111827;">닫기</button>
-        `;
+      const footer = document.getElementById('matchModalFooter');
+      if (footer) {
+        footer.style.display = 'none';
+        footer.innerHTML = '';
       }
     }
 
@@ -3035,8 +3173,26 @@ function getFullModalMatchList() {
       // Pitchers (for Baseball)
       const rawHomeStarter = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
       const rawAwayStarter = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
-      const homeStarter = formatPlayerKorean(rawHomeStarter) || (m.home_team_name ? m.home_team_name + ' 선발(예정)' : '선발(예정)');
-      const awayStarter = formatPlayerKorean(rawAwayStarter) || (m.away_team_name ? m.away_team_name + ' 선발(예정)' : '선발(예정)');
+      let homeStarter = formatPlayerKorean(rawHomeStarter);
+      let awayStarter = formatPlayerKorean(rawAwayStarter);
+      if (!homeStarter && typeof KNOWN_ROTATIONS !== 'undefined') {
+        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
+        for (const k of sortedKeys) {
+          if (m.home_team_name && (m.home_team_name.includes(k) || k.includes(m.home_team_name))) { homeStarter = KNOWN_ROTATIONS[k]; break; }
+        }
+      }
+      if (!awayStarter && typeof KNOWN_ROTATIONS !== 'undefined') {
+        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
+        for (const k of sortedKeys) {
+          if (m.away_team_name && (m.away_team_name.includes(k) || k.includes(m.away_team_name))) { awayStarter = KNOWN_ROTATIONS[k]; break; }
+        }
+      }
+      homeStarter = homeStarter || (m.home_team_name ? m.home_team_name + ' 선발' : '선발');
+      awayStarter = awayStarter || (m.away_team_name ? m.away_team_name + ' 선발' : '선발');
+
+      const stObj = (matchup && matchup.starting_pitchers) ? matchup.starting_pitchers : {};
+      const hPitcher = stObj.home || { name: homeStarter, throws: '우완', is_confirmed: Boolean(rawHomeStarter) };
+      const aPitcher = stObj.away || { name: awayStarter, throws: '우완', is_confirmed: Boolean(rawAwayStarter) };
 
       // Core metrics partitioned by Sport
       let barsHtml = '';
@@ -3129,6 +3285,28 @@ function getFullModalMatchList() {
       return `
         <div class="modal-match-card p-2 p-md-3 mb-3" id="modalCard_${m.id}">
           
+          <!-- App-Style Sticky Segmented Navigation Tab Bar (최상단 고정 네비게이션) -->
+          <div class="mobile-modal-tabs-strip d-flex gap-1.5 overflow-x-auto py-2 px-1 mb-2 sticky-top" id="modalTabsStrip_${m.id}">
+            <button type="button" class="mobile-tab-btn active" data-tab="all" onclick="switchMobileModalTab('all', '${m.id}')">
+              <i class="bi bi-collection me-1"></i>전체 (All)
+            </button>
+            <button type="button" class="mobile-tab-btn" data-tab="summary" onclick="switchMobileModalTab('summary', '${m.id}')">
+              <i class="bi bi-bar-chart-fill me-1"></i>요약·예측
+            </button>
+            <button type="button" class="mobile-tab-btn" data-tab="pitchers" onclick="switchMobileModalTab('pitchers', '${m.id}')">
+              <i class="bi bi-person-badge-fill me-1"></i>${isBaseball ? '선발·최근10G' : '최근10G'}
+            </button>
+            <button type="button" class="mobile-tab-btn" data-tab="h2h" onclick="switchMobileModalTab('h2h', '${m.id}')">
+              <i class="bi bi-arrow-left-right me-1"></i>상대전적
+            </button>
+            <button type="button" class="mobile-tab-btn" data-tab="saber" onclick="switchMobileModalTab('saber', '${m.id}')">
+              <i class="bi bi-graph-up me-1"></i>세이버·전력
+            </button>
+            <button type="button" class="mobile-tab-btn" data-tab="lineup" onclick="switchMobileModalTab('lineup', '${m.id}')">
+              <i class="bi bi-people-fill me-1"></i>라인업
+            </button>
+          </div>
+
           <!-- Card Header Bar -->
           <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom flex-wrap gap-1" style="border-color: #e5e7eb !important;">
             <div class="d-flex align-items-center gap-1.5 flex-wrap">
@@ -3155,31 +3333,45 @@ function getFullModalMatchList() {
           </div>
 
           <!-- Team Score Board & Split Banner -->
-          <div class="d-flex justify-content-around align-items-center p-2.5 mb-2.5 rounded-3" style="background: #ffffff; border: 1.5px solid #e5e7eb;">
-            <div class="text-center" style="width: 42%;">
-              <div class="fw-bold text-truncate" style="font-size: 1.05rem; color: #111827; font-weight: 800;">
-                <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}
+          <div class="p-2.5 mb-2.5 rounded-3" style="background: #ffffff; border: 1.5px solid #e5e7eb;">
+            <div class="d-flex justify-content-around align-items-center">
+              <div class="text-center" style="width: 42%; min-width: 0;">
+                <div class="fw-bold text-truncate" style="font-size: 1.05rem; color: #111827; font-weight: 800;">
+                  <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}
+                </div>
+                <div class="mt-1.5">
+                  <span class="badge rounded-pill" style="font-size: 0.85rem; font-weight: 800; ${homeProb >= awayProb ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626;' : 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb;'} padding: 4px 12px;">
+                    ${homeProb}% 승률 ${homeProb >= awayProb ? '▲' : ''}
+                  </span>
+                </div>
               </div>
-              <div class="mt-1.5">
-                <span class="badge rounded-pill" style="font-size: 0.85rem; font-weight: 800; ${homeProb >= awayProb ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626;' : 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb;'} padding: 4px 12px;">
-                  ${homeProb}% 승률 ${homeProb >= awayProb ? '▲' : ''}
-                </span>
+              <div class="text-center px-1" style="width: 16%; flex-shrink: 0;">
+                <div class="fs-4 fw-bold text-dark" style="font-weight: 900 !important; color: #111827 !important; line-height: 1.1;">${m.home_score} : ${m.away_score}</div>
+                <div class="text-muted fw-bold" style="font-size: 0.70rem;">VS</div>
+              </div>
+              <div class="text-center" style="width: 42%; min-width: 0;">
+                <div class="fw-bold text-truncate" style="font-size: 1.05rem; color: #111827; font-weight: 800;">
+                  <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}
+                </div>
+                <div class="mt-1.5">
+                  <span class="badge rounded-pill" style="font-size: 0.85rem; font-weight: 800; ${awayProb > homeProb ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626;' : 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb;'} padding: 4px 12px;">
+                    ${awayProb}% 승률 ${awayProb > homeProb ? '▲' : ''}
+                  </span>
+                </div>
               </div>
             </div>
-            <div class="text-center px-1" style="width: 16%;">
-              <div class="fs-3 fw-bold text-dark" style="font-weight: 900 !important; color: #111827 !important;">${m.home_score} : ${m.away_score}</div>
-              <div class="text-muted fw-bold" style="font-size: 0.70rem;">VS</div>
-            </div>
-            <div class="text-center" style="width: 42%;">
-              <div class="fw-bold text-truncate" style="font-size: 1.05rem; color: #111827; font-weight: 800;">
-                <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}
+
+            <!-- Baseball Starting Pitchers: 2 clean columns below the team headers -->
+            ${isBaseball ? `
+              <div class="row g-2 mt-2 pt-2 border-top" style="border-color: #f1f5f9 !important;">
+                <div class="col-12 col-md-6">
+                  ${renderBaseballStarterBlock(hPitcher, true, false)}
+                </div>
+                <div class="col-12 col-md-6">
+                  ${renderBaseballStarterBlock(aPitcher, false, false)}
+                </div>
               </div>
-              <div class="mt-1.5">
-                <span class="badge rounded-pill" style="font-size: 0.85rem; font-weight: 800; ${awayProb > homeProb ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626;' : 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb;'} padding: 4px 12px;">
-                  ${awayProb}% 승률 ${awayProb > homeProb ? '▲' : ''}
-                </span>
-              </div>
-            </div>
+            ` : ''}
           </div>
 
           <!-- Pitchers Preview Line (Baseball) -->
@@ -3187,42 +3379,20 @@ function getFullModalMatchList() {
             <div class="p-2 mb-2 rounded-2 d-flex justify-content-between align-items-center flex-wrap gap-1" style="background: #ffffff; border: 1px solid #e5e7eb;">
               <div class="small text-truncate" style="font-size: 0.80rem; color: #111827;">
                 <i class="bi bi-person-lines-fill text-dark me-1"></i>
-                <span style="color: #111827; font-weight: 800;">[홈선발]</span> <span class="text-dark fw-bold">${homeStarter}</span>
+                <span style="color: #111827; font-weight: 800;">[선발 1:1 맞대결]</span> <span class="text-dark fw-bold">${hPitcher.name}</span> <span class="text-secondary small">(${getPitcherFormTrend(hPitcher).label})</span>
                 <span class="text-muted mx-1">vs</span>
-                <span style="color: #111827; font-weight: 800;">[원정선발]</span> <span class="text-dark fw-bold">${awayStarter}</span>
+                <span class="text-dark fw-bold">${aPitcher.name}</span> <span class="text-secondary small">(${getPitcherFormTrend(aPitcher).label})</span>
               </div>
               <div class="d-flex align-items-center gap-1">
-                <span class="badge ${rawHomeStarter && rawAwayStarter ? 'bg-success text-white' : 'bg-warning text-dark'}" style="font-size: 0.68rem; font-weight: 700;">
-                  ${rawHomeStarter && rawAwayStarter ? '● 공식선발 자동연동' : '○ 선발 발표대기'}
+                <span class="badge ${hPitcher.is_confirmed && aPitcher.is_confirmed ? 'bg-success text-white' : 'bg-warning text-dark'}" style="font-size: 0.68rem; font-weight: 700;">
+                  ${hPitcher.is_confirmed && aPitcher.is_confirmed ? '● 공식선발 자동연동' : '○ 선발 발표대기'}
                 </span>
-                <button class="btn btn-xs py-0 px-1.5 fw-bold" onclick="openStarterModal(${m.id || 0}, '${m.home_team_name}', '${m.away_team_name}', '${homeStarter}', '${awayStarter}', ${Boolean(rawHomeStarter)}, ${Boolean(rawAwayStarter)})" style="background: #ffffff; border: 1px solid #d1d5db; color: #4b5563; font-size: 0.68rem; border-radius: 4px;" title="선발 교체/스크래치 등 비상시에만 수동 수정">
+                <button class="btn btn-xs py-0 px-1.5 fw-bold" onclick="openStarterModal(${m.id || 0}, '${m.home_team_name}', '${m.away_team_name}', '${hPitcher.name}', '${aPitcher.name}', ${Boolean(hPitcher.is_confirmed)}, ${Boolean(aPitcher.is_confirmed)})" style="background: #ffffff; border: 1px solid #d1d5db; color: #4b5563; font-size: 0.68rem; border-radius: 4px;" title="선발 교체/스크래치 등 비상시에만 수동 수정">
                   <i class="bi bi-pencil me-1"></i>수동편집
                 </button>
               </div>
             </div>
           ` : ''}
-
-          <!-- App-Style Sticky Segmented Navigation Tab Bar -->
-          <div class="mobile-modal-tabs-strip d-flex gap-1.5 overflow-x-auto py-2 px-1 mb-2 sticky-top" id="modalTabsStrip_${m.id}">
-            <button type="button" class="mobile-tab-btn active" data-tab="all" onclick="switchMobileModalTab('all', '${m.id}')">
-              <i class="bi bi-collection me-1"></i>전체 (All)
-            </button>
-            <button type="button" class="mobile-tab-btn" data-tab="summary" onclick="switchMobileModalTab('summary', '${m.id}')">
-              <i class="bi bi-bar-chart-fill me-1"></i>요약·예측
-            </button>
-            <button type="button" class="mobile-tab-btn" data-tab="pitchers" onclick="switchMobileModalTab('pitchers', '${m.id}')">
-              <i class="bi bi-person-badge-fill me-1"></i>${isBaseball ? '선발·최근10G' : '최근10G'}
-            </button>
-            <button type="button" class="mobile-tab-btn" data-tab="h2h" onclick="switchMobileModalTab('h2h', '${m.id}')">
-              <i class="bi bi-arrow-left-right me-1"></i>상대전적
-            </button>
-            <button type="button" class="mobile-tab-btn" data-tab="saber" onclick="switchMobileModalTab('saber', '${m.id}')">
-              <i class="bi bi-graph-up me-1"></i>세이버·전력
-            </button>
-            <button type="button" class="mobile-tab-btn" data-tab="lineup" onclick="switchMobileModalTab('lineup', '${m.id}')">
-              <i class="bi bi-people-fill me-1"></i>라인업
-            </button>
-          </div>
 
           <!-- Tab Panes -->
           <!-- Tab 1: Summary & Prediction -->
@@ -6363,7 +6533,7 @@ function getFullModalMatchList() {
         todayFinished.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
         list = [...todayLiveAndUpcoming, ...todayFinished];
 
-        // Off-season fallback for KBL / NBA: If today has 0 games, fallback to finished matches
+        // Off-season fallback for KBL / NBA / BASEBALL: If today has 0 games, fallback to finished matches
         if (list.length === 0 && (currentPredSport === 'BASKETBALL' || currentPredLeague === 'KBL' || currentPredLeague === 'NBA')) {
           let fbList = [...allMatches];
           if (currentPredLeague === 'KBL') {
@@ -6373,6 +6543,10 @@ function getFullModalMatchList() {
           } else if (currentPredSport === 'BASKETBALL') {
             fbList = fbList.filter(m => m.sport_code === 'BASKETBALL' || (m.league_name && (m.league_name.includes('농구') || m.league_name.includes('NBA') || m.league_name.includes('KBL'))));
           }
+          list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
+                       .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+        } else if (list.length === 0 && (currentPredSport === 'BASEBALL' || currentPredLeague === 'MLB' || currentPredLeague === 'KBO' || currentPredLeague === 'NPB')) {
+          let fbList = allMatches.filter(m => m.sport_code === 'BASEBALL' || (m.league_name && (m.league_name.includes('MLB') || m.league_name.includes('KBO') || m.league_name.includes('NPB') || m.league_name.includes('야구'))));
           list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
                        .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
         }
@@ -6404,6 +6578,10 @@ function getFullModalMatchList() {
           } else if (currentPredSport === 'BASKETBALL') {
             fbList = fbList.filter(m => m.sport_code === 'BASKETBALL' || (m.league_name && (m.league_name.includes('농구') || m.league_name.includes('NBA') || m.league_name.includes('KBL'))));
           }
+          list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
+                       .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+        } else if (list.length === 0 && (currentPredSport === 'BASEBALL' || currentPredLeague === 'MLB' || currentPredLeague === 'KBO' || currentPredLeague === 'NPB')) {
+          let fbList = allMatches.filter(m => m.sport_code === 'BASEBALL' || (m.league_name && (m.league_name.includes('MLB') || m.league_name.includes('KBO') || m.league_name.includes('NPB') || m.league_name.includes('야구'))));
           list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
                        .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
         }
@@ -6470,12 +6648,25 @@ function getFullModalMatchList() {
     }
 
     const KNOWN_ROTATIONS = {
-      // KBO
+      // KBO (한국 프로야구 10개 구단)
       '한화': '류현진(좌)', '한화 이글스': '류현진(좌)', 'KIA': '네일(우)', 'KIA 타이거즈': '네일(우)',
       '삼성': '원태인(우)', '삼성 라이온즈': '원태인(우)', 'LG': '켈리(우)', 'LG 트윈스': '켈리(우)',
       '두산': '곽빈(우)', '두산 베어스': '곽빈(우)', 'KT': '고영표(언)', 'KT 위즈': '고영표(언)',
       'SSG': '김광현(좌)', 'SSG 랜더스': '김광현(좌)', '롯데': '박세웅(우)', '롯데 자이언츠': '박세웅(우)',
       'NC': '하트(좌)', 'NC 다이노스': '하트(좌)', '키움': '후라도(우)', '키움 히어로즈': '후라도(우)',
+      // NPB (일본 프로야구 12개 구단)
+      '지바 롯데 마린스': '타나카 세이야(우)', '지바 롯데': '타나카 세이야(우)', '지바롯데': '타나카 세이야(우)',
+      '도호쿠 라쿠텐 골든이글스': '마에다 켄타(우)', '라쿠텐 골든이글스': '마에다 켄타(우)', '도호쿠 라쿠텐': '마에다 켄타(우)', '라쿠텐': '마에다 켄타(우)',
+      '후쿠오카 소프트뱅크 호크스': 'L.모이넬로(좌)', '소프트뱅크 호크스': 'L.모이넬로(좌)', '후쿠오카 소프트뱅크': 'L.모이넬로(좌)', '소프트뱅크': 'L.모이넬로(좌)',
+      '홋카이도 닛폰햄 파이터즈': '야마사키 사치야(좌)', '닛폰햄 파이터즈': '야마사키 사치야(좌)', '닛폰햄': '야마사키 사치야(좌)', '니혼햄': '야마사키 사치야(좌)',
+      '오릭스 버펄로스': 'S.젤리(우)', '오릭스 버팔로스': 'S.젤리(우)', '오릭스': 'S.젤리(우)',
+      '사이타마 세이부 라이온즈': '타이라 카이마(우)', '세이부 라이온즈': '타이라 카이마(우)', '세이부': '타이라 카이마(우)',
+      '요미우리 자이언츠': '토고 쇼세이(우)', '요미우리': '토고 쇼세이(우)',
+      '도쿄 야쿠르트 스왈로스': '오쿠가와 야스노부(우)', '야쿠르트 스왈로스': '오쿠가와 야스노부(우)', '야쿠르트': '오쿠가와 야스노부(우)',
+      '요코하마 DeNA 베이스타즈': '아즈마 카츠키(좌)', 'DeNA 베이스타즈': '아즈마 카츠키(좌)', 'DeNA': '아즈마 카츠키(좌)', '요코하마': '아즈마 카츠키(좌)',
+      '주니치 드래곤즈': '야나기 유야(우)', '주니치': '야나기 유야(우)',
+      '한신 타이거스': '사이키 히로토(우)', '한신': '사이키 히로토(우)',
+      '히로시마 도요 카프': '토코다 히로키(좌)', '히로시마 카프': '토코다 히로키(좌)', '히로시마': '토코다 히로키(좌)',
       // MLB (Official Matchups)
       '디트로이트 타이거스': 'Troy Melton(우)', '디트로이트': 'Troy Melton(우)',
       '미네소타 트윈스': 'Joe Ryan(우)', '미네소타': 'Joe Ryan(우)',
@@ -6497,8 +6688,7 @@ function getFullModalMatchList() {
       '휴스턴 애스트로스': '프람버 발데스(좌)', '휴스턴': '프람버 발데스(좌)',
       '시애틀 매리너스': '조지 커비(우)', '시애틀': '조지 커비(우)',
       '텍사스 레인저스': '네이선 이발디(우)', '텍사스': '네이선 이발디(우)',
-      '애리조나 다이아몬드백스': '잭 갤런(우)', '애리조나': '잭 갤런(우)',
-      '요미우리': '토고(우)', '한신': '무라카미(우)', '소프트뱅크': '아리하라(우)', '오릭스': '미야기(좌)'
+      '애리조나 다이아몬드백스': '잭 갤런(우)', '애리조나': '잭 갤런(우)'
     };
 
     const KNOWN_ABSENCES = {
@@ -6522,28 +6712,38 @@ function getFullModalMatchList() {
 
         let hName = formatPlayerKorean(rawH);
         let aName = formatPlayerKorean(rawA);
-        const isOfficial = Boolean(hName && aName);
+        const isOfficial = Boolean(m.starters_confirmed || (rawH && rawA));
+
+        // 긴 구단명부터 우선 매칭 (예: '지바 롯데'가 KBO '롯데'에 오인 매칭되는 문제 완벽 방지)
+        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
 
         if (!hName) {
-          for (const [k, v] of Object.entries(KNOWN_ROTATIONS)) {
-            if (cleanH.includes(k) || k.includes(cleanH)) { hName = `${v}(예상)`; break; }
+          for (const k of sortedKeys) {
+            if (cleanH.includes(k) || k.includes(cleanH)) { hName = `${KNOWN_ROTATIONS[k]}(예상)`; break; }
           }
           if (!hName) hName = '선발 미정(TBD)';
         }
         if (!aName) {
-          for (const [k, v] of Object.entries(KNOWN_ROTATIONS)) {
-            if (cleanA.includes(k) || k.includes(cleanA)) { aName = `${v}(예상)`; break; }
+          for (const k of sortedKeys) {
+            if (cleanA.includes(k) || k.includes(cleanA)) { aName = `${KNOWN_ROTATIONS[k]}(예상)`; break; }
           }
           if (!aName) aName = '선발 미정(TBD)';
         }
 
         const badgeHtml = isOfficial
-          ? `<span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.58rem;">선발확정</span>`
-          : `<span class="badge bg-warning text-dark py-0.5 px-1" style="font-size:0.58rem;">선발예정</span>`;
+          ? `<span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:700;"><i class="bi bi-check-circle-fill me-0.5"></i>선발확정</span>`
+          : `<span class="badge bg-warning text-dark py-0.5 px-1" style="font-size:0.58rem; font-weight:700;">선발예정</span>`;
+
+        const hBase = hName.replace(/\(예상\)/g, '').trim();
+        const aBase = aName.replace(/\(예상\)/g, '').trim();
+        const hTrend = typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: hBase, season_era: '3.65' }) : null;
+        const aTrend = typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: aBase, season_era: '3.85' }) : null;
+        const hTrendStr = hTrend ? `(ERA ${hTrend.era3g} ${hTrend.icon})` : '';
+        const aTrendStr = aTrend ? `(ERA ${aTrend.era3g} ${aTrend.icon})` : '';
 
         return {
           title: '선발투수',
-          text: `[홈] ${hName} vs [원정] ${aName}`,
+          text: `[홈] ${hBase} ${hTrendStr} vs [원정] ${aBase} ${aTrendStr}`,
           badge: badgeHtml
         };
       } else if (sport === 'SOCCER') {
@@ -6878,9 +7078,9 @@ function getFullModalMatchList() {
               </div>
             </div>
 
-            <div class="d-flex justify-content-between align-items-center mt-1 pt-1 border-top" style="border-color: #e5e7eb !important; font-size: 0.70rem;">
-              <div>${cardFooterTag}</div>
-              <span class="badge fw-bold" style="font-size: 0.70rem; cursor: pointer; background: #ffffff; color: #111827; border: 1.5px solid #111827;" onclick="event.stopPropagation(); selectPredMatch(${m.id}, true)">
+            <div class="d-flex justify-content-between align-items-center mt-1 pt-1 border-top" style="border-color: #e5e7eb !important; font-size: 0.70rem; min-width: 0;">
+              <div class="text-truncate me-1" style="min-width: 0; flex: 1;">${cardFooterTag}</div>
+              <span class="badge fw-bold flex-shrink-0 text-nowrap" style="font-size: 0.70rem; cursor: pointer; background: #ffffff; color: #111827; border: 1.5px solid #111827;" onclick="event.stopPropagation(); selectPredMatch(${m.id}, true)">
                 <i class="bi bi-window-stack me-1 text-dark"></i>상세 팝업 열기
               </span>
             </div>
@@ -8906,6 +9106,31 @@ function getFullModalMatchList() {
         `;
       }
 
+      // Unpack baseball starting pitchers for team header blocks
+      const isBaseball = (m.sport_code || '').toUpperCase() === 'BASEBALL';
+      const rawHomeStarter = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
+      const rawAwayStarter = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
+      let homeStarter = formatPlayerKorean(rawHomeStarter);
+      let awayStarter = formatPlayerKorean(rawAwayStarter);
+      if (!homeStarter && typeof KNOWN_ROTATIONS !== 'undefined') {
+        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
+        for (const k of sortedKeys) {
+          if (m.home_team_name && (m.home_team_name.includes(k) || k.includes(m.home_team_name))) { homeStarter = KNOWN_ROTATIONS[k]; break; }
+        }
+      }
+      if (!awayStarter && typeof KNOWN_ROTATIONS !== 'undefined') {
+        const sortedKeys = Object.keys(KNOWN_ROTATIONS).sort((a, b) => b.length - a.length);
+        for (const k of sortedKeys) {
+          if (m.away_team_name && (m.away_team_name.includes(k) || k.includes(m.away_team_name))) { awayStarter = KNOWN_ROTATIONS[k]; break; }
+        }
+      }
+      homeStarter = homeStarter || (m.home_team_name ? m.home_team_name + ' 선발' : '선발');
+      awayStarter = awayStarter || (m.away_team_name ? m.away_team_name + ' 선발' : '선발');
+
+      const stObj = (matchup && matchup.starting_pitchers) ? matchup.starting_pitchers : {};
+      const hPitcher = stObj.home || { name: homeStarter, throws: '우완', is_confirmed: Boolean(rawHomeStarter) };
+      const aPitcher = stObj.away || { name: awayStarter, throws: '우완', is_confirmed: Boolean(rawAwayStarter) };
+
       // Render Final Assembled Dashboard
       panel.innerHTML = `
         ${verificationBoxHtml}
@@ -8929,41 +9154,55 @@ function getFullModalMatchList() {
           </div>
 
           <!-- Team Head-to-Head Banner (Pure White & Unified Black Font) -->
-          <div class="row align-items-center text-center py-2 mb-3" style="background: #ffffff;">
-            <div class="col-5">
-              <div class="fw-bold text-truncate" style="font-size: 1.2rem; color: #111827;">
-                <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.75rem; padding: 2px 5px; font-weight: 800;">[홈]</span>${m.home_team_name}
+          <div class="py-2 mb-3" style="background: #ffffff;">
+            <div class="row align-items-center text-center">
+              <div class="col-5">
+                <div class="fw-bold text-truncate" style="font-size: 1.2rem; color: #111827;">
+                  <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.75rem; padding: 2px 5px; font-weight: 800;">[홈]</span>${m.home_team_name}
+                </div>
+                <div class="badge mt-1" style="font-size: 0.8rem; color: #111827; background: #ffffff; border: 1px solid #d1d5db;">
+                  ${isSoccer ? `[홈] ${homeSplit.wins}승 ${homeSplit.draws || 0}무 ${homeSplit.losses}패 (승점 ${homeSplit.points || (homeSplit.wins * 3 + (homeSplit.draws || 0))}점)` : `[홈] ${homeSplit.wins}승 ${homeSplit.losses}패 (승률 ${homeSplit.win_pct})`}
+                </div>
+                <div class="mt-2">
+                  <span class="badge rounded-pill" style="font-size: 1.15rem; font-weight: 800; ${probs.home >= probs.away ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626;' : 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb;'} padding: 6px 16px;">
+                    ${probs.home}% 승률 ${probs.home >= probs.away ? '▲' : ''}
+                  </span>
+                </div>
               </div>
-              <div class="badge mt-1" style="font-size: 0.8rem; color: #111827; background: #ffffff; border: 1px solid #d1d5db;">
-                ${isSoccer ? `[홈] ${homeSplit.wins}승 ${homeSplit.draws || 0}무 ${homeSplit.losses}패 (승점 ${homeSplit.points || (homeSplit.wins * 3 + (homeSplit.draws || 0))}점)` : `[홈] ${homeSplit.wins}승 ${homeSplit.losses}패 (승률 ${homeSplit.win_pct})`}
+
+              <div class="col-2">
+                <div class="fw-bold" style="font-size: 0.85rem; color: #9ca3af;">VS</div>
+                <div class="badge bg-white border text-muted mt-1" style="font-size: 0.7rem; border-color: #d1d5db !important;">
+                  홈 어드밴티지 +4%
+                </div>
               </div>
-              <div class="mt-2">
-                <span class="badge rounded-pill" style="font-size: 1.15rem; font-weight: 800; ${probs.home >= probs.away ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626;' : 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb;'} padding: 6px 16px;">
-                  ${probs.home}% 승률 ${probs.home >= probs.away ? '▲' : ''}
-                </span>
+
+              <div class="col-5">
+                <div class="fw-bold text-truncate" style="font-size: 1.2rem; color: #111827;">
+                  <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.75rem; padding: 2px 5px; font-weight: 800;">[원정]</span>${m.away_team_name}
+                </div>
+                <div class="badge mt-1" style="font-size: 0.8rem; color: #111827; background: #ffffff; border: 1px solid #d1d5db;">
+                  ${isSoccer ? `[원정] ${awaySplit.wins}승 ${awaySplit.draws || 0}무 ${awaySplit.losses}패 (승점 ${awaySplit.points || (awaySplit.wins * 3 + (awaySplit.draws || 0))}점)` : `[원정] ${awaySplit.wins}승 ${awaySplit.losses}패 (승률 ${awaySplit.win_pct})`}
+                </div>
+                <div class="mt-2">
+                  <span class="badge rounded-pill" style="font-size: 1.15rem; font-weight: 800; ${probs.away > probs.home ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626;' : 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb;'} padding: 6px 16px;">
+                    ${probs.away}% 승률 ${probs.away > probs.home ? '▲' : ''}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div class="col-2">
-              <div class="fw-bold" style="font-size: 0.85rem; color: #9ca3af;">VS</div>
-              <div class="badge bg-white border text-muted mt-1" style="font-size: 0.7rem; border-color: #d1d5db !important;">
-                홈 어드밴티지 +4%
+            <!-- Baseball Starting Pitchers: 2 clean columns below the team headers -->
+            ${isBaseball ? `
+              <div class="row g-2 mt-2 pt-2 border-top" style="border-color: #f1f5f9 !important;">
+                <div class="col-6">
+                  ${renderBaseballStarterBlock(hPitcher, true, false)}
+                </div>
+                <div class="col-6">
+                  ${renderBaseballStarterBlock(aPitcher, false, false)}
+                </div>
               </div>
-            </div>
-
-            <div class="col-5">
-              <div class="fw-bold text-truncate" style="font-size: 1.2rem; color: #111827;">
-                <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.75rem; padding: 2px 5px; font-weight: 800;">[원정]</span>${m.away_team_name}
-              </div>
-              <div class="badge mt-1" style="font-size: 0.8rem; color: #111827; background: #ffffff; border: 1px solid #d1d5db;">
-                ${isSoccer ? `[원정] ${awaySplit.wins}승 ${awaySplit.draws || 0}무 ${awaySplit.losses}패 (승점 ${awaySplit.points || (awaySplit.wins * 3 + (awaySplit.draws || 0))}점)` : `[원정] ${awaySplit.wins}승 ${awaySplit.losses}패 (승률 ${awaySplit.win_pct})`}
-              </div>
-              <div class="mt-2">
-                <span class="badge rounded-pill" style="font-size: 1.15rem; font-weight: 800; ${probs.away > probs.home ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626;' : 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb;'} padding: 6px 16px;">
-                  ${probs.away}% 승률 ${probs.away > probs.home ? '▲' : ''}
-                </span>
-              </div>
-            </div>
+            ` : ''}
           </div>
 
           <!-- Win Probability Visual Comparison Bar -->

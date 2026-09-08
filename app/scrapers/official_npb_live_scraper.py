@@ -85,6 +85,45 @@ def translate_npb_position(raw: str) -> str:
         return "/".join(res)
     return raw or "타자"
 
+NPB_PLAYER_KO_MAP = {
+    '戸郷 翔征': '토고 쇼세이', '戸郷　翔征': '토고 쇼세이', '戸郷翔征': '토고 쇼세이',
+    '柳 裕也': '야나기 유야', '柳　裕也': '야나기 유야', '柳裕也': '야나기 유야',
+    '東 克樹': '아즈마 카츠키', '東　克樹': '아즈마 카츠키', '東克樹': '아즈마 카츠키',
+    '奥川 恭伸': '오쿠가와 야스노부', '奥川　恭伸': '오쿠가와 야스노부', '奥川恭伸': '오쿠가와 야스노부',
+    '才木 浩人': '사이키 히로토', '才木　浩人': '사이키 히로토', '才木浩人': '사이키 히로토',
+    '床田 寛樹': '토코다 히로키', '床田　寛樹': '토코다 히로키', '床田寛樹': '토코다 히로키',
+    '田中 晴也': '타나카 세이야', '田中　晴也': '타나카 세이야', '田中晴也': '타나카 세이야',
+    '前田 健太': '마에다 켄타', '前田　健太': '마에다 켄타', '前田健太': '마에다 켄타',
+    'Ｓ．ジェリー': 'S.젤리', 'S.ジェリー': 'S.젤리', 'ジェリー': 'S.젤리',
+    '平良 海馬': '타이라 카이마', '平良　海馬': '타이라 카이마', '平良海馬': '타이라 카이마',
+    'Ｌ．モイネロ': 'L.모이넬로', 'L.モイネロ': 'L.모이넬로', 'モイネロ': 'L.모이넬로',
+    '山﨑 福也': '야마사키 사치야', '山﨑　福也': '야마사키 사치야', '山﨑福也': '야마사키 사치야', '山崎 福也': '야마사키 사치야',
+    '有原 航平': '아리하라 코헤이', '宮城 大弥': '미야기 히로야', '村上 頌樹': '무라카미 쇼키',
+    '今井 達也': '이마이 타츠야', '伊藤 大海': '이토 히로미', '小島 和哉': '코지마 카즈야',
+    '早川 隆久': '하야카와 타카히사', '小川 泰弘': '오가와 야스히로', '高橋 宏斗': '타카하시 히로토',
+    '九里 亜蓮': '쿠리 아렌', '大瀬良 大地': '오오세라 다이치', '菅野 智之': '스가노 토모유키',
+    '髙橋 光成': '다카하시 코나', '高橋 光成': '다카하시 코나', '隅田 知一郎': '스미다 치히로',
+    '松本 航': '마츠모토 와타루', '山下 舜平大': '야마시타 슌페이타', '田嶋 大樹': '타지마 다이키',
+    '種市 篤暉': '타네이치 아츠키', '佐々木 朗希': '사사키 로키', '岸 孝之': '키시 타카유키',
+    '則本 昂大': '노리모토 타카히로', '加藤 貴之': '카토 타카유키', '上原 健太': '우에하라 켄타',
+    '東浜 巨': '히가시하마 나오', '大津 亮介': '오오츠 료스케', '和田 毅': '와다 츠요시',
+    '森下 暢仁': '모리시타 마사토', '小園 健太': '코조노 켄타', '大貫 晋一': '오오누키 신이치',
+    '高橋 奎二': '타카하시 케이지', '吉村 貢司郎': '요시무라 코지로', '小笠原 慎之介': '오가사와라 신노스케',
+    '大野 雄大': '오오노 유다이', '西 勇輝': '니시 유키', '伊藤 将司': '이토 마사시'
+}
+
+def translate_npb_player_name(raw: str) -> str:
+    if not raw:
+        return ""
+    clean = re.sub(r'\s+', ' ', raw).strip()
+    if clean in NPB_PLAYER_KO_MAP:
+        return NPB_PLAYER_KO_MAP[clean]
+    no_space = clean.replace(' ', '')
+    if no_space in NPB_PLAYER_KO_MAP:
+        return NPB_PLAYER_KO_MAP[no_space]
+    # Fallback: clean symbols
+    return clean.replace('　', ' ')
+
 class NpbOfficialScraper:
     """
     일본 프로야구(NPB) 100% 공식 사이트 (npb.jp) 실시간 연동 크롤러
@@ -101,6 +140,58 @@ class NpbOfficialScraper:
         self.ctx = ssl.create_default_context()
         self.ctx.check_hostname = False
         self.ctx.verify_mode = ssl.CERT_NONE
+
+    def scrape_probable_starters(self, target_date: Optional[str] = None) -> List[Dict[str, Any]]:
+        """NPB 공식 예고선발 페이지(https://npb.jp/announcement/starter/)에서 실시간 공식 발표 선발투수 수집"""
+        url = "https://npb.jp/announcement/starter/"
+        try:
+            html = self._fetch_html(url)
+        except Exception as e:
+            print(f"[NPB Scraper] Failed to fetch starter page: {e}")
+            return []
+
+        soup = BeautifulSoup(html, 'html.parser')
+        units = soup.find_all('div', class_=re.compile(r'unit\s+(cl|pl)'))
+        starters_list = []
+
+        for u in units:
+            try:
+                left_div = u.find('div', class_='team_left')
+                right_div = u.find('div', class_='team_right')
+                info_div = u.find('div', class_='info')
+
+                if not left_div or not right_div:
+                    continue
+
+                raw_t_left = left_div.find('img').get('alt', '') if left_div.find('img') else ''
+                raw_t_right = right_div.find('img').get('alt', '') if right_div.find('img') else ''
+                p_left_raw = left_div.find('span').get_text(strip=True) if left_div.find('span') else ''
+                p_right_raw = right_div.find('span').get_text(strip=True) if right_div.find('span') else ''
+                stadium_info = info_div.get_text(strip=True) if info_div else ''
+
+                t_left = map_npb_team(raw_t_left)
+                t_right = map_npb_team(raw_t_right)
+                p_left = translate_npb_player_name(p_left_raw)
+                p_right = translate_npb_player_name(p_right_raw)
+
+                # NPB 예고선발 페이지에서 unit 내 좌측(team_left)은 해당 경기 구장의 홈팀 또는 제1팀입니다.
+                starters_list.append({
+                    "league_id": "NPB",
+                    "home_team_name": t_left,
+                    "away_team_name": t_right,
+                    "home_starter": p_left,
+                    "away_starter": p_right,
+                    "home_starter_confirmed": bool(p_left),
+                    "away_starter_confirmed": bool(p_right),
+                    "stadium_info": stadium_info,
+                    "raw_home_starter": p_left_raw,
+                    "raw_away_starter": p_right_raw
+                })
+            except Exception as e:
+                print(f"[NPB Scraper] Error parsing unit: {e}")
+                continue
+
+        return starters_list
 
     def _fetch_html(self, url: str) -> str:
         req = urllib.request.Request(url, headers=self.headers)

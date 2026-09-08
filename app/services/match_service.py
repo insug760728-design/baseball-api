@@ -9,7 +9,7 @@ from app.scrapers.baseball_scraper import BaseballScraper
 from app.scrapers.soccer_scraper import SoccerScraper, SOCCER_LEAGUE_CODES
 from app.scrapers.basketball_scraper import BasketballScraper
 from app.core.sports_catalog import SPORTS_CATALOG
-from app.services.team_split_service import TeamSplitService
+from app.services.team_split_service import TeamSplitService, DEFAULT_ROTATION_STARTERS
 from app.services.player_translation import translate_player_name
 
 class MatchService:
@@ -291,6 +291,7 @@ class MatchService:
 
             m.home_starter_name = None
             m.away_starter_name = None
+            m.starters_confirmed = False
             if m.details and m.details.team_stats:
                 try:
                     ts = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
@@ -301,8 +302,31 @@ class MatchService:
                         m.home_starter_name = translate_player_name(h_st.get("name"))
                     if a_st.get("name") and a_st.get("name") not in ["선발 예고", "선발 투수"]:
                         m.away_starter_name = translate_player_name(a_st.get("name"))
+                    if m.home_starter_name or m.away_starter_name:
+                        m.starters_confirmed = bool(h_st.get("confirmed", True) or a_st.get("confirmed", True))
                 except Exception:
                     pass
+
+            # 야구 경기 선발투수 Fallback 보강 (KBO, NPB, MLB 12+10+30 구단 전원 대응)
+            if m.sport_code == "BASEBALL":
+                if not m.home_starter_name:
+                    d_h = DEFAULT_ROTATION_STARTERS.get(m.home_team_name)
+                    if not d_h and m.home_team_name:
+                        for k, v in DEFAULT_ROTATION_STARTERS.items():
+                            if k in m.home_team_name or m.home_team_name in k:
+                                d_h = v
+                                break
+                    if d_h:
+                        m.home_starter_name = d_h.get("name_en") if "MLB" in (m.league_name or "") else d_h["name"]
+                if not m.away_starter_name:
+                    d_a = DEFAULT_ROTATION_STARTERS.get(m.away_team_name)
+                    if not d_a and m.away_team_name:
+                        for k, v in DEFAULT_ROTATION_STARTERS.items():
+                            if k in m.away_team_name or m.away_team_name in k:
+                                d_a = v
+                                break
+                    if d_a:
+                        m.away_starter_name = d_a.get("name_en") if "MLB" in (m.league_name or "") else d_a["name"]
         return matches
 
     @staticmethod
@@ -468,4 +492,92 @@ class MatchService:
             "starters": ts["starters"],
             "matchup_analysis": analysis
         }
+
+    @classmethod
+    def sync_announced_starters(cls, db: Session, target_date: Optional[str] = None) -> Dict[str, Any]:
+        """KBO 및 NPB 공식 사이트에서 당일 공식 발표된 선발투수를 실시간 수집하여 DB에 확정 저장"""
+        from app.scrapers.official_kbo_live_scraper import KboOfficialScraper
+        from app.scrapers.official_npb_live_scraper import NpbOfficialScraper
+        from app.services.team_split_service import KBO_TEAMS_POOL, NPB_TEAMS_POOL
+        
+        d_ref = target_date or datetime.now().strftime("%Y-%m-%d")
+        results = {"date": d_ref, "kbo_synced": 0, "npb_synced": 0, "matches_updated": []}
+
+        # 1. KBO 공식 선발투수 동기화
+        try:
+            kbo_scraper = KboOfficialScraper()
+            kbo_starters = kbo_scraper.scrape_probable_starters(d_ref)
+            kbo_team_starters = {}
+            for ks in kbo_starters:
+                ht = ks.get("home_team_name")
+                at = ks.get("away_team_name")
+                if ht and ks.get("home_starter"):
+                    kbo_team_starters[ht] = ks["home_starter"]
+                if at and ks.get("away_starter"):
+                    kbo_team_starters[at] = ks["away_starter"]
+
+            all_kbo = db.query(Match).filter(Match.match_date.like(f"{d_ref}%"), Match.sport_code == "BASEBALL").all()
+            for m in all_kbo:
+                is_kbo = (m.official_id and m.official_id.startswith("KBO_")) or (m.home_team_name in KBO_TEAMS_POOL)
+                if not is_kbo:
+                    continue
+
+                st_h = None
+                st_a = None
+                for t_name, s_name in kbo_team_starters.items():
+                    if t_name in m.home_team_name or m.home_team_name in t_name:
+                        st_h = s_name
+                    if t_name in m.away_team_name or m.away_team_name in t_name:
+                        st_a = s_name
+
+                if st_h or st_a:
+                    st_data = {
+                        "home": {"name": st_h or "선발 예고", "confirmed": bool(st_h), "throws": "우완"},
+                        "away": {"name": st_a or "선발 예고", "confirmed": bool(st_a), "throws": "우완"}
+                    }
+                    cls.update_starters(db, m.id, st_data)
+                    results["kbo_synced"] += 1
+                    results["matches_updated"].append({"id": m.id, "league": "KBO", "home": m.home_team_name, "away": m.away_team_name, "starters": st_data})
+        except Exception as e:
+            logger.error(f"[Sync Announced Starters] KBO error: {e}")
+
+        # 2. NPB 공식 선발투수 동기화
+        try:
+            npb_scraper = NpbOfficialScraper()
+            npb_starters = npb_scraper.scrape_probable_starters(d_ref)
+            npb_team_starters = {}
+            for ns in npb_starters:
+                ht = ns.get("home_team_name")
+                at = ns.get("away_team_name")
+                if ht and ns.get("home_starter"):
+                    npb_team_starters[ht] = ns["home_starter"]
+                if at and ns.get("away_starter"):
+                    npb_team_starters[at] = ns["away_starter"]
+
+            all_npb = db.query(Match).filter(Match.match_date.like(f"{d_ref}%"), Match.sport_code == "BASEBALL").all()
+            for m in all_npb:
+                is_npb = (m.official_id and m.official_id.startswith("NPB_")) or (m.home_team_name in NPB_TEAMS_POOL)
+                if not is_npb:
+                    continue
+
+                st_h = None
+                st_a = None
+                for t_name, s_name in npb_team_starters.items():
+                    if t_name in m.home_team_name or m.home_team_name in t_name:
+                        st_h = s_name
+                    if t_name in m.away_team_name or m.away_team_name in t_name:
+                        st_a = s_name
+
+                if st_h or st_a:
+                    st_data = {
+                        "home": {"name": st_h or "선발 예고", "confirmed": bool(st_h), "throws": "우완"},
+                        "away": {"name": st_a or "선발 예고", "confirmed": bool(st_a), "throws": "우완"}
+                    }
+                    cls.update_starters(db, m.id, st_data)
+                    results["npb_synced"] += 1
+                    results["matches_updated"].append({"id": m.id, "league": "NPB", "home": m.home_team_name, "away": m.away_team_name, "starters": st_data})
+        except Exception as e:
+            logger.error(f"[Sync Announced Starters] NPB error: {e}")
+
+        return results
 

@@ -92,6 +92,7 @@ class MatchResponse(MatchBase):
     prediction: Optional[Dict[str, Any]] = None
     home_starter_name: Optional[str] = None
     away_starter_name: Optional[str] = None
+    starters_confirmed: Optional[bool] = False
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

@@ -65,6 +65,14 @@ class SchedulerService:
                 id="betman_10min_sync_job",
                 replace_existing=True
             )
+            # 15분마다 KBO 및 NPB 공식 선발투수 발표 실시간 동기화
+            starters_trigger = CronTrigger(minute="*/15")
+            scheduler.add_job(
+                cls.execute_starters_sync_job,
+                trigger=starters_trigger,
+                id="starters_15min_sync_job",
+                replace_existing=True
+            )
             # 1분마다 바탕화면 실시간 접속자 및 시간대별 트래픽 파일 자동 갱신
             traffic_trigger = CronTrigger(minute="*")
             scheduler.add_job(
@@ -354,6 +362,18 @@ class SchedulerService:
                         logger.warning(f"[Scheduler LiveApi] WebSocket broadcast error: {be}")
         except Exception as e:
             logger.error(f"[Scheduler LiveApi] 실시간 유료 API 동기화 오류: {e}")
+
+    @classmethod
+    def execute_starters_sync_job(cls):
+        """15분 주기 KBO 및 NPB 공식 선발투수 발표 실시간 동기화"""
+        db = SessionLocal()
+        try:
+            res = MatchService.sync_announced_starters(db)
+            logger.info(f"[Scheduler Starters] 선발투수 실시간 동기화 완료: KBO {res.get('kbo_synced')}건, NPB {res.get('npb_synced')}건")
+        except Exception as e:
+            logger.error(f"[Scheduler Starters] 선발투수 동기화 오류: {e}")
+        finally:
+            db.close()
 
 
 

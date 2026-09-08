@@ -197,3 +197,10 @@ def get_match_timeline(match_id: int, db: Session = Depends(get_db)):
         },
         "timeline": detail.get("events", [])
     }
+
+@router.post("/sync-starters", summary="KBO 및 NPB 공식 선발투수 실시간 동기화")
+def sync_announced_starters_endpoint(date: Optional[str] = Query(None, description="기준일 (YYYY-MM-DD)"), db: Session = Depends(get_db)):
+    """KBO 및 NPB 공식 사이트에서 당일 공식 발표된 선발투수를 실시간 수집하여 DB에 확정 저장하고 캐시를 갱신합니다."""
+    res = MatchService.sync_announced_starters(db, target_date=date)
+    clear_matches_cache()
+    return res

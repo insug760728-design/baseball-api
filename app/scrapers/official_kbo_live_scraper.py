@@ -99,6 +99,18 @@ class KboOfficialScraper:
         if not all_rows:
             return []
 
+        # 당일 공식 발표 선발투수 맵 수집
+        starters_map = {}
+        try:
+            starters_data = self.scrape_probable_starters(d_ref)
+            for s in starters_data:
+                g_id = s.get("game_id")
+                if g_id:
+                    starters_map[g_id] = (s.get("home_starter"), s.get("away_starter"))
+                starters_map[f"{s.get('home_team_name')}_{s.get('away_team_name')}"] = (s.get("home_starter"), s.get("away_starter"))
+        except Exception as e:
+            print(f"[KBO Scraper] Starters fetch error: {e}")
+
         games = []
         cur_date_str = d_ref
 
@@ -147,6 +159,9 @@ class KboOfficialScraper:
             is_live = ("id='btnRelay'" in relay_col or "문자중계" in relay_col)
             status = "FINISHED" if is_finished else ("LIVE" if is_live else "SCHEDULED")
 
+            # 선발 투수 정보 매핑
+            h_st, a_st = starters_map.get(game_id, starters_map.get(f"{home_team}_{away_team}", (None, None)))
+
             games.append({
                 "official_id": f"KBO_{game_id}",
                 "sport_code": "BASEBALL",
@@ -160,10 +175,47 @@ class KboOfficialScraper:
                 "home_score": home_score,
                 "away_score": away_score,
                 "status": status,
-                "game_id": game_id
+                "game_id": game_id,
+                "probable_pitcher_home": h_st,
+                "probable_pitcher_away": a_st
             })
 
         return games
+
+    def scrape_probable_starters(self, target_date: Optional[str] = None) -> List[Dict[str, Any]]:
+        """KBO 공식 실시간 메인 API(GetKboGameList)에서 당일 공식 발표된 선발투수 목록 수집"""
+        d_ref = (target_date or datetime.now().strftime("%Y-%m-%d")).replace("-", "")
+        url = 'https://www.koreabaseball.com/ws/Main.asmx/GetKboGameList'
+        res = self._post(url, {
+            'leId': '1',
+            'srId': '0',
+            'date': d_ref
+        })
+        games = res.get('game', [])
+        starters_list = []
+        for g in games:
+            home_raw = g.get('HOME_NM') or ''
+            away_raw = g.get('AWAY_NM') or ''
+            home_team = KBO_TEAMS_MAP.get(home_raw, home_raw)
+            away_team = KBO_TEAMS_MAP.get(away_raw, away_raw)
+            home_starter = (g.get('B_PIT_P_NM') or '').strip()
+            away_starter = (g.get('T_PIT_P_NM') or '').strip()
+            g_id = g.get('G_ID') or ''
+            
+            if home_starter or away_starter:
+                starters_list.append({
+                    'official_id': f"KBO_{g_id}",
+                    'game_id': g_id,
+                    'home_team_name': home_team,
+                    'away_team_name': away_team,
+                    'home_starter': home_starter,
+                    'away_starter': away_starter,
+                    'home_starter_confirmed': bool(home_starter),
+                    'away_starter_confirmed': bool(away_starter),
+                    'stadium': g.get('S_NM') or '',
+                    'match_date': f"{d_ref[:4]}-{d_ref[4:6]}-{d_ref[6:8]} {g.get('G_TM', '18:30')}"
+                })
+        return starters_list
 
     def scrape_game_detail(self, game_id: str) -> Dict[str, Any]:
         """KBO 공식 박스스코어, 라인스코어, 선수 기록, 타임라인 수집"""
