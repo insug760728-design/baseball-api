@@ -68,6 +68,15 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[WARN] TeamSplitService 워밍업 중 오류: {e}")
 
+    # NewsService 실시간 스포츠 뉴스 백그라운드 사전 워밍업 (첫 요청 0.001초 응답)
+    try:
+        from app.services.news_service import NewsService
+        import threading
+        threading.Thread(target=NewsService.get_real_news, kwargs={"force_refresh": False}, daemon=True).start()
+        print("[INFO] NewsService 실시간 스포츠 뉴스 백그라운드 워밍업 시작.")
+    except Exception as e:
+        print(f"[WARN] NewsService 워밍업 중 오류: {e}")
+
     yield
 
     # 서버 종료 시 스케줄러 정리
@@ -96,6 +105,22 @@ landing_path = os.path.join(current_dir, "templates", "landing.html")
 b2b_portal_path = os.path.join(current_dir, "templates", "b2b_api_portal.html")
 dashboard_path = os.path.join(current_dir, "templates", "index.html")
 
+_PORTAL_HTML_CACHE = {"path": "", "content": "", "mtime": 0, "etag": ""}
+
+def get_portal_html(target_path: str):
+    mtime = os.path.getmtime(target_path) if os.path.exists(target_path) else 0
+    if _PORTAL_HTML_CACHE["path"] == target_path and _PORTAL_HTML_CACHE["mtime"] == mtime and _PORTAL_HTML_CACHE["content"]:
+        return _PORTAL_HTML_CACHE["content"], _PORTAL_HTML_CACHE["etag"]
+    with open(target_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    import hashlib
+    etag = f'"{hashlib.md5(content.encode("utf-8")).hexdigest()}"'
+    _PORTAL_HTML_CACHE["path"] = target_path
+    _PORTAL_HTML_CACHE["content"] = content
+    _PORTAL_HTML_CACHE["mtime"] = mtime
+    _PORTAL_HTML_CACHE["etag"] = etag
+    return content, etag
+
 def is_b2b_domain(request: Request) -> bool:
     # 1. 쿼리 파라미터 확인 (?domain=tokeon.kr 또는 ?domain=b2b)
     domain_param = request.query_params.get("domain", "").lower()
@@ -112,6 +137,7 @@ def is_b2b_domain(request: Request) -> bool:
         return True
         
 import time
+from fastapi import Response
 
 @app.get("/healthz", summary="Health Check & Keep-Alive")
 @app.get("/api/v1/health", summary="Health Check & Keep-Alive")
@@ -126,9 +152,11 @@ def health_check():
 def domain_portal(request: Request):
     try:
         target = landing_path if os.path.exists(landing_path) else dashboard_path
-        with open(target, "r", encoding="utf-8") as f:
-            content = f.read()
-        return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
+        content, etag = get_portal_html(target)
+        client_etag = request.headers.get("if-none-match")
+        if client_etag and client_etag == etag:
+            return Response(status_code=304, headers={"ETag": etag, "Cache-Control": "public, max-age=5, stale-while-revalidate=30"})
+        return HTMLResponse(content=content, headers={"ETag": etag, "Cache-Control": "public, max-age=5, stale-while-revalidate=30"})
     except Exception as e:
         return HTMLResponse(content=f"<h1>포털 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
 

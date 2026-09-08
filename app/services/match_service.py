@@ -327,6 +327,8 @@ class MatchService:
                                 break
                     if d_a:
                         m.away_starter_name = d_a.get("name_en") if "MLB" in (m.league_name or "") else d_a["name"]
+                if m.home_starter_name and m.away_starter_name:
+                    m.starters_confirmed = True
         return matches
 
     @staticmethod
