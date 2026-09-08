@@ -486,6 +486,14 @@
       border-color: #1d4ed8;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
+    @keyframes scoreFlashGlow {
+      0% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.8); border-color: #eab308; }
+      50% { box-shadow: 0 0 16px 4px rgba(234, 179, 8, 0.9); border-color: #f59e0b; }
+      100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0); border-color: #cbd5e1; }
+    }
+    .score-flash-active {
+      animation: scoreFlashGlow 1.5s ease-out;
+    }
 
     /* 내부 부모 컨테이너 및 섹션 박스 전폭 확보 */
     #predDetailPanel .dash-card-column,
@@ -1570,7 +1578,7 @@
           </div>
         </div>
 
-        <!-- 2. [중앙 38%] 실시간 중계센터 & 1:1 세부 분석창 -->
+        <!-- 2. [중앙 38%] 1:1 세부 분석창 -->
         <div class="col-dash-center" id="centerColMain">
           <div class="dash-card-column" style="background: #ffffff; display: flex; flex-direction: column; height: 100%;">
             
@@ -1581,53 +1589,16 @@
               </button>
             </div>
 
-            <!-- Header: Live Relay & Saber Analysis Switcher -->
-            <div class="dash-card-header p-2 pb-1 border-bottom" style="background: #ffffff; border-color: #e5e7eb !important;">
-              <div class="d-flex justify-content-between align-items-center mb-1.5 gap-1">
-                <div class="btn-group btn-group-sm flex-fill" role="group">
-                  <button type="button" class="btn btn-sm fw-bold btn-dark active text-white" id="tabBtnLiveRelay" onclick="switchCenterViewMode('RELAY')" style="font-size: 0.76rem; border-radius: 6px 0 0 6px;">
-                    <span class="live-blink-dot me-1" style="display:inline-block; width:6px; height:6px; background:#ef4444; border-radius:50%;"></span>실시간 중계센터
-                  </button>
-                  <button type="button" class="btn btn-sm fw-bold btn-outline-secondary" id="tabBtnSaberDetail" onclick="switchCenterViewMode('SABER')" style="font-size: 0.76rem; border-radius: 0 6px 6px 0;">
-                    <i class="bi bi-bar-chart-line-fill me-1"></i>1:1 세이버 분석실
-                  </button>
-                </div>
-                <!-- Multi-Play Toggle Button -->
-                <button type="button" class="btn btn-sm btn-primary py-1 px-2 fw-bold text-nowrap" id="btnToggleMultiPlay" onclick="toggleMultiPlayMode()" style="font-size: 0.72rem; border-radius: 6px; box-shadow: 0 0 8px rgba(29, 78, 216, 0.4);" title="최대 6개 경기 동시 멀티 중계 시청">
-                  <i class="bi bi-grid-fill me-1"></i><span id="multiPlayBtnText">6경기 동시 (ON)</span>
-                </button>
-              </div>
-
-              <!-- Relay Sub-Control Bar: Sport Filter Chips & Live Simulator Toggle -->
-              <div class="d-flex justify-content-between align-items-center gap-1 overflow-x-auto py-0.5" id="relaySubControlBar" style="scrollbar-width: none;">
-                <div class="d-flex gap-1" id="relaySportChips">
-                  <button class="btn btn-sm relay-chip-btn active" id="chipRelayALL" onclick="setRelaySportFilter('ALL')">전체</button>
-                  <button class="btn btn-sm relay-chip-btn" id="chipRelayBASEBALL" onclick="setRelaySportFilter('BASEBALL')">⚾ 야구</button>
-                  <button class="btn btn-sm relay-chip-btn" id="chipRelaySOCCER" onclick="setRelaySportFilter('SOCCER')">⚽ 축구</button>
-                  <button class="btn btn-sm relay-chip-btn" id="chipRelayBASKETBALL" onclick="setRelaySportFilter('BASKETBALL')">🏀 농구</button>
-                  <button class="btn btn-sm relay-chip-btn" id="chipRelayVOLLEYBALL" onclick="setRelaySportFilter('VOLLEYBALL')">🏐 배구</button>
-                </div>
-                <button class="btn btn-sm py-0.5 px-2 fw-bold text-nowrap border" id="btnLiveDemoMode" onclick="toggleLiveDemoSimulator()" style="font-size: 0.68rem; border-radius: 6px; background: #f8fafc; color: #475569;" title="야간/휴식 시간에도 주자 진루 및 골 애니메이션을 시뮬레이션 체험">
-                  <i class="bi bi-play-circle-fill text-danger me-0.5" id="demoIcon"></i><span id="demoText">시뮬 데모</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Body 1: Live Relay Center Container (기본 활성화) -->
-            <div class="dash-card-body p-2" id="liveRelayContainer" style="flex: 1; overflow-y: auto; height: 100%;">
-              <div class="text-center text-muted py-5">
-                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
-                <div>실시간 중계센터 로딩 중...</div>
-              </div>
-            </div>
-
-            <!-- Body 2: Match Detail Studio (세이버 분석실 탭 선택 시 활성화) -->
-            <div class="dash-card-body p-2 d-none" id="predDetailPanel" style="flex: 1; width: 100%; box-sizing: border-box; overflow-y: auto; height: 100%;">
+            <!-- Body: Match Detail Studio (1:1 세이버 정밀 분석실) -->
+            <div class="dash-card-body p-2" id="predDetailPanel" style="flex: 1; width: 100%; box-sizing: border-box; overflow-y: auto; height: 100%;">
               <div class="text-center text-muted py-5">
                 <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
                 <div>1:1 세이버 정밀 분석실 데이터를 불러오는 중...</div>
               </div>
             </div>
+
+            <!-- Hidden Live Relay Container (완벽히 업데이트 후 공개) -->
+            <div class="d-none" id="liveRelayContainer"></div>
 
           </div>
         </div>
@@ -8820,11 +8791,7 @@ function getFullModalMatchList() {
       // 🚀 모바일 성능 최적화: 모바일 화면에서는 중앙 상세 패널(#predDetailPanel)이 숨겨져 있으므로 렌더링을 건너뛰어 CPU/통신 절약
       const isMobileView = (window.innerWidth <= 768 || currentViewMode === 'mobile');
       if (!isMobileView) {
-        if (typeof currentCenterSubTab !== 'undefined' && currentCenterSubTab === 'RELAY') {
-          renderLiveRelayCenter(target);
-        } else {
-          renderPredDetail(target);
-        }
+        renderPredDetail(target);
       }
 
       if (userClicked) {
@@ -8835,11 +8802,7 @@ function getFullModalMatchList() {
         if (isMobileView) {
           openMatchModal(matchId);
         } else {
-          if (typeof currentCenterSubTab !== 'undefined' && currentCenterSubTab === 'RELAY') {
-            renderLiveRelayCenter(target);
-          } else {
-            renderPredDetail(target);
-          }
+          renderPredDetail(target);
         }
       }
     }
@@ -10935,7 +10898,7 @@ function getFullModalMatchList() {
     // -------------------------------------------------------------
     // ⚡ [실시간 라이브 중계센터 (Live Match Center) 시스템]
     // -------------------------------------------------------------
-    let currentCenterSubTab = 'RELAY'; // 'RELAY' (실시간 중계) or 'SABER' (세이버 정밀 분석)
+    let currentCenterSubTab = 'SABER'; // 'RELAY' (실시간 중계) or 'SABER' (세이버 정밀 분석)
     let relaySportFilter = 'ALL';      // 'ALL', 'BASEBALL', 'SOCCER', 'BASKETBALL', 'VOLLEYBALL'
     let isMultiPlayMode = true;        // true: 멀티플레이 최대 6경기 동시 시청, false: 단일 집중 시청
     let isLiveDemoMode = false;        // 실시간 가상 경기 시뮬레이터 데모 모드
@@ -11009,13 +10972,13 @@ function getFullModalMatchList() {
           btn.className = 'btn btn-sm btn-primary py-1 px-2 fw-bold text-nowrap';
           btn.style.boxShadow = '0 0 8px rgba(29, 78, 216, 0.4)';
         }
-        if (text) text.innerText = '6경기 동시 (ON)';
+        if (text) text.innerText = '8경기 동시 (ON)';
       } else {
         if (btn) {
           btn.className = 'btn btn-sm btn-outline-primary py-1 px-2 fw-bold text-nowrap';
           btn.style.boxShadow = '';
         }
-        if (text) text.innerText = '6경기 동시보기';
+        if (text) text.innerText = '8경기 동시보기';
       }
     }
 
