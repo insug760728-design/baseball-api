@@ -1,14 +1,23 @@
 import os
 import sys
 
+if sys.platform == "win32":
+    import asyncio
+    try:
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    except Exception:
+        pass
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = os.path.dirname(current_dir)
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from app.core.config import settings
@@ -51,6 +60,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[WARN] AI 채팅 봇 시작 중 오류: {e}")
 
+    # TeamSplitService 사전 워밍업 (41,000건 통계 메모리 선적재로 첫 요청 0초화)
+    try:
+        from app.services.team_split_service import TeamSplitService
+        TeamSplitService.get_all_splits()
+        print("[INFO] TeamSplitService 분할 통계 사전 워밍업 완료.")
+    except Exception as e:
+        print(f"[WARN] TeamSplitService 워밍업 중 오류: {e}")
+
     yield
 
     # 서버 종료 시 스케줄러 정리
@@ -73,6 +90,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 landing_path = os.path.join(current_dir, "templates", "landing.html")
 b2b_portal_path = os.path.join(current_dir, "templates", "b2b_api_portal.html")

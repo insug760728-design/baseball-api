@@ -87,8 +87,21 @@ SPORTS_CATALOG = {
             {"id": "UEL", "name": "UEFA 유로파리그 (UEL)", "api_code": "uefa.europa"}
         ]
     },
-
-    # [농구 리그]
+    "ENGLAND_CUP": {
+        "title": "잉글랜드 컵 (FA컵 & 카라바오컵)",
+        "sport_code": "SOCCER",
+        "leagues": [
+            {"id": "FA_CUP", "name": "잉글랜드 FA컵", "api_code": "eng.fa"},
+            {"id": "CARABAO_CUP", "name": "잉글랜드 카라바오컵", "api_code": "eng.league_cup"}
+        ]
+    },
+    "KBL": {
+        "title": "한국 남자프로농구 (KBL)",
+        "sport_code": "BASKETBALL",
+        "leagues": [
+            {"id": "KBL", "name": "한국 프로농구 (KBL)", "api_code": "kbl"}
+        ]
+    },
     "NBA": {
         "title": "미국 프로농구 (NBA)",
         "sport_code": "BASKETBALL",

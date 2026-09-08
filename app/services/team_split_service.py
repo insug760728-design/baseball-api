@@ -1040,6 +1040,7 @@ class TeamSplitService:
     _cached_splits: Optional[Dict[str, Any]] = None
     _cached_h2h: Optional[Dict[str, Any]] = None
     _MATCHUP_ANALYSIS_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+    _QUICK_PRED_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
 
     @classmethod
     def get_team_splits_for_matchup(cls, home_team: str, away_team: str, sport_code: str):
@@ -1495,6 +1496,13 @@ class TeamSplitService:
 
     @classmethod
     def get_quick_prediction(cls, home_team: str, away_team: str, sport_code: str, status: str, home_score: int = 0, away_score: int = 0, match_date: Optional[str] = None):
+        cache_key = f"{home_team}:{away_team}:{sport_code}:{status}:{home_score}:{away_score}:{match_date}"
+        now_ts = time.time()
+        if cache_key in cls._QUICK_PRED_CACHE:
+            ts, pred = cls._QUICK_PRED_CACHE[cache_key]
+            if now_ts - ts < 180:
+                return pred
+
         splits, h2h = cls.get_all_splits()
 
         h_data = splits.get(home_team)
@@ -1622,7 +1630,7 @@ class TeamSplitService:
             is_match = (pick_type == actual)
             status_badge = "일치 (적중) ✅" if is_match else "불일치 ❌"
 
-        return {
+        res = {
             "pick_type": pick_type,
             "expected_label": expected_label,
             "favored_team": favored_team,
@@ -1633,6 +1641,8 @@ class TeamSplitService:
             "status_badge": status_badge,
             "series_context": series_ctx if sport_code == "BASEBALL" else None
         }
+        cls._QUICK_PRED_CACHE[cache_key] = (now_ts, res)
+        return res
 
     @classmethod
     def get_matchup_analysis(cls, home_team: str, away_team: str, sport_code: str = "BASEBALL", match_id: Optional[int] = None, team_stats: Optional[Dict[str, Any]] = None):

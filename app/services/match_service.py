@@ -1,7 +1,8 @@
 import json
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import or_
 
 from app.models.models import Match, MatchDetail, MatchEvent, PlayerMatchStat
 from app.scrapers.baseball_scraper import BaseballScraper
@@ -198,12 +199,12 @@ class MatchService:
 
     @staticmethod
     def get_matches(db: Session, sport_code: Optional[str] = None, league_name: Optional[str] = None, status: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None, limit: Optional[int] = None, order: Optional[str] = "asc"):
-        query = db.query(Match)
+        query = db.query(Match).options(joinedload(Match.details))
 
         # 리그명에 따라 sport_code 자동 감지
         if league_name:
             ln_upper = league_name.upper()
-            if any(s in ln_upper for s in ["EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "EREDIVISIE", "CHAMPIONSHIP", "UCL", "UEL", "프리미어", "라리가", "분데스", "세리에", "리그 1", "챔피언십", "챔피언스", "챔스"]):
+            if any(s in ln_upper for s in ["EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "EREDIVISIE", "CHAMPIONSHIP", "UCL", "UEL", "ENGLAND_CUP", "FA_CUP", "CARABAO", "CUP", "프리미어", "라리가", "분데스", "세리에", "리그 1", "챔피언십", "챔피언스", "챔스", "FA컵", "카라바오", "리그컵", "컵대회"]):
                 sport_code = "SOCCER"
             elif any(b in ln_upper for b in ["NBA", "KBL", "농구"]):
                 sport_code = "BASKETBALL"
@@ -213,16 +214,23 @@ class MatchService:
         if sport_code and sport_code.upper() not in ["ALL", "NONE", ""]:
             query = query.filter(Match.sport_code == sport_code.upper())
         if league_name:
-            query = query.filter(Match.league_name.contains(league_name))
+            if league_name.upper() in ["ENGLAND_CUP", "FA_CUP", "CARABAO_CUP", "CUP"]:
+                query = query.filter(or_(Match.league_name.contains("FA컵"), Match.league_name.contains("카라바오컵"), Match.league_name.contains("잉글랜드 컵")))
+            else:
+                query = query.filter(Match.league_name.contains(league_name))
         if status:
             query = query.filter(Match.status == status)
         if start_date:
             if start_date.upper() != "ALL":
                 query = query.filter(Match.match_date >= f"{start_date} 00:00")
         elif not end_date and not league_name:
-            # 기본 호출 시 최근 3일부터 미래 전체(오늘, 내일, 라이브, 예정) 일정을 우선 반환 (초고속 로딩)
-            three_days_ago = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
-            query = query.filter(Match.match_date >= f"{three_days_ago} 00:00")
+            today_str = datetime.now().strftime("%Y-%m-%d")
+            if order and order.lower() == "desc":
+                # 내림차순(종료 경기 조회 등)일 때는 오늘 밤 이전 경기 반환
+                query = query.filter(Match.match_date <= f"{today_str} 23:59")
+            else:
+                # 오름차순(기본 일정표/라이브 조회)일 때는 오늘 00:00부터 미래(오늘, 내일, 예정 및 라이브) 일정 반환
+                query = query.filter(Match.match_date >= f"{today_str} 00:00")
         if end_date:
             query = query.filter(Match.match_date <= f"{end_date} 23:59")
         
@@ -231,7 +239,7 @@ class MatchService:
         else:
             q = query.order_by(Match.match_date.asc(), Match.id.asc())
 
-        target_limit = limit if (limit and limit > 0) else 400
+        target_limit = limit if (limit and limit > 0) else 150
         matches = q.limit(target_limit).all()
         
         # Deduplicate matches by fixture key (sport, home, away, date)

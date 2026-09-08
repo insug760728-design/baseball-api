@@ -1,4 +1,5 @@
-from typing import List, Optional
+import time
+from typing import List, Optional, Dict, Tuple, Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -8,6 +9,11 @@ from app.services.team_split_service import TeamSplitService
 from app.schemas.schemas import MatchResponse, MatchUpdate, DateRangeSyncRequest, PlayerMatchStatUpdate
 
 router = APIRouter(prefix="/matches", tags=["야구 경기 일정 및 결과"])
+
+_MATCHES_CACHE: Dict[str, Tuple[float, Any]] = {}
+
+def clear_matches_cache():
+    _MATCHES_CACHE.clear()
 
 @router.get("", response_model=List[MatchResponse], summary="경기 일정 및 결과 목록 조회 (종목/기간 필터 포함)")
 def list_matches(
@@ -21,7 +27,14 @@ def list_matches(
     db: Session = Depends(get_db)
 ):
     """지정된 종목 및 조건에 맞는 경기 일정/결과 목록을 조회합니다."""
-    return MatchService.get_matches(
+    cache_key = f"{sport_code}:{league_name}:{status}:{start_date}:{end_date}:{limit}:{order}"
+    now = time.time()
+    if cache_key in _MATCHES_CACHE:
+        cache_time, cached_res = _MATCHES_CACHE[cache_key]
+        if now - cache_time < 15: # 15초 초고속 인메모리 반환 (<0.001s)
+            return cached_res
+
+    res = MatchService.get_matches(
         db,
         sport_code=sport_code,
         league_name=league_name,
@@ -31,6 +44,8 @@ def list_matches(
         limit=limit,
         order=order
     )
+    _MATCHES_CACHE[cache_key] = (now, res)
+    return res
 
 @router.post("/sync", summary="기간별 야구 경기 데이터 동기화 수집")
 def sync_matches(payload: DateRangeSyncRequest, db: Session = Depends(get_db)):
@@ -45,6 +60,7 @@ def sync_matches(payload: DateRangeSyncRequest, db: Session = Depends(get_db)):
         start_date=s_date,
         end_date=e_date
     )
+    clear_matches_cache()
     return result
 
 @router.get("/{match_id}", summary="경기 상세 정보, 1~9회 스코어보드, 타자/투수 세부 기록 종합 조회")
@@ -119,6 +135,7 @@ def update_match_starters(match_id: int, payload: dict, db: Session = Depends(ge
     updated = MatchService.update_starters(db, match_id, payload)
     if not updated:
         raise HTTPException(status_code=404, detail="경기를 찾을 수 없습니다.")
+    clear_matches_cache()
     return updated
 
 

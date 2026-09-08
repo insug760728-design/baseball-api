@@ -1340,6 +1340,7 @@
                 <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueNBA" onclick="filterPredLeague('NBA')" style="background: #fff7ed; color: #c2410c; border: 1.5px solid #fed7aa;"><i class="bi bi-dribbble me-1"></i>🏀 NBA</button>
                 <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueUCL" onclick="filterPredLeague('UCL')" style="background: #eff6ff; color: #1e3a8a; border: 1.5px solid #bfdbfe;"><i class="bi bi-trophy-fill text-warning me-1"></i>🏆 챔스</button>
                 <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueCHAMPIONSHIP" onclick="filterPredLeague('CHAMPIONSHIP')" style="background: #f8fafc; color: #0f172a; border: 1.5px solid #cbd5e1;"><i class="bi bi-shield-shaded text-primary me-1"></i>🏴󠁧󠁢󠁥󠁮󠁧󠁿 챔피언십</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap fw-bold" id="predLeagueENGLAND_CUP" onclick="filterPredLeague('ENGLAND_CUP')" style="background: #faf5ff; color: #7e22ce; border: 1.5px solid #d8b4fe;"><i class="bi bi-trophy-fill text-warning me-1"></i>🏆 잉글랜드컵</button>
                 <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueEPL" onclick="filterPredLeague('EPL')">EPL</button>
                 <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueLALIGA" onclick="filterPredLeague('LALIGA')">라리가</button>
                 <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueBUNDESLIGA" onclick="filterPredLeague('BUNDESLIGA')">분데스</button>
@@ -1462,6 +1463,7 @@
                       <option value="LALIGA">⚽ 라리가</option>
                       <option value="NBA">🏀 NBA (미국농구)</option>
                       <option value="KBL">🏀 KBL (한국농구)</option>
+                      <option value="ENGLAND_CUP">🏆 잉글랜드컵 (FA/카라바오)</option>
                       <option value="PREDICTION">🔥 AI 픽 토론</option>
                     </select>
                   </div>
@@ -2278,7 +2280,7 @@
     async function loadLiveMatches() {
       const container = document.getElementById('stripContainer');
       try {
-        const resp = await fetch('/api/v1/matches?order=asc&limit=1200');
+        const resp = await fetch('/api/v1/matches?order=asc&limit=150');
         if (!resp.ok) throw new Error('Failed to load matches');
         const rawMatches = await resp.json();
 
@@ -2294,9 +2296,19 @@
           }
         }
         allMatches = uniqueList;
+        try {
+          localStorage.setItem('tokeon_matches_cache_v2', JSON.stringify(uniqueList));
+        } catch (e) {}
 
         renderMatchStrip('ALL');
         renderPredMatches();
+
+        if (!selectedPredMatchId) {
+          const list = getFilteredPredMatches();
+          if (list.length > 0) {
+            selectPredMatch(list[0].id);
+          }
+        }
       } catch (e) {
         console.error('Match strip error:', e);
         if (container && (!allMatches || allMatches.length === 0)) {
@@ -5208,6 +5220,18 @@ function getFullModalMatchList() {
     let initialScheduleAutoScrollDone = false;
 
     function initPredictionSection() {
+      // ⚡ 0초(0ms) 즉시 렌더링: 브라우저 캐시가 있으면 대기 없이 즉각 경기 목록 & 전광판 표출
+      try {
+        const cached = localStorage.getItem('tokeon_matches_cache_v2');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            allMatches = parsed;
+            renderMatchStrip('ALL');
+          }
+        }
+      } catch (e) {}
+
       const now = new Date();
       const d0Str = getKSTDateString(now);
       const d1Str = getKSTDateString(new Date(now.getTime() + 86400000));
@@ -5281,7 +5305,7 @@ function getFullModalMatchList() {
 
     async function silentLiveRefresh() {
       try {
-        const resp = await fetch('/api/v1/matches?order=asc&limit=1200');
+        const resp = await fetch('/api/v1/matches?order=asc&limit=150');
         if (!resp.ok) return;
         const rawMatches = await resp.json();
 
@@ -5297,6 +5321,9 @@ function getFullModalMatchList() {
           }
         }
         allMatches = uniqueList;
+        try {
+          localStorage.setItem('tokeon_matches_cache_v2', JSON.stringify(uniqueList));
+        } catch (e) {}
 
         // Quiet background sync: only update match strip without wiping detail panel or resetting scroll
         renderMatchStrip('ALL');
@@ -5341,9 +5368,9 @@ function getFullModalMatchList() {
 
       if (dKey === 'FINISHED') {
         try {
-          let finishedUrl = '/api/v1/matches?status=FINISHED&order=desc&limit=1200';
+          let finishedUrl = '/api/v1/matches?status=FINISHED&order=desc&limit=150';
           if (currentPredLeague && currentPredLeague !== 'ALL') {
-            const leagueParam = (currentPredLeague === 'UCL') ? 'UCL' : ((currentPredLeague === 'CHAMPIONSHIP') ? 'Championship' : ((currentPredLeague === 'KBL') ? 'KBL' : (currentPredLeague === 'NBA' ? 'NBA' : currentPredLeague)));
+            const leagueParam = (currentPredLeague === 'UCL') ? 'UCL' : ((currentPredLeague === 'CHAMPIONSHIP') ? 'Championship' : ((currentPredLeague === 'ENGLAND_CUP') ? 'ENGLAND_CUP' : ((currentPredLeague === 'KBL') ? 'KBL' : (currentPredLeague === 'NBA' ? 'NBA' : currentPredLeague))));
             finishedUrl += `&league_name=${encodeURIComponent(leagueParam)}`;
           } else if (currentPredSport && currentPredSport !== 'ALL') {
             finishedUrl += `&sport_code=${encodeURIComponent(currentPredSport)}`;
@@ -5401,7 +5428,7 @@ function getFullModalMatchList() {
 
     async function filterPredLeague(lKey, autoRender = true) {
       currentPredLeague = lKey;
-      ['ALL', 'KBL', 'NBA', 'UCL', 'CHAMPIONSHIP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'MLB', 'KBO'].forEach(k => {
+      ['ALL', 'KBL', 'NBA', 'UCL', 'CHAMPIONSHIP', 'ENGLAND_CUP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'MLB', 'KBO'].forEach(k => {
         const chipBtn = document.getElementById('predLeague' + k);
         if (chipBtn) {
           if (k === lKey) chipBtn.classList.add('active');
@@ -5409,7 +5436,7 @@ function getFullModalMatchList() {
         }
       });
 
-      if (['UCL', 'CHAMPIONSHIP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A'].includes(lKey)) {
+      if (['UCL', 'CHAMPIONSHIP', 'ENGLAND_CUP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A'].includes(lKey)) {
         currentPredSport = 'SOCCER';
         ['ALL', 'SOCCER', 'BASEBALL', 'BASKETBALL', 'HOCKEY', 'VOLLEYBALL'].forEach(k => {
           const chipBtn = document.getElementById('predSport' + k);
@@ -5440,7 +5467,7 @@ function getFullModalMatchList() {
 
       if (lKey !== 'ALL') {
         try {
-          const leagueParam = (lKey === 'UCL') ? 'UCL' : ((lKey === 'CHAMPIONSHIP') ? 'Championship' : ((lKey === 'KBL') ? 'KBL' : (lKey === 'NBA' ? 'NBA' : lKey)));
+          const leagueParam = (lKey === 'UCL') ? 'UCL' : ((lKey === 'CHAMPIONSHIP') ? 'Championship' : ((lKey === 'ENGLAND_CUP') ? 'ENGLAND_CUP' : ((lKey === 'KBL') ? 'KBL' : (lKey === 'NBA' ? 'NBA' : lKey))));
           const resp = await fetch(`/api/v1/matches?league_name=${encodeURIComponent(leagueParam)}&order=desc&limit=800`);
           if (resp.ok) {
             const leagueData = await resp.json();
@@ -5523,6 +5550,8 @@ function getFullModalMatchList() {
         list = list.filter(m => (m.league_name && m.league_name.includes('NBA')));
       } else if (currentPredLeague === 'CHAMPIONSHIP') {
         list = list.filter(m => m.league_name && (m.league_name.includes('Championship') || m.league_name.includes('챔피언십')));
+      } else if (currentPredLeague === 'ENGLAND_CUP') {
+        list = list.filter(m => m.league_name && (m.league_name.includes('FA컵') || m.league_name.includes('카라바오') || m.league_name.includes('잉글랜드 컵') || m.league_name.includes('EFL')));
       } else if (currentPredLeague === 'UCL') {
         list = list.filter(m => m.league_name && (m.league_name.includes('UCL') || m.league_name.includes('챔피언스') || m.league_name.includes('Champions League')));
       } else if (currentPredLeague === 'EPL') {
@@ -6002,6 +6031,10 @@ function getFullModalMatchList() {
           leagueTag = '🏴󠁧󠁢󠁥󠁮󠁧󠁿 챔피언십';
           leagueBadgeClass = 'badge text-dark fw-bold bg-white';
           leagueBadgeStyle = 'border: 1.5px solid #0f172a;';
+        } else if (m.league_name && (m.league_name.includes('FA컵') || m.league_name.includes('카라바오') || m.league_name.includes('잉글랜드 컵'))) {
+          leagueTag = m.league_name.includes('FA') ? '🏴󠁧󠁢󠁥󠁮󠁧󠁿 FA컵' : '🏴󠁧󠁢󠁥󠁮󠁧󠁿 카라바오컵';
+          leagueBadgeClass = 'badge text-dark fw-bold';
+          leagueBadgeStyle = 'background: #faf5ff; color: #7e22ce !important; border: 1.5px solid #d8b4fe;';
         } else if (m.league_name && (m.league_name.includes('UCL') || m.league_name.includes('챔피언스') || m.league_name.includes('Champions League'))) {
           leagueTag = '🏆 챔스(UCL)';
           leagueBadgeClass = 'badge text-white fw-bold';
