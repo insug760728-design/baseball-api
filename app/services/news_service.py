@@ -39,9 +39,11 @@ class NewsService:
         if force_refresh:
             cls._refresh_all_news()
         else:
-            # If cache is empty, do a fast initial fetch or pre-seed
+            # Non-blocking: never freeze web workers with synchronous Google RSS fetches
             if not cls._cached_news:
-                cls._refresh_all_news()
+                if not cls._is_refreshing:
+                    threading.Thread(target=cls._refresh_all_news, daemon=True).start()
+                return []
             elif now - cls._last_fetched > cls._cache_ttl:
                 # Cache expired: trigger background non-blocking refresh!
                 if not cls._is_refreshing:

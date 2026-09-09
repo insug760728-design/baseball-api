@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session, joinedload
@@ -11,6 +12,9 @@ from app.scrapers.basketball_scraper import BasketballScraper
 from app.core.sports_catalog import SPORTS_CATALOG
 from app.services.team_split_service import TeamSplitService, is_valid_starter_name
 from app.services.player_translation import translate_player_name, sanitize_player_name, sanitize_text
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class MatchService:
 
