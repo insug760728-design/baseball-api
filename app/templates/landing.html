@@ -6900,22 +6900,20 @@ function getFullModalMatchList() {
         </div>
       `;
 
-      // Relative batting trend evaluation
+      // Multi-dimensional batting trend evaluation
       let hTrendBadge = hBatSum.trend || '타격 보통';
       let aTrendBadge = aBatSum.trend || '타격 보통';
 
-      if (avgAwayAdv && rpgAwayAdv) {
-        aTrendBadge = '⚡ 화력 우세';
-        hTrendBadge = '❄️ 타선 침체';
-      } else if (avgHomeAdv && rpgHomeAdv) {
+      if (hRpg >= aRpg + 1.2 || (hRpg > aRpg && hAvg >= aAvg + 0.030)) {
         hTrendBadge = '⚡ 화력 우세';
-        aTrendBadge = '❄️ 타선 침체';
-      } else if (aRpg >= hRpg + 0.8 || aAvg >= hAvg + 0.020) {
+        if (aRpg < 3.0 && aAvg < 0.235) {
+          aTrendBadge = '❄️ 타선 침체';
+        }
+      } else if (aRpg >= hRpg + 1.2 || (aRpg > hRpg && aAvg >= hAvg + 0.030)) {
         aTrendBadge = '⚡ 화력 우세';
-        if (hTrendBadge === aTrendBadge || hTrendBadge.includes('우세')) hTrendBadge = '❄️ 타선 침체';
-      } else if (hRpg >= aRpg + 0.8 || hAvg >= aAvg + 0.020) {
-        hTrendBadge = '⚡ 화력 우세';
-        if (aTrendBadge === hTrendBadge || aTrendBadge.includes('우세')) aTrendBadge = '❄️ 타선 침체';
+        if (hRpg < 3.0 && hAvg < 0.235) {
+          hTrendBadge = '❄️ 타선 침체';
+        }
       }
 
       const hBadgeColor = (hTrendBadge.includes('우세') || hTrendBadge.includes('호조') || hTrendBadge.includes('불타는'))
