@@ -2,32 +2,32 @@
   "team_name": "볼티모어 오리올스",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-07",
-    "end_date": "2026-09-08"
+    "start_date": "2026-09-08",
+    "end_date": "2026-09-09"
   },
   "total_matches": 2,
   "hitters_count": 12,
-  "pitchers_count": 9,
+  "pitchers_count": 10,
   "matches": [
-    {
-      "date": "2026-09-07 02:35",
-      "opponent": "보스턴 레드삭스",
-      "score": "1 : 3",
-      "result": "패",
-      "file": "matches/2026-09-07_0235_vs_보스턴_레드삭스.json"
-    },
     {
       "date": "2026-09-08 02:35",
       "opponent": "클리블랜드 가디언스",
       "score": "6 : 4",
       "result": "승",
       "file": "matches/2026-09-08_0235_vs_클리블랜드_가디언스.json"
+    },
+    {
+      "date": "2026-09-09 07:35",
+      "opponent": "클리블랜드 가디언스",
+      "score": "5 : 9",
+      "result": "패",
+      "file": "matches/2026-09-09_0735_vs_클리블랜드_가디언스.json"
     }
   ],
   "hitters": [
     {
       "name": "브라제 알렉산더",
-      "pos": "1번 2B",
+      "pos": "1번 3B",
       "file": "hitters/브라제_알렉산더.json"
     },
     {
@@ -36,14 +36,19 @@
       "file": "hitters/피트_알론소.json"
     },
     {
+      "name": "잭슨 홀리데이",
+      "pos": "3번 2B",
+      "file": "hitters/잭슨_홀리데이.json"
+    },
+    {
       "name": "코바이 므에이오",
-      "pos": "3번 DH",
+      "pos": "4번 3B",
       "file": "hitters/코바이_므에이오.json"
     },
     {
-      "name": "크리스천 엔크아르나시온스트르안드",
-      "pos": "4번 3B",
-      "file": "hitters/크리스천_엔크아르나시온스트르안드.json"
+      "name": "콜턴 코우스에르",
+      "pos": "4번 CF",
+      "file": "hitters/콜턴_코우스에르.json"
     },
     {
       "name": "거너 흐엔드에르슨",
@@ -51,67 +56,37 @@
       "file": "hitters/거너_흐엔드에르슨.json"
     },
     {
-      "name": "레세 흐인드스",
-      "pos": "6번 LF",
-      "file": "hitters/레세_흐인드스.json"
-    },
-    {
-      "name": "레오디 타브에르아스",
-      "pos": "7번 RF",
-      "file": "hitters/레오디_타브에르아스.json"
-    },
-    {
-      "name": "딜런 브이브에르스",
-      "pos": "7번 RF",
-      "file": "hitters/딜런_브이브에르스.json"
-    },
-    {
-      "name": "카를로스 느아르바에즈",
-      "pos": "8번 C",
-      "file": "hitters/카를로스_느아르바에즈.json"
-    },
-    {
-      "name": "콜턴 코우스에르",
-      "pos": "9번 CF",
-      "file": "hitters/콜턴_코우스에르.json"
-    },
-    {
-      "name": "잭슨 홀리데이",
-      "pos": "3번 2B",
-      "file": "hitters/잭슨_홀리데이.json"
+      "name": "크리스천 엔크아르나시온스트르안드",
+      "pos": "6번 DH",
+      "file": "hitters/크리스천_엔크아르나시온스트르안드.json"
     },
     {
       "name": "새뮤얼 바스알로",
       "pos": "7번 C",
       "file": "hitters/새뮤얼_바스알로.json"
+    },
+    {
+      "name": "레세 흐인드스",
+      "pos": "8번 RF",
+      "file": "hitters/레세_흐인드스.json"
+    },
+    {
+      "name": "딜런 브이브에르스",
+      "pos": "9번 LF",
+      "file": "hitters/딜런_브이브에르스.json"
+    },
+    {
+      "name": "카를로스 느아르바에즈",
+      "pos": "3번 2B",
+      "file": "hitters/카를로스_느아르바에즈.json"
+    },
+    {
+      "name": "레오디 타브에르아스",
+      "pos": "9번 RF",
+      "file": "hitters/레오디_타브에르아스.json"
     }
   ],
   "pitchers": [
-    {
-      "name": "카일 브래디시",
-      "pos": "P",
-      "file": "pitchers/카일_브래디시.json"
-    },
-    {
-      "name": "앤서니 느운에즈",
-      "pos": "P",
-      "file": "pitchers/앤서니_느운에즈.json"
-    },
-    {
-      "name": "루이스 데 레온",
-      "pos": "P",
-      "file": "pitchers/루이스_데_레온.json"
-    },
-    {
-      "name": "크암 스안드에르스",
-      "pos": "P",
-      "file": "pitchers/크암_스안드에르스.json"
-    },
-    {
-      "name": "그랜트 우올프르암",
-      "pos": "P",
-      "file": "pitchers/그랜트_우올프르암.json"
-    },
     {
       "name": "트레버 로저스",
       "pos": "P",
@@ -131,6 +106,36 @@
       "name": "조시 워커",
       "pos": "P",
       "file": "pitchers/조시_워커.json"
+    },
+    {
+      "name": "브랜든 영",
+      "pos": "P",
+      "file": "pitchers/브랜든_영.json"
+    },
+    {
+      "name": "그랜트 우올프르암",
+      "pos": "P",
+      "file": "pitchers/그랜트_우올프르암.json"
+    },
+    {
+      "name": "루이스 데 레온",
+      "pos": "P",
+      "file": "pitchers/루이스_데_레온.json"
+    },
+    {
+      "name": "알렉스 호프페",
+      "pos": "P",
+      "file": "pitchers/알렉스_호프페.json"
+    },
+    {
+      "name": "앤서니 느운에즈",
+      "pos": "P",
+      "file": "pitchers/앤서니_느운에즈.json"
+    },
+    {
+      "name": "크암 스안드에르스",
+      "pos": "P",
+      "file": "pitchers/크암_스안드에르스.json"
     }
   ]
 }

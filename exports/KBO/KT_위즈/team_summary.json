@@ -2,12 +2,12 @@
   "team_name": "KT 위즈",
   "league": "KBO",
   "period": {
-    "start_date": "2026-09-07",
-    "end_date": "2026-09-08"
+    "start_date": "2026-09-08",
+    "end_date": "2026-09-09"
   },
-  "total_matches": 1,
-  "hitters_count": 12,
-  "pitchers_count": 3,
+  "total_matches": 2,
+  "hitters_count": 14,
+  "pitchers_count": 4,
   "matches": [
     {
       "date": "2026-09-08 18:30",
@@ -15,6 +15,13 @@
       "score": "3 : 1",
       "result": "승",
       "file": "matches/2026-09-08_1830_vs_SSG_랜더스.json"
+    },
+    {
+      "date": "2026-09-09 18:30",
+      "opponent": "삼성 라이온즈",
+      "score": "2 : 0",
+      "result": "승",
+      "file": "matches/2026-09-09_1830_vs_삼성_라이온즈.json"
     }
   ],
   "hitters": [
@@ -77,23 +84,38 @@
       "name": "한승택",
       "pos": "9번 포수",
       "file": "hitters/한승택.json"
+    },
+    {
+      "name": "배정대",
+      "pos": "1번 중견수",
+      "file": "hitters/배정대.json"
+    },
+    {
+      "name": "류현인",
+      "pos": "7번 1루수",
+      "file": "hitters/류현인.json"
     }
   ],
   "pitchers": [
     {
       "name": "소형준",
-      "pos": "투수 (선발)",
+      "pos": "선발투수",
       "file": "pitchers/소형준.json"
     },
     {
       "name": "손동현",
-      "pos": "투수 (8.7)",
+      "pos": "구원투수 (8.7)",
       "file": "pitchers/손동현.json"
     },
     {
       "name": "박영현",
-      "pos": "투수 (9.2)",
+      "pos": "구원투수 (9.2)",
       "file": "pitchers/박영현.json"
+    },
+    {
+      "name": "고영표",
+      "pos": "선발투수",
+      "file": "pitchers/고영표.json"
     }
   ]
 }
