@@ -1193,6 +1193,69 @@
       }
     }
 
+    /* 📱 모바일 팝업 좌우 흔들림 및 가로 스크롤 완벽 방지 */
+    #matchModal {
+      overflow-x: hidden !important;
+      overscroll-behavior-x: none !important;
+    }
+    #matchModal .modal-dialog {
+      max-width: 100% !important;
+      margin: 0 !important;
+      overflow-x: hidden !important;
+    }
+    @media (min-width: 576px) {
+      #matchModal .modal-dialog {
+        margin: 1.75rem auto !important;
+        max-width: 95% !important;
+      }
+    }
+    @media (min-width: 1200px) {
+      #matchModal .modal-dialog {
+        max-width: 1140px !important;
+      }
+    }
+    #matchModal .modal-content {
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+      border-radius: 0 !important;
+    }
+    @media (min-width: 576px) {
+      #matchModal .modal-content {
+        border-radius: 12px !important;
+      }
+    }
+    #matchModal .modal-body {
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+      touch-action: pan-y !important;
+      overscroll-behavior-x: none !important;
+      overscroll-behavior-y: contain !important;
+    }
+    #matchModal .modal-match-card {
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+    }
+    #matchModal .mobile-tab-pane {
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+    }
+    #matchModal .row {
+      margin-left: -4px !important;
+      margin-right: -4px !important;
+    }
+    #matchModal .row > [class*="col-"] {
+      padding-left: 4px !important;
+      padding-right: 4px !important;
+    }
+    #matchModal .table-responsive {
+      overflow-x: auto !important;
+      max-width: 100% !important;
+      -webkit-overflow-scrolling: touch !important;
+      touch-action: pan-x pan-y !important;
+    }
+
     /* Modal Styling */
     .modal-content-custom {
       background-color: #ffffff !important;
@@ -1313,9 +1376,12 @@
       padding: 8px 10px !important;
       display: flex !important;
       gap: 6px !important;
+      max-width: calc(100% + 16px) !important;
       overflow-x: auto !important;
       white-space: nowrap !important;
       -webkit-overflow-scrolling: touch !important;
+      touch-action: pan-x pan-y !important;
+      overscroll-behavior-x: contain !important;
       scrollbar-width: none !important;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) !important;
     }
@@ -2331,38 +2397,164 @@
     } catch(e) {}
     let currentUser = null;
 
+    // ⏱️ 비활동 자동 로그아웃 시간 설정 (30분 = 1800000ms)
+    const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
+    const WARNING_THRESHOLD_MS = 60 * 1000; // 만료 60초 전 경고
+    let lastActivityTimestamp = Date.now();
+    let inactivityCheckInterval = null;
+
     function initAuthUser() {
       try {
         const saved = localStorage.getItem('tokeon_simple_user');
         if (saved) {
           currentUser = JSON.parse(saved);
+          // 저장된 마지막 활동 시각 검사
+          const savedActivity = localStorage.getItem('tokeon_last_activity');
+          if (savedActivity) {
+            const lastActive = parseInt(savedActivity, 10);
+            if (!isNaN(lastActive) && (Date.now() - lastActive) > INACTIVITY_TIMEOUT_MS) {
+              // 30분 이상 비활동인 채로 재접속한 경우 즉시 세션 만료
+              currentUser = null;
+              localStorage.removeItem('tokeon_simple_user');
+            } else if (!isNaN(lastActive)) {
+              lastActivityTimestamp = lastActive;
+            }
+          }
         }
       } catch (e) {
         currentUser = null;
       }
       renderAuthUI();
+      initInactivityTracker();
     }
 
-    function openLoginModal() {
+    function switchAuthTab(tab) {
+      const loginForm = document.getElementById('authLoginForm');
+      const regForm = document.getElementById('authRegisterForm');
+      const btnLogin = document.getElementById('authTabBtnLogin');
+      const btnRegister = document.getElementById('authTabBtnRegister');
+
+      if (tab === 'login') {
+        if (loginForm) loginForm.classList.remove('d-none');
+        if (regForm) regForm.classList.add('d-none');
+        if (btnLogin) {
+          btnLogin.style.background = '#ffffff';
+          btnLogin.style.color = '#0284c7';
+          btnLogin.classList.add('shadow-sm');
+        }
+        if (btnRegister) {
+          btnRegister.style.background = 'transparent';
+          btnRegister.style.color = '#64748b';
+          btnRegister.classList.remove('shadow-sm');
+        }
+        const nickEl = document.getElementById('loginNicknameInput');
+        if (nickEl) setTimeout(() => nickEl.focus(), 150);
+      } else {
+        if (loginForm) loginForm.classList.add('d-none');
+        if (regForm) regForm.classList.remove('d-none');
+        if (btnRegister) {
+          btnRegister.style.background = '#ffffff';
+          btnRegister.style.color = '#059669';
+          btnRegister.classList.add('shadow-sm');
+        }
+        if (btnLogin) {
+          btnLogin.style.background = 'transparent';
+          btnLogin.style.color = '#64748b';
+          btnLogin.classList.remove('shadow-sm');
+        }
+        const regNickEl = document.getElementById('regNicknameInput');
+        if (regNickEl) setTimeout(() => regNickEl.focus(), 150);
+      }
+    }
+
+    function openLoginModal(defaultTab = 'login') {
+      switchAuthTab(defaultTab);
       if (currentUser) {
         const nickEl = document.getElementById('loginNicknameInput');
-        const ageEl = document.getElementById('loginAgeInput');
         if (nickEl) nickEl.value = currentUser.nickname || '';
-        if (ageEl) ageEl.value = currentUser.age || '';
       }
       const modal = new bootstrap.Modal(document.getElementById('simpleLoginModal'));
       modal.show();
     }
 
-    function handleSimpleLogin(e) {
+    // 🔑 1. 간편 로그인 (별명 + 비밀번호)
+    async function handleUserLogin(e) {
       if (e) e.preventDefault();
       const nickEl = document.getElementById('loginNicknameInput');
-      const ageEl = document.getElementById('loginAgeInput');
+      const passEl = document.getElementById('loginPasswordInput');
       const nickname = nickEl ? nickEl.value.trim() : '';
-      const age = ageEl ? parseInt(ageEl.value.trim(), 10) : 0;
+      const password = passEl ? passEl.value.trim() : '';
 
       if (!nickname) {
         alert('활동하실 별명(닉네임)을 입력해주세요.');
+        if (nickEl) nickEl.focus();
+        return;
+      }
+      if (!password) {
+        alert('비밀번호를 입력해주세요.');
+        if (passEl) passEl.focus();
+        return;
+      }
+
+      try {
+        const resp = await fetch('/api/v1/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nickname: nickname, password: password })
+        });
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          const errMsg = data.detail || '로그인에 실패했습니다. 다시 확인해주세요.';
+          alert('⚠️ ' + errMsg);
+          if (resp.status === 404) {
+            // 등록되지 않은 계정인 경우 신규가입 탭으로 자동 이동
+            const regNick = document.getElementById('regNicknameInput');
+            if (regNick) regNick.value = nickname;
+            switchAuthTab('register');
+          }
+          return;
+        }
+
+        // 로그인 성공 처리
+        currentUser = data.user;
+        currentUser.isLoggedIn = true;
+        currentUser.loginAt = new Date().toISOString();
+
+        localStorage.setItem('tokeon_simple_user', JSON.stringify(currentUser));
+        recordUserActivity();
+
+        const modalEl = document.getElementById('simpleLoginModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+
+        renderAuthUI();
+        if (passEl) passEl.value = '';
+        alert(`🎉 [${currentUser.nickname}]님 환영합니다!\n로그인이 완료되었습니다.`);
+      } catch (err) {
+        console.error('Login error:', err);
+        alert('로그인 처리 중 통신 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      }
+    }
+
+    // 📝 2. 신규 회원가입 (별명 + 나이 + 비밀번호)
+    async function handleUserRegister(e) {
+      if (e) e.preventDefault();
+      const nickEl = document.getElementById('regNicknameInput');
+      const ageEl = document.getElementById('regAgeInput');
+      const passEl = document.getElementById('regPasswordInput');
+
+      const nickname = nickEl ? nickEl.value.trim() : '';
+      const age = ageEl ? parseInt(ageEl.value.trim(), 10) : 0;
+      const password = passEl ? passEl.value.trim() : '';
+
+      if (!nickname) {
+        alert('활동하실 별명(닉네임)을 입력해주세요.');
+        if (nickEl) nickEl.focus();
+        return;
+      }
+      if (nickname.length > 12) {
+        alert('별명은 최대 12자까지 입력할 수 있습니다.');
         if (nickEl) nickEl.focus();
         return;
       }
@@ -2371,43 +2563,128 @@
         if (ageEl) ageEl.focus();
         return;
       }
-
-      currentUser = {
-        nickname: nickname,
-        age: age,
-        isLoggedIn: true,
-        loginAt: new Date().toISOString()
-      };
+      if (!password || password.length < 4) {
+        alert('비밀번호는 최소 4자리 이상 입력해주세요.');
+        if (passEl) passEl.focus();
+        return;
+      }
 
       try {
-        localStorage.setItem('tokeon_simple_user', JSON.stringify(currentUser));
-        // Save to data/members folder via backend API
-        fetch('/api/v1/auth/register-user', {
+        const resp = await fetch('/api/v1/auth/register-user', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nickname: nickname, age: age })
-        }).catch(err => console.warn('Member folder registration error:', err));
-      } catch (err) {}
+          body: JSON.stringify({ nickname: nickname, age: age, password: password })
+        });
+        const data = await resp.json();
 
-      // Auto-activate 3-day VIP trial on simple login
-      isVipUser = true;
-      updateVipDisplay();
+        if (!resp.ok) {
+          const errMsg = data.detail || '회원가입에 실패했습니다.';
+          alert('⚠️ ' + errMsg);
+          if (resp.status === 400 && errMsg.includes('이미 등록된')) {
+            switchAuthTab('login');
+            const loginNick = document.getElementById('loginNicknameInput');
+            if (loginNick) loginNick.value = nickname;
+          }
+          return;
+        }
 
-      const modalEl = document.getElementById('simpleLoginModal');
-      const modal = bootstrap.Modal.getInstance(modalEl);
-      if (modal) modal.hide();
+        currentUser = data.user;
+        currentUser.isLoggedIn = true;
+        currentUser.loginAt = new Date().toISOString();
 
-      renderAuthUI();
-      alert(`🎉 [${nickname}]님 (${age}세) 환영합니다!\n별명과 나이로 즉시 접속되었습니다.\n(3일 VIP 무료체험이 함께 적용되었습니다)`);
+        localStorage.setItem('tokeon_simple_user', JSON.stringify(currentUser));
+        recordUserActivity();
+
+        const modalEl = document.getElementById('simpleLoginModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+
+        renderAuthUI();
+        if (passEl) passEl.value = '';
+        alert(`🎉 [${nickname}]님 (${age}세) 환영합니다!\n회원가입 및 로그인이 완료되었습니다.`);
+      } catch (err) {
+        console.error('Register error:', err);
+        alert('회원가입 처리 중 통신 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      }
     }
 
-    function handleLogout() {
+    // 🚪 3. 로그아웃 처리 (일반 로그아웃 및 비활동 자동 로그아웃 공용)
+    function handleLogout(isAuto = false) {
       currentUser = null;
       try {
         localStorage.removeItem('tokeon_simple_user');
+        localStorage.removeItem('tokeon_last_activity');
       } catch (e) {}
       renderAuthUI();
-      alert('로그아웃되었습니다.');
+      if (isAuto) {
+        alert('⏱️ 일정 시간 동안 활동이 감지되지 않아 보안을 위해 자동으로 로그아웃되었습니다.');
+      } else {
+        alert('로그아웃되었습니다.');
+      }
+    }
+
+    // =============================================================
+    // ⏱️ 비활동 감지 자동 로그아웃 (Activity Tracker - 30분 미조작 시 즉시 안전 로그아웃)
+    // =============================================================
+    function recordUserActivity() {
+      const now = Date.now();
+      lastActivityTimestamp = now;
+      try {
+        localStorage.setItem('tokeon_last_activity', String(now));
+      } catch (e) {}
+    }
+
+    function checkInactivity() {
+      if (!currentUser || !currentUser.nickname) return;
+
+      const now = Date.now();
+      let lastActive = lastActivityTimestamp;
+      try {
+        const saved = localStorage.getItem('tokeon_last_activity');
+        if (saved) {
+          const parsed = parseInt(saved, 10);
+          if (!isNaN(parsed) && parsed > lastActive) {
+            lastActive = parsed;
+            lastActivityTimestamp = parsed;
+          }
+        }
+      } catch (e) {}
+
+      const idleTime = now - lastActive;
+
+      // 30분(INACTIVITY_TIMEOUT_MS) 경과 시 별도의 카운트다운 없이 즉시 안전 로그아웃
+      if (idleTime >= INACTIVITY_TIMEOUT_MS) {
+        handleLogout(true);
+      }
+    }
+
+    function initInactivityTracker() {
+      recordUserActivity();
+
+      // 마우스, 키보드, 터치, 스크롤 등 사용자 조작 이벤트 감지 (2초 쓰로틀링)
+      const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
+      let lastThrottle = 0;
+      events.forEach(evt => {
+        window.addEventListener(evt, () => {
+          const now = Date.now();
+          if (now - lastThrottle > 2000) {
+            lastThrottle = now;
+            recordUserActivity();
+          }
+        }, { passive: true });
+      });
+
+      // 브라우저 탭 복귀 또는 스마트폰 화면 켜질 때 즉시 검사
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) checkInactivity();
+      });
+      window.addEventListener('focus', () => {
+        checkInactivity();
+      });
+
+      // 5초 주기로 비활동 시간 체크
+      if (inactivityCheckInterval) clearInterval(inactivityCheckInterval);
+      inactivityCheckInterval = setInterval(checkInactivity, 5000);
     }
 
     function renderAuthUI() {
@@ -2442,7 +2719,7 @@
             </button>
             <div class="d-flex align-items-center bg-dark border border-secondary px-2 py-1 rounded-2">
               <i class="bi bi-person-circle text-info me-1"></i>
-              <span class="text-dark fw-bold" style="font-size: 0.78rem;">${currentUser.nickname}</span>
+              <span class="text-white fw-bold" style="font-size: 0.78rem;">${currentUser.nickname}</span>
               <span class="text-info small fw-bold ms-1 d-none d-sm-inline" style="font-size: 0.70rem;">(${currentUser.age}세)</span>
               <button class="btn btn-xs btn-danger py-0 px-1.5 ms-1.5 text-white fw-bold" onclick="handleLogout()" style="font-size: 0.68rem;" title="로그아웃">로그아웃</button>
             </div>
@@ -2507,7 +2784,7 @@
       const modalEl = document.getElementById('vipModal');
       const modal = bootstrap.Modal.getInstance(modalEl);
       if (modal) modal.hide();
-      alert('🎉 TOKEON PRO VIP 3일 무료 체험이 활성화되었습니다! 모든 38/26개 세이버메트릭스와 AI 추천픽이 잠금 해제되었습니다.');
+      alert('🎉 TOKEON PRO VIP 멤버십이 활성화되었습니다! 모든 38/26개 세이버메트릭스와 AI 추천픽이 잠금 해제되었습니다.');
     }
 
     function updateVipDisplay() {
@@ -3969,12 +4246,12 @@ function getFullModalMatchList() {
               : `<span class="badge bg-secondary text-white" style="font-size: 0.68rem; font-weight: 700;">○ 미확정 (TBD)</span>`;
 
             return `
-            <div class="p-2 mb-2 rounded-2 d-flex justify-content-between align-items-center flex-wrap gap-1" id="modalStartersPreview_${m.id}" style="background: ${bothAnnounced ? '#ffffff' : '#f8fafc'}; border: 1px ${bothAnnounced ? 'solid #e5e7eb' : 'dashed #cbd5e1'};">
-              <div class="small text-truncate" style="font-size: 0.80rem; color: #111827;">
+            <div class="p-2 mb-2 rounded-2 d-flex justify-content-between align-items-center flex-wrap gap-1" id="modalStartersPreview_${m.id}" style="background: ${bothAnnounced ? '#ffffff' : '#f8fafc'}; border: 1px ${bothAnnounced ? 'solid #e5e7eb' : 'dashed #cbd5e1'}; max-width: 100%; overflow: hidden;">
+              <div class="small text-truncate" style="font-size: 0.80rem; color: #111827; min-width: 0; max-width: 100%; flex: 1 1 0;">
                 <i class="bi bi-person-lines-fill ${bothAnnounced ? 'text-dark' : 'text-secondary'} me-1"></i>
                 <span style="color: #111827; font-weight: 800;">[선발 1:1 맞대결]</span> ${matchText}
               </div>
-              <div class="d-flex align-items-center gap-1">
+              <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-auto">
                 ${badgeHtml}
                 <button class="btn btn-xs py-0 px-1.5 fw-bold" onclick="openStarterModal(${m.id || 0}, '${m.home_team_name}', '${m.away_team_name}', '${hPitcher.name || ''}', '${aPitcher.name || ''}', ${Boolean(hPitcher.is_confirmed)}, ${Boolean(aPitcher.is_confirmed)})" style="background: #ffffff; border: 1px solid #d1d5db; color: #4b5563; font-size: 0.68rem; border-radius: 4px;" title="선발 교체/스크래치 등 비상시에만 수동 수정">
                   <i class="bi bi-pencil me-1"></i>수동편집
@@ -4176,12 +4453,14 @@ function getFullModalMatchList() {
 
           stPrev.style.background = bothAnnounced ? '#ffffff' : '#f8fafc';
           stPrev.style.border = bothAnnounced ? '1px solid #e5e7eb' : '1px dashed #cbd5e1';
+          stPrev.style.maxWidth = '100%';
+          stPrev.style.overflow = 'hidden';
           stPrev.innerHTML = `
-            <div class="small text-truncate" style="font-size: 0.80rem; color: #111827;">
+            <div class="small text-truncate" style="font-size: 0.80rem; color: #111827; min-width: 0; max-width: 100%; flex: 1 1 0;">
               <i class="bi bi-person-lines-fill ${bothAnnounced ? 'text-dark' : 'text-secondary'} me-1"></i>
               <span style="color: #111827; font-weight: 800;">[선발 1:1 맞대결]</span> ${matchText}
             </div>
-            <div class="d-flex align-items-center gap-1">
+            <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-auto">
               ${badgeHtml}
               <button class="btn btn-xs py-0 px-1.5 fw-bold" onclick="openStarterModal(${match.id || 0}, '${match.home_team_name}', '${match.away_team_name}', '${hPitcher.name || ''}', '${aPitcher.name || ''}', ${Boolean(hPitcher.is_confirmed)}, ${Boolean(aPitcher.is_confirmed)})" style="background: #ffffff; border: 1px solid #d1d5db; color: #4b5563; font-size: 0.68rem; border-radius: 4px;" title="선발 교체/스크래치 등 비상시에만 수동 수정">
                 <i class="bi bi-pencil me-1"></i>수동편집
@@ -5518,7 +5797,7 @@ function getFullModalMatchList() {
         return `
           <div class="col-md-6 col-12">
             <div class="p-2 rounded-3 h-100" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px;">
-              <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: #e5e7eb !important;">
+              <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom flex-wrap gap-1" style="border-color: #e5e7eb !important;">
                 <div>
                   <span class="fw-bold" style="color: #111827; font-size: 0.84rem; white-space: nowrap; word-break: keep-all;">
                     ${sideLabel} ${teamName}
@@ -5628,7 +5907,7 @@ function getFullModalMatchList() {
         return `
           <div class="col-md-6 col-12">
             <div class="p-2 rounded-3 h-100" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px;">
-              <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: #e5e7eb !important;">
+              <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom flex-wrap gap-1" style="border-color: #e5e7eb !important;">
                 <span class="fw-bold" style="color: #111827; font-size: 0.84rem; white-space: nowrap; word-break: keep-all;">
                   ${sideLabel} ${teamName}
                 </span>
@@ -6826,23 +7105,25 @@ function getFullModalMatchList() {
           const q1H = Math.round(hSc * 0.24), q2H = Math.round(hSc * 0.26), q3H = Math.round(hSc * 0.23), q4H = hSc - (q1H + q2H + q3H);
           const q1A = Math.round(aSc * 0.25), q2A = Math.round(aSc * 0.24), q3A = Math.round(aSc * 0.26), q4A = aSc - (q1A + q2A + q3A);
           lineTableHtml = `
-            <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.76rem; border-color: #e5e7eb; background: #ffffff;">
-              <thead style="background: #ffffff; color: #111827;">
-                <tr style="font-weight: 700;"><th>팀명</th><th>1Q</th><th>2Q</th><th>3Q</th><th>4Q</th><th>TOTAL</th></tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 120px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[홈]</span>${teamH}</td>
-                  <td>${q1H}</td><td>${q2H}</td><td>${q3H}</td><td>${q4H}</td>
-                  <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${hSc}</td>
-                </tr>
-                <tr>
-                  <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 120px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[원정]</span>${teamA}</td>
-                  <td>${q1A}</td><td>${q2A}</td><td>${q3A}</td><td>${q4A}</td>
-                  <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${aSc}</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-responsive mb-2">
+              <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.76rem; border-color: #e5e7eb; background: #ffffff;">
+                <thead style="background: #ffffff; color: #111827;">
+                  <tr style="font-weight: 700;"><th>팀명</th><th>1Q</th><th>2Q</th><th>3Q</th><th>4Q</th><th>TOTAL</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 120px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[홈]</span>${teamH}</td>
+                    <td>${q1H}</td><td>${q2H}</td><td>${q3H}</td><td>${q4H}</td>
+                    <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${hSc}</td>
+                  </tr>
+                  <tr>
+                    <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 120px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[원정]</span>${teamA}</td>
+                    <td>${q1A}</td><td>${q2A}</td><td>${q3A}</td><td>${q4A}</td>
+                    <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${aSc}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           `;
           const fakeBball = {
             sport_code: 'BASKETBALL',
@@ -6936,23 +7217,25 @@ function getFullModalMatchList() {
           const a1H = Math.floor(aSc / 2);
           const a2H = aSc - a1H;
           lineTableHtml = `
-            <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.76rem; border-color: #e5e7eb; background: #ffffff;">
-              <thead style="background: #ffffff; color: #111827;">
-                <tr style="font-weight: 700;"><th>팀명</th><th>전반 (1H)</th><th>후반 (2H)</th><th>연장 (ET)</th><th>TOTAL</th></tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 120px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[홈]</span>${teamH}</td>
-                  <td>${h1H}</td><td>${h2H}</td><td>-</td>
-                  <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${hSc}</td>
-                </tr>
-                <tr>
-                  <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 120px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[원정]</span>${teamA}</td>
-                  <td>${a1H}</td><td>${a2H}</td><td>-</td>
-                  <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${aSc}</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-responsive mb-2">
+              <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.76rem; border-color: #e5e7eb; background: #ffffff;">
+                <thead style="background: #ffffff; color: #111827;">
+                  <tr style="font-weight: 700;"><th>팀명</th><th>전반 (1H)</th><th>후반 (2H)</th><th>연장 (ET)</th><th>TOTAL</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 120px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[홈]</span>${teamH}</td>
+                    <td>${h1H}</td><td>${h2H}</td><td>-</td>
+                    <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${hSc}</td>
+                  </tr>
+                  <tr>
+                    <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 120px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[원정]</span>${teamA}</td>
+                    <td>${a1H}</td><td>${a2H}</td><td>-</td>
+                    <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${aSc}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           `;
           const fakeSoccer = {
             sport_code: 'SOCCER',
@@ -7085,27 +7368,29 @@ function getFullModalMatchList() {
           const errA = aSc > hSc ? 0 : 1;
 
           lineTableHtml = `
-            <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.74rem; border-color: #e5e7eb; background: #ffffff;">
-              <thead style="background: #ffffff; color: #111827;">
-                <tr style="font-weight: 700;"><th>팀명</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>R</th><th>H</th><th>E</th></tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 110px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[홈]</span>${teamH}</td>
-                  ${innH.map(v => `<td>${v}</td>`).join('')}
-                  <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${hSc}</td>
-                  <td class="fw-bold">${hitsH}</td>
-                  <td class="text-muted">${errH}</td>
-                </tr>
-                <tr>
-                  <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 110px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[원정]</span>${teamA}</td>
-                  ${innA.map(v => `<td>${v}</td>`).join('')}
-                  <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${aSc}</td>
-                  <td class="fw-bold">${hitsA}</td>
-                  <td class="text-muted">${errA}</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="table-responsive mb-2">
+              <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.74rem; border-color: #e5e7eb; background: #ffffff;">
+                <thead style="background: #ffffff; color: #111827;">
+                  <tr style="font-weight: 700;"><th>팀명</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>R</th><th>H</th><th>E</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 110px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[홈]</span>${teamH}</td>
+                    ${innH.map(v => `<td>${v}</td>`).join('')}
+                    <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${hSc}</td>
+                    <td class="fw-bold">${hitsH}</td>
+                    <td class="text-muted">${errH}</td>
+                  </tr>
+                  <tr>
+                    <td class="fw-bold text-start ps-1 text-truncate" style="max-width: 110px;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[원정]</span>${teamA}</td>
+                    ${innA.map(v => `<td>${v}</td>`).join('')}
+                    <td class="fw-bold" style="font-size: 0.88rem; color: #111827;">${aSc}</td>
+                    <td class="fw-bold">${hitsA}</td>
+                    <td class="text-muted">${errA}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           `;
           const fakeBaseball = {
             sport_code: 'BASEBALL',
@@ -12607,7 +12892,6 @@ function getFullModalMatchList() {
           <div class="p-3 mb-4 rounded-3 text-center" style="background: linear-gradient(135deg, #fef2f2 0%, rgba(217, 119, 6, 0.05) 100%); border: 1px solid #fef2f2;">
             <div class="text-warning small fw-bold mb-1">커피 한 잔 가격으로 즐기는 프로 스포츠 빅데이터</div>
             <div class="display-6 fw-bold text-white mb-1">월 3,300원 <span class="fs-6 text-muted font-monospace">(부과세/VAT 포함)</span></div>
-            <div class="badge bg-danger text-white px-3 py-1 fs-6 mt-1">🎉 지금 신청 시 첫 3일 100% 무료 체험!</div>
           </div>
 
           <!-- Free vs VIP Rights Table -->
@@ -12663,7 +12947,7 @@ function getFullModalMatchList() {
 
           <div class="d-flex gap-2">
             <button class="btn btn-warning flex-grow-1 fw-bold py-2" onclick="activateVipDemo()">
-              <i class="bi bi-gift-fill me-1"></i>3일 무료 체험 시작하기 (월 3,300원)
+              <i class="bi bi-crown-fill me-1"></i>PRO VIP 멤버십 신청하기 (월 3,300원)
             </button>
             <button class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">닫기</button>
           </div>
@@ -12672,50 +12956,91 @@ function getFullModalMatchList() {
     </div>
   </div>
 
-  <!-- ⚡ Modal: 3초 초간편 로그인 (별명 + 나이) -->
+  <!-- ⚡ Modal: 계정 접속 및 회원가입 (별명 + 비번 간편 로그인 & 신규가입) -->
   <div class="modal fade" id="simpleLoginModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
-      <div class="modal-content" style="background: #f8fafc; color: #111827; border: 1px solid rgba(14, 165, 233, 0.4); border-radius: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.85);">
-        <div class="modal-header border-bottom d-flex justify-content-between align-items-center" style="border-color: #e5e7eb !important;">
+      <div class="modal-content" style="background: #ffffff; color: #111827; border: 1px solid #cbd5e1; border-radius: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.35);">
+        <div class="modal-header border-bottom d-flex justify-content-between align-items-center" style="border-color: #e2e8f0 !important; background: #f8fafc; border-top-left-radius: 16px; border-top-right-radius: 16px;">
           <div class="d-flex align-items-center gap-2">
             <div style="background: linear-gradient(135deg, #0284c7, #2563eb); width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
-              <i class="bi bi-lightning-charge-fill text-white fs-5"></i>
+              <i class="bi bi-shield-lock-fill text-white fs-5"></i>
             </div>
-            <h5 class="modal-title text-white fw-bold mb-0">⚡ 3초 초간편 로그인</h5>
+            <div>
+              <h5 class="modal-title text-dark fw-bold mb-0" style="font-size: 1.05rem;">TOKEON 스포츠 분석실</h5>
+              <div class="text-muted small" style="font-size: 0.72rem;">별명과 비밀번호로 안전하게 접속하세요</div>
+            </div>
           </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
         <div class="modal-body p-4">
-          <div class="text-center mb-3">
-            <p class="text-light small mb-0">복잡한 회원가입이나 비밀번호 없이<br><strong class="text-info">별명(닉네임)</strong>과 <strong class="text-warning">나이</strong>만 입력하면 즉시 접속됩니다!</p>
+          <!-- 탭 선택기 (로그인 / 회원가입) -->
+          <div class="d-flex p-1 mb-3 rounded-3" style="background: #f1f5f9; border: 1px solid #e2e8f0;">
+            <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5 rounded-2 shadow-sm" id="authTabBtnLogin" onclick="switchAuthTab('login')" style="background: #ffffff; color: #0284c7; border: none; font-size: 0.86rem;">
+              <i class="bi bi-box-arrow-in-right me-1"></i>간편 로그인
+            </button>
+            <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5 rounded-2" id="authTabBtnRegister" onclick="switchAuthTab('register')" style="background: transparent; color: #64748b; border: none; font-size: 0.86rem;">
+              <i class="bi bi-person-plus-fill me-1"></i>신규 회원가입
+            </button>
           </div>
 
-          <form id="simpleLoginForm" onsubmit="handleSimpleLogin(event)">
-            <!-- 별명 입력 -->
+          <!-- 1. 간편 로그인 폼 (기본) -->
+          <form id="authLoginForm" onsubmit="handleUserLogin(event)">
             <div class="mb-3">
-              <label class="form-label text-white fw-bold small"><i class="bi bi-person-fill text-info me-1"></i>활동할 별명 (닉네임)</label>
-              <input type="text" class="form-control bg-light text-dark border-secondary py-2" id="loginNicknameInput" placeholder="예: 슈퍼손, 홈런왕, 세이버전문가" maxlength="12" required autocomplete="off" style="font-size: 0.9rem;">
-              <div class="form-text text-muted" style="font-size: 0.72rem;">실시간 채팅, 투표, 분석방에서 사용할 별명입니다. (최대 12자)</div>
+              <label class="form-label text-dark fw-bold small"><i class="bi bi-person-fill text-primary me-1"></i>활동 별명 (닉네임)</label>
+              <input type="text" class="form-control bg-white text-dark border py-2" id="loginNicknameInput" placeholder="가입한 별명 입력 (예: 슈퍼손)" maxlength="12" required autocomplete="username" style="font-size: 0.9rem;">
             </div>
 
-            <!-- 나이 입력 -->
             <div class="mb-3">
-              <label class="form-label text-white fw-bold small"><i class="bi bi-calendar-event text-warning me-1"></i>나이 (연령)</label>
-              <input type="number" class="form-control bg-light text-dark border-secondary py-2" id="loginAgeInput" placeholder="예: 28" min="10" max="100" required autocomplete="off" style="font-size: 0.9rem;">
-              <div class="form-text text-muted" style="font-size: 0.72rem;">맞춤형 스포츠 분석 추천에 활용됩니다.</div>
+              <label class="form-label text-dark fw-bold small"><i class="bi bi-key-fill text-warning me-1"></i>비밀번호 (패스워드)</label>
+              <input type="password" class="form-control bg-white text-dark border py-2" id="loginPasswordInput" placeholder="비밀번호 입력" required autocomplete="current-password" style="font-size: 0.9rem;">
             </div>
 
-            <!-- 혜택 배너 -->
-            <div class="p-2 mb-3 rounded-2 text-center" style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3);">
-              <span class="text-success small fw-bold"><i class="bi bi-gift-fill me-1"></i>접속 시 3일 VIP 무료체험 자동 적용!</span>
+            <div class="p-2 mb-3 rounded-2 text-center" style="background: rgba(2, 132, 199, 0.08); border: 1px solid rgba(2, 132, 199, 0.2);">
+              <span class="text-primary small fw-bold"><i class="bi bi-lightning-charge-fill me-1"></i>별명과 비밀번호로 1초 만에 즉시 접속!</span>
             </div>
 
-            <!-- 버튼 -->
             <div class="d-grid gap-2">
-              <button type="submit" class="btn btn-info py-2 fw-bold text-dark fs-6" style="background: linear-gradient(135deg, #38bdf8, #0ea5e9); border: none; ">
-                <i class="bi bi-box-arrow-in-right me-1"></i>접속하기 (로그인)
+              <button type="submit" class="btn btn-primary py-2.5 fw-bold text-white fs-6 shadow-sm" style="background: linear-gradient(135deg, #0284c7, #2563eb); border: none; border-radius: 8px;">
+                <i class="bi bi-box-arrow-in-right me-1"></i>로그인하기
               </button>
+            </div>
+
+            <div class="text-center mt-3">
+              <span class="text-muted small">아직 계정이 없으신가요?</span>
+              <a href="javascript:void(0)" onclick="switchAuthTab('register')" class="text-primary small fw-bold ms-1 text-decoration-none">3초 신규 회원가입 &rarr;</a>
+            </div>
+          </form>
+
+          <!-- 2. 신규 회원가입 폼 -->
+          <form id="authRegisterForm" class="d-none" onsubmit="handleUserRegister(event)">
+            <div class="mb-3">
+              <label class="form-label text-dark fw-bold small"><i class="bi bi-person-fill text-primary me-1"></i>활동할 별명 (닉네임)</label>
+              <input type="text" class="form-control bg-white text-dark border py-2" id="regNicknameInput" placeholder="원하는 별명 입력 (최대 12자)" maxlength="12" required autocomplete="off" style="font-size: 0.9rem;">
+              <div class="form-text text-muted" style="font-size: 0.72rem;">실시간 채팅 및 분석방에서 표시될 고유 별명입니다.</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-dark fw-bold small"><i class="bi bi-calendar-event text-info me-1"></i>나이 (연령)</label>
+              <input type="number" class="form-control bg-white text-dark border py-2" id="regAgeInput" placeholder="예: 28" min="10" max="100" required autocomplete="off" style="font-size: 0.9rem;">
+              <div class="form-text text-muted" style="font-size: 0.72rem;">맞춤형 스포츠 승부예측 분석 추천에 활용됩니다.</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-dark fw-bold small"><i class="bi bi-lock-fill text-warning me-1"></i>비밀번호 설정</label>
+              <input type="password" class="form-control bg-white text-dark border py-2" id="regPasswordInput" placeholder="비밀번호 설정 (최소 4자리 이상)" minlength="4" required autocomplete="new-password" style="font-size: 0.9rem;">
+              <div class="form-text text-muted" style="font-size: 0.72rem;">다음에 접속할 때 별명과 함께 사용됩니다.</div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-success py-2.5 fw-bold text-white fs-6 shadow-sm" style="background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 8px;">
+                <i class="bi bi-person-check-fill me-1"></i>회원가입 & 즉시 접속
+              </button>
+            </div>
+
+            <div class="text-center mt-3">
+              <span class="text-muted small">이미 계정이 있으신가요?</span>
+              <a href="javascript:void(0)" onclick="switchAuthTab('login')" class="text-primary small fw-bold ms-1 text-decoration-none">간편 로그인으로 이동 &rarr;</a>
             </div>
           </form>
         </div>
