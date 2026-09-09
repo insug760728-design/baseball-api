@@ -1272,77 +1272,96 @@
       background-color: #f0fdf4 !important;
     }
 
-    /* 📱 모바일 핸드폰 한면에 14경기 한눈에 쏙 들어오게 하는 초컴팩트 스타일 */
+    /* 📱 모바일 핸드폰 한면에 14경기 100% 바로 전부 다 보이게 하는 극초컴팩트 스타일 */
     @media (max-width: 767.98px) {
+      #totoBetmanModal .modal-body {
+        padding: 2px 3px !important;
+        height: calc(100dvh - 82px) !important;
+        max-height: calc(100dvh - 82px) !important;
+        overflow: hidden !important;
+      }
+      .toto-col-left {
+        overflow-y: hidden !important;
+        height: 100% !important;
+      }
+      .toto-modal-table {
+        margin-bottom: 0 !important;
+        width: 100% !important;
+      }
+      .toto-modal-table thead tr {
+        height: 16px !important;
+        max-height: 16px !important;
+      }
+      .toto-modal-table th {
+        font-size: 0.54rem !important;
+        padding: 0 1px !important;
+        line-height: 1 !important;
+      }
+      /* 14개 행: 각 18px 초슬림 (14개 x 18px = 252px) */
+      .toto-modal-table tbody tr {
+        height: 18px !important;
+        min-height: 18px !important;
+        max-height: 18px !important;
+      }
+      .toto-modal-table td {
+        padding: 0 1px !important;
+        vertical-align: middle !important;
+        line-height: 1 !important;
+        border-bottom-width: 1px !important;
+      }
       .betman-slip-btn {
-        width: 30px !important;
-        height: 21px !important;
-        border-radius: 3.5px !important;
+        width: 25px !important;
+        height: 16px !important;
+        border-radius: 2.5px !important;
         padding: 0 !important;
         border-width: 1px !important;
       }
       .betman-slip-btn .b-label {
-        font-size: 0.65rem !important;
-        font-weight: 900 !important;
-      }
-      .betman-slip-btn .b-pct {
-        font-size: 0.46rem !important;
-        transform: scale(0.88);
-        margin-top: 0 !important;
-      }
-      .betman-slip-btn .ai-badge {
-        font-size: 0.40rem !important;
-        top: -4px !important;
-        right: -3px !important;
-        padding: 0 1.5px !important;
-      }
-      
-      /* 테이블 행 높이 초슬림화: 14경기 전체가 한 화면에 쏙 들어옴 */
-      .toto-modal-table tbody tr {
-        height: 24px !important;
-        min-height: 24px !important;
-        max-height: 24px !important;
-      }
-      .toto-modal-table td,
-      .toto-modal-table th {
-        padding: 1px 1px !important;
-        vertical-align: middle !important;
-        border-bottom-width: 1px !important;
-      }
-      .toto-modal-table th {
         font-size: 0.60rem !important;
-        padding-top: 2px !important;
-        padding-bottom: 2px !important;
-      }
-      .toto-match-seq-badge {
-        font-size: 0.58rem !important;
-        padding: 1px 3px !important;
-        border-radius: 3px !important;
+        font-weight: 900 !important;
         line-height: 1 !important;
       }
-      .toto-team-txt {
-        font-size: 0.70rem !important;
-        font-weight: 700 !important;
-        letter-spacing: -0.3px !important;
-        max-width: 62px !important;
+      .betman-slip-btn .b-pct {
+        font-size: 0.38rem !important;
+        transform: scale(0.82);
+        margin-top: -1px !important;
+        line-height: 1 !important;
       }
-      .toto-prob-badge {
-        font-size: 0.54rem !important;
+      .betman-slip-btn .ai-badge {
+        font-size: 0.36rem !important;
+        top: -3px !important;
+        right: -2px !important;
+        padding: 0 1px !important;
+      }
+      .toto-match-seq-badge {
+        font-size: 0.50rem !important;
         padding: 0 2px !important;
+        border-radius: 2px !important;
         line-height: 1.1 !important;
       }
+      .toto-team-txt {
+        font-size: 0.64rem !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.4px !important;
+        max-width: 60px !important;
+      }
+      .toto-prob-badge {
+        font-size: 0.48rem !important;
+        padding: 0 1.5px !important;
+        line-height: 1 !important;
+      }
       .toto-league-txt {
-        font-size: 0.56rem !important;
+        font-size: 0.50rem !important;
         line-height: 1 !important;
       }
       .toto-time-txt {
-        font-size: 0.56rem !important;
+        font-size: 0.48rem !important;
         line-height: 1 !important;
       }
       .toto-detail-btn {
-        width: 18px !important;
-        height: 18px !important;
-        font-size: 0.56rem !important;
+        width: 15px !important;
+        height: 15px !important;
+        font-size: 0.50rem !important;
         padding: 0 !important;
         line-height: 1 !important;
       }
@@ -13116,9 +13135,35 @@ function getFullModalMatchList() {
       }
     }
 
+    let wsHeartbeatTimer = null;
+    let liveAutoPollingTimer = null;
+
+    function startLiveAutoPolling() {
+      if (liveAutoPollingTimer) clearInterval(liveAutoPollingTimer);
+      // 45초 주기 무중단 백업 폴링 (웹소켓 연결 여부와 상관없이 백그라운드에서 실시간 스코어 자동 보장)
+      liveAutoPollingTimer = setInterval(() => {
+        try {
+          loadLiveMatches();
+        } catch (e) {
+          console.warn('Auto polling error:', e);
+        }
+      }, 45000);
+    }
+
+    // 브라우저 탭 복귀 감지 (사용자가 다른 탭/앱을 보다가 돌아왔을 때 즉시 실시간 동기화)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        loadLiveMatches();
+        if (!liveSocket || liveSocket.readyState === WebSocket.CLOSED || liveSocket.readyState === WebSocket.CLOSING) {
+          connectLiveWebSocket();
+        }
+      }
+    });
+
     function initCommunityAndWebSocket() {
       loadCommunityMessages();
       connectLiveWebSocket();
+      startLiveAutoPolling();
     }
 
     async function loadCommunityMessages() {
@@ -13141,6 +13186,10 @@ function getFullModalMatchList() {
       if (badge) badge.innerText = '실시간 웹소켓 연결 중...';
 
       try {
+        if (liveSocket && liveSocket.readyState === WebSocket.OPEN) {
+          return;
+        }
+
         liveSocket = new WebSocket(wsUrl);
 
         liveSocket.onopen = () => {
@@ -13149,6 +13198,14 @@ function getFullModalMatchList() {
             badge.innerText = '실시간 웹소켓 연결됨';
             badge.parentElement.style.background = 'rgba(16, 185, 129, 0.2)';
           }
+
+          // 25초 주기 Ping 하트비트 시작 (공유기/브라우저의 유휴 단절 완전 방지)
+          if (wsHeartbeatTimer) clearInterval(wsHeartbeatTimer);
+          wsHeartbeatTimer = setInterval(() => {
+            if (liveSocket && liveSocket.readyState === WebSocket.OPEN) {
+              liveSocket.send(JSON.stringify({ type: 'PING' }));
+            }
+          }, 25000);
         };
 
         liveSocket.onmessage = (event) => {
@@ -13163,8 +13220,12 @@ function getFullModalMatchList() {
         let wsRetryDelay = 1000;
         liveSocket.onclose = () => {
           console.log(`[WebSocket] Connection closed, retrying in ${wsRetryDelay}ms...`);
+          if (wsHeartbeatTimer) {
+            clearInterval(wsHeartbeatTimer);
+            wsHeartbeatTimer = null;
+          }
           if (badge) {
-            badge.innerText = '실시간 스트림 동기화 중...';
+            badge.innerText = '실시간 스트림 재연결 중...';
             badge.parentElement.style.background = 'rgba(245, 158, 11, 0.2)';
           }
           setTimeout(() => {

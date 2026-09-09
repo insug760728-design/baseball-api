@@ -60,17 +60,20 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[WARN] AI 채팅 봇 시작 중 오류: {e}")
 
-    # TeamSplitService 사전 워밍업 (41,000건 통계 메모리 선적재로 첫 요청 0초화)
+    # 🚀 백그라운드 사전 워밍업 (TeamSplitService 41,000건 적재 및 주요 경기 1:1 분석)
     try:
-        from app.services.team_split_service import TeamSplitService
-        TeamSplitService.get_all_splits()
-        print("[INFO] TeamSplitService 분할 통계 사전 워밍업 완료.")
-    except Exception as e:
-        print(f"[WARN] TeamSplitService 워밍업 중 오류: {e}")
+        def _warmup_background():
+            # 1. TeamSplitService 사전 워밍업 (메모리 선적재로 통계 조회 0초화)
+            try:
+                import time
+                from app.services.team_split_service import TeamSplitService
+                t0 = time.time()
+                TeamSplitService.get_all_splits()
+                print(f"[INFO] TeamSplitService 분할 통계 사전 워밍업 완료 ({time.time() - t0:.2f}s).")
+            except Exception as e:
+                print(f"[WARN] TeamSplitService 워밍업 중 오류: {e}")
 
-    # 🚀 오늘 주요 경기 1:1 세이버 정밀 분석 백그라운드 사전 워밍업 (첫 요청 0.001초 응답)
-    try:
-        def _warmup_top_matches():
+            # 2. 오늘 주요 경기 1:1 세이버 정밀 분석 사전 워밍업
             try:
                 from app.core.database import SessionLocal
                 from app.services.match_service import MatchService
@@ -118,10 +121,10 @@ async def lifespan(app: FastAPI):
                 print(f"[WARN] 경기 분석 사전 워밍업 중 오류: {ex}")
 
         import threading
-        threading.Thread(target=_warmup_top_matches, daemon=True).start()
-        print("[INFO] 오늘 주요 경기 세이버메트릭스 백그라운드 사전 워밍업 시작.")
+        threading.Thread(target=_warmup_background, daemon=True).start()
+        print("[INFO] 백그라운드 사전 워밍업 스레드 시작 완료 (서버 즉시 서빙 가능).")
     except Exception as e:
-        print(f"[WARN] 경기 분석 사전 워밍업 스레드 시작 오류: {e}")
+        print(f"[WARN] 백그라운드 사전 워밍업 스레드 시작 오류: {e}")
 
     yield
 

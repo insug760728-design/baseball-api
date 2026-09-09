@@ -422,6 +422,9 @@ class SchedulerService:
                     "sport": "BASEBALL_DOMESTIC",
                     "message": "KBO/NPB 공식 실시간 스코어보드 갱신 완료"
                 })
+        except Exception as e:
+            logger.warning(f"[Scheduler Domestic Live] 오류: {e}")
+
     @classmethod
     async def execute_starters_sync_job(cls):
         """15분 주기 KBO 및 NPB 공식 선발투수 발표 실시간 동기화"""
