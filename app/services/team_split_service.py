@@ -27,9 +27,84 @@ from app.services.live_api_sports_service import TEAM_SYNONYMS
 
 logger = logging.getLogger("team_split_service")
 
+# League Pools for Baseball (KBO / MLB / NPB)
+MLB_TEAMS_POOL = [
+    "뉴욕 양키스", "보스턴 레드삭스", "토론토 블루제이스", "볼티모어 오리올스", "탬파베이 레이스",
+    "시카고 화이트삭스", "클리블랜드 가디언스", "디트로이트 타이거스", "캔자스시티 로열스", "미네소타 트윈스",
+    "휴스턴 애스트로스", "LA 에인절스", "애슬레틱스", "시애틀 매리너스", "텍사스 레인저스",
+    "애틀랜타 브레이브스", "마이애미 말린스", "뉴욕 메츠", "필라델피아 필리스", "워싱턴 내셔널스",
+    "시카고 컵스", "신시내티 레즈", "밀워키 브루어스", "피츠버그 파이리츠", "세인트루이스 카디널스",
+    "애리조나 다이아몬드백스", "콜로라도 로키스", "LA 다저스", "샌디에이고 파드리스", "샌프란시스코 자이언츠"
+]
+
+NPB_TEAMS_POOL = [
+    "요미우리 자이언츠", "한신 타이거스", "주니치 드래곤즈", "요코하마 DeNA 베이스타즈",
+    "히로시마 도요 카프", "도쿄 야쿠르트 스왈로스", "후쿠오카 소프트뱅크 호크스",
+    "홋카이도 닛폰햄 파이터즈", "지바 롯데 마린스", "도호쿠 라쿠텐 골든이글스",
+    "오릭스 버펄로스", "사이타마 세이부 라이온즈"
+]
+
+KBO_TEAMS_POOL = [
+    "LG 트윈스", "삼성 라이온즈", "KIA 타이거즈", "KT 위즈", "SSG 랜더스",
+    "두산 베어스", "한화 이글스", "롯데 자이언츠", "NC 다이노스", "키움 히어로즈"
+]
+
 COMMON_GENERIC_NICKNAMES = {
-    "자이언츠", "타이거스", "타이거즈", "라이온즈", "이글스", "트윈스", "베어스", "유나이티드", "시티", "fc", "에프씨", "마린스"
+    "자이언츠", "giants", "타이거스", "타이거즈", "tigers", "라이온즈", "lions",
+    "이글스", "eagles", "트윈스", "twins", "베어스", "bears", "유나이티드", "united",
+    "시티", "city", "fc", "에프씨", "마린스", "marines", "롯데", "lotte"
 }
+
+def is_kbo_team_name(name: str) -> bool:
+    if not name:
+        return False
+    name_clean = str(name).replace(" ", "").lower()
+    if name in KBO_TEAMS_POOL:
+        return True
+    if any(x in name_clean for x in ["지바", "치바", "chiba", "마린스", "marines", "요미우리", "한신", "소프트뱅크", "세이부", "주니치", "야쿠르트", "라쿠텐", "버펄로스"]):
+        return False
+    kbo_markers = [
+        "lg", "삼성", "samsung", "kia", "기아", "kt", "ssg", "랜더스", "landers",
+        "두산", "doosan", "한화", "hanwha", "다이노스", "dinos", "키움", "kiwoom",
+        "히어로즈", "heroes", "자이언츠", "giants", "위즈", "wiz", "트윈스", "twins", "베어스", "bears"
+    ]
+    if any(k in name_clean for k in kbo_markers):
+        if any(x in name_clean for x in ["미네소타", "샌프란시스코", "시카고", "디트로이트"]):
+            return False
+        return True
+    return False
+
+def is_npb_team_name(name: str) -> bool:
+    if not name:
+        return False
+    name_clean = str(name).replace(" ", "").lower()
+    if name in NPB_TEAMS_POOL:
+        return True
+    npb_markers = [
+        "요미우리", "yomiuri", "한신", "hanshin", "주니치", "chunichi", "dena", "베이스타즈", "baystars",
+        "카프", "carp", "야쿠르트", "yakult", "소프트뱅크", "softbank", "닛폰햄", "니혼햄", "fighters",
+        "지바롯데", "치바롯데", "chiba", "마린스", "marines", "라쿠텐", "rakuten", "버펄로스", "buffaloes",
+        "오릭스", "orix", "세이부", "seibu"
+    ]
+    return any(k in name_clean for k in npb_markers)
+
+def is_mlb_team_name(name: str) -> bool:
+    if not name:
+        return False
+    name_clean = str(name).replace(" ", "").lower()
+    if name in MLB_TEAMS_POOL:
+        return True
+    mlb_markers = [
+        "양키스", "레드삭스", "블루제이스", "오리올스", "레이스", "화이트삭스", "가디언스",
+        "타이거스", "로열스", "트윈스", "애스트로스", "에인절스", "애슬레틱스", "매리너스",
+        "레인저스", "브레이브스", "말린스", "메츠", "필리스", "내셔널스", "컵스",
+        "레즈", "브루어스", "파이리츠", "카디널스", "다이아몬드백스", "로키스", "다저스", "파드리스"
+    ]
+    if any(k in name_clean for k in mlb_markers):
+        if any(x in name_clean for x in ["한신", "lg"]):
+            return False
+        return True
+    return False
 
 def get_all_team_aliases(team_name: str) -> list:
     if not team_name:
@@ -44,6 +119,31 @@ def get_all_team_aliases(team_name: str) -> list:
     for k, syn_list in TEAM_SYNONYMS.items():
         k_clean = k.lower().replace(" ", "")
         if k_clean in COMMON_GENERIC_NICKNAMES and k_clean != t_clean:
+            continue
+
+        # Cross-league mutual decoupling guards
+        # 1. Chiba Lotte Marines (NPB) vs Lotte Giants (KBO)
+        if any(x in t_clean for x in ["지바", "치바", "chiba", "마린스", "marines"]) and any(x in k_clean or any(x in s.lower() for s in syn_list) for x in ["자이언츠", "giants"]):
+            continue
+        if ("자이언츠" in t_clean or "giants" in t_clean) and "롯데" in t_clean and any(x in k_clean or any(x in s.lower() for s in syn_list) for x in ["지바", "치바", "chiba", "마린스", "marines"]):
+            continue
+        # 2. Seibu Lions (NPB) vs Samsung Lions (KBO)
+        if any(x in t_clean for x in ["세이부", "seibu", "사이타마"]) and any(x in k_clean or any(x in s.lower() for s in syn_list) for x in ["삼성", "samsung"]):
+            continue
+        if any(x in t_clean for x in ["삼성", "samsung"]) and any(x in k_clean or any(x in s.lower() for s in syn_list) for x in ["세이부", "seibu", "사이타마"]):
+            continue
+        # 3. Hanshin Tigers (NPB) vs KIA Tigers (KBO)
+        if any(x in t_clean for x in ["한신", "hanshin"]) and any(x in k_clean or any(x in s.lower() for s in syn_list) for x in ["kia", "기아"]):
+            continue
+        if any(x in t_clean for x in ["kia", "기아"]) and any(x in k_clean or any(x in s.lower() for s in syn_list) for x in ["한신", "hanshin"]):
+            continue
+        # 4. Rakuten Golden Eagles (NPB) vs Hanwha Eagles (KBO)
+        if any(x in t_clean for x in ["라쿠텐", "rakuten", "도호쿠"]) and any(x in k_clean or any(x in s.lower() for s in syn_list) for x in ["한화", "hanwha"]):
+            continue
+        if any(x in t_clean for x in ["한화", "hanwha"]) and any(x in k_clean or any(x in s.lower() for s in syn_list) for x in ["라쿠텐", "rakuten", "도호쿠"]):
+            continue
+        # 5. Yomiuri Giants (NPB) vs Lotte Giants (KBO) / SF Giants (MLB)
+        if any(x in t_clean for x in ["요미우리", "yomiuri"]) and any(x in k_clean or any(x in s.lower() for s in syn_list) for x in ["롯데", "lotte"]):
             continue
 
         matched = False
@@ -149,15 +249,28 @@ def _get_baseball_recent_pitching(conn, team_name: str, limit: int = 3, league_n
         params.append(league_name)
         params.append(f"%{league_name[:4]}%")
     query += " ORDER BY match_date DESC LIMIT ?"
-    params.append(limit)
+    params.append(max(limit * 3, 15))
 
     c.execute(query, tuple(params))
     matches = c.fetchall()
     results = []
     total_bp_pitches_all_3 = 0
+
+    is_npb = is_npb_team_name(team_name) or (league_name and ("NPB" in league_name.upper() or "일본" in league_name))
+    is_kbo = is_kbo_team_name(team_name) or (league_name and ("KBO" in league_name.upper() or "한국" in league_name))
+    is_mlb = is_mlb_team_name(team_name) or (league_name and ("MLB" in league_name.upper() or "메이저" in league_name))
+
     for mid, mdate, hteam, ateam, hscore, ascore, lg in matches:
         is_home = any(hteam.lower() == x.lower() for x in t_aliases)
         opp = ateam if is_home else hteam
+        # Strict cross-league filtering
+        if is_npb and (is_kbo_team_name(opp) or is_mlb_team_name(opp) or not is_npb_team_name(opp)):
+            continue
+        if is_kbo and (is_npb_team_name(opp) or is_mlb_team_name(opp) or not is_kbo_team_name(opp)):
+            continue
+        if is_mlb and (is_kbo_team_name(opp) or is_npb_team_name(opp) or not is_mlb_team_name(opp)):
+            continue
+
         team_score = hscore if is_home else ascore
         opp_score = ascore if is_home else hscore
         res = "W" if team_score > opp_score else ("D" if team_score == opp_score else "L")
@@ -318,6 +431,8 @@ def _get_baseball_recent_pitching(conn, team_name: str, limit: int = 3, league_n
             'bullpen_pitchers': bullpen,
             'league': lg or ''
         })
+        if len(results) >= limit:
+            break
 
     return {
         "games": results,
@@ -344,7 +459,7 @@ def _get_baseball_recent_batting(conn, team_name: str, limit: int = 3, league_na
         params.append(league_name)
         params.append(f"%{league_name[:4]}%")
     query += " ORDER BY match_date DESC LIMIT ?"
-    params.append(limit)
+    params.append(max(limit * 3, 15))
 
     c.execute(query, tuple(params))
     matches = c.fetchall()
@@ -357,9 +472,21 @@ def _get_baseball_recent_batting(conn, team_name: str, limit: int = 3, league_na
     total_bb = 0
     total_so = 0
     
+    is_npb = is_npb_team_name(team_name) or (league_name and ("NPB" in league_name.upper() or "일본" in league_name))
+    is_kbo = is_kbo_team_name(team_name) or (league_name and ("KBO" in league_name.upper() or "한국" in league_name))
+    is_mlb = is_mlb_team_name(team_name) or (league_name and ("MLB" in league_name.upper() or "메이저" in league_name))
+
     for mid, mdate, hteam, ateam, hscore, ascore, lg in matches:
         is_home = any(hteam.lower() == x.lower() for x in t_aliases)
         opp = ateam if is_home else hteam
+        # Strict cross-league filtering
+        if is_npb and (is_kbo_team_name(opp) or is_mlb_team_name(opp) or not is_npb_team_name(opp)):
+            continue
+        if is_kbo and (is_npb_team_name(opp) or is_mlb_team_name(opp) or not is_kbo_team_name(opp)):
+            continue
+        if is_mlb and (is_kbo_team_name(opp) or is_npb_team_name(opp) or not is_mlb_team_name(opp)):
+            continue
+
         team_score = hscore if is_home else ascore
         opp_score = ascore if is_home else hscore
         res = "W" if team_score > opp_score else ("D" if team_score == opp_score else "L")
@@ -430,9 +557,11 @@ def _get_baseball_recent_batting(conn, team_name: str, limit: int = 3, league_na
             'so': g_so,
             'avg': f"{g_avg:.3f}".replace('0.', '.')
         })
+        if len(batting_games) >= limit:
+            break
         
     team_avg_3g = round(total_h / total_ab, 3) if total_ab > 0 else .250
-    rpg_3g = round(total_r / max(1, len(matches)), 1)
+    rpg_3g = round(total_r / max(1, len(batting_games)), 1)
     obp_3g = round((total_h + total_bb) / (total_ab + total_bb), 3) if (total_ab + total_bb) > 0 else round(team_avg_3g + 0.068, 3)
     slg_3g = round(team_avg_3g + (total_hr * 0.045) + 0.105, 3)
     ops_3g = round(obp_3g + slg_3g, 3)
@@ -454,7 +583,7 @@ def _get_baseball_recent_batting(conn, team_name: str, limit: int = 3, league_na
         
     return {
         'team_name': team_name,
-        'games_count': len(matches),
+        'games_count': len(batting_games),
         'summary': {
             'avg_3g': f"{team_avg_3g:.3f}".replace('0.', '.'),
             'total_hits': total_h,
@@ -593,27 +722,6 @@ def _detect_baseball_series_context(conn, home_team: str, away_team: str, match_
     _series_context_cache[cache_key] = res_dict
     return res_dict
 
-# League Pools for Baseball (KBO / MLB / NPB)
-MLB_TEAMS_POOL = [
-    "뉴욕 양키스", "보스턴 레드삭스", "토론토 블루제이스", "볼티모어 오리올스", "탬파베이 레이스",
-    "시카고 화이트삭스", "클리블랜드 가디언스", "디트로이트 타이거스", "캔자스시티 로열스", "미네소타 트윈스",
-    "휴스턴 애스트로스", "LA 에인절스", "애슬레틱스", "시애틀 매리너스", "텍사스 레인저스",
-    "애틀랜타 브레이브스", "마이애미 말린스", "뉴욕 메츠", "필라델피아 필리스", "워싱턴 내셔널스",
-    "시카고 컵스", "신시내티 레즈", "밀워키 브루어스", "피츠버그 파이리츠", "세인트루이스 카디널스",
-    "애리조나 다이아몬드백스", "콜로라도 로키스", "LA 다저스", "샌디에이고 파드리스", "샌프란시스코 자이언츠"
-]
-
-NPB_TEAMS_POOL = [
-    "요미우리 자이언츠", "한신 타이거스", "주니치 드래곤즈", "요코하마 DeNA 베이스타즈",
-    "히로시마 도요 카프", "도쿄 야쿠르트 스왈로스", "후쿠오카 소프트뱅크 호크스",
-    "홋카이도 닛폰햄 파이터즈", "지바 롯데 마린스", "도호쿠 라쿠텐 골든이글스",
-    "오릭스 버펄로스", "사이타마 세이부 라이온즈"
-]
-
-KBO_TEAMS_POOL = [
-    "LG 트윈스", "삼성 라이온즈", "KIA 타이거즈", "KT 위즈", "SSG 랜더스",
-    "두산 베어스", "한화 이글스", "롯데 자이언츠", "NC 다이노스", "키움 히어로즈"
-]
 
 DEFAULT_ROTATION_STARTERS = {
     # KBO
@@ -1016,8 +1124,8 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
     
     # Strict League Classification (NPB -> MLB -> KBO)
     m_league_str = (league_name or "").upper()
-    is_npb = ("NPB" in m_league_str) or ("일본" in m_league_str) or (team_name in NPB_TEAMS_POOL) or any(t in team_name for t in ["요미우리", "한신", "소프트뱅크", "오릭스", "세이부", "주니치", "DeNA", "베이스타즈", "카프", "야쿠르트", "라쿠텐", "지바 롯데", "마린스", "닛폰햄", "니혼햄"])
-    is_mlb = not is_npb and (("MLB" in m_league_str) or ("메이저리그" in m_league_str) or (team_name in MLB_TEAMS_POOL) or any(t in team_name for t in ["다저스", "양키스", "보스턴", "레드삭스", "메츠", "파드리스", "필리스", "애틀랜타", "브레이브스", "휴스턴", "애스트로스", "볼티모어", "오리올스", "시애틀", "매리너스", "컵스", "화이트삭스", "에인절스", "레인저스", "트윈스", "가디언스", "로열스", "브루어스", "파이리츠", "카디널스", "다이아몬드백스", "로키스", "블루제이스", "내셔널스"]))
+    is_npb = ("NPB" in m_league_str) or ("일본" in m_league_str) or (team_name in NPB_TEAMS_POOL) or is_npb_team_name(team_name)
+    is_mlb = not is_npb and (("MLB" in m_league_str) or ("메이저" in m_league_str) or (team_name in MLB_TEAMS_POOL) or is_mlb_team_name(team_name))
     is_kbo = not is_npb and not is_mlb
     curr_league = "일본 프로야구 (NPB)" if is_npb else ("미국 메이저리그 (MLB)" if is_mlb else "한국 프로야구 (KBO)")
 
@@ -1074,11 +1182,11 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
             opp_sc = ascore if is_home else hscore
 
             # 타 리그 팀이 상대팀으로 섞여있는 레코드 철저 차단
-            if is_mlb and (opp in KBO_TEAMS_POOL or opp in NPB_TEAMS_POOL):
+            if is_mlb and (is_kbo_team_name(opp) or is_npb_team_name(opp)):
                 continue
-            if is_npb and (opp in KBO_TEAMS_POOL or opp in MLB_TEAMS_POOL):
+            if is_npb and (is_kbo_team_name(opp) or is_mlb_team_name(opp) or not is_npb_team_name(opp)):
                 continue
-            if is_kbo and (opp in MLB_TEAMS_POOL or opp in NPB_TEAMS_POOL):
+            if is_kbo and (is_mlb_team_name(opp) or is_npb_team_name(opp) or not is_kbo_team_name(opp)):
                 continue
             
             # 100% 실제 공식 기록 추출 (0값을 기본값으로 덮어쓰지 않음)
@@ -1198,12 +1306,18 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
               AND sport_code = 'BASEBALL'
               AND (league_name = ? OR league_name LIKE ?)
             ORDER BY match_date DESC
-            LIMIT 10
+            LIMIT 15
         """, list(t_aliases) + list(t_aliases) + [curr_league, f"%{curr_league[:4]}%"])
         for m_row in c.fetchall():
             m_dt, m_h, m_a, m_hs, m_as = m_row
             is_cur_h = any(m_h.lower() == x.lower() for x in t_aliases)
             m_opp = m_a if is_cur_h else m_h
+            if is_npb and (is_kbo_team_name(m_opp) or is_mlb_team_name(m_opp) or not is_npb_team_name(m_opp)):
+                continue
+            if is_kbo and (is_npb_team_name(m_opp) or is_mlb_team_name(m_opp) or not is_kbo_team_name(m_opp)):
+                continue
+            if is_mlb and (is_kbo_team_name(m_opp) or is_npb_team_name(m_opp) or not is_mlb_team_name(m_opp)):
+                continue
             if m_opp and not any(m_opp.lower() == x.lower() for x in t_aliases) and not any(x["opp"] == m_opp for x in team_recent_opps):
                 team_recent_opps.append({
                     "date": m_dt[:10] if m_dt else sample_dates[len(team_recent_opps) % 3],
@@ -1222,13 +1336,19 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
         target_pool = MLB_TEAMS_POOL
     else:
         target_pool = KBO_TEAMS_POOL
-    fallback_pool = [t for t in target_pool if t != team_name]
+    fallback_pool = [t for t in target_pool if t != team_name and not any(t.lower() == x.lower() for x in t_aliases)]
 
     while len(starts) < 3:
         s_idx = len(starts)
         real_info = team_recent_opps[s_idx] if s_idx < len(team_recent_opps) else None
         d_str = real_info["date"] if real_info else sample_dates[s_idx]
         opp_name = real_info["opp"] if real_info else (fallback_pool[s_idx % len(fallback_pool)] if fallback_pool else "상대팀")
+        if is_npb and (is_kbo_team_name(opp_name) or not is_npb_team_name(opp_name)):
+            opp_name = fallback_pool[s_idx % len(fallback_pool)] if fallback_pool else "오릭스 버펄로스"
+        elif is_kbo and (is_npb_team_name(opp_name) or not is_kbo_team_name(opp_name)):
+            opp_name = fallback_pool[s_idx % len(fallback_pool)] if fallback_pool else "삼성 라이온즈"
+        elif is_mlb and (is_kbo_team_name(opp_name) or is_npb_team_name(opp_name)):
+            opp_name = fallback_pool[s_idx % len(fallback_pool)] if fallback_pool else "LA 다저스"
         is_home_val = real_info["is_home"] if real_info else (s_idx % 2 == 0)
         t_sc = real_info["team_score"] if real_info else None
         o_sc = real_info["opp_score"] if real_info else None
@@ -3093,6 +3213,10 @@ class TeamSplitService:
                 recent_h2h_matches.append(h2h_item)
 
             # 2. Recent 10 matches for Home Team (strictly sorted DESC by match_date)
+            is_h_npb = is_npb_team_name(home_team)
+            is_h_kbo = is_kbo_team_name(home_team)
+            is_h_mlb = is_mlb_team_name(home_team)
+
             c_cur.execute(f"""
                 SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
                 FROM matches
@@ -3101,7 +3225,7 @@ class TeamSplitService:
                     away_team_name COLLATE NOCASE IN ({placeholders_h})
                 )
                 ORDER BY match_date DESC
-                LIMIT 10
+                LIMIT 25
             """, list(h_aliases) + list(h_aliases))
             h_rows = c_cur.fetchall()
             for row in h_rows:
@@ -3110,6 +3234,23 @@ class TeamSplitService:
                 gf = h_sc if is_h else a_sc
                 ga = a_sc if is_h else h_sc
                 opp = a_name if is_h else h_name
+
+                eff_sport = (sport_code or '').upper()
+                if not eff_sport or eff_sport in ['ALL', 'NONE']:
+                    l_up = (leg or '').upper()
+                    if any(b in l_up for b in ['NBA', 'KBL', '농구']): eff_sport = 'BASKETBALL'
+                    elif any(bb in l_up for bb in ['MLB', 'KBO', 'NPB', '야구']): eff_sport = 'BASEBALL'
+                    else: eff_sport = 'SOCCER'
+
+                # Cross-league filtering for baseball
+                if eff_sport == "BASEBALL":
+                    if is_h_npb and (is_kbo_team_name(opp) or is_mlb_team_name(opp) or not is_npb_team_name(opp)):
+                        continue
+                    if is_h_kbo and (is_npb_team_name(opp) or is_mlb_team_name(opp) or not is_kbo_team_name(opp)):
+                        continue
+                    if is_h_mlb and (is_kbo_team_name(opp) or is_npb_team_name(opp) or not is_mlb_team_name(opp)):
+                        continue
+
                 res = "W" if gf > ga else ("D" if gf == ga else "L")
                 h_rec_item = {
                     "match_id": m_id,
@@ -3123,12 +3264,6 @@ class TeamSplitService:
                     "result": res,
                     "league": leg or ""
                 }
-                eff_sport = (sport_code or '').upper()
-                if not eff_sport or eff_sport in ['ALL', 'NONE']:
-                    l_up = (leg or '').upper()
-                    if any(b in l_up for b in ['NBA', 'KBL', '농구']): eff_sport = 'BASKETBALL'
-                    elif any(bb in l_up for bb in ['MLB', 'KBO', 'NPB', '야구']): eff_sport = 'BASEBALL'
-                    else: eff_sport = 'SOCCER'
 
                 if eff_sport == "SOCCER":
                     h_rec_item = _enrich_soccer_match_events(c_cur, h_rec_item, home_team, opp, gf, ga, match_id=m_id, date_str=m_date)
@@ -3139,8 +3274,14 @@ class TeamSplitService:
                 else:
                     h_rec_item["odds"] = _generate_match_odds(gf, ga, f"{home_team}_{opp}_{m_id}")
                 home_recent_matches.append(h_rec_item)
+                if len(home_recent_matches) >= 10:
+                    break
 
             # 3. Recent 10 matches for Away Team (strictly sorted DESC by match_date)
+            is_a_npb = is_npb_team_name(away_team)
+            is_a_kbo = is_kbo_team_name(away_team)
+            is_a_mlb = is_mlb_team_name(away_team)
+
             c_cur.execute(f"""
                 SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
                 FROM matches
@@ -3149,7 +3290,7 @@ class TeamSplitService:
                     away_team_name COLLATE NOCASE IN ({placeholders_a})
                 )
                 ORDER BY match_date DESC
-                LIMIT 10
+                LIMIT 25
             """, list(a_aliases) + list(a_aliases))
             a_rows = c_cur.fetchall()
             for row in a_rows:
@@ -3158,6 +3299,23 @@ class TeamSplitService:
                 gf = h_sc if is_h else a_sc
                 ga = a_sc if is_h else h_sc
                 opp = a_name if is_h else h_name
+
+                eff_sport = (sport_code or '').upper()
+                if not eff_sport or eff_sport in ['ALL', 'NONE']:
+                    l_up = (leg or '').upper()
+                    if any(b in l_up for b in ['NBA', 'KBL', '농구']): eff_sport = 'BASKETBALL'
+                    elif any(bb in l_up for bb in ['MLB', 'KBO', 'NPB', '야구']): eff_sport = 'BASEBALL'
+                    else: eff_sport = 'SOCCER'
+
+                # Cross-league filtering for baseball
+                if eff_sport == "BASEBALL":
+                    if is_a_npb and (is_kbo_team_name(opp) or is_mlb_team_name(opp) or not is_npb_team_name(opp)):
+                        continue
+                    if is_a_kbo and (is_npb_team_name(opp) or is_mlb_team_name(opp) or not is_kbo_team_name(opp)):
+                        continue
+                    if is_a_mlb and (is_kbo_team_name(opp) or is_npb_team_name(opp) or not is_mlb_team_name(opp)):
+                        continue
+
                 res = "W" if gf > ga else ("D" if gf == ga else "L")
                 a_rec_item = {
                     "match_id": m_id,
@@ -3171,12 +3329,6 @@ class TeamSplitService:
                     "result": res,
                     "league": leg or ""
                 }
-                eff_sport = (sport_code or '').upper()
-                if not eff_sport or eff_sport in ['ALL', 'NONE']:
-                    l_up = (leg or '').upper()
-                    if any(b in l_up for b in ['NBA', 'KBL', '농구']): eff_sport = 'BASKETBALL'
-                    elif any(bb in l_up for bb in ['MLB', 'KBO', 'NPB', '야구']): eff_sport = 'BASEBALL'
-                    else: eff_sport = 'SOCCER'
 
                 if eff_sport == "SOCCER":
                     a_rec_item = _enrich_soccer_match_events(c_cur, a_rec_item, away_team, opp, gf, ga, match_id=m_id, date_str=m_date)
@@ -3187,6 +3339,8 @@ class TeamSplitService:
                 else:
                     a_rec_item["odds"] = _generate_match_odds(gf, ga, f"{away_team}_{opp}_{m_id}")
                 away_recent_matches.append(a_rec_item)
+                if len(away_recent_matches) >= 10:
+                    break
 
             # Ensure all lists are strictly sorted by date and time DESC
             recent_h2h_matches.sort(key=lambda x: (x.get("date", ""), x.get("time", "")), reverse=True)
