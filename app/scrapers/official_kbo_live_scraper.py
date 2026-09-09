@@ -371,6 +371,7 @@ class KboOfficialScraper:
                     continue
                 p_name = c[0]
                 role = c[1]  # 선발, 구원, 마무리
+                is_starter = (role == "선발")
                 dec_code = c[2] # 승, 패, 세, 홀
                 dec_label = f"{dec_code}리투수 (W)" if dec_code == "승" else (f"{dec_code}전투수 (L)" if dec_code == "패" else (f"{dec_code}이브 (SV)" if dec_code == "세" else (f"{dec_code}드 (HD)" if dec_code == "홀" else "")))
                 ip = c[6]
@@ -387,14 +388,16 @@ class KboOfficialScraper:
                     "team_name": t_name,
                     "player_name": p_name,
                     "back_number": "",
-                    "position": f"투수 ({role})",
+                    "position": f"선발투수" if is_starter else f"구원투수 ({role})",
                     "minutes_played": 0,
                     "points": so,
                     "assists": 0,
-                    "shots": int(float(ip)) if ip and '.' in ip else 0,
+                    "shots": clean_int(ip.split()[0] if ' ' in ip else (ip.split('.')[0] if '.' in ip else ip)),
                     "extra_stats": {
                         "type": "PITCHER",
                         "player_type": "PITCHER",
+                        "is_starter": is_starter,
+                        "starter": is_starter,
                         "ip": ip, "np": np, "h": h, "r": r, "er": er, "bb": bb,
                         "so": so, "hr": hr, "era": era, "whip": "1.10",
                         "decision": dec_label

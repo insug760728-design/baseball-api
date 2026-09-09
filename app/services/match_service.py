@@ -538,7 +538,7 @@ class MatchService:
         """KBO 및 NPB 공식 사이트에서 당일 공식 발표된 선발투수를 실시간 수집하여 DB에 확정 저장"""
         from app.scrapers.official_kbo_live_scraper import KboOfficialScraper
         from app.scrapers.official_npb_live_scraper import NpbOfficialScraper
-        from app.services.team_split_service import KBO_TEAMS_POOL, NPB_TEAMS_POOL
+        from app.services.team_split_service import KBO_TEAMS_POOL, NPB_TEAMS_POOL, is_kbo_team_name, is_npb_team_name
         
         d_ref = target_date or datetime.now().strftime("%Y-%m-%d")
         results = {"date": d_ref, "kbo_synced": 0, "npb_synced": 0, "matches_updated": []}
@@ -558,17 +558,18 @@ class MatchService:
 
             all_kbo = db.query(Match).filter(Match.match_date.like(f"{d_ref}%"), Match.sport_code == "BASEBALL").all()
             for m in all_kbo:
-                is_kbo = (m.official_id and m.official_id.startswith("KBO_")) or (m.home_team_name in KBO_TEAMS_POOL)
-                if not is_kbo:
+                is_kbo = (m.official_id and m.official_id.startswith("KBO_")) or is_kbo_team_name(m.home_team_name)
+                if not is_kbo or is_npb_team_name(m.home_team_name):
                     continue
 
                 st_h = None
                 st_a = None
                 for t_name, s_name in kbo_team_starters.items():
-                    if t_name in m.home_team_name or m.home_team_name in t_name:
-                        st_h = s_name
-                    if t_name in m.away_team_name or m.away_team_name in t_name:
-                        st_a = s_name
+                    if is_kbo_team_name(t_name):
+                        if (t_name == m.home_team_name) or (len(t_name) >= 2 and t_name in m.home_team_name and not ("지바" in m.home_team_name and "롯데" in t_name)):
+                            st_h = s_name
+                        if (t_name == m.away_team_name) or (len(t_name) >= 2 and t_name in m.away_team_name and not ("지바" in m.away_team_name and "롯데" in t_name)):
+                            st_a = s_name
 
                 if st_h or st_a:
                     st_data = {
@@ -596,17 +597,18 @@ class MatchService:
 
             all_npb = db.query(Match).filter(Match.match_date.like(f"{d_ref}%"), Match.sport_code == "BASEBALL").all()
             for m in all_npb:
-                is_npb = (m.official_id and m.official_id.startswith("NPB_")) or (m.home_team_name in NPB_TEAMS_POOL)
-                if not is_npb:
+                is_npb = (m.official_id and m.official_id.startswith("NPB_")) or is_npb_team_name(m.home_team_name)
+                if not is_npb or is_kbo_team_name(m.home_team_name):
                     continue
 
                 st_h = None
                 st_a = None
                 for t_name, s_name in npb_team_starters.items():
-                    if t_name in m.home_team_name or m.home_team_name in t_name:
-                        st_h = s_name
-                    if t_name in m.away_team_name or m.away_team_name in t_name:
-                        st_a = s_name
+                    if is_npb_team_name(t_name):
+                        if (t_name == m.home_team_name) or (len(t_name) >= 2 and t_name in m.home_team_name and not ("자이언츠" in m.home_team_name and "요미우리" not in m.home_team_name)):
+                            st_h = s_name
+                        if (t_name == m.away_team_name) or (len(t_name) >= 2 and t_name in m.away_team_name and not ("자이언츠" in m.away_team_name and "요미우리" not in m.away_team_name)):
+                            st_a = s_name
 
                 if st_h or st_a:
                     st_data = {

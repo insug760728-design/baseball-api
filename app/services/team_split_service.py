@@ -230,6 +230,113 @@ SPECIFIC_GAME_PITCHING = {
     }
 }
 
+def parse_innings_to_float(ip_val) -> float:
+    """
+    야구 이닝 문자열을 float로 정확하게 변환:
+    - '5 1/3' -> 5.333...
+    - '5 2/3' -> 5.666...
+    - '1/3'   -> 0.333...
+    - '2/3'   -> 0.666...
+    - '5.1'   -> 5.333...
+    - '5.2'   -> 5.666...
+    - '5.0', '5' -> 5.0
+    - '5.33'  -> 5.33
+    """
+    if ip_val is None:
+        return 0.0
+    s = str(ip_val).strip()
+    if not s or s == '-':
+        return 0.0
+    # Case: "5 1/3", "5 2/3"
+    if ' ' in s and '/' in s:
+        try:
+            parts = s.split()
+            whole = float(parts[0])
+            num, den = parts[1].split('/')
+            return whole + float(num) / float(den)
+        except Exception:
+            pass
+    # Case: "1/3", "2/3"
+    if '/' in s:
+        try:
+            num, den = s.split('/')
+            return float(num) / float(den)
+        except Exception:
+            pass
+    # Case: "5.1", "5.2", "5.0"
+    if '.' in s:
+        try:
+            parts = s.split('.')
+            whole = float(parts[0])
+            frac_str = parts[1]
+            if frac_str == '1':
+                return whole + 1.0 / 3.0
+            elif frac_str == '2':
+                return whole + 2.0 / 3.0
+            return float(s)
+        except Exception:
+            pass
+    try:
+        return float(s)
+    except Exception:
+        return 0.0
+
+def is_duplicate_pitcher_start(s1: dict, s2: dict) -> bool:
+    """선발투수 등판 일지 중복 판정 (동일 경기, 시차 오차 ±2일, 동일 상대팀 등 차단)"""
+    if s1.get("match_id") and s2.get("match_id") and s1.get("match_id") == s2.get("match_id"):
+        return True
+
+    d1_str = (s1.get("date") or "")[:10]
+    d2_str = (s2.get("date") or "")[:10]
+    date_diff_days = 999
+    if d1_str and d2_str:
+        try:
+            dt1 = datetime.strptime(d1_str, "%Y-%m-%d")
+            dt2 = datetime.strptime(d2_str, "%Y-%m-%d")
+            date_diff_days = abs((dt1 - dt2).days)
+        except Exception:
+            pass
+
+    if d1_str and d2_str and d1_str == d2_str:
+        return True
+
+    opp1 = (s1.get("opponent") or "").strip().lower()
+    opp2 = (s2.get("opponent") or "").strip().lower()
+    if opp1 and opp2 and (opp1 in opp2 or opp2 in opp1) and date_diff_days <= 2:
+        return True
+
+    try:
+        ip1 = str(s1.get("ip", "")).strip()
+        ip2 = str(s2.get("ip", "")).strip()
+        np1 = int(s1.get("np", 0))
+        np2 = int(s2.get("np", 0))
+        er1 = int(s1.get("er", 0))
+        er2 = int(s2.get("er", 0))
+        if ip1 == ip2 and np1 == np2 and er1 == er2 and np1 > 0 and date_diff_days <= 2:
+            return True
+    except Exception:
+        pass
+
+    if date_diff_days <= 2:
+        return True
+
+    return False
+
+def determine_batting_trend(avg: float, rpg: float, ops: float = 0.0) -> str:
+    """타격감 트렌드 배지 산출 (절대 지표 기반)"""
+    avg_pts = max(0.0, min(40.0, (avg - .200) * 400.0))
+    rpg_pts = max(0.0, min(40.0, (rpg - 2.0) * 8.0))
+    comp_score = avg_pts + rpg_pts
+
+    if comp_score >= 60.0 or avg >= .290 or rpg >= 5.5:
+        return "🔥 타격감 폭발"
+    elif comp_score >= 38.0 or avg >= .255 or rpg >= 4.0:
+        return "⚡ 타격감 양호"
+    elif rpg < 3.0 and avg < .235:
+        return "❄️ 타선 침체"
+    else:
+        return "⚖️ 타격 보통"
+
 def _get_baseball_recent_pitching(conn, team_name: str, limit: int = 3, league_name: Optional[str] = None):
     """
     야구 전용: 팀의 최근 3경기 선발 투구수 및 불펜 투수진 투구수 상세 추출
@@ -337,6 +444,9 @@ def _get_baseball_recent_pitching(conn, team_name: str, limit: int = 3, league_n
                 bp_item = dict(bp)
                 bp_item['name_en'] = bp_item['name']
                 bp_item['name'] = translate_player_name(bp_item['name'])
+                if bp_item.get('np', 0) <= 0:
+                    bp_ip_f = parse_innings_to_float(bp_item.get('ip'))
+                    bp_item['np'] = max(9, round(bp_ip_f * 15) + (bp_item.get('bb', 0) * 4) + (bp_item.get('so', 0) * 2))
                 bullpen.append(bp_item)
             bullpen_np = sum(p['np'] for p in bullpen)
         elif mid in SPECIFIC_GAME_PITCHING:
@@ -434,6 +544,7 @@ def _get_baseball_recent_pitching(conn, team_name: str, limit: int = 3, league_n
         if len(results) >= limit:
             break
 
+    total_bp_pitches_all_3 = sum(g['bullpen_np'] for g in results)
     return {
         "games": results,
         "total_bullpen_np_3g": total_bp_pitches_all_3,
@@ -566,20 +677,7 @@ def _get_baseball_recent_batting(conn, team_name: str, limit: int = 3, league_na
     slg_3g = round(team_avg_3g + (total_hr * 0.045) + 0.105, 3)
     ops_3g = round(obp_3g + slg_3g, 3)
 
-    # 다차원 복합 타격 지수 (Composite Offensive Score: 타율, RPG, OPS, 홈런 종합 반영)
-    avg_pts = max(0.0, min(35.0, (team_avg_3g - .200) * 350.0))
-    rpg_pts = max(0.0, min(35.0, (rpg_3g - 2.0) * 7.0))
-    ops_pts = max(0.0, min(30.0, (ops_3g - .600) * 100.0))
-    comp_score = avg_pts + rpg_pts + ops_pts
-
-    if comp_score >= 65.0 or team_avg_3g >= .288 or rpg_3g >= 5.8:
-        trend = "🔥 타격감 폭발"
-    elif comp_score >= 40.0 or team_avg_3g >= .248 or rpg_3g >= 4.0:
-        trend = "⚡ 타격감 양호"
-    elif comp_score >= 25.0 or rpg_3g >= 3.0:
-        trend = "⚖️ 타격 보통"
-    else:
-        trend = "❄️ 타선 침체"
+    trend = determine_batting_trend(team_avg_3g, rpg_3g, ops_3g)
         
     return {
         'team_name': team_name,
@@ -824,7 +922,22 @@ DEFAULT_TEAM_BULLPENS = {
     # MLB 대표
     "LA 다저스": [{"name": "알렉스 베시아", "role": "중간계투"}, {"name": "블레이크 트레이넨", "role": "셋업맨"}, {"name": "에반 필립스", "role": "마무리"}],
     "뉴욕 양키스": [{"name": "토미 칸레", "role": "중간계투"}, {"name": "루크 위버", "role": "셋업맨"}, {"name": "클레이 홈즈", "role": "마무리"}],
-    "샌디에이고 파드리스": [{"name": "아드리안 모레혼", "role": "중간계투"}, {"name": "제이슨 아담", "role": "셋업맨"}, {"name": "로베르트 수아레즈", "role": "마무리"}]
+    "샌디에이고 파드리스": [{"name": "아드리안 모레혼", "role": "중간계투"}, {"name": "제이슨 아담", "role": "셋업맨"}, {"name": "로베르트 수아레즈", "role": "마무리"}],
+    "보스턴 레드삭스": [{"name": "크리스 마틴", "role": "중간계투"}, {"name": "저스틴 슬레이튼", "role": "셋업맨"}, {"name": "켄리 잰슨", "role": "마무리"}],
+    "미네소타 트윈스": [{"name": "콜 샌즈", "role": "중간계투"}, {"name": "그리핀 잭스", "role": "셋업맨"}, {"name": "요안 두란", "role": "마무리"}],
+    "디트로이트 타이거스": [{"name": "윌 베스트", "role": "중간계투"}, {"name": "보 브리스키", "role": "셋업맨"}, {"name": "제이슨 폴리", "role": "마무리"}],
+    "토론토 블루제이스": [{"name": "채드 그린", "role": "중간계투"}, {"name": "에릭 스완슨", "role": "셋업맨"}, {"name": "조던 로마노", "role": "마무리"}],
+    "볼티모어 오리올스": [{"name": "시오난 페레즈", "role": "중간계투"}, {"name": "예니어 카노", "role": "셋업맨"}, {"name": "크레이그 킴브렐", "role": "마무리"}],
+    "필라델피아 필리스": [{"name": "맷 스트라움", "role": "중간계투"}, {"name": "제프 호프만", "role": "셋업맨"}, {"name": "호세 알바라도", "role": "마무리"}],
+    "애틀랜타 브레이브스": [{"name": "조 피어스", "role": "중간계투"}, {"name": "A.J. 민터", "role": "셋업맨"}, {"name": "라이셀 이글레시아스", "role": "마무리"}],
+    "시카고 컵스": [{"name": "마크 라이터 Jr", "role": "중간계투"}, {"name": "헥터 네리스", "role": "셋업맨"}, {"name": "아드버트 알졸레이", "role": "마무리"}],
+    "텍사스 레인저스": [{"name": "조쉬 스보츠", "role": "중간계투"}, {"name": "데이비드 로버트슨", "role": "셋업맨"}, {"name": "커비 예이츠", "role": "마무리"}],
+    "휴스턴 애스트로스": [{"name": "브라이언 아브레우", "role": "중간계투"}, {"name": "라이언 프레슬리", "role": "셋업맨"}, {"name": "조시 헤이더", "role": "마무리"}],
+    "클리블랜드 가디언스": [{"name": "헌터 가디스", "role": "중간계투"}, {"name": "팀 헤린", "role": "셋업맨"}, {"name": "엠마누엘 클라세", "role": "마무리"}],
+    "밀워키 브루어스": [{"name": "브라이언 허드슨", "role": "중간계투"}, {"name": "엘비스 페게로", "role": "셋업맨"}, {"name": "데빈 윌리엄스", "role": "마무리"}],
+    "세인트루이스 카디널스": [{"name": "조조 로메로", "role": "중간계투"}, {"name": "앤드류 키트리지", "role": "셋업맨"}, {"name": "라이언 헬슬리", "role": "마무리"}],
+    "캔자스시티 로열스": [{"name": "앙헬 제르파", "role": "중간계투"}, {"name": "존 슈라이버", "role": "셋업맨"}, {"name": "제임스 맥아더", "role": "마무리"}],
+    "워싱턴 내셔널스": [{"name": "데릭 로", "role": "중간계투"}, {"name": "헌터 하비", "role": "셋업맨"}, {"name": "카일 피네건", "role": "마무리"}]
 }
 
 NPB_PITCHER_KANJI_MAP = {
@@ -1069,15 +1182,7 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
         
         total_np = sum(s['np'] for s in v_starts)
         avg_np = round(total_np / len(v_starts), 1) if v_starts else 0
-        
-        def parse_ip_fraction_v(ip_val):
-            s = str(ip_val).strip()
-            if '.' in s:
-                parts = s.split('.')
-                return float(parts[0]) + float(parts[1]) / 3.0
-            return float(s) if s.replace('.','',1).isdigit() else 0.0
-            
-        total_ip_frac = sum(parse_ip_fraction_v(s['ip']) for s in v_starts)
+        total_ip_frac = sum(parse_innings_to_float(s['ip']) for s in v_starts)
         avg_ip = round(total_ip_frac / len(v_starts), 1) if v_starts else 0
         total_er = sum(s['er'] for s in v_starts)
         total_so = sum(s['so'] for s in v_starts)
@@ -1175,6 +1280,18 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
             # 투구 이닝이나 투구수가 전혀 없는 경우 제외
             if not ex.get("ip") and not ex.get("np") and not ex.get("pitches"):
                 continue
+
+            # 구원/중계/마무리 등 명시적 불펜 등판 기록은 '선발 등판 일지'에서 제외
+            is_explicit_reliever = (
+                ex.get("is_starter") is False or
+                ex.get("role") in ["구원", "중계", "마무리", "불펜", "셋업맨", "구원투수"] or
+                any(rel_w in str(pos) for rel_w in ["구원", "중계", "마무리", "불펜", "셋업맨", "구원투수"]) or
+                ex.get("decision") in ["홀드", "세이브", "홀드 (HD)", "세이브 (SV)"]
+            )
+            ip_float_cand = parse_innings_to_float(ex.get("ip"))
+            np_cand = int(ex.get("np") or ex.get("pitches") or 0)
+            if is_explicit_reliever or (ip_float_cand < 2.0 and np_cand < 35 and not ex.get("is_starter")):
+                continue
             
             is_home = (pteam == hteam)
             opp = ateam if is_home else hteam
@@ -1202,7 +1319,7 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
             strikes = int(ex.get('strikes')) if ex.get('strikes') is not None else round(np_cnt * 0.65)
             balls = max(0, np_cnt - strikes)
             
-            starts.append({
+            cand_start = {
                 "match_id": mid,
                 "date": mdate[:10] if mdate else "2026-09-01",
                 "opponent": opp,
@@ -1220,7 +1337,10 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
                 "bb": bb,
                 "h": h,
                 "hr": hr
-            })
+            }
+            if any(is_duplicate_pitcher_start(s, cand_start) for s in starts):
+                continue
+            starts.append(cand_start)
             if len(starts) >= 3:
                 break
         if len(starts) >= 3:
@@ -1230,7 +1350,7 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
     if len(starts) < 3 and is_mlb:
         official_starts = fetch_mlb_pitcher_official_starts(pitcher_name, limit=3)
         for ost in official_starts:
-            if any(s.get("date") == ost.get("date") for s in starts):
+            if any(is_duplicate_pitcher_start(s, ost) for s in starts):
                 continue
             starts.append(ost)
             if len(starts) >= 3:
@@ -1338,20 +1458,52 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
         target_pool = KBO_TEAMS_POOL
     fallback_pool = [t for t in target_pool if t != team_name and not any(t.lower() == x.lower() for x in t_aliases)]
 
+    # Collect existing dates to avoid collisions and duplicate dates in fallback starts
+    existing_dates = []
+    for s in starts:
+        try:
+            existing_dates.append(datetime.strptime(s["date"][:10], "%Y-%m-%d"))
+        except Exception:
+            pass
+    existing_dates.sort(reverse=True)
+    last_dt = min(existing_dates) if existing_dates else datetime(2026, 9, 8)
+
     while len(starts) < 3:
         s_idx = len(starts)
-        real_info = team_recent_opps[s_idx] if s_idx < len(team_recent_opps) else None
-        d_str = real_info["date"] if real_info else sample_dates[s_idx]
-        opp_name = real_info["opp"] if real_info else (fallback_pool[s_idx % len(fallback_pool)] if fallback_pool else "상대팀")
+        # Next start at least 5-6 days earlier
+        next_dt = last_dt - timedelta(days=5 + ((p_seed + s_idx) % 2))
+        last_dt = next_dt
+        d_str = next_dt.strftime("%Y-%m-%d")
+
+        used_opps = [s.get("opponent") for s in starts if s.get("opponent")]
+        real_info = None
+        earliest_start_date = min((s.get("date", "9999-99-99") for s in starts), default="9999-99-99")
+        for cand_opp in team_recent_opps:
+            cand_d = cand_opp.get("date", "")
+            cand_name = cand_opp.get("opp", "")
+            if cand_name and cand_name not in used_opps and cand_d < earliest_start_date:
+                real_info = cand_opp
+                break
+
+        if real_info:
+            d_str = real_info["date"]
+            opp_name = real_info["opp"]
+            is_home_val = real_info["is_home"]
+            t_sc = real_info["team_score"]
+            o_sc = real_info["opp_score"]
+        else:
+            avail_pool = [t for t in fallback_pool if t not in used_opps]
+            opp_name = avail_pool[s_idx % len(avail_pool)] if avail_pool else (fallback_pool[0] if fallback_pool else "상대팀")
+            is_home_val = (s_idx % 2 == 0)
+            t_sc = None
+            o_sc = None
+
         if is_npb and (is_kbo_team_name(opp_name) or not is_npb_team_name(opp_name)):
             opp_name = fallback_pool[s_idx % len(fallback_pool)] if fallback_pool else "오릭스 버펄로스"
         elif is_kbo and (is_npb_team_name(opp_name) or not is_kbo_team_name(opp_name)):
             opp_name = fallback_pool[s_idx % len(fallback_pool)] if fallback_pool else "삼성 라이온즈"
         elif is_mlb and (is_kbo_team_name(opp_name) or is_npb_team_name(opp_name)):
             opp_name = fallback_pool[s_idx % len(fallback_pool)] if fallback_pool else "LA 다저스"
-        is_home_val = real_info["is_home"] if real_info else (s_idx % 2 == 0)
-        t_sc = real_info["team_score"] if real_info else None
-        o_sc = real_info["opp_score"] if real_info else None
 
         # 경기별 고유 수치 (절대 동일 수치 복사 방지)
         if base_3g_era <= 2.80:
@@ -1413,26 +1565,15 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
             "h": h_v,
             "hr": 1 if er_val >= 2 else 0
         })
+
+    # Ensure starts are strictly sorted in descending chronological order
+    starts.sort(key=lambda x: x.get("date", ""), reverse=True)
+    starts = starts[:3]
             
     # Calculate 3G aggregates
     total_np = sum(s['np'] for s in starts)
     avg_np = round(total_np / len(starts), 1) if starts else 0
-    
-    def parse_ip_fraction(ip_val):
-        s = str(ip_val).strip()
-        if '.' in s:
-            parts = s.split('.')
-            return float(parts[0]) + float(parts[1]) / 3.0
-        elif ' ' in s and '/' in s:
-            try:
-                whole, frac = s.split(' ')
-                num, den = frac.split('/')
-                return float(whole) + float(num) / float(den)
-            except:
-                pass
-        return float(s) if (s.replace('.','',1).isdigit()) else 0.0
-        
-    total_ip_frac = sum(parse_ip_fraction(s['ip']) for s in starts)
+    total_ip_frac = sum(parse_innings_to_float(s['ip']) for s in starts)
     avg_ip = round(total_ip_frac / len(starts), 1) if starts else 0
     total_er = sum(s['er'] for s in starts)
     total_so = sum(s['so'] for s in starts)
@@ -3684,25 +3825,72 @@ class TeamSplitService:
                 h_b = "[선발 확정]" if hst.get("is_confirmed") else "[선발 예고]"
                 a_b = "[선발 확정]" if ast.get("is_confirmed") else "[선발 예고]"
                 drivers_list.insert(0, f"[선발 매치업] {h_b} [홈] {hst.get('name')}({hst.get('throws')}, 3G 평균 {hsum.get('avg_ip')}이닝 {hsum.get('avg_np')}구 ERA {hsum.get('era_3g')}) vs {a_b} [원정] {ast.get('name')}({ast.get('throws')}, 3G 평균 {asum.get('avg_ip')}이닝 {asum.get('avg_np')}구 ERA {asum.get('era_3g')})")
-        # Relative batting trend calibration between home and away (ensure consistent comparative badges)
+        # Relative batting trend calibration between home and away (anti-contradiction guard)
         if sport_code == "BASEBALL" and home_batting_3g and away_batting_3g:
             h_bsum = home_batting_3g.get("summary", {})
             a_bsum = away_batting_3g.get("summary", {})
             try:
-                h_avg_f = float(str(h_bsum.get("avg_3g", "0")).replace(".", "0."))
-                a_avg_f = float(str(a_bsum.get("avg_3g", "0")).replace(".", "0."))
-                h_rpg_f = float(str(h_bsum.get("rpg_3g", "0")).replace("점", "").strip())
-                a_rpg_f = float(str(a_bsum.get("rpg_3g", "0")).replace("점", "").strip())
-                if a_rpg_f >= h_rpg_f + 1.2 or (a_rpg_f > h_rpg_f and a_avg_f >= h_avg_f + 0.030):
-                    a_bsum["trend"] = "⚡ 화력 우세"
-                    if h_rpg_f < 3.0 and h_avg_f < 0.235:
-                        h_bsum["trend"] = "❄️ 타선 침체"
-                elif h_rpg_f >= a_rpg_f + 1.2 or (h_rpg_f > a_rpg_f and h_avg_f >= a_avg_f + 0.030):
-                    h_bsum["trend"] = "⚡ 화력 우세"
+                def safe_parse_stat(val, is_avg=False):
+                    s = str(val or "0").replace("점", "").strip()
+                    if is_avg and s.startswith("."):
+                        s = "0" + s
+                    try:
+                        return float(s)
+                    except:
+                        return 0.250 if is_avg else 4.0
+
+                h_avg_f = safe_parse_stat(h_bsum.get("avg_3g"), is_avg=True)
+                a_avg_f = safe_parse_stat(a_bsum.get("avg_3g"), is_avg=True)
+                h_rpg_f = safe_parse_stat(h_bsum.get("rpg_3g"))
+                a_rpg_f = safe_parse_stat(a_bsum.get("rpg_3g"))
+
+                h_base_trend = determine_batting_trend(h_avg_f, h_rpg_f)
+                a_base_trend = determine_batting_trend(a_avg_f, a_rpg_f)
+
+                h_score = (h_rpg_f * 10.0) + (h_avg_f * 100.0)
+                a_score = (a_rpg_f * 10.0) + (a_avg_f * 100.0)
+
+                if h_score >= a_score + 10.0 or (h_rpg_f >= a_rpg_f + 1.2) or (h_rpg_f > a_rpg_f and h_avg_f >= a_avg_f + 0.030):
+                    h_bsum["trend"] = "🔥 타격감 폭발" if (h_rpg_f >= 5.5 or h_avg_f >= .290) else "⚡ 화력 우세"
                     if a_rpg_f < 3.0 and a_avg_f < 0.235:
                         a_bsum["trend"] = "❄️ 타선 침체"
-            except Exception:
-                pass
+                    elif a_base_trend in ["🔥 타격감 폭발", "⚡ 타격감 양호"]:
+                        a_bsum["trend"] = "⚖️ 타격 보통"
+                    else:
+                        a_bsum["trend"] = a_base_trend
+                elif a_score >= h_score + 10.0 or (a_rpg_f >= h_rpg_f + 1.2) or (a_rpg_f > h_rpg_f and a_avg_f >= h_avg_f + 0.030):
+                    a_bsum["trend"] = "🔥 타격감 폭발" if (a_rpg_f >= 5.5 or a_avg_f >= .290) else "⚡ 화력 우세"
+                    if h_rpg_f < 3.0 and h_avg_f < 0.235:
+                        h_bsum["trend"] = "❄️ 타선 침체"
+                    elif h_base_trend in ["🔥 타격감 폭발", "⚡ 타격감 양호"]:
+                        h_bsum["trend"] = "⚖️ 타격 보통"
+                    else:
+                        h_bsum["trend"] = h_base_trend
+                else:
+                    h_bsum["trend"] = h_base_trend
+                    a_bsum["trend"] = a_base_trend
+
+                # Anti-Contradiction Guard: A team with superior RPG and AVG must NEVER have a worse badge
+                def badge_rank(b):
+                    if not b: return 2
+                    if "폭발" in b or "우세" in b: return 4
+                    if "양호" in b or "호조" in b: return 3
+                    if "보통" in b or "안정" in b: return 2
+                    return 1
+
+                if h_rpg_f >= a_rpg_f and h_avg_f >= a_avg_f:
+                    if badge_rank(h_bsum["trend"]) < badge_rank(a_bsum["trend"]):
+                        h_bsum["trend"] = a_bsum["trend"]
+                    if "침체" in h_bsum["trend"] and "침체" not in a_bsum["trend"]:
+                        h_bsum["trend"] = "⚖️ 타격 보통"
+
+                if a_rpg_f >= h_rpg_f and a_avg_f >= h_avg_f:
+                    if badge_rank(a_bsum["trend"]) < badge_rank(h_bsum["trend"]):
+                        a_bsum["trend"] = h_bsum["trend"]
+                    if "침체" in a_bsum["trend"] and "침체" not in h_bsum["trend"]:
+                        a_bsum["trend"] = "⚖️ 타격 보통"
+            except Exception as e:
+                logger.warning(f"Error calibrating batting trends: {e}")
 
         baseball_res = {
             "sport_code": "BASEBALL",

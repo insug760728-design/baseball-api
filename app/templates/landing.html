@@ -6662,49 +6662,33 @@ function getFullModalMatchList() {
 
         if (!matchup.home_pitching_recent_3) {
           matchup.home_pitching_recent_3 = {
-            total_bullpen_np_3g: 118,
-            fatigue_level: '양호',
-            games: [
-              { date: '26.09.06', venue: '홈', opponent: awayName, result: 'W', team_score: 5, opp_score: 3, starter: { name: homeStarter, ip: '6.0', np: 92, er: 2, so: 6, bb: 1 }, bullpen_count: 3, bullpen_np: 38, bullpen_pitchers: [{ name: '셋업맨', np: 15 }, { name: '중간계투', np: 12 }, { name: '마무리투수', np: 11 }] },
-              { date: '26.09.05', venue: '홈', opponent: awayName, result: 'L', team_score: 4, opp_score: 6, starter: { name: homeStarter, ip: '5.1', np: 88, er: 4, so: 5, bb: 3 }, bullpen_count: 3, bullpen_np: 45, bullpen_pitchers: [{ name: '셋업맨', np: 18 }, { name: '중간계투', np: 14 }, { name: '원포인트', np: 13 }] },
-              { date: '26.09.03', venue: '원정', opponent: hOpps[0] || awayName, result: 'W', team_score: 6, opp_score: 2, starter: { name: homeStarter, ip: '6.2', np: 96, er: 1, so: 8, bb: 2 }, bullpen_count: 2, bullpen_np: 35, bullpen_pitchers: [{ name: '셋업맨', np: 17 }, { name: '마무리투수', np: 18 }] }
-            ]
+            total_bullpen_np_3g: 0,
+            fatigue_level: '기록 집계 중',
+            games: []
           };
         }
 
         if (!matchup.away_pitching_recent_3) {
           matchup.away_pitching_recent_3 = {
-            total_bullpen_np_3g: 142,
-            fatigue_level: '보통',
-            games: [
-              { date: '26.09.06', venue: '원정', opponent: homeName, result: 'L', team_score: 3, opp_score: 5, starter: { name: awayStarter, ip: '5.0', np: 86, er: 4, so: 5, bb: 2 }, bullpen_count: 3, bullpen_np: 52, bullpen_pitchers: [{ name: '셋업맨', np: 22 }, { name: '중간계투', np: 15 }, { name: '마무리투수', np: 15 }] },
-              { date: '26.09.05', venue: '원정', opponent: homeName, result: 'W', team_score: 6, opp_score: 4, starter: { name: awayStarter, ip: '5.2', np: 90, er: 3, so: 6, bb: 2 }, bullpen_count: 3, bullpen_np: 48, bullpen_pitchers: [{ name: '셋업맨', np: 16 }, { name: '중간계투', np: 14 }, { name: '마무리투수', np: 18 }] },
-              { date: '26.09.03', venue: '홈', opponent: aOpps[0] || homeName, result: 'L', team_score: 2, opp_score: 4, starter: { name: awayStarter, ip: '6.0', np: 91, er: 3, so: 5, bb: 1 }, bullpen_count: 2, bullpen_np: 42, bullpen_pitchers: [{ name: '중간계투', np: 20 }, { name: '셋업맨', np: 22 }] }
-            ]
+            total_bullpen_np_3g: 0,
+            fatigue_level: '기록 집계 중',
+            games: []
           };
         }
 
         if (!matchup.home_batting_recent_3) {
           matchup.home_batting_recent_3 = {
             team_name: homeName,
-            summary: { avg_3g: '.286', total_hits: 30, total_ab: 105, total_runs: 15, rpg_3g: '5.0점', total_hr: 3, total_bb: 10, ops_3g: '.805', trend: '⚡ 타격감 양호' },
-            games: [
-              { date: '26.09.06', opponent: awayName, venue: '홈', runs: 5, hits: 10, ab: 34, hr: 1, avg: '.294', result: 'W' },
-              { date: '26.09.05', opponent: awayName, venue: '홈', runs: 4, hits: 9, ab: 35, hr: 1, avg: '.257', result: 'L' },
-              { date: '26.09.03', opponent: hOpps[0] || awayName, venue: '원정', runs: 6, hits: 11, ab: 36, hr: 1, avg: '.306', result: 'W' }
-            ]
+            summary: { avg_3g: '-', total_hits: 0, total_ab: 0, total_runs: 0, rpg_3g: '-', total_hr: 0, total_bb: 0, ops_3g: '-', trend: '기록 대기' },
+            games: []
           };
         }
 
         if (!matchup.away_batting_recent_3) {
           matchup.away_batting_recent_3 = {
             team_name: awayName,
-            summary: { avg_3g: '.262', total_hits: 27, total_ab: 103, total_runs: 13, rpg_3g: '4.3점', total_hr: 2, total_bb: 8, ops_3g: '.742', trend: '⚡ 타격감 양호' },
-            games: [
-              { date: '26.09.06', opponent: homeName, venue: '원정', runs: 3, hits: 8, ab: 33, hr: 0, avg: '.242', result: 'L' },
-              { date: '26.09.05', opponent: homeName, venue: '원정', runs: 6, hits: 12, ab: 36, hr: 2, avg: '.333', result: 'W' },
-              { date: '26.09.03', opponent: aOpps[0] || homeName, venue: '홈', runs: 2, hits: 7, ab: 34, hr: 0, avg: '.206', result: 'L' }
-            ]
+            summary: { avg_3g: '-', total_hits: 0, total_ab: 0, total_runs: 0, rpg_3g: '-', total_hr: 0, total_bb: 0, ops_3g: '-', trend: '기록 대기' },
+            games: []
           };
         }
       }
@@ -6900,19 +6884,46 @@ function getFullModalMatchList() {
         </div>
       `;
 
-      // Multi-dimensional batting trend evaluation
-      let hTrendBadge = hBatSum.trend || '타격 보통';
-      let aTrendBadge = aBatSum.trend || '타격 보통';
+      // Multi-dimensional batting trend evaluation with anti-contradiction guard
+      let hTrendBadge = hBatSum.trend || '⚖️ 타격 보통';
+      let aTrendBadge = aBatSum.trend || '⚖️ 타격 보통';
 
-      if (hRpg >= aRpg + 1.2 || (hRpg > aRpg && hAvg >= aAvg + 0.030)) {
-        hTrendBadge = '⚡ 화력 우세';
-        if (aRpg < 3.0 && aAvg < 0.235) {
-          aTrendBadge = '❄️ 타선 침체';
+      const badgeRank = (b) => {
+        if (!b) return 2;
+        if (b.includes('폭발') || b.includes('우세')) return 4;
+        if (b.includes('양호') || b.includes('호조')) return 3;
+        if (b.includes('보통') || b.includes('안정')) return 2;
+        return 1;
+      };
+
+      if (!isNaN(hRpg) && !isNaN(aRpg) && !isNaN(hAvg) && !isNaN(aAvg)) {
+        if (hRpg >= aRpg + 1.2 || (hRpg > aRpg && hAvg >= aAvg + 0.030)) {
+          hTrendBadge = '⚡ 화력 우세';
+          if (aRpg < 3.0 && aAvg < 0.235) {
+            aTrendBadge = '❄️ 타선 침체';
+          }
+        } else if (aRpg >= hRpg + 1.2 || (aRpg > hRpg && aAvg >= hAvg + 0.030)) {
+          aTrendBadge = '⚡ 화력 우세';
+          if (hRpg < 3.0 && hAvg < 0.235) {
+            hTrendBadge = '❄️ 타선 침체';
+          }
         }
-      } else if (aRpg >= hRpg + 1.2 || (aRpg > hRpg && aAvg >= hAvg + 0.030)) {
-        aTrendBadge = '⚡ 화력 우세';
-        if (hRpg < 3.0 && hAvg < 0.235) {
-          hTrendBadge = '❄️ 타선 침체';
+
+        // Anti-Contradiction Guard: A team with higher or equal RPG & AVG cannot have a lower badge rank!
+        if (hRpg >= aRpg && hAvg >= aAvg) {
+          if (badgeRank(hTrendBadge) < badgeRank(aTrendBadge)) {
+            hTrendBadge = aTrendBadge;
+          }
+          if (hTrendBadge.includes('침체') && !aTrendBadge.includes('침체')) {
+            hTrendBadge = '⚖️ 타격 보통';
+          }
+        } else if (aRpg >= hRpg && aAvg >= hAvg) {
+          if (badgeRank(aTrendBadge) < badgeRank(hTrendBadge)) {
+            aTrendBadge = hTrendBadge;
+          }
+          if (aTrendBadge.includes('침체') && !hTrendBadge.includes('침체')) {
+            aTrendBadge = '⚖️ 타격 보통';
+          }
         }
       }
 

@@ -415,7 +415,9 @@ class NpbOfficialScraper:
 
                 order_raw = cells[0].strip()
                 pos_raw = cells[1].strip()
-                p_name = sanitize_player_name(cells[2].strip())
+                p_name_raw = sanitize_player_name(cells[2].strip())
+                p_name_ko = translate_npb_player_name(p_name_raw)
+                p_name = p_name_ko if p_name_ko else p_name_raw
 
                 pos_kor = translate_npb_position(pos_raw)
                 pos_label = f"{order_raw}번 {pos_kor}" if order_raw and order_raw.isdigit() else pos_kor
@@ -440,6 +442,7 @@ class NpbOfficialScraper:
                     "extra_stats": {
                         "type": "HITTER",
                         "player_type": "HITTER",
+                        "name_raw": p_name_raw,
                         "ab": ab, "r": r, "h": h, "2b": 0, "3b": 0, "hr": 0,
                         "rbi": rbi, "bb": 0, "so": 0, "sb": sb,
                         "hits": h, "doubles": 0, "triples": 0, "homeruns": 0,
@@ -451,15 +454,21 @@ class NpbOfficialScraper:
         for team_idx, pt in enumerate(pitcher_tables):
             t_name = away_name if team_idx == 0 else home_name
             body = pt.find('tbody') or pt
+            p_order = 0
             for tr in body.find_all('tr', recursive=False):
                 cells = [c.get_text(separator=' ', strip=True) for c in tr.find_all(['th', 'td'], recursive=False)]
                 if len(cells) < 10 or 'チーム計' in cells or '投手' in cells:
                     continue
 
+                p_order += 1
+                is_starter = (p_order == 1)
+
                 dec_raw = cells[0].strip()
                 dec_label = "승리투수 (W)" if dec_raw == "○" else ("패전투수 (L)" if dec_raw == "●" else ("세이브 (SV)" if dec_raw == "S" else ("홀드 (HD)" if dec_raw == "H" else "")))
 
-                p_name = sanitize_player_name(cells[1].strip())
+                p_name_raw = sanitize_player_name(cells[1].strip())
+                p_name_ko = translate_npb_player_name(p_name_raw)
+                p_name = p_name_ko if p_name_ko else p_name_raw
                 np = clean_int(cells[2])
                 bf = clean_int(cells[3]) if len(cells) > 3 else 0
                 ip_raw = cells[4].replace(' ', '').replace('\xa0', '').replace('+', '.0') if len(cells) > 4 else "1.0"
@@ -481,7 +490,7 @@ class NpbOfficialScraper:
                     "team_name": t_name,
                     "player_name": p_name,
                     "back_number": "",
-                    "position": "투수",
+                    "position": "선발투수" if is_starter else "구원투수",
                     "minutes_played": 0,
                     "points": so,
                     "assists": 0,
@@ -489,6 +498,10 @@ class NpbOfficialScraper:
                     "extra_stats": {
                         "type": "PITCHER",
                         "player_type": "PITCHER",
+                        "is_starter": is_starter,
+                        "starter": is_starter,
+                        "pitcher_order": p_order,
+                        "name_raw": p_name_raw,
                         "ip": ip_raw, "np": np, "h": h, "r": r, "er": er, "bb": bb,
                         "so": so, "hr": hr, "era": era, "whip": "-",
                         "decision": dec_label
