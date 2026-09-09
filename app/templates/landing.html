@@ -295,33 +295,28 @@
       height: 100%;
     }
     
-    /* 3-Column Width Ratio: 경기 5(50%) | 상세 3(30%) | 채팅 2(20%) */
-    @media (min-width: 1200px) {
+    /* 3-Column Width Ratio: 경기 5 (50%) | 상세 3 (30%) | 채팅 2 (20%) */
+    @media (min-width: 769px) {
+      #leftColSchedule,
       .col-dash-left {
         flex: 0 0 50% !important;
+        width: 50% !important;
         max-width: 50% !important;
+        min-width: 0 !important;
       }
+      #centerColMain,
       .col-dash-center {
         flex: 0 0 30% !important;
+        width: 30% !important;
         max-width: 30% !important;
+        min-width: 0 !important;
       }
+      #rightColCommunity,
       .col-dash-right {
         flex: 0 0 20% !important;
+        width: 20% !important;
         max-width: 20% !important;
-      }
-    }
-    @media (min-width: 769px) and (max-width: 1199px) {
-      .col-dash-left {
-        flex: 0 0 50% !important;
-        max-width: 50% !important;
-      }
-      .col-dash-center {
-        flex: 0 0 30% !important;
-        max-width: 30% !important;
-      }
-      .col-dash-right {
-        flex: 0 0 20% !important;
-        max-width: 20% !important;
+        min-width: 0 !important;
       }
     }
     .footer-section {
@@ -396,7 +391,6 @@
     /* ------------------------------------------------------------- */
     /* 중앙 세이버메트릭스 상세 분석 패널 (#predDetailPanel) 반응형 전폭 정렬 */
     /* ------------------------------------------------------------- */
-    #centerColMain,
     #predDetailPanel,
     #liveRelayContainer {
       width: 100% !important;
@@ -1989,16 +1983,16 @@
           </div>
         </div>
 
-        <!-- 3. [우측 40%] 실시간 라이브 팬룸 & 유저 승부 투표 -->
+        <!-- 3. [우측 20%] 실시간 라이브 팬룸 & 유저 승부 투표 -->
         <div class="col-dash-right" id="rightColCommunity">
           <div class="dash-card-column">
             
             <div class="dash-card-header">
               <!-- Chat Header with Live WebSocket Status -->
               <div class="d-flex justify-content-between align-items-center mb-1.5 flex-nowrap">
-                <span class="fw-bold text-dark text-nowrap" style="font-size: 0.85rem;"><i class="bi bi-chat-square-dots-fill text-primary me-1"></i>실시간 팬룸</span>
+                <span class="fw-bold text-dark text-nowrap" style="font-size: 0.78rem;"><i class="bi bi-chat-square-dots-fill text-primary me-1"></i>실시간 팬룸</span>
                 <div class="d-flex align-items-center gap-1">
-                  <span class="badge" style="background: #eff6ff; border: 1px solid #bfdbfe; font-size: 0.68rem; color: #1d4ed8; padding: 2px 5px;">
+                  <span class="badge" style="background: #eff6ff; border: 1px solid #bfdbfe; font-size: 0.65rem; color: #1d4ed8; padding: 1px 4px;">
                     <span style="width: 5px; height: 5px; background-color: #10b981; border-radius: 50%; display: inline-block; animation: pulseGlow 1.5s infinite;" class="me-0.5"></span>
                     <span id="wsStatusBadge">연결</span>
                   </span>
@@ -2006,12 +2000,12 @@
               </div>
 
               <!-- Channel Tabs -->
-              <div class="d-flex gap-1 overflow-auto">
-                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 active flex-fill fw-bold" id="chatTabALL" onclick="switchCommunityChannel('ALL')" style="font-size: 0.70rem;">💬전체</button>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 flex-fill fw-bold" id="chatTabBASEBALL" onclick="switchCommunityChannel('BASEBALL')" style="font-size: 0.70rem;">⚾야구</button>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 flex-fill fw-bold" id="chatTabSOCCER" onclick="switchCommunityChannel('SOCCER')" style="font-size: 0.70rem;">⚽축구</button>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 flex-fill fw-bold" id="chatTabBASKETBALL" onclick="switchCommunityChannel('BASKETBALL')" style="font-size: 0.70rem;">🏀농구</button>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 flex-fill fw-bold" id="chatTabPREDICTION" onclick="switchCommunityChannel('PREDICTION')" style="font-size: 0.70rem;">🔥AI픽</button>
+              <div class="d-flex gap-0.5 overflow-x-auto" style="scrollbar-width: none;">
+                <button class="btn btn-sm btn-outline-secondary py-0 px-1 active flex-fill fw-bold text-nowrap" id="chatTabALL" onclick="switchCommunityChannel('ALL')" style="font-size: 0.64rem;">💬전체</button>
+                <button class="btn btn-sm btn-outline-secondary py-0 px-1 flex-fill fw-bold text-nowrap" id="chatTabBASEBALL" onclick="switchCommunityChannel('BASEBALL')" style="font-size: 0.64rem;">⚾야구</button>
+                <button class="btn btn-sm btn-outline-secondary py-0 px-1 flex-fill fw-bold text-nowrap" id="chatTabSOCCER" onclick="switchCommunityChannel('SOCCER')" style="font-size: 0.64rem;">⚽축구</button>
+                <button class="btn btn-sm btn-outline-secondary py-0 px-1 flex-fill fw-bold text-nowrap" id="chatTabBASKETBALL" onclick="switchCommunityChannel('BASKETBALL')" style="font-size: 0.64rem;">🏀농구</button>
+                <button class="btn btn-sm btn-outline-secondary py-0 px-1 flex-fill fw-bold text-nowrap" id="chatTabPREDICTION" onclick="switchCommunityChannel('PREDICTION')" style="font-size: 0.64rem;">🔥AI픽</button>
               </div>
             </div>
 
@@ -11874,28 +11868,28 @@ function getFullModalMatchList() {
         `;
       } else {
         verificationBoxHtml = `
-          <div class="d-flex align-items-center justify-content-between p-3 mb-3 rounded-3" style="background: #ffffff; border: 1.5px solid #111827; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-            <div class="d-flex align-items-center gap-3">
-              <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: #ffffff; border: 2px solid #111827; color: #111827; font-size: 1.3rem;">
+          <div class="d-flex align-items-center justify-content-between p-2.5 mb-2.5 rounded-3" style="background: #ffffff; border: 1.5px solid #111827; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <div class="d-flex align-items-center gap-2">
+              <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: #ffffff; border: 1.5px solid #111827; color: #111827; font-size: 1.1rem;">
                 <i class="bi bi-cpu"></i>
               </div>
-              <div>
-                <div class="d-flex align-items-center gap-2">
-                  <span class="badge" style="background: ${synced.isDraw ? '#fff7ed' : '#fef2f2'}; color: ${synced.isDraw ? '#ea580c' : '#dc2626'}; border: 1.5px solid ${synced.isDraw ? '#ea580c' : '#dc2626'}; font-size: 0.82rem; padding: 4px 8px; font-weight: 800;">
-                    AI 정밀 분석 픽
+              <div style="min-width: 0;">
+                <div class="d-flex align-items-center gap-1.5 flex-wrap">
+                  <span class="badge" style="background: ${synced.isDraw ? '#fff7ed' : '#fef2f2'}; color: ${synced.isDraw ? '#ea580c' : '#dc2626'}; border: 1px solid ${synced.isDraw ? '#ea580c' : '#dc2626'}; font-size: 0.74rem; padding: 2px 6px; font-weight: 800;">
+                    AI 픽
                   </span>
-                  <span class="fw-bold" style="font-size: 0.95rem; color: #111827;">
+                  <span class="fw-bold" style="font-size: 0.88rem; color: #111827;">
                     [<span style="${synced.isDraw ? 'color: #ea580c;' : 'color: #dc2626;'} font-weight: 800;">${pickTeam}</span>] (${pickConf}% ${pickLabel})
                   </span>
                 </div>
-                <div class="small mt-1" style="color: #4b5563;">
-                  경기 종료 후 스코어가 자동 대조되어 적중 여부가 공식 판정됩니다.
+                <div class="small mt-0.5 text-muted" style="font-size: 0.68rem; line-height: 1.2;">
+                  종료 후 스코어 자동 대조 판정
                 </div>
               </div>
             </div>
-            <div class="text-end d-none d-md-block">
-              <span class="badge bg-white border fw-bold text-dark" style="font-size: 0.82rem; border-color: #d1d5db !important;">
-                <i class="bi bi-clock-history me-1 text-dark"></i>경기 결과 대기
+            <div class="text-end d-none d-xl-block flex-shrink-0">
+              <span class="badge bg-white border fw-bold text-dark" style="font-size: 0.74rem; border-color: #d1d5db !important;">
+                <i class="bi bi-clock-history me-0.5 text-dark"></i>결과 대기
               </span>
             </div>
           </div>
@@ -13965,26 +13959,26 @@ function getFullModalMatchList() {
 
         <!-- Big Score Center -->
         <div class="p-3 rounded-3 text-center mb-3" style="background: linear-gradient(180deg, #0d1527 0%, #080d1a 100%); border: 2px solid #1e293b; box-shadow: 0 4px 16px rgba(0,0,0,0.5);">
-          <div class="row align-items-center">
-            <div class="col-4">
+          <div class="row align-items-center g-1">
+            <div class="col-3 text-center">
               <div style="width:40px; height:40px; border-radius:50%; background:#1e293b; border:2px solid #334155; display:flex; align-items:center; justify-content:center; margin:0 auto 4px; font-weight:800; font-size:0.95rem;">
                 ${board.away_team_name.substring(0, 2)}
               </div>
-              <div class="fw-bold text-white text-truncate" style="font-size:0.92rem;">${board.away_team_name}</div>
-              <span class="text-white-50" style="font-size:0.68rem;">원정</span>
+              <div class="fw-bold text-white text-truncate" style="font-size:0.85rem;">${board.away_team_name}</div>
+              <span class="text-white-50" style="font-size:0.68rem;">원정 (초)</span>
             </div>
-            <div class="col-4">
-              <div style="font-family:'Orbitron', monospace; font-size:2.4rem; font-weight:900; color:#fef08a; text-shadow:0 0 10px rgba(245,158,11,0.6); line-height:1;">
+            <div class="col-6 text-center">
+              <div style="font-family:'Orbitron', monospace; font-size:clamp(1.7rem, 6.5vw, 2.2rem); font-weight:900; color:#fef08a; text-shadow:0 0 10px rgba(245,158,11,0.6); line-height:1; white-space:nowrap;">
                 ${board.away_score} : ${board.home_score}
               </div>
               <div class="text-danger small mt-1 fw-bold" style="font-size:0.7rem;">● LIVE</div>
             </div>
-            <div class="col-4">
+            <div class="col-3 text-center">
               <div style="width:40px; height:40px; border-radius:50%; background:#1e293b; border:2px solid #f59e0b; display:flex; align-items:center; justify-content:center; margin:0 auto 4px; font-weight:800; font-size:0.95rem;">
                 ${board.home_team_name.substring(0, 2)}
               </div>
-              <div class="fw-bold text-white text-truncate" style="font-size:0.92rem;">${board.home_team_name}</div>
-              <span class="text-white-50" style="font-size:0.68rem;">홈</span>
+              <div class="fw-bold text-white text-truncate" style="font-size:0.85rem;">${board.home_team_name}</div>
+              <span class="text-white-50" style="font-size:0.68rem;">홈 (말)</span>
             </div>
           </div>
         </div>

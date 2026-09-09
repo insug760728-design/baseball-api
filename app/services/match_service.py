@@ -310,6 +310,7 @@ class MatchService:
                 seen_keys.add(f_key)
                 unique_matches.append(m)
         matches = unique_matches
+        pred_calc_count = 0
 
         for m in matches:
             m.home_starter_name = None
@@ -363,7 +364,7 @@ class MatchService:
                     a_confirmed = False
                 m.starters_confirmed = bool(m.home_starter_name and m.away_starter_name and h_confirmed and a_confirmed)
 
-            if m.status == "FINISHED":
+            if m.status == "FINISHED" or (m.status != "LIVE" and pred_calc_count >= 30):
                 m.prediction = None
                 m.odds = None
                 m.ou_line = None
@@ -382,6 +383,8 @@ class MatchService:
                         starter_a=m.away_starter_name,
                         league_name=m.league_name
                     )
+                    if m.status != "LIVE":
+                        pred_calc_count += 1
                 except Exception:
                     m.prediction = None
 
