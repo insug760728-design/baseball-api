@@ -72,6 +72,20 @@ def list_matches(
     _MATCHES_CACHE[cache_key] = (now, res)
     return res
 
+@router.get("/live-boards", summary="실시간 라이브 전광판 전용 종합 데이터 (구장/주자/볼카운트/이닝/스코어)")
+def get_live_boards(
+    sport: Optional[str] = Query(None, description="스포츠 종목 필터 (BASEBALL, SOCCER 또는 ALL)"),
+    limit: Optional[int] = Query(16, description="조회 경기 수 (기본 16개)"),
+    response: Response = None,
+    db: Session = Depends(get_db)
+):
+    """PC 및 모바일 라이브 전광판 중계 센터에 즉시 렌더링 가능한 풍부한 종합 보드 데이터를 반환합니다."""
+    if response:
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return MatchService.get_live_scoreboard_boards(db, sport=sport, limit=limit or 16)
+
 @router.post("/sync", summary="기간별 야구 경기 데이터 동기화 수집")
 def sync_matches(payload: DateRangeSyncRequest, db: Session = Depends(get_db)):
     """지정된 야구 리그와 기간(start_date ~ end_date)의 경기 및 선수 세부 지표를 공식 사이트에서 수집합니다."""

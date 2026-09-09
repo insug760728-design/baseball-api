@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>🔴 TOKEON LIVE — 실시간 경기장 전광판 중계센터 (멀티뷰)</title>
+  
+  <!-- Bootstrap 5.3 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  
+  <!-- Digital LED Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800&family=Orbitron:wght@700;900&family=Pretendard:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #070b14;
+      --bg-card: #0d1527;
+      --bg-card-inner: #080d1a;
+      --border-bezel: #1e293b;
+      --border-highlight: #334155;
+      
+      --led-gold: #f59e0b;
+      --led-yellow: #facc15;
+      --led-green: #10b981;
+      --led-red: #ef4444;
+      --led-off: #1e293b;
+      
+      --text-glow-gold: 0 0 12px rgba(245, 158, 11, 0.7);
+      --text-glow-red: 0 0 10px rgba(239, 68, 68, 0.7);
+      --text-glow-green: 0 0 10px rgba(16, 185, 129, 0.7);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: #f8fafc;
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Custom Dark Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #070b14; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* Top Stadium Control Header */
+    .stadium-header {
+      background: linear-gradient(180deg, #0b1329 0%, #070b14 100%);
+      border-bottom: 2px solid #1e293b;
+      padding: 10px 18px;
+      position: sticky;
+      top: 0;
+      z-index: 1040;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .live-pulse-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(239, 68, 68, 0.18);
+      color: #ef4444;
+      border: 1px solid #ef4444;
+      font-weight: 800;
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #ef4444;
+      border-radius: 50%;
+      animation: pulse-ring 1.4s infinite;
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+      100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    /* Multi-View Grid Switch Buttons */
+    .view-btn {
+      background: #0f172a;
+      border: 1.5px solid #334155;
+      color: #94a3b8;
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 5px 12px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .view-btn:hover {
+      background: #1e293b;
+      color: #f8fafc;
+      border-color: #475569;
+    }
+    .view-btn.active {
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+      color: #ffffff;
+      border-color: #3b82f6;
+      box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
+    }
+
+    .sport-filter-btn {
+      background: transparent;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+    .sport-filter-btn.active {
+      background: #f59e0b;
+      color: #000000;
+      border-color: #f59e0b;
+      font-weight: 800;
+    }
+
+    /* Main Board Grid Container */
+    #boardGridContainer {
+      padding: 16px;
+      display: grid;
+      gap: 16px;
+      width: 100%;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Grid Modes */
+    .grid-mode-4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .grid-mode-6 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .grid-mode-8 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .grid-mode-12 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    @media (max-width: 1280px) {
+      .grid-mode-6 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-mode-8 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-mode-12 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 768px) {
+      #boardGridContainer {
+        grid-template-columns: 1fr !important;
+        padding: 8px;
+        gap: 12px;
+      }
+    }
+
+    /* Electronic Stadium Scoreboard Card */
+    .stadium-card {
+      background: linear-gradient(180deg, #0d1527 0%, #070b16 100%);
+      border: 2px solid var(--border-bezel);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .stadium-card:hover {
+      transform: translateY(-2px);
+      border-color: #3b82f6;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 16px rgba(59, 130, 246, 0.2);
+    }
+
+    /* Card Top Header Bezel */
+    .card-top-bar {
+      background: rgba(15, 23, 42, 0.85);
+      border-bottom: 1.5px solid #1e293b;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+    }
+
+    .league-tag {
+      background: #1e293b;
+      color: #93c5fd;
+      border: 1px solid #334155;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.7rem;
+    }
+
+    .stadium-name {
+      color: #94a3b8;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 140px;
+    }
+
+    .inning-badge {
+      background: #ef4444;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    }
+    .inning-badge.finished {
+      background: #475569;
+      box-shadow: none;
+    }
+
+    /* Card Main Score Area */
+    .card-main-stage {
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: radial-gradient(circle at 50% 30%, rgba(30, 58, 138, 0.15) 0%, transparent 70%);
+    }
+
+    .team-block {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      min-width: 0;
+    }
+
+    .team-logo-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #1e293b;
+      border: 2px solid #334155;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #f8fafc;
+      margin-bottom: 4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+
+    .team-name-text {
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: #f1f5f9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .team-side-badge {
+      font-size: 0.65rem;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+
+    .score-center-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 110px;
+    }
+
+    .led-score-display {
+      font-family: 'Orbitron', 'Chakra Petch', monospace;
+      font-size: 2.1rem;
+      font-weight: 900;
+      color: #fef08a;
+      text-shadow: var(--text-glow-gold);
+      letter-spacing: 2px;
+      line-height: 1;
+    }
+
+    /* Baseball Diamond & BSO Field Box */
+    .field-bso-box {
+      background: #080d1a;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      margin: 0 10px 10px 10px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      gap: 10px;
+    }
+
+    /* SVG Diamond Runners */
+    .diamond-svg-wrap {
+      width: 52px;
+      height: 52px;
+      position: relative;
+    }
+
+    /* BSO Lights */
+    .bso-column {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-family: 'Chakra Petch', monospace;
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+    .bso-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .bso-label {
+      width: 14px;
+      color: #94a3b8;
+    }
+    .bso-lamp {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #1e293b;
+      border: 1px solid #334155;
+    }
+    .bso-lamp.active-ball {
+      background: #10b981;
+      border-color: #34d399;
+      box-shadow: 0 0 6px #10b981;
+    }
+    .bso-lamp.active-strike {
+      background: #ef4444;
+      border-color: #f87171;
+      box-shadow: 0 0 6px #ef4444;
+    }
+    .bso-lamp.active-out {
+      background: #f59e0b;
+      border-color: #fbbf24;
+      box-shadow: 0 0 6px #f59e0b;
+    }
+
+    /* Pitcher / Batter Mini Info */
+    .pitcher-batter-info {
+      font-size: 0.72rem;
+      color: #cbd5e1;
+      border-left: 1px solid #1e293b;
+      padding-left: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 100px;
+    }
+
+    /* Linescore Table (1~9 이닝 전광판) */
+    .linescore-wrap {
+      background: #060a14;
+      border-top: 1px solid #1e293b;
+      padding: 6px 10px;
+      font-size: 0.72rem;
+      font-family: 'Chakra Petch', monospace;
+    }
+    .linescore-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      color: #e2e8f0;
+    }
+    .linescore-table th {
+      color: #64748b;
+      font-size: 0.65rem;
+      padding: 2px 0;
+      font-weight: 700;
+      border-bottom: 1px solid #1e293b;
+    }
+    .linescore-table td {
+      padding: 2px 0;
+      font-weight: 600;
+    }
+    .linescore-table .col-team {
+      text-align: left;
+      font-weight: 700;
+      color: #94a3b8;
+      width: 48px;
+    }
+    .linescore-table .col-summary {
+      color: #fef08a;
+      font-weight: 800;
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .linescore-table .active-inn-cell {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      font-weight: 800;
+      border-radius: 2px;
+    }
+
+    /* Soccer Field Styling */
+    .soccer-field-box {
+      background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+      border: 1px solid #047857;
+      border-radius: 8px;
+      margin: 0 10px 10px 10px;
+      padding: 8px 12px;
+      color: #ecfdf5;
+      font-size: 0.74rem;
+    }
+    .soccer-stat-bar-wrap {
+      background: #022c22;
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+      display: flex;
+      margin: 4px 0;
+    }
+
+    /* Expand Modal (대형 전광판 팝업) */
+    .modal-stadium-content {
+      background: #070b14;
+      border: 2px solid #3b82f6;
+      border-radius: 16px;
+      color: #f8fafc;
+      box-shadow: 0 0 50px rgba(59, 130, 246, 0.3);
+    }
+
+    /* Mobile Simulation Container */
+    .mobile-sim-wrapper {
+      max-width: 430px;
+      margin: 0 auto;
+      border-left: 2px solid #1e293b;
+      border-right: 2px solid #1e293b;
+      min-height: 100vh;
+      background: #070b14;
+    }
+
+    /* Floating Quick Bar for Mobile */
+    .mobile-live-tab-bar {
+      display: flex;
+      overflow-x: auto;
+      gap: 6px;
+      padding: 6px 12px;
+      background: #0b1329;
+      border-bottom: 1px solid #1e293b;
+      scrollbar-width: none;
+    }
+    .mobile-live-tab-bar::-webkit-scrollbar { display: none; }
+    .mob-tab-item {
+      background: #1e293b;
+      color: #cbd5e1;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
+      border: 1px solid #334155;
+    }
+    .mob-tab-item.active {
+      background: #ef4444;
+      color: #ffffff;
+      border-color: #ef4444;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Stadium Header -->
+  <header class="stadium-header">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <!-- Left: Logo & Live Status -->
+      <div class="d-flex align-items-center gap-3">
+        <a href="/" class="text-decoration-none d-flex align-items-center gap-2 text-white">
+          <div style="background: linear-gradient(135deg, #1d4ed8, #2563eb); width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-broadcast text-white fs-5"></i>
+          </div>
+          <div>
+            <div class="fw-black fs-5 lh-1 text-white" style="letter-spacing: -0.5px;">
+              TOKEON <span style="color: #60a5fa;">LIVE</span>
+            </div>
+            <div class="text-white-50" style="font-size: 0.68rem;">실시간 전광판 중계센터</div>
+          </div>
+        </a>
+
+        <div class="live-pulse-badge">
+          <span class="pulse-dot"></span>
+          <span id="headerLiveCountText">LIVE 14경기 진행중</span>
+        </div>
+      </div>
+
+      <!-- Center: Grid View Selection (핵심 요청 기능 ⭐) -->
+      <div class="d-flex align-items-center gap-1.5 p-1 rounded-2" style="background: rgba(0,0,0,0.4); border: 1px solid #1e293b;">
+        <span class="text-white-50 small me-1 d-none d-lg-inline" style="font-size: 0.72rem;">화면 분할:</span>
+        <button type="button" class="view-btn" id="btnGrid4" onclick="setGridMode(4)">
+          <i class="bi bi-grid-fill me-1"></i>4개 (2×2)
+        </button>
+        <button type="button" class="view-btn active" id="btnGrid6" onclick="setGridMode(6)">
+          <i class="bi bi-grid-3x2-gap-fill me-1"></i>6개 (KBO최적 ⭐)
+        </button>
+        <button type="button" class="view-btn" id="btnGrid8" onclick="setGridMode(8)">
+          <i class="bi bi-grid-3x3-gap-fill me-1"></i>8개 관제
+        </button>
+        <button type="button" class="view-btn" id="btnGrid12" onclick="setGridMode(12)">
+          <i class="bi bi-border-all me-1"></i>12개 상황실
+        </button>
+      </div>
+
+      <!-- Right: Controls & Clocks -->
+      <div class="d-flex align-items-center gap-2">
+        <!-- Sport Filters -->
+        <div class="d-none d-md-flex align-items-center gap-1">
+          <button class="sport-filter-btn active" id="filterSportAll" onclick="filterSport('ALL')">전체</button>
+          <button class="sport-filter-btn" id="filterSportBaseball" onclick="filterSport('BASEBALL')">⚾ 야구</button>
+          <button class="sport-filter-btn" id="filterSportSoccer" onclick="filterSport('SOCCER')">⚽ 축구</button>
+        </div>
+
+        <!-- Sound FX Toggle -->
+        <button class="btn btn-sm btn-outline-secondary text-white py-1 px-2" id="btnSoundToggle" onclick="toggleSoundFx()" title="안타/득점 현장 효과음" style="border-color: #334155; font-size: 0.75rem;">
+          <i class="bi bi-volume-up-fill text-warning me-1" id="soundIcon"></i><span id="soundText" class="d-none d-sm-inline">효과음 ON</span>
+        </button>
+
+        <!-- Auto Refresh Indicator -->
+        <button class="btn btn-sm btn-primary py-1 px-2.5 fw-bold" onclick="refreshLiveBoards(true)" style="font-size: 0.75rem; background: #1d4ed8; border: 1px solid #3b82f6;">
+          <i class="bi bi-arrow-repeat me-1" id="refreshIcon"></i><span id="refreshTimer">10s</span>
+        </button>
+
+        <a href="/" class="btn btn-sm btn-dark py-1 px-2 text-white-50" style="border: 1px solid #334155; font-size: 0.75rem;" title="포털 홈으로">
+          <i class="bi bi-house-door"></i>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Live Match Tabs (Only visible on mobile) -->
+  <div class="mobile-live-tab-bar d-md-none" id="mobileTabBarContainer">
+    <!-- Rendered dynamically -->
+  </div>
+
+  <!-- Main Board Grid -->
+  <main class="container-fluid px-2 px-md-3 py-2">
+    <div id="boardGridContainer" class="grid-mode-6">
+      <div class="text-center py-5 w-100" style="grid-column: 1 / -1;">
+        <div class="spinner-border text-primary" role="status"></div>
+        <div class="text-white-50 mt-2 small">경기장 공식 실시간 전광판 연결 중...</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Fullscreen Stadium Scoreboard Modal (전광판 대형 확대 팝업) -->
+  <div class="modal fade" id="stadiumDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content modal-stadium-content" id="modalDetailContent">
+        <!-- Rendered dynamically on click -->
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // --- Global State ---
+    let currentGridMode = 6;
+    let currentSportFilter = 'ALL';
+    let soundEnabled = true;
+    let autoRefreshCountdown = 10;
+    let refreshTimerInterval = null;
+    let cachedLiveBoards = [];
+    let activeMobileMatchId = null;
+
+    // --- Audio Synthesizer (Web Audio API: No external mp3 dependency) ---
+    let audioCtx = null;
+    function playStadiumTone(type) {
+      if (!soundEnabled) return;
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (type === 'hit') {
+          // Baseball bat crack tone
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(650, now);
+          osc.frequency.exponentialRampToValueAtTime(150, now + 0.15);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+          osc.start(now);
+          osc.stop(now + 0.15);
+        } else if (type === 'goal') {
+          // Stadium chime
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now); // C5
+          osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+          osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+          osc.start(now);
+          osc.stop(now + 0.45);
+        }
+      } catch (e) {
+        console.log('Audio error:', e);
+      }
+    }
+
+    function toggleSoundFx() {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('soundIcon');
+      const text = document.getElementById('soundText');
+      if (soundEnabled) {
+        icon.className = 'bi bi-volume-up-fill text-warning me-1';
+        text.innerText = '효과음 ON';
+        playStadiumTone('goal');
+      } else {
+        icon.className = 'bi bi-volume-mute-fill text-secondary me-1';
+        text.innerText = '효과음 OFF';
+      }
+    }
+
+    // --- Grid Layout Controls ---
+    function setGridMode(num) {
+      currentGridMode = num;
+      const container = document.getElementById('boardGridContainer');
+      container.className = `grid-mode-${num}`;
+
+      ['4', '6', '8', '12'].forEach(n => {
+        const btn = document.getElementById(`btnGrid${n}`);
+        if (btn) {
+          if (parseInt(n) === num) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        }
+      });
+      renderBoards(cachedLiveBoards);
+    }
+
+    function filterSport(sport) {
+      currentSportFilter = sport;
+      document.getElementById('filterSportAll').classList.toggle('active', sport === 'ALL');
+      document.getElementById('filterSportBaseball').classList.toggle('active', sport === 'BASEBALL');
+      document.getElementById('filterSportSoccer').classList.toggle('active', sport === 'SOCCER');
+      renderBoards(cachedLiveBoards);
+    }
+
+    // --- Data Fetching ---
+    async function refreshLiveBoards(manual = false) {
+      const refreshIcon = document.getElementById('refreshIcon');
+      if (refreshIcon) refreshIcon.classList.add('bi-spin');
+
+      try {
+        const res = await fetch(`/api/v1/matches/live-boards?limit=16&t=${Date.now()}`);
+        if (!res.ok) throw new Error('API Response Error');
+        const data = await res.json();
+        
+        cachedLiveBoards = data;
+        renderBoards(cachedLiveBoards);
+        renderMobileTabs(cachedLiveBoards);
+
+        const liveCount = data.filter(b => b.status === 'LIVE').length;
+        document.getElementById('headerLiveCountText').innerText = `LIVE ${liveCount}경기 진행중`;
+
+        if (manual) {
+          autoRefreshCountdown = 10;
+        }
+      } catch (err) {
+        console.error('라이브 보드 로딩 실패:', err);
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove('bi-spin');
+      }
+    }
+
+    // --- Render Diamond SVG Graphics (실시간 주자 다이아몬드) ---
+    function renderDiamondSvg(runners) {
+      const b1 = runners && runners.b1;
+      const b2 = runners && runners.b2;
+      const b3 = runners && runners.b3;
+
+      const fill1 = b1 ? '#f59e0b' : '#1e293b';
+      const fill2 = b2 ? '#f59e0b' : '#1e293b';
+      const fill3 = b3 ? '#f59e0b' : '#1e293b';
+      const stroke1 = b1 ? '#fef08a' : '#334155';
+      const stroke2 = b2 ? '#fef08a' : '#334155';
+      const stroke3 = b3 ? '#fef08a' : '#334155';
+      const filter1 = b1 ? 'filter="url(#glow)"' : '';
+      const filter2 = b2 ? 'filter="url(#glow)"' : '';
+      const filter3 = b3 ? 'filter="url(#glow)"' : '';
+
+      return `
+        <svg viewBox="0 0 60 60" class="diamond-svg-wrap">
+          <defs>
+            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="2" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+          <!-- Basepath lines -->
+          <polygon points="30,10 50,30 30,50 10,30" fill="none" stroke="#1e293b" stroke-width="2" />
+          
+          <!-- Home Plate -->
+          <polygon points="30,52 35,48 25,48" fill="#ffffff" stroke="#94a3b8" stroke-width="1" />
+
+          <!-- 1st Base (Right) -->
+          <rect x="44" y="24" width="10" height="10" transform="rotate(45 49 29)" fill="${fill1}" stroke="${stroke1}" stroke-width="1.5" ${filter1} />
+
+          <!-- 2nd Base (Top) -->
+          <rect x="25" y="5" width="10" height="10" transform="rotate(45 30 10)" fill="${fill2}" stroke="${stroke2}" stroke-width="1.5" ${filter2} />
+
+          <!-- 3rd Base (Left) -->
+          <rect x="6" y="24" width="10" height="10" transform="rotate(45 11 29)" fill="${fill3}" stroke="${stroke3}" stroke-width="1.5" ${filter3} />
+        </svg>
+      `;
+    }
+
+    // --- Render Baseball Scoreboard Card ---
+    function renderBaseballCard(board) {
+      const bb = board.baseball || {};
+      const bso = bb.bso || { balls: 0, strikes: 0, outs: 0 };
+      const rheb = bb.rheb || { away: { r: board.away_score, h: 0, e: 0, b: 0 }, home: { r: board.home_score, h: 0, e: 0, b: 0 } };
+      const innAway = bb.innings_away || [];
+      const innHome = bb.innings_home || [];
+
+      // BSO Lamps
+      const ballLamps = [1, 2, 3].map(i => `<span class="bso-lamp ${i <= bso.balls ? 'active-ball' : ''}"></span>`).join('');
+      const strikeLamps = [1, 2].map(i => `<span class="bso-lamp ${i <= bso.strikes ? 'active-strike' : ''}"></span>`).join('');
+      const outLamps = [1, 2].map(i => `<span class="bso-lamp ${i <= bso.outs ? 'active-out' : ''}"></span>`).join('');
+
+      // Linescore Cells
+      let headers = '';
+      let awayCells = '';
+      let homeCells = '';
+      for (let i = 1; i <= 9; i++) {
+        const isActive = (bb.active_inning_num === i && board.status === 'LIVE');
+        headers += `<th class="${isActive ? 'text-warning' : ''}">${i}</th>`;
+        awayCells += `<td class="${isActive && bb.active_half === '초' ? 'active-inn-cell' : ''}">${innAway[i - 1] !== undefined ? innAway[i - 1] : '-'}</td>`;
+        homeCells += `<td class="${isActive && bb.active_half === '말' ? 'active-inn-cell' : ''}">${innHome[i - 1] !== undefined ? innHome[i - 1] : '-'}</td>`;
+      }
+
+      return `
+        <div class="stadium-card" onclick="openScoreboardModal(${board.id})">
+          <!-- Top Bar -->
+          <div class="card-top-bar">
+            <div class="d-flex align-items-center gap-1.5 min-w-0">
+              <span class="league-tag">⚾ ${board.league_name.split(' ')[0]}</span>
+              <span class="stadium-name">${board.stadium}</span>
+            </div>
+            <div>
+              <span class="inning-badge ${board.status === 'FINISHED' ? 'finished' : ''}">
+                ${board.status === 'LIVE' ? '🔴 ' + bb.current_inning : (board.status === 'FINISHED' ? '경기종료' : '예정')}
+              </span>
+            </div>
+          </div>
+
+          <!-- Main Stage: Teams & Big LED Score -->
+          <div class="card-main-stage">
+            <!-- Away Team -->
+            <div class="team-block">
+              <div class="team-logo-circle">${board.away_team_name.substring(0, 2)}</div>
+              <div class="team-name-text">${board.away_team_name}</div>
+              <span class="team-side-badge">원정 (초)</span>
+            </div>
+
+            <!-- LED Score Center -->
+            <div class="score-center-block">
+              <div class="led-score-display">${board.away_score} : ${board.home_score}</div>
+              <div class="text-white-50 small" style="font-size: 0.65rem; font-weight: 700;">
+                ${board.status === 'LIVE' ? '<span class="text-danger">● LIVE</span>' : 'FINAL'}
+              </div>
+            </div>
+
+            <!-- Home Team -->
+            <div class="team-block">
+              <div class="team-logo-circle" style="border-color: #f59e0b;">${board.home_team_name.substring(0, 2)}</div>
+              <div class="team-name-text">${board.home_team_name}</div>
+              <span class="team-side-badge">홈 (말)</span>
+            </div>
+          </div>
+
+          <!-- Field Graphic & BSO Box -->
+          <div class="field-bso-box">
+            <!-- SVG Diamond -->
+            ${renderDiamondSvg(bb.runners)}
+
+            <!-- BSO Lamps -->
+            <div class="bso-column">
+              <div class="bso-row"><span class="bso-label text-success">B</span>${ballLamps}</div>
+              <div class="bso-row"><span class="bso-label text-danger">S</span>${strikeLamps}</div>
+              <div class="bso-row"><span class="bso-label text-warning">O</span>${outLamps}</div>
+            </div>
+
+            <!-- Pitcher / Batter Info -->
+            <div class="pitcher-batter-info">
+              <div><strong class="text-warning">P:</strong> ${bb.pitcher ? bb.pitcher.name : '선발'} (${bb.pitcher ? bb.pitcher.pitches : 0}구)</div>
+              <div><strong class="text-info">B:</strong> ${bb.batter ? bb.batter.name : '타자'} (${bb.batter ? bb.batter.today : ''})</div>
+            </div>
+          </div>
+
+          <!-- Linescore Matrix (1~9회) -->
+          <div class="linescore-wrap">
+            <table class="linescore-table">
+              <thead>
+                <tr>
+                  <th class="col-team">TEAM</th>
+                  ${headers}
+                  <th class="col-summary">R</th>
+                  <th>H</th>
+                  <th>E</th>
+                  <th>B</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="col-team">${board.away_team_name.substring(0, 3)}</td>
+                  ${awayCells}
+                  <td class="col-summary">${rheb.away.r}</td>
+                  <td>${rheb.away.h}</td>
+                  <td>${rheb.away.e}</td>
+                  <td>${rheb.away.b}</td>
+                </tr>
+                <tr>
+                  <td class="col-team">${board.home_team_name.substring(0, 3)}</td>
+                  ${homeCells}
+                  <td class="col-summary">${rheb.home.r}</td>
+                  <td>${rheb.home.h}</td>
+                  <td>${rheb.home.e}</td>
+                  <td>${rheb.home.b}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- Render Soccer Scoreboard Card ---
+    function renderSoccerCard(board) {
+      const sc = board.soccer || {
+        match_time: "75' (후반)",
+        possession: { home: 55, away: 45 },
+        shots: { home: 10, away: 6 },
+        shots_on_target: { home: 4, away: 2 },
+        corners: { home: 5, away: 3 },
+        fouls: { home: 8, away: 7 }
+      };
+
+      return `
+        <div class="stadium-card" onclick="openScoreboardModal(${board.id})">
+          <!-- Top Bar -->
+          <div class="card-top-bar">
+            <div class="d-flex align-items-center gap-1.5 min-w-0">
+              <span class="league-tag" style="color: #6ee7b7; border-color: #059669;">⚽ ${board.league_name.split(' ')[0]}</span>
+              <span class="stadium-name">${board.stadium}</span>
+            </div>
+            <div>
+              <span class="inning-badge" style="background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);">
+                ${sc.match_time}
+              </span>
+            </div>
+          </div>
+
+          <!-- Main Stage -->
+          <div class="card-main-stage">
+            <div class="team-block">
+              <div class="team-logo-circle">${board.away_team_name.substring(0, 2)}</div>
+              <div class="team-name-text">${board.away_team_name}</div>
+              <span class="team-side-badge">원정팀</span>
+            </div>
+
+            <div class="score-center-block">
+              <div class="led-score-display" style="color: #a7f3d0; text-shadow: var(--text-glow-green);">${board.away_score} : ${board.home_score}</div>
+              <div class="text-white-50 small" style="font-size: 0.65rem;">
+                <span class="text-success">● IN PLAY</span>
+              </div>
+            </div>
+
+            <div class="team-block">
+              <div class="team-logo-circle" style="border-color: #10b981;">${board.home_team_name.substring(0, 2)}</div>
+              <div class="team-name-text">${board.home_team_name}</div>
+              <span class="team-side-badge">홈팀</span>
+            </div>
+          </div>
+
+          <!-- Soccer Field Grass Stats -->
+          <div class="soccer-field-box">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span>점유율 ${sc.possession.away}%</span>
+              <span class="fw-bold text-warning">경기장 상황판</span>
+              <span>${sc.possession.home}% 점유율</span>
+            </div>
+            <div class="soccer-stat-bar-wrap">
+              <div style="width: ${sc.possession.away}%; background: #3b82f6;"></div>
+              <div style="width: ${sc.possession.home}%; background: #10b981;"></div>
+            </div>
+            <div class="d-flex justify-content-between text-white-50 mt-2" style="font-size: 0.7rem;">
+              <span>슈팅: ${sc.shots.away} (${sc.shots_on_target.away})</span>
+              <span>코너킥: ${sc.corners.away} : ${sc.corners.home}</span>
+              <span>슈팅: ${sc.shots.home} (${sc.shots_on_target.home})</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- Render All Boards ---
+    function renderBoards(boards) {
+      const container = document.getElementById('boardGridContainer');
+      if (!boards || boards.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-5 w-100" style="grid-column: 1 / -1;">
+            <i class="bi bi-info-circle fs-2 text-warning"></i>
+            <div class="mt-2 text-white-50">현재 선택된 조건의 실시간 경기가 없습니다.</div>
+          </div>
+        `;
+        return;
+      }
+
+      // Filter by sport
+      let filtered = boards;
+      if (currentSportFilter !== 'ALL') {
+        filtered = boards.filter(b => b.sport_code === currentSportFilter);
+      }
+
+      // Slice to currentGridMode
+      const targetList = filtered.slice(0, currentGridMode);
+
+      let html = '';
+      targetList.forEach(board => {
+        if (board.sport_code === 'BASEBALL') {
+          html += renderBaseballCard(board);
+        } else {
+          html += renderSoccerCard(board);
+        }
+      });
+
+      container.innerHTML = html;
+    }
+
+    // --- Mobile Top Bar Tabs ---
+    function renderMobileTabs(boards) {
+      const container = document.getElementById('mobileTabBarContainer');
+      if (!container) return;
+
+      let html = '';
+      boards.slice(0, 8).forEach((b, idx) => {
+        const isActive = (idx === 0);
+        html += `
+          <div class="mob-tab-item ${isActive ? 'active' : ''}" onclick="selectMobileMatchTab(${b.id}, this)">
+            ${b.sport_code === 'BASEBALL' ? '⚾' : '⚽'} ${b.away_team_name.substring(0, 3)} vs ${b.home_team_name.substring(0, 3)}
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function selectMobileMatchTab(matchId, el) {
+      document.querySelectorAll('.mob-tab-item').forEach(item => item.classList.remove('active'));
+      if (el) el.classList.add('active');
+      openScoreboardModal(matchId);
+    }
+
+    // --- Open Fullscreen Stadium Scoreboard Modal ---
+    function openScoreboardModal(matchId) {
+      const board = cachedLiveBoards.find(b => b.id === matchId);
+      if (!board) return;
+
+      playStadiumTone(board.sport_code === 'BASEBALL' ? 'hit' : 'goal');
+
+      const modalContent = document.getElementById('modalDetailContent');
+      const isBaseball = board.sport_code === 'BASEBALL';
+      const bb = board.baseball || {};
+      const rheb = bb.rheb || { away: { r: board.away_score, h: 0, e: 0, b: 0 }, home: { r: board.home_score, h: 0, e: 0, b: 0 } };
+
+      modalContent.innerHTML = `
+        <div class="modal-header border-0 pb-0" style="background: #0b1329;">
+          <div>
+            <span class="badge bg-danger me-2">🔴 LIVE 전광판 정밀 확대</span>
+            <span class="text-white-50 small">${board.league_name} | ${board.stadium} (${board.match_date})</span>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4" style="background: #070b14;">
+          <!-- Big Scoreboard Center -->
+          <div class="text-center py-3 mb-4 rounded-3" style="background: linear-gradient(180deg, #0f172a 0%, #080d1a 100%); border: 2px solid #1e293b;">
+            <div class="row align-items-center">
+              <div class="col-4">
+                <h3 class="fw-bold text-white mb-1">${board.away_team_name}</h3>
+                <span class="text-white-50 small">선발: ${board.away_starter_name}</span>
+              </div>
+              <div class="col-4">
+                <div class="led-score-display" style="font-size: 3.5rem;">${board.away_score} : ${board.home_score}</div>
+                <div class="badge bg-warning text-dark fw-bold mt-1 px-3 py-1">
+                  ${isBaseball ? bb.current_inning : 'IN PLAY'}
+                </div>
+              </div>
+              <div class="col-4">
+                <h3 class="fw-bold text-white mb-1">${board.home_team_name}</h3>
+                <span class="text-white-50 small">선발: ${board.home_starter_name}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Stadium Graphic Section -->
+          ${isBaseball ? `
+            <div class="p-3 rounded-3 mb-3" style="background: #080d1a; border: 1.5px solid #1e293b;">
+              <h6 class="text-warning fw-bold mb-3"><i class="bi bi-broadcast me-2"></i>야구장 다이아몬드 및 실시간 볼카운트</h6>
+              <div class="d-flex flex-wrap align-items-center justify-content-around gap-3">
+                <div>
+                  <div class="text-center text-white-50 small mb-1">주자 현황</div>
+                  ${renderDiamondSvg(bb.runners)}
+                </div>
+                <div class="p-3 rounded-2" style="background: #0b1329; border: 1px solid #1e293b; min-width: 200px;">
+                  <div class="d-flex justify-content-between mb-1">
+                    <span class="text-success fw-bold">BALL</span>
+                    <span>${'🟢 '.repeat(bb.bso ? bb.bso.balls : 0)}</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-1">
+                    <span class="text-danger fw-bold">STRIKE</span>
+                    <span>${'🔴 '.repeat(bb.bso ? bb.bso.strikes : 0)}</span>
+                  </div>
+                  <div class="d-flex justify-content-between">
+                    <span class="text-warning fw-bold">OUT</span>
+                    <span>${'🟡 '.repeat(bb.bso ? bb.bso.outs : 0)}</span>
+                  </div>
+                </div>
+                <div class="p-3 rounded-2 text-white-50" style="background: #0b1329; border: 1px solid #1e293b; font-size: 0.82rem;">
+                  <div><strong class="text-white">투수:</strong> ${bb.pitcher ? bb.pitcher.name : ''} (투구수: ${bb.pitcher ? bb.pitcher.pitches : 0}구 | ERA: ${bb.pitcher ? bb.pitcher.era : ''})</div>
+                  <div class="mt-1"><strong class="text-white">타자:</strong> ${bb.batter ? bb.batter.name : ''} (타율: ${bb.batter ? bb.batter.avg : ''} | ${bb.batter ? bb.batter.today : ''})</div>
+                </div>
+              </div>
+            </div>
+          ` : `
+            <div class="p-3 rounded-3 mb-3 soccer-field-box">
+              <h6 class="text-success fw-bold mb-2"><i class="bi bi-dribbble me-2"></i>경기장 필드 현황</h6>
+              <div class="row text-center mt-3">
+                <div class="col-4">
+                  <div class="fs-4 fw-bold text-info">${board.soccer ? board.soccer.possession.away : 50}%</div>
+                  <div class="text-white-50 small">점유율</div>
+                </div>
+                <div class="col-4">
+                  <div class="fs-4 fw-bold text-warning">${board.soccer ? board.soccer.shots.away : 0} : ${board.soccer ? board.soccer.shots.home : 0}</div>
+                  <div class="text-white-50 small">총 슈팅</div>
+                </div>
+                <div class="col-4">
+                  <div class="fs-4 fw-bold text-success">${board.soccer ? board.soccer.possession.home : 50}%</div>
+                  <div class="text-white-50 small">점유율</div>
+                </div>
+              </div>
+            </div>
+          `}
+        </div>
+        <div class="modal-footer border-0" style="background: #0b1329;">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">닫기</button>
+          <a href="/analytics" class="btn btn-primary btn-sm fw-bold">정밀 분석실 바로가기</a>
+        </div>
+      `;
+
+      const modal = new bootstrap.Modal(document.getElementById('stadiumDetailModal'));
+      modal.show();
+    }
+
+    // --- Auto Refresh Loop ---
+    function startAutoRefreshLoop() {
+      if (refreshTimerInterval) clearInterval(refreshTimerInterval);
+      refreshTimerInterval = setInterval(() => {
+        autoRefreshCountdown--;
+        const timerEl = document.getElementById('refreshTimer');
+        if (timerEl) timerEl.innerText = `${autoRefreshCountdown}s`;
+
+        if (autoRefreshCountdown <= 0) {
+          autoRefreshCountdown = 10;
+          refreshLiveBoards();
+        }
+      }, 1000);
+    }
+
+    // --- Init on Page Load ---
+    document.addEventListener('DOMContentLoaded', () => {
+      refreshLiveBoards();
+      startAutoRefreshLoop();
+    });
+  </script>
+</body>
+</html>

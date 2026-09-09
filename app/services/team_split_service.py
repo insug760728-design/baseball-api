@@ -1164,7 +1164,7 @@ VERIFIED_PITCHER_3_STARTS = {
     }
 }
 
-def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, team_name: str, throws: str = "우완", league_name: Optional[str] = None) -> Dict[str, Any]:
+def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, team_name: str, throws: str = "우완", league_name: Optional[str] = None, allow_remote: bool = True) -> Dict[str, Any]:
     c = conn.cursor()
     
     # 0. Check Verified Authentic Pitcher Starts Map
@@ -1347,8 +1347,8 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
         if len(starts) >= 3:
             break
 
-    # MLB 투수인데 로컬 DB에 3경기 미만인 경우: 공식 MLB Stats API에서 100% 공식 실시간 등판기록 수집
-    if len(starts) < 3 and is_mlb:
+    # MLB 투수인데 로컬 DB에 3경기 미만인 경우: 공식 MLB Stats API에서 100% 공식 실시간 등판기록 수집 (allow_remote=True일 때만)
+    if allow_remote and len(starts) < 3 and is_mlb:
         official_starts = fetch_mlb_pitcher_official_starts(pitcher_name, limit=3)
         for ost in official_starts:
             if any(is_duplicate_pitcher_start(s, ost) for s in starts):
@@ -3382,13 +3382,13 @@ class TeamSplitService:
             rec_diff = (h_rec_w - a_rec_w) * 0.015
             prob_home = min(0.89, max(0.11, prob_home + rec_diff))
 
-            # Fetch starting pitcher stats if names are announced
-            if starter_h or starter_a:
+            # Fetch starting pitcher stats if names are announced (only for active/scheduled matches, local only)
+            if status != "FINISHED" and (starter_h or starter_a):
                 try:
                     c_conn_qp = sqlite3.connect("sports_data.db", timeout=3.0)
                     if starter_h and is_valid_starter_name(starter_h):
                         sh_clean = starter_h.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
-                        sh_data = _get_pitcher_recent_3_starts(c_conn_qp, sh_clean, home_team, "우완", league_name=league_name)
+                        sh_data = _get_pitcher_recent_3_starts(c_conn_qp, sh_clean, home_team, "우완", league_name=league_name, allow_remote=False)
                         if sh_data and "summary" in sh_data:
                             era_str = sh_data["summary"].get("era_3g") or sh_data["summary"].get("season_era")
                             if era_str and era_str != "-":
@@ -3396,7 +3396,7 @@ class TeamSplitService:
                                 except: pass
                     if starter_a and is_valid_starter_name(starter_a):
                         sa_clean = starter_a.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
-                        sa_data = _get_pitcher_recent_3_starts(c_conn_qp, sa_clean, away_team, "우완", league_name=league_name)
+                        sa_data = _get_pitcher_recent_3_starts(c_conn_qp, sa_clean, away_team, "우완", league_name=league_name, allow_remote=False)
                         if sa_data and "summary" in sa_data:
                             era_str = sa_data["summary"].get("era_3g") or sa_data["summary"].get("season_era")
                             if era_str and era_str != "-":

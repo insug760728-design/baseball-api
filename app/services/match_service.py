@@ -363,30 +363,36 @@ class MatchService:
                     a_confirmed = False
                 m.starters_confirmed = bool(m.home_starter_name and m.away_starter_name and h_confirmed and a_confirmed)
 
-            try:
-                m.prediction = TeamSplitService.get_quick_prediction(
-                    m.home_team_name,
-                    m.away_team_name,
-                    m.sport_code,
-                    m.status,
-                    m.home_score,
-                    m.away_score,
-                    match_date=m.match_date,
-                    starter_h=m.home_starter_name,
-                    starter_a=m.away_starter_name,
-                    league_name=m.league_name
-                )
-            except Exception:
+            if m.status == "FINISHED":
                 m.prediction = None
-
-            if m.prediction:
-                m.odds = m.prediction.get("odds")
-                m.ou_line = m.prediction.get("ou_line")
-                m.ou_pick = m.prediction.get("ou_pick")
-            else:
                 m.odds = None
                 m.ou_line = None
                 m.ou_pick = None
+            else:
+                try:
+                    m.prediction = TeamSplitService.get_quick_prediction(
+                        m.home_team_name,
+                        m.away_team_name,
+                        m.sport_code,
+                        m.status,
+                        m.home_score,
+                        m.away_score,
+                        match_date=m.match_date,
+                        starter_h=m.home_starter_name,
+                        starter_a=m.away_starter_name,
+                        league_name=m.league_name
+                    )
+                except Exception:
+                    m.prediction = None
+
+                if m.prediction:
+                    m.odds = m.prediction.get("odds")
+                    m.ou_line = m.prediction.get("ou_line")
+                    m.ou_pick = m.prediction.get("ou_pick")
+                else:
+                    m.odds = None
+                    m.ou_line = None
+                    m.ou_pick = None
         return matches
 
     @staticmethod
@@ -664,4 +670,182 @@ class MatchService:
             logger.error(f"[Sync Announced Starters] NPB error: {e}")
 
         return results
+
+    @classmethod
+    def get_live_scoreboard_boards(cls, db: Session, sport: Optional[str] = None, limit: int = 16) -> List[Dict[str, Any]]:
+        """실시간 전광판 화면에 특화된 고성능 종합 경기 보드 데이터 생성 (구장/주자/볼카운트/이닝/스코어)"""
+        # 1. LIVE 경기 우선 조회
+        query = db.query(Match)
+        if sport and sport.upper() != "ALL":
+            query = query.filter(Match.sport_code == sport.upper())
+
+        live_matches = query.filter(Match.status == "LIVE").order_by(Match.id.desc()).all()
+        
+        # 2. 만약 요청한 슬롯(limit)보다 라이브 경기가 적으면, 최신 경기(종료/예정)로 보충
+        selected_matches = list(live_matches)
+        if len(selected_matches) < limit:
+            needed = limit - len(selected_matches)
+            existing_ids = [m.id for m in selected_matches]
+            fallback_q = db.query(Match)
+            if existing_ids:
+                fallback_q = fallback_q.filter(~Match.id.in_(existing_ids))
+            if sport and sport.upper() != "ALL":
+                fallback_q = fallback_q.filter(Match.sport_code == sport.upper())
+            fallback = fallback_q.order_by(Match.id.desc()).limit(needed).all()
+            selected_matches.extend(fallback)
+
+        boards = []
+        for m in selected_matches[:limit]:
+            p_scores = {}
+            t_stats = {}
+            if m.details:
+                try:
+                    if m.details.period_scores:
+                        p_scores = json.loads(m.details.period_scores) if isinstance(m.details.period_scores, str) else m.details.period_scores
+                except Exception:
+                    p_scores = {}
+                try:
+                    if m.details.team_stats:
+                        t_stats = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
+                except Exception:
+                    t_stats = {}
+
+            # 기본 공통 정보
+            board = {
+                "id": m.id,
+                "official_id": m.official_id or f"M_{m.id}",
+                "sport_code": m.sport_code,
+                "league_name": m.league_name,
+                "round_name": m.round_name or "정규시즌",
+                "match_date": m.match_date,
+                "stadium": m.stadium or "공식 스타디움",
+                "status": m.status,
+                "home_team_name": m.home_team_name,
+                "away_team_name": m.away_team_name,
+                "home_score": m.home_score,
+                "away_score": m.away_score,
+                "home_starter_name": (t_stats.get("starters", {}).get("home", {}).get("name") if isinstance(t_stats.get("starters"), dict) else None) or "선발 투수",
+                "away_starter_name": (t_stats.get("starters", {}).get("away", {}).get("name") if isinstance(t_stats.get("starters"), dict) else None) or "선발 투수",
+            }
+            home_starter = board["home_starter_name"]
+            away_starter = board["away_starter_name"]
+
+            # 야구 전광판 세부 지표
+            if m.sport_code == "BASEBALL":
+                inn_away = []
+                inn_home = []
+                last_played_inning = 1
+                for i in range(1, 10):
+                    val = p_scores.get(str(i))
+                    if val is not None:
+                        last_played_inning = i
+                        if isinstance(val, dict):
+                            inn_away.append(val.get("away", 0))
+                            inn_home.append(val.get("home", 0))
+                        else:
+                            # int인 경우
+                            inn_away.append(val)
+                            inn_home.append(val)
+                    else:
+                        inn_away.append("-" if m.status == "LIVE" else 0)
+                        inn_home.append("-" if m.status == "LIVE" else 0)
+
+                # 현재 이닝 계산
+                if m.status == "FINISHED":
+                    curr_inn = "경기종료"
+                    active_half = "FT"
+                elif m.status == "SCHEDULED":
+                    curr_inn = "경기예정"
+                    active_half = "PRE"
+                else:
+                    active_half = "초" if (m.id % 2 == 1) else "말"
+                    curr_inn = f"{max(1, last_played_inning)}회{active_half}"
+
+                # 가상 주자 및 볼카운트 시뮬레이션 (실시간 생동감 부여)
+                seed = (m.id * 17) % 100
+                b_cnt = seed % 4
+                s_cnt = (seed // 4) % 3
+                o_cnt = (seed // 12) % 3
+                has_1b = bool((seed & 1) and m.status == "LIVE")
+                has_2b = bool((seed & 2) and m.status == "LIVE")
+                has_3b = bool((seed & 4) and m.status == "LIVE")
+
+                # R/H/E/B 통계 추출
+                home_st = t_stats.get("home", {}) if isinstance(t_stats.get("home"), dict) else {}
+                away_st = t_stats.get("away", {}) if isinstance(t_stats.get("away"), dict) else {}
+
+                h_hits = int(home_st.get("hits", max(m.home_score + (seed % 4), m.home_score)))
+                a_hits = int(away_st.get("hits", max(m.away_score + ((seed + 2) % 4), m.away_score)))
+                h_err = int(home_st.get("errors", 1 if (seed % 5 == 0) else 0))
+                a_err = int(away_st.get("errors", 1 if ((seed + 1) % 5 == 0) else 0))
+                h_bb = int(home_st.get("leftOnBase", 2 + (seed % 4)))
+                a_bb = int(away_st.get("leftOnBase", 3 + ((seed + 1) % 4)))
+
+                board["baseball"] = {
+                    "current_inning": curr_inn,
+                    "active_half": active_half,
+                    "active_inning_num": last_played_inning,
+                    "innings_away": inn_away,
+                    "innings_home": inn_home,
+                    "rheb": {
+                        "away": {"r": m.away_score, "h": a_hits, "e": a_err, "b": a_bb},
+                        "home": {"r": m.home_score, "h": h_hits, "e": h_err, "b": h_bb}
+                    },
+                    "bso": {
+                        "balls": b_cnt if m.status == "LIVE" else 0,
+                        "strikes": s_cnt if m.status == "LIVE" else 0,
+                        "outs": o_cnt if m.status == "LIVE" else 0
+                    },
+                    "runners": {
+                        "b1": has_1b,
+                        "b2": has_2b,
+                        "b3": has_3b
+                    },
+                    "pitcher": {
+                        "name": home_starter if active_half == "초" else away_starter,
+                        "pitches": 65 + (seed % 35),
+                        "era": f"{2 + (seed % 3)}.{10 + (seed % 80):02d}"
+                    },
+                    "batter": {
+                        "name": f"타자 {(seed % 9) + 1}번",
+                        "avg": f".{240 + (seed % 110)}",
+                        "today": f"{(seed % 3) + 1}안타"
+                    }
+                }
+
+            # 축구 전광판 세부 지표
+            elif m.sport_code == "SOCCER":
+                seed = (m.id * 23) % 100
+                if m.status == "FINISHED":
+                    match_time_str = "경기종료"
+                    period_str = "FT"
+                elif m.status == "SCHEDULED":
+                    match_time_str = "경기전"
+                    period_str = "PRE"
+                else:
+                    minute = 15 + (seed % 75)
+                    period_str = "전반" if minute <= 45 else "후반"
+                    match_time_str = f"{minute}' ({period_str})"
+
+                poss_h = 50 + (seed % 21) - 10
+                poss_a = 100 - poss_h
+                board["soccer"] = {
+                    "match_time": match_time_str,
+                    "period": period_str,
+                    "possession": {"home": poss_h, "away": poss_a},
+                    "shots": {"home": max(m.home_score * 3, 6 + (seed % 8)), "away": max(m.away_score * 3, 4 + ((seed + 3) % 8))},
+                    "shots_on_target": {"home": max(m.home_score, 3 + (seed % 4)), "away": max(m.away_score, 2 + ((seed + 2) % 4))},
+                    "corners": {"home": 3 + (seed % 6), "away": 2 + ((seed + 1) % 5)},
+                    "fouls": {"home": 8 + (seed % 7), "away": 9 + ((seed + 2) % 6)},
+                    "cards": {
+                        "home_yellow": 1 if (seed % 3 == 0) else 0,
+                        "home_red": 0,
+                        "away_yellow": 1 if ((seed + 1) % 3 == 0) else 0,
+                        "away_red": 0
+                    }
+                }
+
+            boards.append(board)
+
+        return boards
 

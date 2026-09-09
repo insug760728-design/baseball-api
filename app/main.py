@@ -153,6 +153,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 landing_path = os.path.join(current_dir, "templates", "landing.html")
 b2b_portal_path = os.path.join(current_dir, "templates", "b2b_api_portal.html")
 dashboard_path = os.path.join(current_dir, "templates", "index.html")
+live_center_path = os.path.join(current_dir, "templates", "live_center.html")
 
 _PORTAL_HTML_CACHE = {"path": "", "content": "", "mtime": 0, "etag": ""}
 
@@ -239,6 +240,19 @@ def admin_dashboard(request: Request):
         return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
     except Exception as e:
         return HTMLResponse(content=f"<h1>대시보드 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
+
+@app.get("/live", response_class=HTMLResponse, summary="PC/모바일 실시간 라이브 전광판 중계센터 (4/6/8/12 멀티뷰)")
+@app.get("/live-center", response_class=HTMLResponse)
+def live_center_portal(request: Request):
+    try:
+        target = live_center_path if os.path.exists(live_center_path) else landing_path
+        content, etag = get_portal_html(target)
+        client_etag = request.headers.get("if-none-match")
+        if client_etag and client_etag == etag:
+            return Response(status_code=304, headers={"ETag": etag, "Cache-Control": "no-cache, no-store, must-revalidate"})
+        return HTMLResponse(content=content, headers={"ETag": etag, "Cache-Control": "no-cache, no-store, must-revalidate"})
+    except Exception as e:
+        return HTMLResponse(content=f"<h1>라이브 센터 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
 
 def generate_timeline_widget_html(match_data: dict, events: list) -> str:
     ev_html = ""
