@@ -22,7 +22,7 @@ class SchedulerService:
         "hour": 0,
         "minute": 0,
         "enabled": True,
-        "leagues": ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "NBA"]
+        "leagues": ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS", "UCL", "CHAMPIONSHIP", "ENGLAND_CUP", "EREDIVISIE", "NBA", "KBL"]
     }
     _last_run_info: Dict[str, Any] = {
         "last_run_time": None,
@@ -239,7 +239,7 @@ class SchedulerService:
         d3_str = (start_time + timedelta(days=3)).strftime("%Y-%m-%d")
 
         try:
-            active_leagues = cls._config.get("leagues", ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "NBA"])
+            active_leagues = cls._config.get("leagues", ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS", "UCL", "CHAMPIONSHIP", "ENGLAND_CUP", "EREDIVISIE", "NBA", "KBL"])
             for lid in active_leagues:
                 try:
                     res = MatchService.sync_from_official_site(

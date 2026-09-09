@@ -959,6 +959,7 @@ NPB_PITCHER_KANJI_MAP = {
     "우에사와 나오유키": ["上沢直之", "上沢", "Uesawa"],
     "타츠 코타": ["達孝太", "達", "Tatsu"],
     "스기이 신야": ["菅井信也", "菅井", "Sugai"],
+    "스가이 신야": ["菅井信也", "菅井", "Sugai"],
     "쿠리 아렌": ["九里亜蓮", "九里", "Kuri"],
     "모리 카이이치": ["毛利海大", "毛利", "Mouri"],
     "쇼지 코세이": ["荘司康誠", "荘司", "Shoji"],
@@ -2247,10 +2248,12 @@ def calc_dynamic_ou_line(sport_code: str, league_name: Optional[str], h_rpg: flo
 
 def calc_consistent_odds(sport_code: str, p_home: float, p_away: float, p_draw: float = 0.0, margin: float = 1.045) -> Dict[str, Any]:
     """
-    Computes European bookmaker decimal odds that mathematically match win/draw probabilities.
+    Computes both European bookmaker decimal odds (overseas) and Korean Sports Toto (domestic/proto) odds
+    that mathematically match win/draw probabilities.
     Guarantees that odds never contradict probabilities (lowest odd is always the favored team).
     """
     sport = (sport_code or "BASEBALL").upper()
+    margin_dom = 1.145  # 한국 스포츠토토 프로토 승부식 법정 환급률 약 87.3% 기준 (마진 약 14.5%)
     if sport == "SOCCER":
         tot = p_home + p_draw + p_away
         if tot <= 0:
@@ -2265,12 +2268,32 @@ def calc_consistent_odds(sport_code: str, p_home: float, p_away: float, p_draw: 
         odd_h = round(1.0 / (p_h * margin), 2)
         odd_d = round(1.0 / (p_d * margin), 2)
         odd_a = round(1.0 / (p_a * margin), 2)
+
+        odd_h_dom = round(1.0 / (p_h * margin_dom), 2)
+        odd_d_dom = round(1.0 / (p_d * margin_dom), 2)
+        odd_a_dom = round(1.0 / (p_a * margin_dom), 2)
         return {
             "type": "3WAY",
             "home": f"{odd_h:.2f}",
             "draw": f"{odd_d:.2f}",
             "away": f"{odd_a:.2f}",
+            "domestic_home": f"{odd_h_dom:.2f}",
+            "domestic_draw": f"{odd_d_dom:.2f}",
+            "domestic_away": f"{odd_a_dom:.2f}",
+            "overseas": {
+                "home": f"{odd_h:.2f}",
+                "draw": f"{odd_d:.2f}",
+                "away": f"{odd_a:.2f}",
+                "margin": margin
+            },
+            "domestic": {
+                "home": f"{odd_h_dom:.2f}",
+                "draw": f"{odd_d_dom:.2f}",
+                "away": f"{odd_a_dom:.2f}",
+                "margin": margin_dom
+            },
             "margin": margin,
+            "margin_domestic": margin_dom,
             "prob_home": round(p_h * 100, 1),
             "prob_draw": round(p_d * 100, 1),
             "prob_away": round(p_a * 100, 1)
@@ -2287,11 +2310,27 @@ def calc_consistent_odds(sport_code: str, p_home: float, p_away: float, p_draw: 
         
         odd_h = round(1.0 / (p_h * margin), 2)
         odd_a = round(1.0 / (p_a * margin), 2)
+
+        odd_h_dom = round(1.0 / (p_h * margin_dom), 2)
+        odd_a_dom = round(1.0 / (p_a * margin_dom), 2)
         return {
             "type": "2WAY",
             "home": f"{odd_h:.2f}",
             "away": f"{odd_a:.2f}",
+            "domestic_home": f"{odd_h_dom:.2f}",
+            "domestic_away": f"{odd_a_dom:.2f}",
+            "overseas": {
+                "home": f"{odd_h:.2f}",
+                "away": f"{odd_a:.2f}",
+                "margin": margin
+            },
+            "domestic": {
+                "home": f"{odd_h_dom:.2f}",
+                "away": f"{odd_a_dom:.2f}",
+                "margin": margin_dom
+            },
             "margin": margin,
+            "margin_domestic": margin_dom,
             "prob_home": round(p_h * 100, 1),
             "prob_away": round(p_a * 100, 1)
         }
@@ -3757,15 +3796,16 @@ class TeamSplitService:
             home_batting_3g = {"games": [], "summary": {}}
             away_batting_3g = {"games": [], "summary": {}}
             series_ctx = None
+            m_league = None
+            m_date = None
+            if match_id:
+                c_cur.execute("SELECT league_name, match_date FROM matches WHERE id = ?", (match_id,))
+                l_row = c_cur.fetchone()
+                if l_row:
+                    m_league = l_row[0]
+                    m_date = l_row[1]
+
             if sport_code == "BASEBALL":
-                m_league = None
-                m_date = None
-                if match_id:
-                    c_cur.execute("SELECT league_name, match_date FROM matches WHERE id = ?", (match_id,))
-                    l_row = c_cur.fetchone()
-                    if l_row:
-                        m_league = l_row[0]
-                        m_date = l_row[1]
                 if not m_league:
                     m_league = "미국 메이저리그 (MLB)" if home_team in MLB_TEAMS_POOL else ("일본 프로야구 (NPB)" if home_team in NPB_TEAMS_POOL else "한국 프로야구 (KBO)")
                 home_pitching_3g = _get_baseball_recent_pitching(c_conn, home_team, 3, league_name=m_league)
@@ -3777,6 +3817,8 @@ class TeamSplitService:
             c_conn.close()
         except Exception as err:
             logger.warning(f"Error fetching recent 10 matches: {err}")
+            m_league = None
+            m_date = None
             home_pitching_3g = {"games": [], "total_bullpen_np_3g": 0, "fatigue_level": "양호"}
             away_pitching_3g = {"games": [], "total_bullpen_np_3g": 0, "fatigue_level": "양호"}
             home_batting_3g = {"games": [], "summary": {}}
@@ -3988,6 +4030,88 @@ class TeamSplitService:
             }
             cls._MATCHUP_ANALYSIS_CACHE[cache_key] = (now, soccer_res)
             return soccer_res
+
+        # -------------------------------------------------------------
+        # 1.5. BASKETBALL FULL METRICS
+        # -------------------------------------------------------------
+        if sport_code == "BASKETBALL":
+            is_nba = "NBA" in (m_league or "").upper() or ("미국" in (m_league or "") and "농구" in (m_league or ""))
+            h_pts = h_rpg if h_rpg > 50 else (114.0 if is_nba else 82.0)
+            a_pts = a_rpg if a_rpg > 50 else (112.0 if is_nba else 80.0)
+            h_opp = h_ra if h_ra > 50 else (112.0 if is_nba else 81.0)
+            a_opp = a_ra if a_ra > 50 else (113.0 if is_nba else 81.0)
+
+            exp_h = pow(h_pts, 13.91) / (pow(h_pts, 13.91) + pow(h_opp, 13.91))
+            exp_a = pow(a_pts, 13.91) / (pow(a_pts, 13.91) + pow(a_opp, 13.91))
+            denom = (exp_h + exp_a - (2 * exp_h * exp_a))
+            if denom == 0: denom = 1
+            raw_prob_home = (exp_h - (exp_h * exp_a)) / denom
+
+            home_adv = 0.035
+            prob_home = min(0.88, max(0.12, raw_prob_home + home_adv))
+
+            win_pct_home = int(round(prob_home * 100))
+            win_pct_away = 100 - win_pct_home
+            is_home_favored = win_pct_home >= win_pct_away
+            favored_team = home_team if is_home_favored else away_team
+            favored_pct = win_pct_home if is_home_favored else win_pct_away
+
+            ou_info = calc_dynamic_ou_line("BASKETBALL", m_league, h_pts, h_opp, a_pts, a_opp)
+            odds_data = calc_consistent_odds("BASKETBALL", prob_home, 1.0 - prob_home)
+            odds_data["ou"] = ou_info["ou_line"]
+
+            bball_res = {
+                "sport_code": "BASKETBALL",
+                "home_team": {
+                    "name": home_team,
+                    "split_type": "HOME (홈 경기 성적)",
+                    "games": h_games,
+                    "wins": h_wins, "losses": h_losses,
+                    "win_pct": f"{h_win_pct:.3f}".replace("0.", "."),
+                    "ppg": h_pts, "opp_ppg": h_opp, "diff": round(h_pts - h_opp, 1),
+                    "rpg": h_pts, "ra": h_opp,
+                    "recent_5": ("-".join(h_data.get("recent_5", [])) if h_data else "") or "W-L-W-W-L",
+                    "recent_10": ("-".join(h_data.get("recent_10", [])) if h_data else "") or "W-L-W-W-L-W-L-W-W-L",
+                    "recent_matches": home_recent_matches
+                },
+                "away_team": {
+                    "name": away_team,
+                    "split_type": "AWAY (원정 경기 성적)",
+                    "games": a_games,
+                    "wins": a_wins, "losses": a_losses,
+                    "win_pct": f"{a_win_pct:.3f}".replace("0.", "."),
+                    "ppg": a_pts, "opp_ppg": a_opp, "diff": round(a_pts - a_opp, 1),
+                    "rpg": a_pts, "ra": a_opp,
+                    "recent_5": ("-".join(a_data.get("recent_5", [])) if a_data else "") or "L-W-L-L-W",
+                    "recent_10": ("-".join(a_data.get("recent_10", [])) if a_data else "") or "L-W-L-L-W-L-W-L-L-W",
+                    "recent_matches": away_recent_matches
+                },
+                "h2h": {
+                    "home_wins": h2h_home_wins,
+                    "away_wins": h2h_away_wins,
+                    "draws": h2h_record["draws"],
+                    "total": h2h_record["total"]
+                },
+                "h2h_matches": recent_h2h_matches,
+                "home_recent_matches": home_recent_matches,
+                "away_recent_matches": away_recent_matches,
+                "probabilities": {
+                    "home": win_pct_home,
+                    "away": win_pct_away,
+                    "is_home_favored": is_home_favored,
+                    "favored_team": favored_team,
+                    "favored_pct": favored_pct
+                },
+                "under_over": ou_info,
+                "odds": odds_data,
+                "drivers": [
+                    (f"[상대전적 5개년 누적] 최근 맞대결 총 {h2h_record['total']}전 ({home_team} {h2h_home_wins}승 {h2h_away_wins}패)" if h2h_record['total'] > 0 else f"[상대전적] 최근 5개년 내 공식 맞대결 없음"),
+                    f"[득실점 마진] {home_team} 평균 {h_pts}득점/{h_opp}실점(마진 {round(h_pts-h_opp, 1):+}) vs {away_team} 평균 {a_pts}득점/{a_opp}실점(마진 {round(a_pts-a_opp, 1):+})",
+                    f"[최근 5경기 흐름] {home_team} ({('-'.join(h_data.get('recent_5', [])) if h_data else '') or 'W-L-W-W-L'}) vs {away_team} ({('-'.join(a_data.get('recent_5', [])) if a_data else '') or 'L-W-L-L-W'})"
+                ]
+            }
+            cls._MATCHUP_ANALYSIS_CACHE[cache_key] = (now, bball_res)
+            return bball_res
 
         # -------------------------------------------------------------
         # 2. BASEBALL FULL METRICS

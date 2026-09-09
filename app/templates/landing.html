@@ -1585,6 +1585,22 @@
                 <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportVOLLEYBALL" onclick="filterPredSport('VOLLEYBALL')">🏐 배구</button>
               </div>
 
+              <!-- 🌐 주요 리그 퀵 필터 칩 바 (MLS, EPL, UCL, 라리가, MLB, KBO, NPB, NBA, KBL 등) -->
+              <div class="d-flex gap-1 overflow-x-auto py-1" id="predLeagueBar" style="scrollbar-width: none;">
+                <button class="btn btn-xs league-chip-btn active text-nowrap" id="predLeagueALL" onclick="filterPredLeague('ALL')">전체 리그</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueMLS" onclick="filterPredLeague('MLS')">🇺🇸 MLS</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueEPL" onclick="filterPredLeague('EPL')">🏴󠁧󠁢󠁥󠁮󠁧󠁿 EPL</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueUCL" onclick="filterPredLeague('UCL')">🇪🇺 UCL</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueCHAMPIONSHIP" onclick="filterPredLeague('CHAMPIONSHIP')">🏴󠁧󠁢󠁥󠁮󠁧󠁿 챔피언십</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueENGLAND_CUP" onclick="filterPredLeague('ENGLAND_CUP')">🏆 카라바오/FA</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueLALIGA" onclick="filterPredLeague('LALIGA')">🇪🇸 라리가</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueMLB" onclick="filterPredLeague('MLB')">⚾ MLB</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueKBO" onclick="filterPredLeague('KBO')">🇰🇷 KBO</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueNPB" onclick="filterPredLeague('NPB')">🇯🇵 NPB</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueNBA" onclick="filterPredLeague('NBA')">🏀 NBA</button>
+                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueKBL" onclick="filterPredLeague('KBL')">🇰🇷 KBL</button>
+              </div>
+
               <!-- 🏆 배트맨 공식 14경기 승무패 / 승1패 / 승5패 전용 팝업 퀵 바 -->
               <div class="d-flex align-items-center gap-1 mt-1.5 p-1 rounded-2" style="background: #0f172a; border: 1.5px solid #0f172a; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);">
                 <span class="badge bg-warning text-dark fw-bold px-1.5 py-1 text-nowrap flex-shrink-0" style="font-size: 0.68rem; letter-spacing: -0.3px;">
@@ -2954,10 +2970,12 @@
       if (archiveLoadingPromise) return archiveLoadingPromise;
       archiveLoadingPromise = (async () => {
         try {
-          // 🚀 모바일 및 서버 부하 방지: 대량 1200건 전수 쿼리 대신 실시간에 필요한 200건/100건으로 최적화
+          // 🚀 롤링 윈도우 기반 연속 페칭 (어제 D-1 12:00 ~ 내일 D+2 23:59): 자정 경계 단절 완전 방지
+          const now = new Date();
+          const rollingStartStr = getKSTDateString(new Date(now.getTime() - 86400000));
           const [upResp, finResp] = await Promise.all([
-            fetch('/api/v1/matches?start_date=ALL&order=asc&limit=200'),
-            fetch('/api/v1/matches?status=FINISHED&order=desc&limit=100')
+            fetch(`/api/v1/matches?start_date=${rollingStartStr}&order=asc&limit=300`),
+            fetch('/api/v1/matches?status=FINISHED&order=desc&limit=150')
           ]);
           const upMatches = upResp.ok ? await upResp.json() : [];
           const finMatches = finResp.ok ? await finResp.json() : [];
@@ -2999,11 +3017,13 @@
     async function loadLiveMatches() {
       const container = document.getElementById('stripContainer');
       try {
-        const d0Str = getKSTDateString(new Date());
-        // Fast Phase 1: Only today's upcoming & recent finished matches (~50KB JSON for instant 50ms render)
+        const now = new Date();
+        const d0Str = getKSTDateString(now);
+        const rollingStartStr = getKSTDateString(new Date(now.getTime() - 86400000));
+        // Fast Phase 1: 롤링 윈도우(D-1 어제부터 시작)로 오늘 새벽/아침 및 어젯밤 경기 무누락 보존 (~60KB JSON)
         const [upResp, finResp] = await Promise.all([
-          fetch(`/api/v1/matches?start_date=${d0Str}&order=asc&limit=100`),
-          fetch('/api/v1/matches?status=FINISHED&order=desc&limit=30')
+          fetch(`/api/v1/matches?start_date=${rollingStartStr}&order=asc&limit=150`),
+          fetch('/api/v1/matches?status=FINISHED&order=desc&limit=60')
         ]);
         const upMatches = upResp.ok ? await upResp.json() : [];
         const finMatches = finResp.ok ? await finResp.json() : [];
@@ -3817,7 +3837,11 @@ function getFullModalMatchList() {
       if (isDraw) {
         favoredTeam = '무승부';
         expectedLabel = '예상무';
-        conf = pred.confidence || m.probability_percentage || probs.draw || probs.favored_pct || 72;
+        conf = probs.draw || pred.confidence || m.probability_percentage || probs.favored_pct || 72;
+      } else if (probs.favored_team && probs.favored_team !== '무승부') {
+        favoredTeam = probs.favored_team;
+        expectedLabel = (probs.is_home_favored ? '예상승' : '예상패');
+        conf = probs.favored_pct || pred.confidence || 55;
       } else if (pred.favored_team && pred.favored_team !== '무승부') {
         favoredTeam = pred.favored_team;
         expectedLabel = pred.expected_label || (favoredTeam === m.home_team_name ? '예상승' : '예상패');
@@ -8141,6 +8165,9 @@ function getFullModalMatchList() {
 
     function getLeagueQueryParam(lg) {
       const map = {
+        'MLS': 'MLS',
+        'NPB': 'NPB',
+        'EREDIVISIE': '네덜란드 에레디비시',
         'UCL': 'UCL',
         'CHAMPIONSHIP': 'Championship',
         'ENGLAND_CUP': 'ENGLAND_CUP',
@@ -8211,9 +8238,9 @@ function getFullModalMatchList() {
       });
 
       // Reset league filter if switching sport
-      if (sKey !== 'SOCCER' && ['UCL', 'CHAMPIONSHIP', 'ENGLAND_CUP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A'].includes(currentPredLeague)) {
+      if (sKey !== 'SOCCER' && ['MLS', 'EREDIVISIE', 'UCL', 'CHAMPIONSHIP', 'ENGLAND_CUP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A'].includes(currentPredLeague)) {
         await filterPredLeague('ALL', false);
-      } else if (sKey !== 'BASEBALL' && ['MLB', 'KBO'].includes(currentPredLeague)) {
+      } else if (sKey !== 'BASEBALL' && ['MLB', 'KBO', 'NPB'].includes(currentPredLeague)) {
         await filterPredLeague('ALL', false);
       } else if (sKey !== 'BASKETBALL' && ['KBL', 'NBA'].includes(currentPredLeague)) {
         await filterPredLeague('ALL', false);
@@ -8252,7 +8279,7 @@ function getFullModalMatchList() {
 
     async function filterPredLeague(lKey, autoRender = true) {
       currentPredLeague = lKey;
-      ['ALL', 'KBL', 'NBA', 'UCL', 'CHAMPIONSHIP', 'ENGLAND_CUP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'MLB', 'KBO'].forEach(k => {
+      ['ALL', 'MLS', 'KBL', 'NBA', 'UCL', 'CHAMPIONSHIP', 'ENGLAND_CUP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A', 'MLB', 'KBO', 'NPB', 'EREDIVISIE'].forEach(k => {
         const chipBtn = document.getElementById('predLeague' + k);
         if (chipBtn) {
           if (k === lKey) chipBtn.classList.add('active');
@@ -8260,7 +8287,7 @@ function getFullModalMatchList() {
         }
       });
 
-      if (['UCL', 'CHAMPIONSHIP', 'ENGLAND_CUP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A'].includes(lKey)) {
+      if (['MLS', 'EREDIVISIE', 'UCL', 'CHAMPIONSHIP', 'ENGLAND_CUP', 'EPL', 'LALIGA', 'BUNDESLIGA', 'SERIE_A'].includes(lKey)) {
         currentPredSport = 'SOCCER';
         ['ALL', 'SOCCER', 'BASEBALL', 'BASKETBALL', 'HOCKEY', 'VOLLEYBALL'].forEach(k => {
           const chipBtn = document.getElementById('predSport' + k);
@@ -8278,7 +8305,7 @@ function getFullModalMatchList() {
             else chipBtn.classList.remove('active');
           }
         });
-      } else if (['MLB', 'KBO'].includes(lKey)) {
+      } else if (['MLB', 'KBO', 'NPB'].includes(lKey)) {
         currentPredSport = 'BASEBALL';
         ['ALL', 'SOCCER', 'BASEBALL', 'BASKETBALL', 'HOCKEY', 'VOLLEYBALL'].forEach(k => {
           const chipBtn = document.getElementById('predSport' + k);
@@ -8312,10 +8339,9 @@ function getFullModalMatchList() {
       }
 
       if (autoRender) {
-        // For off-season leagues (KBL, NBA) or leagues with 0 upcoming games today:
-        // Automatically switch date filter to FINISHED so matches are immediately displayed!
+        // Any league with 0 games in current date filter: automatically switch date filter to FINISHED so matches are immediately displayed!
         const curList = getFilteredPredMatches();
-        if (curList.length === 0 && (lKey === 'KBL' || lKey === 'NBA')) {
+        if (curList.length === 0 && currentPredDate !== 'FINISHED') {
           await filterPredDate('FINISHED');
           return;
         }
@@ -8376,8 +8402,10 @@ function getFullModalMatchList() {
         list = list.filter(m => m.sport_code === 'VOLLEYBALL' || (m.league_name && (m.league_name.includes('배구') || m.league_name.includes('V-리그'))));
       }
 
-      // 개별 리그 전용 필터 (KBL, NBA, UCL, CHAMPIONSHIP, EPL, LALIGA, BUNDESLIGA, SERIE_A, MLB, KBO)
-      if (currentPredLeague === 'KBL') {
+      // 개별 리그 전용 필터 (MLS, KBL, NBA, UCL, CHAMPIONSHIP, ENGLAND_CUP, EPL, LALIGA, BUNDESLIGA, SERIE_A, MLB, KBO, NPB, EREDIVISIE)
+      if (currentPredLeague === 'MLS') {
+        list = list.filter(m => m.league_name && (m.league_name.includes('MLS') || m.league_name.includes('메이저리그 사커') || m.league_name.includes('Major League Soccer') || m.league_name.includes('미국축구')));
+      } else if (currentPredLeague === 'KBL') {
         list = list.filter(m => !m.league_name.includes('NBA') && ((m.sport_code === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('한국 프로농구'))) || (m.league_name && m.league_name.includes('KBL'))));
       } else if (currentPredLeague === 'NBA') {
         list = list.filter(m => m.league_name && (m.league_name.includes('NBA') || m.league_name.includes('미국 프로농구')));
@@ -8399,6 +8427,10 @@ function getFullModalMatchList() {
         list = list.filter(m => m.league_name && m.league_name.includes('MLB'));
       } else if (currentPredLeague === 'KBO') {
         list = list.filter(m => m.league_name && m.league_name.includes('KBO'));
+      } else if (currentPredLeague === 'NPB') {
+        list = list.filter(m => m.league_name && (m.league_name.includes('NPB') || m.league_name.includes('일본 프로야구')));
+      } else if (currentPredLeague === 'EREDIVISIE') {
+        list = list.filter(m => m.league_name && (m.league_name.includes('네덜란드') || m.league_name.includes('에레디비시') || m.league_name.includes('Eredivisie')));
       }
 
       if (currentPredConfidence === '80') {
@@ -8415,7 +8447,7 @@ function getFullModalMatchList() {
         list = list.filter(m => m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED' || (m.match_date || '') < nowKstDateTime);
         list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
       } else if (currentPredDate === 'D0') {
-        // [오늘 경기]: 오늘 진행 중(LIVE), 오늘 예정 경기, 및 오늘 밤에 이어지는 내일 새벽(00:00~06:00) 유럽 축구(챔스, 챔피언십 등) 경기를 우선 표시
+        // [오늘 경기]: 오늘 진행 중(LIVE), 오늘 예정 경기, 내일 새벽(00:00~06:00) 유럽 축구, 및 오늘 완결/어젯밤 경기 보존
         const nowKstDateTime = getKSTDateTimeString(now);
         const todayLiveAndUpcoming = list.filter(m => {
           const raw = m.match_date || '';
@@ -8427,26 +8459,24 @@ function getFullModalMatchList() {
         });
         const todayFinished = list.filter(m => {
           const raw = m.match_date || '';
-          return raw.startsWith(d0Str) && (m.status === 'FINISHED' || (m.status !== 'LIVE' && raw < nowKstDateTime));
+          const isToday = raw.startsWith(d0Str);
+          const isYesterdayNight = raw.startsWith(yesterdayStr) && raw.slice(11, 16) >= '18:00';
+          return (isToday || isYesterdayNight) && (m.status === 'FINISHED' || (m.status !== 'LIVE' && raw < nowKstDateTime));
         });
         todayLiveAndUpcoming.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
         todayFinished.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
         list = [...todayLiveAndUpcoming, ...todayFinished];
 
-        // Off-season fallback for KBL / NBA / BASEBALL: If today has 0 games, fallback to finished matches
-        if (list.length === 0 && (currentPredSport === 'BASKETBALL' || currentPredLeague === 'KBL' || currentPredLeague === 'NBA')) {
+        // Off-season fallback: If today has 0 games, fallback to finished matches
+        if (list.length === 0) {
           let fbList = [...allMatches];
-          if (currentPredLeague === 'KBL') {
-            fbList = fbList.filter(m => !m.league_name.includes('NBA') && ((m.sport_code === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('한국 프로농구'))) || (m.league_name && m.league_name.includes('KBL'))));
-          } else if (currentPredLeague === 'NBA') {
-            fbList = fbList.filter(m => m.league_name && (m.league_name.includes('NBA') || m.league_name.includes('미국 프로농구')));
-          } else if (currentPredSport === 'BASKETBALL') {
-            fbList = fbList.filter(m => m.sport_code === 'BASKETBALL' || (m.league_name && (m.league_name.includes('농구') || m.league_name.includes('NBA') || m.league_name.includes('KBL'))));
+          if (currentPredSport !== 'ALL') {
+            fbList = fbList.filter(m => m.sport_code === currentPredSport);
           }
-          list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
-                       .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
-        } else if (list.length === 0 && (currentPredSport === 'BASEBALL' || currentPredLeague === 'MLB' || currentPredLeague === 'KBO' || currentPredLeague === 'NPB')) {
-          let fbList = allMatches.filter(m => m.sport_code === 'BASEBALL' || (m.league_name && (m.league_name.includes('MLB') || m.league_name.includes('KBO') || m.league_name.includes('NPB') || m.league_name.includes('야구'))));
+          if (currentPredLeague !== 'ALL') {
+            const leagueParam = getLeagueQueryParam(currentPredLeague);
+            fbList = fbList.filter(m => m.league_name && m.league_name.includes(leagueParam));
+          }
           list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
                        .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
         }
@@ -8455,43 +8485,38 @@ function getFullModalMatchList() {
         list = list.filter(m => (m.match_date || '').startsWith(d1Str) && m.status !== 'CANCELLED' && m.status !== 'POSTPONED');
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       } else {
-        // [진행/예정]: 현재 진행 중(LIVE)이거나 오늘 현재 시각 이후 앞으로 2일 이내 예정된 경기(SCHEDULED)만 시간순 표시
+        // [진행/예정]: LIVE 진행 중 + 2일 이내 예정 경기 + 오늘 완결된 경기(새벽/아침 및 어젯밤 경기 포함) 상시 표시
         const nowKstDateTime = getKSTDateTimeString(now);
         const maxUpcomingStr = getKSTDateString(new Date(now.getTime() + 2 * 86400000)) + ' 23:59:59';
-        list = list.filter(m => {
-          if (m.status === 'CANCELLED' || m.status === 'POSTPONED' || m.status === 'FINISHED') return false;
-          if (m.status === 'LIVE') return true;
-          if (m.status === 'SCHEDULED' || !m.status) {
-            return (m.match_date || '') >= nowKstDateTime && (m.match_date || '') <= maxUpcomingStr;
-          }
-          return false;
-        });
-        list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
 
-        // Off-season or night-time fallback: If 0 upcoming matches, show today's/recent season matches!
-        if (list.length === 0 && (currentPredSport === 'BASKETBALL' || currentPredLeague === 'KBL' || currentPredLeague === 'NBA')) {
-          let fbList = [...allMatches];
-          if (currentPredLeague === 'KBL') {
-            fbList = fbList.filter(m => !m.league_name.includes('NBA') && ((m.sport_code === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('한국 프로농구'))) || (m.league_name && m.league_name.includes('KBL'))));
-          } else if (currentPredLeague === 'NBA') {
-            fbList = fbList.filter(m => m.league_name && (m.league_name.includes('NBA') || m.league_name.includes('미국 프로농구')));
-          } else if (currentPredSport === 'BASKETBALL') {
-            fbList = fbList.filter(m => m.sport_code === 'BASKETBALL' || (m.league_name && (m.league_name.includes('농구') || m.league_name.includes('NBA') || m.league_name.includes('KBL'))));
-          }
-          list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
-                       .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
-        } else if (list.length === 0 && (currentPredSport === 'BASEBALL' || currentPredLeague === 'MLB' || currentPredLeague === 'KBO' || currentPredLeague === 'NPB')) {
-          let fbList = allMatches.filter(m => m.sport_code === 'BASEBALL' || (m.league_name && (m.league_name.includes('MLB') || m.league_name.includes('KBO') || m.league_name.includes('NPB') || m.league_name.includes('야구'))));
-          list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
-                       .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
-        } else if (list.length === 0) {
-          // General fallback for ALL or any sport: show today's finished matches so the screen is never blank!
+        const liveMatches = list.filter(m => m.status === 'LIVE');
+        const upcomingMatches = list.filter(m => {
+          if (m.status === 'CANCELLED' || m.status === 'POSTPONED' || m.status === 'FINISHED' || m.status === 'LIVE') return false;
+          return (m.match_date || '') >= nowKstDateTime && (m.match_date || '') <= maxUpcomingStr;
+        });
+        const todayOrRecentFinished = list.filter(m => {
+          if (m.status === 'CANCELLED' || m.status === 'POSTPONED') return false;
+          const raw = m.match_date || '';
+          const isToday = raw.startsWith(d0Str);
+          const isYesterdayNight = raw.startsWith(yesterdayStr) && raw.slice(11, 16) >= '18:00';
+          return (isToday || isYesterdayNight) && (m.status === 'FINISHED' || raw < nowKstDateTime);
+        });
+
+        liveMatches.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
+        upcomingMatches.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
+        todayOrRecentFinished.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+
+        list = [...liveMatches, ...upcomingMatches, ...todayOrRecentFinished];
+
+        // Off-season or 0 upcoming matches fallback: show recent finished matches so the screen is NEVER blank
+        if (list.length === 0) {
           let fbList = [...allMatches];
           if (currentPredSport !== 'ALL') {
             fbList = fbList.filter(m => m.sport_code === currentPredSport);
           }
           if (currentPredLeague !== 'ALL') {
-            fbList = fbList.filter(m => m.league_name && m.league_name.includes(currentPredLeague));
+            const leagueParam = getLeagueQueryParam(currentPredLeague);
+            fbList = fbList.filter(m => m.league_name && m.league_name.includes(leagueParam));
           }
           list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
                        .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
@@ -8502,7 +8527,7 @@ function getFullModalMatchList() {
     }
 
     // ------------------------------------------------------------------
-    // 메인 경기바 전용 지표 헬퍼: 해외배당 (유럽 북메이커 Bet365 / Pinnacle 기준)
+    // 메인 경기바 전용 지표 헬퍼: 해외배당 (유럽 북메이커 기준) & 국내배당 (스포츠토토 / 베트맨 프로토 기준)
     // ------------------------------------------------------------------
     function getMatchOdds(m) {
       const pred = m.prediction || {};
@@ -8511,54 +8536,176 @@ function getFullModalMatchList() {
       const isHomeFav = pred.favored_team ? (pred.favored_team === m.home_team_name) : (pred.pick_type === 'HOME_WIN');
       const isDraw = pred.pick_type === 'DRAW';
 
-      if (sport === 'SOCCER') {
-        let pH = 0.40, pD = 0.28, pA = 0.32;
-        if (isDraw) {
-          pD = 0.31;
-          pH = 0.36;
-          pA = 0.33;
-        } else if (isHomeFav) {
-          const hRate = Math.min(0.80, Math.max(0.42, conf / 100));
-          pH = hRate;
-          pD = Math.max(0.14, 0.28 - (hRate - 0.42) * 0.28);
-          pA = Math.max(0.06, 1.0 - pH - pD);
-        } else {
-          const aRate = Math.min(0.80, Math.max(0.42, conf / 100));
-          pA = aRate;
-          pD = Math.max(0.14, 0.28 - (aRate - 0.42) * 0.28);
-          pH = Math.max(0.06, 1.0 - pA - pD);
-        }
-        // 환급률 95% (해외 북메이커 마진 약 5%)
-        const margin = 1.05;
-        const oddH = (1.0 / (pH * margin)).toFixed(2);
-        const oddD = (1.0 / (pD * margin)).toFixed(2);
-        const oddA = (1.0 / (pA * margin)).toFixed(2);
-        return {
-          type: '3WAY',
-          home: oddH, draw: oddD, away: oddA,
-          html: `<span class="badge bg-white border text-dark py-0.5 px-1 me-0.5" style="border-color:#d1d5db!important; font-size:0.64rem;"><span class="text-primary fw-bold">승</span> ${oddH}</span><span class="badge bg-white border text-dark py-0.5 px-1 me-0.5" style="border-color:#d1d5db!important; font-size:0.64rem;"><span class="text-secondary fw-bold">무</span> ${oddD}</span><span class="badge bg-white border text-dark py-0.5 px-1" style="border-color:#d1d5db!important; font-size:0.64rem;"><span class="text-danger fw-bold">패</span> ${oddA}</span>`
-        };
-      } else {
-        // BASEBALL, BASKETBALL, HOCKEY, VOLLEYBALL (2-WAY)
-        let pH = 0.50;
-        if (isHomeFav) {
-          pH = Math.min(0.78, Math.max(0.50, conf / 100));
-        } else {
-          pH = Math.max(0.22, Math.min(0.50, 1.0 - conf / 100));
-        }
-        const pA = 1.0 - pH;
-        const margin = 1.05;
-        const oddH = (1.0 / (pH * margin)).toFixed(2);
-        const oddA = (1.0 / (pA * margin)).toFixed(2);
-        const isNba = m.league_name && m.league_name.includes('NBA');
-        const isKbl = (sport === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('한국') || m.league_name.includes('농구'))) || (m.league_name && m.league_name.includes('KBL'));
-        const ouBase = (sport === 'BASEBALL') ? '8.5' : (sport === 'BASKETBALL' ? (isNba ? '226.5' : (isKbl ? '162.5' : '158.5')) : (sport === 'HOCKEY' ? '5.5' : '182.5'));
-        return {
-          type: '2WAY',
-          home: oddH, away: oddA, ou: ouBase,
-          html: `<span class="badge bg-white border text-dark py-0.5 px-1 me-0.5" style="border-color:#d1d5db!important; font-size:0.64rem;"><span class="text-primary fw-bold">승</span> ${oddH}</span><span class="badge bg-white border text-dark py-0.5 px-1 me-0.5" style="border-color:#d1d5db!important; font-size:0.64rem;"><span class="text-danger fw-bold">패</span> ${oddA}</span><span class="badge bg-light text-muted py-0.5 px-1" style="border:1px solid #e5e7eb; font-size:0.60rem;">U/O ${ouBase}</span>`
-        };
+      // 1. 경기 시작 여부 및 발매 마감 / 마감 임박 판단 (KST 기준)
+      let isClosed = (m.status === 'FINISHED' || m.status === 'LIVE');
+      let isImminent = false;
+      if (!isClosed && m.match_date) {
+        try {
+          const clean = m.match_date.replace(' ', 'T');
+          const parts = clean.split(/[-T:]/);
+          if (parts.length >= 5) {
+            const yr = parseInt(parts[0], 10);
+            const mo = parseInt(parts[1], 10);
+            const da = parseInt(parts[2], 10);
+            const hr = parseInt(parts[3], 10);
+            const mn = parseInt(parts[4], 10);
+            const sc = parts.length >= 6 ? parseInt(parts[5], 10) : 0;
+            const now = new Date();
+            const utcNow = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const kstNow = new Date(utcNow + (9 * 60 * 60000));
+            const matchDt = new Date(yr, mo - 1, da, hr, mn, sc);
+            const diffMin = (matchDt.getTime() - kstNow.getTime()) / (60 * 1000);
+            if (diffMin <= 0) {
+              isClosed = true;
+            } else if (diffMin <= 15) {
+              isImminent = true;
+            }
+          }
+        } catch (e) {}
       }
+
+      // 2. 백엔드 사전 계산된 정합 배당 및 기준점 우선 사용
+      const backendOdds = m.odds || pred.odds || null;
+      const backendOu = m.ou_line || pred.ou_line || (backendOdds ? backendOdds.ou_line : null);
+
+      let oddH, oddD, oddA, ouBase;
+      let domH, domD, domA;
+      const is3Way = (sport === 'SOCCER');
+
+      // 마진 정의: 해외 1.045 (유럽 북메이커 환급률 ~95.7%), 국내 1.145 (스포츠토토 베트맨 프로토 환급률 ~87.3%)
+      const marginOvs = 1.045;
+      const marginDom = 1.145;
+
+      if (is3Way) {
+        if (backendOdds && backendOdds.home && backendOdds.draw && backendOdds.away) {
+          oddH = Number(backendOdds.home).toFixed(2);
+          oddD = Number(backendOdds.draw).toFixed(2);
+          oddA = Number(backendOdds.away).toFixed(2);
+          if (backendOdds.domestic_home && backendOdds.domestic_away && backendOdds.domestic_draw) {
+            domH = Number(backendOdds.domestic_home).toFixed(2);
+            domD = Number(backendOdds.domestic_draw).toFixed(2);
+            domA = Number(backendOdds.domestic_away).toFixed(2);
+          } else if (backendOdds.domestic && backendOdds.domestic.home) {
+            domH = Number(backendOdds.domestic.home).toFixed(2);
+            domD = Number(backendOdds.domestic.draw).toFixed(2);
+            domA = Number(backendOdds.domestic.away).toFixed(2);
+          } else {
+            domH = (Number(oddH) * (marginOvs / marginDom)).toFixed(2);
+            domD = (Number(oddD) * (marginOvs / marginDom)).toFixed(2);
+            domA = (Number(oddA) * (marginOvs / marginDom)).toFixed(2);
+          }
+        } else {
+          let pH = 0.40, pD = 0.28, pA = 0.32;
+          if (isDraw) {
+            pD = 0.31; pH = 0.36; pA = 0.33;
+          } else if (isHomeFav) {
+            const hRate = Math.min(0.85, Math.max(0.40, conf / 100));
+            pH = hRate;
+            pD = Math.max(0.12, 0.28 - (hRate - 0.40) * 0.28);
+            pA = Math.max(0.05, 1.0 - pH - pD);
+          } else {
+            const aRate = Math.min(0.85, Math.max(0.40, conf / 100));
+            pA = aRate;
+            pD = Math.max(0.12, 0.28 - (aRate - 0.40) * 0.28);
+            pH = Math.max(0.05, 1.0 - pA - pD);
+          }
+          oddH = (1.0 / (pH * marginOvs)).toFixed(2);
+          oddD = (1.0 / (pD * marginOvs)).toFixed(2);
+          oddA = (1.0 / (pA * marginOvs)).toFixed(2);
+          domH = (1.0 / (pH * marginDom)).toFixed(2);
+          domD = (1.0 / (pD * marginDom)).toFixed(2);
+          domA = (1.0 / (pA * marginDom)).toFixed(2);
+        }
+        ouBase = backendOu ? String(backendOu) : '2.5';
+      } else {
+        // 2WAY: BASEBALL, BASKETBALL, HOCKEY, VOLLEYBALL
+        if (backendOdds && backendOdds.home && backendOdds.away) {
+          oddH = Number(backendOdds.home).toFixed(2);
+          oddA = Number(backendOdds.away).toFixed(2);
+          if (backendOdds.domestic_home && backendOdds.domestic_away) {
+            domH = Number(backendOdds.domestic_home).toFixed(2);
+            domA = Number(backendOdds.domestic_away).toFixed(2);
+          } else if (backendOdds.domestic && backendOdds.domestic.home) {
+            domH = Number(backendOdds.domestic.home).toFixed(2);
+            domA = Number(backendOdds.domestic.away).toFixed(2);
+          } else {
+            domH = (Number(oddH) * (marginOvs / marginDom)).toFixed(2);
+            domA = (Number(oddA) * (marginOvs / marginDom)).toFixed(2);
+          }
+        } else {
+          let pH = 0.50;
+          if (isHomeFav) {
+            pH = Math.min(0.92, Math.max(0.50, conf / 100));
+          } else {
+            pH = Math.max(0.08, Math.min(0.50, 1.0 - conf / 100));
+          }
+          const pA = 1.0 - pH;
+          oddH = (1.0 / (pH * marginOvs)).toFixed(2);
+          oddA = (1.0 / (pA * marginOvs)).toFixed(2);
+          domH = (1.0 / (pH * marginDom)).toFixed(2);
+          domA = (1.0 / (pA * marginDom)).toFixed(2);
+        }
+        if (backendOu) {
+          ouBase = String(backendOu);
+        } else {
+          const isNba = m.league_name && m.league_name.includes('NBA');
+          const isKbl = (sport === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('한국') || m.league_name.includes('농구'))) || (m.league_name && m.league_name.includes('KBL'));
+          const isNpb = m.league_name && m.league_name.includes('NPB');
+          const isKbo = m.league_name && m.league_name.includes('KBO');
+          ouBase = (sport === 'BASEBALL') ? (isNpb ? '6.5' : (isKbo ? '9.5' : '8.5')) : (sport === 'BASKETBALL' ? (isNba ? '226.5' : (isKbl ? '162.5' : '158.5')) : (sport === 'HOCKEY' ? '5.5' : '182.5'));
+        }
+      }
+
+      // 3. 마감 및 임박 시각적 스타일링
+      let statusBadge = '';
+      let badgeStyle = 'background: #ffffff; border: 1px solid #d1d5db; color: #111827;';
+      let textWinClass = 'text-primary fw-bold';
+      let textDrawClass = 'text-secondary fw-bold';
+      let textLoseClass = 'text-danger fw-bold';
+      let domTextWinClass = 'fw-bold';
+      let domWinColor = '#059669';
+
+      if (isClosed) {
+        statusBadge = `<span class="badge bg-secondary text-white py-0.5 px-1 me-0.5" style="font-size:0.60rem; letter-spacing: -0.3px;">[발매마감]</span>`;
+        badgeStyle = 'background: #f3f4f6; border: 1px solid #e5e7eb; color: #9ca3af;';
+        textWinClass = 'text-muted fw-bold';
+        textDrawClass = 'text-muted fw-bold';
+        textLoseClass = 'text-muted fw-bold';
+        domTextWinClass = 'text-muted fw-bold';
+        domWinColor = '#9ca3af';
+      } else if (isImminent) {
+        statusBadge = `<span class="badge bg-danger text-white py-0.5 px-1 me-0.5" style="font-size:0.60rem; letter-spacing: -0.3px; animation: pulse 1.5s infinite;">마감임박🔥</span>`;
+      }
+
+      const ouBadgeStyle = isClosed ? 'background: #f3f4f6; color: #9ca3af; border: 1px solid #e5e7eb;' : 'background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;';
+
+      let overseasHtml = '';
+      let domesticHtml = '';
+
+      if (is3Way) {
+        overseasHtml = `<span class="badge py-0.5 px-1 me-0.5" style="${badgeStyle} font-size:0.64rem;"><span class="${textWinClass}">승</span> ${oddH}</span><span class="badge py-0.5 px-1 me-0.5" style="${badgeStyle} font-size:0.64rem;"><span class="${textDrawClass}">무</span> ${oddD}</span><span class="badge py-0.5 px-1 me-0.5" style="${badgeStyle} font-size:0.64rem;"><span class="${textLoseClass}">패</span> ${oddA}</span><span class="badge py-0.5 px-1" style="${ouBadgeStyle} font-size:0.60rem;">U/O ${ouBase}</span>`;
+        domesticHtml = `<span class="badge py-0.5 px-1 me-0.5" style="${badgeStyle} font-size:0.64rem;"><span class="${domTextWinClass}" style="color:${domWinColor};">승</span> ${domH}</span><span class="badge py-0.5 px-1 me-0.5" style="${badgeStyle} font-size:0.64rem;"><span class="${textDrawClass}">무</span> ${domD}</span><span class="badge py-0.5 px-1 me-0.5" style="${badgeStyle} font-size:0.64rem;"><span class="${textLoseClass}">패</span> ${domA}</span><span class="badge py-0.5 px-1" style="${ouBadgeStyle} font-size:0.60rem;">U/O ${ouBase}</span>`;
+      } else {
+        overseasHtml = `<span class="badge py-0.5 px-1 me-0.5" style="${badgeStyle} font-size:0.64rem;"><span class="${textWinClass}">승</span> ${oddH}</span><span class="badge py-0.5 px-1 me-0.5" style="${badgeStyle} font-size:0.64rem;"><span class="${textLoseClass}">패</span> ${oddA}</span><span class="badge py-0.5 px-1" style="${ouBadgeStyle} font-size:0.60rem;">U/O ${ouBase}</span>`;
+        domesticHtml = `<span class="badge py-0.5 px-1 me-0.5" style="${badgeStyle} font-size:0.64rem;"><span class="${domTextWinClass}" style="color:${domWinColor};">승</span> ${domH}</span><span class="badge py-0.5 px-1 me-0.5" style="${badgeStyle} font-size:0.64rem;"><span class="${textLoseClass}">패</span> ${domA}</span><span class="badge py-0.5 px-1" style="${ouBadgeStyle} font-size:0.60rem;">U/O ${ouBase}</span>`;
+      }
+
+      return {
+        type: is3Way ? '3WAY' : '2WAY',
+        home: oddH,
+        draw: oddD,
+        away: oddA,
+        domHome: domH,
+        domDraw: domD,
+        domAway: domA,
+        ou: ouBase,
+        isClosed: isClosed,
+        isImminent: isImminent,
+        statusBadge: statusBadge,
+        overseasHtml: overseasHtml,
+        domesticHtml: domesticHtml,
+        html: overseasHtml
+      };
     }
 
     function getMatchStarters(m) {
@@ -8849,6 +8996,7 @@ function getFullModalMatchList() {
         }
         let scoreSnippet = '';
         let cardFooterTag = '';
+        const oddsInfo = getMatchOdds(m);
 
         if (m.status === 'FINISHED') {
           scoreSnippet = `<span class="badge" style="background: #ffffff; border: 1px solid #d1d5db; padding: 2px 7px;"><span style="color:#111827; font-weight:800; font-size:0.88rem;">${m.home_score}</span> <span style="color:#9ca3af; font-size:0.75rem;">:</span> <span style="color:#111827; font-weight:800; font-size:0.88rem;">${m.away_score}</span> <span class="badge bg-white border text-dark ms-1 py-0 px-1" style="border-color: #d1d5db !important; font-size:0.62rem; font-weight:700;">종료</span></span>`;
@@ -8866,7 +9014,13 @@ function getFullModalMatchList() {
           scoreSnippet = `<span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; padding: 2px 7px;"><span class="text-dark fw-bold" style="font-size:0.88rem;">${m.home_score} : ${m.away_score}</span> <span class="badge bg-danger text-white ms-1" style="font-size:0.62rem;">LIVE</span></span>`;
           cardFooterTag = `<span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; font-size:0.68rem; font-weight: 700;"><i class="bi bi-broadcast me-1"></i>실시간 공식 점수 [AI: ${pred.expected_label || '진행중'}]</span>`;
         } else {
-          scoreSnippet = `<span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; font-size:0.70rem; padding: 2px 6px; font-weight: 600;"><i class="bi bi-clock me-1 text-dark"></i>시작대기</span>`;
+          if (oddsInfo.isClosed) {
+            scoreSnippet = `<span class="badge bg-secondary text-white" style="font-size:0.70rem; padding: 2px 6px; font-weight: 700;"><i class="bi bi-lock-fill me-1"></i>경기개시 [발매마감]</span>`;
+          } else if (oddsInfo.isImminent) {
+            scoreSnippet = `<span class="badge bg-danger text-white" style="font-size:0.70rem; padding: 2px 6px; font-weight: 700;"><i class="bi bi-stopwatch-fill me-1"></i>마감임박🔥</span>`;
+          } else {
+            scoreSnippet = `<span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; font-size:0.70rem; padding: 2px 6px; font-weight: 600;"><i class="bi bi-clock me-1 text-dark"></i>시작대기</span>`;
+          }
           const fireIcon = (pred.confidence >= 80) ? '🔥' : ((pred.confidence >= 70) ? '⚡' : '⭐');
           const confText = pred.confidence ? `${pred.confidence}% ` : '';
           const labelText = pred.expected_label ? `${pred.expected_label}` : '예상승';
@@ -8878,7 +9032,11 @@ function getFullModalMatchList() {
         let leagueTag = m.league_name ? m.league_name.split(' ')[0] : m.sport_code;
         let leagueBadgeClass = 'badge bg-light border text-primary';
         let leagueBadgeStyle = '';
-        if (m.league_name && m.league_name.includes('NPB')) leagueTag = 'NPB(일야)';
+        if (m.league_name && (m.league_name.includes('MLS') || m.league_name.includes('메이저리그 사커') || m.league_name.includes('Major League Soccer') || m.league_name.includes('미국축구'))) {
+          leagueTag = '🇺🇸 MLS';
+          leagueBadgeClass = 'badge text-white fw-bold';
+          leagueBadgeStyle = 'background: #002244; border: 1.5px solid #00172e;';
+        } else if (m.league_name && m.league_name.includes('NPB')) leagueTag = 'NPB(일야)';
         else if (m.league_name && m.league_name.includes('KBO')) leagueTag = 'KBO(한야)';
         else if (m.league_name && (m.league_name.includes('NBA') || m.league_name.includes('미국 프로농구'))) {
           leagueTag = '🏀 NBA';
@@ -8913,7 +9071,6 @@ function getFullModalMatchList() {
         else if (m.league_name && m.league_name.includes('Bundesliga')) leagueTag = '분데스';
         else if (m.league_name && m.league_name.includes('Ligue 1')) leagueTag = '리그1';
 
-        const oddsInfo = getMatchOdds(m);
         const startersInfo = getMatchStarters(m);
         const absInfo = getMatchAbsences(m);
 
@@ -8941,16 +9098,31 @@ function getFullModalMatchList() {
               </div>
             </div>
 
-            <!-- 1번 지표: 배당 및 결장 정보 바 (메인 경기바 전용, PC/모바일 전체 적용) -->
-            <div class="d-flex align-items-center justify-content-between my-1 px-1.5 py-1 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.68rem;">
-              <div class="d-flex align-items-center gap-1 text-truncate" style="min-width: 0;">
-                <span class="badge text-white fw-bold py-0.5 px-1" style="background: #2563eb; font-size:0.58rem; letter-spacing: -0.3px;">해외배당</span>
-                <div class="d-flex align-items-center gap-0.5" style="font-family: monospace; font-size: 0.68rem;">
-                  ${oddsInfo.html}
+            <!-- 1번 지표: 배당 및 결장 정보 바 (해외배당 & 국내배당 동시 표기, PC/모바일 전체 적용) -->
+            <div class="my-1 px-1.5 py-1 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.68rem;">
+              <!-- 1) 해외배당 행 -->
+              <div class="d-flex align-items-center justify-content-between mb-1">
+                <div class="d-flex align-items-center gap-1 text-truncate" style="min-width: 0;">
+                  <span class="badge text-white fw-bold py-0.5 px-1 flex-shrink-0" style="background: #2563eb; font-size:0.58rem; letter-spacing: -0.3px;">해외배당</span>
+                  <div class="d-flex align-items-center gap-0.5" style="font-family: monospace; font-size: 0.68rem; overflow-x: auto; scrollbar-width: none;">
+                    ${oddsInfo.overseasHtml}
+                  </div>
+                </div>
+                <div class="flex-shrink-0 ms-1">
+                  ${absInfo.badge}
                 </div>
               </div>
-              <div class="flex-shrink-0 ms-1">
-                ${absInfo.badge}
+              <!-- 2) 국내배당 행 (스포츠토토 / 베트맨 프로토) -->
+              <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-1 text-truncate" style="min-width: 0;">
+                  <span class="badge text-white fw-bold py-0.5 px-1 flex-shrink-0" style="background: #059669; font-size:0.58rem; letter-spacing: -0.3px;">국내배당</span>
+                  <div class="d-flex align-items-center gap-0.5" style="font-family: monospace; font-size: 0.68rem; overflow-x: auto; scrollbar-width: none;">
+                    ${oddsInfo.domesticHtml}
+                  </div>
+                </div>
+                <div class="flex-shrink-0 ms-1">
+                  ${oddsInfo.statusBadge || '<span class="badge py-0.5 px-1" style="background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; font-size: 0.58rem;">스포츠토토</span>'}
+                </div>
               </div>
             </div>
 
@@ -11556,45 +11728,105 @@ function getFullModalMatchList() {
       const absences = getMatchAbsences(m);
       const dateText = m.match_date ? formatKSTDateTime(m.match_date) : '경기 시작 대기';
 
-      let oddsBox = '';
+      let overseasOddsBox = '';
+      let domesticOddsBox = '';
       if (odds.type === '3WAY') {
-        oddsBox = `
-          <div class="row g-1.5 text-center my-2">
+        overseasOddsBox = `
+          <div class="row g-1 text-center my-1">
             <div class="col-4">
-              <div class="p-2 rounded border" style="background:#ffffff; border-color:#e2e8f0;">
-                <div class="text-muted fw-bold" style="font-size:0.68rem;">홈승 (1)</div>
-                <div class="fw-bold text-primary fs-5 font-monospace">${odds.home}</div>
+              <div class="p-1.5 rounded border" style="${odds.isClosed ? 'background:#f8fafc; border-color:#e2e8f0;' : 'background:#ffffff; border-color:#e2e8f0;'}">
+                <div class="text-muted fw-bold" style="font-size:0.65rem;">홈승 (1)</div>
+                <div class="fw-bold ${odds.isClosed ? 'text-muted' : 'text-primary'} fs-6 font-monospace">${odds.home}</div>
               </div>
             </div>
             <div class="col-4">
-              <div class="p-2 rounded border" style="background:#ffffff; border-color:#e2e8f0;">
-                <div class="text-muted fw-bold" style="font-size:0.68rem;">무승부 (X)</div>
-                <div class="fw-bold text-secondary fs-5 font-monospace">${odds.draw}</div>
+              <div class="p-1.5 rounded border" style="${odds.isClosed ? 'background:#f8fafc; border-color:#e2e8f0;' : 'background:#ffffff; border-color:#e2e8f0;'}">
+                <div class="text-muted fw-bold" style="font-size:0.65rem;">무 (X)</div>
+                <div class="fw-bold ${odds.isClosed ? 'text-muted' : 'text-secondary'} fs-6 font-monospace">${odds.draw}</div>
               </div>
             </div>
             <div class="col-4">
-              <div class="p-2 rounded border" style="background:#ffffff; border-color:#e2e8f0;">
-                <div class="text-muted fw-bold" style="font-size:0.68rem;">원정승 (2)</div>
-                <div class="fw-bold text-danger fs-5 font-monospace">${odds.away}</div>
+              <div class="p-1.5 rounded border" style="${odds.isClosed ? 'background:#f8fafc; border-color:#e2e8f0;' : 'background:#ffffff; border-color:#e2e8f0;'}">
+                <div class="text-muted fw-bold" style="font-size:0.65rem;">원정승 (2)</div>
+                <div class="fw-bold ${odds.isClosed ? 'text-muted' : 'text-danger'} fs-6 font-monospace">${odds.away}</div>
+              </div>
+            </div>
+          </div>
+        `;
+        domesticOddsBox = `
+          <div class="row g-1 text-center my-1">
+            <div class="col-4">
+              <div class="p-1.5 rounded border" style="${odds.isClosed ? 'background:#f8fafc; border-color:#e2e8f0;' : 'background:#ffffff; border-color:#e2e8f0;'}">
+                <div class="text-muted fw-bold" style="font-size:0.65rem;">홈승 (1)</div>
+                <div class="fw-bold ${odds.isClosed ? 'text-muted' : 'text-success'} fs-6 font-monospace">${odds.domHome}</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="p-1.5 rounded border" style="${odds.isClosed ? 'background:#f8fafc; border-color:#e2e8f0;' : 'background:#ffffff; border-color:#e2e8f0;'}">
+                <div class="text-muted fw-bold" style="font-size:0.65rem;">무 (X)</div>
+                <div class="fw-bold ${odds.isClosed ? 'text-muted' : 'text-secondary'} fs-6 font-monospace">${odds.domDraw}</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="p-1.5 rounded border" style="${odds.isClosed ? 'background:#f8fafc; border-color:#e2e8f0;' : 'background:#ffffff; border-color:#e2e8f0;'}">
+                <div class="text-muted fw-bold" style="font-size:0.65rem;">원정승 (2)</div>
+                <div class="fw-bold ${odds.isClosed ? 'text-muted' : 'text-danger'} fs-6 font-monospace">${odds.domAway}</div>
               </div>
             </div>
           </div>
         `;
       } else {
-        oddsBox = `
-          <div class="row g-1.5 text-center my-2">
+        overseasOddsBox = `
+          <div class="row g-1 text-center my-1">
             <div class="col-6">
-              <div class="p-2 rounded border" style="background:#ffffff; border-color:#e2e8f0;">
-                <div class="text-muted fw-bold" style="font-size:0.68rem;">홈팀 승</div>
-                <div class="fw-bold text-primary fs-5 font-monospace">${odds.home}</div>
+              <div class="p-1.5 rounded border" style="${odds.isClosed ? 'background:#f8fafc; border-color:#e2e8f0;' : 'background:#ffffff; border-color:#e2e8f0;'}">
+                <div class="text-muted fw-bold" style="font-size:0.65rem;">홈팀 승</div>
+                <div class="fw-bold ${odds.isClosed ? 'text-muted' : 'text-primary'} fs-6 font-monospace">${odds.home}</div>
               </div>
             </div>
             <div class="col-6">
-              <div class="p-2 rounded border" style="background:#ffffff; border-color:#e2e8f0;">
-                <div class="text-muted fw-bold" style="font-size:0.68rem;">원정팀 승</div>
-                <div class="fw-bold text-danger fs-5 font-monospace">${odds.away}</div>
+              <div class="p-1.5 rounded border" style="${odds.isClosed ? 'background:#f8fafc; border-color:#e2e8f0;' : 'background:#ffffff; border-color:#e2e8f0;'}">
+                <div class="text-muted fw-bold" style="font-size:0.65rem;">원정팀 승</div>
+                <div class="fw-bold ${odds.isClosed ? 'text-muted' : 'text-danger'} fs-6 font-monospace">${odds.away}</div>
               </div>
             </div>
+          </div>
+        `;
+        domesticOddsBox = `
+          <div class="row g-1 text-center my-1">
+            <div class="col-6">
+              <div class="p-1.5 rounded border" style="${odds.isClosed ? 'background:#f8fafc; border-color:#e2e8f0;' : 'background:#ffffff; border-color:#e2e8f0;'}">
+                <div class="text-muted fw-bold" style="font-size:0.65rem;">홈팀 승</div>
+                <div class="fw-bold ${odds.isClosed ? 'text-muted' : 'text-success'} fs-6 font-monospace">${odds.domHome}</div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-1.5 rounded border" style="${odds.isClosed ? 'background:#f8fafc; border-color:#e2e8f0;' : 'background:#ffffff; border-color:#e2e8f0;'}">
+                <div class="text-muted fw-bold" style="font-size:0.65rem;">원정팀 승</div>
+                <div class="fw-bold ${odds.isClosed ? 'text-muted' : 'text-danger'} fs-6 font-monospace">${odds.domAway}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      let topBanner = '';
+      if (odds.isClosed) {
+        topBanner = `
+          <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill mb-2.5" style="background: #f1f5f9; color: #475569; font-size: 0.78rem; font-weight: 700; border: 1px solid #cbd5e1;">
+            <i class="bi bi-lock-fill"></i><span>경기개시 [발매마감] (${dateText})</span>
+          </div>
+        `;
+      } else if (odds.isImminent) {
+        topBanner = `
+          <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill mb-2.5" style="background: #fef2f2; color: #b91c1c; font-size: 0.78rem; font-weight: 700; border: 1px solid #fecaca;">
+            <i class="bi bi-stopwatch-fill"></i><span>마감임박🔥 (15분 이내 경기 시작: ${dateText})</span>
+          </div>
+        `;
+      } else {
+        topBanner = `
+          <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill mb-2.5" style="background: #eff6ff; color: #1d4ed8; font-size: 0.78rem; font-weight: 700; border: 1px solid #bfdbfe;">
+            <i class="bi bi-clock-history"></i><span>${dateText} 킥오프 예정</span>
           </div>
         `;
       }
@@ -11602,19 +11834,38 @@ function getFullModalMatchList() {
       return `
         <div class="pre-match-box text-center p-3 rounded-3" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border: 1.5px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
           <!-- Top Info Banner -->
-          <div class="d-inline-flex align-items-center gap-1.5 px-3 py-1 rounded-pill mb-2.5" style="background: #eff6ff; color: #1d4ed8; font-size: 0.78rem; font-weight: 700; border: 1px solid #bfdbfe;">
-            <i class="bi bi-clock-history"></i><span>${dateText} 킥오프 예정</span>
-          </div>
+          ${topBanner}
 
-          <!-- Overseas Odds Card -->
+          <!-- Dual Odds Display (해외배당 vs 국내배당) -->
           <div class="text-start mb-2 px-1">
-            <div class="d-flex justify-content-between align-items-center">
-              <span class="fw-bold text-dark" style="font-size: 0.82rem;">
-                <i class="bi bi-globe2 text-primary me-1"></i>해외 공식 배당 (Overseas Odds)
-              </span>
-              <span class="badge text-white fw-bold" style="background: #2563eb; font-size: 0.65rem;">유럽 북메이커 기준</span>
+            <div class="row g-2">
+              <div class="col-12 col-md-6">
+                <div class="p-2 rounded border bg-white h-100" style="border-color:#e2e8f0;">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-bold text-dark" style="font-size: 0.78rem;">
+                      <i class="bi bi-globe2 text-primary me-1"></i>해외 공식 배당
+                    </span>
+                    <span class="badge text-white fw-bold py-0.5 px-1" style="background: #2563eb; font-size: 0.60rem;">유럽 북메이커</span>
+                  </div>
+                  ${overseasOddsBox}
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div class="p-2 rounded border bg-white h-100" style="border-color:#e2e8f0;">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-bold text-dark" style="font-size: 0.78rem;">
+                      <i class="bi bi-tag-fill text-success me-1"></i>국내 공식 배당
+                    </span>
+                    <span class="badge text-white fw-bold py-0.5 px-1" style="background: #059669; font-size: 0.60rem;">스포츠토토 프로토</span>
+                  </div>
+                  ${domesticOddsBox}
+                </div>
+              </div>
             </div>
-            ${oddsBox}
+            <div class="d-flex justify-content-between align-items-center mt-1.5 px-1" style="font-size: 0.70rem;">
+              <span>${odds.ou ? `<span class="badge bg-light text-dark border" style="font-size: 0.65rem; border-color:#cbd5e1!important;">기준점 U/O ${odds.ou}</span>` : ''}</span>
+              <span>${odds.isClosed ? '<span class="badge bg-secondary text-white fw-bold" style="font-size: 0.65rem;">발매마감</span>' : (odds.isImminent ? '<span class="badge bg-danger text-white fw-bold" style="font-size: 0.65rem;">마감임박🔥</span>' : '<span class="text-secondary fw-semibold">실시간 배당 정합 연동</span>')}</span>
+            </div>
           </div>
 
           <!-- Lineups & Pre-match Info -->
@@ -11641,8 +11892,8 @@ function getFullModalMatchList() {
           </div>
 
           <!-- Chat Sharing -->
-          <button class="btn btn-sm btn-primary w-100 py-1.5 fw-bold" onclick="quickSendLiveToChat('${m.home_team_name} vs ${m.away_team_name}', '${dateText} 해외배당 [승 ${odds.home} / 무 ${odds.draw || '-'} / 패 ${odds.away}] - 경기 시작 전 라인업 분석!')" style="font-size: 0.78rem; border-radius: 6px;">
-            💬 톡방에 프리뷰 및 해외배당 공유하기
+          <button class="btn btn-sm btn-primary w-100 py-1.5 fw-bold" onclick="quickSendLiveToChat('${m.home_team_name} vs ${m.away_team_name}', '${dateText} 배당 [해외 승 ${odds.home} / 패 ${odds.away}] [국내 승 ${odds.domHome} / 패 ${odds.domAway}] - 경기 전 라인업 분석!')" style="font-size: 0.78rem; border-radius: 6px;">
+            💬 톡방에 배당 및 라인업 분석 공유하기
           </button>
         </div>
       `;
@@ -12168,7 +12419,11 @@ function getFullModalMatchList() {
           ? `<span class="badge bg-danger text-white py-0 px-1" style="font-size:0.60rem;"><span class="live-blink-dot me-0.5" style="display:inline-block;width:4px;height:4px;background:#fff;border-radius:50%;"></span>LIVE</span>`
           : (isFin 
               ? `<span class="badge bg-secondary text-white py-0 px-1" style="font-size:0.60rem;">종료</span>` 
-              : `<span class="badge text-white py-0 px-1" style="background:#2563eb; font-size:0.60rem;">해외배당</span>`);
+              : (odds.isClosed 
+                  ? `<span class="badge bg-secondary text-white py-0 px-1" style="font-size:0.60rem;">발매마감</span>`
+                  : (odds.isImminent 
+                      ? `<span class="badge bg-danger text-white py-0 px-1" style="font-size:0.60rem;">마감임박🔥</span>`
+                      : `<span class="badge text-white py-0 px-1" style="background:#2563eb; font-size:0.60rem;">해외배당</span>`)));
 
         let centerContent = '';
         if (isSched) {
@@ -12178,14 +12433,24 @@ function getFullModalMatchList() {
               <span class="badge bg-light text-primary border px-1 py-0 fw-bold" style="font-size:0.62rem;">VS</span>
               <div class="fw-bold text-truncate" style="font-size:0.75rem; max-width:44%; color:#0f172a;" title="${m.away_team_name}">${m.away_team_name}</div>
             </div>
-            <div class="rounded py-0.5 px-1 my-1 text-center font-monospace fw-bold" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.66rem; color:#1e293b;">
-              ${odds.type === '3WAY' 
-                ? `<span class="text-primary">승 ${odds.home}</span> / <span class="text-secondary">무 ${odds.draw}</span> / <span class="text-danger">패 ${odds.away}</span>` 
-                : `<span class="text-primary">승 ${odds.home}</span> / <span class="text-danger">패 ${odds.away}</span> <span class="text-muted" style="font-size:0.58rem;">(기준 ${odds.ou})</span>`
-              }
+            <div class="rounded py-1 px-1.5 my-1 text-center font-monospace fw-bold" style="${odds.isClosed ? 'background:#f1f5f9; border:1px solid #e2e8f0; color:#9ca3af;' : 'background:#f8fafc; border:1px solid #e2e8f0; color:#1e293b;'} font-size:0.65rem;">
+              <div class="d-flex justify-content-between align-items-center mb-0.5">
+                <span class="badge text-white py-0 px-1" style="background:#2563eb; font-size:0.55rem;">해외</span>
+                <span>${odds.type === '3WAY' 
+                  ? `<span class="${odds.isClosed ? 'text-muted' : 'text-primary'}">승 ${odds.home}</span> / <span class="${odds.isClosed ? 'text-muted' : 'text-secondary'}">무 ${odds.draw}</span> / <span class="${odds.isClosed ? 'text-muted' : 'text-danger'}">패 ${odds.away}</span>` 
+                  : `<span class="${odds.isClosed ? 'text-muted' : 'text-primary'}">승 ${odds.home}</span> / <span class="${odds.isClosed ? 'text-muted' : 'text-danger'}">패 ${odds.away}</span>`
+                }</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="badge text-white py-0 px-1" style="background:#059669; font-size:0.55rem;">국내</span>
+                <span>${odds.type === '3WAY' 
+                  ? `<span class="${odds.isClosed ? 'text-muted' : 'text-success'}">승 ${odds.domHome}</span> / <span class="${odds.isClosed ? 'text-muted' : 'text-secondary'}">무 ${odds.domDraw}</span> / <span class="${odds.isClosed ? 'text-muted' : 'text-danger'}">패 ${odds.domAway}</span>` 
+                  : `<span class="${odds.isClosed ? 'text-muted' : 'text-success'}">승 ${odds.domHome}</span> / <span class="${odds.isClosed ? 'text-muted' : 'text-danger'}">패 ${odds.domAway}</span>`
+                }</span>
+              </div>
             </div>
             <div class="text-muted text-truncate text-center" style="font-size:0.65rem;">
-              <i class="bi bi-clock me-0.5 text-primary"></i>${m.match_date ? formatKSTDateTime(m.match_date) : '시작 대기'}
+              ${odds.isClosed ? '<span class="badge bg-secondary text-white me-1 py-0 px-1" style="font-size:0.58rem;">마감</span>' : (odds.isImminent ? '<span class="badge bg-danger text-white me-1 py-0 px-1" style="font-size:0.58rem;">마감임박🔥</span>' : '')}<i class="bi bi-clock me-0.5 text-primary"></i>${m.match_date ? formatKSTDateTime(m.match_date) : '시작 대기'}
             </div>
           `;
         } else if (isFin) {

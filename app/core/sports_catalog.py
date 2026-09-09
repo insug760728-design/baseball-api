@@ -72,6 +72,13 @@ SPORTS_CATALOG = {
             {"id": "EREDIVISIE", "name": "네덜란드 에레디비시 (Eredivisie)", "api_code": "ned.1"}
         ]
     },
+    "MLS": {
+        "title": "미국 메이저리그 사커 (MLS)",
+        "sport_code": "SOCCER",
+        "leagues": [
+            {"id": "MLS", "name": "미국 메이저리그 사커 (MLS)", "api_code": "usa.1"}
+        ]
+    },
     "CHAMPIONSHIP": {
         "title": "잉글랜드 챔피언십 (Championship)",
         "sport_code": "SOCCER",

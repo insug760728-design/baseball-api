@@ -21,7 +21,8 @@ SOCCER_LEAGUE_CODES = {
     "CHAMPIONSHIP": "eng.2",
     "UCL": "uefa.champions",
     "UEL": "uefa.europa",
-    "LIBERTADORES": "conmebol.libertadores"
+    "LIBERTADORES": "conmebol.libertadores",
+    "MLS": "usa.1"
 }
 
 SOCCER_LEAGUE_NAMES = {
@@ -34,8 +35,52 @@ SOCCER_LEAGUE_NAMES = {
     "CHAMPIONSHIP": "잉글랜드 챔피언십 (Championship)",
     "UCL": "UEFA 챔피언스리그 (UCL)",
     "UEL": "UEFA 유로파리그 (UEL)",
-    "LIBERTADORES": "코파 리베르타도레스 (Copa Libertadores)"
+    "LIBERTADORES": "코파 리베르타도레스 (Copa Libertadores)",
+    "MLS": "미국 메이저리그 사커 (MLS)"
 }
+
+MLS_TEAM_TRANSLATION = {
+    "Atlanta United FC": "애틀랜타 유나이티드", "Atlanta United": "애틀랜타 유나이티드",
+    "Orlando City SC": "올랜도 시티", "Orlando City": "올랜도 시티",
+    "CF Montréal": "CF 몬트리올", "CF Montreal": "CF 몬트리올", "Montreal Impact": "CF 몬트리올",
+    "Charlotte FC": "샬럿 FC", "Charlotte": "샬럿 FC",
+    "D.C. United": "DC 유나이티드", "DC United": "DC 유나이티드",
+    "Columbus Crew": "콜럼버스 크루", "Columbus": "콜럼버스 크루",
+    "Toronto FC": "토론토 FC", "Toronto": "토론토 FC",
+    "Nashville SC": "내슈빌 SC", "Nashville": "내슈빌 SC",
+    "Philadelphia Union": "필라델피아 유니온", "Philadelphia": "필라델피아 유니온",
+    "FC Cincinnati": "FC 신시내티", "Cincinnati": "FC 신시내티",
+    "New York City FC": "뉴욕 시티 FC", "NYCFC": "뉴욕 시티 FC",
+    "New England Revolution": "뉴잉글랜드 레볼루션", "New England": "뉴잉글랜드 레볼루션",
+    "Austin FC": "오스틴 FC", "Austin": "오스틴 FC",
+    "Colorado Rapids": "콜로라도 래피즈", "Colorado": "콜로라도 래피즈",
+    "Chicago Fire FC": "시카고 파이어", "Chicago Fire": "시카고 파이어",
+    "Inter Miami CF": "인터 마이애미", "Inter Miami": "인터 마이애미",
+    "Houston Dynamo FC": "휴스턴 다이나모", "Houston Dynamo": "휴스턴 다이나모",
+    "Real Salt Lake": "레알 솔트레이크", "Salt Lake": "레알 솔트레이크",
+    "Minnesota United FC": "미네소타 유나이티드", "Minnesota United": "미네소타 유나이티드",
+    "FC Dallas": "FC 댈러스", "Dallas": "FC 댈러스",
+    "LAFC": "로스앤젤레스 FC (LAFC)", "Los Angeles Football Club": "로스앤젤레스 FC (LAFC)", "Los Angeles FC": "로스앤젤레스 FC (LAFC)",
+    "Red Bull New York": "뉴욕 레드불스", "New York Red Bulls": "뉴욕 레드불스", "NY Red Bulls": "뉴욕 레드불스",
+    "Portland Timbers": "포틀랜드 팀버즈", "Portland": "포틀랜드 팀버즈",
+    "St. Louis CITY SC": "세인트루이스 시티", "St Louis CITY SC": "세인트루이스 시티", "St. Louis City": "세인트루이스 시티",
+    "San Diego FC": "샌디에이고 FC", "San Diego": "샌디에이고 FC",
+    "San Jose Earthquakes": "산호세 어스퀘이크스", "San Jose": "산호세 어스퀘이크스",
+    "Vancouver Whitecaps": "밴쿠버 화이트캡스", "Vancouver Whitecaps FC": "밴쿠버 화이트캡스",
+    "LA Galaxy": "LA 갤럭시", "Galaxy": "LA 갤럭시",
+    "Seattle Sounders FC": "시애틀 사운더스", "Seattle Sounders": "시애틀 사운더스",
+    "Sporting Kansas City": "스포팅 캔자스시티", "Sporting KC": "스포팅 캔자스시티"
+}
+
+def translate_soccer_team_name(name: str) -> str:
+    if not name: return ""
+    clean_name = name.strip()
+    if clean_name in MLS_TEAM_TRANSLATION:
+        return MLS_TEAM_TRANSLATION[clean_name]
+    for eng, kor in MLS_TEAM_TRANSLATION.items():
+        if eng.lower() == clean_name.lower() or (len(eng) >= 5 and eng.lower() in clean_name.lower()):
+            return kor
+    return clean_name
 
 class SoccerScraper(BaseScraper):
     """
@@ -97,10 +142,10 @@ class SoccerScraper(BaseScraper):
                     sc_int = 0
 
                 if comp.get("homeAway") == "home":
-                    home_team = t_name
+                    home_team = translate_soccer_team_name(t_name)
                     home_score = sc_int
                 else:
-                    away_team = t_name
+                    away_team = translate_soccer_team_name(t_name)
                     away_score = sc_int
 
             status_raw = comps.get("status", {}).get("type", {}).get("state", "pre")
@@ -168,8 +213,13 @@ class SoccerScraper(BaseScraper):
 
         home_team_name, away_team_name = "홈팀", "원정팀"
         period_scores = {"home": {}, "away": {}}
+
+        def _safe_int(v):
+            try: return int(v)
+            except Exception: return 0
+
         for comp in competitors:
-            t_name = comp.get("team", {}).get("displayName", "")
+            t_name = translate_soccer_team_name(comp.get("team", {}).get("displayName", ""))
             ha = comp.get("homeAway", "home")
             if ha == "home":
                 home_team_name = t_name
@@ -178,10 +228,10 @@ class SoccerScraper(BaseScraper):
 
             lines = comp.get("linescores", [])
             if len(lines) >= 2:
-                period_scores[ha]["1H"] = lines[0].get("value", 0) or 0
-                period_scores[ha]["2H"] = lines[1].get("value", 0) or 0
+                period_scores[ha]["1H"] = _safe_int(lines[0].get("value", 0))
+                period_scores[ha]["2H"] = _safe_int(lines[1].get("value", 0))
             else:
-                period_scores[ha]["FT"] = comp.get("score", 0)
+                period_scores[ha]["FT"] = _safe_int(comp.get("score", 0))
 
         # 박스스코어 팀 통계
         box_teams = data.get("boxscore", {}).get("teams", [])
@@ -240,8 +290,10 @@ class SoccerScraper(BaseScraper):
             })
 
         # 골 이벤트를 바탕으로 전반/후반 스코어 정밀 보정
-        h_total = sum(period_scores.get("home", {}).values())
-        a_total = sum(period_scores.get("away", {}).values())
+        def _sum_dict(d):
+            return sum(_safe_int(v) for v in (d or {}).values())
+        h_total = _sum_dict(period_scores.get("home", {}))
+        a_total = _sum_dict(period_scores.get("away", {}))
         if h_total == 0 and a_total == 0:
             h_1h, h_2h, a_1h, a_2h = 0, 0, 0, 0
             for ev in events_list:

@@ -213,7 +213,7 @@ class MatchService:
         # 리그명에 따라 sport_code 자동 감지
         if league_name:
             ln_upper = league_name.upper()
-            if any(s in ln_upper for s in ["EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "EREDIVISIE", "CHAMPIONSHIP", "UCL", "UEL", "LIBERTADORES", "JLEAGUE", "J_LEAGUE", "KLEAGUE", "K_LEAGUE", "ENGLAND_CUP", "FA_CUP", "CARABAO", "CUP", "프리미어", "라리가", "분데스", "세리에", "리그 1", "에레디비시", "리베르타도레스", "코파", "남미", "챔피언십", "챔피언스", "챔스", "J리그", "K리그", "FA컵", "카라바오", "리그컵", "컵대회"]):
+            if any(s in ln_upper for s in ["MLS", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "EREDIVISIE", "CHAMPIONSHIP", "UCL", "UEL", "LIBERTADORES", "JLEAGUE", "J_LEAGUE", "KLEAGUE", "K_LEAGUE", "ENGLAND_CUP", "FA_CUP", "CARABAO", "CUP", "프리미어", "라리가", "분데스", "세리에", "리그 1", "에레디비시", "리베르타도레스", "코파", "남미", "챔피언십", "챔피언스", "챔스", "J리그", "K리그", "FA컵", "카라바오", "리그컵", "컵대회", "메이저리그 사커", "미국축구"]):
                 sport_code = "SOCCER"
             elif any(b in ln_upper for b in ["NBA", "KBL", "FIBA", "농구", "월드컵", "여자농구"]):
                 sport_code = "BASKETBALL"
@@ -224,7 +224,9 @@ class MatchService:
             query = query.filter(Match.sport_code == sport_code.upper())
         if league_name:
             ln_u = league_name.upper()
-            if ln_u in ["ENGLAND_CUP", "FA_CUP", "CARABAO_CUP", "CUP"]:
+            if ln_u in ["MLS", "MAJOR_LEAGUE_SOCCER", "미국축구"]:
+                query = query.filter(or_(Match.league_name.contains("MLS"), Match.league_name.contains("메이저리그 사커"), Match.league_name.contains("미국 축구")))
+            elif ln_u in ["ENGLAND_CUP", "FA_CUP", "CARABAO_CUP", "CUP"]:
                 query = query.filter(or_(Match.league_name.contains("FA컵"), Match.league_name.contains("카라바오"), Match.league_name.contains("잉글랜드 컵"), Match.league_name.contains("EFL")))
             elif ln_u in ["LALIGA", "LA_LIGA", "LA LIGA"]:
                 query = query.filter(or_(Match.league_name.contains("라리가"), Match.league_name.contains("La Liga")))
