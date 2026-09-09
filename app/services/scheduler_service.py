@@ -170,7 +170,8 @@ class SchedulerService:
 
             for league_id in cls._config.get("leagues", ["KBO", "NPB", "MLB"]):
                 try:
-                    sync_res = MatchService.sync_from_official_site(
+                    sync_res = await asyncio.to_thread(
+                        MatchService.sync_from_official_site,
                         db=db,
                         league_id=league_id,
                         start_date=yesterday_str,
@@ -178,7 +179,8 @@ class SchedulerService:
                     )
                     
                     try:
-                        FolderExportService.export_league_to_folder_structure(
+                        await asyncio.to_thread(
+                            FolderExportService.export_league_to_folder_structure,
                             db=db,
                             league_id=league_id,
                             start_date=yesterday_str,
@@ -246,7 +248,8 @@ class SchedulerService:
             active_leagues = cls._config.get("leagues", ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS", "UCL", "CHAMPIONSHIP", "ENGLAND_CUP", "EREDIVISIE", "LIBERTADORES", "JLEAGUE", "NBA", "KBL"])
             for lid in active_leagues:
                 try:
-                    res = MatchService.sync_from_official_site(
+                    res = await asyncio.to_thread(
+                        MatchService.sync_from_official_site,
                         db=db,
                         league_id=lid,
                         start_date=yesterday_str,
@@ -273,8 +276,8 @@ class SchedulerService:
             try:
                 from app.services.live_api_sports_service import LiveApiSportsService
                 if LiveApiSportsService.is_configured():
-                    fb_res = LiveApiSportsService.sync_live_football()
-                    bb_res = LiveApiSportsService.sync_live_baseball()
+                    fb_res = await asyncio.to_thread(LiveApiSportsService.sync_live_football)
+                    bb_res = await asyncio.to_thread(LiveApiSportsService.sync_live_baseball)
                     summary["API_SPORTS_LIVE"] = {"football": fb_res, "baseball": bb_res}
             except Exception as ase:
                 logger.error(f"[Scheduler] API-Sports live sync error: {ase}")
@@ -310,7 +313,7 @@ class SchedulerService:
 
             for g_id, g_ts, label in sync_targets:
                 try:
-                    res = BetmanService.get_round_data(gm_id=g_id, gm_ts=g_ts, force_refresh=True)
+                    res = await asyncio.to_thread(BetmanService.get_round_data, gm_id=g_id, gm_ts=g_ts, force_refresh=True)
                     logger.info(f"[Scheduler] 베트맨 10분 주기 최신화: {label} (총매출: {res.get('total_sell_amount', 0):,}원, 1등누적: {res.get('first_prize_pool', 0):,}원, 경기수: {len(res.get('matches', []))})")
                     try:
                         await manager.broadcast({
@@ -346,8 +349,8 @@ class SchedulerService:
         try:
             from app.services.live_api_sports_service import LiveApiSportsService
             if LiveApiSportsService.is_configured():
-                fb_res = LiveApiSportsService.sync_live_football()
-                bb_res = LiveApiSportsService.sync_live_baseball()
+                fb_res = await asyncio.to_thread(LiveApiSportsService.sync_live_football)
+                bb_res = await asyncio.to_thread(LiveApiSportsService.sync_live_baseball)
                 tot_updated = (fb_res.get('updated_db_matches', 0) or 0) + (bb_res.get('updated_db_matches', 0) or 0)
                 logger.info(f"[Scheduler LiveApi] 실시간 유료 API 동기화 완료: 축구 {fb_res.get('updated_db_matches', 0)}경기, 야구 {bb_res.get('updated_db_matches', 0)}경기 갱신 (총 {tot_updated}건)")
                 if tot_updated > 0:
@@ -366,16 +369,18 @@ class SchedulerService:
             logger.error(f"[Scheduler LiveApi] 실시간 유료 API 동기화 오류: {e}")
 
     @classmethod
-    def execute_starters_sync_job(cls):
+    async def execute_starters_sync_job(cls):
         """15분 주기 KBO 및 NPB 공식 선발투수 발표 실시간 동기화"""
-        db = SessionLocal()
-        try:
-            res = MatchService.sync_announced_starters(db)
-            logger.info(f"[Scheduler Starters] 선발투수 실시간 동기화 완료: KBO {res.get('kbo_synced')}건, NPB {res.get('npb_synced')}건")
-        except Exception as e:
-            logger.error(f"[Scheduler Starters] 선발투수 동기화 오류: {e}")
-        finally:
-            db.close()
+        def _run_starters():
+            db = SessionLocal()
+            try:
+                res = MatchService.sync_announced_starters(db)
+                logger.info(f"[Scheduler Starters] 선발투수 실시간 동기화 완료: KBO {res.get('kbo_synced')}건, NPB {res.get('npb_synced')}건")
+            except Exception as e:
+                logger.error(f"[Scheduler Starters] 선발투수 동기화 오류: {e}")
+            finally:
+                db.close()
+        await asyncio.to_thread(_run_starters)
 
 
 

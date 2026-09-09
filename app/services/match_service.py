@@ -534,7 +534,7 @@ class MatchService:
         return stat
 
     @staticmethod
-    def update_starters(db: Session, match_id: int, starters_data: Dict[str, Any]):
+    def update_starters(db: Session, match_id: int, starters_data: Dict[str, Any], refresh_analysis: bool = False):
         match = db.query(Match).filter(Match.id == match_id).first()
         if not match:
             return None
@@ -556,13 +556,19 @@ class MatchService:
         db.commit()
         db.refresh(detail)
         
-        analysis = TeamSplitService.get_matchup_analysis(
-            match.home_team_name,
-            match.away_team_name,
-            match.sport_code,
-            match_id=match.id,
-            team_stats=ts
-        )
+        analysis = None
+        if refresh_analysis:
+            try:
+                analysis = TeamSplitService.get_matchup_analysis(
+                    match.home_team_name,
+                    match.away_team_name,
+                    match.sport_code,
+                    match_id=match.id,
+                    team_stats=ts
+                )
+            except Exception as ae:
+                logger.warning(f"Failed to refresh matchup analysis: {ae}")
+
         return {
             "match_id": match.id,
             "starters": ts["starters"],

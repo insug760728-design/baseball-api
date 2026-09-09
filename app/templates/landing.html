@@ -1667,28 +1667,10 @@
             <span class="domain-badge d-none d-md-inline-block" style="background: #1d4ed8; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 700; color: white;">tokeon.co.kr</span>
           </div>
         </a>
-        <span class="badge fw-bold py-1 px-2 d-none d-md-inline-flex align-items-center ms-2" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.72rem; border-radius: 6px;">
-          <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
-        </span>
       </div>
 
-      <!-- Simple Auth Section, PC/Mobile View Switcher & Member Registry -->
+      <!-- Simple Auth Section -->
       <div id="navAuthContainer" class="d-flex align-items-center gap-1.5">
-        <!-- 💻 PC / 📱 핸드폰 버전 전환 버튼 -->
-        <div class="btn-group btn-group-sm" role="group" id="viewModeToggleGroup" style="border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden;">
-          <button type="button" class="btn btn btn-primary fw-bold px-2 py-1" id="btnModePC" onclick="setViewMode('pc')" title="PC 최적화 대화면 4분할 뷰">
-            <i class="bi bi-display me-1"></i><span class="d-none d-sm-inline">PC</span>버전
-          </button>
-          <button type="button" class="btn btn btn-outline-secondary fw-bold px-2 py-1" id="btnModeMobile" onclick="setViewMode('mobile')" title="스마트폰 모바일 최적화 뷰">
-            <i class="bi bi-phone me-1"></i><span class="d-none d-sm-inline">핸드폰</span>앱
-          </button>
-        </div>
-
-        <!-- 👥 회원 가입 현황 (data/members 폴더 연동) 버튼 -->
-        <button class="btn btn-sm btn-outline-dark fw-bold px-2 py-1" onclick="openMembersModal()" title="실제 가입한 별명·나이 인원수 목록 확인 (data/members 폴더 연동)" style="border-radius: 8px; font-size: 0.75rem; border-color: rgba(255, 255, 255, 0.2);">
-          <i class="bi bi-people-fill text-warning"></i><span class="d-none d-sm-inline ms-1">회원</span>
-        </button>
-
         <!-- ⚡ 간편 로그인 버튼 -->
         <button class="btn btn-sm btn-primary text-white fw-bold px-2.5 py-1" onclick="openLoginModal()" id="btnNavLogin" style="border-radius: 6px; font-size: 0.78rem; background: #1d4ed8; border: 1px solid #1d4ed8;">
           <i class="bi bi-box-arrow-in-right me-1"></i><span class="d-none d-sm-inline">간편 </span>로그인
@@ -1858,9 +1840,6 @@
                   <span class="badge" style="background: #eff6ff; border: 1px solid #bfdbfe; font-size: 0.68rem; color: #1d4ed8; padding: 2px 5px;">
                     <span style="width: 5px; height: 5px; background-color: #10b981; border-radius: 50%; display: inline-block; animation: pulseGlow 1.5s infinite;" class="me-0.5"></span>
                     <span id="wsStatusBadge">연결</span>
-                  </span>
-                  <span class="badge bg-light border text-dark px-1.5 py-0.5" style="font-size: 0.68rem;">
-                    <i class="bi bi-people-fill text-info me-0.5"></i><b class="text-dark" id="wsClientCount">664</b>명
                   </span>
                 </div>
               </div>
@@ -2220,29 +2199,27 @@
             </div>
           </div>
 
-          <!-- Round Horizontal Scroll Bar (50회, 51회, 52회...) + [모바일 전용] 뷰 전환 탭 -->
-          <div class="d-flex align-items-center justify-content-between gap-1">
-            <div class="d-flex align-items-center gap-1 flex-grow-1 min-w-0">
-              <button class="btn btn-xs p-0.5 text-secondary" onclick="scrollTotoModalRounds(-1)" title="이전 회차" style="border:1px solid #cbd5e1; border-radius:4px; line-height:1; flex-shrink:0; background:#fff; width:20px; height:20px;">
-                <i class="bi bi-chevron-left" style="font-size:0.65rem;"></i>
-              </button>
-              <div id="totoModalRoundScrollTrack" class="d-flex align-items-center gap-1 overflow-auto no-scrollbar py-0.5" style="white-space: nowrap; scroll-behavior: smooth; flex-grow: 1; -webkit-overflow-scrolling: touch;">
-                <!-- Dynamically rendered per sport: 50회, 51회, 52회... -->
-              </div>
-              <button class="btn btn-xs p-0.5 text-secondary" onclick="scrollTotoModalRounds(1)" title="다음 회차" style="border:1px solid #cbd5e1; border-radius:4px; line-height:1; flex-shrink:0; background:#fff; width:20px; height:20px;">
-                <i class="bi bi-chevron-right" style="font-size:0.65rem;"></i>
-              </button>
+          <!-- Round Horizontal Scroll Bar (50회, 51회, 52회...) -->
+          <div class="d-flex align-items-center gap-1">
+            <button class="btn btn-xs p-0.5 text-secondary" onclick="scrollTotoModalRounds(-1)" title="이전 회차" style="border:1px solid #cbd5e1; border-radius:4px; line-height:1; flex-shrink:0; background:#fff; width:20px; height:20px;">
+              <i class="bi bi-chevron-left" style="font-size:0.65rem;"></i>
+            </button>
+            <div id="totoModalRoundScrollTrack" class="d-flex align-items-center gap-1 overflow-auto no-scrollbar py-0.5" style="white-space: nowrap; scroll-behavior: smooth; flex-grow: 1; -webkit-overflow-scrolling: touch;">
+              <!-- Dynamically rendered per sport: 50회, 51회, 52회... -->
             </div>
+            <button class="btn btn-xs p-0.5 text-secondary" onclick="scrollTotoModalRounds(1)" title="다음 회차" style="border:1px solid #cbd5e1; border-radius:4px; line-height:1; flex-shrink:0; background:#fff; width:20px; height:20px;">
+              <i class="bi bi-chevron-right" style="font-size:0.65rem;"></i>
+            </button>
+          </div>
 
-            <!-- 📱 모바일 전용 [📋 14경기 마킹] ↔ [📊 계산 결과값] 즉시 전환 세그먼트 버튼 -->
-            <div class="d-flex d-md-none gap-1 flex-shrink-0 ms-1">
-              <button type="button" class="btn btn-xs fw-bold py-0.5 px-2 active" id="totoMobileTabMatches" onclick="switchTotoModalView('matches')" style="font-size: 0.68rem; border-radius: 4px; background: #0f172a; color: #fff; border: 1px solid #0f172a;">
-                📋 14경기
-              </button>
-              <button type="button" class="btn btn-xs fw-bold py-0.5 px-2" id="totoMobileTabCalc" onclick="switchTotoModalView('calc')" style="font-size: 0.68rem; border-radius: 4px; background: #ffffff; color: #1d4ed8; border: 1px solid #93c5fd;">
-                📊 계산 결과
-              </button>
-            </div>
+          <!-- 📱 [모바일 전용] 14경기 마킹 ↔ 계산 결과값 5:5 탭 바 -->
+          <div class="d-flex d-md-none gap-1 mt-1">
+            <button type="button" class="btn btn-xs fw-bold py-1 flex-fill" id="totoMobileTabMatches" onclick="switchTotoModalView('matches')" style="font-size: 0.70rem; border-radius: 4px; background: #0f172a; color: #fff; border: 1.5px solid #0f172a;">
+              <i class="bi bi-list-ol me-0.5"></i>14경기 마킹표
+            </button>
+            <button type="button" class="btn btn-xs fw-bold py-1 flex-fill" id="totoMobileTabCalc" onclick="switchTotoModalView('calc')" style="font-size: 0.70rem; border-radius: 4px; background: #ffffff; color: #1d4ed8; border: 1.5px solid #93c5fd;">
+              <i class="bi bi-calculator-fill me-0.5"></i>계산 결과값 & 설명
+            </button>
           </div>
         </div>
 
@@ -2909,17 +2886,6 @@
         // Logged In State: Show nickname, age, logout
         if (navContainer) {
           navContainer.innerHTML = `
-            <div class="btn-group btn-group-sm" role="group" id="viewModeToggleGroup" style="border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden;">
-              <button type="button" class="btn ${currentViewMode === 'pc' ? 'btn-info text-dark' : 'btn-dark text-light'} fw-bold px-2 py-1" id="btnModePC" onclick="setViewMode('pc')" title="PC 최적화 대화면 4분할 뷰">
-                <i class="bi bi-display me-1"></i><span class="d-none d-sm-inline">PC</span>버전
-              </button>
-              <button type="button" class="btn ${currentViewMode === 'mobile' ? 'btn-warning text-dark' : 'btn-dark text-light'} fw-bold px-2 py-1" id="btnModeMobile" onclick="setViewMode('mobile')" title="스마트폰 모바일 최적화 뷰">
-                <i class="bi bi-phone me-1"></i><span class="d-none d-sm-inline">핸드폰</span>앱
-              </button>
-            </div>
-            <button class="btn btn-sm btn-outline-dark fw-bold px-2 py-1" onclick="openMembersModal()" title="실제 가입한 별명·나이 인원수 목록 확인" style="border-radius: 8px; font-size: 0.75rem; border-color: rgba(255, 255, 255, 0.2);">
-              <i class="bi bi-people-fill text-warning"></i><span class="d-none d-sm-inline ms-1">회원</span>
-            </button>
             <div class="d-flex align-items-center bg-dark border border-secondary px-2 py-1 rounded-2">
               <i class="bi bi-person-circle text-info me-1"></i>
               <span class="text-white fw-bold" style="font-size: 0.78rem;">${currentUser.nickname}</span>
@@ -2944,17 +2910,6 @@
         // NOT Logged In: Freely view all matches & analysis, show clean Login button
         if (navContainer) {
           navContainer.innerHTML = `
-            <div class="btn-group btn-group-sm me-1" role="group" id="viewModeToggleGroup" style="border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden;">
-              <button type="button" class="btn ${currentViewMode === 'pc' ? 'btn-info text-dark' : 'btn-dark text-light'} fw-bold px-2 py-1" id="btnModePC" onclick="setViewMode('pc')" style="font-size: 0.72rem;">
-                <i class="bi bi-display me-1"></i>PC
-              </button>
-              <button type="button" class="btn ${currentViewMode === 'mobile' ? 'btn-warning text-dark' : 'btn-dark text-light'} fw-bold px-2 py-1" id="btnModeMobile" onclick="setViewMode('mobile')" style="font-size: 0.72rem;">
-                <i class="bi bi-phone me-1"></i>앱
-              </button>
-            </div>
-            <button class="btn btn-sm btn-outline-dark fw-bold px-2 py-1" onclick="openMembersModal()" title="실제 가입 회원 목록" style="border-radius: 8px; font-size: 0.75rem; border-color: rgba(255, 255, 255, 0.2);">
-              <i class="bi bi-people-fill text-warning"></i><span class="d-none d-sm-inline ms-1">회원</span>
-            </button>
             <button class="btn btn-sm btn-primary text-white fw-bold px-2.5 py-1" onclick="openLoginModal()" id="btnNavLogin" style="border-radius: 6px; font-size: 0.78rem; background: #1d4ed8; border: 1px solid #1d4ed8;">
               <i class="bi bi-box-arrow-in-right me-1"></i>로그인
             </button>
@@ -10095,10 +10050,85 @@ function getFullModalMatchList() {
       toggleTotoChoice(totoKey, seq, choice);
     }
 
+    // 모바일 전용 14경기 ↔ 계산 결과값 뷰 상태 관리
+    let currentTotoModalView = 'matches'; // 'matches' | 'calc'
+
+    function switchTotoModalView(viewName) {
+      currentTotoModalView = viewName;
+      const container = document.getElementById('totoTwoColWrapper');
+      const rightCol = document.getElementById('totoColRight');
+      const tabMatches = document.getElementById('totoMobileTabMatches');
+      const tabCalc = document.getElementById('totoMobileTabCalc');
+
+      if (tabMatches && tabCalc) {
+        if (viewName === 'matches') {
+          tabMatches.style.background = '#0f172a';
+          tabMatches.style.color = '#ffffff';
+          tabMatches.style.borderColor = '#0f172a';
+          tabCalc.style.background = '#ffffff';
+          tabCalc.style.color = '#1d4ed8';
+          tabCalc.style.borderColor = '#93c5fd';
+        } else {
+          tabCalc.style.background = '#1d4ed8';
+          tabCalc.style.color = '#ffffff';
+          tabCalc.style.borderColor = '#1d4ed8';
+          tabMatches.style.background = '#ffffff';
+          tabMatches.style.color = '#475569';
+          tabMatches.style.borderColor = '#cbd5e1';
+        }
+      }
+
+      if (container) {
+        if (viewName === 'matches') {
+          container.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          if (rightCol) {
+            container.scrollTo({ left: rightCol.offsetLeft, behavior: 'smooth' });
+          }
+        }
+      }
+    }
+
+    function showTotoSideCalc() {
+      const isMobile = window.innerWidth < 992;
+      if (isMobile) {
+        switchTotoModalView('calc');
+      } else {
+        const rightCol = document.getElementById('totoColRight');
+        if (rightCol) {
+          rightCol.classList.add('highlight-pulse');
+          rightCol.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          setTimeout(() => {
+            rightCol.classList.remove('highlight-pulse');
+          }, 1200);
+        }
+      }
+    }
+
+    function scrollToTotoCalculator() {
+      showTotoSideCalc();
+    }
+
+    function toggleMobilePrizeBoard() {
+      const board = document.getElementById('totoModalLivePrizeBoard');
+      const icon = document.getElementById('totoMobileBoardToggleIcon');
+      if (board) {
+        if (board.classList.contains('d-none')) {
+          board.classList.remove('d-none');
+          if (icon) icon.innerText = '접기 ▲';
+        } else {
+          board.classList.add('d-none');
+          if (icon) icon.innerText = '상세 ▼';
+        }
+      }
+    }
+
     function renderBetmanModalSheet(totoKey) {
       const modalBody = document.getElementById('totoModalBody');
       if (!modalBody) return;
-      const prevScroll = modalBody.scrollTop;
+      
+      const prevLeftCol = document.getElementById('totoColLeft');
+      const prevScroll = prevLeftCol ? prevLeftCol.scrollTop : modalBody.scrollTop;
 
       const targetTs = currentBetmanTs;
       let toto = TOTO_DATA[totoKey + '_' + targetTs] || 
@@ -10129,7 +10159,7 @@ function getFullModalMatchList() {
         prizePool.innerText = toto.first_prize_text || toto.prize || (Number(toto.first_prize_pool || 939525000).toLocaleString() + '원');
       }
 
-      // Update Real-time Live Prize Board in Modal
+      // Update Real-time Live Prize Board in Modal (PC Card & Mobile 1-Line Bar)
       const liveFirstPrize = document.getElementById('totoLiveFirstPrizeText');
       const liveSellAmt = document.getElementById('totoLiveSellAmtText');
       const liveSaleCount = document.getElementById('totoLiveSaleCountBadge');
@@ -10137,19 +10167,26 @@ function getFullModalMatchList() {
       const liveSyncTime = document.getElementById('totoLiveSyncTimeText');
       const livePulsing = document.getElementById('totoLivePulsingBadge');
 
+      const mobFirstPrize = document.getElementById('totoMobileFirstPrize');
+      const mobSellAmt = document.getElementById('totoMobileSellAmt');
+      const mobForward = document.getElementById('totoMobileForward');
+
       if (toto) {
-        if (liveFirstPrize) {
-          liveFirstPrize.innerText = toto.first_prize_text || (Number(toto.first_prize_pool || 0).toLocaleString() + '원');
-        }
-        if (liveSellAmt) {
-          liveSellAmt.innerText = toto.total_sell_text || (Number(toto.total_sell_amount || 0).toLocaleString() + '원');
-        }
+        const fpText = toto.first_prize_text || (Number(toto.first_prize_pool || 0).toLocaleString() + '원');
+        const saText = toto.total_sell_text || (Number(toto.total_sell_amount || 0).toLocaleString() + '원');
+        const fwText = toto.forward_text || (toto.forward_amount > 0 ? (Number(toto.forward_amount).toLocaleString() + '원') : '이월 없음');
+
+        if (liveFirstPrize) liveFirstPrize.innerText = fpText;
+        if (liveSellAmt) liveSellAmt.innerText = saText;
+        if (liveForward) liveForward.innerText = fwText;
+
+        if (mobFirstPrize) mobFirstPrize.innerText = fpText;
+        if (mobSellAmt) mobSellAmt.innerText = saText;
+        if (mobForward) mobForward.innerText = fwText;
+
         if (liveSaleCount) {
           const sCnt = toto.total_sale_cnt || (toto.total_sell_amount ? Math.round(toto.total_sell_amount / 1000) : 0);
           liveSaleCount.innerText = `${Number(sCnt).toLocaleString()}표`;
-        }
-        if (liveForward) {
-          liveForward.innerText = toto.forward_text || (toto.forward_amount > 0 ? (Number(toto.forward_amount).toLocaleString() + '원') : '이월 없음');
         }
         if (liveSyncTime) {
           liveSyncTime.innerText = `${toto.updated_at || '실시간'} 갱신`;
@@ -10216,11 +10253,11 @@ function getFullModalMatchList() {
 
         let resultBadge = '';
         if (m.home_score !== undefined && m.away_score !== undefined && (m.status === 'FINISHED' || m.status === 'Finished')) {
-          resultBadge = `<span class="badge bg-light border text-dark fw-bold" style="border-color:#cbd5e1!important; font-size:0.68rem;">${m.home_score}:${m.away_score}</span>`;
+          resultBadge = `<span class="badge bg-light border text-dark fw-bold" style="border-color:#cbd5e1!important; font-size:0.62rem; padding: 1px 3px;">${m.home_score}:${m.away_score}</span>`;
         } else if (m.status === 'LIVE' || m.status === 'Live') {
-          resultBadge = `<span class="badge bg-danger animate-pulse text-white fw-bold" style="font-size:0.65rem;">LIVE ${m.home_score || 0}:${m.away_score || 0}</span>`;
+          resultBadge = `<span class="badge bg-danger animate-pulse text-white fw-bold" style="font-size:0.58rem; padding: 1px 3px;">LIVE ${m.home_score || 0}:${m.away_score || 0}</span>`;
         } else {
-          resultBadge = `<span class="badge bg-light text-secondary border" style="font-size:0.65rem; border-color:#e2e8f0!important;">대기</span>`;
+          resultBadge = `<span class="badge bg-light text-secondary border" style="font-size:0.58rem; border-color:#e2e8f0!important; padding: 1px 3px;">대기</span>`;
         }
 
         const probH = m.db_prob_home || (Math.round((Number(m.pW) || 45) * 1.05));
@@ -10228,27 +10265,29 @@ function getFullModalMatchList() {
 
         rowsHtml += `
           <tr class="toto-modal-row ${hasPick ? 'row-has-pick' : ''}" onclick="openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
-            <td class="text-center py-2 px-1" style="width: 54px;">
-              <span class="badge" style="background:#0f172a; color:#ffffff; font-weight:800; font-size:0.75rem; border-radius:4px; padding: 3px 6px;">
+            <td class="text-center" style="width: 32px;">
+              <span class="badge toto-match-seq-badge" style="background:#0f172a; color:#ffffff; font-weight:800;">
                 ${String(m.seq).padStart(2, '0')}
               </span>
             </td>
-            <td class="py-2 px-1 text-center" style="width: 110px; font-size: 0.76rem;">
-              <div class="badge bg-light text-primary border fw-bold mb-0.5" style="border-color: #cbd5e1 !important; font-size: 0.68rem;">
-                ${m.league}
-              </div>
-              <div class="text-muted" style="font-size: 0.70rem; font-family: monospace;">
-                ${timeShort}
-              </div>
-            </td>
-            <td class="py-2 px-2 text-end" style="width: 25%;">
-              <div class="d-flex align-items-center justify-content-end gap-1.5">
-                <span class="fw-bold text-dark text-truncate" style="font-size: 0.88rem;" title="${m.home}">${m.home}</span>
-                <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.68rem; font-weight: 700; padding: 2px 5px;">${probH}%</span>
+            <td class="text-center" style="width: 76px; font-size: 0.66rem; line-height: 1.1;">
+              <div class="d-flex flex-column align-items-center justify-content-center">
+                <span class="badge bg-light text-primary border fw-bold toto-league-txt text-truncate" style="border-color: #cbd5e1 !important; max-width: 72px;">
+                  ${m.league}
+                </span>
+                <span class="text-muted toto-time-txt mt-0.5" style="font-family: monospace;">
+                  ${timeShort}
+                </span>
               </div>
             </td>
-            <td class="py-2 px-2 text-center" style="width: 260px;" onclick="event.stopPropagation()">
-              <div class="d-flex align-items-center justify-content-center gap-1">
+            <td class="text-end" style="width: 25%; max-width: 105px;">
+              <div class="d-flex align-items-center justify-content-end gap-1">
+                <span class="fw-bold text-dark text-truncate toto-team-txt" title="${m.home}">${m.home}</span>
+                <span class="badge toto-prob-badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 700;">${probH}%</span>
+              </div>
+            </td>
+            <td class="text-center" style="width: 105px; min-width: 100px;" onclick="event.stopPropagation()">
+              <div class="d-flex align-items-center justify-content-center gap-0.5">
                 <button type="button" class="betman-slip-btn ${isMarkW ? 'marked' : ''} ${isAiW ? 'ai-rec' : ''}" onclick="toggleTotoModalChoice('${totoKey}', ${m.seq}, 'W')" title="홈팀 승 (투표율 ${m.pW}%)">
                   <span class="b-label">승</span>
                   <span class="b-pct">${m.pW}%</span>
@@ -10266,18 +10305,18 @@ function getFullModalMatchList() {
                 </button>
               </div>
             </td>
-            <td class="py-2 px-2 text-start" style="width: 25%;">
-              <div class="d-flex align-items-center justify-content-start gap-1.5">
-                <span class="badge" style="background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8; font-size: 0.68rem; font-weight: 700; padding: 2px 5px;">${probA}%</span>
-                <span class="fw-bold text-dark text-truncate" style="font-size: 0.88rem;" title="${m.away}">${m.away}</span>
+            <td class="text-start" style="width: 25%; max-width: 105px;">
+              <div class="d-flex align-items-center justify-content-start gap-1">
+                <span class="badge toto-prob-badge" style="background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8; font-weight: 700;">${probA}%</span>
+                <span class="fw-bold text-dark text-truncate toto-team-txt" title="${m.away}">${m.away}</span>
               </div>
             </td>
-            <td class="py-2 px-1 text-center" style="width: 80px;">
+            <td class="text-center d-none d-sm-table-cell" style="width: 58px;">
               ${resultBadge}
             </td>
-            <td class="py-2 px-1 text-center" style="width: 75px;">
-              <button type="button" class="btn btn-xs fw-bold text-dark" onclick="event.stopPropagation(); openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="background:#ffffff; border:1.5px solid #0f172a; border-radius:4px; font-size:0.70rem; padding: 2px 6px; white-space:nowrap;" title="클릭 시 [${m.home} vs ${m.away}] 1:1 세이버 분석실 팝업 열기">
-                지표↗
+            <td class="text-center" style="width: 30px;">
+              <button type="button" class="btn btn-xs fw-bold text-dark toto-detail-btn d-flex align-items-center justify-content-center mx-auto" onclick="event.stopPropagation(); openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="background:#ffffff; border:1px solid #0f172a; border-radius:3px; white-space:nowrap;" title="클릭 시 [${m.home} vs ${m.away}] 1:1 세이버 분석실 팝업 열기">
+                ↗
               </button>
             </td>
           </tr>
@@ -10298,46 +10337,94 @@ function getFullModalMatchList() {
 
       const calcHtml = buildTotoCalculatorHtml(totoKey, toto);
 
+      // 🏆 좌우 2-컬럼 분할 구조: 왼쪽은 14경기 마킹표, 오른쪽은 계산 결과값 및 설명
       modalBody.innerHTML = `
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0" style="min-width: 720px;">
-            <thead style="background: #0f172a; color: #f8fafc; font-size: 0.74rem;">
-              <tr>
-                <th class="text-center py-2" style="width: 54px;">번호</th>
-                <th class="text-center py-2" style="width: 110px;">대회 / 일시</th>
-                <th class="text-end py-2" style="width: 25%;">홈팀 (AI승률)</th>
-                <th class="text-center py-2" style="width: 260px;">마킹 슬립 (베트맨 공식 투표율)</th>
-                <th class="text-start py-2" style="width: 25%;">(AI승률) 원정팀</th>
-                <th class="text-center py-2" style="width: 80px;">결과/상태</th>
-                <th class="text-center py-2" style="width: 75px;">세부분석</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml}
-            </tbody>
-          </table>
+        <div class="toto-two-col-container" id="totoTwoColWrapper">
+          <!-- 왼쪽 컬럼: 14경기 승무패/승1패/승5패 마킹표 (스마트폰 한 화면 쏙 들어오는 초컴팩트 뷰) -->
+          <div class="toto-col-left" id="totoColLeft">
+            <div class="table-responsive h-100" style="-webkit-overflow-scrolling: touch;">
+              <table class="table toto-modal-table table-hover align-middle mb-0" style="min-width: 350px;">
+                <thead style="background: #0f172a; color: #f8fafc; font-size: 0.68rem; position: sticky; top: 0; z-index: 5;">
+                  <tr>
+                    <th class="text-center py-1" style="width: 32px;">No</th>
+                    <th class="text-center py-1" style="width: 76px;">대회/일시</th>
+                    <th class="text-end py-1" style="width: 25%;">홈팀(승률)</th>
+                    <th class="text-center py-1" style="width: 105px;">마킹(투표율)</th>
+                    <th class="text-start py-1" style="width: 25%;">(승률)원정팀</th>
+                    <th class="text-center py-1 d-none d-sm-table-cell" style="width: 58px;">상태</th>
+                    <th class="text-center py-1" style="width: 30px;">지표</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rowsHtml}
+                </tbody>
+              </table>
+            </div>
+            <div class="p-1 mt-1 bg-light border rounded text-center small text-muted d-none d-md-block" style="font-size: 0.68rem;">
+              <i class="bi bi-info-circle-fill text-primary me-1"></i>14경기 마킹을 클릭하시면 우측 계산 결과값이 실시간으로 즉시 연산됩니다.
+            </div>
+          </div>
+
+          <!-- 오른쪽 컬럼: 계산 결과값 (AI 빅데이터 시뮬레이터 & 당첨 계산기) -->
+          <div class="toto-col-right" id="totoColRight">
+            ${calcHtml}
+          </div>
         </div>
-        <div class="p-2 mt-2 bg-light border rounded text-center small text-muted" style="font-size: 0.74rem;">
-          <i class="bi bi-info-circle-fill text-primary me-1"></i>배트맨 지정 14경기 중 임의의 경기 행 또는 <b>[지표 ↗]</b> 버튼을 클릭하시면 <b>1:1 세이버메트릭스 정밀 분석 팝업창</b>이 오픈됩니다.
-        </div>
-        ${calcHtml}
       `;
 
+      // 스크롤 및 모바일 뷰 위치 복구
       if (prevScroll > 0) {
-        modalBody.scrollTop = prevScroll;
+        const curLeftCol = document.getElementById('totoColLeft');
+        if (curLeftCol) curLeftCol.scrollTop = prevScroll;
+      }
+      if (currentTotoModalView === 'calc') {
+        setTimeout(() => {
+          switchTotoModalView('calc');
+        }, 10);
+      }
+
+      // 모바일 가로 스와이프 시 상단 탭 자동 동기화
+      const colWrapper = document.getElementById('totoTwoColWrapper');
+      if (colWrapper && !colWrapper._hasScrollSync) {
+        colWrapper._hasScrollSync = true;
+        colWrapper.addEventListener('scroll', () => {
+          if (window.innerWidth >= 992) return;
+          const sl = colWrapper.scrollLeft;
+          const w = colWrapper.clientWidth || 360;
+          const tabMatches = document.getElementById('totoMobileTabMatches');
+          const tabCalc = document.getElementById('totoMobileTabCalc');
+          if (!tabMatches || !tabCalc) return;
+          if (sl > w * 0.45) {
+            currentTotoModalView = 'calc';
+            tabCalc.style.background = '#1d4ed8';
+            tabCalc.style.color = '#ffffff';
+            tabCalc.style.borderColor = '#1d4ed8';
+            tabMatches.style.background = '#ffffff';
+            tabMatches.style.color = '#475569';
+            tabMatches.style.borderColor = '#cbd5e1';
+          } else {
+            currentTotoModalView = 'matches';
+            tabMatches.style.background = '#0f172a';
+            tabMatches.style.color = '#ffffff';
+            tabMatches.style.borderColor = '#0f172a';
+            tabCalc.style.background = '#ffffff';
+            tabCalc.style.color = '#1d4ed8';
+            tabCalc.style.borderColor = '#93c5fd';
+          }
+        }, { passive: true });
       }
 
       const bStats = document.getElementById('totoModalBottomStats');
       if (bStats) {
         bStats.innerHTML = `
-          <span class="badge ${markedCount === 14 ? 'bg-success text-white' : 'bg-warning text-dark'} fw-bold px-2.5 py-1.5" style="font-size: 0.76rem;">
+          <span class="badge ${markedCount === 14 ? 'bg-success text-white' : 'bg-warning text-dark'} fw-bold px-2 py-1" style="font-size: 0.72rem;">
             <i class="bi bi-check2-circle me-1"></i>${markedCount} / 14 경기 마킹
           </span>
-          <span class="text-dark fw-bold" style="font-size: 0.82rem;">
+          <span class="text-dark fw-bold" style="font-size: 0.76rem;">
             총 <strong class="text-primary">${combinations.toLocaleString()}</strong> 조합
           </span>
-          <span class="badge bg-white border text-dark fw-bold px-2.5 py-1" style="border-color: #cbd5e1 !important; font-size: 0.82rem;">
-            베팅 금액: <strong style="color: #1d4ed8;">${totalBetPrice.toLocaleString()}</strong>원
+          <span class="badge bg-white border text-dark fw-bold px-2 py-0.5" style="border-color: #cbd5e1 !important; font-size: 0.76rem;">
+            베팅: <strong style="color: #1d4ed8;">${totalBetPrice.toLocaleString()}</strong>원
           </span>
         `;
       }
@@ -10385,16 +10472,13 @@ function getFullModalMatchList() {
     // ⚡ 14경기 토토 실제 예상 등수 및 당첨 인원수 & 수령액 일체형 시뮬레이터
     // (베트맨 공식 실시간 발매 투표율 & 푸아송 이항확률 분포 Poisson-Binomial 모델 기반)
     // ------------------------------------------------------------------
-    function scrollToTotoCalculator() {
-      const calcEl = document.getElementById('totoEmbeddedCalcSection');
-      if (calcEl) {
-        calcEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
-
     function buildTotoCalculatorHtml(totoKey, toto) {
       if (!toto || !Array.isArray(toto.matches) || toto.matches.length === 0) {
-        return '';
+        return `
+          <div class="text-center py-4 text-muted small">
+            <i class="bi bi-hourglass-split me-1"></i>경기 목록 등록 후 계산 결과값이 표출됩니다.
+          </div>
+        `;
       }
 
       // Get Sales & Prize Pools
@@ -10495,146 +10579,144 @@ function getFullModalMatchList() {
       // Combination profile
       let favoriteCount = picksSummary.filter(p => Number(p.pct) >= 45).length;
       let upsetCount = 14 - favoriteCount;
-      let profileBadge = favoriteCount >= 11 ? '정배 몰림형 (많은 1등 예상)' : (favoriteCount <= 7 ? '초고배당 역배형 (이월 유력 / 독식 노림수)' : '황금 균형 밸런스형 (적절한 1점차/역배)');
+      let profileBadge = favoriteCount >= 11 ? '정배 몰림형 (다수 1등 예상)' : (favoriteCount <= 7 ? '초고배당 역배형 (이월 유력/독식)' : '황금 균형 밸런스형 (적절한 배당)');
 
       return `
-        <!-- ⚡ Embedded AI 빅데이터 시뮬레이터 (일체형 실시간 연동) -->
-        <div id="totoEmbeddedCalcSection" class="mt-4 pt-3 border-top" style="border-color: #e2e8f0 !important;">
-          <!-- Section Header -->
-          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom" style="border-color: #f1f5f9 !important;">
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              <span class="badge" style="background: linear-gradient(135deg, #0284c7, #1d4ed8); color: #ffffff; font-weight: 800; font-size: 0.82rem; padding: 5px 10px; border-radius: 6px;">
-                <i class="bi bi-cpu-fill me-1"></i>AI 빅데이터 시뮬레이터
+        <!-- ⚡ 우측 컬럼: 실시간 당첨 계산 결과값 & 설명 헤더 -->
+        <div id="totoEmbeddedCalcSection">
+          <!-- 모바일 전용 복귀 헤더 바 -->
+          <div class="d-md-none mb-2 d-flex justify-content-between align-items-center p-1.5 rounded" style="background: #eff6ff; border: 1px solid #bfdbfe;">
+            <span class="fw-bold small" style="color: #1d4ed8; font-size:0.75rem;">
+              <i class="bi bi-cpu-fill me-1"></i>실시간 당첨 계산 결과값
+            </span>
+            <button type="button" class="btn btn-xs fw-bold text-white py-0.5 px-2" onclick="switchTotoModalView('matches')" style="background: #0f172a; border-radius: 4px; font-size: 0.68rem;">
+              ◀ 14경기 마킹표 보기
+            </button>
+          </div>
+
+          <!-- Section Title (PC) -->
+          <div class="d-none d-md-flex align-items-center justify-content-between mb-2 pb-1.5 border-bottom" style="border-color: #e2e8f0 !important;">
+            <div class="d-flex align-items-center gap-1.5">
+              <span class="badge" style="background: linear-gradient(135deg, #0284c7, #1d4ed8); color: #ffffff; font-weight: 800; font-size: 0.74rem; padding: 3px 6px; border-radius: 4px;">
+                <i class="bi bi-cpu-fill me-0.5"></i>AI 계산기
               </span>
-              <span class="fw-bold text-dark" style="font-size: 0.96rem;">
-                14경기 당첨 확률 & 실시간 예상 수령액 계산기
-              </span>
-              <span class="badge bg-light text-secondary border d-none d-md-inline-block" style="border-color: #cbd5e1 !important; font-size: 0.70rem;">
-                베트맨 공식 10분 단위 실시간 집계 기반
+              <span class="fw-bold text-dark" style="font-size: 0.88rem;">
+                14경기 당첨 확률 & 실시간 예상 수령액
               </span>
             </div>
-            <div class="text-muted small d-flex align-items-center gap-1" style="font-size: 0.74rem;">
-              <i class="bi bi-lightning-charge-fill text-warning"></i>
-              <span>마킹 시 실시간 즉시 재계산</span>
+            <div class="text-muted small" style="font-size: 0.68rem;">
+              <i class="bi bi-lightning-charge-fill text-warning"></i> 마킹 즉시 연산
             </div>
           </div>
 
-          <!-- Top 3 Stat Cards -->
-          <div class="row g-2 mb-3">
-            <div class="col-md-4">
-              <div class="p-2.5 rounded-3 text-center h-100" style="background: #ffffff; border: 1.5px solid #bfdbfe;">
-                <div class="text-secondary small fw-bold" style="font-size: 0.76rem;">1등 예상 총 상금 (이월+발매)</div>
-                <div class="fs-5 fw-bold my-1" style="color: #1d4ed8;">${(firstPrizePool / 100000000).toFixed(2)}억 원</div>
-                <div class="text-muted" style="font-size: 0.70rem;">(이월 ${(forwardAmt / 100000000).toFixed(2)}억 + 발매 ${(sellAmt * 0.25 / 10000000).toFixed(1)}천만)</div>
+          <!-- Top 3 Mini Stat Cards -->
+          <div class="row g-1.5 mb-2">
+            <div class="col-4">
+              <div class="p-1.5 rounded-2 text-center h-100" style="background: #ffffff; border: 1.5px solid #bfdbfe;">
+                <div class="text-secondary fw-bold" style="font-size: 0.64rem;">1등 총 상금</div>
+                <div class="fw-bold my-0.5 text-truncate" style="color: #1d4ed8; font-size: 0.86rem;">${(firstPrizePool / 100000000).toFixed(2)}억</div>
+                <div class="text-muted" style="font-size: 0.58rem;">이월 ${(forwardAmt / 100000000).toFixed(1)}억</div>
               </div>
             </div>
-            <div class="col-md-4">
-              <div class="p-2.5 rounded-3 text-center h-100" style="background: #ffffff; border: 1.5px solid #fed7aa;">
-                <div class="text-secondary small fw-bold" style="font-size: 0.76rem;">베트맨 공식 총 투표수</div>
-                <div class="fs-5 fw-bold text-warning my-1" style="color: #d97706 !important;">${totalBets.toLocaleString()}표</div>
-                <div class="text-muted" style="font-size: 0.70rem;">(10분 단위 실시간 집계 반영)</div>
+            <div class="col-4">
+              <div class="p-1.5 rounded-2 text-center h-100" style="background: #ffffff; border: 1.5px solid #fed7aa;">
+                <div class="text-secondary fw-bold" style="font-size: 0.64rem;">베트맨 총 투표수</div>
+                <div class="fw-bold text-warning my-0.5 text-truncate" style="color: #d97706 !important; font-size: 0.86rem;">${totalBets.toLocaleString()}표</div>
+                <div class="text-muted" style="font-size: 0.58rem;">10분 주기 실시간</div>
               </div>
             </div>
-            <div class="col-md-4">
-              <div class="p-2.5 rounded-3 text-center h-100" style="background: #ffffff; border: 1.5px solid #a7f3d0;">
-                <div class="text-secondary small fw-bold" style="font-size: 0.76rem;">내 조합 난이도 프로필</div>
-                <div class="fs-6 fw-bold mt-1 text-truncate" style="color: #059669;">${profileBadge}</div>
-                <div class="text-muted mt-1" style="font-size: 0.70rem;">정배 ${favoriteCount}경기 / 역배·1점차 ${upsetCount}경기</div>
+            <div class="col-4">
+              <div class="p-1.5 rounded-2 text-center h-100" style="background: #ffffff; border: 1.5px solid #a7f3d0;">
+                <div class="text-secondary fw-bold" style="font-size: 0.64rem;">내 조합 난이도</div>
+                <div class="fw-bold mt-0.5 text-truncate" style="color: #059669; font-size: 0.74rem;">${profileBadge}</div>
+                <div class="text-muted" style="font-size: 0.58rem;">정배 ${favoriteCount} / 역배 ${upsetCount}</div>
               </div>
             </div>
           </div>
 
           <!-- Main Expected Winners & Rank Table -->
-          <div class="d-flex align-items-center justify-content-between mb-2">
-            <h6 class="fw-bold text-dark mb-0" style="font-size: 0.88rem;">
-              <i class="bi bi-award-fill text-warning me-1"></i>실제 공식 확률 기반 예상 등수 및 당첨 인원수 계산 결과
-            </h6>
-            <span class="text-muted small" style="font-size: 0.72rem;">단위: 1인당 수령액(세전)</span>
-          </div>
-
-          <div class="table-responsive mb-3">
-            <table class="table table-bordered align-middle text-center mb-0" style="border-color: #e2e8f0; font-size: 0.84rem;">
-              <thead style="background: #0f172a; color: #f8fafc; font-size: 0.76rem;">
+          <div class="table-responsive mb-2">
+            <table class="table table-bordered align-middle text-center mb-0" style="border-color: #e2e8f0; font-size: 0.74rem;">
+              <thead style="background: #0f172a; color: #f8fafc; font-size: 0.68rem;">
                 <tr>
-                  <th style="width: 70px;">등수</th>
-                  <th>적중 조건</th>
-                  <th>전국 적중 확률</th>
-                  <th style="color: #60a5fa;">🎯 예상 당첨 인원수</th>
-                  <th style="color: #fca5a5;">💰 1인당 예상 수령액</th>
+                  <th style="width: 48px; padding: 2px;">등수</th>
+                  <th style="padding: 2px;">적중 조건</th>
+                  <th style="padding: 2px;">전국 확률</th>
+                  <th style="color: #60a5fa; padding: 2px;">🎯 예상 인원</th>
+                  <th style="color: #fca5a5; padding: 2px;">💰 1인당 예상 수령액</th>
                 </tr>
               </thead>
               <tbody>
                 <!-- 1등 -->
-                <tr style="background: #eff6ff; border-left: 4px solid #1d4ed8;">
-                  <td class="fw-bold"><span class="badge bg-danger px-2 py-1">1등</span></td>
-                  <td class="fw-bold text-dark">14경기 올적중 (14/14)</td>
-                  <td>
-                    <strong class="text-dark">${(p14 * 100).toFixed(5)}%</strong><br>
-                    <small class="text-muted" style="font-size: 0.70rem;">약 1 : ${Math.round(1 / Math.max(1e-10, p14)).toLocaleString()}</small>
+                <tr style="background: #eff6ff; border-left: 3px solid #1d4ed8;">
+                  <td class="fw-bold py-1 px-1"><span class="badge bg-danger px-1 py-0.5" style="font-size:0.62rem;">1등</span></td>
+                  <td class="fw-bold text-dark py-1 px-1" style="font-size:0.72rem;">14올킬 (14/14)</td>
+                  <td class="py-1 px-1" style="font-size:0.68rem;">
+                    <strong class="text-dark">${(p14 * 100).toFixed(5)}%</strong>
                   </td>
-                  <td class="fw-bold fs-5" style="color: #1d4ed8;">
+                  <td class="fw-bold py-1 px-1" style="color: #1d4ed8; font-size:0.86rem;">
                     ${expWinners1 < 1.0 ? expWinners1.toFixed(2) : expWinners1.toFixed(1)}명
                   </td>
-                  <td class="fw-bold fs-6" style="color: #dc2626;">
+                  <td class="fw-bold py-1 px-1" style="color: #dc2626; font-size:0.82rem;">
                     약 ${(payout1 / 100000000).toFixed(2)}억 원<br>
-                    <small class="text-muted" style="font-size: 0.70rem;">(${payout1.toLocaleString()}원)</small>
+                    <small class="text-muted" style="font-size: 0.60rem;">(${payout1.toLocaleString()}원)</small>
                   </td>
                 </tr>
                 <!-- 2등 -->
                 <tr>
-                  <td class="fw-bold"><span class="badge bg-primary px-2 py-1">2등</span></td>
-                  <td class="text-dark">13경기 적중 (1오답)</td>
-                  <td>${(p13 * 100).toFixed(4)}%</td>
-                  <td class="fw-bold text-info">${expWinners2.toFixed(1)}명</td>
-                  <td class="fw-bold" style="color: #b45309;">약 ${(payout2 / 10000).toFixed(0)}만 원 <small class="text-muted">(${payout2.toLocaleString()}원)</small></td>
+                  <td class="fw-bold py-1 px-1"><span class="badge bg-primary px-1 py-0.5" style="font-size:0.62rem;">2등</span></td>
+                  <td class="text-dark py-1 px-1" style="font-size:0.70rem;">13적중 (1오답)</td>
+                  <td class="py-1 px-1" style="font-size:0.66rem;">${(p13 * 100).toFixed(4)}%</td>
+                  <td class="fw-bold text-info py-1 px-1" style="font-size:0.76rem;">${expWinners2.toFixed(1)}명</td>
+                  <td class="fw-bold py-1 px-1" style="color: #b45309; font-size:0.74rem;">약 ${(payout2 / 10000).toFixed(0)}만 원</td>
                 </tr>
                 <!-- 3등 -->
                 <tr>
-                  <td class="fw-bold"><span class="badge bg-secondary px-2 py-1">3등</span></td>
-                  <td class="text-dark">12경기 적중 (2오답)</td>
-                  <td>${(p12 * 100).toFixed(3)}%</td>
-                  <td class="fw-bold text-dark">${expWinners3.toFixed(1)}명</td>
-                  <td class="fw-bold" style="color: #b45309;">약 ${(payout3 / 10000).toFixed(1)}만 원 <small class="text-muted">(${payout3.toLocaleString()}원)</small></td>
+                  <td class="fw-bold py-1 px-1"><span class="badge bg-secondary px-1 py-0.5" style="font-size:0.62rem;">3등</span></td>
+                  <td class="text-dark py-1 px-1" style="font-size:0.70rem;">12적중 (2오답)</td>
+                  <td class="py-1 px-1" style="font-size:0.66rem;">${(p12 * 100).toFixed(3)}%</td>
+                  <td class="fw-bold text-dark py-1 px-1" style="font-size:0.76rem;">${expWinners3.toFixed(1)}명</td>
+                  <td class="fw-bold py-1 px-1" style="color: #b45309; font-size:0.74rem;">약 ${(payout3 / 10000).toFixed(1)}만 원</td>
                 </tr>
                 <!-- 4등 -->
                 <tr>
-                  <td class="fw-bold"><span class="badge bg-light border text-dark px-2 py-1">4등</span></td>
-                  <td class="text-dark">11경기 적중 (3오답)</td>
-                  <td>${(p11 * 100).toFixed(2)}%</td>
-                  <td class="fw-bold text-dark">${expWinners4.toFixed(0)}명</td>
-                  <td class="fw-bold" style="color: #b45309;">약 ${(payout4 / 10000).toFixed(1)}만 원 <small class="text-muted">(${payout4.toLocaleString()}원)</small></td>
+                  <td class="fw-bold py-1 px-1"><span class="badge bg-light border text-dark px-1 py-0.5" style="font-size:0.62rem;">4등</span></td>
+                  <td class="text-dark py-1 px-1" style="font-size:0.70rem;">11적중 (3오답)</td>
+                  <td class="py-1 px-1" style="font-size:0.66rem;">${(p11 * 100).toFixed(2)}%</td>
+                  <td class="fw-bold text-dark py-1 px-1" style="font-size:0.76rem;">${expWinners4.toFixed(0)}명</td>
+                  <td class="fw-bold py-1 px-1" style="color: #b45309; font-size:0.74rem;">약 ${(payout4 / 10000).toFixed(1)}만 원</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           <!-- Insights: Rollover & Solo -->
-          <div class="row g-2 mb-3">
-            <div class="col-md-6">
-              <div class="p-2.5 rounded-3 d-flex align-items-center justify-content-between h-100" style="background: #fef2f2; border: 1.5px solid #fca5a5;">
+          <div class="row g-1.5 mb-2">
+            <div class="col-6">
+              <div class="p-1.5 rounded-2 d-flex align-items-center justify-content-between h-100" style="background: #fef2f2; border: 1px solid #fca5a5;">
                 <div>
-                  <div class="fw-bold small text-danger"><i class="bi bi-fire text-danger me-1"></i>1등 이월 가능성 (당첨자 0명)</div>
-                  <div class="text-muted" style="font-size: 0.70rem;">전국에서 아무도 14경기를 맞히지 못해 다음 회차로 상금이 이월될 확률</div>
+                  <div class="fw-bold text-danger" style="font-size: 0.68rem;"><i class="bi bi-fire me-0.5"></i>1등 이월 가능성</div>
+                  <div class="text-muted" style="font-size: 0.58rem;">당첨자 0명 확률</div>
                 </div>
-                <div class="fs-5 fw-bold text-danger ms-2">${pRollover}%</div>
+                <div class="fw-bold text-danger ms-1" style="font-size: 0.90rem;">${pRollover}%</div>
               </div>
             </div>
-            <div class="col-md-6">
-              <div class="p-2.5 rounded-3 d-flex align-items-center justify-content-between h-100" style="background: #ecfdf5; border: 1.5px solid #a7f3d0;">
+            <div class="col-6">
+              <div class="p-1.5 rounded-2 d-flex align-items-center justify-content-between h-100" style="background: #ecfdf5; border: 1px solid #a7f3d0;">
                 <div>
-                  <div class="fw-bold small" style="color: #059669;"><i class="bi bi-trophy-fill text-success me-1"></i>1등 단독 독식 확률 (나홀로 당첨)</div>
-                  <div class="text-muted" style="font-size: 0.70rem;">단 1명만 당첨되어 총상금 ${(firstPrizePool / 100000000).toFixed(1)}억 원을 혼자 전액 수령할 확률</div>
+                  <div class="fw-bold" style="color: #059669; font-size: 0.68rem;"><i class="bi bi-trophy-fill me-0.5"></i>단독 독식 확률</div>
+                  <div class="text-muted" style="font-size: 0.58rem;">1명 나홀로 당첨</div>
                 </div>
-                <div class="fs-5 fw-bold text-success ms-2">${pSolo}%</div>
+                <div class="fw-bold text-success ms-1" style="font-size: 0.90rem;">${pSolo}%</div>
               </div>
             </div>
           </div>
 
           <!-- Calculation Basis Callout -->
-          <div class="p-2 rounded-2" style="background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.74rem; color: #4b5563;">
+          <div class="p-1.5 rounded-2" style="background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.66rem; color: #4b5563;">
             <i class="bi bi-info-circle me-1 text-primary"></i>
-            현재 계산은 ${userMarksCount > 0 ? `회원님이 마킹하신 <b>${userMarksCount}경기</b>와 나머지 경기(AI 단통 픽)를 조합하여` : `<b>AI 빅데이터 추천 픽(14경기 단통)</b>을 기준으로`}
-            베트맨 공식 실시간 집계 투표율과 판매 총액 데이터를 100% 반영하여 산출되었습니다.
+            현재 계산은 ${userMarksCount > 0 ? `마킹하신 <b>${userMarksCount}경기</b>와 AI 단통 픽을 결합하여` : `<b>AI 추천 픽(14경기 단통)</b>을 기준으로`}
+            베트맨 공식 실시간 집계 투표율과 판매 총액을 반영하여 산출되었습니다.
           </div>
         </div>
       `;
@@ -13319,13 +13401,13 @@ function getFullModalMatchList() {
 
     function initViewMode() {
       const isMobileScreen = window.innerWidth <= 768;
-      const savedMode = localStorage.getItem('tokeon_view_mode');
-      if (isMobileScreen) {
-        setViewMode(savedMode === 'pc' ? 'pc' : 'mobile', false);
-      } else {
-        setViewMode(savedMode || 'pc', false);
-      }
+      setViewMode(isMobileScreen ? 'mobile' : 'pc', false);
     }
+
+    // 화면 크기 변경 및 회전 시 자동으로 PC/모바일 모드 전환
+    window.addEventListener('resize', () => {
+      initViewMode();
+    });
 
     function switchMobileTab(tabKey) {
       if (tabKey === 'center') tabKey = 'toto';
@@ -13548,18 +13630,7 @@ function getFullModalMatchList() {
     }
 
     function startLiveUsersFluctuation() {
-      syncLiveUserCounts();
-
-      if (liveUsersInterval) return;
-
-      liveUsersInterval = setInterval(() => {
-        // Fluctuates by -3 to +3, staying strictly within [620, 745]
-        const delta = Math.floor(Math.random() * 7) - 3;
-        currentLiveUsersCount += delta;
-        if (currentLiveUsersCount < 620) currentLiveUsersCount = 625 + Math.floor(Math.random() * 15);
-        if (currentLiveUsersCount > 745) currentLiveUsersCount = 740 - Math.floor(Math.random() * 15);
-        syncLiveUserCounts();
-      }, 10000); // every 10 seconds
+      // 접속자 표시 삭제됨
     }
 
     // =============================================================
