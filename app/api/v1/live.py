@@ -18,11 +18,14 @@ class ApiKeyPayload(BaseModel):
 def get_live_status():
     status_info = LiveApiSportsService.get_status_info()
 
-    # Query active live matches in DB
+    # Query active live matches in DB (KST 기준)
     db = SessionLocal()
     try:
+        from datetime import timedelta
+        now_kst = datetime.utcnow() + timedelta(hours=9)
+        today_str = now_kst.strftime("%Y-%m-%d")
+
         live_matches = db.query(Match).filter(Match.status == "LIVE").all()
-        today_str = datetime.now().strftime("%Y-%m-%d")
         today_finished = db.query(Match).filter(
             Match.status == "FINISHED",
             Match.match_date.like(f"{today_str}%")
@@ -57,11 +60,13 @@ def set_live_api_key(payload: ApiKeyPayload):
     return result
 
 @router.post("/sync-now", summary="실시간 축구 및 야구 경기 결과 즉시 강제 동기화")
-def force_sync_live():
-    res = LiveApiSportsService.sync_all()
+async def force_sync_live():
+    res = await LiveApiSportsService.sync_all_async()
+    from datetime import timedelta
+    now_kst = datetime.utcnow() + timedelta(hours=9)
     return {
         "status": "SUCCESS",
         "message": "실시간 데이터 동기화 완료",
         "details": res,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "timestamp": now_kst.strftime("%Y-%m-%d %H:%M:%S")
     }
