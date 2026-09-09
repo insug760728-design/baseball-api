@@ -382,7 +382,7 @@ class SchedulerService:
     @classmethod
     async def execute_kbo_npb_live_sync_job(cls):
         """3분 주기 KBO 및 NPB 야구 실시간 스코어보드 고속 동기화 (경기 집중 시간대 13:00~23:30)"""
-        now = datetime.now()
+        now = get_now_kst()
         # 한국시간 기준 경기 시간대 (13시 ~ 23시)
         if not (13 <= now.hour <= 23):
             return
