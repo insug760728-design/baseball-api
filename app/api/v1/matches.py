@@ -152,13 +152,17 @@ def get_match_full(match_id: int, response: Response, db: Session = Depends(get_
 @router.patch("/{match_id}", response_model=MatchResponse, summary="경기 스코어 및 상태 직접 수정 (PATCH)")
 def update_match(match_id: int, payload: MatchUpdate, db: Session = Depends(get_db)):
     clear_match_full_cache(match_id)
+    clear_matches_cache()
     updated = MatchService.update_match_score(
         db,
         match_id=match_id,
         home_score=payload.home_score,
         away_score=payload.away_score,
         status=payload.status,
-        notes=payload.custom_notes
+        notes=payload.custom_notes,
+        home_team_name=payload.home_team_name,
+        away_team_name=payload.away_team_name,
+        stadium=payload.stadium
     )
     if not updated:
         raise HTTPException(status_code=404, detail="경기를 찾을 수 없습니다.")

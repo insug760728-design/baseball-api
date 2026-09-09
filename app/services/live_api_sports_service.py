@@ -407,7 +407,7 @@ class LiveApiSportsService:
         if not cls.is_configured():
             return {"status": "SKIPPED", "message": "API Key not configured"}
 
-        now_dt = datetime.now()
+        now_dt = datetime.utcnow() + timedelta(hours=9)
         d_today = date_str or now_dt.strftime("%Y-%m-%d")
         d_yesterday = (now_dt - timedelta(days=1)).strftime("%Y-%m-%d")
         d_tomorrow = (now_dt + timedelta(days=1)).strftime("%Y-%m-%d")
@@ -529,29 +529,25 @@ class LiveApiSportsService:
         if not cls.is_configured():
             return {"status": "SKIPPED", "message": "API Key not configured"}
 
-        now_dt = datetime.now()
+        now_dt = datetime.utcnow() + timedelta(hours=9)
         d_today = date_str or now_dt.strftime("%Y-%m-%d")
         d_yesterday = (now_dt - timedelta(days=1)).strftime("%Y-%m-%d")
         d_tomorrow = (now_dt + timedelta(days=1)).strftime("%Y-%m-%d")
 
-        # 1. Fetch live games
-        data_live = cls._make_request("/games?live=all", sport="baseball")
-        games_live = (data_live or {}).get("response", [])
-
-        # 2. Fetch today's games
+        # 1. Fetch today's games (includes current live scores & status)
         data_date = cls._make_request(f"/games?date={d_today}", sport="baseball")
         games_date = (data_date or {}).get("response", [])
 
-        # 3. Fetch yesterday's games (for games wrapping up in US time)
+        # 2. Fetch yesterday's games (for games wrapping up in US time)
         data_yesterday = cls._make_request(f"/games?date={d_yesterday}", sport="baseball")
         games_yesterday = (data_yesterday or {}).get("response", [])
 
-        # 4. Fetch tomorrow's games (for games starting early morning KST)
+        # 3. Fetch tomorrow's games (for games starting early morning KST)
         data_tomorrow = cls._make_request(f"/games?date={d_tomorrow}", sport="baseball")
         games_tomorrow = (data_tomorrow or {}).get("response", [])
 
         all_games_dict = {}
-        for g in (games_date + games_yesterday + games_tomorrow + games_live):
+        for g in (games_date + games_yesterday + games_tomorrow):
             gid = g.get("id")
             if gid:
                 all_games_dict[gid] = g

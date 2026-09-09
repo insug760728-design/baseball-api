@@ -467,7 +467,17 @@ class MatchService:
         }
 
     @staticmethod
-    def update_match_score(db: Session, match_id: int, home_score: Optional[int], away_score: Optional[int], status: Optional[str] = None, notes: Optional[str] = None):
+    def update_match_score(
+        db: Session,
+        match_id: int,
+        home_score: Optional[int] = None,
+        away_score: Optional[int] = None,
+        status: Optional[str] = None,
+        notes: Optional[str] = None,
+        home_team_name: Optional[str] = None,
+        away_team_name: Optional[str] = None,
+        stadium: Optional[str] = None
+    ):
         match = db.query(Match).filter(Match.id == match_id).first()
         if not match:
             return None
@@ -480,6 +490,12 @@ class MatchService:
             match.status = status
         if notes is not None:
             match.custom_notes = notes
+        if home_team_name is not None:
+            match.home_team_name = home_team_name
+        if away_team_name is not None:
+            match.away_team_name = away_team_name
+        if stadium is not None:
+            match.stadium = stadium
 
         match.is_customized = True
         match.updated_at = datetime.utcnow()

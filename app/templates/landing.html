@@ -1109,20 +1109,118 @@
     }
 
     /* Betman-Style Dedicated Toto Modal Styles */
+    .toto-modal-dialog {
+      max-width: 95vw !important;
+      width: 1440px !important;
+      margin: 1.25rem auto;
+    }
+    @media (max-width: 991.98px) {
+      .toto-modal-dialog {
+        max-width: 100vw !important;
+        width: 100% !important;
+        margin: 0 !important;
+        height: 100% !important;
+      }
+      #totoBetmanModal .modal-content {
+        height: 100dvh !important;
+        border-radius: 0 !important;
+      }
+      #totoBetmanModal .modal-body {
+        padding: 4px 6px !important;
+        height: calc(100dvh - 165px) !important;
+        max-height: calc(100dvh - 165px) !important;
+        overflow-y: hidden !important;
+      }
+    }
+
+    /* 2-Column Split View Layout (왼쪽: 14경기 마킹표 / 오른쪽: 계산 결과값 및 설명) */
+    .toto-two-col-container {
+      display: flex;
+      width: 100%;
+      gap: 14px;
+      align-items: stretch;
+      height: 100%;
+    }
+    .toto-col-left {
+      flex: 1 1 55%;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .toto-col-right {
+      flex: 1 1 45%;
+      min-width: 0;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      overflow-y: auto;
+      max-height: calc(100vh - 230px);
+      transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+    .toto-col-right.highlight-pulse {
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35) !important;
+    }
+
+    /* 모바일 (< 992px) 가로 스냅 스와이프: 왼쪽 14경기 ↔ 오른쪽 계산 결과값 나란히 전환 */
+    @media (max-width: 991.98px) {
+      .toto-two-col-container {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        gap: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .toto-two-col-container::-webkit-scrollbar {
+        display: none;
+      }
+      .toto-col-left {
+        min-width: 100%;
+        width: 100%;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+        padding: 0;
+        overflow-y: auto;
+        height: 100%;
+      }
+      .toto-col-right {
+        min-width: 100%;
+        width: 100%;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+        border: none;
+        border-radius: 0;
+        padding: 6px 8px;
+        max-height: 100%;
+        background: #ffffff;
+        overflow-y: auto;
+        height: 100%;
+      }
+    }
+
+    /* 초컴팩트 14경기 슬립 마킹 버튼 */
     .betman-slip-btn {
       display: inline-flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      width: 76px;
-      height: 38px;
+      width: 60px;
+      height: 30px;
       background: #ffffff;
       border: 1.5px solid #cbd5e1;
-      border-radius: 6px;
+      border-radius: 5px;
       cursor: pointer;
       position: relative;
-      padding: 2px 4px;
+      padding: 1px 3px;
       transition: all 0.15s ease;
+      line-height: 1;
     }
     .betman-slip-btn:hover {
       border-color: #0f172a;
@@ -1132,45 +1230,122 @@
       background: #0f172a !important;
       border-color: #0f172a !important;
       color: #ffffff !important;
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+      box-shadow: 0 2px 5px rgba(15, 23, 42, 0.25);
     }
     .betman-slip-btn.marked .b-label,
     .betman-slip-btn.marked .b-pct {
       color: #ffffff !important;
     }
     .betman-slip-btn .b-label {
-      font-size: 0.78rem;
+      font-size: 0.74rem;
       font-weight: 800;
       color: #1e293b;
-      line-height: 1.1;
+      line-height: 1;
     }
     .betman-slip-btn .b-pct {
-      font-size: 0.64rem;
+      font-size: 0.58rem;
       color: #64748b;
       font-family: monospace;
       line-height: 1;
+      margin-top: 1px;
     }
     .betman-slip-btn.ai-rec {
       border-color: #f59e0b;
     }
     .betman-slip-btn .ai-badge {
       position: absolute;
-      top: -6px;
-      right: -4px;
+      top: -5px;
+      right: -3px;
       background: #f59e0b;
       color: #0f172a;
-      font-size: 0.54rem;
+      font-size: 0.48rem;
       font-weight: 900;
-      padding: 0 3px;
+      padding: 0 2px;
       border-radius: 3px;
       border: 1px solid #ffffff;
-      line-height: 1.1;
+      line-height: 1;
     }
     .toto-modal-row:hover {
       background-color: #f8fafc !important;
     }
     .toto-modal-row.row-has-pick {
       background-color: #f0fdf4 !important;
+    }
+
+    /* 📱 모바일 핸드폰 한면에 14경기 한눈에 쏙 들어오게 하는 초컴팩트 스타일 */
+    @media (max-width: 767.98px) {
+      .betman-slip-btn {
+        width: 30px !important;
+        height: 21px !important;
+        border-radius: 3.5px !important;
+        padding: 0 !important;
+        border-width: 1px !important;
+      }
+      .betman-slip-btn .b-label {
+        font-size: 0.65rem !important;
+        font-weight: 900 !important;
+      }
+      .betman-slip-btn .b-pct {
+        font-size: 0.46rem !important;
+        transform: scale(0.88);
+        margin-top: 0 !important;
+      }
+      .betman-slip-btn .ai-badge {
+        font-size: 0.40rem !important;
+        top: -4px !important;
+        right: -3px !important;
+        padding: 0 1.5px !important;
+      }
+      
+      /* 테이블 행 높이 초슬림화: 14경기 전체가 한 화면에 쏙 들어옴 */
+      .toto-modal-table tbody tr {
+        height: 24px !important;
+        min-height: 24px !important;
+        max-height: 24px !important;
+      }
+      .toto-modal-table td,
+      .toto-modal-table th {
+        padding: 1px 1px !important;
+        vertical-align: middle !important;
+        border-bottom-width: 1px !important;
+      }
+      .toto-modal-table th {
+        font-size: 0.60rem !important;
+        padding-top: 2px !important;
+        padding-bottom: 2px !important;
+      }
+      .toto-match-seq-badge {
+        font-size: 0.58rem !important;
+        padding: 1px 3px !important;
+        border-radius: 3px !important;
+        line-height: 1 !important;
+      }
+      .toto-team-txt {
+        font-size: 0.70rem !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.3px !important;
+        max-width: 62px !important;
+      }
+      .toto-prob-badge {
+        font-size: 0.54rem !important;
+        padding: 0 2px !important;
+        line-height: 1.1 !important;
+      }
+      .toto-league-txt {
+        font-size: 0.56rem !important;
+        line-height: 1 !important;
+      }
+      .toto-time-txt {
+        font-size: 0.56rem !important;
+        line-height: 1 !important;
+      }
+      .toto-detail-btn {
+        width: 18px !important;
+        height: 18px !important;
+        font-size: 0.56rem !important;
+        padding: 0 !important;
+        line-height: 1 !important;
+      }
     }
 
     @media (max-width: 650px) {
@@ -1482,15 +1657,20 @@
   <!-- Top Navbar: Brand Logo + Simple Login Button Only -->
   <nav class="navbar navbar-glass py-2" style="background: #ffffff; border-bottom: 1.5px solid #e5e7eb;">
     <div class="dash-container d-flex align-items-center justify-content-between">
-      <a class="navbar-brand d-flex align-items-center gap-2 m-0 p-0" href="/">
-        <div style="background: #111827; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-          <i class="bi bi-lightning-charge-fill text-white fs-5"></i>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <span class="nav-brand-title" style="font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px; color: #111827;"><span class="d-none d-sm-inline">TOKEON ANALYTICS</span><span class="d-inline d-sm-none">TOKEON</span></span>
-          <span class="domain-badge d-none d-md-inline-block" style="background: #1d4ed8; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 700; color: white;">tokeon.co.kr</span>
-        </div>
-      </a>
+      <div class="d-flex align-items-center gap-2">
+        <a class="navbar-brand d-flex align-items-center gap-2 m-0 p-0" href="/">
+          <div style="background: #111827; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-lightning-charge-fill text-white fs-5"></i>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="nav-brand-title" style="font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px; color: #111827;"><span class="d-none d-sm-inline">TOKEON ANALYTICS</span><span class="d-inline d-sm-none">TOKEON</span></span>
+            <span class="domain-badge d-none d-md-inline-block" style="background: #1d4ed8; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 700; color: white;">tokeon.co.kr</span>
+          </div>
+        </a>
+        <span class="badge fw-bold py-1 px-2 d-none d-md-inline-flex align-items-center ms-2" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.72rem; border-radius: 6px;">
+          <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
+        </span>
+      </div>
 
       <!-- Simple Auth Section, PC/Mobile View Switcher & Member Registry -->
       <div id="navAuthContainer" class="d-flex align-items-center gap-1.5">
@@ -1535,25 +1715,6 @@
   </div>
 
   <div id="mainAppWrapper">
-
-  <!-- Live Breaking News Marquee (로고 아래 실시간 가로 이동 뉴스 티커) -->
-  <div class="breaking-ticker" style="background: #f8fafc; border-bottom: 1px solid #e5e7eb; padding: 6px 0;">
-    <div class="dash-container">
-      <div class="ticker-wrap d-flex align-items-center">
-        <span class="badge fw-bold me-2 py-1 px-2" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.72rem;">
-          <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark">664</strong>명
-        </span>
-        <span class="ticker-badge" style="background: #dc2626; color: white; font-weight: 800; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; white-space: nowrap; margin-right: 12px;">
-          <i class="bi bi-broadcast me-1"></i>BREAKING NEWS
-        </span>
-        <div class="overflow-hidden position-relative flex-grow-1" style="mask-image: linear-gradient(to right, transparent, black 1%, black 99%, transparent);">
-          <div class="ticker-content" id="tickerItems">
-            <span class="ticker-item text-muted">최신 실시간 스포츠 뉴스를 수집하고 있습니다...</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- 🔮 [TOKEON PRO ANALYTICS 3:3:4 Dashboard] 좌(3): 경기바 30% | 중(3): 메인 분석창 & 14경기 토토 마킹표 30% | 우(4): 실시간 라이브 팬룸 40% -->
   <section class="py-2 px-1" id="prediction-section" style="background: #ffffff; border-bottom: 1px solid #e5e7eb;">

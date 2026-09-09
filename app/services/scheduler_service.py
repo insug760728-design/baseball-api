@@ -15,6 +15,10 @@ from app.services.folder_export_service import FolderExportService
 logger = logging.getLogger("baseball_scheduler")
 logger.setLevel(logging.INFO)
 
+def get_now_kst() -> datetime:
+    """Return current Korean Standard Time (KST, UTC+9) regardless of server host timezone."""
+    return datetime.utcnow() + timedelta(hours=9)
+
 class SchedulerService:
     _scheduler: Optional[AsyncIOScheduler] = None
     _job_id = "daily_baseball_sync_job"
@@ -22,7 +26,7 @@ class SchedulerService:
         "hour": 0,
         "minute": 0,
         "enabled": True,
-        "leagues": ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS", "UCL", "CHAMPIONSHIP", "ENGLAND_CUP", "EREDIVISIE", "NBA", "KBL"]
+        "leagues": ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS", "UCL", "CHAMPIONSHIP", "ENGLAND_CUP", "EREDIVISIE", "LIBERTADORES", "JLEAGUE", "NBA", "KBL"]
     }
     _last_run_info: Dict[str, Any] = {
         "last_run_time": None,
@@ -147,7 +151,7 @@ class SchedulerService:
             return
 
         cls._is_running_task = True
-        start_time = datetime.now()
+        start_time = get_now_kst()
         cls._last_run_info = {
             "last_run_time": start_time.isoformat(),
             "status": "RUNNING",
@@ -162,7 +166,7 @@ class SchedulerService:
         summary = {}
 
         try:
-            logger.info(f"[Scheduler] 일일 동기화 시작: 대상 날짜={yesterday_str} ~ {today_str}")
+            logger.info(f"[Scheduler] 일일 동기화 시작 (KST): 대상 날짜={yesterday_str} ~ {today_str}")
 
             for league_id in cls._config.get("leagues", ["KBO", "NPB", "MLB"]):
                 try:
@@ -197,7 +201,7 @@ class SchedulerService:
                         "error": str(le)
                     }
 
-            end_time = datetime.now()
+            end_time = get_now_kst()
             duration_sec = round((end_time - start_time).total_seconds(), 1)
             cls._last_run_info = {
                 "last_run_time": end_time.isoformat(),
@@ -211,7 +215,7 @@ class SchedulerService:
         except Exception as e:
             logger.error(f"[Scheduler] 치명적 오류 발생: {e}")
             cls._last_run_info = {
-                "last_run_time": datetime.now().isoformat(),
+                "last_run_time": get_now_kst().isoformat(),
                 "status": "ERROR",
                 "message": f"오류 발생: {str(e)}",
                 "details": summary
@@ -228,24 +232,24 @@ class SchedulerService:
             return
 
         cls._is_running_task = True
-        start_time = datetime.now()
-        logger.info(f"[Scheduler Hourly] 1시간 주기 전 종목 자동 동기화 시작: {start_time.isoformat()}")
+        start_time = get_now_kst()
+        logger.info(f"[Scheduler Hourly] 1시간 주기 전 종목 자동 동기화 시작 (KST): {start_time.isoformat()}")
 
         db = SessionLocal()
         summary = {}
 
-        # 오늘 ~ 오늘+3일
-        today_str = start_time.strftime("%Y-%m-%d")
+        # 어제 ~ 오늘+3일 (유럽/미주 새벽 종료 경기 결과 및 스코어 누락 방지)
+        yesterday_str = (start_time - timedelta(days=1)).strftime("%Y-%m-%d")
         d3_str = (start_time + timedelta(days=3)).strftime("%Y-%m-%d")
 
         try:
-            active_leagues = cls._config.get("leagues", ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS", "UCL", "CHAMPIONSHIP", "ENGLAND_CUP", "EREDIVISIE", "NBA", "KBL"])
+            active_leagues = cls._config.get("leagues", ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS", "UCL", "CHAMPIONSHIP", "ENGLAND_CUP", "EREDIVISIE", "LIBERTADORES", "JLEAGUE", "NBA", "KBL"])
             for lid in active_leagues:
                 try:
                     res = MatchService.sync_from_official_site(
                         db=db,
                         league_id=lid,
-                        start_date=today_str,
+                        start_date=yesterday_str,
                         end_date=d3_str
                     )
                     summary[lid] = res.get("synced_matches_count", 0)
@@ -254,10 +258,10 @@ class SchedulerService:
 
             logger.info(f"[Scheduler Hourly] 1시간 주기 동기화 완료: {summary}")
 
-            # Auto-resolve past scheduled matches older than 4 hours to FINISHED
+            # Auto-resolve past scheduled matches older than 4 hours to FINISHED (KST 기준)
             try:
                 from app.models.models import Match
-                cutoff_4h = (datetime.now() - timedelta(hours=4)).strftime("%Y-%m-%d %H:%M")
+                cutoff_4h = (start_time - timedelta(hours=4)).strftime("%Y-%m-%d %H:%M")
                 past_sched = db.query(Match).filter(Match.status == "SCHEDULED", Match.match_date < cutoff_4h).all()
                 for pm in past_sched:
                     pm.status = "FINISHED"

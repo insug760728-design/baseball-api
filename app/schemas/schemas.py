@@ -84,6 +84,9 @@ class MatchUpdate(BaseModel):
     away_score: Optional[int] = None
     status: Optional[str] = None
     custom_notes: Optional[str] = None
+    home_team_name: Optional[str] = None
+    away_team_name: Optional[str] = None
+    stadium: Optional[str] = None
 
 class MatchResponse(MatchBase):
     id: int
