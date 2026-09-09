@@ -2129,6 +2129,174 @@ def _generate_basketball_odds(score1: int, score2: int, seed_str: Optional[str] 
     ovs = [round(w_odd * rng.uniform(1.02, 1.05), 2), round(l_odd * rng.uniform(1.02, 1.05), 2)]
     return {"domestic": dom, "overseas": ovs}
 
+def calc_dynamic_ou_line(sport_code: str, league_name: Optional[str], h_rpg: float, h_ra: float, a_rpg: float, a_ra: float, h_era: Optional[float] = None, a_era: Optional[float] = None) -> Dict[str, Any]:
+    """
+    Computes a dynamically calibrated Under/Over (U/O) base line for each match,
+    factoring in league context, team offensive/defensive averages, and starting pitchers.
+    Eliminates fixed uniform hardcoding (e.g. 8.5 everywhere).
+    """
+    sport = (sport_code or "BASEBALL").upper()
+    leg = (league_name or "").upper()
+
+    if sport == "BASKETBALL" or "NBA" in leg or "KBL" in leg or "농구" in leg:
+        is_nba = "NBA" in leg or ("미국" in leg and "농구" in leg)
+        is_kbl = "KBL" in leg or ("한국" in leg and "농구" in leg)
+        
+        h_pts = h_rpg if h_rpg > 50 else (114.0 if is_nba else 82.0)
+        a_pts = a_rpg if a_rpg > 50 else (112.0 if is_nba else 80.0)
+        h_allow = h_ra if h_ra > 50 else (112.0 if is_nba else 81.0)
+        a_allow = a_ra if a_ra > 50 else (113.0 if is_nba else 81.0)
+        
+        exp_pts = (h_pts + a_allow + a_pts + h_allow) / 2.0
+        if is_nba:
+            half_pt = round(exp_pts) + 0.5
+            half_pt = max(212.5, min(238.5, half_pt))
+        elif is_kbl:
+            half_pt = round(exp_pts) + 0.5
+            half_pt = max(154.5, min(170.5, half_pt))
+        else:
+            half_pt = round(exp_pts) + 0.5
+            half_pt = max(155.5, min(230.5, half_pt))
+            
+        pick = "OVER" if exp_pts >= half_pt else "UNDER"
+        prob = int(min(68, max(52, 50 + abs(exp_pts - half_pt) * 4)))
+        return {
+            "ou_line": f"{half_pt:.1f}",
+            "expected_total": round(exp_pts, 1),
+            "ou_pick": pick,
+            "ou_confidence": prob,
+            "display": f"U/O {half_pt:.1f}"
+        }
+
+    elif sport == "SOCCER":
+        h_gf = h_rpg if (0.2 <= h_rpg <= 6.0) else 1.45
+        a_gf = a_rpg if (0.2 <= a_rpg <= 6.0) else 1.25
+        h_ga = h_ra if (0.2 <= h_ra <= 6.0) else 1.25
+        a_ga = a_ra if (0.2 <= a_ra <= 6.0) else 1.45
+        exp_goals = (h_gf * 0.6 + a_ga * 0.4) + (a_gf * 0.6 + h_ga * 0.4)
+        exp_goals = max(1.2, min(4.8, exp_goals))
+        
+        if exp_goals < 2.05:
+            line_str = "1.5"
+        elif exp_goals < 3.05:
+            line_str = "2.5"
+        else:
+            line_str = "3.5"
+            
+        line_val = float(line_str)
+        pick = "OVER" if exp_goals >= line_val else "UNDER"
+        prob = int(min(70, max(52, 50 + abs(exp_goals - line_val) * 15)))
+        return {
+            "ou_line": line_str,
+            "expected_total": round(exp_goals, 2),
+            "ou_pick": pick,
+            "ou_confidence": prob,
+            "display": f"U/O {line_str}"
+        }
+
+    else:
+        # BASEBALL: NPB(pitcher/low-scoring), KBO(high-scoring), MLB(balanced)
+        h_g = h_rpg if (1.5 <= h_rpg <= 14.0) else 4.5
+        a_g = a_rpg if (1.5 <= a_rpg <= 14.0) else 4.3
+        h_a = h_ra if (1.5 <= h_ra <= 14.0) else 4.3
+        a_a = a_ra if (1.5 <= a_ra <= 14.0) else 4.5
+        base_exp = (h_g + a_a + a_g + h_a) / 2.0
+        
+        is_npb = "NPB" in leg or "일본" in leg
+        is_kbo = "KBO" in leg or "한국" in leg
+        
+        league_avg_era = 3.35 if is_npb else (4.35 if is_kbo else 4.15)
+        
+        if h_era is not None and a_era is not None and h_era > 0 and a_era > 0:
+            era_delta = ((h_era + a_era) - (2.0 * league_avg_era)) * 0.45
+            exp_runs = max(3.5, min(14.0, base_exp + era_delta))
+        else:
+            exp_runs = base_exp
+            
+        if is_npb:
+            exp_runs = min(exp_runs, 8.5)
+            if exp_runs < 5.8: line_str = "5.5"
+            elif exp_runs < 6.8: line_str = "6.5"
+            elif exp_runs < 7.4: line_str = "7.0"
+            elif exp_runs < 8.0: line_str = "7.5"
+            else: line_str = "8.5"
+        elif is_kbo:
+            if exp_runs < 7.8: line_str = "7.5"
+            elif exp_runs < 8.8: line_str = "8.5"
+            elif exp_runs < 9.8: line_str = "9.5"
+            elif exp_runs < 10.8: line_str = "10.5"
+            else: line_str = "11.5"
+        else: # MLB & Others
+            if exp_runs < 6.8: line_str = "6.5"
+            elif exp_runs < 7.6: line_str = "7.5"
+            elif exp_runs < 8.4: line_str = "8.0"
+            elif exp_runs < 9.2: line_str = "8.5"
+            elif exp_runs < 10.2: line_str = "9.5"
+            else: line_str = "10.5"
+            
+        line_val = float(line_str)
+        pick = "OVER" if exp_runs >= line_val else "UNDER"
+        prob = int(min(68, max(52, 50 + abs(exp_runs - line_val) * 10)))
+        return {
+            "ou_line": line_str,
+            "expected_total": round(exp_runs, 2),
+            "ou_pick": pick,
+            "ou_confidence": prob,
+            "display": f"U/O {line_str}"
+        }
+
+def calc_consistent_odds(sport_code: str, p_home: float, p_away: float, p_draw: float = 0.0, margin: float = 1.045) -> Dict[str, Any]:
+    """
+    Computes European bookmaker decimal odds that mathematically match win/draw probabilities.
+    Guarantees that odds never contradict probabilities (lowest odd is always the favored team).
+    """
+    sport = (sport_code or "BASEBALL").upper()
+    if sport == "SOCCER":
+        tot = p_home + p_draw + p_away
+        if tot <= 0:
+            p_h, p_d, p_a = 0.42, 0.28, 0.30
+        else:
+            p_h, p_d, p_a = p_home / tot, p_draw / tot, p_away / tot
+            
+        p_h = max(0.06, min(0.85, p_h))
+        p_d = max(0.12, min(0.40, p_d))
+        p_a = max(0.06, min(0.85, 1.0 - p_h - p_d))
+        
+        odd_h = round(1.0 / (p_h * margin), 2)
+        odd_d = round(1.0 / (p_d * margin), 2)
+        odd_a = round(1.0 / (p_a * margin), 2)
+        return {
+            "type": "3WAY",
+            "home": f"{odd_h:.2f}",
+            "draw": f"{odd_d:.2f}",
+            "away": f"{odd_a:.2f}",
+            "margin": margin,
+            "prob_home": round(p_h * 100, 1),
+            "prob_draw": round(p_d * 100, 1),
+            "prob_away": round(p_a * 100, 1)
+        }
+    else:
+        tot = p_home + p_away
+        if tot <= 0:
+            p_h, p_a = 0.50, 0.50
+        else:
+            p_h, p_a = p_home / tot, p_away / tot
+            
+        p_h = max(0.12, min(0.88, p_h))
+        p_a = 1.0 - p_h
+        
+        odd_h = round(1.0 / (p_h * margin), 2)
+        odd_a = round(1.0 / (p_a * margin), 2)
+        return {
+            "type": "2WAY",
+            "home": f"{odd_h:.2f}",
+            "away": f"{odd_a:.2f}",
+            "margin": margin,
+            "prob_home": round(p_h * 100, 1),
+            "prob_away": round(p_a * 100, 1)
+        }
+
+
 def _enrich_baseball_match_events(c_cur, m_dict, home_name: str, away_name: str, home_score: int, away_score: int, match_id: Optional[int] = None, date_str: Optional[str] = None):
     h_hits = max(home_score + 2, round(home_score * 1.4))
     a_hits = max(away_score + 2, round(away_score * 1.4))
@@ -3045,8 +3213,8 @@ class TeamSplitService:
         return cls._cached_splits, cls._cached_h2h
 
     @classmethod
-    def get_quick_prediction(cls, home_team: str, away_team: str, sport_code: str, status: str, home_score: int = 0, away_score: int = 0, match_date: Optional[str] = None):
-        cache_key = f"{home_team}:{away_team}:{sport_code}:{status}:{home_score}:{away_score}:{match_date}"
+    def get_quick_prediction(cls, home_team: str, away_team: str, sport_code: str, status: str, home_score: int = 0, away_score: int = 0, match_date: Optional[str] = None, starter_h: Optional[str] = None, starter_a: Optional[str] = None, league_name: Optional[str] = None):
+        cache_key = f"{home_team}:{away_team}:{sport_code}:{status}:{home_score}:{away_score}:{match_date}:{starter_h}:{starter_a}:{league_name}"
         now_ts = time.time()
         if cache_key in cls._QUICK_PRED_CACHE:
             ts, pred = cls._QUICK_PRED_CACHE[cache_key]
@@ -3073,6 +3241,8 @@ class TeamSplitService:
         a_ra = a_away["ra"] / a_games
 
         series_ctx = None
+        h_starter_era = None
+        a_starter_era = None
 
         if sport_code == "SOCCER":
             exp_h = max(0.3, (h_rf * 0.6 + a_ra * 0.4) * 1.15)
@@ -3090,7 +3260,7 @@ class TeamSplitService:
             if tot > 0:
                 p_h /= tot; p_d /= tot; p_a /= tot
 
-            winrate_diff = (h_win_rate - a_win_rate) * 0.20
+            winrate_diff = (h_win_rate - a_win_rate) * 0.25
             p_h = max(0.08, min(0.85, p_h + winrate_diff))
             p_a = max(0.08, min(0.85, p_a - winrate_diff))
             tot2 = p_h + p_d + p_a
@@ -3115,8 +3285,50 @@ class TeamSplitService:
                 favored_team = away_team
                 confidence = int(round(52 + (p_a - p_h) * 75))
                 confidence = max(52, min(89, confidence))
+
+            ou_info = calc_dynamic_ou_line("SOCCER", league_name, h_rf, h_ra, a_rf, a_ra)
+            odds_data = calc_consistent_odds("SOCCER", p_h, p_a, p_d)
+            odds_data["ou"] = ou_info["ou_line"]
+
+        elif sport_code == "BASKETBALL":
+            is_nba = "NBA" in (league_name or "").upper() or ("미국" in (league_name or "") and "농구" in (league_name or ""))
+            h_pts = h_rf if h_rf > 50 else (114.0 if is_nba else 82.0)
+            a_pts = a_rf if a_rf > 50 else (112.0 if is_nba else 80.0)
+            h_opp = h_ra if h_ra > 50 else (112.0 if is_nba else 81.0)
+            a_opp = a_ra if a_ra > 50 else (113.0 if is_nba else 81.0)
+
+            # Dean Oliver / Morey Pythagorean for basketball (exponent 13.91)
+            exp_h = pow(h_pts, 13.91) / (pow(h_pts, 13.91) + pow(h_opp, 13.91))
+            exp_a = pow(a_pts, 13.91) / (pow(a_pts, 13.91) + pow(a_opp, 13.91))
+            denom = (exp_h + exp_a - (2 * exp_h * exp_a))
+            if denom == 0: denom = 1
+            raw_prob_home = (exp_h - (exp_h * exp_a)) / denom
+
+            home_adv = 0.035
+            prob_home = min(0.88, max(0.12, raw_prob_home + home_adv))
+
+            h_rec_w = sum(1 for x in h_data.get("recent_5", []) if x == 'W') if h_data else 3
+            a_rec_w = sum(1 for x in a_data.get("recent_5", []) if x == 'W') if a_data else 2
+            rec_diff = (h_rec_w - a_rec_w) * 0.015
+            prob_home = min(0.89, max(0.11, prob_home + rec_diff))
+
+            if prob_home >= 0.50:
+                pick_type = "HOME_WIN"
+                expected_label = "예상승"
+                favored_team = home_team
+                confidence = int(round(prob_home * 100))
+            else:
+                pick_type = "AWAY_WIN"
+                expected_label = "예상패"
+                favored_team = away_team
+                confidence = int(round((1.0 - prob_home) * 100))
+
+            ou_info = calc_dynamic_ou_line("BASKETBALL", league_name, h_rf, h_ra, a_rf, a_ra)
+            odds_data = calc_consistent_odds("BASKETBALL", prob_home, 1.0 - prob_home)
+            odds_data["ou"] = ou_info["ou_line"]
+
         else:
-            # BASEBALL (Pythagorean)
+            # BASEBALL (Sabermetric Pythagorean + Starting Pitcher Calibration)
             exp_h = pow(max(0.5, h_rf), 1.83) / (pow(max(0.5, h_rf), 1.83) + pow(max(0.5, h_ra), 1.83))
             exp_a = pow(max(0.5, a_rf), 1.83) / (pow(max(0.5, a_rf), 1.83) + pow(max(0.5, a_ra), 1.83))
             denom = (exp_h + exp_a - (2 * exp_h * exp_a))
@@ -3130,6 +3342,48 @@ class TeamSplitService:
             a_rec_w = sum(1 for x in a_data.get("recent_5", []) if x == 'W') if a_data else 2
             rec_diff = (h_rec_w - a_rec_w) * 0.015
             prob_home = min(0.89, max(0.11, prob_home + rec_diff))
+
+            # Fetch starting pitcher stats if names are announced
+            if starter_h or starter_a:
+                try:
+                    c_conn_qp = sqlite3.connect("sports_data.db", timeout=3.0)
+                    if starter_h and is_valid_starter_name(starter_h):
+                        sh_clean = starter_h.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
+                        sh_data = _get_pitcher_recent_3_starts(c_conn_qp, sh_clean, home_team, "우완", league_name=league_name)
+                        if sh_data and "summary" in sh_data:
+                            era_str = sh_data["summary"].get("era_3g") or sh_data["summary"].get("season_era")
+                            if era_str and era_str != "-":
+                                try: h_starter_era = float(era_str)
+                                except: pass
+                    if starter_a and is_valid_starter_name(starter_a):
+                        sa_clean = starter_a.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
+                        sa_data = _get_pitcher_recent_3_starts(c_conn_qp, sa_clean, away_team, "우완", league_name=league_name)
+                        if sa_data and "summary" in sa_data:
+                            era_str = sa_data["summary"].get("era_3g") or sa_data["summary"].get("season_era")
+                            if era_str and era_str != "-":
+                                try: a_starter_era = float(era_str)
+                                except: pass
+                    c_conn_qp.close()
+                except Exception:
+                    pass
+
+            # Starting Pitcher Impact Calibration
+            # Each 1.0 ERA difference equates to ~ 3.5% win probability swing
+            if h_starter_era is not None and a_starter_era is not None:
+                p_diff = (a_starter_era - h_starter_era) / 7.5 * 0.22
+                prob_home += p_diff
+            elif h_starter_era is not None:
+                is_npb = "NPB" in (league_name or "").upper() or "일본" in (league_name or "")
+                ref_era = 3.35 if is_npb else 4.15
+                p_diff = (ref_era - h_starter_era) / 7.5 * 0.12
+                prob_home += p_diff
+            elif a_starter_era is not None:
+                is_npb = "NPB" in (league_name or "").upper() or "일본" in (league_name or "")
+                ref_era = 3.35 if is_npb else 4.15
+                p_diff = (a_starter_era - ref_era) / 7.5 * 0.12
+                prob_home += p_diff
+
+            prob_home = min(0.88, max(0.12, prob_home))
 
             # Detect Baseball 3-Game Series Context & Sweep Resistance (Skip for FINISHED matches and use fast memory cache)
             if status != "FINISHED":
@@ -3166,6 +3420,10 @@ class TeamSplitService:
                 favored_team = away_team
                 confidence = int(round((1.0 - prob_home) * 100))
 
+            ou_info = calc_dynamic_ou_line("BASEBALL", league_name, h_rf, h_ra, a_rf, a_ra, h_era=h_starter_era, a_era=a_starter_era)
+            odds_data = calc_consistent_odds("BASEBALL", prob_home, 1.0 - prob_home)
+            odds_data["ou"] = ou_info["ou_line"]
+
         if confidence >= 80:
             conf_tier = "80"
         elif confidence >= 70:
@@ -3197,7 +3455,12 @@ class TeamSplitService:
             "is_finished": is_finished,
             "is_match": is_match,
             "status_badge": status_badge,
-            "series_context": series_ctx if sport_code == "BASEBALL" else None
+            "series_context": series_ctx if sport_code == "BASEBALL" else None,
+            "ou_line": ou_info["ou_line"],
+            "expected_total": ou_info["expected_total"],
+            "ou_pick": ou_info["ou_pick"],
+            "ou_confidence": ou_info["ou_confidence"],
+            "odds": odds_data
         }
         cls._QUICK_PRED_CACHE[cache_key] = (now_ts, res)
         return res
@@ -3635,6 +3898,10 @@ class TeamSplitService:
                 favored_pct = prob_away
                 is_home_favored = False
 
+            ou_info = calc_dynamic_ou_line("SOCCER", None, h_rpg, h_ra, a_rpg, a_ra)
+            odds_data = calc_consistent_odds("SOCCER", p_h, p_a, p_d)
+            odds_data["ou"] = ou_info["ou_line"]
+
             soccer_res = {
                 "sport_code": "SOCCER",
                 "home_team": {
@@ -3710,6 +3977,8 @@ class TeamSplitService:
                     "favored_team": favored_team,
                     "favored_pct": favored_pct
                 },
+                "under_over": ou_info,
+                "odds": odds_data,
                 "drivers": [
                     (f"[상대전적 5개년 누적] 최근 맞대결 총 {h2h_record['total']}전 ({home_team} {h2h_home_wins}승 {h2h_record['draws']}무 {h2h_away_wins}패)" if h2h_record['total'] > 0 else f"[상대전적] 최근 5개년 내 공식 맞대결 없음"),
                     f"[득실점 및 기대승점] {home_team} 홈 평균 {h_rpg}득점/{h_ra}실점 (기대승점 {h_ppg}점, 마진 {round(h_rpg-h_ra, 1):+}) vs {away_team} 원정 평균 {a_rpg}득점/{a_ra}실점 (기대승점 {a_ppg}점, 마진 {round(a_rpg-a_ra, 1):+})",
@@ -3760,6 +4029,32 @@ class TeamSplitService:
         a_fielding_pct = round(1.0 - (a_err_pg / 38.0), 3)
         a_pyth = round(pow(max(0.5, a_rpg), 1.83) / (pow(max(0.5, a_rpg), 1.83) + pow(max(0.5, a_ra), 1.83)) * 100, 1)
 
+        # 1. Resolve starting pitchers first so ERA and form directly calibrate win probability
+        starting_pitchers_analysis = None
+        h_starter_era = None
+        a_starter_era = None
+        if sport_code == "BASEBALL":
+            try:
+                c_conn_st = sqlite3.connect("sports_data.db", timeout=15.0)
+                starting_pitchers_analysis = _resolve_match_starters(c_conn_st, match_id, home_team, away_team, sport_code, team_stats)
+                c_conn_st.close()
+                if starting_pitchers_analysis:
+                    hst = starting_pitchers_analysis.get("home", {})
+                    ast = starting_pitchers_analysis.get("away", {})
+                    hsum = hst.get("summary", {})
+                    asum = ast.get("summary", {})
+                    h_era_val = hsum.get("era_3g") or hsum.get("season_era")
+                    a_era_val = asum.get("era_3g") or asum.get("season_era")
+                    if h_era_val and h_era_val != "-":
+                        try: h_starter_era = float(h_era_val)
+                        except: pass
+                    if a_era_val and a_era_val != "-":
+                        try: a_starter_era = float(a_era_val)
+                        except: pass
+            except Exception as e:
+                pass
+
+        # 2. Team Pythagorean baseline
         exp_h = pow(max(0.5, h_rpg), 1.83) / (pow(max(0.5, h_rpg), 1.83) + pow(max(0.5, h_ra), 1.83))
         exp_a = pow(max(0.5, a_rpg), 1.83) / (pow(max(0.5, a_rpg), 1.83) + pow(max(0.5, a_ra), 1.83))
         denom = (exp_h + exp_a - (2 * exp_h * exp_a))
@@ -3767,15 +4062,40 @@ class TeamSplitService:
         raw_prob_home = (exp_h - (exp_h * exp_a)) / denom
         
         home_adv = 0.04
-        prob_home = min(0.85, max(0.15, raw_prob_home + home_adv))
+        prob_home = min(0.88, max(0.12, raw_prob_home + home_adv))
 
-        # Apply sweep resistance penalty
+        # 3. Starting Pitcher Impact Calibration
+        # Each 1.0 ERA difference equates to ~ 3.0% - 3.5% win probability swing
+        if h_starter_era is not None and a_starter_era is not None:
+            p_diff = (a_starter_era - h_starter_era) / 7.5 * 0.22
+            prob_home += p_diff
+        elif h_starter_era is not None:
+            is_npb = "NPB" in (m_league or "").upper() or "일본" in (m_league or "")
+            ref_era = 3.35 if is_npb else 4.15
+            p_diff = (ref_era - h_starter_era) / 7.5 * 0.12
+            prob_home += p_diff
+        elif a_starter_era is not None:
+            is_npb = "NPB" in (m_league or "").upper() or "일본" in (m_league or "")
+            ref_era = 3.35 if is_npb else 4.15
+            p_diff = (a_starter_era - ref_era) / 7.5 * 0.12
+            prob_home += p_diff
+
+        # 4. Bullpen fatigue calibration
+        h_bp_np = home_pitching_3g.get("total_bullpen_np_3g", 0)
+        a_bp_np = away_pitching_3g.get("total_bullpen_np_3g", 0)
+        if h_bp_np >= 130 and a_bp_np <= 80:
+            prob_home -= 0.02
+        elif a_bp_np >= 130 and h_bp_np <= 80:
+            prob_home += 0.02
+
+        # 5. Apply sweep resistance penalty
         if series_ctx and series_ctx.get("is_sweep_game"):
             if series_ctx.get("sweep_leader") == home_team:
                 prob_home = min(0.85, max(0.15, prob_home - 0.07))
             elif series_ctx.get("sweep_leader") == away_team:
                 prob_home = min(0.85, max(0.15, prob_home + 0.07))
 
+        prob_home = min(0.88, max(0.12, prob_home))
         prob_away = 1.0 - prob_home
 
         win_pct_home = int(round(prob_home * 100))
@@ -3785,14 +4105,9 @@ class TeamSplitService:
         favored_team = home_team if is_home_favored else away_team
         favored_pct = win_pct_home if is_home_favored else win_pct_away
 
-        starting_pitchers_analysis = None
-        if sport_code == "BASEBALL":
-            try:
-                c_conn_st = sqlite3.connect("sports_data.db", timeout=15.0)
-                starting_pitchers_analysis = _resolve_match_starters(c_conn_st, match_id, home_team, away_team, sport_code, team_stats)
-                c_conn_st.close()
-            except Exception as e:
-                pass
+        ou_info = calc_dynamic_ou_line("BASEBALL", m_league, h_rpg, h_ra, a_rpg, a_ra, h_era=h_starter_era, a_era=a_starter_era)
+        odds_data = calc_consistent_odds("BASEBALL", prob_home, 1.0 - prob_home)
+        odds_data["ou"] = ou_info["ou_line"]
 
         drivers_list = [
             (f"[상대전적 누적] 최근 맞대결 총 {h2h_record['total']}전 ({home_team} {h2h_home_wins}승 {h2h_away_wins}패)" if h2h_record['total'] > 0 else f"[상대전적] 최근 공식 맞대결 없음"),
@@ -3962,9 +4277,20 @@ class TeamSplitService:
                 "favored_team": favored_team,
                 "favored_pct": favored_pct
             },
+            "under_over": ou_info,
+            "odds": odds_data,
             "starting_pitchers": starting_pitchers_analysis,
             "series_context": series_ctx,
             "drivers": drivers_list
         }
         cls._MATCHUP_ANALYSIS_CACHE[cache_key] = (now, baseball_res)
         return baseball_res
+
+    @classmethod
+    def calc_dynamic_ou_line(cls, sport_code: str, league_name: Optional[str], h_rpg: float, h_ra: float, a_rpg: float, a_ra: float, h_era: Optional[float] = None, a_era: Optional[float] = None) -> Dict[str, Any]:
+        return calc_dynamic_ou_line(sport_code, league_name, h_rpg, h_ra, a_rpg, a_ra, h_era, a_era)
+
+    @classmethod
+    def calc_consistent_odds(cls, sport_code: str, p_home: float, p_away: float, p_draw: float = 0.0, margin: float = 1.045) -> Dict[str, Any]:
+        return calc_consistent_odds(sport_code, p_home, p_away, p_draw, margin)
+

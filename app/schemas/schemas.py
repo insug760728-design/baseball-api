@@ -91,6 +91,9 @@ class MatchResponse(MatchBase):
     custom_notes: Optional[str] = None
     summary: Optional[str] = None
     prediction: Optional[Dict[str, Any]] = None
+    odds: Optional[Dict[str, Any]] = None
+    ou_line: Optional[str] = None
+    ou_pick: Optional[str] = None
     home_starter_name: Optional[str] = None
     away_starter_name: Optional[str] = None
     starters_confirmed: Optional[bool] = False

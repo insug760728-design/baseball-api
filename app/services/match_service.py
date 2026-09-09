@@ -310,13 +310,6 @@ class MatchService:
         matches = unique_matches
 
         for m in matches:
-            try:
-                m.prediction = TeamSplitService.get_quick_prediction(
-                    m.home_team_name, m.away_team_name, m.sport_code, m.status, m.home_score, m.away_score, match_date=m.match_date
-                )
-            except Exception:
-                m.prediction = None
-
             m.home_starter_name = None
             m.away_starter_name = None
             m.starters_confirmed = False
@@ -340,7 +333,7 @@ class MatchService:
                 except Exception:
                     pass
 
-            # 진행 중인 LIVE 야구 경기의 경우 player_match_stats 박스스코어에서 실제 등판 투수 식별 (종료된 대량 경기는 상세 모달 조회 시 로드하여 목록 N+1 쿼리 폭주 방지)
+            # 진행 중인 LIVE 야구 경기의 경우 player_match_stats 박스스코어에서 실제 등판 투수 식별
             if m.sport_code == "BASEBALL" and (not m.home_starter_name or not m.away_starter_name) and m.status == "LIVE":
                 try:
                     p_rows = db.query(PlayerMatchStat).filter(
@@ -367,6 +360,31 @@ class MatchService:
                     m.away_starter_name = None
                     a_confirmed = False
                 m.starters_confirmed = bool(m.home_starter_name and m.away_starter_name and h_confirmed and a_confirmed)
+
+            try:
+                m.prediction = TeamSplitService.get_quick_prediction(
+                    m.home_team_name,
+                    m.away_team_name,
+                    m.sport_code,
+                    m.status,
+                    m.home_score,
+                    m.away_score,
+                    match_date=m.match_date,
+                    starter_h=m.home_starter_name,
+                    starter_a=m.away_starter_name,
+                    league_name=m.league_name
+                )
+            except Exception:
+                m.prediction = None
+
+            if m.prediction:
+                m.odds = m.prediction.get("odds")
+                m.ou_line = m.prediction.get("ou_line")
+                m.ou_pick = m.prediction.get("ou_pick")
+            else:
+                m.odds = None
+                m.ou_line = None
+                m.ou_pick = None
         return matches
 
     @staticmethod
