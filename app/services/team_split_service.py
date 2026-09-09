@@ -3513,6 +3513,9 @@ class TeamSplitService:
             if now - cached_time < 180:
                 return cached_data
 
+        m_league = None
+        m_date = None
+
         if cls._cached_splits is not None:
             splits, h2h = cls._cached_splits, cls._cached_h2h
         else:
