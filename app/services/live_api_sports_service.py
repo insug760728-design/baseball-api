@@ -429,7 +429,7 @@ class LiveApiSportsService:
             return None
 
     @classmethod
-    def sync_live_football(cls, date_str: Optional[str] = None) -> Dict[str, Any]:
+    def sync_live_football(cls, date_str: Optional[str] = None, include_adjacent: bool = False) -> Dict[str, Any]:
         """Fetch live & date soccer fixtures and update matching matches in DB"""
         if not cls.is_configured():
             return {"status": "SKIPPED", "message": "API Key not configured"}
@@ -447,13 +447,12 @@ class LiveApiSportsService:
         data_today = cls._make_request(f"/fixtures?date={d_today}", sport="football")
         fixtures_today = (data_today or {}).get("response", [])
 
-        # 3. Fetch yesterday's soccer matches (for European matches starting late night UTC / early KST)
-        data_yesterday = cls._make_request(f"/fixtures?date={d_yesterday}", sport="football")
-        fixtures_yesterday = (data_yesterday or {}).get("response", [])
-
-        # 4. Fetch tomorrow's matches for late European games crossing into KST
-        data_tomorrow = cls._make_request(f"/fixtures?date={d_tomorrow}", sport="football")
-        fixtures_tomorrow = (data_tomorrow or {}).get("response", [])
+        fixtures_yesterday = []
+        fixtures_tomorrow = []
+        if include_adjacent or now_dt.hour < 10:
+            # 아침 시간대(10시 이전)에는 새벽에 끝난 어제 유럽 경기 결과 포함
+            data_yesterday = cls._make_request(f"/fixtures?date={d_yesterday}", sport="football")
+            fixtures_yesterday = (data_yesterday or {}).get("response", [])
 
         all_fixtures_dict = {}
         for f in (fixtures_today + fixtures_yesterday + fixtures_tomorrow + fixtures_live):
@@ -562,7 +561,7 @@ class LiveApiSportsService:
         return {"status": "SUCCESS", "total_fixtures": len(all_fixtures), "updated_db_matches": updated}
 
     @classmethod
-    def sync_live_baseball(cls, date_str: Optional[str] = None) -> Dict[str, Any]:
+    def sync_live_baseball(cls, date_str: Optional[str] = None, include_adjacent: bool = False) -> Dict[str, Any]:
         """Fetch live & date baseball games and update matching matches in DB"""
         if not cls.is_configured():
             return {"status": "SKIPPED", "message": "API Key not configured"}
@@ -576,13 +575,12 @@ class LiveApiSportsService:
         data_date = cls._make_request(f"/games?date={d_today}", sport="baseball")
         games_date = (data_date or {}).get("response", [])
 
-        # 2. Fetch yesterday's games (for games wrapping up in US time)
-        data_yesterday = cls._make_request(f"/games?date={d_yesterday}", sport="baseball")
-        games_yesterday = (data_yesterday or {}).get("response", [])
-
-        # 3. Fetch tomorrow's games (for games starting early morning KST)
-        data_tomorrow = cls._make_request(f"/games?date={d_tomorrow}", sport="baseball")
-        games_tomorrow = (data_tomorrow or {}).get("response", [])
+        games_yesterday = []
+        games_tomorrow = []
+        if include_adjacent or now_dt.hour < 10:
+            # 아침 시간대(10시 이전)에는 새벽에 끝난 어제 미주 경기 결과 포함
+            data_yesterday = cls._make_request(f"/games?date={d_yesterday}", sport="baseball")
+            games_yesterday = (data_yesterday or {}).get("response", [])
 
         all_games_dict = {}
         for g in (games_date + games_yesterday + games_tomorrow):
