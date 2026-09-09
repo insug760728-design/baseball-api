@@ -223,7 +223,47 @@ TEAM_SYNONYMS = {
     "갈라타사라이": ["galatasaray", "galatasaray sk"],
     "페네르바체": ["fenerbahce", "fenerbahce sk"],
     "베식타시": ["besiktas", "besiktas jk"],
-    "보되글림트": ["bodo/glimt", "fk bodo/glimt", "보되"]
+    "보되글림트": ["bodo/glimt", "fk bodo/glimt", "보되"],
+
+    # Soccer (K League 1 & 2)
+    "포항": ["pohang", "pohang steelers", "포항스틸러스", "포항 스틸러스"],
+    "김천": ["gimcheon", "gimcheon sangmu", "gimcheon sangmu fc", "김천상무", "김천 상무"],
+    "대전": ["daejeon", "daejeon citizen", "daejeon hana citizen", "대전하나시티즌", "대전 시티즌"],
+    "안양": ["anyang", "fc anyang", "안양fc", "fc안양", "fc 안양"],
+    "강원": ["gangwon", "gangwon fc", "강원fc", "강원 fc"],
+    "전북": ["jeonbuk", "jeonbuk motors", "jeonbuk hyundai", "jeonbuk hyundai motors", "전북현대", "전북 현대"],
+    "광주": ["gwangju", "gwangju fc", "광주fc", "광주 fc"],
+    "제주": ["jeju", "jeju united", "jeju united fc", "제주유나이티드", "제주 유나이티드"],
+    "울산": ["ulsan", "ulsan hyundai", "ulsan hd", "ulsan hd fc", "울산hd", "울산 현대"],
+    "서울": ["seoul", "fc seoul", "fc서울", "fc 서울"],
+    "인천": ["incheon", "incheon united", "인천유나이티드", "인천 유나이티드"],
+    "대구": ["daegu", "daegu fc", "대구fc", "대구 fc"],
+    "수원FC": ["suwon fc", "suwon", "수원fc"],
+    "수원삼성": ["suwon samsung", "suwon samsung bluewings", "수원", "수원 삼성", "수원블루윙즈"],
+    "부산": ["busan", "busan ipark", "부산아이파크", "부산 아이파크"],
+    "성남": ["seongnam", "seongnam fc", "성남fc"],
+    "부천": ["bucheon", "bucheon 1995", "부천fc"],
+    "서울이랜드": ["seoul e-land", "seoul e land", "서울e", "서울 이랜드"],
+    "충남아산": ["chungnam asan", "asan", "충남 아산"],
+    "경남": ["gyeongnam", "gyeongnam fc", "경남fc"],
+    "전남": ["jeonnam", "jeonnam dragons", "전남 드래곤즈"],
+    "천안": ["cheonan", "cheonan city", "천안 시티"],
+    "충북청주": ["cheongju", "chungbuk cheongju", "충북 청주"],
+    "안산": ["ansan", "ansan greeners", "안산 그리너스"],
+    "김포": ["gimpo", "gimpo fc", "김포fc"],
+
+    # Soccer (J League)
+    "고베": ["vissel kobe", "vissel", "비셀고베", "비셀 고베"],
+    "산프레체": ["sanfrecce hiroshima", "sanfrecce", "산프레체 히로시마"],
+    "마치다": ["machida zelvia", "machida", "마치다젤비아"],
+    "요코하마M": ["yokohama f. marinos", "yokohama fm", "요코하마마리노스", "요코하마 f. 마리노스"],
+    "가와사키": ["kawasaki frontale", "kawasaki", "가와사키 프론탈레"],
+    "감바오사카": ["gamba osaka", "gamba", "감바 오사카"],
+    "세레소오사카": ["cerezo osaka", "cerezo", "세레소 오사카"],
+    "우라와": ["urawa red diamonds", "urawa", "우라와 레즈"],
+    "나고야": ["nagoya grampus", "nagoya", "나고야 그램퍼스"],
+    "가시마": ["kashima antlers", "kashima", "가시마 앤틀러스"],
+    "도쿄": ["fc tokyo", "tokyo", "fc 도쿄", "fc도쿄"]
 }
 
 def normalize_name(n: str) -> str:
