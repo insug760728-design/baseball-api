@@ -93,8 +93,16 @@ class SchedulerService:
                 id="live_api_sports_job",
                 replace_existing=True
             )
+            # 3분마다 KBO 및 NPB 공식 라이브 스코어보드 고속 동기화 (경기 시간대 13~23시)
+            kbo_live_trigger = CronTrigger(minute="*/3")
+            scheduler.add_job(
+                cls.execute_kbo_npb_live_sync_job,
+                trigger=kbo_live_trigger,
+                id="kbo_npb_live_sync_job",
+                replace_existing=True
+            )
             scheduler.start()
-            logger.info(f"[Scheduler] 매일 {cls._config['hour']:02d}:{cls._config['minute']:02d}, 1시간 전종목 동기화, 10분 주기 베트맨, 1분 바탕화면 트래픽, 2분 유료 API-Sports 실시간 동기화 스케줄러 시작 완료.")
+            logger.info(f"[Scheduler] 매일 {cls._config['hour']:02d}:{cls._config['minute']:02d}, 1시간 전종목 동기화, 10분 주기 베트맨, 1분 트래픽, 2분 유료 API-Sports, 3분 KBO/NPB 실시간 동기화 스케줄러 시작 완료.")
 
 
     @classmethod
@@ -261,16 +269,19 @@ class SchedulerService:
 
             logger.info(f"[Scheduler Hourly] 1시간 주기 동기화 완료: {summary}")
 
-            # Auto-resolve past scheduled matches older than 4 hours to FINISHED (KST 기준)
+            # Auto-resolve past scheduled matches older than 8 hours safely
             try:
                 from app.models.models import Match
-                cutoff_4h = (start_time - timedelta(hours=4)).strftime("%Y-%m-%d %H:%M")
-                past_sched = db.query(Match).filter(Match.status == "SCHEDULED", Match.match_date < cutoff_4h).all()
+                cutoff_8h = (start_time - timedelta(hours=8)).strftime("%Y-%m-%d %H:%M")
+                past_sched = db.query(Match).filter(Match.status == "SCHEDULED", Match.match_date < cutoff_8h).all()
                 for pm in past_sched:
-                    pm.status = "FINISHED"
+                    if (pm.home_score or 0) > 0 or (pm.away_score or 0) > 0:
+                        pm.status = "FINISHED"
+                    else:
+                        pm.status = "POSTPONED"
                 if past_sched:
                     db.commit()
-                    logger.info(f"[Scheduler Hourly] 과거 미종료 경기 {len(past_sched)}건 FINISHED로 자동 정리 완료")
+                    logger.info(f"[Scheduler Hourly] 과거 8시간 경과 경기 {len(past_sched)}건 안전 상태 정리 완료")
             except Exception as pe:
                 logger.warning(f"[Scheduler Hourly] 과거 경기 정리 중 경고: {pe}")
             try:
@@ -369,9 +380,54 @@ class SchedulerService:
             logger.error(f"[Scheduler LiveApi] 실시간 유료 API 동기화 오류: {e}")
 
     @classmethod
+    async def execute_kbo_npb_live_sync_job(cls):
+        """3분 주기 KBO 및 NPB 야구 실시간 스코어보드 고속 동기화 (경기 집중 시간대 13:00~23:30)"""
+        now = datetime.now()
+        # 한국시간 기준 경기 시간대 (13시 ~ 23시)
+        if not (13 <= now.hour <= 23):
+            return
+
+        def _sync_domestic():
+            from app.services.match_service import MatchService
+            from app.core.database import SessionLocal
+            from app.api.v1.matches import clear_matches_cache
+            today_str = now.strftime("%Y-%m-%d")
+            db = SessionLocal()
+            updated_any = False
+            try:
+                for league in ["KBO", "NPB"]:
+                    try:
+                        res = MatchService.sync_from_official_site(
+                            db=db,
+                            league_id=league,
+                            target_date=today_str
+                        )
+                        if res.get("synced_matches_count", 0) > 0:
+                            updated_any = True
+                    except Exception as le:
+                        logger.warning(f"[Scheduler Domestic] {league} 수집 경고: {le}")
+                if updated_any:
+                    clear_matches_cache()
+            finally:
+                db.close()
+            return updated_any
+
+        try:
+            updated = await asyncio.to_thread(_sync_domestic)
+            if updated:
+                from app.core.websocket_manager import manager
+                await manager.broadcast({
+                    "type": "LIVE_SCORE_UPDATE",
+                    "timestamp": datetime.now().isoformat(),
+                    "sport": "BASEBALL_DOMESTIC",
+                    "message": "KBO/NPB 공식 실시간 스코어보드 갱신 완료"
+                })
+    @classmethod
     async def execute_starters_sync_job(cls):
         """15분 주기 KBO 및 NPB 공식 선발투수 발표 실시간 동기화"""
         def _run_starters():
+            from app.core.database import SessionLocal
+            from app.services.match_service import MatchService
             db = SessionLocal()
             try:
                 res = MatchService.sync_announced_starters(db)

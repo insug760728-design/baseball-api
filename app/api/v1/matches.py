@@ -13,9 +13,20 @@ from app.schemas.schemas import MatchResponse, MatchUpdate, DateRangeSyncRequest
 router = APIRouter(prefix="/matches", tags=["야구 경기 일정 및 결과"])
 
 _MATCHES_CACHE: Dict[str, Tuple[float, Any]] = {}
+_MATCH_FULL_CACHE: Dict[int, Tuple[float, Any]] = {}
 
-def clear_matches_cache():
+def clear_matches_cache(match_id: Optional[int] = None):
     _MATCHES_CACHE.clear()
+    if match_id:
+        _MATCH_FULL_CACHE.pop(match_id, None)
+    else:
+        _MATCH_FULL_CACHE.clear()
+
+def clear_match_full_cache(match_id: Optional[int] = None):
+    if match_id:
+        _MATCH_FULL_CACHE.pop(match_id, None)
+    else:
+        _MATCH_FULL_CACHE.clear()
 
 @router.get("", response_model=List[MatchResponse], summary="경기 일정 및 결과 목록 조회 (종목/기간 필터 포함)")
 def list_matches(
@@ -37,12 +48,15 @@ def list_matches(
         if not end_date:
             end_date = date
 
-    response.headers["Cache-Control"] = "public, max-age=15, s-maxage=30"
+    # 실시간 점수 즉시 반영을 위해 no-cache 헤더 설정 (구형 캐시 사용 차단)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     cache_key = f"{sport_code}:{league_name}:{status}:{start_date}:{end_date}:{limit}:{order}"
     now = time.time()
     if cache_key in _MATCHES_CACHE:
         cache_time, cached_res = _MATCHES_CACHE[cache_key]
-        if now - cache_time < 30: # 30초 초고속 인메모리 반환 (<0.001s)
+        if now - cache_time < 5: # 5초 초단기 캐시로 실시간성과 속도 동시 확보
             return cached_res
 
     res = MatchService.get_matches(
@@ -73,18 +87,6 @@ def sync_matches(payload: DateRangeSyncRequest, db: Session = Depends(get_db)):
     )
     clear_matches_cache()
     return result
-
-_MATCH_FULL_CACHE: Dict[int, Tuple[float, Any]] = {}
-
-def clear_matches_cache():
-    _MATCHES_CACHE.clear()
-    _MATCH_FULL_CACHE.clear()
-
-def clear_match_full_cache(match_id: Optional[int] = None):
-    if match_id:
-        _MATCH_FULL_CACHE.pop(match_id, None)
-    else:
-        _MATCH_FULL_CACHE.clear()
 
 @router.get("/{match_id}", summary="경기 상세 정보, 1~9회 스코어보드, 타자/투수 세부 기록 종합 조회")
 def get_match_full(match_id: int, response: Response, db: Session = Depends(get_db)):

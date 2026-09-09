@@ -237,6 +237,15 @@ for _k, _aliases in TEAM_SYNONYMS.items():
     for _a in _aliases:
         _CANONICAL_LOOKUP[normalize_name(_a)] = _k
 
+def clean_team_tokens(n: str) -> str:
+    s = normalize_name(n)
+    for stop in ["footballclub", "football", "club", "city", "united", "town", "athletic", "rovers", "wanderers", "hotspur", "albion", "자이언츠", "베어스", "트윈스", "라이온즈", "타이거즈", "이글스", "랜더스", "히어로즈", "다이노스", "위즈", "fc", "cf", "sc", "ac"]:
+        if s.endswith(stop) and len(s) > len(stop) + 2:
+            s = s[:-len(stop)]
+        elif s.startswith(stop) and len(s) > len(stop) + 2:
+            s = s[len(stop):]
+    return s
+
 def get_canonical(n: str) -> str:
     norm = normalize_name(n)
     if not norm:
@@ -256,11 +265,29 @@ def teams_match(api_name: str, db_name: str) -> bool:
         return False
     if norm_api == norm_db:
         return True
+
+    # 1. Canonical synonym match
+    canon_api = get_canonical(api_name)
+    canon_db = get_canonical(db_name)
+    if canon_api and canon_db and canon_api == canon_db:
+        return True
+
+    # 2. Clean tokens match (e.g. Wolverhampton Wanderers vs Wolverhampton, Brighton & Hove Albion vs Brighton)
+    clean_api = clean_team_tokens(api_name)
+    clean_db = clean_team_tokens(db_name)
+    if clean_api and clean_db:
+        if clean_api == clean_db:
+            return True
+        if len(clean_api) >= 4 and len(clean_db) >= 4:
+            if clean_api in clean_db or clean_db in clean_api:
+                return True
+
+    # 3. Substring match
     if len(norm_api) >= 3 and len(norm_db) >= 3:
         if norm_api in norm_db or norm_db in norm_api:
             return True
 
-    return get_canonical(api_name) == get_canonical(db_name)
+    return False
 
 
 def parse_utc_to_kst(utc_str: str) -> tuple[Optional[datetime], str]:
@@ -476,8 +503,11 @@ class LiveApiSportsService:
                 kst_dt, _ = parse_utc_to_kst(fixture_info.get("date", ""))
                 canon_h = get_canonical(h_name)
                 candidate_matches = db_by_home.get(canon_h, [])
+                if not candidate_matches:
+                    # 유연한 2차 검색 (동의어 사전 미등록 팀도 teams_match로 전체 DB 매칭)
+                    candidate_matches = [m for m in db_matches if teams_match(h_name, m.home_team_name)]
 
-                # Pick the match candidate with the closest scheduled time (within 6 hours)
+                # Pick the match candidate with the closest scheduled time
                 best_match = None
                 min_diff = float("inf")
                 for m in candidate_matches:
@@ -486,11 +516,14 @@ class LiveApiSportsService:
                             try:
                                 db_dt = datetime.strptime(m.match_date[:16], "%Y-%m-%d %H:%M")
                                 diff = abs((db_dt - kst_dt).total_seconds())
-                                if diff < min_diff and diff <= 6 * 3600:
+                                if diff < min_diff and diff <= 12 * 3600:
                                     min_diff = diff
                                     best_match = m
                             except Exception:
-                                pass
+                                if not best_match:
+                                    best_match = m
+                        elif not best_match:
+                            best_match = m
 
                 if best_match:
                     best_match.home_score = h_score
@@ -511,8 +544,13 @@ class LiveApiSportsService:
                     updated += 1
             db.commit()
 
-            # Broadcast real-time update via WebSocket if any scores changed
+            # Broadcast real-time update via WebSocket & clear cache if any scores changed
             if updated > 0:
+                try:
+                    from app.api.v1.matches import clear_matches_cache
+                    clear_matches_cache()
+                except Exception:
+                    pass
                 cls._broadcast_live_update("SOCCER", updated)
 
         except Exception as e:
@@ -596,9 +634,11 @@ class LiveApiSportsService:
                 kst_dt, _ = parse_utc_to_kst(g.get("date", ""))
                 canon_h = get_canonical(h_name)
                 candidate_matches = db_by_home.get(canon_h, [])
+                if not candidate_matches:
+                    # 유연한 2차 검색 (팀명 매칭 폴백)
+                    candidate_matches = [m for m in db_matches if teams_match(h_name, m.home_team_name)]
 
-                # In baseball, teams play multi-game series against each other on consecutive days.
-                # Pick the match candidate with the closest scheduled time (strictly within 8 hours).
+                # Pick the match candidate with the closest scheduled time
                 best_match = None
                 min_diff = float("inf")
                 for m in candidate_matches:
@@ -607,11 +647,14 @@ class LiveApiSportsService:
                             try:
                                 db_dt = datetime.strptime(m.match_date[:16], "%Y-%m-%d %H:%M")
                                 diff = abs((db_dt - kst_dt).total_seconds())
-                                if diff < min_diff and diff <= 8 * 3600:
+                                if diff < min_diff and diff <= 12 * 3600:
                                     min_diff = diff
                                     best_match = m
                             except Exception:
-                                pass
+                                if not best_match:
+                                    best_match = m
+                        elif not best_match:
+                            best_match = m
 
                 if best_match:
                     best_match.home_score = h_score
@@ -628,7 +671,13 @@ class LiveApiSportsService:
                     updated += 1
             db.commit()
 
+            # Broadcast real-time update via WebSocket & clear cache if any scores changed
             if updated > 0:
+                try:
+                    from app.api.v1.matches import clear_matches_cache
+                    clear_matches_cache()
+                except Exception:
+                    pass
                 cls._broadcast_live_update("BASEBALL", updated)
 
         except Exception as e:
@@ -662,4 +711,27 @@ class LiveApiSportsService:
         return {
             "football": cls.sync_live_football(),
             "baseball": cls.sync_live_baseball()
+        }
+
+    @classmethod
+    async def sync_live_football_async(cls, date_str: Optional[str] = None) -> Dict[str, Any]:
+        import asyncio
+        return await asyncio.to_thread(cls.sync_live_football, date_str)
+
+    @classmethod
+    async def sync_live_baseball_async(cls, date_str: Optional[str] = None) -> Dict[str, Any]:
+        import asyncio
+        return await asyncio.to_thread(cls.sync_live_baseball, date_str)
+
+    @classmethod
+    async def sync_all_async(cls) -> Dict[str, Any]:
+        import asyncio
+        fb, bb = await asyncio.gather(
+            asyncio.to_thread(cls.sync_live_football),
+            asyncio.to_thread(cls.sync_live_baseball),
+            return_exceptions=True
+        )
+        return {
+            "football": fb if not isinstance(fb, Exception) else {"status": "ERROR", "error": str(fb)},
+            "baseball": bb if not isinstance(bb, Exception) else {"status": "ERROR", "error": str(bb)}
         }
