@@ -627,52 +627,68 @@
       background: #eff6ff !important;
       border: 2px solid #1d4ed8 !important;
     }
-    /* 경기 상단 줄: 이모티콘+시간 | 팀+배당 | 팀 */
+    /* 카드 1행: 시간+이모티콘 | 홈팀 vs 원정팀 | 스코어 */
     .slim-card-row {
       display: flex;
-      align-items: center;
-      gap: 4px;
+      align-items: flex-start;
+      gap: 5px;
       flex-wrap: nowrap;
-      overflow: hidden;
       font-size: 0.80rem;
-      line-height: 1.3;
+      line-height: 1.4;
     }
     .slim-card-sport-time {
       color: #6b7280;
-      font-size: 0.70rem;
+      font-size: 0.68rem;
       white-space: nowrap;
       flex-shrink: 0;
+      padding-top: 2px;
+    }
+    /* 팀명 영역 — 길어도 줄바꿈 허용 */
+    .slim-card-teams {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 2px 4px;
+      font-size: 0.80rem;
+      line-height: 1.4;
+      word-break: keep-all;
     }
     .slim-card-home {
-      font-weight: 700;
       color: #111827;
-      white-space: nowrap;
+      font-weight: 800;
+    }
+    .slim-card-vs {
+      color: #9ca3af;
+      font-size: 0.64rem;
+      font-weight: 500;
       flex-shrink: 0;
-      max-width: 80px;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
     .slim-card-away {
-      font-weight: 700;
       color: #374151;
-      white-space: nowrap;
-      flex-shrink: 0;
-      max-width: 80px;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-weight: 700;
+    }
+    /* 배당 버튼 그룹 — 2행으로 분리 */
+    .slim-card-odds-row {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex-wrap: wrap;
+      margin-top: 3px;
     }
     .slim-odds-group {
       display: flex;
       align-items: center;
       gap: 3px;
-      flex-shrink: 0;
+      flex-wrap: wrap;
     }
     .slim-odds-btn {
       background: #f1f5f9;
       border: 1px solid #e2e8f0;
       border-radius: 4px;
       padding: 1px 5px;
-      font-size: 0.68rem;
+      font-size: 0.67rem;
       font-weight: 700;
       color: #1e3a8a;
       white-space: nowrap;
@@ -681,14 +697,13 @@
     .slim-odds-btn.win  { color: #15803d; }
     .slim-odds-btn.draw { color: #92400e; }
     .slim-odds-btn.lose { color: #b91c1c; }
-    /* 두 번째 줄: 선발/결장 */
+    /* 선발/결장 줄 — 줄바꿈 허용 */
     .slim-card-sub {
-      font-size: 0.67rem;
+      font-size: 0.66rem;
       color: #6b7280;
       margin-top: 3px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      word-break: keep-all;
+      line-height: 1.4;
     }
     /* 세 번째 줄: 액션 버튼들 */
     .slim-card-actions {
@@ -9326,17 +9341,22 @@ function getFullModalMatchList() {
         html += `
           <div class="slim-match-card pred-card-compact ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
             <div class="slim-card-row">
-              <span class="slim-card-sport-time">${sportIcon} ${timeStr}</span>
-              <span class="slim-card-home" title="${m.home_team_name}">${m.home_team_name}</span>
+              <span class="slim-card-sport-time">${sportIcon}<br>${timeStr}</span>
+              <span class="slim-card-teams">
+                <span class="slim-card-home">${m.home_team_name}</span>
+                <span class="slim-card-vs">vs</span>
+                <span class="slim-card-away">${m.away_team_name}</span>
+              </span>
+              ${scoreLabel ? `<span style="flex-shrink:0; margin-left:2px; text-align:right;">${scoreLabel}</span>` : ''}
+            </div>
+            <div class="slim-card-odds-row">
               ${oddsRowHtml}
-              <span class="slim-card-away" title="${m.away_team_name}">${m.away_team_name}</span>
-              ${scoreLabel ? `<span style="margin-left:auto; flex-shrink:0;">${scoreLabel}</span>` : ''}
             </div>
             ${subLineHtml}
             <div class="slim-card-actions">
               <button class="slim-action-btn odds-btn" id="oddsBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'odds')">📊 배당</button>
               <button class="slim-action-btn history-btn" id="histBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'history')">📋 전경기</button>
-              <button class="slim-action-btn detail-btn" onclick="event.stopPropagation(); selectPredMatch(${m.id}, true)">🔍 상세분석</button>
+              <button class="slim-action-btn detail-btn" onclick="event.stopPropagation(); selectPredMatch(${m.id}, true)">🔍 상세</button>
             </div>
             <div class="slim-accordion-panel" id="slimPanel_${m.id}">
               <div class="slim-accordion-loading">로딩 중...</div>
@@ -9344,6 +9364,7 @@ function getFullModalMatchList() {
           </div>
         `;
       });
+
 
       // Preserve user's scroll position so it NEVER jumps back to current time while user is reading/scrolling
       const prevContainerScrollTop = container.scrollTop;
