@@ -2,26 +2,26 @@
   "team_name": "뉴욕 메츠",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-08",
-    "end_date": "2026-09-09"
+    "start_date": "2026-09-09",
+    "end_date": "2026-09-10"
   },
   "total_matches": 2,
-  "hitters_count": 10,
-  "pitchers_count": 9,
+  "hitters_count": 12,
+  "pitchers_count": 10,
   "matches": [
-    {
-      "date": "2026-09-08 02:10",
-      "opponent": "마이애미 말린스",
-      "score": "9 : 4",
-      "result": "승",
-      "file": "matches/2026-09-08_0210_vs_마이애미_말린스.json"
-    },
     {
       "date": "2026-09-09 07:40",
       "opponent": "마이애미 말린스",
       "score": "7 : 5",
       "result": "승",
       "file": "matches/2026-09-09_0740_vs_마이애미_말린스.json"
+    },
+    {
+      "date": "2026-09-10 07:40",
+      "opponent": "마이애미 말린스",
+      "score": "15 : 14",
+      "result": "승",
+      "file": "matches/2026-09-10_0740_vs_마이애미_말린스.json"
     }
   ],
   "hitters": [
@@ -32,13 +32,18 @@
     },
     {
       "name": "후안 소토",
-      "pos": "2번 DH",
+      "pos": "2번 LF",
       "file": "hitters/후안_소토.json"
     },
     {
       "name": "보 비셋",
-      "pos": "3번 3B",
+      "pos": "3번 DH",
       "file": "hitters/보_비셋.json"
+    },
+    {
+      "name": "닉 므오르아비토",
+      "pos": "3번 DH",
+      "file": "hitters/닉_므오르아비토.json"
     },
     {
       "name": "카슨 브엔제",
@@ -46,62 +51,42 @@
       "file": "hitters/카슨_브엔제.json"
     },
     {
+      "name": "재러드 영",
+      "pos": "5번 1B",
+      "file": "hitters/재러드_영.json"
+    },
+    {
       "name": "마커스 세미엔",
-      "pos": "5번 2B",
+      "pos": "6번 2B",
       "file": "hitters/마커스_세미엔.json"
     },
     {
       "name": "A.J. 에우인그",
-      "pos": "6번 CF",
+      "pos": "7번 CF",
       "file": "hitters/A.J._에우인그.json"
     },
     {
-      "name": "프란시스코 알바레즈",
-      "pos": "7번 C",
-      "file": "hitters/프란시스코_알바레즈.json"
-    },
-    {
       "name": "브렛 바티",
-      "pos": "8번 1B",
+      "pos": "8번 3B",
       "file": "hitters/브렛_바티.json"
     },
     {
-      "name": "닉 므오르아비토",
-      "pos": "9번 LF",
-      "file": "hitters/닉_므오르아비토.json"
+      "name": "프란시스코 알바레즈",
+      "pos": "9번 C",
+      "file": "hitters/프란시스코_알바레즈.json"
     },
     {
-      "name": "재러드 영",
-      "pos": "5번 1B",
-      "file": "hitters/재러드_영.json"
+      "name": "치리스토프에르 므오르엘",
+      "pos": "8번 1B",
+      "file": "hitters/치리스토프에르_므오르엘.json"
+    },
+    {
+      "name": "루이스 트오르르엔스",
+      "pos": "9번 C",
+      "file": "hitters/루이스_트오르르엔스.json"
     }
   ],
   "pitchers": [
-    {
-      "name": "즈온아흐 트온그",
-      "pos": "P",
-      "file": "pitchers/즈온아흐_트온그.json"
-    },
-    {
-      "name": "데드니엘 느운에즈",
-      "pos": "P",
-      "file": "pitchers/데드니엘_느운에즈.json"
-    },
-    {
-      "name": "크리스 데브엔스키",
-      "pos": "P",
-      "file": "pitchers/크리스_데브엔스키.json"
-    },
-    {
-      "name": "대니얼 두아르테",
-      "pos": "P",
-      "file": "pitchers/대니얼_두아르테.json"
-    },
-    {
-      "name": "오스틴 워렌",
-      "pos": "P",
-      "file": "pitchers/오스틴_워렌.json"
-    },
     {
       "name": "션 마네아",
       "pos": "P",
@@ -118,9 +103,39 @@
       "file": "pitchers/나테_라브엔드에르.json"
     },
     {
+      "name": "데드니엘 느운에즈",
+      "pos": "P",
+      "file": "pitchers/데드니엘_느운에즈.json"
+    },
+    {
       "name": "센가 코다이",
       "pos": "P",
       "file": "pitchers/센가_코다이.json"
+    },
+    {
+      "name": "로버트 스토크",
+      "pos": "P",
+      "file": "pitchers/로버트_스토크.json"
+    },
+    {
+      "name": "오스틴 워렌",
+      "pos": "P",
+      "file": "pitchers/오스틴_워렌.json"
+    },
+    {
+      "name": "크리스 데브엔스키",
+      "pos": "P",
+      "file": "pitchers/크리스_데브엔스키.json"
+    },
+    {
+      "name": "대니얼 두아르테",
+      "pos": "P",
+      "file": "pitchers/대니얼_두아르테.json"
+    },
+    {
+      "name": "토비아스 마이에르스",
+      "pos": "P",
+      "file": "pitchers/토비아스_마이에르스.json"
     }
   ]
 }

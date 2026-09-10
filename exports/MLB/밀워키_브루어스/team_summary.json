@@ -2,26 +2,26 @@
   "team_name": "밀워키 브루어스",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-08",
-    "end_date": "2026-09-09"
+    "start_date": "2026-09-09",
+    "end_date": "2026-09-10"
   },
   "total_matches": 2,
-  "hitters_count": 13,
-  "pitchers_count": 8,
+  "hitters_count": 12,
+  "pitchers_count": 11,
   "matches": [
-    {
-      "date": "2026-09-08 03:10",
-      "opponent": "시카고 컵스",
-      "score": "4 : 3",
-      "result": "승",
-      "file": "matches/2026-09-08_0310_vs_시카고_컵스.json"
-    },
     {
       "date": "2026-09-09 08:40",
       "opponent": "시카고 컵스",
       "score": "4 : 3",
       "result": "승",
       "file": "matches/2026-09-09_0840_vs_시카고_컵스.json"
+    },
+    {
+      "date": "2026-09-10 08:40",
+      "opponent": "시카고 컵스",
+      "score": "8 : 6",
+      "result": "승",
+      "file": "matches/2026-09-10_0840_vs_시카고_컵스.json"
     }
   ],
   "hitters": [
@@ -36,44 +36,19 @@
       "file": "hitters/브리세_투랑.json"
     },
     {
-      "name": "윌리엄 콘트레라스",
-      "pos": "3번 C",
-      "file": "hitters/윌리엄_콘트레라스.json"
-    },
-    {
       "name": "앤드루 본",
-      "pos": "4번 1B",
+      "pos": "3번 1B",
       "file": "hitters/앤드루_본.json"
     },
     {
       "name": "제이크 브오에르스",
-      "pos": "4번 1B",
+      "pos": "3번 1B",
       "file": "hitters/제이크_브오에르스.json"
     },
     {
-      "name": "크리스천 이엘이치",
-      "pos": "5번 DH",
-      "file": "hitters/크리스천_이엘이치.json"
-    },
-    {
-      "name": "루이스 르아르아",
-      "pos": "6번 RF",
-      "file": "hitters/루이스_르아르아.json"
-    },
-    {
-      "name": "쿠퍼 프라트트",
-      "pos": "7번 SS",
-      "file": "hitters/쿠퍼_프라트트.json"
-    },
-    {
-      "name": "개럿 미첼",
-      "pos": "8번 CF",
-      "file": "hitters/개럿_미첼.json"
-    },
-    {
-      "name": "조에이 오르티스",
-      "pos": "9번 3B",
-      "file": "hitters/조에이_오르티스.json"
+      "name": "윌리엄 콘트레라스",
+      "pos": "4번 C",
+      "file": "hitters/윌리엄_콘트레라스.json"
     },
     {
       "name": "그아르이 스안치에즈",
@@ -86,6 +61,26 @@
       "file": "hitters/스알_프르엘이크.json"
     },
     {
+      "name": "루이스 르아르아",
+      "pos": "6번 RF",
+      "file": "hitters/루이스_르아르아.json"
+    },
+    {
+      "name": "조에이 오르티스",
+      "pos": "7번 SS",
+      "file": "hitters/조에이_오르티스.json"
+    },
+    {
+      "name": "개럿 미첼",
+      "pos": "8번 CF",
+      "file": "hitters/개럿_미첼.json"
+    },
+    {
+      "name": "쿠퍼 프라트트",
+      "pos": "9번 SS",
+      "file": "hitters/쿠퍼_프라트트.json"
+    },
+    {
       "name": "데이비드 흐암일턴",
       "pos": "9번 3B",
       "file": "hitters/데이비드_흐암일턴.json"
@@ -93,9 +88,14 @@
   ],
   "pitchers": [
     {
-      "name": "로버트 가스스에르",
+      "name": "크리스천 이엘이치",
+      "pos": "9번 PH",
+      "file": "pitchers/크리스천_이엘이치.json"
+    },
+    {
+      "name": "제이콥 미시오르오우스키",
       "pos": "P",
-      "file": "pitchers/로버트_가스스에르.json"
+      "file": "pitchers/제이콥_미시오르오우스키.json"
     },
     {
       "name": "채드 패트릭",
@@ -108,9 +108,9 @@
       "file": "pitchers/애런_애슈비.json"
     },
     {
-      "name": "아브느에르 우르이베",
+      "name": "안트온이오 스엔자트엘아",
       "pos": "P",
-      "file": "pitchers/아브느에르_우르이베.json"
+      "file": "pitchers/안트온이오_스엔자트엘아.json"
     },
     {
       "name": "트레버 메길",
@@ -118,19 +118,29 @@
       "file": "pitchers/트레버_메길.json"
     },
     {
-      "name": "제이콥 미시오르오우스키",
-      "pos": "P",
-      "file": "pitchers/제이콥_미시오르오우스키.json"
-    },
-    {
-      "name": "안트온이오 스엔자트엘아",
-      "pos": "P",
-      "file": "pitchers/안트온이오_스엔자트엘아.json"
-    },
-    {
       "name": "DL 흐알르",
       "pos": "P",
       "file": "pitchers/DL_흐알르.json"
+    },
+    {
+      "name": "로건 흐엔드에르슨",
+      "pos": "P",
+      "file": "pitchers/로건_흐엔드에르슨.json"
+    },
+    {
+      "name": "조조 로메로",
+      "pos": "P",
+      "file": "pitchers/조조_로메로.json"
+    },
+    {
+      "name": "브랜든 스프르오트",
+      "pos": "P",
+      "file": "pitchers/브랜든_스프르오트.json"
+    },
+    {
+      "name": "아브느에르 우르이베",
+      "pos": "P",
+      "file": "pitchers/아브느에르_우르이베.json"
     }
   ]
 }
