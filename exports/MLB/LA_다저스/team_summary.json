@@ -2,32 +2,32 @@
   "team_name": "LA 다저스",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-07",
-    "end_date": "2026-09-08"
+    "start_date": "2026-09-08",
+    "end_date": "2026-09-09"
   },
   "total_matches": 2,
-  "hitters_count": 12,
-  "pitchers_count": 11,
+  "hitters_count": 11,
+  "pitchers_count": 3,
   "matches": [
-    {
-      "date": "2026-09-07 11:10",
-      "opponent": "워싱턴 내셔널스",
-      "score": "7 : 5",
-      "result": "승",
-      "file": "matches/2026-09-07_1110_vs_워싱턴_내셔널스.json"
-    },
     {
       "date": "2026-09-08 10:10",
       "opponent": "신시내티 레즈",
       "score": "6 : 3",
       "result": "승",
       "file": "matches/2026-09-08_1010_vs_신시내티_레즈.json"
+    },
+    {
+      "date": "2026-09-09 11:10",
+      "opponent": "신시내티 레즈",
+      "score": "3 : 2",
+      "result": "승",
+      "file": "matches/2026-09-09_1110_vs_신시내티_레즈.json"
     }
   ],
   "hitters": [
     {
       "name": "토미 에드맨",
-      "pos": "1번 2B",
+      "pos": "1번 CF",
       "file": "hitters/토미_에드맨.json"
     },
     {
@@ -42,7 +42,7 @@
     },
     {
       "name": "프레디 프리먼",
-      "pos": "4번 1B",
+      "pos": "4번 DH",
       "file": "hitters/프레디_프리먼.json"
     },
     {
@@ -51,66 +51,41 @@
       "file": "hitters/테오스카_에르난데스.json"
     },
     {
-      "name": "카일 터커",
-      "pos": "6번 RF",
-      "file": "hitters/카일_터커.json"
-    },
-    {
       "name": "미구엘 로하스",
-      "pos": "7번 2B",
+      "pos": "6번 2B",
       "file": "hitters/미구엘_로하스.json"
     },
     {
       "name": "알렉스 프리랜드",
-      "pos": "7번 3B",
+      "pos": "6번 2B",
       "file": "hitters/알렉스_프리랜드.json"
     },
     {
+      "name": "알렉스 크알르",
+      "pos": "7번 LF",
+      "file": "hitters/알렉스_크알르.json"
+    },
+    {
+      "name": "카일 터커",
+      "pos": "7번 RF",
+      "file": "hitters/카일_터커.json"
+    },
+    {
       "name": "맥스 먼시",
-      "pos": "8번 DH",
+      "pos": "8번 3B",
       "file": "hitters/맥스_먼시.json"
     },
     {
       "name": "엔리퀴에 에르난데스",
-      "pos": "9번 3B",
+      "pos": "9번 1B",
       "file": "hitters/엔리퀴에_에르난데스.json"
-    },
-    {
-      "name": "알렉스 크알르",
-      "pos": "9번 CF",
-      "file": "hitters/알렉스_크알르.json"
-    },
-    {
-      "name": "오타니 쇼헤이",
-      "pos": "1번 DH",
-      "file": "hitters/오타니_쇼헤이.json"
     }
   ],
   "pitchers": [
     {
-      "name": "헌터 페두크시아",
-      "pos": "9번 PH",
-      "file": "pitchers/헌터_페두크시아.json"
-    },
-    {
-      "name": "저스틴 우로브레스키",
+      "name": "타릭 스쿠발",
       "pos": "P",
-      "file": "pitchers/저스틴_우로브레스키.json"
-    },
-    {
-      "name": "브록 스테우아르트",
-      "pos": "P",
-      "file": "pitchers/브록_스테우아르트.json"
-    },
-    {
-      "name": "블레이크 트레이넨",
-      "pos": "P",
-      "file": "pitchers/블레이크_트레이넨.json"
-    },
-    {
-      "name": "바비 밀러",
-      "pos": "P",
-      "file": "pitchers/바비_밀러.json"
+      "file": "pitchers/타릭_스쿠발.json"
     },
     {
       "name": "에드그아르도 엔리케스",
@@ -118,29 +93,9 @@
       "file": "pitchers/에드그아르도_엔리케스.json"
     },
     {
-      "name": "에멧 시한",
+      "name": "태너 스콧",
       "pos": "P",
-      "file": "pitchers/에멧_시한.json"
-    },
-    {
-      "name": "알렉스 베시아",
-      "pos": "P",
-      "file": "pitchers/알렉스_베시아.json"
-    },
-    {
-      "name": "세스 할보센",
-      "pos": "P",
-      "file": "pitchers/세스_할보센.json"
-    },
-    {
-      "name": "잭 드레이어",
-      "pos": "P",
-      "file": "pitchers/잭_드레이어.json"
-    },
-    {
-      "name": "에반 필립스",
-      "pos": "P",
-      "file": "pitchers/에반_필립스.json"
+      "file": "pitchers/태너_스콧.json"
     }
   ]
 }

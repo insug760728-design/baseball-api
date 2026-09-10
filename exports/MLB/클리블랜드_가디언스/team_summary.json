@@ -2,78 +2,38 @@
   "team_name": "클리블랜드 가디언스",
   "league": "MLB",
   "period": {
-    "start_date": "2026-09-07",
-    "end_date": "2026-09-08"
+    "start_date": "2026-09-08",
+    "end_date": "2026-09-09"
   },
   "total_matches": 2,
-  "hitters_count": 12,
-  "pitchers_count": 10,
+  "hitters_count": 10,
+  "pitchers_count": 11,
   "matches": [
-    {
-      "date": "2026-09-07 02:40",
-      "opponent": "디트로이트 타이거스",
-      "score": "3 : 2",
-      "result": "승",
-      "file": "matches/2026-09-07_0240_vs_디트로이트_타이거스.json"
-    },
     {
       "date": "2026-09-08 02:35",
       "opponent": "볼티모어 오리올스",
       "score": "4 : 6",
       "result": "패",
       "file": "matches/2026-09-08_0235_vs_볼티모어_오리올스.json"
+    },
+    {
+      "date": "2026-09-09 07:35",
+      "opponent": "볼티모어 오리올스",
+      "score": "9 : 5",
+      "result": "승",
+      "file": "matches/2026-09-09_0735_vs_볼티모어_오리올스.json"
     }
   ],
   "hitters": [
     {
       "name": "스티븐 크우안",
-      "pos": "1번 DH",
+      "pos": "1번 LF",
       "file": "hitters/스티븐_크우안.json"
     },
     {
-      "name": "트라비스 바즈즈안아",
-      "pos": "2번 2B",
-      "file": "hitters/트라비스_바즈즈안아.json"
-    },
-    {
       "name": "조 아드엘르",
-      "pos": "3번 RF",
+      "pos": "2번 DH",
       "file": "hitters/조_아드엘르.json"
-    },
-    {
-      "name": "나트안이엘 로우",
-      "pos": "4번 1B",
-      "file": "hitters/나트안이엘_로우.json"
-    },
-    {
-      "name": "안그엘 마르티네스",
-      "pos": "5번 LF",
-      "file": "hitters/안그엘_마르티네스.json"
-    },
-    {
-      "name": "안그엘 그엔아오",
-      "pos": "6번 3B",
-      "file": "hitters/안그엘_그엔아오.json"
-    },
-    {
-      "name": "패트릭 베일리",
-      "pos": "7번 C",
-      "file": "hitters/패트릭_베일리.json"
-    },
-    {
-      "name": "페테이 흐알프인",
-      "pos": "8번 CF",
-      "file": "hitters/페테이_흐알프인.json"
-    },
-    {
-      "name": "대니얼 스치느이므안느",
-      "pos": "8번 CF",
-      "file": "hitters/대니얼_스치느이므안느.json"
-    },
-    {
-      "name": "브라얀 로크치이오",
-      "pos": "9번 SS",
-      "file": "hitters/브라얀_로크치이오.json"
     },
     {
       "name": "호세 라미레즈",
@@ -81,36 +41,51 @@
       "file": "hitters/호세_라미레즈.json"
     },
     {
+      "name": "안그엘 마르티네스",
+      "pos": "4번 RF",
+      "file": "hitters/안그엘_마르티네스.json"
+    },
+    {
+      "name": "데이비드 프리",
+      "pos": "5번 1B",
+      "file": "hitters/데이비드_프리.json"
+    },
+    {
+      "name": "안그엘 그엔아오",
+      "pos": "6번 2B",
+      "file": "hitters/안그엘_그엔아오.json"
+    },
+    {
       "name": "오스틴 헤드제스",
       "pos": "7번 C",
       "file": "hitters/오스틴_헤드제스.json"
+    },
+    {
+      "name": "페테이 흐알프인",
+      "pos": "8번 CF",
+      "file": "hitters/페테이_흐알프인.json"
+    },
+    {
+      "name": "브라얀 로크치이오",
+      "pos": "9번 SS",
+      "file": "hitters/브라얀_로크치이오.json"
+    },
+    {
+      "name": "트라비스 바즈즈안아",
+      "pos": "2번 2B",
+      "file": "hitters/트라비스_바즈즈안아.json"
     }
   ],
   "pitchers": [
     {
-      "name": "데이비드 프리",
-      "pos": "8번 PH",
-      "file": "pitchers/데이비드_프리.json"
+      "name": "나트안이엘 로우",
+      "pos": "5번 PH",
+      "file": "pitchers/나트안이엘_로우.json"
     },
     {
-      "name": "가브인 윌리엄스",
-      "pos": "P",
-      "file": "pitchers/가브인_윌리엄스.json"
-    },
-    {
-      "name": "에릭 사브로우스키",
-      "pos": "P",
-      "file": "pitchers/에릭_사브로우스키.json"
-    },
-    {
-      "name": "헌터 가드디스",
-      "pos": "P",
-      "file": "pitchers/헌터_가드디스.json"
-    },
-    {
-      "name": "케이드 스미스",
-      "pos": "P",
-      "file": "pitchers/케이드_스미스.json"
+      "name": "패트릭 베일리",
+      "pos": "7번 PH",
+      "file": "pitchers/패트릭_베일리.json"
     },
     {
       "name": "조에이 칸티요",
@@ -136,6 +111,26 @@
       "name": "크레이그 요호",
       "pos": "P",
       "file": "pitchers/크레이그_요호.json"
+    },
+    {
+      "name": "태너 비브이",
+      "pos": "P",
+      "file": "pitchers/태너_비브이.json"
+    },
+    {
+      "name": "트임 흐에르린",
+      "pos": "P",
+      "file": "pitchers/트임_흐에르린.json"
+    },
+    {
+      "name": "헌터 가드디스",
+      "pos": "P",
+      "file": "pitchers/헌터_가드디스.json"
+    },
+    {
+      "name": "케이드 스미스",
+      "pos": "P",
+      "file": "pitchers/케이드_스미스.json"
     }
   ]
 }
