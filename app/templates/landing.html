@@ -11280,12 +11280,12 @@ function getFullModalMatchList() {
             };
 
             // Store in per-round cache and active live slot
-            TOTO_DATA[roundKey + '_' + targetTs] = parsedObj;
+            TOTO_DATA[roundKey + '_' + data.gmTs] = parsedObj;
             TOTO_DATA[roundKey + '_LIVE'] = parsedObj;
 
             // Dynamically update status in TOTO_ROUNDS list if changed
             if (TOTO_ROUNDS[roundKey]) {
-              const rItem = TOTO_ROUNDS[roundKey].find(x => x.gmTs === targetTs);
+              const rItem = TOTO_ROUNDS[roundKey].find(x => x.gmTs === data.gmTs);
               if (rItem && data.sale_status) {
                 rItem.status = data.sale_status;
               }
@@ -12731,7 +12731,6 @@ function getFullModalMatchList() {
       // Home & Away split data extraction
       const isSoccer = (m.sport_code || '').toUpperCase() === 'SOCCER';
       const isBasketball = (m.sport_code || '').toUpperCase() === 'BASKETBALL';
-      const isBaseball = !isSoccer && !isBasketball;
 
       const calcWinRateStr = (p) => (p >= 100 ? '1.000' : ('.' + String(Math.round(p * 10)).padStart(3, '0')));
       const homeEstWins = Math.max(1, Math.min(9, Math.round(probs.home / 10)));
