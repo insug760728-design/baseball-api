@@ -94,7 +94,7 @@ class MatchService:
                         match.match_date = m_data["match_date"]
                         db.commit()
 
-                # 선발 예고 투수(probablePitcher)가 제공된 경우 match_details.team_stats에 자동 등록
+                # 선발 예고 투수(probablePitcher)가 제공된 경우 match_details.team_stats에 자동 등록 및 최신화
                 if m_data.get("probable_pitcher_home") or m_data.get("probable_pitcher_away"):
                     detail = db.query(MatchDetail).filter(MatchDetail.match_id == match.id).first()
                     if not detail:
@@ -106,18 +106,32 @@ class MatchService:
                     if detail.team_stats:
                         try:
                             ts = json.loads(detail.team_stats)
-                        except:
+                        except Exception:
                             ts = {}
-                    if not detail.is_customized:
-                        h_p = sanitize_player_name(m_data.get("probable_pitcher_home") or "") or None
-                        a_p = sanitize_player_name(m_data.get("probable_pitcher_away") or "") or None
-                        if h_p or a_p:
-                            ts["starters"] = {
-                                "home": {"name": h_p or "선발 예고", "confirmed": bool(h_p), "throws": "우완"},
-                                "away": {"name": a_p or "선발 예고", "confirmed": bool(a_p), "throws": "우완"}
-                            }
-                            detail.team_stats = json.dumps(ts, ensure_ascii=False)
-                            db.commit()
+                    
+                    h_p = sanitize_player_name(m_data.get("probable_pitcher_home") or "") or None
+                    a_p = sanitize_player_name(m_data.get("probable_pitcher_away") or "") or None
+                    if h_p or a_p:
+                        curr_st = ts.get("starters", {})
+                        curr_h = curr_st.get("home", {}).get("name")
+                        curr_a = curr_st.get("away", {}).get("name")
+                        
+                        # 기존에 '미정/예정'이었거나 새로 확정된 선발투수가 유효한 경우 최신 확정 이름으로 즉시 갱신
+                        final_h = h_p if is_valid_starter_name(h_p) else (curr_h if is_valid_starter_name(curr_h) else None)
+                        final_a = a_p if is_valid_starter_name(a_p) else (curr_a if is_valid_starter_name(curr_a) else None)
+                        
+                        ts["starters"] = {
+                            "home": {"name": final_h or "선발 예고", "confirmed": bool(final_h), "throws": "우완"},
+                            "away": {"name": final_a or "선발 예고", "confirmed": bool(final_a), "throws": "우완"}
+                        }
+                        detail.team_stats = json.dumps(ts, ensure_ascii=False)
+                        db.commit()
+                        try:
+                            from app.api.v1.matches import clear_matches_cache, clear_match_full_cache
+                            clear_matches_cache(match.id)
+                            clear_match_full_cache(match.id)
+                        except Exception:
+                            pass
 
                 if match.status in ["FINISHED", "LIVE"]:
                     if not match.details or not match.player_stats or match.status == "LIVE":
@@ -587,6 +601,13 @@ class MatchService:
         db.commit()
         db.refresh(detail)
         
+        try:
+            from app.api.v1.matches import clear_matches_cache, clear_match_full_cache
+            clear_matches_cache(match.id)
+            clear_match_full_cache(match.id)
+        except Exception:
+            pass
+        
         analysis = None
         if refresh_analysis:
             try:
@@ -611,7 +632,7 @@ class MatchService:
         """KBO 및 NPB 공식 사이트에서 당일 공식 발표된 선발투수를 실시간 수집하여 DB에 확정 저장"""
         from app.scrapers.official_kbo_live_scraper import KboOfficialScraper
         from app.scrapers.official_npb_live_scraper import NpbOfficialScraper
-        from app.services.team_split_service import KBO_TEAMS_POOL, NPB_TEAMS_POOL, is_kbo_team_name, is_npb_team_name
+        from app.services.team_split_service import KBO_TEAMS_POOL, NPB_TEAMS_POOL, is_kbo_team_name, is_npb_team_name, is_valid_starter_name
         
         d_ref = target_date or datetime.now().strftime("%Y-%m-%d")
         results = {"date": d_ref, "kbo_synced": 0, "npb_synced": 0, "matches_updated": []}
@@ -645,9 +666,24 @@ class MatchService:
                             st_a = s_name
 
                 if st_h or st_a:
+                    # 기존 저장된 선발투수가 이미 있으면 보존하며 신규 발표분 병합
+                    curr_dt = db.query(MatchDetail).filter(MatchDetail.match_id == m.id).first()
+                    curr_ts = {}
+                    if curr_dt and curr_dt.team_stats:
+                        try:
+                            curr_ts = json.loads(curr_dt.team_stats)
+                        except Exception:
+                            pass
+                    exist_st = curr_ts.get("starters", {})
+                    exist_h = exist_st.get("home", {}).get("name")
+                    exist_a = exist_st.get("away", {}).get("name")
+
+                    final_h = st_h if is_valid_starter_name(st_h) else (exist_h if is_valid_starter_name(exist_h) else None)
+                    final_a = st_a if is_valid_starter_name(st_a) else (exist_a if is_valid_starter_name(exist_a) else None)
+
                     st_data = {
-                        "home": {"name": st_h or "선발 예고", "confirmed": bool(st_h), "throws": "우완"},
-                        "away": {"name": st_a or "선발 예고", "confirmed": bool(st_a), "throws": "우완"}
+                        "home": {"name": final_h or "선발 예고", "confirmed": bool(final_h), "throws": "우완"},
+                        "away": {"name": final_a or "선발 예고", "confirmed": bool(final_a), "throws": "우완"}
                     }
                     cls.update_starters(db, m.id, st_data)
                     results["kbo_synced"] += 1
@@ -684,9 +720,23 @@ class MatchService:
                             st_a = s_name
 
                 if st_h or st_a:
+                    curr_dt = db.query(MatchDetail).filter(MatchDetail.match_id == m.id).first()
+                    curr_ts = {}
+                    if curr_dt and curr_dt.team_stats:
+                        try:
+                            curr_ts = json.loads(curr_dt.team_stats)
+                        except Exception:
+                            pass
+                    exist_st = curr_ts.get("starters", {})
+                    exist_h = exist_st.get("home", {}).get("name")
+                    exist_a = exist_st.get("away", {}).get("name")
+
+                    final_h = st_h if is_valid_starter_name(st_h) else (exist_h if is_valid_starter_name(exist_h) else None)
+                    final_a = st_a if is_valid_starter_name(st_a) else (exist_a if is_valid_starter_name(exist_a) else None)
+
                     st_data = {
-                        "home": {"name": st_h or "선발 예고", "confirmed": bool(st_h), "throws": "우완"},
-                        "away": {"name": st_a or "선발 예고", "confirmed": bool(st_a), "throws": "우완"}
+                        "home": {"name": final_h or "선발 예고", "confirmed": bool(final_h), "throws": "우완"},
+                        "away": {"name": final_a or "선발 예고", "confirmed": bool(final_a), "throws": "우완"}
                     }
                     cls.update_starters(db, m.id, st_data)
                     results["npb_synced"] += 1
