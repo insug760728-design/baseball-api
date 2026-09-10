@@ -11567,12 +11567,81 @@ function getFullModalMatchList() {
         </div>
       `;
 
+      // 🏆 맨 위: 실시간 당첨금액 & 이월금 & 총 발매현황 골든 배너
+      const forwardAmt = Number(toto.forward_amount || 0);
+      const forwardCnt = Number(toto.forward_cnt || 0);
+      const sellAmt = Number(toto.total_sell_amount || 0);
+      const totalBets = Number(toto.total_sale_cnt || (sellAmt > 0 ? Math.round(sellAmt / 1000) : 0));
+      const firstPrizePool = Number(toto.first_prize_pool || (forwardAmt + Math.round(sellAmt * 0.25)));
+      const firstPrizeText = toto.first_prize_text || (firstPrizePool > 0 ? (Math.round(firstPrizePool / 10000).toLocaleString() + '만 원') : '집계 중');
+      const totalSellText = toto.total_sell_text || (sellAmt > 0 ? (Math.round(sellAmt / 10000).toLocaleString() + '만 원') : '집계 중');
+
+      if (headTitle && toto) {
+        const sportLabel = (totoKey === 'W1L' ? '⚾ 야구 승1패' : (totoKey === 'WDL' ? '⚽ 축구 승무패' : '🏀 농구 승5패'));
+        const rawTitle = (toto && toto.title) ? toto.title : '';
+        const cleanTitle = rawTitle.replace(/^(⚾\s*야구\s*승1패|⚽\s*축구\s*승무패|🏀\s*농구\s*승5패|야구\s*승1패|축구\s*승무패|농구\s*승5패)\s*/, '');
+        headTitle.innerHTML = `${sportLabel} ${cleanTitle} <span class="badge bg-warning text-dark fw-bold ms-1.5" style="font-size:0.75rem;"><i class="bi bi-cash-coin me-1"></i>실시간 1등: ${firstPrizeText}</span> ${forwardAmt > 0 ? `<span class="badge bg-danger text-white ms-1" style="font-size:0.70rem;">${forwardCnt > 0 ? forwardCnt + '회 이월🔥' : '이월🔥'}</span>` : ''}`;
+      }
+
+      let rolloverBadgeHtml = '';
+      if (forwardAmt > 0) {
+        rolloverBadgeHtml = `
+          <span class="badge bg-danger text-white px-2 py-1 shadow-sm d-inline-flex align-items-center gap-1" style="font-size: 0.76rem; font-weight: 800; border-radius: 6px;">
+            <i class="bi bi-fire text-warning"></i>
+            <span>${forwardCnt > 0 ? `${forwardCnt}회차 이월🔥` : '이월 발생🔥'}</span>
+            <span class="text-warning bg-black bg-opacity-25 px-1 rounded">${(forwardAmt / 100000000).toFixed(1)}억 원</span>
+          </span>
+        `;
+      } else {
+        rolloverBadgeHtml = `
+          <span class="badge bg-secondary bg-opacity-75 text-white px-2 py-0.5" style="font-size: 0.70rem; border-radius: 4px;">
+            이월 없음 (발매 누적)
+          </span>
+        `;
+      }
+
+      const topJackpotBannerHtml = `
+        <div class="p-2.5 rounded-3 mb-2 text-white shadow-sm" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #172554 100%); border: 1.5px solid #fbbf24;">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <!-- 왼쪽: 실시간 1등 당첨금액 & 이월금 -->
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <div class="d-flex align-items-center gap-1.5">
+                <span class="badge" style="background: #fbbf24; color: #000000; font-size: 0.76rem; font-weight: 900; padding: 3px 7px; border-radius: 4px;">
+                  <i class="bi bi-trophy-fill me-0.5"></i>실시간 1등 당첨금
+                </span>
+                <span class="fs-5 fw-black text-warning" style="letter-spacing: -0.5px; font-family: monospace;">
+                  ${firstPrizeText}
+                </span>
+              </div>
+              ${rolloverBadgeHtml}
+            </div>
+
+            <!-- 오른쪽: 실시간 발매 현황 & 마감 시간 -->
+            <div class="d-flex align-items-center gap-2 flex-wrap text-white-50" style="font-size: 0.74rem;">
+              <div>
+                <span class="text-white-50">총 발매:</span>
+                <strong class="text-white">${totalSellText}</strong>
+                ${totalBets > 0 ? `<span class="text-white-50">(${totalBets.toLocaleString()}표)</span>` : ''}
+              </div>
+              <span class="text-white-50">·</span>
+              <div>
+                <span class="text-white-50">마감:</span>
+                <strong class="text-warning">${toto.period || '집계 중'}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
       // 🎯 3번째 순서: 그다음 (실시간 당첨예상 1등~4등 계산기)
       const calcHtml = buildTotoCalculatorHtml(totoKey, toto);
 
       modalBody.innerHTML = `
         <div class="toto-flow-wrapper">
           <div class="toto-flow-left">
+            <!-- 🏆 0. 맨위 실시간 1등 당첨금액 & 이월 배너 -->
+            ${topJackpotBannerHtml}
+
             <!-- 1. 14경기 테이블 -->
             <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
               <table class="toto-compact-table table table-hover align-middle mb-0">
