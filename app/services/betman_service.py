@@ -424,6 +424,193 @@ class BetmanService:
 
         return {'status': 'error', 'message': '베트맨 공식 사이트 응답 지연'}
 
+    @staticmethod
+    def get_match_full_odds(match_id: int) -> dict:
+        """
+        특정 경기(match_id)에 대한 베트맨 전체 배당 조합 조회
+        - 야구: 승패, 승1패, 핸디캡, U/O, SUM, 전반 승무패, 전반 핸디캡, 전반 U/O
+        - 축구: 승무패, 핸디캡, U/O, SUM
+        - 농구: 승패, 핸디캡, U/O, SUM
+        DB에서 경기 정보 조회 후, 베트맨 gameInfoInq 엔드포인트에서 해당 경기 배당 파싱
+        """
+        try:
+            db_path = 'sports_data.db'
+            if not os.path.exists(db_path):
+                return {'status': 'error', 'message': 'DB 없음'}
+            conn = sqlite3.connect(db_path, timeout=15.0)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT id, sport_code, league_name, home_team_name, away_team_name, match_date, status, home_score, away_score FROM matches WHERE id = ?",
+                (match_id,)
+            )
+            row = cursor.fetchone()
+            conn.close()
+            if not row:
+                return {'status': 'error', 'message': f'경기 {match_id} 없음'}
+            match = dict(row)
+        except Exception as e:
+            return {'status': 'error', 'message': str(e)}
+
+        sport_code = match.get('sport_code', 'BASEBALL')
+        home_name = match.get('home_team_name', '')
+        away_name = match.get('away_team_name', '')
+        match_date = match.get('match_date', '')
+
+        # 종목별 게임ID 결정
+        if sport_code == 'SOCCER':
+            gm_ids = [('G011', '승무패')]
+        elif sport_code == 'BASKETBALL':
+            gm_ids = [('G027', '승5패')]
+        else:  # BASEBALL
+            gm_ids = [('G024', '승1패')]
+
+        # 현재 발매중인 회차에서 해당 경기 찾기
+        result_groups = []
+
+        for gm_id, gm_label in gm_ids:
+            # 현재 발매중 회차 조회
+            if gm_id == 'G011':
+                ts_list = [260051, 260052, 260050]
+            elif gm_id == 'G024':
+                ts_list = [260067, 260068, 260066]
+            else:
+                ts_list = [260027, 260028]
+
+            for gm_ts in ts_list:
+                data = BetmanService.get_round_data(gm_id=gm_id, gm_ts=gm_ts)
+                if not data or data.get('status') == 'error':
+                    continue
+                matches_in_round = data.get('matches', [])
+                for m in matches_in_round:
+                    if teams_match(m.get('home', ''), home_name) and teams_match(m.get('away', ''), away_name):
+                        result_groups.append({
+                            'gm_id': gm_id,
+                            'gm_ts': gm_ts,
+                            'label': gm_label,
+                            'round_name': data.get('round_name', ''),
+                            'match_data': m
+                        })
+                        break
+                else:
+                    continue
+                break
+
+        # 베트맨 gameInfoInq 엔드포인트에서 전체 배당 조합 가져오기
+        # 이 API는 특정 경기의 모든 게임 타입을 반환
+        betman_odds_map = BetmanService._fetch_betman_game_info(home_name, away_name, sport_code, match_date)
+
+        return {
+            'status': 'success',
+            'match_id': match_id,
+            'home': home_name,
+            'away': away_name,
+            'sport_code': sport_code,
+            'match_date': match_date,
+            'toto_groups': result_groups,
+            'full_odds': betman_odds_map
+        }
+
+    @staticmethod
+    def _fetch_betman_game_info(home_name: str, away_name: str, sport_code: str, match_date: str) -> list:
+        """
+        베트맨 gameInfoInq.do 호출 → 전체 배당 조합 파싱
+        종목별 모든 게임타입(승패/핸디캡/U/O/SUM/전반 등) 반환
+        """
+        # 종목별 게임ID
+        if sport_code == 'SOCCER':
+            gm_id = 'G011'
+            gm_ts_candidates = [260051, 260052]
+        elif sport_code == 'BASKETBALL':
+            gm_id = 'G027'
+            gm_ts_candidates = [260027, 260028]
+        else:
+            gm_id = 'G024'
+            gm_ts_candidates = [260067, 260068]
+
+        odds_rows = []
+        for gm_ts in gm_ts_candidates:
+            try:
+                params = {
+                    'gmId': gm_id,
+                    'gmTs': int(gm_ts),
+                    '_sbmInfo': {'_sbmInfo': {'debugMode': 'false'}}
+                }
+                req = urllib.request.Request(
+                    BETMAN_INQ_URL,
+                    data=json.dumps(params).encode('utf-8'),
+                    headers=HEADERS
+                )
+                with urllib.request.urlopen(req, timeout=3.0) as resp:
+                    raw = resp.read().decode('utf-8', errors='ignore')
+                    res = json.loads(raw)
+
+                game_list = res.get('totoGames', []) or res.get('schedulesList', []) or []
+                # 배당 테이블이 있는 경우 파싱 (베트맨 gameInfoInq 응답 구조)
+                all_odds = res.get('oddsList', []) or res.get('gameOddsList', []) or []
+                if all_odds:
+                    for odd_item in all_odds:
+                        h = odd_item.get('homeName', '') or odd_item.get('homeTeam', '')
+                        a = odd_item.get('awayName', '') or odd_item.get('awayTeam', '')
+                        if teams_match(h, home_name) and teams_match(a, away_name):
+                            # 해당 경기의 배당 조합 파싱
+                            game_type = odd_item.get('gameTypeName', '') or odd_item.get('gmTypeName', '')
+                            odds_rows.append({
+                                'type': game_type,
+                                'handicap': odd_item.get('hdpVal') or odd_item.get('handicap') or '',
+                                'uo': odd_item.get('uoVal') or odd_item.get('underOver') or '',
+                                'home_odds': odd_item.get('homeOdds') or odd_item.get('winOdds') or 0,
+                                'draw_odds': odd_item.get('drawOdds') or odd_item.get('midOdds') or 0,
+                                'away_odds': odd_item.get('awayOdds') or odd_item.get('loseOdds') or 0,
+                            })
+                if odds_rows:
+                    break
+            except Exception:
+                continue
+
+        # API에서 실시간 배당을 못 가져온 경우 → 기존 캐시(get_round_data)에서 조합 생성
+        if not odds_rows:
+            odds_rows = BetmanService._build_odds_from_round_cache(home_name, away_name, sport_code)
+
+        return odds_rows
+
+    @staticmethod
+    def _build_odds_from_round_cache(home_name: str, away_name: str, sport_code: str) -> list:
+        """
+        gameInfoInq 실패 시 get_round_data 캐시에서 기본 배당 조합 생성
+        현재 캐시에는 승패(W1L)/승무패(WDL)/승5패(W5L)만 있으므로
+        핸디캡/U/O 등은 N/A로 표시
+        """
+        if sport_code == 'SOCCER':
+            gm_id, gm_ts = 'G011', 260051
+        elif sport_code == 'BASKETBALL':
+            gm_id, gm_ts = 'G027', 260027
+        else:
+            gm_id, gm_ts = 'G024', 260067
+
+        data = BetmanService.get_round_data(gm_id=gm_id, gm_ts=gm_ts)
+        if not data or data.get('status') == 'error':
+            return []
+
+        for m in data.get('matches', []):
+            if teams_match(m.get('home', ''), home_name) and teams_match(m.get('away', ''), away_name):
+                # 기본 승패/승무패 배당만 구성 (핸디캡/U/O는 베트맨 직접 참조 안내)
+                rows = []
+                if sport_code == 'BASEBALL':
+                    rows = [
+                        {'type': '야구 승1패', 'handicap': '', 'uo': '', 'home_odds': 0, 'draw_odds': 0, 'away_odds': 0, 'note': '베트맨 사이트 참조'},
+                    ]
+                elif sport_code == 'SOCCER':
+                    rows = [
+                        {'type': '축구 승무패', 'handicap': '', 'uo': '', 'home_odds': 0, 'draw_odds': 0, 'away_odds': 0, 'note': '베트맨 사이트 참조'},
+                    ]
+                else:
+                    rows = [
+                        {'type': '농구 승5패', 'handicap': '', 'uo': '', 'home_odds': 0, 'draw_odds': 0, 'away_odds': 0, 'note': '베트맨 사이트 참조'},
+                    ]
+                return rows
+        return []
+
 
     @staticmethod
     def _parse_betman_payload(data: dict, gm_id: str, gm_ts: int) -> dict:

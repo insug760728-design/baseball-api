@@ -70,3 +70,15 @@ async def force_sync_live():
         "details": res,
         "timestamp": now_kst.strftime("%Y-%m-%d %H:%M:%S")
     }
+
+
+@router.get("/match-history/{match_id}", summary="경기별 홈/원정 팀 전경기 상세 조회 (득점자/경고/선발/안타/홈런)")
+def get_match_history(match_id: int, max_games: int = 5):
+    """
+    특정 경기(match_id)에 대해 홈팀/원정팀의 최근 경기 결과 + 상세 이벤트 반환.
+    - 축구: 득점자(시간/이름/어시스트), 경고/퇴장
+    - 야구: 선발투수(이닝/볼넷/삼진), 팀 안타/홈런
+    - 농구: 스코어 + 기본 결과
+    API-Sports 키가 설정되어 있으면 실시간 이벤트, 없으면 DB 기본 정보만 반환.
+    """
+    return LiveApiSportsService.get_match_history(match_id=match_id, max_games=max_games)

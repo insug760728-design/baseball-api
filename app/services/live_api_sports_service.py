@@ -773,3 +773,216 @@ class LiveApiSportsService:
             "football": fb if not isinstance(fb, Exception) else {"status": "ERROR", "error": str(fb)},
             "baseball": bb if not isinstance(bb, Exception) else {"status": "ERROR", "error": str(bb)}
         }
+
+    @classmethod
+    def get_match_history(cls, match_id: int, max_games: int = 5) -> Dict[str, Any]:
+        """
+        특정 경기(match_id)에 대해 홈/원정 팀 최근 경기 + 상세 이벤트 반환.
+        - 축구: /fixtures/events → 득점자, 경고/퇴장, 어시스트
+        - 야구: /games/statistics → 선발, 이닝, 안타, 홈런, 볼넷, 삼진
+        - 공통: DB에서 최근 N경기 조회 후 API-Sports external_id로 이벤트 패치
+        """
+        # 1. DB에서 경기 정보 조회
+        from app.core.database import SessionLocal
+        from app.models.models import Match
+        db = SessionLocal()
+        try:
+            target = db.query(Match).filter(Match.id == match_id).first()
+            if not target:
+                return {"status": "error", "message": f"경기 {match_id} 없음"}
+
+            sport_code = target.sport_code
+            home_team = target.home_team_name
+            away_team = target.away_team_name
+            match_date = target.match_date or ''
+
+            # 최근 경기 날짜 범위 (경기일 기준 30일 이내)
+            import re
+            date_match = re.match(r'(\d{4}-\d{2}-\d{2})', match_date)
+            base_date = date_match.group(1) if date_match else match_date[:10]
+
+            # 홈팀 최근 경기 (현재 경기 제외)
+            home_recent = db.query(Match).filter(
+                Match.sport_code == sport_code,
+                Match.status == 'FINISHED',
+                Match.id != match_id,
+                (Match.home_team_name == home_team) | (Match.away_team_name == home_team)
+            ).order_by(Match.match_date.desc()).limit(max_games).all()
+
+            # 원정팀 최근 경기 (현재 경기 제외)
+            away_recent = db.query(Match).filter(
+                Match.sport_code == sport_code,
+                Match.status == 'FINISHED',
+                Match.id != match_id,
+                (Match.home_team_name == away_team) | (Match.away_team_name == away_team)
+            ).order_by(Match.match_date.desc()).limit(max_games).all()
+
+        finally:
+            db.close()
+
+        def format_match_basic(m: Match, perspective_team: str) -> Dict[str, Any]:
+            """경기 기본 정보 포맷"""
+            is_home = (m.home_team_name == perspective_team)
+            opponent = m.away_team_name if is_home else m.home_team_name
+            team_score = m.home_score if is_home else m.away_score
+            opp_score = m.away_score if is_home else m.home_score
+            if team_score > opp_score:
+                result = 'WIN'
+                result_emoji = '✅'
+            elif team_score < opp_score:
+                result = 'LOSS'
+                result_emoji = '❌'
+            else:
+                result = 'DRAW'
+                result_emoji = '🟰'
+
+            date_str = (m.match_date or '')[:10]
+            home_away = '홈' if is_home else '원정'
+
+            # 선발 정보 (야구)
+            starter_info = ''
+            if sport_code == 'BASEBALL':
+                if is_home and m.details and hasattr(m, 'home_starter_name'):
+                    starter_info = getattr(m, 'home_starter_name', '') or ''
+                elif not is_home and hasattr(m, 'away_starter_name'):
+                    starter_info = getattr(m, 'away_starter_name', '') or ''
+
+            return {
+                'match_id': m.id,
+                'date': date_str,
+                'home_away': home_away,
+                'opponent': opponent,
+                'score': f'{team_score} - {opp_score}',
+                'result': result,
+                'result_emoji': result_emoji,
+                'starter': starter_info,
+                'events': [],  # API-Sports 이벤트는 별도 패치
+                'stats': {}
+            }
+
+        home_games = [format_match_basic(m, home_team) for m in home_recent]
+        away_games = [format_match_basic(m, away_team) for m in away_recent]
+
+        # 2. API-Sports로 이벤트/통계 패치 (키 설정되어 있는 경우만)
+        if cls.is_configured():
+            if sport_code == 'SOCCER':
+                home_games = cls._enrich_football_events(home_games, home_team, home_recent)
+                away_games = cls._enrich_football_events(away_games, away_team, away_recent)
+            elif sport_code == 'BASEBALL':
+                home_games = cls._enrich_baseball_stats(home_games, home_team, home_recent)
+                away_games = cls._enrich_baseball_stats(away_games, away_team, away_recent)
+
+        return {
+            'status': 'success',
+            'match_id': match_id,
+            'sport_code': sport_code,
+            'home_team': home_team,
+            'away_team': away_team,
+            'home_recent': home_games,
+            'away_recent': away_games
+        }
+
+    @classmethod
+    def _enrich_football_events(cls, games: list, team_name: str, db_matches: list) -> list:
+        """
+        축구 경기 이벤트 패치: /fixtures/events?fixture={id}
+        득점자(시간/이름/어시스트), 경고/퇴장 파싱
+        """
+        for i, (game, db_match) in enumerate(zip(games, db_matches)):
+            try:
+                # official_id가 있으면 API-Sports fixture ID로 사용
+                ext_id = getattr(db_match, 'official_id', None)
+                if not ext_id:
+                    continue
+
+                # fixture ID가 숫자형인지 확인
+                try:
+                    int(ext_id)
+                except (ValueError, TypeError):
+                    continue
+
+                data = cls._make_request(f"/fixtures/events?fixture={ext_id}", sport="football")
+                if not data:
+                    continue
+                events_raw = data.get('response', [])
+
+                goals = []
+                cards = []
+                for ev in events_raw:
+                    ev_type = ev.get('type', '')
+                    ev_detail = ev.get('detail', '')
+                    ev_time = ev.get('time', {}).get('elapsed', '')
+                    player_name = ev.get('player', {}).get('name', '')
+                    assist_name = ev.get('assist', {}).get('name', '')
+                    team_ev_name = ev.get('team', {}).get('name', '')
+                    is_own_team = teams_match(team_ev_name, team_name)
+
+                    if ev_type == 'Goal' and ev_detail != 'Missed Penalty':
+                        side = '' if is_own_team else '(실점)'
+                        assist_str = f' ({assist_name} 어시스트)' if assist_name else ''
+                        goals.append(f"⚽ {ev_time}'{side} {player_name}{assist_str}")
+                    elif ev_type == 'Card':
+                        is_yellow = 'Yellow' in ev_detail
+                        is_red = 'Red' in ev_detail
+                        card_emoji = '🟡' if is_yellow else '🔴'
+                        side = '' if is_own_team else '(상대)'
+                        cards.append(f"{card_emoji} {ev_time}' {player_name}{side}")
+
+                game['events'] = goals + cards
+                games[i] = game
+            except Exception:
+                continue
+        return games
+
+    @classmethod
+    def _enrich_baseball_stats(cls, games: list, team_name: str, db_matches: list) -> list:
+        """
+        야구 경기 통계 패치: /games/statistics?id={id}
+        선발투수 이닝/볼넷/삼진, 팀 안타/홈런 파싱
+        """
+        for i, (game, db_match) in enumerate(zip(games, db_matches)):
+            try:
+                ext_id = getattr(db_match, 'official_id', None)
+                if not ext_id:
+                    # official_id 없으면 DB details에서 period_scores 사용
+                    if db_match.details and db_match.details.team_stats:
+                        try:
+                            stats = json.loads(db_match.details.team_stats or '{}')
+                            if stats:
+                                game['stats'] = stats
+                        except Exception:
+                            pass
+                    continue
+
+                try:
+                    int(ext_id)
+                except (ValueError, TypeError):
+                    continue
+
+                data = cls._make_request(f"/games/statistics?id={ext_id}", sport="baseball")
+                if not data:
+                    continue
+                stats_raw = data.get('response', [])
+
+                for team_stat in stats_raw:
+                    team_ev_name = team_stat.get('team', {}).get('name', '')
+                    if not teams_match(team_ev_name, team_name):
+                        continue
+                    batting = team_stat.get('statistics', {}).get('batting', {})
+                    pitching = team_stat.get('statistics', {}).get('pitching', {})
+                    game['stats'] = {
+                        'hits': batting.get('hits', 0),
+                        'home_runs': batting.get('homeRuns', 0),
+                        'walks': batting.get('baseOnBalls', 0),
+                        'strikeouts_bat': batting.get('strikeOuts', 0),
+                        'starter_ip': pitching.get('inningsPitched', ''),
+                        'starter_er': pitching.get('earnedRuns', 0),
+                        'starter_bb': pitching.get('baseOnBalls', 0),
+                        'starter_k': pitching.get('strikeOuts', 0),
+                    }
+                    break
+                games[i] = game
+            except Exception:
+                continue
+        return games
+

@@ -51,3 +51,15 @@ def get_available_rounds(gmId: str = Query('G011')):
                 {'gmTs': 260027, 'label': '27회차 (5,232만 원)', 'status': 'Finished', 'is_live': False}
             ]
         }
+
+
+@router.get('/match-odds/{match_id}', summary='특정 경기 베트맨 전체 배당 조합 조회 (승패/핸디캡/U&O/SUM/전반 등)')
+def get_match_full_odds(match_id: int):
+    """
+    경기 ID로 해당 경기의 베트맨 전체 배당 조합 반환.
+    - 야구: 승패, 승1패, 핸디캡, 언더오버, SUM(홀짝), 전반 승무패, 전반 핸디캡, 전반 언더오버
+    - 축구: 승무패, 핸디캡, 언더오버, SUM(홀짝)
+    - 농구: 승패, 핸디캡, 언더오버, SUM(홀짝)
+    """
+    return BetmanService.get_match_full_odds(match_id=match_id)
+

@@ -604,6 +604,189 @@
       border: 2px solid #1d4ed8 !important;
     }
 
+    /* =============================================
+       슬림 경기 카드 (배트맨 스타일)
+    ============================================= */
+    .slim-match-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 8px 10px 6px 10px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+      box-sizing: border-box;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .slim-match-card:hover {
+      border-color: #94a3b8;
+      background: #f9fafb;
+    }
+    .slim-match-card.active-match-card {
+      background: #eff6ff !important;
+      border: 2px solid #1d4ed8 !important;
+    }
+    /* 경기 상단 줄: 이모티콘+시간 | 팀+배당 | 팀 */
+    .slim-card-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: nowrap;
+      overflow: hidden;
+      font-size: 0.80rem;
+      line-height: 1.3;
+    }
+    .slim-card-sport-time {
+      color: #6b7280;
+      font-size: 0.70rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .slim-card-home {
+      font-weight: 700;
+      color: #111827;
+      white-space: nowrap;
+      flex-shrink: 0;
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .slim-card-away {
+      font-weight: 700;
+      color: #374151;
+      white-space: nowrap;
+      flex-shrink: 0;
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .slim-odds-group {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+    .slim-odds-btn {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #1e3a8a;
+      white-space: nowrap;
+      cursor: default;
+    }
+    .slim-odds-btn.win  { color: #15803d; }
+    .slim-odds-btn.draw { color: #92400e; }
+    .slim-odds-btn.lose { color: #b91c1c; }
+    /* 두 번째 줄: 선발/결장 */
+    .slim-card-sub {
+      font-size: 0.67rem;
+      color: #6b7280;
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* 세 번째 줄: 액션 버튼들 */
+    .slim-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 5px;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 5px;
+    }
+    .slim-action-btn {
+      flex: 1;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 5px;
+      padding: 3px 6px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #374151;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.12s;
+    }
+    .slim-action-btn:hover { background: #e2e8f0; }
+    .slim-action-btn.odds-btn { color: #1e40af; border-color: #bfdbfe; background: #eff6ff; }
+    .slim-action-btn.history-btn { color: #065f46; border-color: #a7f3d0; background: #ecfdf5; }
+    .slim-action-btn.detail-btn { color: #1f2937; border-color: #d1d5db; }
+    .slim-action-btn.active { background: #1e40af; color: #fff; border-color: #1e40af; }
+    /* 아코디언 패널 */
+    .slim-accordion-panel {
+      display: none;
+      margin-top: 6px;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 6px;
+      font-size: 0.70rem;
+    }
+    .slim-accordion-panel.open { display: block; }
+    /* 배당 테이블 */
+    .slim-odds-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.68rem;
+    }
+    .slim-odds-table tr {
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .slim-odds-table td {
+      padding: 3px 4px;
+      vertical-align: middle;
+    }
+    .slim-odds-table .type-col {
+      color: #374151;
+      font-weight: 600;
+      white-space: nowrap;
+      width: 35%;
+    }
+    .slim-odds-table .odds-val {
+      font-weight: 800;
+      font-family: monospace;
+      text-align: center;
+    }
+    .slim-odds-table .odds-val.win  { color: #15803d; }
+    .slim-odds-table .odds-val.draw { color: #92400e; }
+    .slim-odds-table .odds-val.lose { color: #b91c1c; }
+    .slim-odds-table .odds-val.under { color: #1d4ed8; }
+    .slim-odds-table .odds-val.over  { color: #7c3aed; }
+    /* 전경기 히스토리 */
+    .slim-history-section { margin-bottom: 8px; }
+    .slim-history-header {
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 4px;
+      font-size: 0.72rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .slim-history-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 5px;
+      padding: 3px 0;
+      border-bottom: 1px solid #f9fafb;
+    }
+    .slim-history-item .result-icon { flex-shrink: 0; font-size: 0.75rem; }
+    .slim-history-item .match-info  { flex: 1; min-width: 0; }
+    .slim-history-item .match-score { font-weight: 700; color: #111827; white-space: nowrap; }
+    .slim-history-item .match-detail { color: #6b7280; font-size: 0.64rem; margin-top: 1px; }
+    .slim-history-item .match-events { color: #374151; font-size: 0.64rem; margin-top: 1px; }
+    .slim-accordion-loading {
+      text-align: center;
+      color: #9ca3af;
+      font-size: 0.68rem;
+      padding: 8px 0;
+    }
+
+
+
     /* Button Controls (Date, Sport, Conf) */
     .sport-filter-btn, .sport-chip-btn {
       background: #ffffff !important;
@@ -9097,150 +9280,66 @@ function getFullModalMatchList() {
         let cardFooterTag = '';
         const oddsInfo = getMatchOdds(m);
 
-        if (m.status === 'FINISHED') {
-          scoreSnippet = `<span class="badge" style="background: #ffffff; border: 1px solid #d1d5db; padding: 2px 7px;"><span style="color:#111827; font-weight:800; font-size:0.88rem;">${m.home_score}</span> <span style="color:#9ca3af; font-size:0.75rem;">:</span> <span style="color:#111827; font-weight:800; font-size:0.88rem;">${m.away_score}</span> <span class="badge bg-white border text-dark ms-1 py-0 px-1" style="border-color: #d1d5db !important; font-size:0.62rem; font-weight:700;">종료</span></span>`;
-
-          const confDisplay = pred.confidence ? `${pred.confidence}% ` : '';
-          const pickLabel = pred.expected_label || (m.home_score > m.away_score ? '예상승' : '예상패');
-          const isHit = pred.is_match === true;
-
-          if (isHit) {
-            cardFooterTag = `<span class="badge" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; font-weight:700;"><i class="bi bi-check-circle-fill me-1"></i>[AI ${confDisplay}${pickLabel}] 적중 ✓</span>`;
-          } else {
-            cardFooterTag = `<span class="badge" style="background:#ffffff; color:#111827; border:1px solid #d1d5db; font-size:0.68rem; font-weight:700;"><i class="bi bi-x-circle me-1"></i>[AI ${confDisplay}${pickLabel}] 불일치 ✕</span>`;
-          }
-        } else if (m.status === 'LIVE') {
-          scoreSnippet = `<span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; padding: 2px 7px;"><span class="text-dark fw-bold" style="font-size:0.88rem;">${m.home_score} : ${m.away_score}</span> <span class="badge bg-danger text-white ms-1" style="font-size:0.62rem;">LIVE</span></span>`;
-          cardFooterTag = `<span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; font-size:0.68rem; font-weight: 700;"><i class="bi bi-broadcast me-1"></i>실시간 공식 점수 [AI: ${pred.expected_label || '진행중'}]</span>`;
+        // 기본 배당 표시 (슬림 카드용)
+        let oddsRowHtml = '';
+        if (m.sport_code === 'SOCCER') {
+          const hw = oddsInfo.home ? `<span class="slim-odds-btn win">승 ${oddsInfo.home}</span>` : '';
+          const dw = oddsInfo.draw ? `<span class="slim-odds-btn draw">무 ${oddsInfo.draw}</span>` : '';
+          const aw = oddsInfo.away ? `<span class="slim-odds-btn lose">패 ${oddsInfo.away}</span>` : '';
+          oddsRowHtml = `<span class="slim-odds-group">${hw}${dw}${aw}</span>`;
+        } else if (m.sport_code === 'BASKETBALL') {
+          const hw = oddsInfo.home ? `<span class="slim-odds-btn win">승 ${oddsInfo.home}</span>` : '';
+          const aw = oddsInfo.away ? `<span class="slim-odds-btn lose">패 ${oddsInfo.away}</span>` : '';
+          oddsRowHtml = `<span class="slim-odds-group">${hw}${aw}</span>`;
         } else {
-          if (oddsInfo.isClosed) {
-            scoreSnippet = `<span class="badge bg-secondary text-white" style="font-size:0.70rem; padding: 2px 6px; font-weight: 700;"><i class="bi bi-lock-fill me-1"></i>경기개시 [발매마감]</span>`;
-          } else if (oddsInfo.isImminent) {
-            scoreSnippet = `<span class="badge bg-danger text-white" style="font-size:0.70rem; padding: 2px 6px; font-weight: 700;"><i class="bi bi-stopwatch-fill me-1"></i>마감임박🔥</span>`;
-          } else {
-            scoreSnippet = `<span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; font-size:0.70rem; padding: 2px 6px; font-weight: 600;"><i class="bi bi-clock me-1 text-dark"></i>시작대기</span>`;
-          }
-          const fireIcon = (pred.confidence >= 80) ? '🔥' : ((pred.confidence >= 70) ? '⚡' : '⭐');
-          const confText = pred.confidence ? `${pred.confidence}% ` : '';
-          const labelText = pred.expected_label ? `${pred.expected_label}` : '예상승';
-          const teamText = pred.favored_team ? ` [${pred.favored_team}]` : '';
-          cardFooterTag = `<span class="badge" style="background:#ffffff; color:#111827; border:1px solid #d1d5db; font-size:0.68rem; font-weight:700;"><i class="bi bi-stars me-1 text-dark"></i>[${fireIcon} AI ${confText}${labelText}]${teamText}</span>`;
+          const hw = oddsInfo.home ? `<span class="slim-odds-btn win">승 ${oddsInfo.home}</span>` : '';
+          const dw = oddsInfo.draw ? `<span class="slim-odds-btn draw">1 ${oddsInfo.draw}</span>` : '';
+          const aw = oddsInfo.away ? `<span class="slim-odds-btn lose">패 ${oddsInfo.away}</span>` : '';
+          oddsRowHtml = `<span class="slim-odds-group">${hw}${dw}${aw}</span>`;
         }
-        cardFooterTag += sweepFooterNote;
 
-        let leagueTag = m.league_name ? m.league_name.split(' ')[0] : m.sport_code;
-        let leagueBadgeClass = 'badge bg-light border text-primary';
-        let leagueBadgeStyle = '';
-        if (m.league_name && (m.league_name.includes('MLS') || m.league_name.includes('메이저리그 사커') || m.league_name.includes('Major League Soccer') || m.league_name.includes('미국축구'))) {
-          leagueTag = '🇺🇸 MLS';
-          leagueBadgeClass = 'badge text-white fw-bold';
-          leagueBadgeStyle = 'background: #002244; border: 1.5px solid #00172e;';
-        } else if (m.league_name && m.league_name.includes('NPB')) leagueTag = 'NPB(일야)';
-        else if (m.league_name && m.league_name.includes('KBO')) leagueTag = 'KBO(한야)';
-        else if (m.league_name && (m.league_name.includes('NBA') || m.league_name.includes('미국 프로농구'))) {
-          leagueTag = '🏀 NBA';
-          leagueBadgeClass = 'badge text-dark fw-bold';
-          leagueBadgeStyle = 'background: #fff7ed; color: #c2410c !important; border: 1.5px solid #fed7aa;';
-        } else if ((m.sport_code === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('한국 프로농구'))) || (m.league_name && m.league_name.includes('KBL'))) {
-          leagueTag = '🏀 KBL';
-          leagueBadgeClass = 'badge text-dark fw-bold';
-          leagueBadgeStyle = 'background: #f0fdf4; color: #15803d !important; border: 1.5px solid #86efac;';
-        } else if (m.league_name && (m.league_name.includes('K League') || m.league_name.includes('K리그'))) {
-          leagueTag = 'K리그';
-          leagueBadgeClass = 'badge bg-success text-white fw-bold';
-          leagueBadgeStyle = '';
-        } else if (m.league_name && (m.league_name.includes('Eredivisie') || m.league_name.includes('네덜란드'))) {
-          leagueTag = '🇳🇱 네덜란드 (에레디비시)';
-          leagueBadgeClass = 'badge text-dark fw-bold bg-warning';
-        } else if (m.league_name && (m.league_name.includes('Championship') || m.league_name.includes('챔피언십'))) {
-          leagueTag = '🏴󠁧󠁢󠁥󠁮󠁧󠁿 챔피언십';
-          leagueBadgeClass = 'badge text-dark fw-bold bg-white';
-          leagueBadgeStyle = 'border: 1.5px solid #0f172a;';
-        } else if (m.league_name && (m.league_name.includes('FA컵') || m.league_name.includes('카라바오') || m.league_name.includes('잉글랜드 컵'))) {
-          leagueTag = m.league_name.includes('FA') ? '🏴󠁧󠁢󠁥󠁮󠁧󠁿 FA컵' : '🏴󠁧󠁢󠁥󠁮󠁧󠁿 카라바오컵';
-          leagueBadgeClass = 'badge text-dark fw-bold';
-          leagueBadgeStyle = 'background: #faf5ff; color: #7e22ce !important; border: 1.5px solid #d8b4fe;';
-        } else if (m.league_name && (m.league_name.includes('UCL') || m.league_name.includes('챔피언스') || m.league_name.includes('Champions League'))) {
-          leagueTag = '🏆 챔스(UCL)';
-          leagueBadgeClass = 'badge text-white fw-bold';
-          leagueBadgeStyle = 'background: #1e3a8a; border: 1px solid #172554;';
-        } else if (m.league_name && m.league_name.includes('EPL')) leagueTag = 'EPL(프리미어)';
-        else if (m.league_name && m.league_name.includes('La Liga')) leagueTag = '라리가';
-        else if (m.league_name && m.league_name.includes('Serie A')) leagueTag = '세리에A';
-        else if (m.league_name && m.league_name.includes('Bundesliga')) leagueTag = '분데스';
-        else if (m.league_name && m.league_name.includes('Ligue 1')) leagueTag = '리그1';
+        // 스코어 or 상태
+        let scoreLabel = '';
+        if (m.status === 'FINISHED') {
+          scoreLabel = `<span style="font-size:0.70rem; font-weight:800; color:#111827;">${m.home_score}:${m.away_score}</span> <span style="font-size:0.60rem; color:#9ca3af;">종료</span>`;
+        } else if (m.status === 'LIVE') {
+          scoreLabel = `<span style="font-size:0.70rem; font-weight:800; color:#dc2626;">${m.home_score}:${m.away_score}</span> <span style="font-size:0.60rem; color:#dc2626; font-weight:700;">LIVE</span>`;
+        } else if (oddsInfo.isImminent) {
+          scoreLabel = `<span style="font-size:0.65rem; color:#dc2626; font-weight:700;">🔥마감임박</span>`;
+        } else if (oddsInfo.isClosed) {
+          scoreLabel = `<span style="font-size:0.65rem; color:#6b7280; font-weight:600;">🔒마감</span>`;
+        }
 
+        // 두 번째 줄: 종목별 선발/결장
         const startersInfo = getMatchStarters(m);
         const absInfo = getMatchAbsences(m);
+        let subLineHtml = '';
+        if (m.sport_code === 'BASEBALL' && startersInfo.text && startersInfo.text !== '-') {
+          subLineHtml = `<div class="slim-card-sub">👤 ${startersInfo.text}</div>`;
+        } else if ((m.sport_code === 'SOCCER' || m.sport_code === 'BASKETBALL') && absInfo.text && absInfo.text !== '-') {
+          subLineHtml = `<div class="slim-card-sub">🚑 ${absInfo.text}</div>`;
+        }
+
+        // 시간 표시
+        const timeStr = formatKSTDateTime(m.match_date);
 
         html += `
-          <div class="pred-card-compact ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <div class="d-flex align-items-center">
-                <span class="${leagueBadgeClass}" style="font-size: 0.70rem; font-weight: 700; ${leagueBadgeStyle}">
-                  ${sportIcon} ${leagueTag}
-                </span>
-                ${sweepBadge}
-              </div>
-              <span class="badge" style="font-size: 0.72rem; font-weight: 600; color: #374151; background: #ffffff; border: 1px solid #e5e7eb;">
-                ${dayBadge}<i class="bi bi-clock-history text-dark me-1"></i>${formatKSTDateTime(m.match_date)}
-              </span>
+          <div class="slim-match-card pred-card-compact ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
+            <div class="slim-card-row">
+              <span class="slim-card-sport-time">${sportIcon} ${timeStr}</span>
+              <span class="slim-card-home" title="${m.home_team_name}">${m.home_team_name}</span>
+              ${oddsRowHtml}
+              <span class="slim-card-away" title="${m.away_team_name}">${m.away_team_name}</span>
+              ${scoreLabel ? `<span style="margin-left:auto; flex-shrink:0;">${scoreLabel}</span>` : ''}
             </div>
-            <div class="d-flex justify-content-between align-items-center my-1">
-              <div class="fw-bold text-dark text-truncate me-2" style="font-size: 0.84rem; max-width: 68%;">
-                <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span><span style="color: #111827; font-weight: 700;">${m.home_team_name}</span> 
-                <span class="text-muted fw-normal mx-1" style="font-size: 0.72rem;">vs</span> 
-                <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span><span style="color: #111827; font-weight: 700;">${m.away_team_name}</span>
-              </div>
-              <div>
-                ${scoreSnippet}
-              </div>
+            ${subLineHtml}
+            <div class="slim-card-actions">
+              <button class="slim-action-btn odds-btn" id="oddsBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'odds')">📊 배당</button>
+              <button class="slim-action-btn history-btn" id="histBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'history')">📋 전경기</button>
+              <button class="slim-action-btn detail-btn" onclick="event.stopPropagation(); selectPredMatch(${m.id}, true)">🔍 상세분석</button>
             </div>
-
-            <!-- 1번 지표: 배당 및 결장 정보 바 (해외배당 & 국내배당 동시 표기, PC/모바일 전체 적용) -->
-            <div class="my-1 px-1.5 py-1 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.68rem;">
-              <!-- 1) 해외배당 행 -->
-              <div class="d-flex align-items-center justify-content-between mb-1">
-                <div class="d-flex align-items-center gap-1 text-truncate" style="min-width: 0;">
-                  <span class="badge text-white fw-bold py-0.5 px-1 flex-shrink-0" style="background: #2563eb; font-size:0.58rem; letter-spacing: -0.3px;">해외배당</span>
-                  <div class="d-flex align-items-center gap-0.5" style="font-family: monospace; font-size: 0.68rem; overflow-x: auto; scrollbar-width: none;">
-                    ${oddsInfo.overseasHtml}
-                  </div>
-                </div>
-                <div class="flex-shrink-0 ms-1">
-                  ${absInfo.badge}
-                </div>
-              </div>
-              <!-- 2) 국내배당 행 (스포츠토토 / 베트맨 프로토) -->
-              <div class="d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center gap-1 text-truncate" style="min-width: 0;">
-                  <span class="badge text-white fw-bold py-0.5 px-1 flex-shrink-0" style="background: #059669; font-size:0.58rem; letter-spacing: -0.3px;">국내배당</span>
-                  <div class="d-flex align-items-center gap-0.5" style="font-family: monospace; font-size: 0.68rem; overflow-x: auto; scrollbar-width: none;">
-                    ${oddsInfo.domesticHtml}
-                  </div>
-                </div>
-                <div class="flex-shrink-0 ms-1">
-                  ${oddsInfo.statusBadge || '<span class="badge py-0.5 px-1" style="background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; font-size: 0.58rem;">스포츠토토</span>'}
-                </div>
-              </div>
-            </div>
-
-            <!-- 1번 지표: 선발 정보 바 (선발투수 / 라인업, 메인 경기바 전용, PC/모바일 전체 적용) -->
-            <div class="d-flex align-items-center justify-content-between my-1 px-1.5 py-1 rounded" style="background: #ffffff; border: 1px solid #e2e8f0; font-size: 0.68rem;">
-              <div class="d-flex align-items-center gap-1 text-truncate" style="min-width: 0;">
-                <span class="badge bg-dark text-white fw-bold py-0.5 px-1" style="font-size:0.58rem; letter-spacing: -0.3px;">선발</span>
-                <span class="text-truncate text-secondary fw-semibold" style="font-size: 0.68rem;">${startersInfo.text}</span>
-              </div>
-              <div class="flex-shrink-0 ms-1">
-                ${startersInfo.badge}
-              </div>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mt-1 pt-1 border-top" style="border-color: #e5e7eb !important; font-size: 0.70rem; min-width: 0;">
-              <div class="text-truncate me-1" style="min-width: 0; flex: 1;">${cardFooterTag}</div>
-              <span class="badge fw-bold flex-shrink-0 text-nowrap" style="font-size: 0.70rem; cursor: pointer; background: #ffffff; color: #111827; border: 1.5px solid #111827;" onclick="event.stopPropagation(); selectPredMatch(${m.id}, true)">
-                <i class="bi bi-window-stack me-1 text-dark"></i>상세 팝업 열기
-              </span>
+            <div class="slim-accordion-panel" id="slimPanel_${m.id}">
+              <div class="slim-accordion-loading">로딩 중...</div>
             </div>
           </div>
         `;
@@ -9274,7 +9373,313 @@ function getFullModalMatchList() {
       }
     }
 
+    // ============================================================
+    // 슬림 카드 아코디언 — [📊 배당] / [📋 전경기] 토글
+    // ============================================================
+    const _slimAccordionState = {}; // { matchId: { type: 'odds'|'history', loaded: bool } }
+
+    async function toggleSlimAccordion(matchId, type) {
+      const panel = document.getElementById('slimPanel_' + matchId);
+      const oddsBtn = document.getElementById('oddsBtn_' + matchId);
+      const histBtn = document.getElementById('histBtn_' + matchId);
+      if (!panel) return;
+
+      const state = _slimAccordionState[matchId] || {};
+      const isOpen = panel.classList.contains('open');
+      const isSameType = (state.type === type);
+
+      // 같은 버튼 다시 누르면 닫기
+      if (isOpen && isSameType) {
+        panel.classList.remove('open');
+        if (oddsBtn) oddsBtn.classList.remove('active');
+        if (histBtn) histBtn.classList.remove('active');
+        _slimAccordionState[matchId] = { type: null, loaded: false };
+        return;
+      }
+
+      // 다른 타입으로 전환 or 새로 열기
+      panel.classList.add('open');
+      if (type === 'odds') {
+        if (oddsBtn) oddsBtn.classList.add('active');
+        if (histBtn) histBtn.classList.remove('active');
+      } else {
+        if (histBtn) histBtn.classList.add('active');
+        if (oddsBtn) oddsBtn.classList.remove('active');
+      }
+
+      // 같은 타입이 이미 로드됐으면 패널만 열기 (재호출 X)
+      if (isSameType && state.loaded) {
+        _slimAccordionState[matchId] = { ...state, type };
+        return;
+      }
+
+      // 로딩 표시
+      panel.innerHTML = '<div class="slim-accordion-loading">⏳ 불러오는 중...</div>';
+      _slimAccordionState[matchId] = { type, loaded: false };
+
+      try {
+        if (type === 'odds') {
+          await loadSlimOddsPanel(matchId, panel);
+        } else {
+          await loadSlimHistoryPanel(matchId, panel);
+        }
+        _slimAccordionState[matchId] = { type, loaded: true };
+      } catch (e) {
+        panel.innerHTML = '<div class="slim-accordion-loading" style="color:#dc2626;">❌ 데이터 조회 실패</div>';
+      }
+    }
+
+    // ---- 배당 패널 렌더 ----
+    async function loadSlimOddsPanel(matchId, panel) {
+      const match = allMatches.find(m => m.id === matchId);
+      if (!match) { panel.innerHTML = '<div class="slim-accordion-loading">경기 정보 없음</div>'; return; }
+
+      const sport = match.sport_code;
+      const homeName = match.home_team_name;
+      const awayName = match.away_team_name;
+
+      // 1. 먼저 기존 getMatchOdds로 해외/국내 배당 가져오기
+      const oddsInfo = getMatchOdds(match);
+
+      // 2. 베트맨 전체 배당 API 호출
+      let fullOdds = [];
+      let totoGroups = [];
+      try {
+        const resp = await fetch(`/api/v1/toto/match-odds/${matchId}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          fullOdds = data.full_odds || [];
+          totoGroups = data.toto_groups || [];
+        }
+      } catch(e) {}
+
+      // 3. 종목별 기본 배당 테이블 생성 (베트맨 스타일)
+      let tableHtml = '';
+
+      if (sport === 'SOCCER') {
+        // 축구: 해외배당 기반 테이블 + 베트맨 조합
+        const h = oddsInfo.home || '-', d = oddsInfo.draw || '-', a = oddsInfo.away || '-';
+        tableHtml = `
+          <div style="font-size:0.64rem; color:#6b7280; margin-bottom:4px; font-weight:600;">
+            ${homeName} <span style="color:#9ca3af">vs</span> ${awayName}
+          </div>
+          <table class="slim-odds-table">
+            <tr>
+              <td class="type-col">축구 승무패</td>
+              <td class="odds-val win">${h}</td>
+              <td class="odds-val draw">${d}</td>
+              <td class="odds-val lose">${a}</td>
+            </tr>`;
+        if (oddsInfo.domHome || oddsInfo.domDraw || oddsInfo.domAway) {
+          tableHtml += `
+            <tr>
+              <td class="type-col" style="color:#059669;">↳ 국내(토토)</td>
+              <td class="odds-val win">${oddsInfo.domHome || '-'}</td>
+              <td class="odds-val draw">${oddsInfo.domDraw || '-'}</td>
+              <td class="odds-val lose">${oddsInfo.domAway || '-'}</td>
+            </tr>`;
+        }
+        tableHtml += `
+            <tr style="background:#fafafa;">
+              <td class="type-col" style="color:#9ca3af; font-size:0.60rem;">핸디캡/U&O</td>
+              <td colspan="3" style="color:#9ca3af; font-size:0.60rem; text-align:center;"><a href="https://www.betman.co.kr" target="_blank" style="color:#2563eb;">베트맨 사이트 확인 →</a></td>
+            </tr>
+          </table>`;
+      } else if (sport === 'BASEBALL') {
+        const h = oddsInfo.home || '-', d = oddsInfo.draw || '-', a = oddsInfo.away || '-';
+        tableHtml = `
+          <div style="font-size:0.64rem; color:#6b7280; margin-bottom:4px; font-weight:600;">
+            ${homeName} <span style="color:#9ca3af">vs</span> ${awayName}
+          </div>
+          <table class="slim-odds-table">
+            <tr>
+              <td class="type-col">야구 승패</td>
+              <td class="odds-val win">${h}</td>
+              <td class="odds-val" style="color:#9ca3af;">-</td>
+              <td class="odds-val lose">${a}</td>
+            </tr>`;
+        if (d && d !== '-') {
+          tableHtml += `
+            <tr>
+              <td class="type-col">야구 승1패</td>
+              <td class="odds-val win">${h}</td>
+              <td class="odds-val draw">${d}</td>
+              <td class="odds-val lose">${a}</td>
+            </tr>`;
+        }
+        if (oddsInfo.domHome || oddsInfo.domAway) {
+          tableHtml += `
+            <tr>
+              <td class="type-col" style="color:#059669;">↳ 국내(토토)</td>
+              <td class="odds-val win">${oddsInfo.domHome || '-'}</td>
+              <td class="odds-val draw">${oddsInfo.domDraw || '-'}</td>
+              <td class="odds-val lose">${oddsInfo.domAway || '-'}</td>
+            </tr>`;
+        }
+        // 베트맨 fullOdds 렌더
+        if (fullOdds.length > 0) {
+          fullOdds.forEach(odd => {
+            if (odd.home_odds || odd.away_odds) {
+              const hdpStr = odd.handicap ? ` H${odd.handicap}` : (odd.uo ? ` U/O ${odd.uo}` : '');
+              tableHtml += `
+                <tr>
+                  <td class="type-col">${odd.type}${hdpStr}</td>
+                  <td class="odds-val win">${odd.home_odds || '-'}</td>
+                  <td class="odds-val draw">${odd.draw_odds || '-'}</td>
+                  <td class="odds-val lose">${odd.away_odds || '-'}</td>
+                </tr>`;
+            }
+          });
+        } else {
+          tableHtml += `
+            <tr style="background:#fafafa;">
+              <td class="type-col" style="color:#9ca3af; font-size:0.60rem;">핸디캡/U&O/SUM</td>
+              <td colspan="3" style="color:#9ca3af; font-size:0.60rem; text-align:center;"><a href="https://www.betman.co.kr" target="_blank" style="color:#2563eb;">베트맨 사이트 확인 →</a></td>
+            </tr>`;
+        }
+        tableHtml += '</table>';
+      } else {
+        // 농구
+        const h = oddsInfo.home || '-', a = oddsInfo.away || '-';
+        tableHtml = `
+          <div style="font-size:0.64rem; color:#6b7280; margin-bottom:4px; font-weight:600;">
+            ${homeName} <span style="color:#9ca3af">vs</span> ${awayName}
+          </div>
+          <table class="slim-odds-table">
+            <tr>
+              <td class="type-col">농구 승패</td>
+              <td class="odds-val win">${h}</td>
+              <td class="odds-val" style="color:#9ca3af;">-</td>
+              <td class="odds-val lose">${a}</td>
+            </tr>
+            <tr style="background:#fafafa;">
+              <td class="type-col" style="color:#9ca3af; font-size:0.60rem;">핸디캡/U&O</td>
+              <td colspan="3" style="color:#9ca3af; font-size:0.60rem; text-align:center;"><a href="https://www.betman.co.kr" target="_blank" style="color:#2563eb;">베트맨 사이트 확인 →</a></td>
+            </tr>
+          </table>`;
+      }
+
+      // 토토 회차 포함 시 표시
+      let totoHtml = '';
+      if (totoGroups.length > 0) {
+        const g = totoGroups[0];
+        totoHtml = `<div style="margin-top:4px; font-size:0.62rem; color:#059669;">📋 베트맨 ${g.round_name} 포함 경기</div>`;
+      }
+
+      panel.innerHTML = tableHtml + totoHtml;
+    }
+
+    // ---- 전경기 패널 렌더 ----
+    async function loadSlimHistoryPanel(matchId, panel) {
+      const match = allMatches.find(m => m.id === matchId);
+      if (!match) { panel.innerHTML = '<div class="slim-accordion-loading">경기 정보 없음</div>'; return; }
+
+      let data = null;
+      try {
+        const resp = await fetch(`/api/v1/live/match-history/${matchId}?max_games=5`);
+        if (resp.ok) data = await resp.json();
+      } catch(e) {}
+
+      if (!data || data.status !== 'success') {
+        // API 실패 시 allMatches 로컬 데이터로 기본 렌더
+        data = buildLocalHistory(match);
+      }
+
+      const sport = data.sport_code;
+
+      function renderHistoryItems(games) {
+        if (!games || games.length === 0) return '<div style="color:#9ca3af; font-size:0.65rem; padding:2px 0;">최근 경기 없음</div>';
+        return games.map(g => {
+          const evHtml = (g.events && g.events.length > 0)
+            ? `<div class="match-events">${g.events.slice(0, 3).join(' · ')}</div>`
+            : '';
+          let statsHtml = '';
+          if (g.stats && Object.keys(g.stats).length > 0) {
+            const s = g.stats;
+            if (sport === 'BASEBALL') {
+              const ip = s.starter_ip ? `${s.starter_ip}IP` : '';
+              const bb = s.starter_bb !== undefined ? `볼넷${s.starter_bb}` : '';
+              const k = s.starter_k !== undefined ? `삼진${s.starter_k}` : '';
+              const hits = s.hits !== undefined ? `안타${s.hits}` : '';
+              const hr = s.home_runs ? `💥홈런${s.home_runs}` : '';
+              const parts = [ip, bb, k, hits, hr].filter(Boolean);
+              if (parts.length) statsHtml = `<div class="match-detail">${parts.join(' · ')}</div>`;
+            }
+          } else if (g.starter) {
+            statsHtml = `<div class="match-detail">👤 선발: ${g.starter}</div>`;
+          }
+          return `
+            <div class="slim-history-item">
+              <span class="result-icon">${g.result_emoji}</span>
+              <div class="match-info">
+                <span class="match-score">${g.date ? g.date.slice(5) : ''} ${g.home_away} vs ${g.opponent} <b>${g.score}</b></span>
+                ${statsHtml}${evHtml}
+              </div>
+            </div>`;
+        }).join('');
+      }
+
+      panel.innerHTML = `
+        <div class="slim-history-section">
+          <div class="slim-history-header">🏠 ${data.home_team} 최근 경기</div>
+          ${renderHistoryItems(data.home_recent)}
+        </div>
+        <div class="slim-history-section">
+          <div class="slim-history-header">✈️ ${data.away_team} 최근 경기</div>
+          ${renderHistoryItems(data.away_recent)}
+        </div>`;
+    }
+
+    // allMatches 로컬 데이터로 기본 히스토리 생성 (API 실패 시 폴백)
+    function buildLocalHistory(match) {
+      const sport = match.sport_code;
+      const home = match.home_team_name;
+      const away = match.away_team_name;
+
+      function getRecentForTeam(teamName) {
+        return allMatches
+          .filter(m => m.status === 'FINISHED' && m.id !== match.id &&
+            (m.home_team_name === teamName || m.away_team_name === teamName))
+          .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''))
+          .slice(0, 5)
+          .map(m => {
+            const isHome = m.home_team_name === teamName;
+            const ts = isHome ? m.home_score : m.away_score;
+            const os = isHome ? m.away_score : m.home_score;
+            const opp = isHome ? m.away_team_name : m.home_team_name;
+            const res = ts > os ? 'WIN' : ts < os ? 'LOSS' : 'DRAW';
+            const emoji = res === 'WIN' ? '✅' : res === 'LOSS' ? '❌' : '🟰';
+            return {
+              match_id: m.id,
+              date: (m.match_date || '').slice(0, 10),
+              home_away: isHome ? '홈' : '원정',
+              opponent: opp,
+              score: `${ts} - ${os}`,
+              result: res,
+              result_emoji: emoji,
+              starter: '',
+              events: [],
+              stats: {}
+            };
+          });
+      }
+
+      return {
+        status: 'success',
+        match_id: match.id,
+        sport_code: sport,
+        home_team: home,
+        away_team: away,
+        home_recent: getRecentForTeam(home),
+        away_recent: getRecentForTeam(away)
+      };
+    }
+
+
+
+
     function findCurrentOrNextMatchCard(cards) {
+
       if (!cards || cards.length === 0) return null;
 
       const now = new Date();
