@@ -780,7 +780,6 @@
             <div class="team-block">
               <div class="team-logo-circle" style="border-color: #f59e0b;">${board.home_team_name.substring(0, 2)}</div>
               <div class="team-name-text">${board.home_team_name}</div>
-              <span class="team-side-badge">홈 (말)</span>
             </div>
 
             <!-- LED Score Center -->
@@ -795,7 +794,6 @@
             <div class="team-block">
               <div class="team-logo-circle">${board.away_team_name.substring(0, 2)}</div>
               <div class="team-name-text">${board.away_team_name}</div>
-              <span class="team-side-badge">원정 (초)</span>
             </div>
           </div>
 
@@ -818,35 +816,32 @@
             </div>
           </div>
 
-          <!-- Linescore Matrix (1~9회) -->
-          <div class="linescore-wrap">
-            <table class="linescore-table">
+          <!-- Inning Scores Mini Matrix -->
+          <div class="mini-linescore-box">
+            <table class="scoreboard-linescore">
               <thead>
                 <tr>
-                  <th class="col-team">TEAM</th>
-                  ${headers}
-                  <th class="col-summary">R</th>
-                  <th>H</th>
-                  <th>E</th>
-                  <th>B</th>
+                  <th class="col-team">팀</th>
+                  <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
+                  <th class="col-rheb">R</th><th class="col-rheb">H</th><th class="col-rheb">E</th><th class="col-rheb">B</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td class="col-team">${board.away_team_name.substring(0, 3)}</td>
-                  ${awayCells}
-                  <td class="col-summary">${rheb.away.r}</td>
-                  <td>${rheb.away.h}</td>
-                  <td>${rheb.away.e}</td>
-                  <td>${rheb.away.b}</td>
+                  <td class="col-team">${board.home_team_name.substring(0, 3)}</td>
+                  ${(bb.innings ? bb.innings.home : Array(9).fill('-')).map(v => `<td>${v ?? '-'}</td>`).join('')}
+                  <td class="col-rheb fw-bold text-warning">${rheb.home.r}</td>
+                  <td class="col-rheb">${rheb.home.h}</td>
+                  <td class="col-rheb">${rheb.home.e}</td>
+                  <td class="col-rheb">${rheb.home.b}</td>
                 </tr>
                 <tr>
-                  <td class="col-team">${board.home_team_name.substring(0, 3)}</td>
-                  ${homeCells}
-                  <td class="col-summary">${rheb.home.r}</td>
-                  <td>${rheb.home.h}</td>
-                  <td>${rheb.home.e}</td>
-                  <td>${rheb.home.b}</td>
+                  <td class="col-team">${board.away_team_name.substring(0, 3)}</td>
+                  ${(bb.innings ? bb.innings.away : Array(9).fill('-')).map(v => `<td>${v ?? '-'}</td>`).join('')}
+                  <td class="col-rheb fw-bold text-white">${rheb.away.r}</td>
+                  <td class="col-rheb">${rheb.away.h}</td>
+                  <td class="col-rheb">${rheb.away.e}</td>
+                  <td class="col-rheb">${rheb.away.b}</td>
                 </tr>
               </tbody>
             </table>
@@ -855,10 +850,10 @@
       `;
     }
 
-    // --- Render Soccer Scoreboard Card ---
+    // --- Render Individual Soccer Match Board ---
     function renderSoccerCard(board) {
+      const isLive = board.status === 'LIVE';
       const sc = board.soccer || {
-        match_time: "75' (후반)",
         possession: { home: 55, away: 45 },
         shots: { home: 10, away: 6 },
         shots_on_target: { home: 4, away: 2 },
@@ -867,16 +862,16 @@
       };
 
       return `
-        <div class="stadium-card" onclick="openScoreboardModal(${board.id})">
-          <!-- Top Bar -->
+        <div class="live-board-card ${isLive ? 'active-live-border' : ''}" onclick="openScoreboardModal(${board.id})">
+          <!-- Card Header -->
           <div class="card-top-bar">
-            <div class="d-flex align-items-center gap-1.5 min-w-0">
-              <span class="league-tag" style="color: #6ee7b7; border-color: #059669;">⚽ ${board.league_name.split(' ')[0]}</span>
-              <span class="stadium-name">${board.stadium}</span>
+            <div>
+              <span class="badge bg-secondary text-white me-1" style="font-size: 0.65rem;">⚽ ${board.league_name}</span>
+              <span class="text-white-50 small">${board.stadium || '경기장'}</span>
             </div>
             <div>
-              <span class="inning-badge" style="background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);">
-                ${sc.match_time}
+              <span class="badge ${isLive ? 'bg-success' : 'bg-dark text-white-50'}" style="font-size: 0.65rem;">
+                ${isLive ? '● 전반 34분' : '종료'}
               </span>
             </div>
           </div>
@@ -886,7 +881,6 @@
             <div class="team-block">
               <div class="team-logo-circle" style="border-color: #10b981;">${board.home_team_name.substring(0, 2)}</div>
               <div class="team-name-text">${board.home_team_name}</div>
-              <span class="team-side-badge">홈팀</span>
             </div>
 
             <div class="score-center-block">
@@ -899,7 +893,6 @@
             <div class="team-block">
               <div class="team-logo-circle">${board.away_team_name.substring(0, 2)}</div>
               <div class="team-name-text">${board.away_team_name}</div>
-              <span class="team-side-badge">원정팀</span>
             </div>
           </div>
 
@@ -968,7 +961,7 @@
         const isActive = (idx === 0);
         html += `
           <div class="mob-tab-item ${isActive ? 'active' : ''}" onclick="selectMobileMatchTab(${b.id}, this)">
-            ${b.sport_code === 'BASEBALL' ? '⚾' : '⚽'} [홈] ${b.home_team_name.substring(0, 3)} vs ${b.away_team_name.substring(0, 3)} [원정]
+            ${b.sport_code === 'BASEBALL' ? '⚾' : '⚽'} ${b.home_team_name.substring(0, 3)} vs ${b.away_team_name.substring(0, 3)}
           </div>
         `;
       });
@@ -1006,7 +999,7 @@
           <div class="text-center py-3 mb-4 rounded-3" style="background: linear-gradient(180deg, #0f172a 0%, #080d1a 100%); border: 2px solid #1e293b;">
             <div class="row align-items-center">
               <div class="col-4">
-                <h3 class="fw-bold text-white mb-1"><span class="badge bg-primary text-white me-1" style="font-size:0.7rem;">[홈]</span>${board.home_team_name}</h3>
+                <h3 class="fw-bold text-white mb-1">${board.home_team_name}</h3>
                 <span class="text-white-50 small">선발: ${board.home_starter_name || '-'}</span>
               </div>
               <div class="col-4">
@@ -1016,7 +1009,7 @@
                 </div>
               </div>
               <div class="col-4">
-                <h3 class="fw-bold text-white mb-1">${board.away_team_name}<span class="badge bg-danger text-white ms-1" style="font-size:0.7rem;">[원정]</span></h3>
+                <h3 class="fw-bold text-white mb-1">${board.away_team_name}</h3>
                 <span class="text-white-50 small">선발: ${board.away_starter_name || '-'}</span>
               </div>
             </div>
