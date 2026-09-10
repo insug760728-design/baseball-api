@@ -10247,7 +10247,7 @@ function getFullModalMatchList() {
           hOppScore = g.away_score ?? 0;
           hOpp = g.away_team_name;
           hResEmoji = hScore > hOppScore ? '승 ✅' : (hScore < hOppScore ? '패 ❌' : '무 🟰');
-          hSubnote = `🗓️ ${hDate} 맞대결`;
+          hSubnote = `${formatTeamName(hOpp)}전 (${hDate}) ${hResEmoji}`;
         } else if (homeLast) {
           const g = homeLast;
           const isHHome = (g.perspective_team === g.home_team_name || g.home_team_name === hTeamName);
@@ -10274,7 +10274,7 @@ function getFullModalMatchList() {
           aOppScore = g.home_score ?? 0;
           aOpp = g.home_team_name;
           aResEmoji = aScore > aOppScore ? '승 ✅' : (aScore < aOppScore ? '패 ❌' : '무 🟰');
-          aSubnote = `🗓️ ${aDate} 맞대결`;
+          aSubnote = `${formatTeamName(aOpp)}전 (${aDate}) ${aResEmoji}`;
         } else if (awayLast) {
           const g = awayLast;
           const isAHome = (g.perspective_team === g.home_team_name || g.home_team_name === aTeamName);
@@ -10372,7 +10372,7 @@ function getFullModalMatchList() {
               <!-- 중앙 뱃지 -->
               <div style="flex: 0 0 24%; min-width:80px; text-align:center;">
                 <span class="badge" style="background:#0f172a; color:#ffffff; font-size:0.65rem; padding:3px 6px; font-weight:800;">
-                  ${isH2H ? '직전 맞대결' : '직전경기 비교'}
+                  직전경기 비교
                 </span>
               </div>
 
@@ -10602,7 +10602,7 @@ function getFullModalMatchList() {
               ${sport === 'BASEBALL' ? '📋 직전 경기 상세 비교 (선발 · 불펜 · 타격)' : '📋 양 팀 바로 직전 경기 상세 결과 (단 1경기)'}
             </span>
             <span class="badge bg-white text-dark border" style="font-size:0.65rem; border-color:#cbd5e1 !important; font-weight:700;">
-              ${isH2H ? '직전 맞대결 1경기' : '각 팀 직전 1경기'}
+              ${sport === 'BASEBALL' ? '각 팀 직전 1경기' : (isH2H ? '직전 맞대결 1경기' : '각 팀 직전 1경기')}
             </span>
           </div>
           ${barsHtml}
