@@ -627,7 +627,7 @@
       background: #eff6ff !important;
       border: 2px solid #1d4ed8 !important;
     }
-    /* 베트맨 스타일 경기 바: [홈팀 (맨앞)] — [ [승 1.75] [무 3.20] [패 3.60] (가운데 배당) ] — [원정팀 (맨끝)] */
+    /* 베트맨 스타일 경기 바: [홈팀 (맨앞)] — [홈점수] [몇회 (가운데)] [원정점수] — [원정팀 (맨끝)] */
     .betman-match-row {
       display: flex;
       align-items: center;
@@ -637,7 +637,7 @@
       margin: 3px 0 2px 0;
     }
     .betman-team-home {
-      flex: 1 1 30%;
+      flex: 1 1 28%;
       min-width: 0;
       text-align: left;
       font-weight: 800;
@@ -646,6 +646,63 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .betman-score-val {
+      flex: 0 0 auto;
+      font-size: 1.15rem;
+      font-weight: 900;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-width: 20px;
+      line-height: 1;
+      padding: 0 2px;
+    }
+    .betman-score-val.home {
+      text-align: right;
+    }
+    .betman-score-val.away {
+      text-align: left;
+    }
+    .betman-score-val.live {
+      color: #dc2626;
+    }
+    .betman-score-val.finished {
+      color: #0f172a;
+    }
+    .betman-inning-badge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      white-space: nowrap;
+      min-width: 52px;
+      text-align: center;
+    }
+    .betman-inning-badge.live {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+    .betman-inning-badge.finished {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+    .live-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: #dc2626;
+      border-radius: 50%;
+      animation: pulse-live-dot 1.2s infinite ease-in-out;
+    }
+    @keyframes pulse-live-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(0.75); }
     }
     .betman-odds-center {
       flex: 0 0 auto;
@@ -708,7 +765,7 @@
       font-weight: 700;
     }
     .betman-team-away {
-      flex: 1 1 30%;
+      flex: 1 1 28%;
       min-width: 0;
       text-align: right;
       font-weight: 800;
@@ -9961,7 +10018,7 @@ function getFullModalMatchList() {
         let cardFooterTag = '';
         const oddsInfo = getMatchOdds(m);
 
-        // 베트맨 스타일 배당 박스 생성 (가운데 배치용)
+        // 베트맨 스타일 배당 박스 생성 (예정 경기용 가운데 배치)
         let betmanOddsHtml = '';
         if (m.sport_code === 'SOCCER') {
           const hw = oddsInfo.home ? `<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">${oddsInfo.home}</span></span>` : '<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">-</span></span>';
@@ -9980,20 +10037,115 @@ function getFullModalMatchList() {
           betmanOddsHtml = `${hw}${aw}`;
         }
 
-        // 스코어 or 상태
+        // 스코어 or 상태 판단
         let isCardStaleLive = false;
-        if (m.status === 'LIVE' && m.match_date) {
+        let diffMin = 0;
+        if (m.match_date) {
           try {
             const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
-            isCardStaleLive = ((now.getTime() - mTime) / (1000 * 60 * 60)) > 4;
+            diffMin = (now.getTime() - mTime) / (1000 * 60);
+            if (m.status === 'LIVE' && diffMin > 240) {
+              isCardStaleLive = true;
+            }
           } catch(e) {}
         }
 
+        const isLive = typeof isRealTimeLive === 'function' ? isRealTimeLive(m) : (m.status === 'LIVE' && !isCardStaleLive);
+        const isFinished = (m.status === 'FINISHED' || isCardStaleLive);
+        const hasScores = (m.home_score !== null && m.home_score !== undefined && m.away_score !== null && m.away_score !== undefined && (isLive || isFinished || m.home_score > 0 || m.away_score > 0));
+
+        // 이닝/시간 추출
+        let innText = '';
+        let details = m.details || {};
+        if (typeof details === 'string') {
+          try { details = JSON.parse(details); } catch(e) { details = {}; }
+        }
+
+        if (isLive) {
+          if (m.sport_code === 'BASEBALL') {
+            if (details.current_inning) {
+              innText = details.current_inning;
+            } else if (details.inning_text) {
+              innText = details.inning_text;
+            } else if (details.period_scores && details.period_scores.innings) {
+              const innKeys = Object.keys(details.period_scores.innings).filter(k => !isNaN(parseInt(k, 10))).map(k => parseInt(k, 10)).sort((a, b) => a - b);
+              if (innKeys.length > 0) {
+                const maxInn = innKeys[innKeys.length - 1];
+                const innData = details.period_scores.innings[String(maxInn)] || {};
+                if (innData.home !== undefined && innData.home !== null && innData.home !== '-') {
+                  innText = `${maxInn}회말`;
+                } else {
+                  innText = `${maxInn}회초`;
+                }
+              }
+            }
+            if (!innText) {
+              if (diffMin < 25) innText = '1회말';
+              else if (diffMin < 45) innText = '2회말';
+              else if (diffMin < 65) innText = '3회말';
+              else if (diffMin < 90) innText = '4회말';
+              else if (diffMin < 115) innText = '5회말';
+              else if (diffMin < 140) innText = '6회말';
+              else if (diffMin < 165) innText = '7회말';
+              else if (diffMin < 190) innText = '8회말';
+              else innText = '9회말';
+            }
+          } else if (m.sport_code === 'SOCCER') {
+            if (details.match_time) {
+              innText = details.match_time;
+            } else {
+              if (diffMin <= 45) innText = `전반 ${Math.max(1, Math.floor(diffMin))}'`;
+              else if (diffMin <= 60) innText = `HT`;
+              else if (diffMin <= 105) innText = `후반 ${Math.min(90, Math.floor(diffMin - 15))}'`;
+              else innText = `후반 90'+`;
+            }
+          } else if (m.sport_code === 'BASKETBALL') {
+            if (details.quarter || details.period) {
+              innText = details.quarter || details.period;
+            } else {
+              if (diffMin <= 25) innText = '1Q';
+              else if (diffMin <= 50) innText = '2Q';
+              else if (diffMin <= 75) innText = '3Q';
+              else innText = '4Q';
+            }
+          } else if (m.sport_code === 'VOLLEYBALL') {
+            innText = details.set || '진행중';
+          } else {
+            innText = 'LIVE';
+          }
+        } else if (isFinished) {
+          innText = '종료';
+        }
+
+        // 경기 바 레이아웃 생성:
+        // 라이브/종료(점수있음): [홈팀] [홈점수] [가운데 이닝/상태] [원정점수] [원정팀]
+        // 예정(점수없음): [홈팀] [가운데 배당 박스] [원정팀]
+        let centerRowHtml = '';
+        if (hasScores) {
+          const scoreClass = isLive ? 'live' : 'finished';
+          const badgeHtml = isLive ? `<span class="live-dot"></span> ${innText}` : innText;
+          centerRowHtml = `
+            <span class="betman-team-home" title="${m.home_team_name}">${formatTeamName(m.home_team_name)}</span>
+            <span class="betman-score-val home ${scoreClass}">${m.home_score ?? 0}</span>
+            <span class="betman-inning-badge ${scoreClass}">${badgeHtml}</span>
+            <span class="betman-score-val away ${scoreClass}">${m.away_score ?? 0}</span>
+            <span class="betman-team-away" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</span>
+          `;
+        } else {
+          centerRowHtml = `
+            <span class="betman-team-home" title="${m.home_team_name}">${formatTeamName(m.home_team_name)}</span>
+            <span class="betman-odds-center">
+              ${betmanOddsHtml}
+            </span>
+            <span class="betman-team-away" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</span>
+          `;
+        }
+
         let scoreLabel = '';
-        if (m.status === 'FINISHED' || isCardStaleLive) {
-          scoreLabel = `<span style="font-size:0.72rem; font-weight:800; color:#111827;">${m.home_score}:${m.away_score}</span> <span style="font-size:0.60rem; color:#9ca3af; font-weight:700;">종료</span>`;
-        } else if (m.status === 'LIVE') {
-          scoreLabel = `<span style="font-size:0.72rem; font-weight:800; color:#dc2626;">${m.home_score}:${m.away_score}</span> <span style="font-size:0.60rem; color:#dc2626; font-weight:700;">LIVE</span>`;
+        if (isLive) {
+          scoreLabel = `<span class="badge bg-danger text-white py-0.5 px-1.5" style="font-size:0.62rem; font-weight:800; border-radius:4px;"><span class="live-dot" style="background:#fff; width:5px; height:5px; margin-right:3px;"></span>LIVE</span>`;
+        } else if (isFinished) {
+          scoreLabel = `<span class="badge bg-secondary text-white py-0.5 px-1.5" style="font-size:0.62rem; font-weight:700; border-radius:4px;">종료</span>`;
         } else if (oddsInfo.isImminent) {
           scoreLabel = `<span style="font-size:0.65rem; color:#dc2626; font-weight:700;">🔥마감임박</span>`;
         } else if (oddsInfo.isClosed) {
@@ -10020,11 +10172,7 @@ function getFullModalMatchList() {
               ${scoreLabel ? `<span style="flex-shrink:0;">${scoreLabel}</span>` : ''}
             </div>
             <div class="betman-match-row">
-              <span class="betman-team-home" title="${m.home_team_name}">${formatTeamName(m.home_team_name)}</span>
-              <span class="betman-odds-center">
-                ${betmanOddsHtml}
-              </span>
-              <span class="betman-team-away" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</span>
+              ${centerRowHtml}
             </div>
             ${subLineHtml}
             ${(() => {
