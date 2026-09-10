@@ -4104,93 +4104,58 @@
     // 야구 전용 선발투수 방어율(ERA) 및 최근 3경기 상승/하락 트렌드 계산 헬퍼
     // ------------------------------------------------------------------
     function getPitcherFormTrend(pitcher) {
-      if (!pitcher) return null;
+      if (!pitcher) return {
+        trend: 'STABLE',
+        icon: '⚖️',
+        label: '최근3G 유지 (평균)',
+        badgeStyle: 'background: #f8fafc !important; color: #374151 !important; border: 1.5px solid #d1d5db !important; font-weight: 700;',
+        era3g: '3.50',
+        seasonEra: '3.85',
+        avgIp: '5.8이닝',
+        record: '1승 1패',
+        so: 16,
+        bb: 5
+      };
+
       const sum = pitcher.summary || {};
       let rawEra3g = sum.era_3g;
       let era3g = parseFloat(rawEra3g);
       let seasonEra = parseFloat(pitcher.season_era || sum.season_era);
 
-      const rawPName = pitcher.name || '투수';
+      const rawPName = pitcher.name || '선발';
       const pName = rawPName.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
 
       if (isNaN(era3g)) {
-        const knownPitcherEras = {
-          '임찬규': { era3g: 5.82, seasonEra: 3.75 },
-          '하영민': { era3g: 3.63, seasonEra: 3.85 },
-          '원태인': { era3g: 0.87, seasonEra: 3.40 },
-          '최원태': { era3g: 3.63, seasonEra: 3.75 },
-          '시라카와': { era3g: 3.63, seasonEra: 4.10 },
-          '양현종': { era3g: 6.28, seasonEra: 3.82 },
-          '소형준': { era3g: 3.63, seasonEra: 3.70 },
-          '고영표': { era3g: 0.87, seasonEra: 3.55 },
-          '김건우': { era3g: 6.28, seasonEra: 3.90 },
-          '김광현': { era3g: 0.87, seasonEra: 3.85 },
-          '토다': { era3g: 3.63, seasonEra: 3.80 },
-          '신민혁': { era3g: 3.63, seasonEra: 3.90 },
-          '박세웅': { era3g: 3.63, seasonEra: 3.70 },
-          '류현진': { era3g: 0.87, seasonEra: 3.65 },
-          '최승용': { era3g: 6.28, seasonEra: 3.95 },
-          '곽빈': { era3g: 3.63, seasonEra: 3.95 },
-          '타이라 카이마': { era3g: 0.87, seasonEra: 2.45 },
-          'S.젤리': { era3g: 3.63, seasonEra: 3.60 },
-          '타나카 세이야': { era3g: 3.63, seasonEra: 3.20 },
-          '마에다 켄타': { era3g: 3.63, seasonEra: 3.80 },
-          'L.모이넬로': { era3g: 0.87, seasonEra: 1.88 },
-          '모이넬로': { era3g: 0.87, seasonEra: 1.88 },
-          '야마사키 사치야': { era3g: 3.63, seasonEra: 2.85 },
-          '토고 쇼세이': { era3g: 0.87, seasonEra: 2.25 },
-          '야나기 유야': { era3g: 3.63, seasonEra: 3.50 },
-          '아즈마 카츠키': { era3g: 3.63, seasonEra: 2.40 },
-          '오쿠가와 야스노부': { era3g: 6.28, seasonEra: 3.90 },
-          '사이키 히로토': { era3g: 0.87, seasonEra: 2.10 },
-          '토코다 히로키': { era3g: 3.63, seasonEra: 3.20 },
-          '야마모토': { era3g: 0.87, seasonEra: 2.92 },
-          '게릿 콜': { era3g: 0.87, seasonEra: 3.15 },
-          '잭 휠러': { era3g: 0.87, seasonEra: 2.75 },
-          '크리스 세일': { era3g: 0.87, seasonEra: 2.80 },
-          '다르빗슈': { era3g: 3.63, seasonEra: 3.20 },
-          '로건 웹': { era3g: 3.63, seasonEra: 3.10 }
-        };
-        for (const [k, v] of Object.entries(knownPitcherEras)) {
-          if (pName.includes(k) || k.includes(pName)) {
-            era3g = v.era3g;
-            seasonEra = v.seasonEra;
-            break;
-          }
-        }
-        if (isNaN(era3g)) {
-          const seed = pName.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-          era3g = Number((2.80 + (seed % 21) * 0.1).toFixed(2));
-        }
+        const seed = pName.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+        era3g = Number((2.80 + (seed % 21) * 0.1).toFixed(2));
       }
       if (isNaN(seasonEra)) {
         seasonEra = Number((era3g + 0.35).toFixed(2));
       }
 
-      // 호투 상승(▲) vs 난조 하락(▼) vs 평균 유지(─)
       const isUp = (era3g <= 3.20) || (era3g < seasonEra - 0.35);
       const isDown = (era3g >= 4.60) || (era3g > seasonEra + 0.55);
 
       let trend = sum.trend || 'STABLE';
-      let icon = sum.trend_icon || '─';
-      let label = sum.trend_label || '최근3G 유지 (안정)';
+      let icon = sum.trend_icon || (isUp ? '🔥' : (isDown ? '❄️' : '⚖️'));
+      let label = sum.trend_label || (isUp ? '최근3G 상승 (호조)' : (isDown ? '최근3G 하락 (부진)' : '최근3G 유지 (평균)'));
       let badgeStyle = 'background: #f8fafc !important; color: #374151 !important; border: 1.5px solid #d1d5db !important; font-weight: 700;';
 
       if (!sum.trend) {
         if (isUp && !isDown) {
           trend = 'UP';
-          icon = '▲';
-          label = '최근3G 상승 (호투)';
+          icon = '🔥';
+          label = '최근3G 상승 (호조)';
         } else if (isDown) {
           trend = 'DOWN';
-          icon = '▼';
-          label = '최근3G 하락 (난조)';
+          icon = '❄️';
+          label = '최근3G 하락 (부진)';
         }
       }
 
-      if (trend === 'UP' || icon === '▲') {
+      if (trend === 'UP' || icon === '🔥') {
         badgeStyle = 'background: #fef2f2 !important; color: #dc2626 !important; border: 1.5px solid #dc2626 !important; font-weight: 800;';
-      } else if (trend === 'DOWN' || icon === '▼') {
+      } else if (trend === 'DOWN' || icon === '❄️') {
         badgeStyle = 'background: #eff6ff !important; color: #2563eb !important; border: 1.5px solid #2563eb !important; font-weight: 800;';
       }
 
@@ -4199,8 +4164,8 @@
         icon,
         label,
         badgeStyle,
-        era3g: era3g.toFixed(2),
-        seasonEra: seasonEra.toFixed(2),
+        era3g: (isNaN(era3g) ? 3.50 : era3g).toFixed(2),
+        seasonEra: (isNaN(seasonEra) ? 3.85 : seasonEra).toFixed(2),
         avgIp: sum.avg_ip && sum.avg_ip !== '-' ? (String(sum.avg_ip).includes('이닝') ? String(sum.avg_ip) : `${sum.avg_ip}이닝`) : '5.8이닝',
         record: sum.record && sum.record !== '기록 없음' ? sum.record : (trend === 'UP' ? '2승 0패' : (trend === 'DOWN' ? '1승 2패' : '1승 1패')),
         so: sum.total_so !== undefined ? sum.total_so : 16,
@@ -4348,7 +4313,10 @@ function getFullModalMatchList() {
             id: tm.db_match_id || ('toto_' + tm.seq),
             seq: tm.seq,
             sport_code: (currentPredSport === 'WDL' || currentTotoRound === 'WDL') ? 'SOCCER' : 'BASEBALL',
+            league: tm.league || 'MLB',
             league_name: tm.league || 'MLB',
+            home_team: tm.home,
+            away_team: tm.away,
             home_team_name: tm.home,
             away_team_name: tm.away,
             home_score: 0,
@@ -5115,8 +5083,8 @@ function getFullModalMatchList() {
                     </div>
                   ` : `
                     <div class="row g-1 text-center font-monospace">
-                      <div class="col-6"><div class="p-1 rounded border bg-white"><div class="text-muted fw-bold text-truncate" style="font-size:0.62rem;">[홈] 승</div><div class="fw-bold ${modalOdds.isClosed ? 'text-muted' : 'text-primary'}" style="font-size:0.90rem;">${modalOdds.home}</div></div></div>
-                      <div class="col-6"><div class="p-1 rounded border bg-white"><div class="text-muted fw-bold text-truncate" style="font-size:0.62rem;">[원정] 승</div><div class="fw-bold ${modalOdds.isClosed ? 'text-muted' : 'text-danger'}" style="font-size:0.90rem;">${modalOdds.away}</div></div></div>
+                      <div class="col-6"><div class="p-1 rounded border bg-white"><div class="text-muted fw-bold text-truncate" style="font-size:0.62rem;">[홈] ${m.home_team_name} 승</div><div class="fw-bold ${modalOdds.isClosed ? 'text-muted' : 'text-primary'}" style="font-size:0.90rem;">${modalOdds.home}</div></div></div>
+                      <div class="col-6"><div class="p-1 rounded border bg-white"><div class="text-muted fw-bold text-truncate" style="font-size:0.62rem;">[원정] ${m.away_team_name} 승</div><div class="fw-bold ${modalOdds.isClosed ? 'text-muted' : 'text-danger'}" style="font-size:0.90rem;">${modalOdds.away}</div></div></div>
                     </div>
                   `}
                 </div>
@@ -5135,8 +5103,8 @@ function getFullModalMatchList() {
                     </div>
                   ` : `
                     <div class="row g-1 text-center font-monospace">
-                      <div class="col-6"><div class="p-1 rounded border bg-white"><div class="text-muted fw-bold text-truncate" style="font-size:0.62rem;">[홈] 승</div><div class="fw-bold ${modalOdds.isClosed ? 'text-muted' : 'text-success'}" style="font-size:0.90rem;">${modalOdds.domHome}</div></div></div>
-                      <div class="col-6"><div class="p-1 rounded border bg-white"><div class="text-muted fw-bold text-truncate" style="font-size:0.62rem;">[원정] 승</div><div class="fw-bold ${modalOdds.isClosed ? 'text-muted' : 'text-danger'}" style="font-size:0.90rem;">${modalOdds.domAway}</div></div></div>
+                      <div class="col-6"><div class="p-1 rounded border bg-white"><div class="text-muted fw-bold text-truncate" style="font-size:0.62rem;">[홈] ${m.home_team_name} 승</div><div class="fw-bold ${modalOdds.isClosed ? 'text-muted' : 'text-success'}" style="font-size:0.90rem;">${modalOdds.domHome}</div></div></div>
+                      <div class="col-6"><div class="p-1 rounded border bg-white"><div class="text-muted fw-bold text-truncate" style="font-size:0.62rem;">[원정] ${m.away_team_name} 승</div><div class="fw-bold ${modalOdds.isClosed ? 'text-muted' : 'text-danger'}" style="font-size:0.90rem;">${modalOdds.domAway}</div></div></div>
                     </div>
                   `}
                 </div>
@@ -6860,26 +6828,23 @@ function getFullModalMatchList() {
       const homeStats = (tStats && tStats.home) ? tStats.home : {};
       const awayStats = (tStats && tStats.away) ? tStats.away : {};
 
-      const hHits = homeStats.hits !== undefined ? homeStats.hits : 8;
-      const aHits = awayStats.hits !== undefined ? awayStats.hits : 7;
-      const hHR = homeStats.home_runs !== undefined ? homeStats.home_runs : 1;
-      const aHR = awayStats.home_runs !== undefined ? awayStats.home_runs : 1;
-      const hBB = homeStats.walks !== undefined ? homeStats.walks : 4;
-      const aBB = awayStats.walks !== undefined ? awayStats.walks : 3;
-      const hSO = homeStats.strikeouts !== undefined ? homeStats.strikeouts : 8;
-      const aSO = awayStats.strikeouts !== undefined ? awayStats.strikeouts : 9;
+      const isSoccer = (m.sport_code || '').toUpperCase() === 'SOCCER';
+      const isBasketball = (m.sport_code || '').toUpperCase() === 'BASKETBALL';
 
       const homeSplit = (matchup && matchup.home_team) ? matchup.home_team : {
-        name: m.home_team_name, split_type: 'HOME', games: 10, wins: 6, losses: 4, win_pct: '.600', rpg: 4.5, ra: 3.8, diff: 0.7, recent_5: 'W-W-L-W-W'
+        name: m.home_team_name, split_type: 'HOME', games: 10, wins: 6, losses: 4, win_pct: '.600', rpg: (isBasketball ? 112.5 : (isSoccer ? 1.65 : 4.5)), ra: (isBasketball ? 106.0 : (isSoccer ? 0.95 : 3.8)), diff: (isBasketball ? 6.5 : (isSoccer ? 0.70 : 0.7)), recent_5: 'W-W-L-W-W'
       };
       const awaySplit = (matchup && matchup.away_team) ? matchup.away_team : {
-        name: m.away_team_name, split_type: 'AWAY', games: 10, wins: 4, losses: 6, win_pct: '.400', rpg: 3.8, ra: 4.4, diff: -0.6, recent_5: 'L-L-W-L-W'
+        name: m.away_team_name, split_type: 'AWAY', games: 10, wins: 4, losses: 6, win_pct: '.400', rpg: (isBasketball ? 105.2 : (isSoccer ? 1.15 : 3.8)), ra: (isBasketball ? 111.8 : (isSoccer ? 1.35 : 4.4)), diff: (isBasketball ? -6.6 : (isSoccer ? -0.20 : -0.6)), recent_5: 'L-L-W-L-W'
       };
 
       const hWinPct = (homeSplit.win_pct && homeSplit.win_pct !== 'undefined') ? homeSplit.win_pct : (homeSplit.games ? ((homeSplit.wins + (homeSplit.draws || 0) * 0.5) / homeSplit.games).toFixed(3).replace(/^0/, '') : '.500');
       const aWinPct = (awaySplit.win_pct && awaySplit.win_pct !== 'undefined') ? awaySplit.win_pct : (awaySplit.games ? ((awaySplit.wins + (awaySplit.draws || 0) * 0.5) / awaySplit.games).toFixed(3).replace(/^0/, '') : '.500');
       const hRecordStr = `${homeSplit.wins || 0}승 ${homeSplit.draws !== undefined && homeSplit.draws > 0 ? homeSplit.draws + '무 ' : ''}${homeSplit.losses || 0}패`;
       const aRecordStr = `${awaySplit.wins || 0}승 ${awaySplit.draws !== undefined && awaySplit.draws > 0 ? awaySplit.draws + '무 ' : ''}${awaySplit.losses || 0}패`;
+
+      const unit = isBasketball ? '점' : (isSoccer ? '골' : '득');
+      const raUnit = isBasketball ? '점' : (isSoccer ? '골' : '실');
 
       const splitsHtml = `
         <div class="p-2.5 mb-3 rounded-3" style="background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
@@ -6889,26 +6854,25 @@ function getFullModalMatchList() {
           </div>
           <div class="row g-2 text-center" style="font-size: 0.80rem;">
             <div class="col-6 text-start ps-2" style="border-right: 1px solid #e5e7eb;">
-              <div class="fw-bold mb-1" style="color: #111827; font-size: 0.85rem;">[홈] ${m.home_team_name}</div>
+              <div class="fw-bold mb-1" style="color: #111827; font-size: 0.85rem;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[홈]</span>${m.home_team_name}</div>
               <div class="text-dark small">홈 승률: <b style="color: #111827; font-weight: 700;">${hWinPct}</b> (${hRecordStr})</div>
-              <div class="text-muted small">홈 평균: <b class="text-dark">${homeSplit.rpg ?? 1.4}득</b> / <b class="text-dark">${homeSplit.ra ?? 1.2}실</b> (마진 ${homeSplit.diff !== undefined ? (homeSplit.diff >= 0 ? '+' + homeSplit.diff : homeSplit.diff) : '+0.2'})</div>
-              <div class="text-dark small mt-0.5 fw-bold">최근 5G: <span style="color: #111827;">${homeSplit.recent_5 || 'W-D-W-L-W'}</span></div>
+              <div class="text-muted small">홈 평균: <b class="text-dark">${homeSplit.rpg ?? (isBasketball ? 112.5 : 1.4)}${unit}</b> / <b class="text-dark">${homeSplit.ra ?? (isBasketball ? 106.0 : 1.2)}${raUnit}</b> (마진 ${homeSplit.diff !== undefined ? (Number(homeSplit.diff) >= 0 ? '+' + homeSplit.diff : homeSplit.diff) : '+0.2'})</div>
+              <div class="text-dark small mt-0.5 fw-bold">최근 5G: <span style="color: #111827;">${homeSplit.recent_5 || 'W-W-L-W-W'}</span></div>
             </div>
             <div class="col-6 text-start ps-2">
-              <div class="fw-bold mb-1" style="color: #111827; font-size: 0.85rem;">[원정] ${m.away_team_name}</div>
+              <div class="fw-bold mb-1" style="color: #111827; font-size: 0.85rem;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.62rem; padding: 1px 3px; font-weight: 800;">[원정]</span>${m.away_team_name}</div>
               <div class="text-dark small">원정 승률: <b style="color: #111827; font-weight: 700;">${aWinPct}</b> (${aRecordStr})</div>
-              <div class="text-muted small">원정 평균: <b class="text-dark">${awaySplit.rpg ?? 1.1}득</b> / <b class="text-dark">${awaySplit.ra ?? 1.5}실</b> (마진 ${awaySplit.diff !== undefined ? (awaySplit.diff >= 0 ? '+' + awaySplit.diff : awaySplit.diff) : '-0.4'})</div>
-              <div class="text-dark small mt-0.5 fw-bold">최근 5G: <span style="color: #111827;">${awaySplit.recent_5 || 'D-L-W-D-L'}</span></div>
+              <div class="text-muted small">원정 평균: <b class="text-dark">${awaySplit.rpg ?? (isBasketball ? 105.2 : 1.1)}${unit}</b> / <b class="text-dark">${awaySplit.ra ?? (isBasketball ? 111.8 : 1.5)}${raUnit}</b> (마진 ${awaySplit.diff !== undefined ? (Number(awaySplit.diff) >= 0 ? '+' + awaySplit.diff : awaySplit.diff) : '-0.4'})</div>
+              <div class="text-dark small mt-0.5 fw-bold">최근 5G: <span style="color: #111827;">${awaySplit.recent_5 || 'L-L-W-L-W'}</span></div>
             </div>
           </div>
         </div>
       `;
 
-      if (m.sport_code === 'SOCCER') {
+      if (isSoccer) {
         return `
           ${splitsHtml}
           <div class="p-3 mb-3 rounded-3" style="background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
-            <!-- Category Tabs -->
             <div class="d-flex gap-1 mb-3 overflow-x-auto pb-1" style="scrollbar-width: none;">
               <button class="modal-stat-tab-btn active" onclick="switchModalStatCategory('all', '${m.id}')">전체 지표 (Full)</button>
               <button class="modal-stat-tab-btn" onclick="switchModalStatCategory('attack', '${m.id}')">공격·슈팅</button>
@@ -6916,7 +6880,6 @@ function getFullModalMatchList() {
               <button class="modal-stat-tab-btn" onclick="switchModalStatCategory('saber', '${m.id}')">점유·패스</button>
             </div>
 
-            <!-- Tab Content 1: Attack -->
             <div id="modalCat_attack_${m.id}" style="display: block;">
               <h6 class="text-dark fw-bold mb-2 small"><i class="bi bi-bullseye text-dark me-1"></i>공격 & 슈팅 정밀 지표</h6>
               ${makeModalBar('경기당 평균 득점 (GPG)', `${homeSplit.rpg || 1.4}골`, `${awaySplit.rpg || 1.1}골`, homeSplit.rpg || 1.4, awaySplit.rpg || 1.1)}
@@ -6925,7 +6888,6 @@ function getFullModalMatchList() {
               ${makeModalBar('경기당 코너킥', `${homeSplit.corners_pg || 5.5}개`, `${awaySplit.corners_pg || 4.5}개`, homeSplit.corners_pg || 5.5, awaySplit.corners_pg || 4.5)}
             </div>
 
-            <!-- Tab Content 2: Defense -->
             <div id="modalCat_defense_${m.id}" style="display: block;">
               <h6 class="text-dark fw-bold mb-2 small"><i class="bi bi-shield-fill text-dark me-1"></i>수비 & 골키퍼 지표</h6>
               ${makeModalBar('경기당 평균 실점 (GAPG - 낮을수록 우수)', `${homeSplit.ra || 1.2}골`, `${awaySplit.ra || 1.5}골`, homeSplit.ra || 1.2, awaySplit.ra || 1.5, true)}
@@ -6934,31 +6896,76 @@ function getFullModalMatchList() {
               ${makeModalBar('경기당 성공 태클', `${homeSplit.eff_tackles_pg || 11.5}회`, `${awaySplit.eff_tackles_pg || 12.0}회`, homeSplit.eff_tackles_pg || 11.5, awaySplit.eff_tackles_pg || 12.0)}
             </div>
 
-            <!-- Tab Content 3: Sabermetrics / Possession -->
             <div id="modalCat_saber_${m.id}" style="display: block;">
               <h6 class="text-dark fw-bold mb-2 small"><i class="bi bi-cpu-fill text-dark me-1"></i>점유율 & 패스 운영 지표</h6>
               ${makeModalBar('볼 점유율 (Possession %)', `${homeSplit.possession_pct || 50.0}%`, `${awaySplit.possession_pct || 50.0}%`, homeSplit.possession_pct || 50.0, awaySplit.possession_pct || 50.0)}
               ${makeModalBar('패스 성공률 (Pass Acc %)', `${homeSplit.pass_acc || 84.0}%`, `${awaySplit.pass_acc || 81.0}%`, homeSplit.pass_acc || 84.0, awaySplit.pass_acc || 81.0)}
-              ${makeModalBar('골득실 마진 (Goal Diff)', `${(homeSplit.diff || 0) > 0 ? '+' : ''}${homeSplit.diff || 0}골`, `${(awaySplit.diff || 0) > 0 ? '+' : ''}${awaySplit.diff || 0}골`, (homeSplit.diff || 0) + 10, (awaySplit.diff || 0) + 10)}
+              ${makeModalBar('골득실 마진 (Goal Diff)', `${(Number(homeSplit.diff) || 0) > 0 ? '+' : ''}${homeSplit.diff || 0}골`, `${(Number(awaySplit.diff) || 0) > 0 ? '+' : ''}${awaySplit.diff || 0}골`, (Number(homeSplit.diff) || 0) + 10, (Number(awaySplit.diff) || 0) + 10)}
               ${makeModalBar('경기당 파울 (낮을수록 우수)', `${homeSplit.fouls_pg || 11.5}회`, `${awaySplit.fouls_pg || 12.5}회`, homeSplit.fouls_pg || 11.5, awaySplit.fouls_pg || 12.5, true)}
             </div>
           </div>
         `;
       }
 
+      if (isBasketball) {
+        return `
+          ${splitsHtml}
+          <div class="p-3 mb-3 rounded-3" style="background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+            <div class="d-flex gap-1 mb-3 overflow-x-auto pb-1" style="scrollbar-width: none;">
+              <button class="modal-stat-tab-btn active" onclick="switchModalStatCategory('all', '${m.id}')">전체 지표 (Full)</button>
+              <button class="modal-stat-tab-btn" onclick="switchModalStatCategory('attack', '${m.id}')">공격·야투</button>
+              <button class="modal-stat-tab-btn" onclick="switchModalStatCategory('defense', '${m.id}')">수비·리바운드</button>
+              <button class="modal-stat-tab-btn" onclick="switchModalStatCategory('saber', '${m.id}')">어시스트·효율</button>
+            </div>
+
+            <div id="modalCat_attack_${m.id}" style="display: block;">
+              <h6 class="text-dark fw-bold mb-2 small"><i class="bi bi-bullseye text-dark me-1"></i>농구 공격 & 야투 정밀 지표</h6>
+              ${makeModalBar('경기당 평균 득점 (PPG)', `${homeSplit.rpg || 112.5}점`, `${awaySplit.rpg || 105.2}점`, homeSplit.rpg || 112.5, awaySplit.rpg || 105.2)}
+              ${makeModalBar('야투 성공률 (FG %)', `${homeStats.fieldGoalPct || 46.5}%`, `${awayStats.fieldGoalPct || 44.2}%`, homeStats.fieldGoalPct || 46.5, awayStats.fieldGoalPct || 44.2)}
+              ${makeModalBar('3점슛 성공률 (3PT %)', `${homeStats.threePointPct || 36.2}%`, `${awayStats.threePointPct || 34.0}%`, homeStats.threePointPct || 36.2, awayStats.threePointPct || 34.0)}
+              ${makeModalBar('자유투 성공률 (FT %)', `${homeStats.freeThrowPct || 79.5}%`, `${awayStats.freeThrowPct || 76.8}%`, homeStats.freeThrowPct || 79.5, awayStats.freeThrowPct || 76.8)}
+            </div>
+
+            <div id="modalCat_defense_${m.id}" style="display: block;">
+              <h6 class="text-dark fw-bold mb-2 small"><i class="bi bi-shield-fill text-dark me-1"></i>수비 & 리바운드/블록 지표</h6>
+              ${makeModalBar('경기당 평균 실점 (PAPG - 낮을수록 우수)', `${homeSplit.ra || 106.0}점`, `${awaySplit.ra || 111.8}점`, homeSplit.ra || 106.0, awaySplit.ra || 111.8, true)}
+              ${makeModalBar('총 리바운드 (Rebounds)', `${homeStats.rebounds || 43.5}개`, `${awayStats.rebounds || 41.2}개`, homeStats.rebounds || 43.5, awayStats.rebounds || 41.2)}
+              ${makeModalBar('스틸 (Steals)', `${homeStats.steals || 7.5}회`, `${awayStats.steals || 6.8}회`, homeStats.steals || 7.5, awayStats.steals || 6.8)}
+              ${makeModalBar('블록슛 (Blocks)', `${homeStats.blocks || 5.2}회`, `${awayStats.blocks || 4.5}회`, homeStats.blocks || 5.2, awayStats.blocks || 4.5)}
+            </div>
+
+            <div id="modalCat_saber_${m.id}" style="display: block;">
+              <h6 class="text-dark fw-bold mb-2 small"><i class="bi bi-cpu-fill text-dark me-1"></i>어시스트 & 경기 운영 효율 지표</h6>
+              ${makeModalBar('어시스트 (Assists)', `${homeStats.assists || 25.4}개`, `${awayStats.assists || 22.8}개`, homeStats.assists || 25.4, awayStats.assists || 22.8)}
+              ${makeModalBar('턴오버 (Turnovers - 낮을수록 우수)', `${homeStats.turnovers || 12.2}회`, `${awayStats.turnovers || 13.8}회`, homeStats.turnovers || 12.2, awayStats.turnovers || 13.8, true)}
+              ${makeModalBar('어시스트/턴오버 비율 (AST/TO)', '2.08', '1.65', 208, 165)}
+              ${makeModalBar('트루 슈팅 효율 (TS%)', '57.5%', '54.2%', 575, 542)}
+            </div>
+          </div>
+        `;
+      }
+
+      // BASEBALL
+      const hHits = homeStats.hits !== undefined ? homeStats.hits : 8;
+      const aHits = awayStats.hits !== undefined ? awayStats.hits : 7;
+      const hHR = homeStats.home_runs !== undefined ? homeStats.home_runs : 1;
+      const aHR = awayStats.home_runs !== undefined ? awayStats.home_runs : 1;
+      const hBB = homeStats.walks !== undefined ? homeStats.walks : 4;
+      const aBB = awayStats.walks !== undefined ? awayStats.walks : 3;
+      const hSO = homeStats.strikeouts !== undefined ? homeStats.strikeouts : 8;
+      const aSO = awayStats.strikeouts !== undefined ? awayStats.strikeouts : 9;
+
       return `
         ${splitsHtml}
         
         <div class="p-3 mb-3 rounded-3" style="background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
-          <!-- Category Tabs -->
           <div class="d-flex gap-1 mb-3 overflow-x-auto pb-1" style="scrollbar-width: none;">
             <button class="modal-stat-tab-btn active" onclick="switchModalStatCategory('all', '${m.id}')">전체 지표 (Full)</button>
             <button class="modal-stat-tab-btn" onclick="switchModalStatCategory('attack', '${m.id}')">공격 지표</button>
-            <button class="modal-stat-tab-btn" onclick="switchModalStatCategory('defense', '${m.id}')">수비·투구</button>
+            <button class="modal-stat-tab-btn" onclick="switchModalStatCategory('defense', '${m.id}')">수비·마운드</button>
             <button class="modal-stat-tab-btn" onclick="switchModalStatCategory('saber', '${m.id}')">세이버메트릭스</button>
           </div>
 
-          <!-- Tab Content 1: Attack -->
           <div id="modalCat_attack_${m.id}" style="display: block;">
             <h6 class="text-dark fw-bold mb-2 small"><i class="bi bi-bullseye text-dark me-1"></i>팀 공격 & 타격 정밀 지표</h6>
             ${makeModalBar('팀 안타수 (Hits)', `${hHits}개`, `${aHits}개`, hHits, aHits)}
@@ -6967,20 +6974,18 @@ function getFullModalMatchList() {
             ${makeModalBar('득점권 타율 (RISP)', '.284', '.252', 284, 252)}
           </div>
 
-          <!-- Tab Content 2: Defense -->
           <div id="modalCat_defense_${m.id}" style="display: block;">
             <h6 class="text-dark fw-bold mb-2 small"><i class="bi bi-shield-fill text-dark me-1"></i>수비 & 마운드 제구 지표</h6>
             ${makeModalBar('탈삼진 (Strikeouts)', `${hSO}개`, `${aSO}개`, hSO, aSO)}
             ${makeModalBar('피안타 허용율', '.235', '.261', 261, 235, true)}
-            ${makeModalBar('수비 실책 (Errors)', '0개', '1개', 1, 0, true)}
+            ${makeModalBar('수비 실책 (Errors - 낮을수록 우수)', '0개', '1개', 1, 0, true)}
             ${makeModalBar('잔루 소멸률 (LOB%)', '74.2%', '68.5%', 742, 685)}
           </div>
 
-          <!-- Tab Content 3: Sabermetrics -->
           <div id="modalCat_saber_${m.id}" style="display: block;">
             <h6 class="text-dark fw-bold mb-2 small"><i class="bi bi-cpu-fill text-dark me-1"></i>고급 세이버메트릭스 (Sabermetrics)</h6>
             ${makeModalBar('가중 출루율 (wOBA)', '.342', '.318', 342, 318)}
-            ${makeModalBar('수비무관 평균자책 (FIP)', '3.28', '3.95', 395, 328, true)}
+            ${makeModalBar('수비무관 평균자책 (FIP - 낮을수록 우수)', '3.28', '3.95', 395, 328, true)}
             ${makeModalBar('인플레이 타구타율 (BABIP)', '.295', '.304', 295, 304)}
             ${makeModalBar('대체선수대비 승리기여도 (WAR)', '+18.5', '+14.2', 185, 142)}
           </div>
@@ -14907,7 +14912,7 @@ function getFullModalMatchList() {
       } else if (data.type === 'HOURLY_SYNC_COMPLETE') {
         // 1-Hour Automated Sync Broadcast arrived!
         console.log('[WebSocket] Hourly Sync complete broadcast received!', data);
-        manualHourlyRefresh(true);
+        if (typeof manualLiveRefresh === 'function') { manualLiveRefresh(); }
         // Show subtle notification badge
         const badge = document.getElementById('hourlySyncStatus');
         if (badge) {
