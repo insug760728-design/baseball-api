@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import time
 import json
 import urllib.request
 import logging
@@ -724,6 +725,8 @@ def parse_utc_to_kst(utc_str: str) -> tuple[Optional[datetime], str]:
 
 
 class LiveApiSportsService:
+    _history_cache: Dict[str, Any] = {}
+
     @classmethod
     def get_api_key(cls) -> Optional[str]:
         return os.getenv("API_SPORTS_KEY") or settings.API_SPORTS_KEY or os.getenv("RAPIDAPI_KEY") or settings.RAPIDAPI_KEY
@@ -813,7 +816,7 @@ class LiveApiSportsService:
         }
 
     @classmethod
-    def _make_request(cls, endpoint: str, sport: str = "football") -> Optional[Dict[str, Any]]:
+    def _make_request(cls, endpoint: str, sport: str = "football", timeout: int = 10) -> Optional[Dict[str, Any]]:
         key = cls.get_api_key()
         if not key:
             return None
@@ -837,7 +840,7 @@ class LiveApiSportsService:
         url = f"{base_url}{endpoint}"
         try:
             req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=10) as resp:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 return data
         except Exception as e:
@@ -1190,6 +1193,12 @@ class LiveApiSportsService:
         - 야구: /games/statistics → 선발, 이닝, 안타, 홈런, 볼넷, 삼진
         - 공통: DB에서 최근 N경기 조회 후 API-Sports external_id로 이벤트 패치
         """
+        cache_key = f"{match_id}_{max_games}"
+        now_ts = time.time()
+        cached = cls._history_cache.get(cache_key)
+        if cached and (now_ts - cached[0] < 300):
+            return cached[1]
+
         # 1. DB에서 경기 정보 조회
         from app.core.database import SessionLocal
         from app.models.models import Match
@@ -1357,7 +1366,7 @@ class LiveApiSportsService:
                 home_games = cls._enrich_baseball_stats(home_games, home_team, home_recent)
                 away_games = cls._enrich_baseball_stats(away_games, away_team, away_recent)
 
-        return {
+        res = {
             'status': 'success',
             'match_id': match_id,
             'sport_code': sport_code,
@@ -1366,6 +1375,8 @@ class LiveApiSportsService:
             'home_recent': home_games,
             'away_recent': away_games
         }
+        cls._history_cache[cache_key] = (now_ts, res)
+        return res
 
     @classmethod
     def _enrich_football_events(cls, games: list, team_name: str, db_matches: list) -> list:
@@ -1386,7 +1397,7 @@ class LiveApiSportsService:
                 except (ValueError, TypeError):
                     continue
 
-                data = cls._make_request(f"/fixtures/events?fixture={ext_id}", sport="football")
+                data = cls._make_request(f"/fixtures/events?fixture={ext_id}", sport="football", timeout=2)
                 if not data:
                     continue
                 events_raw = data.get('response', [])
@@ -1444,7 +1455,7 @@ class LiveApiSportsService:
                 except (ValueError, TypeError):
                     continue
 
-                data = cls._make_request(f"/games/statistics?id={ext_id}", sport="baseball")
+                data = cls._make_request(f"/games/statistics?id={ext_id}", sport="baseball", timeout=2)
                 if not data:
                     continue
                 stats_raw = data.get('response', [])

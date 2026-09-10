@@ -9662,12 +9662,14 @@ function getFullModalMatchList() {
       if (container) {
         container.querySelectorAll('.slim-accordion-panel.open').forEach(p => {
           const mId = p.id.replace('slimPanel_', '');
+          const curHtml = p.innerHTML || '';
+          const isReal = curHtml && !curHtml.includes('로딩') && !curHtml.includes('불러오는 중');
           openPanelsInfo[mId] = {
             isOpen: true,
-            html: p.innerHTML
+            html: isReal ? curHtml : null
           };
-          if (_slimAccordionState[mId]) {
-            _slimAccordionState[mId].html = p.innerHTML;
+          if (_slimAccordionState[mId] && isReal) {
+            _slimAccordionState[mId].html = curHtml;
           }
         });
       }
@@ -9843,9 +9845,10 @@ function getFullModalMatchList() {
             ${(() => {
               const mState = _slimAccordionState[m.id];
               const openInfo = openPanelsInfo[m.id];
-              const isAccordionOpen = !!(openInfo && openInfo.isOpen) || !!(mState && mState.type && mState.loaded && mState.html);
+              const isAccordionOpen = !!(openInfo && openInfo.isOpen) || !!(mState && mState.type);
               const activeAccordionType = mState ? mState.type : (openInfo && openInfo.isOpen ? (mState?.type || 'history') : null);
-              const cachedAccordionHtml = (openInfo && openInfo.html) || (mState && mState.html) || '<div class="slim-accordion-loading">로딩 중...</div>';
+              const realCachedHtml = (openInfo && openInfo.html) || (mState && mState.html && !mState.html.includes('로딩') && !mState.html.includes('불러오는 중') ? mState.html : null);
+              const cachedAccordionHtml = realCachedHtml || '<div class="slim-accordion-loading">⏳ 불러오는 중...</div>';
               return `
                 <div class="slim-card-actions">
                   <button class="slim-action-btn odds-btn ${isAccordionOpen && activeAccordionType === 'odds' ? 'active' : ''}" id="oddsBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'odds')">📊 배당</button>
@@ -9895,19 +9898,37 @@ function getFullModalMatchList() {
     // ============================================================
     const _slimAccordionState = {}; // { matchId: { type: 'odds'|'history', loaded: bool, html: string } }
 
+    function updateSlimPanel(matchId, type, contentHtml) {
+      _slimAccordionState[matchId] = { type, loaded: true, html: contentHtml };
+      const currentPanel = document.getElementById('slimPanel_' + matchId);
+      if (currentPanel) {
+        currentPanel.innerHTML = contentHtml;
+        currentPanel.classList.add('open');
+      }
+      const oddsBtn = document.getElementById('oddsBtn_' + matchId);
+      const histBtn = document.getElementById('histBtn_' + matchId);
+      if (type === 'odds') {
+        if (oddsBtn) oddsBtn.classList.add('active');
+        if (histBtn) histBtn.classList.remove('active');
+      } else if (type === 'history') {
+        if (histBtn) histBtn.classList.add('active');
+        if (oddsBtn) oddsBtn.classList.remove('active');
+      }
+    }
+
     async function toggleSlimAccordion(matchId, type) {
       const panel = document.getElementById('slimPanel_' + matchId);
       const oddsBtn = document.getElementById('oddsBtn_' + matchId);
       const histBtn = document.getElementById('histBtn_' + matchId);
-      if (!panel) return;
 
       const state = _slimAccordionState[matchId] || {};
-      const isOpen = panel.classList.contains('open');
+      const isOpen = panel ? panel.classList.contains('open') : false;
       const isSameType = (state.type === type);
+      const hasRealCachedHtml = state.html && !state.html.includes('로딩') && !state.html.includes('불러오는 중');
 
       // 같은 버튼 다시 누르면 닫기
       if (isOpen && isSameType) {
-        panel.classList.remove('open');
+        if (panel) panel.classList.remove('open');
         if (oddsBtn) oddsBtn.classList.remove('active');
         if (histBtn) histBtn.classList.remove('active');
         _slimAccordionState[matchId] = { type: null, loaded: false, html: null };
@@ -9915,7 +9936,7 @@ function getFullModalMatchList() {
       }
 
       // 다른 타입으로 전환 or 새로 열기
-      panel.classList.add('open');
+      if (panel) panel.classList.add('open');
       if (type === 'odds') {
         if (oddsBtn) oddsBtn.classList.add('active');
         if (histBtn) histBtn.classList.remove('active');
@@ -9924,33 +9945,36 @@ function getFullModalMatchList() {
         if (oddsBtn) oddsBtn.classList.remove('active');
       }
 
-      // 같은 타입이고 이미 HTML이 캐시되어 있으면 즉시 복원하고 반환
-      if (isSameType && state.loaded && state.html) {
-        panel.innerHTML = state.html;
+      // 같은 타입이고 이미 실제 HTML이 캐시되어 있으면 즉시 복원하고 반환
+      if (isSameType && state.loaded && hasRealCachedHtml) {
+        if (panel) panel.innerHTML = state.html;
         _slimAccordionState[matchId] = { ...state, type };
         return;
       }
 
       // 로딩 표시
-      panel.innerHTML = '<div class="slim-accordion-loading">⏳ 불러오는 중...</div>';
+      if (panel) panel.innerHTML = '<div class="slim-accordion-loading">⏳ 불러오는 중...</div>';
       _slimAccordionState[matchId] = { type, loaded: false, html: null };
 
       try {
         if (type === 'odds') {
-          await loadSlimOddsPanel(matchId, panel);
+          await loadSlimOddsPanel(matchId);
         } else {
-          await loadSlimHistoryPanel(matchId, panel);
+          await loadSlimHistoryPanel(matchId);
         }
-        _slimAccordionState[matchId] = { type, loaded: true, html: panel.innerHTML };
       } catch (e) {
-        panel.innerHTML = '<div class="slim-accordion-loading" style="color:#dc2626;">❌ 데이터 조회 실패</div>';
+        const p = document.getElementById('slimPanel_' + matchId);
+        if (p) p.innerHTML = '<div class="slim-accordion-loading" style="color:#dc2626;">❌ 데이터 조회 실패</div>';
       }
     }
 
     // ---- 배당 패널 렌더 ----
-    async function loadSlimOddsPanel(matchId, panel) {
+    async function loadSlimOddsPanel(matchId) {
       const match = allMatches.find(m => m.id === matchId);
-      if (!match) { panel.innerHTML = '<div class="slim-accordion-loading">경기 정보 없음</div>'; return; }
+      if (!match) {
+        updateSlimPanel(matchId, 'odds', '<div class="slim-accordion-loading">경기 정보 없음</div>');
+        return;
+      }
 
       const sport = match.sport_code;
       const homeName = formatTeamName(match.home_team_name);
@@ -10084,25 +10108,30 @@ function getFullModalMatchList() {
         totoHtml = `<div style="margin-top:4px; font-size:0.62rem; color:#059669;">📋 베트맨 ${g.round_name} 포함 경기</div>`;
       }
 
-      panel.innerHTML = tableHtml + totoHtml;
-      if (_slimAccordionState[matchId]) {
-        _slimAccordionState[matchId].html = panel.innerHTML;
-      }
+      updateSlimPanel(matchId, 'odds', tableHtml + totoHtml);
     }
 
     // ---- 전경기 패널 렌더 (사용자 지정: [홈팀][선발] — [가운데 승무패/스코어] — [원정팀][선발] 경기 바) ----
-    async function loadSlimHistoryPanel(matchId, panel) {
+    async function loadSlimHistoryPanel(matchId) {
       const match = allMatches.find(m => m.id === matchId);
-      if (!match) { panel.innerHTML = '<div class="slim-accordion-loading">경기 정보 없음</div>'; return; }
+      if (!match) {
+        updateSlimPanel(matchId, 'history', '<div class="slim-accordion-loading">경기 정보 없음</div>');
+        return;
+      }
 
       let data = null;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
       try {
-        const resp = await fetch(`/api/v1/live/match-history/${matchId}?max_games=1`);
+        const resp = await fetch(`/api/v1/live/match-history/${matchId}?max_games=1`, { signal: controller.signal });
+        clearTimeout(timeoutId);
         if (resp.ok) data = await resp.json();
-      } catch(e) {}
+      } catch(e) {
+        clearTimeout(timeoutId);
+      }
 
       if (!data || data.status !== 'success' || (!data.home_recent && !data.away_recent)) {
-        // API 실패 시 allMatches 로컬 데이터로 기본 렌더
+        // API 실패 or 2초 타임아웃 시 allMatches 로컬 데이터로 즉시 폴백 렌더 (무한 로딩 100% 방지)
         data = buildLocalHistory(match);
       }
 
@@ -10301,7 +10330,7 @@ function getFullModalMatchList() {
         `;
       }
 
-      panel.innerHTML = `
+      const finalContainerHtml = `
         <div class="slim-history-container p-2" style="background:#f8fafc; border-top:1px solid #e2e8f0; border-radius:0 0 8px 8px;">
           <div class="d-flex align-items-center justify-content-between mb-2 px-1">
             <span style="font-size:0.75rem; font-weight:800; color:#0f172a;">
@@ -10315,9 +10344,7 @@ function getFullModalMatchList() {
         </div>
       `;
 
-      if (_slimAccordionState[matchId]) {
-        _slimAccordionState[matchId].html = panel.innerHTML;
-      }
+      updateSlimPanel(matchId, 'history', finalContainerHtml);
     }
 
     // allMatches 로컬 데이터로 기본 히스토리 생성 (API 실패 시 폴백, 바로 직전 1경기만)
