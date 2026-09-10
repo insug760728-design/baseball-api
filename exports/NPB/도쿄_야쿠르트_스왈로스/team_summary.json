@@ -2,13 +2,20 @@
   "team_name": "도쿄 야쿠르트 스왈로스",
   "league": "NPB",
   "period": {
-    "start_date": "2026-09-09",
+    "start_date": "2026-09-08",
     "end_date": "2026-09-10"
   },
-  "total_matches": 2,
-  "hitters_count": 0,
-  "pitchers_count": 0,
+  "total_matches": 3,
+  "hitters_count": 9,
+  "pitchers_count": 3,
   "matches": [
+    {
+      "date": "2026-09-08 18:00",
+      "opponent": "요코하마 DeNA 베이스타즈",
+      "score": "3 : 1",
+      "result": "승",
+      "file": "matches/2026-09-08_1800_vs_요코하마_DeNA_베이스타즈.json"
+    },
     {
       "date": "2026-09-09 18:00",
       "opponent": "요코하마 DeNA 베이스타즈",
@@ -24,6 +31,68 @@
       "file": "matches/2026-09-10_1800_vs_요미우리_자이언츠.json"
     }
   ],
-  "hitters": [],
-  "pitchers": []
+  "hitters": [
+    {
+      "name": "長岡",
+      "pos": "1번 유격수",
+      "file": "hitters/長岡.json"
+    },
+    {
+      "name": "サンタナ",
+      "pos": "2번 좌익수",
+      "file": "hitters/サンタナ.json"
+    },
+    {
+      "name": "増田",
+      "pos": "3번 우익수",
+      "file": "hitters/増田.json"
+    },
+    {
+      "name": "オスナ",
+      "pos": "4번 1루수",
+      "file": "hitters/オスナ.json"
+    },
+    {
+      "name": "赤羽",
+      "pos": "5번 3루수",
+      "file": "hitters/赤羽.json"
+    },
+    {
+      "name": "内山",
+      "pos": "6번 2루수",
+      "file": "hitters/内山.json"
+    },
+    {
+      "name": "松本直",
+      "pos": "7번 포수",
+      "file": "hitters/松本直.json"
+    },
+    {
+      "name": "鈴木叶",
+      "pos": "대타/포수",
+      "file": "hitters/鈴木叶.json"
+    },
+    {
+      "name": "丸山和",
+      "pos": "9번 중견수",
+      "file": "hitters/丸山和.json"
+    }
+  ],
+  "pitchers": [
+    {
+      "name": "大西",
+      "pos": "투수",
+      "file": "pitchers/大西.json"
+    },
+    {
+      "name": "山野",
+      "pos": "8번 투수",
+      "file": "pitchers/山野.json"
+    },
+    {
+      "name": "石原",
+      "pos": "투수",
+      "file": "pitchers/石原.json"
+    }
+  ]
 }

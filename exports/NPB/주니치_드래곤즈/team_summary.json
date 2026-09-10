@@ -2,13 +2,20 @@
   "team_name": "주니치 드래곤즈",
   "league": "NPB",
   "period": {
-    "start_date": "2026-09-09",
+    "start_date": "2026-09-08",
     "end_date": "2026-09-10"
   },
-  "total_matches": 2,
-  "hitters_count": 0,
-  "pitchers_count": 0,
+  "total_matches": 3,
+  "hitters_count": 11,
+  "pitchers_count": 4,
   "matches": [
+    {
+      "date": "2026-09-08 18:00",
+      "opponent": "요미우리 자이언츠",
+      "score": "3 : 0",
+      "result": "승",
+      "file": "matches/2026-09-08_1800_vs_요미우리_자이언츠.json"
+    },
     {
       "date": "2026-09-09 18:00",
       "opponent": "요미우리 자이언츠",
@@ -24,6 +31,83 @@
       "file": "matches/2026-09-10_1800_vs_한신_타이거스.json"
     }
   ],
-  "hitters": [],
-  "pitchers": []
+  "hitters": [
+    {
+      "name": "福永",
+      "pos": "1번 2루수",
+      "file": "hitters/福永.json"
+    },
+    {
+      "name": "村松",
+      "pos": "2번 유격수",
+      "file": "hitters/村松.json"
+    },
+    {
+      "name": "高橋周",
+      "pos": "3번 3루수",
+      "file": "hitters/高橋周.json"
+    },
+    {
+      "name": "サノー",
+      "pos": "4번 1루수",
+      "file": "hitters/サノー.json"
+    },
+    {
+      "name": "上林",
+      "pos": "5번 우익수",
+      "file": "hitters/上林.json"
+    },
+    {
+      "name": "細川",
+      "pos": "6번 좌익수",
+      "file": "hitters/細川.json"
+    },
+    {
+      "name": "岡林",
+      "pos": "7번 중견수",
+      "file": "hitters/岡林.json"
+    },
+    {
+      "name": "石伊",
+      "pos": "8번 포수",
+      "file": "hitters/石伊.json"
+    },
+    {
+      "name": "石川昂",
+      "pos": "1루수",
+      "file": "hitters/石川昂.json"
+    },
+    {
+      "name": "福元",
+      "pos": "대타",
+      "file": "hitters/福元.json"
+    },
+    {
+      "name": "木下",
+      "pos": "포수",
+      "file": "hitters/木下.json"
+    }
+  ],
+  "pitchers": [
+    {
+      "name": "杉浦",
+      "pos": "투수",
+      "file": "pitchers/杉浦.json"
+    },
+    {
+      "name": "大野",
+      "pos": "9번 투수",
+      "file": "pitchers/大野.json"
+    },
+    {
+      "name": "アブレウ",
+      "pos": "투수",
+      "file": "pitchers/アブレウ.json"
+    },
+    {
+      "name": "橋本",
+      "pos": "투수",
+      "file": "pitchers/橋本.json"
+    }
+  ]
 }

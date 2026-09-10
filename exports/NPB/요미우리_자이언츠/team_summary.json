@@ -2,13 +2,20 @@
   "team_name": "요미우리 자이언츠",
   "league": "NPB",
   "period": {
-    "start_date": "2026-09-09",
+    "start_date": "2026-09-08",
     "end_date": "2026-09-10"
   },
-  "total_matches": 2,
-  "hitters_count": 0,
-  "pitchers_count": 0,
+  "total_matches": 3,
+  "hitters_count": 12,
+  "pitchers_count": 7,
   "matches": [
+    {
+      "date": "2026-09-08 18:00",
+      "opponent": "주니치 드래곤즈",
+      "score": "0 : 3",
+      "result": "패",
+      "file": "matches/2026-09-08_1800_vs_주니치_드래곤즈.json"
+    },
     {
       "date": "2026-09-09 18:00",
       "opponent": "주니치 드래곤즈",
@@ -24,6 +31,103 @@
       "file": "matches/2026-09-10_1800_vs_도쿄_야쿠르트_스왈로스.json"
     }
   ],
-  "hitters": [],
-  "pitchers": []
+  "hitters": [
+    {
+      "name": "浦田",
+      "pos": "1번 2루수",
+      "file": "hitters/浦田.json"
+    },
+    {
+      "name": "キャベッジ",
+      "pos": "2번 중견수",
+      "file": "hitters/キャベッジ.json"
+    },
+    {
+      "name": "ダルベック",
+      "pos": "3번 1루수",
+      "file": "hitters/ダルベック.json"
+    },
+    {
+      "name": "大城",
+      "pos": "4번 포수",
+      "file": "hitters/大城.json"
+    },
+    {
+      "name": "丸",
+      "pos": "5번 좌익수",
+      "file": "hitters/丸.json"
+    },
+    {
+      "name": "佐々木",
+      "pos": "대주자/우익수",
+      "file": "hitters/佐々木.json"
+    },
+    {
+      "name": "泉口",
+      "pos": "6번 유격수",
+      "file": "hitters/泉口.json"
+    },
+    {
+      "name": "마츠모토 와타루",
+      "pos": "7번 우익수/좌익수",
+      "file": "hitters/마츠모토_와타루.json"
+    },
+    {
+      "name": "石塚",
+      "pos": "8번 3루수",
+      "file": "hitters/石塚.json"
+    },
+    {
+      "name": "鈴木大",
+      "pos": "대타/중견수",
+      "file": "hitters/鈴木大.json"
+    },
+    {
+      "name": "中山",
+      "pos": "대타",
+      "file": "hitters/中山.json"
+    },
+    {
+      "name": "門脇",
+      "pos": "대타/3루수",
+      "file": "hitters/門脇.json"
+    }
+  ],
+  "pitchers": [
+    {
+      "name": "平内",
+      "pos": "투수",
+      "file": "pitchers/平内.json"
+    },
+    {
+      "name": "森田",
+      "pos": "투수",
+      "file": "pitchers/森田.json"
+    },
+    {
+      "name": "則本",
+      "pos": "투수",
+      "file": "pitchers/則本.json"
+    },
+    {
+      "name": "マタ",
+      "pos": "9번 투수",
+      "file": "pitchers/マタ.json"
+    },
+    {
+      "name": "代木",
+      "pos": "투수",
+      "file": "pitchers/代木.json"
+    },
+    {
+      "name": "船迫",
+      "pos": "투수",
+      "file": "pitchers/船迫.json"
+    },
+    {
+      "name": "堀田",
+      "pos": "투수",
+      "file": "pitchers/堀田.json"
+    }
+  ]
 }

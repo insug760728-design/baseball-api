@@ -2,13 +2,20 @@
   "team_name": "지바 롯데 마린스",
   "league": "NPB",
   "period": {
-    "start_date": "2026-09-09",
+    "start_date": "2026-09-08",
     "end_date": "2026-09-10"
   },
-  "total_matches": 2,
-  "hitters_count": 0,
-  "pitchers_count": 0,
+  "total_matches": 3,
+  "hitters_count": 12,
+  "pitchers_count": 6,
   "matches": [
+    {
+      "date": "2026-09-08 18:00",
+      "opponent": "도호쿠 라쿠텐 골든이글스",
+      "score": "3 : 2",
+      "result": "승",
+      "file": "matches/2026-09-08_1800_vs_도호쿠_라쿠텐_골든이글스.json"
+    },
     {
       "date": "2026-09-09 18:00",
       "opponent": "도호쿠 라쿠텐 골든이글스",
@@ -24,6 +31,98 @@
       "file": "matches/2026-09-10_1800_vs_도호쿠_라쿠텐_골든이글스.json"
     }
   ],
-  "hitters": [],
-  "pitchers": []
+  "hitters": [
+    {
+      "name": "藤原",
+      "pos": "1번 중견수",
+      "file": "hitters/藤原.json"
+    },
+    {
+      "name": "山口",
+      "pos": "2번 지명타자",
+      "file": "hitters/山口.json"
+    },
+    {
+      "name": "西川",
+      "pos": "3번 우익수",
+      "file": "hitters/西川.json"
+    },
+    {
+      "name": "佐藤",
+      "pos": "4번 1루수/포수",
+      "file": "hitters/佐藤.json"
+    },
+    {
+      "name": "寺地",
+      "pos": "5번 3루수",
+      "file": "hitters/寺地.json"
+    },
+    {
+      "name": "小川",
+      "pos": "6번 2루수",
+      "file": "hitters/小川.json"
+    },
+    {
+      "name": "井上",
+      "pos": "7번 좌익수",
+      "file": "hitters/井上.json"
+    },
+    {
+      "name": "松川",
+      "pos": "8번 포수",
+      "file": "hitters/松川.json"
+    },
+    {
+      "name": "ソト",
+      "pos": "대타/1루수",
+      "file": "hitters/ソト.json"
+    },
+    {
+      "name": "池田",
+      "pos": "1루수",
+      "file": "hitters/池田.json"
+    },
+    {
+      "name": "야마사키 소이치로",
+      "pos": "9번 유격수",
+      "file": "hitters/야마사키_소이치로.json"
+    },
+    {
+      "name": "茶谷",
+      "pos": "대주자/유격수",
+      "file": "hitters/茶谷.json"
+    }
+  ],
+  "pitchers": [
+    {
+      "name": "毛利",
+      "pos": "선발투수",
+      "file": "pitchers/毛利.json"
+    },
+    {
+      "name": "八木",
+      "pos": "구원투수",
+      "file": "pitchers/八木.json"
+    },
+    {
+      "name": "小野",
+      "pos": "구원투수",
+      "file": "pitchers/小野.json"
+    },
+    {
+      "name": "中森",
+      "pos": "구원투수",
+      "file": "pitchers/中森.json"
+    },
+    {
+      "name": "澤田",
+      "pos": "구원투수",
+      "file": "pitchers/澤田.json"
+    },
+    {
+      "name": "宮﨑颯",
+      "pos": "구원투수",
+      "file": "pitchers/宮﨑颯.json"
+    }
+  ]
 }

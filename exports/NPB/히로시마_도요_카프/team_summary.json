@@ -2,13 +2,20 @@
   "team_name": "히로시마 도요 카프",
   "league": "NPB",
   "period": {
-    "start_date": "2026-09-09",
+    "start_date": "2026-09-08",
     "end_date": "2026-09-10"
   },
-  "total_matches": 2,
-  "hitters_count": 0,
-  "pitchers_count": 0,
+  "total_matches": 3,
+  "hitters_count": 9,
+  "pitchers_count": 2,
   "matches": [
+    {
+      "date": "2026-09-08 18:00",
+      "opponent": "한신 타이거스",
+      "score": "0 : 0",
+      "result": "패",
+      "file": "matches/2026-09-08_1800_vs_한신_타이거스.json"
+    },
     {
       "date": "2026-09-09 18:00",
       "opponent": "한신 타이거스",
@@ -24,6 +31,63 @@
       "file": "matches/2026-09-10_1800_vs_요코하마_DeNA_베이스타즈.json"
     }
   ],
-  "hitters": [],
-  "pitchers": []
+  "hitters": [
+    {
+      "name": "大盛",
+      "pos": "1번 중견수",
+      "file": "hitters/大盛.json"
+    },
+    {
+      "name": "菊池",
+      "pos": "2번 2루수",
+      "file": "hitters/菊池.json"
+    },
+    {
+      "name": "中村奨",
+      "pos": "3번 좌익수",
+      "file": "hitters/中村奨.json"
+    },
+    {
+      "name": "坂倉",
+      "pos": "4번 3루수/1루수",
+      "file": "hitters/坂倉.json"
+    },
+    {
+      "name": "佐々木",
+      "pos": "5번 우익수/3루수",
+      "file": "hitters/佐々木.json"
+    },
+    {
+      "name": "佐藤啓",
+      "pos": "6번 1루수",
+      "file": "hitters/佐藤啓.json"
+    },
+    {
+      "name": "名原",
+      "pos": "우익수",
+      "file": "hitters/名原.json"
+    },
+    {
+      "name": "持丸",
+      "pos": "7번 포수",
+      "file": "hitters/持丸.json"
+    },
+    {
+      "name": "勝田",
+      "pos": "8번 유격수",
+      "file": "hitters/勝田.json"
+    }
+  ],
+  "pitchers": [
+    {
+      "name": "床田",
+      "pos": "9번 투수",
+      "file": "pitchers/床田.json"
+    },
+    {
+      "name": "森浦",
+      "pos": "투수",
+      "file": "pitchers/森浦.json"
+    }
+  ]
 }
