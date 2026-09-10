@@ -10137,6 +10137,183 @@ function getFullModalMatchList() {
 
       const sport = data.sport_code || match.sport_code;
 
+      // 야구 전용 3열 대칭 비교 표: [홈팀 수치] — [가운데 비교 지표] — [원정팀 수치]
+      function renderBaseballSymmetricTable(homeLast, awayLast, isH2H, match) {
+        if (!homeLast && !awayLast) {
+          return `
+            <div class="p-3 text-center text-muted small" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:6px;">
+              직전 공식 경기 기록이 없습니다.
+            </div>`;
+        }
+
+        const hTeamName = match.home_team_name;
+        const aTeamName = match.away_team_name;
+
+        // 1. 홈팀 직전 기록 추출
+        let hs = {}, hbp = {}, hbat = {}, hScore = 0, hOppScore = 0, hDate = '', hOpp = '', hResEmoji = '', hSubnote = '';
+        if (isH2H) {
+          const g = homeLast;
+          hDate = g.date || (g.match_date ? g.match_date.slice(5, 10) : '');
+          hs = g.home_starter || {};
+          hbp = g.home_bullpen || {};
+          hbat = g.home_batting || {};
+          hScore = g.home_score ?? 0;
+          hOppScore = g.away_score ?? 0;
+          hOpp = g.away_team_name;
+          hResEmoji = hScore > hOppScore ? '승 ✅' : (hScore < hOppScore ? '패 ❌' : '무 🟰');
+          hSubnote = `🗓️ ${hDate} 맞대결 (${hScore}:${hOppScore})`;
+        } else if (homeLast) {
+          const g = homeLast;
+          const isHHome = (g.perspective_team === g.home_team_name || g.home_team_name === hTeamName);
+          hs = g.perspective_starter || (isHHome ? g.home_starter : g.away_starter) || {};
+          hbp = g.perspective_bullpen || (isHHome ? g.home_bullpen : g.away_bullpen) || {};
+          hbat = g.perspective_batting || (isHHome ? g.home_batting : g.away_batting) || {};
+          hScore = isHHome ? (g.home_score ?? 0) : (g.away_score ?? 0);
+          hOppScore = isHHome ? (g.away_score ?? 0) : (g.home_score ?? 0);
+          hOpp = g.opponent || (isHHome ? g.away_team_name : g.home_team_name);
+          hDate = g.date || (g.match_date ? g.match_date.slice(5, 10) : '');
+          hResEmoji = g.result_emoji || (hScore > hOppScore ? '승 ✅' : (hScore < hOppScore ? '패 ❌' : '무 🟰'));
+          hSubnote = `${formatTeamName(hOpp)}전 (${hDate}) ${hScore}:${hOppScore} ${hResEmoji}`;
+        }
+
+        // 2. 원정팀 직전 기록 추출
+        let as = {}, abp = {}, abat = {}, aScore = 0, aOppScore = 0, aDate = '', aOpp = '', aResEmoji = '', aSubnote = '';
+        if (isH2H) {
+          const g = homeLast;
+          aDate = g.date || (g.match_date ? g.match_date.slice(5, 10) : '');
+          as = g.away_starter || {};
+          abp = g.away_bullpen || {};
+          abat = g.away_batting || {};
+          aScore = g.away_score ?? 0;
+          aOppScore = g.home_score ?? 0;
+          aOpp = g.home_team_name;
+          aResEmoji = aScore > aOppScore ? '승 ✅' : (aScore < aOppScore ? '패 ❌' : '무 🟰');
+          aSubnote = `🗓️ ${aDate} 맞대결 (${aScore}:${aOppScore})`;
+        } else if (awayLast) {
+          const g = awayLast;
+          const isAHome = (g.perspective_team === g.home_team_name || g.home_team_name === aTeamName);
+          as = g.perspective_starter || (isAHome ? g.home_starter : g.away_starter) || {};
+          abp = g.perspective_bullpen || (isAHome ? g.home_bullpen : g.away_bullpen) || {};
+          abat = g.perspective_batting || (isAHome ? g.home_batting : g.away_batting) || {};
+          aScore = isAHome ? (g.home_score ?? 0) : (g.away_score ?? 0);
+          aOppScore = isAHome ? (g.away_score ?? 0) : (g.home_score ?? 0);
+          aOpp = g.opponent || (isAHome ? g.away_team_name : g.home_team_name);
+          aDate = g.date || (g.match_date ? g.match_date.slice(5, 10) : '');
+          aResEmoji = g.result_emoji || (aScore > aOppScore ? '승 ✅' : (aScore < aOppScore ? '패 ❌' : '무 🟰'));
+          aSubnote = `${formatTeamName(aOpp)}전 (${aDate}) ${aScore}:${aOppScore} ${aResEmoji}`;
+        }
+
+        // 승패 결정 뱃지 포맷
+        function formatDecision(dec) {
+          if (!dec) return '';
+          const isW = dec.includes('승') || dec.includes('W');
+          const isL = dec.includes('패') || dec.includes('L');
+          const isS = dec.includes('세') || dec.includes('SV');
+          const isH = dec.includes('홀') || dec.includes('HD');
+          if (isW) return `<span class="badge" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:0.62rem; padding:1px 4px; font-weight:800;">승</span>`;
+          if (isL) return `<span class="badge" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.62rem; padding:1px 4px; font-weight:800;">패</span>`;
+          if (isS) return `<span class="badge" style="background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; font-size:0.62rem; padding:1px 4px; font-weight:800;">세이브</span>`;
+          if (isH) return `<span class="badge" style="background:#f8fafc; color:#475569; border:1px solid #cbd5e1; font-size:0.62rem; padding:1px 4px; font-weight:800;">홀드</span>`;
+          return '';
+        }
+
+        // 선발 투수 데이터
+        const hsName = hs.name ? formatPlayerKorean(hs.name) : '-';
+        const asName = as.name ? formatPlayerKorean(as.name) : '-';
+        const hsDec = formatDecision(hs.decision);
+        const asDec = formatDecision(as.decision);
+        const hsEra = (hs.era && hs.era !== '-') ? `ERA ${hs.era}` : '-';
+        const asEra = (as.era && as.era !== '-') ? `ERA ${as.era}` : '-';
+        const hsIpStr = hs.ip ? `${hs.ip}이닝${hs.np ? ` (${hs.np}구)` : ''}` : '-';
+        const asIpStr = as.ip ? `${as.ip}이닝${as.np ? ` (${as.np}구)` : ''}` : '-';
+        const hsPitchDetail = (hs.so !== undefined || hs.bb !== undefined || hs.er !== undefined) ? 
+          `${hs.so ?? 0}K · ${hs.bb ?? 0}사구 · ${hs.er ?? 0}자책` : '-';
+        const asPitchDetail = (as.so !== undefined || as.bb !== undefined || as.er !== undefined) ? 
+          `${as.so ?? 0}K · ${as.bb ?? 0}사구 · ${as.er ?? 0}자책` : '-';
+
+        // 불펜 투수 데이터
+        const hbpIpStr = (hbp.ip && hbp.ip !== '0.0' && hbp.ip !== '-') ? 
+          `${hbp.ip}이닝${hbp.count ? ` (${hbp.count}명)` : ''} · ${hbp.er ?? 0}실점` : 
+          (hs.ip ? `불펜 무실점` : '-');
+        const abpIpStr = (abp.ip && abp.ip !== '0.0' && abp.ip !== '-') ? 
+          `${abp.ip}이닝${abp.count ? ` (${abp.count}명)` : ''} · ${abp.er ?? 0}실점` : 
+          (as.ip ? `불펜 무실점` : '-');
+
+        // 타격 데이터
+        const hHits = hbat.hits ?? (homeLast?.details?.period_scores?.summary?.home?.H ?? homeLast?.details?.team_stats?.hits?.home ?? '-');
+        const aHits = abat.hits ?? (awayLast?.details?.period_scores?.summary?.away?.H ?? awayLast?.details?.team_stats?.hits?.away ?? '-');
+        const hHrCount = hbat.home_runs ?? 0;
+        const aHrCount = abat.home_runs ?? 0;
+        const hHrNames = (hbat.hr_names && hbat.hr_names.length > 0) ? `(${hbat.hr_names.map(formatPlayerKorean).join(', ')})` : '';
+        const aHrNames = (abat.hr_names && abat.hr_names.length > 0) ? `(${abat.hr_names.map(formatPlayerKorean).join(', ')})` : '';
+        const hHrStr = hHrCount > 0 ? `<span style="color:#dc2626; font-weight:800;">${hHrCount}개</span> <span style="font-size:0.65rem; color:#64748b;">${hHrNames}</span>` : '0개';
+        const aHrStr = aHrCount > 0 ? `<span style="color:#dc2626; font-weight:800;">${aHrCount}개</span> <span style="font-size:0.65rem; color:#64748b;">${aHrNames}</span>` : '0개';
+        const hBb = hbat.walks !== undefined ? `${hbat.walks}개` : (homeLast?.details?.period_scores?.summary?.home?.B ? `${homeLast.details.period_scores.summary.home.B}개` : '-');
+        const aBb = abat.walks !== undefined ? `${abat.walks}개` : (awayLast?.details?.period_scores?.summary?.away?.B ? `${awayLast.details.period_scores.summary.away.B}개` : '-');
+
+        function renderRow(leftHtml, centerLabel, rightHtml, isAlternate) {
+          const bg = isAlternate ? 'background:#f8fafc;' : 'background:#ffffff;';
+          return `
+            <div class="d-flex align-items-center justify-content-between py-1 px-2 border-bottom" style="${bg} border-color:#e2e8f0; font-size:0.73rem; min-height:30px;">
+              <div style="flex: 1 1 38%; text-align:right; padding-right:8px; font-weight:600; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                ${leftHtml}
+              </div>
+              <div style="flex: 0 0 24%; min-width:88px; text-align:center;">
+                <span class="badge" style="background:#e2e8f0; color:#334155; font-weight:800; font-size:0.64rem; padding:2px 6px; border-radius:4px; letter-spacing:-0.2px;">
+                  ${centerLabel}
+                </span>
+              </div>
+              <div style="flex: 1 1 38%; text-align:left; padding-left:8px; font-weight:600; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                ${rightHtml}
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="baseball-symmetric-table mb-2 rounded-2 overflow-hidden" style="background:#ffffff; border:1.5px solid #cbd5e1; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+            <!-- 헤더 바 (팀명 및 직전경기 개요) -->
+            <div class="d-flex align-items-center justify-content-between py-1.5 px-2 border-bottom" style="background:#f1f5f9; border-color:#cbd5e1 !important;">
+              <!-- 홈팀 헤더 -->
+              <div style="flex: 1 1 38%; text-align:right; padding-right:6px;">
+                <div class="d-flex align-items-center justify-content-end gap-1">
+                  <span class="badge" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:0.62rem; padding:1px 4px; font-weight:800;">홈</span>
+                  <span style="font-size:0.86rem; font-weight:900; color:#0f172a;" class="text-truncate">${formatTeamName(hTeamName)}</span>
+                </div>
+                <div style="font-size:0.63rem; color:#64748b; font-weight:600; margin-top:1px;">${hSubnote}</div>
+              </div>
+
+              <!-- 중앙 뱃지 -->
+              <div style="flex: 0 0 24%; min-width:80px; text-align:center;">
+                <span class="badge" style="background:#0f172a; color:#ffffff; font-size:0.65rem; padding:3px 6px; font-weight:800;">
+                  ${isH2H ? '직전 맞대결' : '직전경기 비교'}
+                </span>
+              </div>
+
+              <!-- 원정팀 헤더 -->
+              <div style="flex: 1 1 38%; text-align:left; padding-left:6px;">
+                <div class="d-flex align-items-center justify-content-start gap-1">
+                  <span style="font-size:0.86rem; font-weight:900; color:#0f172a;" class="text-truncate">${formatTeamName(aTeamName)}</span>
+                  <span class="badge" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.62rem; padding:1px 4px; font-weight:800;">원정</span>
+                </div>
+                <div style="font-size:0.63rem; color:#64748b; font-weight:600; margin-top:1px;">${aSubnote}</div>
+              </div>
+            </div>
+
+            <!-- 대칭 비교 행들: [홈팀 수치] — [가운데 지표] — [원정팀 수치] -->
+            ${renderRow(`${hsName} ${hsDec}`, '👤 선발 투수', `${asDec} ${asName}`, false)}
+            ${renderRow(hsEra, '📈 평균 방어율', asEra, true)}
+            ${renderRow(hsIpStr, '⏱️ 던진 이닝', asIpStr, false)}
+            ${renderRow(hsPitchDetail, '🎯 선발 투구내용', asPitchDetail, true)}
+            ${renderRow(hbpIpStr, '🛡️ 불펜 (실점)', abpIpStr, false)}
+            ${renderRow(`${hHits}안타`, '⚾ 팀 안타', `${aHits}안타`, true)}
+            ${renderRow(hHrStr, '💥 홈런', aHrStr, false)}
+            ${renderRow(hBb, '🎯 볼 수 (사사구)', aBb, true)}
+            ${renderRow(`<span style="font-weight:900; font-size:0.92rem; color:#1e293b;">${hScore}득점</span>`, '🏆 최종 득점', `<span style="font-weight:900; font-size:0.92rem; color:#1e293b;">${aScore}득점</span>`, false)}
+          </div>
+        `;
+      }
+
       // 3열 경기 바 단일 렌더러 함수: [홈팀 + 선발] — [가운데 스코어/승무패] — [원정팀 + 선발]
       function renderMatchupBar(g, titleBadge, titleText, sportCode, focusTeam) {
         if (!g) {
@@ -10316,7 +10493,9 @@ function getFullModalMatchList() {
       const isH2H = homeLast && awayLast && (homeLast.match_id === awayLast.match_id);
 
       let barsHtml = '';
-      if (isH2H) {
+      if (sport === 'BASEBALL') {
+        barsHtml = renderBaseballSymmetricTable(homeLast, awayLast, isH2H, match);
+      } else if (isH2H) {
         // 단일 3열 맞대결 경기 바
         const badge = `<span class="badge bg-primary text-white me-1" style="font-size:0.65rem; font-weight:800;">맞대결</span>`;
         barsHtml = renderMatchupBar(homeLast, badge, '직전 맞대결 결과', sport, null);
@@ -10334,7 +10513,7 @@ function getFullModalMatchList() {
         <div class="slim-history-container p-2" style="background:#f8fafc; border-top:1px solid #e2e8f0; border-radius:0 0 8px 8px;">
           <div class="d-flex align-items-center justify-content-between mb-2 px-1">
             <span style="font-size:0.75rem; font-weight:800; color:#0f172a;">
-              📋 양 팀 바로 직전 경기 상세 결과 (단 1경기)
+              ${sport === 'BASEBALL' ? '📋 직전 경기 상세 비교 (선발 · 불펜 · 타격)' : '📋 양 팀 바로 직전 경기 상세 결과 (단 1경기)'}
             </span>
             <span class="badge bg-white text-dark border" style="font-size:0.65rem; border-color:#cbd5e1 !important; font-weight:700;">
               ${isH2H ? '직전 맞대결 1경기' : '각 팀 직전 1경기'}

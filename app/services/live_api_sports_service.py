@@ -724,6 +724,39 @@ def parse_utc_to_kst(utc_str: str) -> tuple[Optional[datetime], str]:
         return None, ''
 
 
+def parse_ip_to_outs(ip_val: Any) -> int:
+    if not ip_val:
+        return 0
+    s = str(ip_val).strip()
+    if ' ' in s:
+        parts = s.split(' ')
+        try:
+            whole = int(parts[0])
+            frac = parts[1]
+            if frac == '1/3': return whole * 3 + 1
+            if frac == '2/3': return whole * 3 + 2
+            return whole * 3
+        except Exception:
+            return 0
+    if '/' in s:
+        if s == '1/3': return 1
+        if s == '2/3': return 2
+        return 0
+    try:
+        f = float(s)
+        whole = int(f)
+        frac = round((f - whole) * 10)
+        return whole * 3 + frac
+    except Exception:
+        return 0
+
+
+def outs_to_ip_str(outs: int) -> str:
+    w = outs // 3
+    r = outs % 3
+    return f"{w}.{r}" if r > 0 else f"{w}.0"
+
+
 class LiveApiSportsService:
     _history_cache: Dict[str, Any] = {}
 
@@ -1256,12 +1289,19 @@ class LiveApiSportsService:
                 # 선발투수 정보 (야구) 및 주요 선수 정보
                 home_starter = {}
                 away_starter = {}
+                home_bullpen = {}
+                away_bullpen = {}
+                home_batting = {}
+                away_batting = {}
                 home_scorers = []
                 away_scorers = []
 
                 if sport_code == 'BASEBALL':
                     try:
                         pstats = db.query(PlayerMatchStat).filter(PlayerMatchStat.match_id == m.id).all()
+                        h_pitchers, a_pitchers = [], []
+                        h_hitters, a_hitters = [], []
+
                         for ps in pstats:
                             pos = ps.position or ''
                             extra = {}
@@ -1270,29 +1310,99 @@ class LiveApiSportsService:
                                     extra = json.loads(ps.extra_stats) if isinstance(ps.extra_stats, str) else ps.extra_stats
                                 except Exception:
                                     extra = {}
-                            is_st = '선발' in pos or extra.get('is_starter') is True or extra.get('starter') is True or extra.get('pitcher_order') == 1
-                            if is_st and (extra.get('player_type') == 'PITCHER' or extra.get('type') == 'PITCHER' or 'P' in pos or '투수' in pos):
-                                st_obj = {
-                                    'name': ps.player_name,
-                                    'ip': str(extra.get('ip', '')),
-                                    'r': extra.get('r', 0),
-                                    'er': extra.get('er', 0),
-                                    'so': extra.get('so', 0),
-                                    'bb': extra.get('bb', 0),
-                                    'h': extra.get('h', 0),
-                                    'hr': extra.get('hr', 0),
-                                    'np': extra.get('np', 0),
-                                    'era': str(extra.get('era', '')),
-                                    'decision': extra.get('decision', '')
-                                }
-                                if ps.team_name == m.home_team_name or m.home_team_name in ps.team_name or ps.team_name in m.home_team_name:
-                                    if not home_starter:
-                                        home_starter = st_obj
+                            p_type = extra.get('player_type') or extra.get('type') or ''
+                            is_p = p_type == 'PITCHER' or 'P' in pos or '투수' in pos
+                            is_h = p_type == 'HITTER' or '타' in pos or any(k in pos for k in ['DH', 'RF', 'CF', 'LF', '1B', '2B', '3B', 'SS', 'C'])
+
+                            p_data = {'name': ps.player_name, **extra}
+                            is_home_tm = (ps.team_name == m.home_team_name or m.home_team_name in (ps.team_name or '') or (ps.team_name or '') in m.home_team_name)
+
+                            if is_p:
+                                if is_home_tm:
+                                    h_pitchers.append(p_data)
                                 else:
-                                    if not away_starter:
-                                        away_starter = st_obj
+                                    a_pitchers.append(p_data)
+                            if is_h:
+                                if is_home_tm:
+                                    h_hitters.append(p_data)
+                                else:
+                                    a_hitters.append(p_data)
+
+                        def parse_baseball_team(pitchers, hitters, tm_name, is_h_side):
+                            starter = next((p for p in pitchers if p.get('is_starter') or p.get('starter') or p.get('pitcher_order') == 1), None)
+                            if not starter and pitchers:
+                                starter = pitchers[0]
+                            st_obj = {}
+                            if starter:
+                                st_obj = {
+                                    'name': starter.get('name', ''),
+                                    'ip': str(starter.get('ip', '')),
+                                    'np': starter.get('np', 0),
+                                    'r': starter.get('r', 0),
+                                    'er': starter.get('er', 0),
+                                    'so': starter.get('so', 0),
+                                    'bb': starter.get('bb', 0),
+                                    'h': starter.get('h', 0),
+                                    'hr': starter.get('hr', 0),
+                                    'era': str(starter.get('era', '')),
+                                    'decision': starter.get('decision', '')
+                                }
+
+                            bullpen = [p for p in pitchers if p != starter]
+                            bp_outs = sum(parse_ip_to_outs(p.get('ip')) for p in bullpen)
+                            bp_ip = outs_to_ip_str(bp_outs)
+                            bp_r = sum(p.get('r', 0) for p in bullpen)
+                            bp_er = sum(p.get('er', 0) for p in bullpen)
+                            bp_so = sum(p.get('so', 0) for p in bullpen)
+                            bp_bb = sum(p.get('bb', 0) for p in bullpen)
+                            bp_h = sum(p.get('h', 0) for p in bullpen)
+                            bp_decisions = [f"{p['name']}({p['decision']})" for p in bullpen if p.get('decision')]
+
+                            bp_obj = {
+                                'ip': bp_ip,
+                                'count': len(bullpen),
+                                'r': bp_r,
+                                'er': bp_er,
+                                'so': bp_so,
+                                'bb': bp_bb,
+                                'h': bp_h,
+                                'decisions': bp_decisions
+                            }
+
+                            tot_h = sum(h.get('h', 0) for h in hitters)
+                            tot_hr = sum(h.get('hr', 0) for h in hitters)
+                            hr_names = [f"{h['name']}({h['hr']}홈런)" if h.get('hr', 0) > 1 else f"{h['name']}" for h in hitters if h.get('hr', 0) > 0]
+                            tot_bb = sum(h.get('bb', 0) for h in hitters)
+                            tot_so = sum(h.get('so', 0) for h in hitters)
+                            tot_r = sum(h.get('r', 0) for h in hitters)
+
+                            # fallback to details if hitters is empty
+                            if not hitters and m.details:
+                                try:
+                                    ps_dict = json.loads(m.details.period_scores) if isinstance(m.details.period_scores, str) else (m.details.period_scores or {})
+                                    side_sum = ps_dict.get('summary', {}).get('home' if is_h_side else 'away', {})
+                                    if side_sum:
+                                        tot_h = side_sum.get('H', tot_h)
+                                        tot_bb = side_sum.get('B', tot_bb)
+                                        tot_r = side_sum.get('R', tot_r)
+                                except Exception:
+                                    pass
+
+                            batting_obj = {
+                                'hits': tot_h,
+                                'home_runs': tot_hr,
+                                'hr_names': hr_names,
+                                'walks': tot_bb,
+                                'strikeouts': tot_so,
+                                'runs': tot_r
+                            }
+                            return st_obj, bp_obj, batting_obj
+
+                        home_starter, home_bullpen, home_batting = parse_baseball_team(h_pitchers, h_hitters, m.home_team_name, True)
+                        away_starter, away_bullpen, away_batting = parse_baseball_team(a_pitchers, a_hitters, m.away_team_name, False)
+
                     except Exception as e:
-                        logger.warning(f"Error fetching starters for match {m.id}: {e}")
+                        logger.warning(f"Error fetching baseball details for match {m.id}: {e}")
 
                 elif sport_code == 'SOCCER':
                     try:
@@ -1340,9 +1450,18 @@ class LiveApiSportsService:
                     'result': result,
                     'result_emoji': result_emoji,
                     'starter': starter_info,
-                    'starter_detail': starter_detail,
                     'home_starter': home_starter,
                     'away_starter': away_starter,
+                    'home_bullpen': home_bullpen,
+                    'away_bullpen': away_bullpen,
+                    'home_batting': home_batting,
+                    'away_batting': away_batting,
+                    'perspective_starter': home_starter if is_home else away_starter,
+                    'perspective_bullpen': home_bullpen if is_home else away_bullpen,
+                    'perspective_batting': home_batting if is_home else away_batting,
+                    'opponent_starter': away_starter if is_home else home_starter,
+                    'opponent_bullpen': away_bullpen if is_home else home_bullpen,
+                    'opponent_batting': away_batting if is_home else home_batting,
                     'home_scorers': home_scorers,
                     'away_scorers': away_scorers,
                     'period_scores': period_scores,
