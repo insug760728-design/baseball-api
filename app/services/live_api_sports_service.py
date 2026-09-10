@@ -494,6 +494,11 @@ class LiveApiSportsService:
             data_yesterday = cls._make_request(f"/fixtures?date={d_yesterday}", sport="football")
             fixtures_yesterday = (data_yesterday or {}).get("response", [])
 
+        if include_adjacent or now_dt.hour >= 15:
+            # 오후/저녁 시간대에는 내일 예정 경기 목록도 자동 동기화
+            data_tomorrow = cls._make_request(f"/fixtures?date={d_tomorrow}", sport="football")
+            fixtures_tomorrow = (data_tomorrow or {}).get("response", [])
+
         all_fixtures_dict = {}
         for f in (fixtures_today + fixtures_yesterday + fixtures_tomorrow + fixtures_live):
             fid = f.get("fixture", {}).get("id")
@@ -581,6 +586,28 @@ class LiveApiSportsService:
                     }
                     best_match.details.period_scores = json.dumps(period_dict)
                     updated += 1
+                elif mapped_status == "SCHEDULED" and kst_dt:
+                    # DB에 없는 신규 예정 경기 자동 등록
+                    league = f.get("league", {})
+                    raw_lname = league.get("name", "")
+                    country = league.get("country", "")
+                    if country in ["England", "Spain", "Germany", "Italy", "France", "Netherlands", "Japan", "South-Korea", "Brazil", "Mexico", "Saudi-Arabia", "Portugal", "Belgium", "Turkey", "USA", "World"]:
+                        new_m = Match(
+                            official_id=str(fixture_info.get("id", "")),
+                            sport_code="SOCCER",
+                            league_name=f"{country} - {raw_lname}" if country != "World" else raw_lname,
+                            season=str(league.get("season", "2026")),
+                            round_name=league.get("round", "정규시즌"),
+                            match_date=kst_dt.strftime("%Y-%m-%d %H:%M"),
+                            home_team_name=h_name,
+                            away_team_name=a_name,
+                            home_score=0,
+                            away_score=0,
+                            status="SCHEDULED",
+                            stadium=fixture_info.get("venue", {}).get("name") or "스타디움"
+                        )
+                        db.add(new_m)
+                        updated += 1
             db.commit()
 
             # Broadcast real-time update via WebSocket & clear cache if any scores changed
