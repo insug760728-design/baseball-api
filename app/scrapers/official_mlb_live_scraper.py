@@ -344,6 +344,18 @@ class MlbOfficialScraper:
                 era = season_p.get("era", "-")
                 whip = season_p.get("whip", "-")
 
+                # 최근(단일 경기) 방어율 계산
+                try:
+                    ip_s = str(ip).strip()
+                    if '.' in ip_s:
+                        ip_parts = ip_s.split('.')
+                        outs = int(ip_parts[0]) * 3 + int(ip_parts[1])
+                    else:
+                        outs = int(float(ip_s)) * 3
+                    recent_era = f"{(er * 27.0 / outs):.2f}" if outs > 0 else ("0.00" if er == 0 else "-")
+                except Exception:
+                    recent_era = "-"
+
                 # 승패 결정
                 decision = ""
                 if p_stat.get("wins", 0) > 0: decision = "승리투수 (W)"
@@ -370,7 +382,8 @@ class MlbOfficialScraper:
                         "starter": is_starter,
                         "pitcher_order": p_idx + 1,
                         "ip": ip, "np": np, "h": h, "r": r, "er": er, "bb": bb,
-                        "so": so, "hr": hr, "era": era, "whip": whip,
+                        "so": so, "hr": hr, "era": era, "season_era": era,
+                        "recent_era": recent_era, "whip": whip,
                         "decision": decision
                     }
                 })

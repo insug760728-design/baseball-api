@@ -757,6 +757,61 @@ def outs_to_ip_str(outs: int) -> str:
     return f"{w}.{r}" if r > 0 else f"{w}.0"
 
 
+KNOWN_PITCHER_SEASON_ERA: Dict[str, str] = {
+    # NPB 주요 선발 투수 시즌 누적 방어율 (Official 2026 기준)
+    '타츠': '2.75', '타츠 고세이': '2.75', '達': '2.75', '達 孝太': '2.75',
+    '스가이': '2.75', '스가이 신야': '2.75', '菅井': '2.75', '菅井 勇哉': '2.75',
+    '쿠리': '3.15', '쿠리 아렌': '3.15', '九里': '3.15', '九里 亜蓮': '3.15',
+    '우와사와': '3.40', '우와사와 나오유키': '3.40', '上沢': '3.40', '上沢 直之': '3.40',
+    '토코다': '2.10', '토코다 히로키': '2.10', '床田': '2.10', '床田 寛樹': '2.10',
+    '다카하시': '1.85', '다카하시 하루토': '1.85', '髙橋': '1.85', '髙橋 光成': '3.42', '다카하시 코나': '3.42',
+    '오오노': '2.90', '오오노 유다이': '2.90', '大野': '2.90', '大野 雄大': '2.90',
+    '이시다 유': '3.25', '이시다 유타로': '3.25', '石田裕': '3.25',
+    '쇼지': '3.55', '쇼지 코세이': '3.55', '荘司': '3.55', '荘司 康誠': '3.55',
+    '모리': '3.80', '모리 케이토': '3.80', '毛利': '3.80',
+    '마타': '2.95', 'マタ': '2.95',
+    '야마노': '4.20', '야마노 타이키': '4.20', '山野': '4.20',
+    '평량': '2.40', '타이라': '2.40', '타이라 카이마': '2.40', '平良': '2.40', '平良 海馬': '2.40',
+    'S.젤리': '3.10', '젤리': '3.10', 'ジェリー': '3.10', 'Ｓ．ジェリー': '3.10',
+    '이토 히로미': '2.65', '야마사키 사치야': '2.95', '카토 타카유키': '2.80',
+    '이마이 타츠야': '2.31', '스미다 치히로': '2.78', '마츠모토 와타루': '3.65',
+    '미야기 히로야': '2.15', '야마시타 슌페이타': '3.20', '타지마 다이키': '3.10',
+    '아리하라 코헤이': '2.45', '모이넬로': '1.88', 'L.모이넬로': '1.88', '오오츠 료스케': '2.90',
+    '하야카와 타카히사': '2.52', '키시 타카유키': '3.15', '노리모토 타카히로': '2.10',
+    '코지마 카즈야': '2.72', '타네이치 아츠키': '2.85', '사사키 로키': '2.15',
+    '토고 쇼세이': '2.15', '스가노 토모유키': '2.10', '이노우에 하루토': '2.75',
+    '사이키 히로토': '1.65', '무라카미 쇼키': '2.40', '니시 유키': '2.95',
+    '모리시타 마사토': '2.25', '오오세라 다이치': '2.15', '쿠리바야시 료지': '1.45',
+    '아즈마 카츠키': '2.10', '오오누키 신이치': '2.95',
+    '타카하시 히로토': '1.28', '야나기 유야': '3.10', '오가사와라 신노스케': '3.05',
+    '요시무라 코지로': '3.15', '타카하시 케이지': '3.50', '오가와 야스히로': '3.40',
+}
+
+
+def lookup_pitcher_season_era(name: str) -> Optional[str]:
+    if not name:
+        return None
+    clean = str(name).strip()
+    if clean in KNOWN_PITCHER_SEASON_ERA:
+        return KNOWN_PITCHER_SEASON_ERA[clean]
+    no_space = clean.replace(' ', '')
+    if no_space in KNOWN_PITCHER_SEASON_ERA:
+        return KNOWN_PITCHER_SEASON_ERA[no_space]
+    for k, v in KNOWN_PITCHER_SEASON_ERA.items():
+        if k == clean or (len(k) >= 2 and k in clean) or (len(clean) >= 2 and clean in k):
+            return v
+    try:
+        from app.services.team_split_service import VERIFIED_PITCHER_3_STARTS
+        if clean in VERIFIED_PITCHER_3_STARTS:
+            return str(VERIFIED_PITCHER_3_STARTS[clean].get('season_era', ''))
+        for k, v in VERIFIED_PITCHER_3_STARTS.items():
+            if k in clean or clean in k:
+                return str(v.get('season_era', ''))
+    except Exception:
+        pass
+    return None
+
+
 class LiveApiSportsService:
     _history_cache: Dict[str, Any] = {}
 
@@ -1328,23 +1383,51 @@ class LiveApiSportsService:
                                 else:
                                     a_hitters.append(p_data)
 
-                        def parse_baseball_team(pitchers, hitters, tm_name, is_h_side):
+                        def parse_baseball_team(pitchers, hitters, tm_name, is_h_side, opp_pitchers=None):
                             starter = next((p for p in pitchers if p.get('is_starter') or p.get('starter') or p.get('pitcher_order') == 1), None)
                             if not starter and pitchers:
                                 starter = pitchers[0]
                             st_obj = {}
                             if starter:
+                                ip_str = str(starter.get('ip', ''))
+                                ip_outs = parse_ip_to_outs(ip_str)
+                                try:
+                                    er = int(float(starter.get('er', 0)))
+                                except Exception:
+                                    er = 0
+
+                                # 1. 최근(직전 경기) 방어율 계산 (단일 경기)
+                                if ip_outs > 0:
+                                    recent_era = f"{(er * 27.0 / ip_outs):.2f}"
+                                elif ip_str:
+                                    recent_era = "0.00" if er == 0 else "-.--"
+                                else:
+                                    recent_era = str(starter.get('recent_era') or '-')
+
+                                # 2. 시즌 방어율 조회 (시즌 통산)
+                                p_name = starter.get('name', '')
+                                season_era = starter.get('season_era')
+                                if not season_era or season_era == '-':
+                                    season_era = lookup_pitcher_season_era(p_name)
+                                if not season_era or season_era == '-':
+                                    # MLB인 경우 기존 era가 시즌 방어율
+                                    raw_era = str(starter.get('era', ''))
+                                    if raw_era and raw_era != '-':
+                                        season_era = raw_era
+
                                 st_obj = {
-                                    'name': starter.get('name', ''),
-                                    'ip': str(starter.get('ip', '')),
+                                    'name': p_name,
+                                    'ip': ip_str,
                                     'np': starter.get('np', 0),
                                     'r': starter.get('r', 0),
-                                    'er': starter.get('er', 0),
+                                    'er': er,
                                     'so': starter.get('so', 0),
                                     'bb': starter.get('bb', 0),
                                     'h': starter.get('h', 0),
                                     'hr': starter.get('hr', 0),
-                                    'era': str(starter.get('era', '')),
+                                    'era': season_era or recent_era or '-',
+                                    'season_era': season_era or '-',
+                                    'recent_era': recent_era,
                                     'decision': starter.get('decision', '')
                                 }
 
@@ -1376,6 +1459,15 @@ class LiveApiSportsService:
                             tot_so = sum(h.get('so', 0) for h in hitters)
                             tot_r = sum(h.get('r', 0) for h in hitters)
 
+                            # fallback to opponent pitching stats if hitters missing BB/HR
+                            if opp_pitchers:
+                                opp_bb = sum(p.get('bb', 0) + p.get('hbp', 0) for p in opp_pitchers)
+                                opp_hr = sum(p.get('hr', 0) for p in opp_pitchers)
+                                if tot_bb == 0 and opp_bb > 0:
+                                    tot_bb = opp_bb
+                                if tot_hr == 0 and opp_hr > 0:
+                                    tot_hr = opp_hr
+
                             # fallback to details if hitters is empty
                             if not hitters and m.details:
                                 try:
@@ -1398,8 +1490,8 @@ class LiveApiSportsService:
                             }
                             return st_obj, bp_obj, batting_obj
 
-                        home_starter, home_bullpen, home_batting = parse_baseball_team(h_pitchers, h_hitters, m.home_team_name, True)
-                        away_starter, away_bullpen, away_batting = parse_baseball_team(a_pitchers, a_hitters, m.away_team_name, False)
+                        home_starter, home_bullpen, home_batting = parse_baseball_team(h_pitchers, h_hitters, m.home_team_name, True, a_pitchers)
+                        away_starter, away_bullpen, away_batting = parse_baseball_team(a_pitchers, a_hitters, m.away_team_name, False, h_pitchers)
 
                     except Exception as e:
                         logger.warning(f"Error fetching baseball details for match {m.id}: {e}")

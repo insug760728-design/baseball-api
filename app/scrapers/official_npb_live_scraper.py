@@ -122,7 +122,20 @@ NPB_PLAYER_KO_MAP = {
     '達': '타츠', '菅井': '스가이', '九里': '쿠리', '上沢': '우와사와',
     '荘司': '쇼지', '毛利': '모리', '床田': '토코다', '髙橋': '다카하시', '高橋': '다카하시',
     '山野': '야마노', '石田裕': '이시다 유', '大野': '오오노', 'マタ': '마타',
-    '豆田': '마메다', '石井': '이시이', '松本': '마츠모토', '加藤': '카토', '岸': '키시'
+    '豆田': '마메다', '石井': '이시이', '松本': '마츠모토', '加藤': '카토', '岸': '키시',
+    '加藤貴': '카토 타카유키', '加藤 貴之': '카토 타카유키',
+    '髙島': '타카시마 타이스케', '高島': '타카시마 타이스케',
+    '高野脩': '타카노 슈타', '高野': '타카노 슈타',
+    '井上': '이노우에 하루토',
+    '吉村': '요시무라 코지로',
+    '深沢': '후카자와 호스케',
+    '金丸': '카네마루 유메토',
+    'オスナ': '오수나', 'ヘルナンデス': '에르난데스', 'マルティネス': '마르티네스', 'ルイーズ': '루이즈',
+    '吉田': '요시다', '坂本': '사카모토', '堀': '호리', '堀田': '호타', '大西': '오오니시',
+    '山岡': '야마오카', '岩嵜': '이와사키', '杉山': '스기야마', '松本健': '마츠모토 켄',
+    '柴田': '시바타', '森博': '모리 히로토', '森脇': '모리와키', '片山': '카타야마',
+    '田中瑛': '타나카 에이', '田嶋大': '타지마 다이키', '益田': '마스다', '篠原': '시노하라',
+    '若松': '와카마츠', '鈴木豪': '스즈키 고', '阪口': '사카구치', '黒木': '쿠로키', '齋藤': '사이토'
 }
 
 def translate_npb_player_name(raw: str) -> str:
@@ -493,10 +506,18 @@ class NpbOfficialScraper:
                 er = clean_int(cells[13]) if len(cells) > 13 else 0
 
                 try:
-                    ip_f = float(ip_raw)
-                    era = f"{(er * 9.0 / ip_f):.2f}" if ip_f > 0 else "0.00"
+                    ip_s = str(ip_raw).strip()
+                    if '.' in ip_s:
+                        ip_parts = ip_s.split('.')
+                        outs = int(ip_parts[0]) * 3 + int(ip_parts[1])
+                    else:
+                        outs = int(float(ip_s)) * 3
+                    recent_era = f"{(er * 27.0 / outs):.2f}" if outs > 0 else ("0.00" if er == 0 else "-")
                 except Exception:
-                    era = "0.00"
+                    recent_era = "0.00"
+
+                from app.services.live_api_sports_service import lookup_pitcher_season_era
+                season_era = lookup_pitcher_season_era(p_name) or lookup_pitcher_season_era(p_name_raw) or "-"
 
                 player_stats.append({
                     "team_name": t_name,
@@ -515,7 +536,11 @@ class NpbOfficialScraper:
                         "pitcher_order": p_order,
                         "name_raw": p_name_raw,
                         "ip": ip_raw, "np": np, "h": h, "r": r, "er": er, "bb": bb,
-                        "so": so, "hr": hr, "era": era, "whip": "-",
+                        "so": so, "hr": hr,
+                        "era": season_era if season_era != '-' else recent_era,
+                        "season_era": season_era,
+                        "recent_era": recent_era,
+                        "whip": "-",
                         "decision": dec_label
                     }
                 })

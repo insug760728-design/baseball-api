@@ -2,33 +2,40 @@
   "team_name": "도쿄 야쿠르트 스왈로스",
   "league": "NPB",
   "period": {
-    "start_date": "2026-09-08",
-    "end_date": "2026-09-10"
+    "start_date": "2026-09-01",
+    "end_date": "2026-09-11"
   },
-  "total_matches": 3,
-  "hitters_count": 9,
-  "pitchers_count": 3,
+  "total_matches": 4,
+  "hitters_count": 17,
+  "pitchers_count": 14,
   "matches": [
     {
-      "date": "2026-09-08 18:00",
-      "opponent": "요코하마 DeNA 베이스타즈",
-      "score": "3 : 1",
+      "date": "2026-09-01 18:00",
+      "opponent": "한신 타이거스",
+      "score": "2 : 6",
+      "result": "패",
+      "file": "matches/2026-09-01_1800_vs_한신_타이거스.json"
+    },
+    {
+      "date": "2026-09-02 18:00",
+      "opponent": "한신 타이거스",
+      "score": "5 : 3",
       "result": "승",
-      "file": "matches/2026-09-08_1800_vs_요코하마_DeNA_베이스타즈.json"
+      "file": "matches/2026-09-02_1800_vs_한신_타이거스.json"
     },
     {
-      "date": "2026-09-09 18:00",
-      "opponent": "요코하마 DeNA 베이스타즈",
-      "score": "2 : 9",
+      "date": "2026-09-03 18:00",
+      "opponent": "한신 타이거스",
+      "score": "4 : 7",
       "result": "패",
-      "file": "matches/2026-09-09_1800_vs_요코하마_DeNA_베이스타즈.json"
+      "file": "matches/2026-09-03_1800_vs_한신_타이거스.json"
     },
     {
-      "date": "2026-09-10 18:00",
-      "opponent": "요미우리 자이언츠",
-      "score": "0 : 0",
+      "date": "2026-09-04 18:00",
+      "opponent": "주니치 드래곤즈",
+      "score": "1 : 1",
       "result": "패",
-      "file": "matches/2026-09-10_1800_vs_요미우리_자이언츠.json"
+      "file": "matches/2026-09-04_1800_vs_주니치_드래곤즈.json"
     }
   ],
   "hitters": [
@@ -38,14 +45,74 @@
       "file": "hitters/長岡.json"
     },
     {
+      "name": "赤羽",
+      "pos": "2번 3루수/1루수",
+      "file": "hitters/赤羽.json"
+    },
+    {
       "name": "サンタナ",
-      "pos": "2번 좌익수",
+      "pos": "3번 좌익수",
       "file": "hitters/サンタナ.json"
     },
     {
+      "name": "야마다 노부요시",
+      "pos": "4번 1루수",
+      "file": "hitters/야마다_노부요시.json"
+    },
+    {
+      "name": "武岡",
+      "pos": "3루수",
+      "file": "hitters/武岡.json"
+    },
+    {
       "name": "増田",
-      "pos": "3번 우익수",
+      "pos": "5번 우익수",
       "file": "hitters/増田.json"
+    },
+    {
+      "name": "古賀",
+      "pos": "6번 포수",
+      "file": "hitters/古賀.json"
+    },
+    {
+      "name": "鈴木叶",
+      "pos": "포수",
+      "file": "hitters/鈴木叶.json"
+    },
+    {
+      "name": "岩田",
+      "pos": "7번 중견수",
+      "file": "hitters/岩田.json"
+    },
+    {
+      "name": "内山",
+      "pos": "8번 2루수",
+      "file": "hitters/内山.json"
+    },
+    {
+      "name": "伊藤",
+      "pos": "대타",
+      "file": "hitters/伊藤.json"
+    },
+    {
+      "name": "西村",
+      "pos": "대타",
+      "file": "hitters/西村.json"
+    },
+    {
+      "name": "並木",
+      "pos": "2번 좌익수",
+      "file": "hitters/並木.json"
+    },
+    {
+      "name": "宮本",
+      "pos": "4번 1루수",
+      "file": "hitters/宮本.json"
+    },
+    {
+      "name": "松本直",
+      "pos": "8번 포수",
+      "file": "hitters/松本直.json"
     },
     {
       "name": "オスナ",
@@ -53,46 +120,81 @@
       "file": "hitters/オスナ.json"
     },
     {
-      "name": "赤羽",
-      "pos": "5번 3루수",
-      "file": "hitters/赤羽.json"
-    },
-    {
-      "name": "内山",
-      "pos": "6번 2루수",
-      "file": "hitters/内山.json"
-    },
-    {
-      "name": "松本直",
-      "pos": "7번 포수",
-      "file": "hitters/松本直.json"
-    },
-    {
-      "name": "鈴木叶",
-      "pos": "대타/포수",
-      "file": "hitters/鈴木叶.json"
-    },
-    {
-      "name": "丸山和",
-      "pos": "9번 중견수",
-      "file": "hitters/丸山和.json"
+      "name": "モンテル",
+      "pos": "대주자/중견수",
+      "file": "hitters/モンテル.json"
     }
   ],
   "pitchers": [
     {
-      "name": "大西",
+      "name": "吉村",
+      "pos": "9번 투수",
+      "file": "pitchers/吉村.json"
+    },
+    {
+      "name": "キハダ",
       "pos": "투수",
-      "file": "pitchers/大西.json"
+      "file": "pitchers/キハダ.json"
+    },
+    {
+      "name": "リランソ",
+      "pos": "투수",
+      "file": "pitchers/リランソ.json"
     },
     {
       "name": "山野",
-      "pos": "8번 투수",
+      "pos": "9번 투수",
       "file": "pitchers/山野.json"
+    },
+    {
+      "name": "清水",
+      "pos": "투수",
+      "file": "pitchers/清水.json"
+    },
+    {
+      "name": "ウォルターズ",
+      "pos": "투수",
+      "file": "pitchers/ウォルターズ.json"
+    },
+    {
+      "name": "丸山翔",
+      "pos": "투수",
+      "file": "pitchers/丸山翔.json"
     },
     {
       "name": "石原",
       "pos": "투수",
       "file": "pitchers/石原.json"
+    },
+    {
+      "name": "増居",
+      "pos": "9번 투수",
+      "file": "pitchers/増居.json"
+    },
+    {
+      "name": "松本健",
+      "pos": "투수",
+      "file": "pitchers/松本健.json"
+    },
+    {
+      "name": "阪口",
+      "pos": "투수",
+      "file": "pitchers/阪口.json"
+    },
+    {
+      "name": "星",
+      "pos": "투수",
+      "file": "pitchers/星.json"
+    },
+    {
+      "name": "高梨",
+      "pos": "9번 투수",
+      "file": "pitchers/高梨.json"
+    },
+    {
+      "name": "廣澤",
+      "pos": "투수",
+      "file": "pitchers/廣澤.json"
     }
   ]
 }

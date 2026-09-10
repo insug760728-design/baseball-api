@@ -10308,8 +10308,38 @@ function getFullModalMatchList() {
         const asName = as.name ? formatPlayerKorean(as.name) : '-';
         const hsDec = formatDecision(hs.decision);
         const asDec = formatDecision(as.decision);
-        const hsEra = (hs.era && hs.era !== '-') ? `ERA ${hs.era}` : '-';
-        const asEra = (as.era && as.era !== '-') ? `ERA ${as.era}` : '-';
+
+        // 1) 시즌 방어율 (시즌 통산 평균자책점)
+        const hsSeasonEra = (hs.season_era && hs.season_era !== '-') ? `ERA ${hs.season_era}` : 
+                            ((hs.seasonEra && hs.seasonEra !== '-') ? `ERA ${hs.seasonEra}` : 
+                            ((hs.era && hs.era !== '-') ? `ERA ${hs.era}` : '-'));
+        const asSeasonEra = (as.season_era && as.season_era !== '-') ? `ERA ${as.season_era}` : 
+                            ((as.seasonEra && as.seasonEra !== '-') ? `ERA ${as.seasonEra}` : 
+                            ((as.era && as.era !== '-') ? `ERA ${as.era}` : '-'));
+
+        // 2) 최근 방어율 (직전 1경기 자책점/이닝 계산값)
+        function calcRecentEra(st) {
+          if (st.recent_era && st.recent_era !== '-') return `ERA ${st.recent_era}`;
+          if (st.recentEra && st.recentEra !== '-') return `ERA ${st.recentEra}`;
+          if (st.ip !== undefined && st.ip !== null && st.ip !== '' && st.er !== undefined) {
+            const s = String(st.ip).trim();
+            let outs = 0;
+            if (s.includes('.')) {
+              const parts = s.split('.');
+              outs = parseInt(parts[0], 10) * 3 + parseInt(parts[1], 10);
+            } else {
+              outs = Math.round(parseFloat(s) * 3);
+            }
+            if (outs > 0) {
+              return `ERA ${((Number(st.er) * 27.0) / outs).toFixed(2)}`;
+            }
+            return (Number(st.er) === 0) ? 'ERA 0.00' : '-';
+          }
+          return '-';
+        }
+        const hsRecentEra = calcRecentEra(hs);
+        const asRecentEra = calcRecentEra(as);
+
         const hsIpStr = hs.ip ? `${hs.ip}이닝${hs.np ? ` (${hs.np}구)` : ''}` : '-';
         const asIpStr = as.ip ? `${as.ip}이닝${as.np ? ` (${as.np}구)` : ''}` : '-';
         const hsPitchDetail = (hs.so !== undefined || hs.bb !== undefined || hs.er !== undefined) ? 
@@ -10388,14 +10418,15 @@ function getFullModalMatchList() {
 
             <!-- 대칭 비교 행들: [홈팀 수치] — [가운데 지표] — [원정팀 수치] -->
             ${renderRow(`${hsName} ${hsDec}`, '👤 선발 투수', `${asDec} ${asName}`, false)}
-            ${renderRow(hsEra, '📈 평균 방어율', asEra, true)}
-            ${renderRow(hsIpStr, '⏱️ 선발 이닝', asIpStr, false)}
-            ${renderRow(hsPitchDetail, '🎯 선발 투구내용', asPitchDetail, true)}
-            ${renderRow(hbpIpStr, '🛡️ 불펜 (실점)', abpIpStr, false)}
-            ${renderRow(`${hHits}안타`, '⚾ 팀 안타', `${aHits}안타`, true)}
-            ${renderRow(hHrStr, '💥 홈런', aHrStr, false)}
-            ${renderRow(hBb, '🎯 볼 수 (사사구)', aBb, true)}
-            ${renderRow(`<span style="font-weight:900; font-size:0.92rem; color:#1e293b;">${hScore}득점</span>`, '🏆 최종 득점', `<span style="font-weight:900; font-size:0.92rem; color:#1e293b;">${aScore}득점</span>`, false)}
+            ${renderRow(hsSeasonEra, '🌐 시즌 방어율', asSeasonEra, true)}
+            ${renderRow(hsRecentEra, '⚡ 최근 방어율', asRecentEra, false)}
+            ${renderRow(hsIpStr, '⏱️ 선발 이닝', asIpStr, true)}
+            ${renderRow(hsPitchDetail, '🎯 선발 투구내용', asPitchDetail, false)}
+            ${renderRow(hbpIpStr, '🛡️ 불펜 (실점)', abpIpStr, true)}
+            ${renderRow(`${hHits}안타`, '⚾ 팀 안타', `${aHits}안타`, false)}
+            ${renderRow(hHrStr, '💥 홈런', aHrStr, true)}
+            ${renderRow(hBb, '🎯 볼 수 (사사구)', aBb, false)}
+            ${renderRow(`<span style="font-weight:900; font-size:0.92rem; color:#1e293b;">${hScore}득점</span>`, '🏆 최종 득점', `<span style="font-weight:900; font-size:0.92rem; color:#1e293b;">${aScore}득점</span>`, true)}
           </div>
         `;
       }
