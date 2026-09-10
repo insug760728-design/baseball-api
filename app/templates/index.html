@@ -907,7 +907,7 @@ fetch('${apiUrl}')
           if (target) {
             await selectMatch(target.id, document.getElementById(`matchCard_${target.id}`));
             alert(`[공식 ${league} 실시간 수집 성공!]
-방금 끝난 [${target.away_team_name} vs ${target.home_team_name}] (${target.match_date})
+방금 끝난 [[홈] ${target.home_team_name} vs [원정] ${target.away_team_name}] (${target.match_date})
 1회부터 9회(연장)까지의 전광판 스코어보드와 타자 9명, 투수 전원 공식 기록이 화면에 반영되었습니다!`);
           }
         } else {

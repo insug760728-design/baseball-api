@@ -1486,22 +1486,46 @@
         max-width: 100% !important;
       }
       .toto-compact-table tr {
-        height: 25px !important;
+        height: 27px !important;
+        min-height: 27px !important;
       }
-      .toto-compact-table td {
-        padding: 2px 2px !important;
+      .toto-compact-table th, .toto-compact-table td {
+        padding: 1px 2px !important;
+        white-space: nowrap !important;
+        vertical-align: middle !important;
+      }
+      .toto-team-name {
+        font-size: 0.76rem !important;
+        font-weight: 700 !important;
+        white-space: nowrap !important;
+        max-width: 68px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: inline-block !important;
+        vertical-align: middle !important;
       }
       .betman-slip-btn {
-        width: 42px !important;
-        height: 23px !important;
+        width: 46px !important;
+        height: 24px !important;
         padding: 1px 2px !important;
         gap: 2px !important;
       }
       .betman-slip-btn .b-label {
-        font-size: 0.70rem !important;
+        font-size: 0.72rem !important;
+        font-weight: 800 !important;
       }
       .betman-slip-btn .b-pct {
-        font-size: 0.56rem !important;
+        font-size: 0.58rem !important;
+        font-weight: 600 !important;
+      }
+      @keyframes calcPulseGlow {
+        0% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7); border-color: #ea580c !important; }
+        50% { box-shadow: 0 0 15px 3px rgba(234, 88, 12, 0.4); border-color: #ea580c !important; }
+        100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); }
+      }
+      .calc-highlight-pulse {
+        animation: calcPulseGlow 1.2s ease-in-out !important;
+        border-radius: 8px !important;
       }
     }
 
@@ -2272,6 +2296,9 @@
             <span class="badge bg-danger text-white px-1.5 py-0.5" id="totoModalSaleBadge" style="font-size: 0.65rem; font-weight: 800;">발매중</span>
           </div>
           <div class="d-flex align-items-center gap-1 flex-shrink-0">
+            <button type="button" class="btn btn-xs py-1 px-2 fw-bold text-white d-inline-flex align-items-center gap-1 shadow-sm" onclick="executeTotoCalculation(currentTotoRound)" style="background: linear-gradient(135deg, #ea580c, #f97316); border: none; border-radius: 4px; font-size: 0.70rem;" title="14경기 당첨 확률 & 실시간 예상 수령액 계산">
+              <i class="bi bi-calculator-fill"></i>계산
+            </button>
             <button type="button" class="btn btn-xs py-1 px-2 fw-bold text-white d-none d-sm-inline-flex align-items-center gap-1" onclick="openTotoSavedBox(currentTotoRound)" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 4px; font-size: 0.70rem;">
               <i class="bi bi-folder2-open"></i>보관함 <span class="badge bg-warning text-dark toto-saved-count-badge" style="font-size:0.55rem; padding: 1px 4px; display:none;">0</span>
             </button>
@@ -9951,9 +9978,9 @@ function getFullModalMatchList() {
             <div class="slim-card-row">
               <span class="slim-card-sport-time">${sportIcon}<br>${timeStr}</span>
               <span class="slim-card-teams">
-                <span class="slim-card-home" title="${m.home_team_name}">${formatTeamName(m.home_team_name)}</span>
+                <span class="slim-card-home" title="${m.home_team_name}"><span class="badge" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:0.58rem; padding:1px 3px; font-weight:800; margin-right:3px;">홈</span>${formatTeamName(m.home_team_name)}</span>
                 <span class="slim-card-vs">vs</span>
-                <span class="slim-card-away" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</span>
+                <span class="slim-card-away" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}<span class="badge" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.58rem; padding:1px 3px; font-weight:800; margin-left:3px;">원정</span></span>
               </span>
               ${scoreLabel ? `<span style="flex-shrink:0; margin-left:2px; text-align:right;">${scoreLabel}</span>` : ''}
             </div>
@@ -10122,7 +10149,7 @@ function getFullModalMatchList() {
         const h = oddsInfo.home || '-', d = oddsInfo.draw || '-', a = oddsInfo.away || '-';
         tableHtml = `
           <div style="font-size:0.64rem; color:#6b7280; margin-bottom:4px; font-weight:600;">
-            ${homeName} <span style="color:#9ca3af">vs</span> ${awayName}
+            <span class="badge" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:0.58rem; padding:1px 3px; font-weight:800; margin-right:3px;">홈</span>${homeName} <span style="color:#9ca3af">vs</span> ${awayName}<span class="badge" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.58rem; padding:1px 3px; font-weight:800; margin-left:3px;">원정</span>
           </div>
           <table class="slim-odds-table">
             <tr>
@@ -10150,7 +10177,7 @@ function getFullModalMatchList() {
         const h = oddsInfo.home || '-', d = oddsInfo.draw || '-', a = oddsInfo.away || '-';
         tableHtml = `
           <div style="font-size:0.64rem; color:#6b7280; margin-bottom:4px; font-weight:600;">
-            ${homeName} <span style="color:#9ca3af">vs</span> ${awayName}
+            <span class="badge" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:0.58rem; padding:1px 3px; font-weight:800; margin-right:3px;">홈</span>${homeName} <span style="color:#9ca3af">vs</span> ${awayName}<span class="badge" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.58rem; padding:1px 3px; font-weight:800; margin-left:3px;">원정</span>
           </div>
           <table class="slim-odds-table">
             <tr>
@@ -10204,7 +10231,7 @@ function getFullModalMatchList() {
         const h = oddsInfo.home || '-', a = oddsInfo.away || '-';
         tableHtml = `
           <div style="font-size:0.64rem; color:#6b7280; margin-bottom:4px; font-weight:600;">
-            ${homeName} <span style="color:#9ca3af">vs</span> ${awayName}
+            <span class="badge" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:0.58rem; padding:1px 3px; font-weight:800; margin-right:3px;">홈</span>${homeName} <span style="color:#9ca3af">vs</span> ${awayName}<span class="badge" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.58rem; padding:1px 3px; font-weight:800; margin-left:3px;">원정</span>
           </div>
           <table class="slim-odds-table">
             <tr>
@@ -11443,27 +11470,23 @@ function getFullModalMatchList() {
 
         rowsHtml += `
           <tr class="toto-modal-row ${hasPick ? 'row-has-pick' : ''}" onclick="openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.12s ease;">
-            <td class="text-center py-1 px-1" style="width: 32px;">
-              <span class="badge" style="background:#0f172a; color:#ffffff; font-weight:800; font-size:0.72rem; border-radius:3px; padding: 2px 4px;">
+            <td class="text-center py-1 px-1" style="width: 28px; white-space: nowrap;">
+              <span class="badge" style="background:#0f172a; color:#ffffff; font-weight:800; font-size:0.70rem; border-radius:3px; padding: 2px 4px;">
                 ${String(m.seq).padStart(2, '0')}
               </span>
             </td>
-            <td class="py-1 px-1 text-center" style="width: 74px; font-size: 0.70rem; line-height: 1.15;">
-              <div class="badge bg-light text-primary border fw-bold mb-0.5" style="border-color: #cbd5e1 !important; font-size: 0.62rem; padding: 1px 4px;">
-                ${m.league}
-              </div>
-              <div class="text-muted" style="font-size: 0.64rem; font-family: monospace;">
-                ${timeShort}
+            <td class="py-1 px-1 text-center" style="width: 48px; line-height: 1.1; white-space: nowrap;">
+              <div class="fw-bold text-primary" style="font-size: 0.64rem; white-space: nowrap;">${m.league}</div>
+              <div class="text-muted" style="font-size: 0.60rem; font-family: monospace; white-space: nowrap;">${timeShort}</div>
+            </td>
+            <td class="py-1 px-1 text-end" style="white-space: nowrap;">
+              <div class="d-flex align-items-center justify-content-end gap-1" style="white-space: nowrap;">
+                <span class="fw-bold text-dark toto-team-name" title="${m.home}">${m.home}</span>
+                <span class="badge toto-prob-badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.60rem; font-weight: 700; padding: 1px 3px;">${probH}%</span>
               </div>
             </td>
-            <td class="py-1 px-1 text-end" style="width: 25%;">
-              <div class="d-flex align-items-center justify-content-end gap-1">
-                <span class="fw-bold text-dark text-truncate toto-team-name" title="${m.home}">${m.home}</span>
-                <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.64rem; font-weight: 700; padding: 1px 3px;">${probH}%</span>
-              </div>
-            </td>
-            <td class="py-1 px-1 text-center" style="width: 172px;" onclick="event.stopPropagation()">
-              <div class="d-flex align-items-center justify-content-center gap-1">
+            <td class="py-1 px-1 text-center" style="width: 154px; white-space: nowrap;" onclick="event.stopPropagation()">
+              <div class="d-flex align-items-center justify-content-center gap-1" style="white-space: nowrap;">
                 <button type="button" class="betman-slip-btn ${isMarkW ? 'marked' : ''}" onclick="toggleTotoModalChoice('${totoKey}', ${m.seq}, 'W')" title="홈팀 승 (투표율 ${m.pW}%)">
                   <span class="b-label">승</span>
                   <span class="b-pct">${m.pW}%</span>
@@ -11478,16 +11501,16 @@ function getFullModalMatchList() {
                 </button>
               </div>
             </td>
-            <td class="py-1 px-1 text-start" style="width: 25%;">
-              <div class="d-flex align-items-center justify-content-start gap-1">
-                <span class="badge" style="background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8; font-size: 0.64rem; font-weight: 700; padding: 1px 3px;">${probA}%</span>
-                <span class="fw-bold text-dark text-truncate toto-team-name" title="${m.away}">${m.away}</span>
+            <td class="py-1 px-1 text-start" style="white-space: nowrap;">
+              <div class="d-flex align-items-center justify-content-start gap-1" style="white-space: nowrap;">
+                <span class="badge toto-prob-badge" style="background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8; font-size: 0.60rem; font-weight: 700; padding: 1px 3px;">${probA}%</span>
+                <span class="fw-bold text-dark toto-team-name" title="${m.away}">${m.away}</span>
               </div>
             </td>
-            <td class="py-1 px-1 text-center" style="width: 46px;">
+            <td class="py-1 px-1 text-center d-none d-md-table-cell" style="width: 46px; white-space: nowrap;">
               ${resultBadge}
             </td>
-            <td class="py-1 px-1 text-center" style="width: 30px;">
+            <td class="py-1 px-1 text-center d-none d-md-table-cell" style="width: 30px; white-space: nowrap;">
               <button type="button" class="btn btn-xs fw-bold text-dark" onclick="event.stopPropagation(); openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="background:#ffffff; border:1px solid #0f172a; border-radius:3px; font-size:0.66rem; padding: 1px 4px; line-height:1.1;" title="클릭 시 [${m.home} vs ${m.away}] 1:1 세이버 분석실 열기">
                 ↗
               </button>
@@ -11530,104 +11553,45 @@ function getFullModalMatchList() {
             <div class="d-flex align-items-center gap-1.5">
               <span class="fw-bold text-white-50" style="font-size: 0.76rem;">총 <strong class="text-warning fs-6" style="font-family: monospace;">${combinations.toLocaleString()}</strong> 조합</span>
               <span class="badge bg-light text-dark fw-black px-1.5 py-0.5" style="font-size: 0.76rem; font-family: monospace;">${totalBetPrice.toLocaleString()}원</span>
+              <button type="button" class="btn btn-xs fw-bold px-2 py-0.5 text-white d-md-none shadow-sm" onclick="executeTotoCalculation('${totoKey}')" style="background: linear-gradient(135deg, #ea580c, #f97316); border:none; border-radius:3px; font-size:0.68rem;" title="14경기 당첨 확률 & 실시간 예상 수령액 계산">
+                <i class="bi bi-calculator-fill me-0.5"></i>계산
+              </button>
             </div>
           </div>
 
           <!-- 2행: 스마트 액션 버튼들 (아이디어 만재) -->
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-1">
             <div class="d-flex align-items-center gap-1 flex-wrap">
-              <!-- 1. 100% 올커버 완성 -->
+              <!-- ⭐ 1. 당첨 확률 계산 버튼 (사용자 요청 핵심!) -->
+              <button type="button" class="btn btn-xs fw-bold px-2.5 py-1 text-white shadow-sm toto-calc-btn" onclick="executeTotoCalculation('${totoKey}')" style="background: linear-gradient(135deg, #ea580c, #f97316); border: none; border-radius: 4px; font-size: 0.72rem; font-weight: 800; box-shadow: 0 2px 5px rgba(234, 88, 12, 0.4);" title="현재 선택된 마킹의 1등~4등 당첨 확률 및 실시간 예상 수령액을 즉시 계산합니다.">
+                <i class="bi bi-calculator-fill me-1"></i>당첨 계산
+              </button>
+              <!-- 2. 100% 올커버 완성 -->
               <button type="button" class="btn btn-xs fw-bold px-2 py-1 text-white" onclick="fillRemaining100PctMatches('${totoKey}')" style="background: linear-gradient(135deg, #1d4ed8, #2563eb); border: none; border-radius: 4px; font-size: 0.70rem;" title="내가 선택한 확실한 축 경기 외 남은 경기를 3픽으로 올커버하여 100% 당첨 조합을 완성합니다.">
                 <i class="bi bi-shield-fill-check me-1 text-warning"></i>100% 올커버 완성
               </button>
-              <!-- 2. 스마트 2픽 압축 (금액 절감 아이디어!) -->
+              <!-- 3. 스마트 2픽 압축 (금액 절감 아이디어!) -->
               <button type="button" class="btn btn-xs fw-bold px-2 py-1 text-white" onclick="compressTotoTo2Picks('${totoKey}')" style="background: linear-gradient(135deg, #0d9488, #059669); border: none; border-radius: 4px; font-size: 0.70rem;" title="복식 마킹을 투표율 상위 2픽으로 스마트 압축하여 베팅 금액을 대폭 절감합니다.">
                 <i class="bi bi-lightning-charge-fill me-1 text-warning"></i>2픽 스마트 압축
               </button>
-              <!-- 3. AI 올픽 -->
+              <!-- 4. AI 올픽 -->
               <button type="button" class="btn btn-xs fw-bold px-1.5 py-1 text-white" onclick="autoPickTotoAi('${totoKey}')" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 4px; font-size: 0.70rem;" title="AI 최고확률 단통 자동 마킹">
                 <i class="bi bi-robot me-0.5"></i>AI 올픽
               </button>
             </div>
             <div class="d-flex align-items-center gap-1 flex-wrap">
-              <!-- 4. 마킹 영구 저장 -->
+              <!-- 5. 마킹 영구 저장 -->
               <button type="button" class="btn btn-xs fw-bold px-2 py-1 text-dark" onclick="saveTotoMarkingSlip('${totoKey}')" style="background: #facc15; border: none; border-radius: 4px; font-size: 0.72rem;" title="현재 완성된 마킹 조합을 보관함에 영구 저장합니다.">
                 <i class="bi bi-save-fill me-1"></i>마킹 저장
               </button>
-              <!-- 5. 보관함 -->
+              <!-- 6. 보관함 -->
               <button type="button" class="btn btn-xs fw-bold px-1.5 py-1 text-white" onclick="openTotoSavedBox('${totoKey}')" style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; font-size: 0.70rem;" title="저장된 마킹 조합 목록 열기">
                 <i class="bi bi-folder2-open me-0.5"></i>보관함 <span class="badge bg-danger toto-saved-count-badge" style="font-size:0.55rem; padding:1px 3px; display:none;">0</span>
               </button>
-              <!-- 6. 초기화 -->
+              <!-- 7. 초기화 -->
               <button type="button" class="btn btn-xs fw-bold px-1.5 py-1 text-white-50" onclick="resetTotoMarks('${totoKey}')" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; font-size: 0.68rem;" title="마킹 초기화">
                 <i class="bi bi-trash"></i>
               </button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      // 🏆 맨 위: 실시간 당첨금액 & 이월금 & 총 발매현황 골든 배너
-      const forwardAmt = Number(toto.forward_amount || 0);
-      const forwardCnt = Number(toto.forward_cnt || 0);
-      const sellAmt = Number(toto.total_sell_amount || 0);
-      const totalBets = Number(toto.total_sale_cnt || (sellAmt > 0 ? Math.round(sellAmt / 1000) : 0));
-      const firstPrizePool = Number(toto.first_prize_pool || (forwardAmt + Math.round(sellAmt * 0.25)));
-      const firstPrizeText = toto.first_prize_text || (firstPrizePool > 0 ? (Math.round(firstPrizePool / 10000).toLocaleString() + '만 원') : '집계 중');
-      const totalSellText = toto.total_sell_text || (sellAmt > 0 ? (Math.round(sellAmt / 10000).toLocaleString() + '만 원') : '집계 중');
-
-      if (headTitle && toto) {
-        const sportLabel = (totoKey === 'W1L' ? '⚾ 야구 승1패' : (totoKey === 'WDL' ? '⚽ 축구 승무패' : '🏀 농구 승5패'));
-        const rawTitle = (toto && toto.title) ? toto.title : '';
-        const cleanTitle = rawTitle.replace(/^(⚾\s*야구\s*승1패|⚽\s*축구\s*승무패|🏀\s*농구\s*승5패|야구\s*승1패|축구\s*승무패|농구\s*승5패)\s*/, '');
-        headTitle.innerHTML = `${sportLabel} ${cleanTitle} <span class="badge bg-warning text-dark fw-bold ms-1.5" style="font-size:0.75rem;"><i class="bi bi-cash-coin me-1"></i>실시간 1등: ${firstPrizeText}</span> ${forwardAmt > 0 ? `<span class="badge bg-danger text-white ms-1" style="font-size:0.70rem;">${forwardCnt > 0 ? forwardCnt + '회 이월🔥' : '이월🔥'}</span>` : ''}`;
-      }
-
-      let rolloverBadgeHtml = '';
-      if (forwardAmt > 0) {
-        rolloverBadgeHtml = `
-          <span class="badge bg-danger text-white px-2 py-1 shadow-sm d-inline-flex align-items-center gap-1" style="font-size: 0.76rem; font-weight: 800; border-radius: 6px;">
-            <i class="bi bi-fire text-warning"></i>
-            <span>${forwardCnt > 0 ? `${forwardCnt}회차 이월🔥` : '이월 발생🔥'}</span>
-            <span class="text-warning bg-black bg-opacity-25 px-1 rounded">${(forwardAmt / 100000000).toFixed(1)}억 원</span>
-          </span>
-        `;
-      } else {
-        rolloverBadgeHtml = `
-          <span class="badge bg-secondary bg-opacity-75 text-white px-2 py-0.5" style="font-size: 0.70rem; border-radius: 4px;">
-            이월 없음 (발매 누적)
-          </span>
-        `;
-      }
-
-      const topJackpotBannerHtml = `
-        <div class="p-2.5 rounded-3 mb-2 text-white shadow-sm" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #172554 100%); border: 1.5px solid #fbbf24;">
-          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <!-- 왼쪽: 실시간 1등 당첨금액 & 이월금 -->
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-              <div class="d-flex align-items-center gap-1.5">
-                <span class="badge" style="background: #fbbf24; color: #000000; font-size: 0.76rem; font-weight: 900; padding: 3px 7px; border-radius: 4px;">
-                  <i class="bi bi-trophy-fill me-0.5"></i>실시간 1등 당첨금
-                </span>
-                <span class="fs-5 fw-black text-warning" style="letter-spacing: -0.5px; font-family: monospace;">
-                  ${firstPrizeText}
-                </span>
-              </div>
-              ${rolloverBadgeHtml}
-            </div>
-
-            <!-- 오른쪽: 실시간 발매 현황 & 마감 시간 -->
-            <div class="d-flex align-items-center gap-2 flex-wrap text-white-50" style="font-size: 0.74rem;">
-              <div>
-                <span class="text-white-50">총 발매:</span>
-                <strong class="text-white">${totalSellText}</strong>
-                ${totalBets > 0 ? `<span class="text-white-50">(${totalBets.toLocaleString()}표)</span>` : ''}
-              </div>
-              <span class="text-white-50">·</span>
-              <div>
-                <span class="text-white-50">마감:</span>
-                <strong class="text-warning">${toto.period || '집계 중'}</strong>
-              </div>
             </div>
           </div>
         </div>
@@ -11639,21 +11603,18 @@ function getFullModalMatchList() {
       modalBody.innerHTML = `
         <div class="toto-flow-wrapper">
           <div class="toto-flow-left">
-            <!-- 🏆 0. 맨위 실시간 1등 당첨금액 & 이월 배너 -->
-            ${topJackpotBannerHtml}
-
-            <!-- 1. 14경기 테이블 -->
+            <!-- 1. 14경기 테이블 (상단: 글자 깨짐 완전 방지 nowrap 적용) -->
             <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
               <table class="toto-compact-table table table-hover align-middle mb-0">
-                <thead style="background: #0f172a; color: #f8fafc; font-size: 0.72rem;">
+                <thead style="background: #0f172a; color: #f8fafc; font-size: 0.72rem; white-space: nowrap;">
                   <tr>
-                    <th class="text-center py-1" style="width: 32px;">No</th>
-                    <th class="text-center py-1" style="width: 74px;">대회/일시</th>
-                    <th class="text-end py-1" style="width: 25%;">홈팀(승률)</th>
-                    <th class="text-center py-1" style="width: 172px;">마킹 (베트맨 투표율)</th>
-                    <th class="text-start py-1" style="width: 25%;">(승률)원정팀</th>
-                    <th class="text-center py-1" style="width: 46px;">상태</th>
-                    <th class="text-center py-1" style="width: 30px;">분석</th>
+                    <th class="text-center py-1 px-1" style="width: 28px; white-space: nowrap;">No</th>
+                    <th class="text-center py-1 px-1" style="width: 48px; white-space: nowrap;">대회</th>
+                    <th class="text-end py-1 px-1" style="white-space: nowrap;">홈팀 (승률)</th>
+                    <th class="text-center py-1 px-1" style="width: 154px; white-space: nowrap;">마킹 (투표율)</th>
+                    <th class="text-start py-1 px-1" style="white-space: nowrap;">(승률) 원정팀</th>
+                    <th class="text-center py-1 px-1 d-none d-md-table-cell" style="width: 46px; white-space: nowrap;">상태</th>
+                    <th class="text-center py-1 px-1 d-none d-md-table-cell" style="width: 30px; white-space: nowrap;">분석</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -11678,6 +11639,32 @@ function getFullModalMatchList() {
       }
       updateTotoSavedBadge();
     }
+
+    // 🎯 [당첨 계산] 실행 및 계산 결과로 부드럽게 이동
+    function executeTotoCalculation(totoKey) {
+      if (!totoKey) totoKey = currentTotoRound || 'W1L';
+      const targetTs = currentBetmanTs;
+      let toto = TOTO_DATA[totoKey + '_' + targetTs] || 
+                 (TOTO_DATA[totoKey + '_LIVE'] && TOTO_DATA[totoKey + '_LIVE'].gmTs === targetTs ? TOTO_DATA[totoKey + '_LIVE'] : null) || 
+                 TOTO_DATA[totoKey + '_LIVE'] || 
+                 TOTO_DATA[totoKey];
+      if (!toto) return;
+
+      const calcContainer = document.querySelector('.toto-flow-right');
+      if (calcContainer) {
+        calcContainer.innerHTML = buildTotoCalculatorHtml(totoKey, toto);
+      }
+
+      const calcSection = document.getElementById('totoEmbeddedCalcSection') || calcContainer;
+      if (calcSection) {
+        calcSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        calcSection.classList.remove('calc-highlight-pulse');
+        void calcSection.offsetWidth;
+        calcSection.classList.add('calc-highlight-pulse');
+      }
+    }
+    window.executeTotoCalculation = executeTotoCalculation;
+    window.scrollToTotoCalculator = executeTotoCalculation;
 
     // Modal restore hook: when matchModal closes, restore totoBetmanModal if opened from it; and return to schedule on mobile
     function initModalRestoreHook() {

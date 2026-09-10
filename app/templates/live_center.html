@@ -776,26 +776,26 @@
 
           <!-- Main Stage: Teams & Big LED Score -->
           <div class="card-main-stage">
-            <!-- Away Team -->
-            <div class="team-block">
-              <div class="team-logo-circle">${board.away_team_name.substring(0, 2)}</div>
-              <div class="team-name-text">${board.away_team_name}</div>
-              <span class="team-side-badge">원정 (초)</span>
-            </div>
-
-            <!-- LED Score Center -->
-            <div class="score-center-block">
-              <div class="led-score-display">${board.away_score} : ${board.home_score}</div>
-              <div class="text-white-50 small" style="font-size: 0.65rem; font-weight: 700;">
-                ${board.status === 'LIVE' ? '<span class="text-danger">● LIVE</span>' : 'FINAL'}
-              </div>
-            </div>
-
             <!-- Home Team -->
             <div class="team-block">
               <div class="team-logo-circle" style="border-color: #f59e0b;">${board.home_team_name.substring(0, 2)}</div>
               <div class="team-name-text">${board.home_team_name}</div>
               <span class="team-side-badge">홈 (말)</span>
+            </div>
+
+            <!-- LED Score Center -->
+            <div class="score-center-block">
+              <div class="led-score-display">${board.home_score} : ${board.away_score}</div>
+              <div class="text-white-50 small" style="font-size: 0.65rem; font-weight: 700;">
+                ${board.status === 'LIVE' ? '<span class="text-danger">● LIVE</span>' : 'FINAL'}
+              </div>
+            </div>
+
+            <!-- Away Team -->
+            <div class="team-block">
+              <div class="team-logo-circle">${board.away_team_name.substring(0, 2)}</div>
+              <div class="team-name-text">${board.away_team_name}</div>
+              <span class="team-side-badge">원정 (초)</span>
             </div>
           </div>
 
@@ -884,40 +884,40 @@
           <!-- Main Stage -->
           <div class="card-main-stage">
             <div class="team-block">
-              <div class="team-logo-circle">${board.away_team_name.substring(0, 2)}</div>
-              <div class="team-name-text">${board.away_team_name}</div>
-              <span class="team-side-badge">원정팀</span>
+              <div class="team-logo-circle" style="border-color: #10b981;">${board.home_team_name.substring(0, 2)}</div>
+              <div class="team-name-text">${board.home_team_name}</div>
+              <span class="team-side-badge">홈팀</span>
             </div>
 
             <div class="score-center-block">
-              <div class="led-score-display" style="color: #a7f3d0; text-shadow: var(--text-glow-green);">${board.away_score} : ${board.home_score}</div>
+              <div class="led-score-display" style="color: #a7f3d0; text-shadow: var(--text-glow-green);">${board.home_score} : ${board.away_score}</div>
               <div class="text-white-50 small" style="font-size: 0.65rem;">
                 <span class="text-success">● IN PLAY</span>
               </div>
             </div>
 
             <div class="team-block">
-              <div class="team-logo-circle" style="border-color: #10b981;">${board.home_team_name.substring(0, 2)}</div>
-              <div class="team-name-text">${board.home_team_name}</div>
-              <span class="team-side-badge">홈팀</span>
+              <div class="team-logo-circle">${board.away_team_name.substring(0, 2)}</div>
+              <div class="team-name-text">${board.away_team_name}</div>
+              <span class="team-side-badge">원정팀</span>
             </div>
           </div>
 
           <!-- Soccer Field Grass Stats -->
           <div class="soccer-field-box">
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span>점유율 ${sc.possession.away}%</span>
-              <span class="fw-bold text-warning">경기장 상황판</span>
               <span>${sc.possession.home}% 점유율</span>
+              <span class="fw-bold text-warning">경기장 상황판</span>
+              <span>점유율 ${sc.possession.away}%</span>
             </div>
             <div class="soccer-stat-bar-wrap">
-              <div style="width: ${sc.possession.away}%; background: #3b82f6;"></div>
               <div style="width: ${sc.possession.home}%; background: #10b981;"></div>
+              <div style="width: ${sc.possession.away}%; background: #3b82f6;"></div>
             </div>
             <div class="d-flex justify-content-between text-white-50 mt-2" style="font-size: 0.7rem;">
-              <span>슈팅: ${sc.shots.away} (${sc.shots_on_target.away})</span>
-              <span>코너킥: ${sc.corners.away} : ${sc.corners.home}</span>
               <span>슈팅: ${sc.shots.home} (${sc.shots_on_target.home})</span>
+              <span>코너킥: ${sc.corners.home} : ${sc.corners.away}</span>
+              <span>슈팅: ${sc.shots.away} (${sc.shots_on_target.away})</span>
             </div>
           </div>
         </div>
@@ -968,7 +968,7 @@
         const isActive = (idx === 0);
         html += `
           <div class="mob-tab-item ${isActive ? 'active' : ''}" onclick="selectMobileMatchTab(${b.id}, this)">
-            ${b.sport_code === 'BASEBALL' ? '⚾' : '⚽'} ${b.away_team_name.substring(0, 3)} vs ${b.home_team_name.substring(0, 3)}
+            ${b.sport_code === 'BASEBALL' ? '⚾' : '⚽'} [홈] ${b.home_team_name.substring(0, 3)} vs ${b.away_team_name.substring(0, 3)} [원정]
           </div>
         `;
       });
@@ -1006,18 +1006,18 @@
           <div class="text-center py-3 mb-4 rounded-3" style="background: linear-gradient(180deg, #0f172a 0%, #080d1a 100%); border: 2px solid #1e293b;">
             <div class="row align-items-center">
               <div class="col-4">
-                <h3 class="fw-bold text-white mb-1">${board.away_team_name}</h3>
-                <span class="text-white-50 small">선발: ${board.away_starter_name}</span>
+                <h3 class="fw-bold text-white mb-1"><span class="badge bg-primary text-white me-1" style="font-size:0.7rem;">[홈]</span>${board.home_team_name}</h3>
+                <span class="text-white-50 small">선발: ${board.home_starter_name || '-'}</span>
               </div>
               <div class="col-4">
-                <div class="led-score-display" style="font-size: 3.5rem;">${board.away_score} : ${board.home_score}</div>
+                <div class="led-score-display" style="font-size: 3.5rem;">${board.home_score} : ${board.away_score}</div>
                 <div class="badge bg-warning text-dark fw-bold mt-1 px-3 py-1">
                   ${isBaseball ? bb.current_inning : 'IN PLAY'}
                 </div>
               </div>
               <div class="col-4">
-                <h3 class="fw-bold text-white mb-1">${board.home_team_name}</h3>
-                <span class="text-white-50 small">선발: ${board.home_starter_name}</span>
+                <h3 class="fw-bold text-white mb-1">${board.away_team_name}<span class="badge bg-danger text-white ms-1" style="font-size:0.7rem;">[원정]</span></h3>
+                <span class="text-white-50 small">선발: ${board.away_starter_name || '-'}</span>
               </div>
             </div>
           </div>
@@ -1056,16 +1056,16 @@
               <h6 class="text-success fw-bold mb-2"><i class="bi bi-dribbble me-2"></i>경기장 필드 현황</h6>
               <div class="row text-center mt-3">
                 <div class="col-4">
-                  <div class="fs-4 fw-bold text-info">${board.soccer ? board.soccer.possession.away : 50}%</div>
-                  <div class="text-white-50 small">점유율</div>
+                  <div class="fs-4 fw-bold text-success">${board.soccer ? board.soccer.possession.home : 50}%</div>
+                  <div class="text-white-50 small">홈 점유율</div>
                 </div>
                 <div class="col-4">
-                  <div class="fs-4 fw-bold text-warning">${board.soccer ? board.soccer.shots.away : 0} : ${board.soccer ? board.soccer.shots.home : 0}</div>
+                  <div class="fs-4 fw-bold text-warning">${board.soccer ? board.soccer.shots.home : 0} : ${board.soccer ? board.soccer.shots.away : 0}</div>
                   <div class="text-white-50 small">총 슈팅</div>
                 </div>
                 <div class="col-4">
-                  <div class="fs-4 fw-bold text-success">${board.soccer ? board.soccer.possession.home : 50}%</div>
-                  <div class="text-white-50 small">점유율</div>
+                  <div class="fs-4 fw-bold text-info">${board.soccer ? board.soccer.possession.away : 50}%</div>
+                  <div class="text-white-50 small">원정 점유율</div>
                 </div>
               </div>
             </div>

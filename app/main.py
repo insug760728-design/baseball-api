@@ -307,11 +307,11 @@ def generate_timeline_widget_html(match_data: dict, events: list) -> str:
     <div class="timeline-header">
       <div>
         <span style="background: {st_badge}; color: white; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 4px;">{st_text}</span>
-        <strong style="margin-left: 8px; font-size: 15px;">{match_data.get('away_team_name', '')} vs {match_data.get('home_team_name', '')}</strong>
+        <strong style="margin-left: 8px; font-size: 15px;">[홈] {match_data.get('home_team_name', '')} vs [원정] {match_data.get('away_team_name', '')}</strong>
         <span style="font-size: 12px; opacity: 0.8; margin-left: 6px;">({match_data.get('match_date', '')})</span>
       </div>
       <div style="font-size: 18px; font-weight: 800; color: #fbbf24;">
-        {match_data.get('away_score', 0)} : {match_data.get('home_score', 0)}
+        {match_data.get('home_score', 0)} : {match_data.get('away_score', 0)}
       </div>
     </div>
     <div class="timeline-body">
