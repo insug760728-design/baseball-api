@@ -4312,13 +4312,18 @@ function getFullModalMatchList() {
 
     const _matchDetailFetchPromises = new Map();
 
-    function fetchMatchDetailCached(matchId) {
+    function fetchMatchDetailCached(matchId, forceRefresh = false) {
       const numId = Number(matchId);
       if (isNaN(numId) || numId <= 0) return Promise.resolve(null);
-      if (matchDetailCache.has(numId)) {
-        return Promise.resolve(matchDetailCache.get(numId));
+      if (!forceRefresh && matchDetailCache.has(numId)) {
+        const cached = matchDetailCache.get(numId);
+        const sp = cached && cached.matchup_analysis && cached.matchup_analysis.starting_pitchers;
+        const isStillUnannounced = !sp || !sp.home || !isStarterAnnounced(sp.home.name) || !sp.away || !isStarterAnnounced(sp.away.name);
+        if (!isStillUnannounced) {
+          return Promise.resolve(cached);
+        }
       }
-      if (_matchDetailFetchPromises.has(numId)) {
+      if (!forceRefresh && _matchDetailFetchPromises.has(numId)) {
         return _matchDetailFetchPromises.get(numId);
       }
       const p = fetch(`/api/v1/matches/${numId}`).then(resp => {
@@ -9032,6 +9037,13 @@ function getFullModalMatchList() {
           if (m && m.id) {
             if (m.home_team_name) m.home_team_name = formatTeamName(m.home_team_name);
             if (m.away_team_name) m.away_team_name = formatTeamName(m.away_team_name);
+
+            const prevM = existingMap.get(m.id);
+            // 선발투수가 미정에서 확정으로 변경되었거나 바뀐 경우 캐시 무효화하여 화면 즉시 갱신
+            if (prevM && (prevM.home_starter_name !== m.home_starter_name || prevM.away_starter_name !== m.away_starter_name)) {
+              matchDetailCache.delete(m.id);
+              matchDetailCache.delete(Number(m.id));
+            }
             existingMap.set(m.id, m);
           }
         }
@@ -12470,10 +12482,17 @@ function getFullModalMatchList() {
       selectedPredMatchId = m.id;
 
       let detailData = customDetailData || matchDetailCache.get(Number(m.id)) || matchDetailCache.get(m.id);
-      if (!detailData && !isNaN(Number(m.id)) && Number(m.id) > 0) {
+      
+      const isBaseball = (m.sport_code || '').toUpperCase() === 'BASEBALL';
+      const mHasAnnouncedStarter = isBaseball && (isStarterAnnounced(m.home_starter_name) || isStarterAnnounced(m.away_starter_name));
+      const cachedHasUnannounced = detailData && detailData.matchup_analysis && detailData.matchup_analysis.starting_pitchers &&
+        (!isStarterAnnounced(detailData.matchup_analysis.starting_pitchers.home?.name) || !isStarterAnnounced(detailData.matchup_analysis.starting_pitchers.away?.name));
+      const needsFreshStarters = mHasAnnouncedStarter && cachedHasUnannounced;
+
+      if ((!detailData || needsFreshStarters) && !isNaN(Number(m.id)) && Number(m.id) > 0) {
         // 🚀 [초고속 0.01초 즉시 표출]: 서버 응답(3~5초 대기)을 기다리지 않고 화면을 즉시 렌더링!
         // 세부 심층 지표는 백그라운드 비동기로 불러와 자연스럽게 보강합니다 (로딩중 랙 100% 제거).
-        fetchMatchDetailCached(m.id).then(freshData => {
+        fetchMatchDetailCached(m.id, needsFreshStarters).then(freshData => {
           if (freshData && selectedPredMatchId === m.id) {
             renderPredDetail(m, freshData);
           }
