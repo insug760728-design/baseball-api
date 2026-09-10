@@ -10247,7 +10247,7 @@ function getFullModalMatchList() {
           hOppScore = g.away_score ?? 0;
           hOpp = g.away_team_name;
           hResEmoji = hScore > hOppScore ? '승 ✅' : (hScore < hOppScore ? '패 ❌' : '무 🟰');
-          hSubnote = `🗓️ ${hDate} 맞대결 (${hScore}:${hOppScore})`;
+          hSubnote = `🗓️ ${hDate} 맞대결`;
         } else if (homeLast) {
           const g = homeLast;
           const isHHome = (g.perspective_team === g.home_team_name || g.home_team_name === hTeamName);
@@ -10259,7 +10259,7 @@ function getFullModalMatchList() {
           hOpp = g.opponent || (isHHome ? g.away_team_name : g.home_team_name);
           hDate = g.date || (g.match_date ? g.match_date.slice(5, 10) : '');
           hResEmoji = g.result_emoji || (hScore > hOppScore ? '승 ✅' : (hScore < hOppScore ? '패 ❌' : '무 🟰'));
-          hSubnote = `${formatTeamName(hOpp)}전 (${hDate}) ${hScore}:${hOppScore} ${hResEmoji}`;
+          hSubnote = `${formatTeamName(hOpp)}전 (${hDate}) ${hResEmoji}`;
         }
 
         // 2. 원정팀 직전 기록 추출
@@ -10274,7 +10274,7 @@ function getFullModalMatchList() {
           aOppScore = g.home_score ?? 0;
           aOpp = g.home_team_name;
           aResEmoji = aScore > aOppScore ? '승 ✅' : (aScore < aOppScore ? '패 ❌' : '무 🟰');
-          aSubnote = `🗓️ ${aDate} 맞대결 (${aScore}:${aOppScore})`;
+          aSubnote = `🗓️ ${aDate} 맞대결`;
         } else if (awayLast) {
           const g = awayLast;
           const isAHome = (g.perspective_team === g.home_team_name || g.home_team_name === aTeamName);
@@ -10286,7 +10286,7 @@ function getFullModalMatchList() {
           aOpp = g.opponent || (isAHome ? g.away_team_name : g.home_team_name);
           aDate = g.date || (g.match_date ? g.match_date.slice(5, 10) : '');
           aResEmoji = g.result_emoji || (aScore > aOppScore ? '승 ✅' : (aScore < aOppScore ? '패 ❌' : '무 🟰'));
-          aSubnote = `${formatTeamName(aOpp)}전 (${aDate}) ${aScore}:${aOppScore} ${aResEmoji}`;
+          aSubnote = `${formatTeamName(aOpp)}전 (${aDate}) ${aResEmoji}`;
         }
 
         // 승패 결정 뱃지 포맷
@@ -10389,7 +10389,7 @@ function getFullModalMatchList() {
             <!-- 대칭 비교 행들: [홈팀 수치] — [가운데 지표] — [원정팀 수치] -->
             ${renderRow(`${hsName} ${hsDec}`, '👤 선발 투수', `${asDec} ${asName}`, false)}
             ${renderRow(hsEra, '📈 평균 방어율', asEra, true)}
-            ${renderRow(hsIpStr, '⏱️ 던진 이닝', asIpStr, false)}
+            ${renderRow(hsIpStr, '⏱️ 선발 이닝', asIpStr, false)}
             ${renderRow(hsPitchDetail, '🎯 선발 투구내용', asPitchDetail, true)}
             ${renderRow(hbpIpStr, '🛡️ 불펜 (실점)', abpIpStr, false)}
             ${renderRow(`${hHits}안타`, '⚾ 팀 안타', `${aHits}안타`, true)}
