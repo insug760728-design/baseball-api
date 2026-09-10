@@ -35,6 +35,7 @@ class SchedulerService:
         "details": {}
     }
     _is_running_task: bool = False
+    _live_loop_task: Optional[asyncio.Task] = None
 
     @classmethod
     def get_scheduler(cls) -> AsyncIOScheduler:
@@ -62,6 +63,7 @@ class SchedulerService:
                 replace_existing=True
             )
             # 10분마다 베트맨(Betman) 공식 발매금액·투표율·이월금 자동 최신화 (매 10분마다 실행)
+            # 10분마다 베트맨(Betman) 공식 발매금액·투표율·이월금 자동 최신화 (매 10분마다 실행)
             betman_trigger = CronTrigger(minute="*/10")
             scheduler.add_job(
                 cls.execute_betman_10min_sync_job,
@@ -69,12 +71,12 @@ class SchedulerService:
                 id="betman_10min_sync_job",
                 replace_existing=True
             )
-            # 15분마다 KBO 및 NPB 공식 선발투수 발표 실시간 동기화
-            starters_trigger = CronTrigger(minute="*/15")
+            # 10분마다 KBO 및 NPB 공식 선발투수 발표 실시간 동기화 (기존 15분 -> 10분)
+            starters_trigger = CronTrigger(minute="*/10")
             scheduler.add_job(
                 cls.execute_starters_sync_job,
                 trigger=starters_trigger,
-                id="starters_15min_sync_job",
+                id="starters_10min_sync_job",
                 replace_existing=True
             )
             # 1분마다 바탕화면 실시간 접속자 및 시간대별 트래픽 파일 자동 갱신
@@ -85,7 +87,7 @@ class SchedulerService:
                 id="traffic_desktop_export_job",
                 replace_existing=True
             )
-            # 2분마다 API-Sports 유료 실시간 경기(축구/야구) 라이브 스코어 자동 동기화
+            # 2분마다 정기 유료 라이브 검증 백업
             live_api_trigger = CronTrigger(minute="*/2")
             scheduler.add_job(
                 cls.execute_live_api_sports_job,
@@ -102,7 +104,12 @@ class SchedulerService:
                 replace_existing=True
             )
             scheduler.start()
-            logger.info(f"[Scheduler] 매일 {cls._config['hour']:02d}:{cls._config['minute']:02d}, 1시간 전종목 동기화, 10분 주기 베트맨, 1분 트래픽, 2분 유료 API-Sports, 3분 KBO/NPB 실시간 동기화 스케줄러 시작 완료.")
+
+            # ⚡ 5초 동적 초고속 실시간 수집 루프 백그라운드 태스크 기동
+            if cls._live_loop_task is None or cls._live_loop_task.done():
+                cls._live_loop_task = asyncio.create_task(cls._run_live_5sec_dynamic_loop())
+
+            logger.info(f"[Scheduler] 매일 {cls._config['hour']:02d}:{cls._config['minute']:02d}, 1시간 전종목 동기화, 10분 주기 베트맨/선발투수, 1분 트래픽, 5초 동적 LIVE 초고속 수집 루프 시작 완료.")
 
 
     @classmethod
@@ -498,6 +505,60 @@ class SchedulerService:
             finally:
                 db.close()
         await asyncio.to_thread(_run_starters)
+
+    @classmethod
+    async def _run_live_5sec_dynamic_loop(cls):
+        """⚡ 5초 실시간 동적 초고속 수집 루프
+        - LIVE 경기가 진행 중이거나 시작 직전인 경우: 5초 주기로 고속 수집
+        - 진행 중인 경기가 없는 경우: 10초 대기 후 상태 재확인 (외부 유료 API 호출 0회 절약)
+        """
+        logger.info("[Scheduler Live5Sec] 5초 동적 실시간 수집 루프 가동 시작")
+        while True:
+            try:
+                now_kst = get_now_kst()
+                start_window = (now_kst - timedelta(hours=4)).strftime("%Y-%m-%d %H:%M")
+                end_window = (now_kst + timedelta(minutes=15)).strftime("%Y-%m-%d %H:%M")
+
+                has_live_or_active = False
+                db = SessionLocal()
+                try:
+                    from app.models.models import Match
+                    from sqlalchemy import or_, and_
+                    # 1. LIVE 상태인 경기 확인
+                    live_count = db.query(Match).filter(Match.status == "LIVE").count()
+                    if live_count > 0:
+                        has_live_or_active = True
+                    else:
+                        # 2. 현재 시간대 전후로 진행 중일 가능성이 있는 SCHEDULED 경기 확인
+                        active_sched = db.query(Match).filter(
+                            Match.status == "SCHEDULED",
+                            Match.match_date >= start_window,
+                            Match.match_date <= end_window
+                        ).count()
+                        if active_sched > 0:
+                            has_live_or_active = True
+                finally:
+                    db.close()
+
+                if has_live_or_active:
+                    from app.services.live_api_sports_service import LiveApiSportsService
+                    if LiveApiSportsService.is_configured():
+                        fb_res = await asyncio.to_thread(LiveApiSportsService.sync_live_football)
+                        bb_res = await asyncio.to_thread(LiveApiSportsService.sync_live_baseball)
+                        tot = (fb_res.get('updated_db_matches', 0) or 0) + (bb_res.get('updated_db_matches', 0) or 0)
+                        if tot > 0:
+                            logger.info(f"[Scheduler Live5Sec] ⚡ 5초 실시간 갱신: 축구 {fb_res.get('updated_db_matches', 0)}건, 야구 {bb_res.get('updated_db_matches', 0)}건")
+                    await asyncio.sleep(5)
+                else:
+                    # 진행 중인 경기 없음: 외부 API 호출 없이 10초 대기
+                    await asyncio.sleep(10)
+            except asyncio.CancelledError:
+                logger.info("[Scheduler Live5Sec] 5초 루프 종료됨")
+                break
+            except Exception as e:
+                logger.warning(f"[Scheduler Live5Sec] 루프 경고: {e}")
+                await asyncio.sleep(5)
+
 
 
 

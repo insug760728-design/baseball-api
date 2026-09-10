@@ -8940,7 +8940,7 @@ function getFullModalMatchList() {
       }
       loadBetmanToto('W1L', 260067);
 
-      startLiveAutoSync(30);
+      startLiveAutoSync(5);
       startBetman10MinSync();
 
       // Auto-scroll match list to current time match ONCE on initial page load
@@ -8952,7 +8952,7 @@ function getFullModalMatchList() {
       }, 500);
     }
 
-    // 30초 실시간 자동 업데이트 타이머
+    // 5초 실시간 자동 업데이트 타이머
     // 10분마다 베트맨 공식 데이터 자동 최신화
     let betmanAutoSyncIntervalId = null;
     function startBetman10MinSync() {
@@ -8967,7 +8967,7 @@ function getFullModalMatchList() {
 
     function startLiveAutoSync(seconds) {
       if (seconds) syncIntervalSeconds = seconds;
-      else syncIntervalSeconds = 30;
+      else syncIntervalSeconds = 5;
       nextSyncSeconds = syncIntervalSeconds;
       if (syncIntervalId) clearInterval(syncIntervalId);
       syncIntervalId = setInterval(() => {
