@@ -10062,68 +10062,192 @@ function getFullModalMatchList() {
       panel.innerHTML = tableHtml + totoHtml;
     }
 
-    // ---- 전경기 패널 렌더 ----
+    // ---- 전경기 패널 렌더 (단 1경기, 바로 직전 경기 결과만 상세하게 표기) ----
     async function loadSlimHistoryPanel(matchId, panel) {
       const match = allMatches.find(m => m.id === matchId);
       if (!match) { panel.innerHTML = '<div class="slim-accordion-loading">경기 정보 없음</div>'; return; }
 
       let data = null;
       try {
-        const resp = await fetch(`/api/v1/live/match-history/${matchId}?max_games=5`);
+        const resp = await fetch(`/api/v1/live/match-history/${matchId}?max_games=1`);
         if (resp.ok) data = await resp.json();
       } catch(e) {}
 
-      if (!data || data.status !== 'success') {
+      if (!data || data.status !== 'success' || (!data.home_recent && !data.away_recent)) {
         // API 실패 시 allMatches 로컬 데이터로 기본 렌더
         data = buildLocalHistory(match);
       }
 
-      const sport = data.sport_code;
+      const sport = data.sport_code || match.sport_code;
 
-      function renderHistoryItems(games) {
-        if (!games || games.length === 0) return '<div style="color:#9ca3af; font-size:0.65rem; padding:2px 0;">최근 경기 없음</div>';
-        return games.map(g => {
-          const evHtml = (g.events && g.events.length > 0)
-            ? `<div class="match-events">${g.events.slice(0, 3).join(' · ')}</div>`
-            : '';
-          let statsHtml = '';
-          if (g.stats && Object.keys(g.stats).length > 0) {
-            const s = g.stats;
-            if (sport === 'BASEBALL') {
-              const ip = s.starter_ip ? `${s.starter_ip}IP` : '';
-              const bb = s.starter_bb !== undefined ? `볼넷${s.starter_bb}` : '';
-              const k = s.starter_k !== undefined ? `삼진${s.starter_k}` : '';
-              const hits = s.hits !== undefined ? `안타${s.hits}` : '';
-              const hr = s.home_runs ? `💥홈런${s.home_runs}` : '';
-              const parts = [ip, bb, k, hits, hr].filter(Boolean);
-              if (parts.length) statsHtml = `<div class="match-detail">${parts.join(' · ')}</div>`;
-            }
-          } else if (g.starter) {
-            statsHtml = `<div class="match-detail">👤 선발: ${g.starter}</div>`;
-          }
+      function renderSingleLastMatchCard(g, teamName, isHome, sportCode) {
+        const teamColor = isHome ? '#1d4ed8' : '#b91c1c';
+        const teamBg = isHome ? '#eff6ff' : '#fef2f2';
+        const teamBorder = isHome ? '#bfdbfe' : '#fecaca';
+        const badgeLabel = isHome ? '홈' : '원정';
+        const formattedTeam = formatTeamName(teamName);
+
+        if (!g) {
           return `
-            <div class="slim-history-item">
-              <span class="result-icon">${g.result_emoji}</span>
-              <div class="match-info">
-                <span class="match-score">${g.date ? g.date.slice(5) : ''} ${g.home_away} vs ${formatTeamName(g.opponent)} <b>${g.score}</b></span>
-                ${statsHtml}${evHtml}
+            <div class="last-match-card mb-2 p-2.5 rounded-2" style="background:#ffffff; border:1px solid #e2e8f0;">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <span style="font-size:0.75rem; font-weight:800; color:${teamColor};">
+                  <span class="badge me-1" style="background:${teamBg}; color:${teamColor}; border:1px solid ${teamBorder}; font-size:0.65rem;">${badgeLabel}</span>${formattedTeam} 직전 경기
+                </span>
               </div>
+              <div class="text-muted small py-2 text-center" style="font-size:0.70rem;">직전 공식 경기 기록이 없습니다.</div>
             </div>`;
-        }).join('');
+        }
+
+        const oppName = formatTeamName(g.opponent || (g.perspective_team === g.home_team_name ? g.away_team_name : g.home_team_name));
+        const resText = g.result === 'WIN' ? '승리' : (g.result === 'LOSS' ? '패배' : '무승부');
+        const resBadgeStyle = g.result === 'WIN'
+          ? 'background:#2563eb; color:#ffffff; font-weight:800;'
+          : (g.result === 'LOSS' ? 'background:#dc2626; color:#ffffff; font-weight:800;' : 'background:#64748b; color:#ffffff; font-weight:800;');
+        const dateStr = g.date || (g.match_date ? g.match_date.slice(0, 10) : '');
+        const homeAwayStr = g.home_away || (g.perspective_team === g.home_team_name ? '홈' : '원정');
+
+        // 상세 내용 생성
+        let detailsHtml = '';
+
+        if (sportCode === 'SOCCER') {
+          // 축구: 전/후반 스코어, 득점자/어시스트, 주요 팀 스탯
+          const p = g.period_scores || {};
+          let halfScoreStr = '';
+          if (p['1H'] || p['2H']) {
+            halfScoreStr = `전반 ${p['1H'] || '0-0'} · 후반 ${p['2H'] || '0-0'}`;
+          } else if (p.half_time && p.full_time) {
+            const h1 = p.half_time.home || 0, a1 = p.half_time.away || 0;
+            const h2 = (p.full_time.home || 0) - h1, a2 = (p.full_time.away || 0) - a1;
+            halfScoreStr = `전반 ${h1}-${a1} · 후반 ${h2}-${a2}`;
+          }
+
+          let eventsHtml = '';
+          if (g.events && g.events.length > 0) {
+            eventsHtml = `
+              <div class="mt-1.5 pt-1.5 border-top" style="border-color:#f1f5f9 !important;">
+                <div class="fw-bold text-dark mb-1" style="font-size:0.68rem;"><i class="bi bi-bullseye text-primary me-1"></i>주요 득점 & 이벤트:</div>
+                <div style="font-size:0.68rem; color:#334155; line-height:1.5;">
+                  ${g.events.map(ev => `<div class="d-flex align-items-center gap-1">${ev}</div>`).join('')}
+                </div>
+              </div>`;
+          }
+
+          const tStats = g.team_stats || {};
+          const myStats = isHome ? (tStats.home || tStats) : (tStats.away || tStats);
+          let statsPills = [];
+          if (myStats && typeof myStats === 'object' && Object.keys(myStats).length > 0) {
+            if (myStats.possession) statsPills.push(`점유율 <b>${myStats.possession}</b>`);
+            if (myStats.totalShots !== undefined) statsPills.push(`슈팅 <b>${myStats.totalShots}개</b>`);
+            if (myStats.shotsOnTarget !== undefined) statsPills.push(`유효 <b>${myStats.shotsOnTarget}개</b>`);
+            if (myStats.wonCorners !== undefined || myStats.cornerKicks !== undefined) statsPills.push(`코너킥 <b>${myStats.wonCorners || myStats.cornerKicks}개</b>`);
+            if (myStats.xg !== undefined) statsPills.push(`xG <b>${myStats.xg}</b>`);
+          }
+          const statsHtml = statsPills.length > 0
+            ? `<div class="mt-1.5 pt-1 border-top d-flex flex-wrap gap-2" style="border-color:#f1f5f9 !important; font-size:0.66rem; color:#475569;">${statsPills.join(' · ')}</div>`
+            : '';
+
+          detailsHtml = `
+            ${halfScoreStr ? `<div class="mt-1.5" style="font-size:0.68rem; color:#475569; font-weight:600;"><i class="bi bi-stopwatch text-secondary me-1"></i>${halfScoreStr}</div>` : ''}
+            ${eventsHtml}
+            ${statsHtml}
+          `;
+        } else if (sportCode === 'BASEBALL') {
+          // 야구: 선발투수 기록, 팀 타격(안타/홈런/볼넷), R/H/E 스코어보드 요약
+          let starterStr = '';
+          const s = g.stats || {};
+          const starterName = g.starter || (s.starter_name || '');
+          if (starterName || s.starter_ip) {
+            const ip = s.starter_ip ? `${s.starter_ip}이닝 ` : '';
+            const k = s.starter_k !== undefined ? `${s.starter_k}K ` : '';
+            const bb = s.starter_bb !== undefined ? `${s.starter_bb}사사구 ` : '';
+            const er = s.starter_er !== undefined ? `${s.starter_er}자책` : '';
+            starterStr = `👤 선발: <b>${starterName || '선발투수'}</b> ${ip || k || bb || er ? `(${ip}${k}${bb}${er})` : ''}`;
+          }
+
+          let battingStr = '';
+          const tStats = g.team_stats || {};
+          const pScores = g.period_scores || {};
+          const summary = pScores.summary ? (isHome ? pScores.summary.home : pScores.summary.away) : null;
+
+          const hits = summary ? summary.H : (s.hits !== undefined ? s.hits : (tStats.hits ? (isHome ? tStats.hits.home : tStats.hits.away) : null));
+          const errors = summary ? summary.E : (tStats.errors ? (isHome ? tStats.errors.home : tStats.errors.away) : null);
+          const hr = s.home_runs !== undefined ? s.home_runs : null;
+          const bb = summary ? summary.B : (s.walks !== undefined ? s.walks : null);
+
+          let batParts = [];
+          if (hits !== null && hits !== undefined) batParts.push(`안타 <b>${hits}개</b>`);
+          if (hr !== null && hr !== undefined && hr > 0) batParts.push(`홈런 <b>${hr}개💥</b>`);
+          if (bb !== null && bb !== undefined) batParts.push(`사사구 <b>${bb}개</b>`);
+          if (errors !== null && errors !== undefined && errors > 0) batParts.push(`실책 <b>${errors}개</b>`);
+          if (batParts.length > 0) {
+            battingStr = `⚾ 팀 타선: ${batParts.join(' · ')}`;
+          }
+
+          detailsHtml = `
+            ${starterStr ? `<div class="mt-1.5" style="font-size:0.68rem; color:#334155;">${starterStr}</div>` : ''}
+            ${battingStr ? `<div class="mt-1" style="font-size:0.68rem; color:#475569;">${battingStr}</div>` : ''}
+          `;
+        } else {
+          // 농구/기타: 쿼터별 스코어
+          const p = g.period_scores || {};
+          let quarterStr = '';
+          if (p['1'] !== undefined || p['1Q'] !== undefined) {
+            quarterStr = `1Q ${p['1Q'] ?? p['1'] ?? '-'} · 2Q ${p['2Q'] ?? p['2'] ?? '-'} · 3Q ${p['3Q'] ?? p['3'] ?? '-'} · 4Q ${p['4Q'] ?? p['4'] ?? '-'}`;
+          }
+          detailsHtml = quarterStr ? `<div class="mt-1.5" style="font-size:0.68rem; color:#475569;">🏀 ${quarterStr}</div>` : '';
+        }
+
+        return `
+          <div class="last-match-card mb-2 p-2 rounded-2" style="background:#ffffff; border:1.5px solid ${teamBorder}; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span style="font-size:0.75rem; font-weight:800; color:${teamColor};">
+                <span class="badge me-1" style="background:${teamBg}; color:${teamColor}; border:1px solid ${teamBorder}; font-size:0.65rem;">${badgeLabel}</span>${formattedTeam} 직전 경기
+              </span>
+              <span style="font-size:0.66rem; color:#64748b; font-weight:600;">
+                <i class="bi bi-calendar3 me-0.5"></i>${dateStr} (${homeAwayStr})
+              </span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center py-1 px-2 rounded" style="background:#f8fafc; border:1px solid #e2e8f0;">
+              <div style="font-size:0.82rem; font-weight:700; color:#1e293b;">
+                <span class="badge bg-white text-secondary border me-1" style="font-size:0.62rem; border-color:#cbd5e1 !important;">상대</span>${oppName}
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge" style="font-size:0.68rem; padding:2px 6px; ${resBadgeStyle}">
+                  ${resText} ${g.result_emoji || ''}
+                </span>
+                <span style="font-size:1.05rem; font-family:monospace; font-weight:800; color:#0f172a; letter-spacing:1px;">
+                  ${g.score}
+                </span>
+              </div>
+            </div>
+
+            ${detailsHtml}
+          </div>
+        `;
       }
 
+      const homeLast = (data.home_recent && data.home_recent.length > 0) ? data.home_recent[0] : null;
+      const awayLast = (data.away_recent && data.away_recent.length > 0) ? data.away_recent[0] : null;
+
       panel.innerHTML = `
-        <div class="slim-history-section">
-          <div class="slim-history-header">🏠 ${formatTeamName(data.home_team)} 최근 경기</div>
-          ${renderHistoryItems(data.home_recent)}
+        <div class="slim-history-container p-2" style="background:#f8fafc; border-top:1px solid #e2e8f0; border-radius:0 0 8px 8px;">
+          <div class="d-flex align-items-center justify-content-between mb-2 px-1">
+            <span style="font-size:0.75rem; font-weight:800; color:#0f172a;">
+              📋 양 팀 바로 직전 경기 상세 결과 (단 1경기)
+            </span>
+            <span class="badge bg-white text-dark border" style="font-size:0.65rem; border-color:#cbd5e1 !important; font-weight:700;">
+              홈 · 원정 1:1 직전전적
+            </span>
+          </div>
+          ${renderSingleLastMatchCard(homeLast, data.home_team || match.home_team_name, true, sport)}
+          ${renderSingleLastMatchCard(awayLast, data.away_team || match.away_team_name, false, sport)}
         </div>
-        <div class="slim-history-section">
-          <div class="slim-history-header">✈️ ${formatTeamName(data.away_team)} 최근 경기</div>
-          ${renderHistoryItems(data.away_recent)}
-        </div>`;
+      `;
     }
 
-    // allMatches 로컬 데이터로 기본 히스토리 생성 (API 실패 시 폴백)
+    // allMatches 로컬 데이터로 기본 히스토리 생성 (API 실패 시 폴백, 바로 직전 1경기만)
     function buildLocalHistory(match) {
       const sport = match.sport_code;
       const home = match.home_team_name;
@@ -10134,7 +10258,7 @@ function getFullModalMatchList() {
           .filter(m => m.status === 'FINISHED' && m.id !== match.id &&
             (m.home_team_name === teamName || m.away_team_name === teamName))
           .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''))
-          .slice(0, 5)
+          .slice(0, 1)
           .map(m => {
             const isHome = m.home_team_name === teamName;
             const ts = isHome ? m.home_score : m.away_score;
@@ -10145,12 +10269,21 @@ function getFullModalMatchList() {
             return {
               match_id: m.id,
               date: (m.match_date || '').slice(0, 10),
+              match_date: m.match_date || '',
               home_away: isHome ? '홈' : '원정',
+              perspective_team: teamName,
+              home_team_name: m.home_team_name,
+              away_team_name: m.away_team_name,
+              home_score: m.home_score,
+              away_score: m.away_score,
+              league_name: m.league_name || '',
               opponent: opp,
               score: `${ts} - ${os}`,
               result: res,
               result_emoji: emoji,
-              starter: '',
+              starter: m.home_starter_name || m.away_starter_name || '',
+              period_scores: (m.details && m.details.period_scores) ? (typeof m.details.period_scores === 'string' ? JSON.parse(m.details.period_scores) : m.details.period_scores) : {},
+              team_stats: (m.details && m.details.team_stats) ? (typeof m.details.team_stats === 'string' ? JSON.parse(m.details.team_stats) : m.details.team_stats) : {},
               events: [],
               stats: {}
             };
@@ -10170,8 +10303,7 @@ function getFullModalMatchList() {
 
 
 
-
-    function findCurrentOrNextMatchCard(cards) {
+        function findCurrentOrNextMatchCard(cards) {
 
       if (!cards || cards.length === 0) return null;
 

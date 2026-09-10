@@ -1225,51 +1225,77 @@ class LiveApiSportsService:
                 (Match.home_team_name == away_team) | (Match.away_team_name == away_team)
             ).order_by(Match.match_date.desc()).limit(max_games).all()
 
+            def format_match_basic(m: Match, perspective_team: str) -> Dict[str, Any]:
+                """경기 기본 정보 포맷"""
+                is_home = (m.home_team_name == perspective_team)
+                opponent = m.away_team_name if is_home else m.home_team_name
+                team_score = m.home_score if is_home else m.away_score
+                opp_score = m.away_score if is_home else m.home_score
+                if team_score > opp_score:
+                    result = 'WIN'
+                    result_emoji = '✅'
+                elif team_score < opp_score:
+                    result = 'LOSS'
+                    result_emoji = '❌'
+                else:
+                    result = 'DRAW'
+                    result_emoji = '🟰'
+
+                date_str = (m.match_date or '')[:10]
+                home_away = '홈' if is_home else '원정'
+
+                # 선발 정보 (야구)
+                starter_info = ''
+                if sport_code == 'BASEBALL':
+                    try:
+                        if is_home and m.details and hasattr(m.details, 'home_starter_name'):
+                            starter_info = getattr(m.details, 'home_starter_name', '') or ''
+                        elif not is_home and m.details and hasattr(m.details, 'away_starter_name'):
+                            starter_info = getattr(m.details, 'away_starter_name', '') or ''
+                    except Exception:
+                        pass
+
+                period_scores = {}
+                team_stats = {}
+                if m.details:
+                    try:
+                        if m.details.period_scores:
+                            period_scores = json.loads(m.details.period_scores) if isinstance(m.details.period_scores, str) else m.details.period_scores
+                    except Exception:
+                        period_scores = {}
+                    try:
+                        if m.details.team_stats:
+                            team_stats = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
+                    except Exception:
+                        team_stats = {}
+
+                return {
+                    'match_id': m.id,
+                    'date': date_str,
+                    'match_date': m.match_date or '',
+                    'home_away': home_away,
+                    'perspective_team': perspective_team,
+                    'home_team_name': m.home_team_name,
+                    'away_team_name': m.away_team_name,
+                    'home_score': m.home_score,
+                    'away_score': m.away_score,
+                    'league_name': m.league_name or '',
+                    'opponent': opponent,
+                    'score': f'{team_score} - {opp_score}',
+                    'result': result,
+                    'result_emoji': result_emoji,
+                    'starter': starter_info,
+                    'period_scores': period_scores,
+                    'team_stats': team_stats,
+                    'events': [],  # API-Sports 이벤트는 별도 패치
+                    'stats': {}
+                }
+
+            home_games = [format_match_basic(m, home_team) for m in home_recent]
+            away_games = [format_match_basic(m, away_team) for m in away_recent]
+
         finally:
             db.close()
-
-        def format_match_basic(m: Match, perspective_team: str) -> Dict[str, Any]:
-            """경기 기본 정보 포맷"""
-            is_home = (m.home_team_name == perspective_team)
-            opponent = m.away_team_name if is_home else m.home_team_name
-            team_score = m.home_score if is_home else m.away_score
-            opp_score = m.away_score if is_home else m.home_score
-            if team_score > opp_score:
-                result = 'WIN'
-                result_emoji = '✅'
-            elif team_score < opp_score:
-                result = 'LOSS'
-                result_emoji = '❌'
-            else:
-                result = 'DRAW'
-                result_emoji = '🟰'
-
-            date_str = (m.match_date or '')[:10]
-            home_away = '홈' if is_home else '원정'
-
-            # 선발 정보 (야구)
-            starter_info = ''
-            if sport_code == 'BASEBALL':
-                if is_home and m.details and hasattr(m, 'home_starter_name'):
-                    starter_info = getattr(m, 'home_starter_name', '') or ''
-                elif not is_home and hasattr(m, 'away_starter_name'):
-                    starter_info = getattr(m, 'away_starter_name', '') or ''
-
-            return {
-                'match_id': m.id,
-                'date': date_str,
-                'home_away': home_away,
-                'opponent': opponent,
-                'score': f'{team_score} - {opp_score}',
-                'result': result,
-                'result_emoji': result_emoji,
-                'starter': starter_info,
-                'events': [],  # API-Sports 이벤트는 별도 패치
-                'stats': {}
-            }
-
-        home_games = [format_match_basic(m, home_team) for m in home_recent]
-        away_games = [format_match_basic(m, away_team) for m in away_recent]
 
         # 2. API-Sports로 이벤트/통계 패치 (키 설정되어 있는 경우만)
         if cls.is_configured():
