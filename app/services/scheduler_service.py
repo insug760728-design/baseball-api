@@ -26,7 +26,7 @@ class SchedulerService:
         "hour": 0,
         "minute": 0,
         "enabled": True,
-        "leagues": ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS", "UCL", "CHAMPIONSHIP", "ENGLAND_CUP", "EREDIVISIE", "LIBERTADORES", "JLEAGUE", "NBA", "KBL"]
+        "leagues": ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS", "UCL", "UEL", "CHAMPIONSHIP", "ENGLAND_CUP", "EREDIVISIE", "LIBERTADORES", "JLEAGUE", "NBA", "KBL"]
     }
     _last_run_info: Dict[str, Any] = {
         "last_run_time": None,
@@ -153,6 +153,60 @@ class SchedulerService:
         return {"status": "TRIGGERED", "message": "백그라운드 동기화 작업이 시작되었습니다."}
 
     @classmethod
+    async def execute_startup_sync(cls):
+        """서버 시작 직후 어제~오늘+1일 전 종목(UCL/UEL 포함) 즉시 동기화.
+        Render 슬립 후 재시작 시에도 최신 경기 데이터가 바로 반영되도록 보장."""
+        await asyncio.sleep(5)  # lifespan 초기화 완료 대기
+        if cls._is_running_task:
+            logger.info("[Startup Sync] 다른 작업 진행 중 - 시작 동기화 건너뜀")
+            return
+
+        cls._is_running_task = True
+        start_time = get_now_kst()
+        logger.info(f"[Startup Sync] 서버 시작 즉시 전종목 동기화 시작 (KST): {start_time.isoformat()}")
+
+        yesterday_str = (start_time - timedelta(days=1)).strftime("%Y-%m-%d")
+        tomorrow_str = (start_time + timedelta(days=1)).strftime("%Y-%m-%d")
+
+        # UCL/UEL 경기는 한국 기준 새벽(01:45~04:00)이므로 어제 UTC = 오늘 KST 새벽
+        sync_leagues = ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A",
+                        "LIGUE_1", "MLS", "UCL", "UEL", "CHAMPIONSHIP", "EREDIVISIE",
+                        "LIBERTADORES", "JLEAGUE", "NBA", "KBL"]
+
+        db = SessionLocal()
+        summary = {}
+        try:
+            for lid in sync_leagues:
+                try:
+                    res = await asyncio.to_thread(
+                        MatchService.sync_from_official_site,
+                        db=db,
+                        league_id=lid,
+                        start_date=yesterday_str,
+                        end_date=tomorrow_str
+                    )
+                    summary[lid] = res.get("synced_matches_count", 0)
+                except Exception as ex:
+                    summary[lid] = f"ERR: {str(ex)[:60]}"
+
+            logger.info(f"[Startup Sync] 서버 시작 즉시 동기화 완료: {summary}")
+            try:
+                from app.core.websocket_manager import manager
+                await manager.broadcast({
+                    "type": "STARTUP_SYNC_COMPLETE",
+                    "timestamp": get_now_kst().isoformat(),
+                    "summary": summary,
+                    "message": "서버 시작 시 전종목(챔스·유로파 포함) 자동 동기화 완료"
+                })
+            except Exception:
+                pass
+        except Exception as e:
+            logger.error(f"[Startup Sync] 서버 시작 동기화 오류: {e}")
+        finally:
+            db.close()
+            cls._is_running_task = False
+
+    @classmethod
     async def execute_daily_sync_job(cls):
         if cls._is_running_task:
             logger.warning("[Scheduler] 이미 실행 중인 작업이 있어 건너뜁니다.")
@@ -253,7 +307,7 @@ class SchedulerService:
         d3_str = (start_time + timedelta(days=3)).strftime("%Y-%m-%d")
 
         try:
-            active_leagues = cls._config.get("leagues", ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS", "UCL", "CHAMPIONSHIP", "ENGLAND_CUP", "EREDIVISIE", "LIBERTADORES", "JLEAGUE", "NBA", "KBL"])
+            active_leagues = cls._config.get("leagues", ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS", "UCL", "UEL", "CHAMPIONSHIP", "ENGLAND_CUP", "EREDIVISIE", "LIBERTADORES", "JLEAGUE", "NBA", "KBL"])
             for lid in active_leagues:
                 try:
                     res = await asyncio.to_thread(
@@ -311,35 +365,39 @@ class SchedulerService:
 
     @classmethod
     async def execute_betman_10min_sync_job(cls):
-        """10분 주기 베트맨(BETMAN) 축구 승무패(52회·51회), 야구 승1패, 농구 승5패 공식 발매금액·투표율 자동 최신화"""
+        """10분 주기 베트맨(BETMAN) 축구 승무패, 야구 승1패, 프로토 전체 배당/투표율 실시간 자동 최신화"""
         try:
             from app.services.betman_service import BetmanService
             from app.core.websocket_manager import manager
+            from app.core.database import SessionLocal
 
-            # 이미 종료된 과거 회차(66회, 27회 등)는 재수집하지 않고, 현재 발매 중인 활성 회차만 최신화
-            sync_targets = [
-                ('G011', 260051, '축구 승무패 51회'),
-                ('G024', 260067, '야구 승1패 67회')
-            ]
-
-            for g_id, g_ts, label in sync_targets:
-                try:
-                    res = await asyncio.to_thread(BetmanService.get_round_data, gm_id=g_id, gm_ts=g_ts, force_refresh=True)
-                    logger.info(f"[Scheduler] 베트맨 10분 주기 최신화: {label} (총매출: {res.get('total_sell_amount', 0):,}원, 1등누적: {res.get('first_prize_pool', 0):,}원, 경기수: {len(res.get('matches', []))})")
+            # 1. 활성 토토 회차(승무패/승1패/승5패) 실시간 매출 및 투표율 동적 최신화
+            summary = await asyncio.to_thread(BetmanService.get_live_toto_summary, force_refresh=True)
+            for gid, g_info in summary.get('games', {}).items():
+                g_ts = g_info.get('gmTs')
+                if g_ts:
                     try:
-                        await manager.broadcast({
-                            "type": "BETMAN_10MIN_UPDATED",
-                            "timestamp": res.get("updated_at"),
-                            "gmId": g_id,
-                            "gmTs": g_ts,
-                            "first_prize_pool": res.get("first_prize_pool"),
-                            "total_sell_amount": res.get("total_sell_amount"),
-                            "total_sale_cnt": res.get("total_sale_cnt")
-                        })
-                    except Exception:
-                        pass
-                except Exception as ex_target:
-                    logger.warning(f"[Scheduler] 베트맨 개별 회차({label}) 동기화 경고: {ex_target}")
+                        res = await asyncio.to_thread(BetmanService.get_round_data, gm_id=gid, gm_ts=g_ts, force_refresh=True)
+                        logger.info(f"[Scheduler] 베트맨 10분 최신화: {g_info.get('title')} (총매출: {res.get('total_sell_amount', 0):,}원, 1등누적: {res.get('first_prize_pool', 0):,}원)")
+                    except Exception as ex_target:
+                        logger.warning(f"[Scheduler] 베트맨 개별 회차({gid}) 동기화 경고: {ex_target}")
+
+            # 2. 프로토 승부식 최신 배당 및 투표율을 DB 경기에 자동 동기화
+            db = SessionLocal()
+            try:
+                proto_res = await asyncio.to_thread(BetmanService.sync_betman_proto_matches, db=db)
+                logger.info(f"[Scheduler] 베트맨 프로토 배당 자동 동기화: {proto_res}")
+            finally:
+                db.close()
+
+            try:
+                await manager.broadcast({
+                    "type": "BETMAN_10MIN_UPDATED",
+                    "timestamp": datetime.now().isoformat(),
+                    "summary": summary
+                })
+            except Exception:
+                pass
         except Exception as e:
             logger.error(f"[Scheduler] 베트맨 10분 동기화 오류: {e}")
 

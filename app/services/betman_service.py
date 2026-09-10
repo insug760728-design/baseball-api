@@ -1,26 +1,30 @@
 # -*- coding: utf-8 -*-
-import urllib.request
+import requests
 import json
 import time
 import os
 import sqlite3
-from datetime import datetime
+import re
+from datetime import datetime, timezone, timedelta
 from functools import lru_cache
 
 BETMAN_TOTO_URL = 'https://www.betman.co.kr/buyPsblGame/totoGameData.do'
-BETMAN_BUYABLE_URL = 'https://www.betman.co.kr/buyPsblGame/inqBuyAbleGameInfoList.do'
+BETMAN_BUYABLE_URL = 'https://www.betman.co.kr/buyPsblGame/inqCacheBuyAbleGameInfoList.do'
 BETMAN_INQ_URL = 'https://www.betman.co.kr/buyPsblGame/gameInfoInq.do'
 
 HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     'Content-Type': 'application/json; charset=UTF-8',
     'Accept': 'application/json, text/javascript, */*; q=0.01',
     'X-Requested-With': 'XMLHttpRequest',
-    'Referer': 'https://www.betman.co.kr/main/mainPage/gamebuy/gameSlip.do?gmId=G011'
+    'Referer': 'https://www.betman.co.kr/main/mainPage/gamebuy/gameSlip.do?gmId=G101'
 }
 
+_SESSION = requests.Session()
+_SESSION.headers.update(HEADERS)
+
 _CACHE = {}
-CACHE_TTL = 1800 # 30 minutes cache: Betman data is mostly static between rounds
+CACHE_TTL = 300 # 5 minutes cache for real-time responsiveness
 
 def format_kr_money(amount: int) -> str:
     """Format Korean won amount into readable eok/man string (e.g., 2억 8,249만 원)"""
@@ -39,94 +43,119 @@ def format_kr_money(amount: int) -> str:
 TEAM_SYNONYMS = {
     # Baseball (MLB)
     "다저스": ["dodgers", "los angeles dodgers", "la dodgers", "la다저스"],
-    "파드리스": ["padres", "san diego padres", "샌디에이고"],
+    "파드리스": ["padres", "san diego padres", "샌디에이고", "샌디에이고 파드리스"],
     "자이언츠": ["giants", "san francisco giants", "샌프란시스코"],
-    "양키스": ["yankees", "new york yankees", "ny yankees", "뉴욕양키스"],
-    "메츠": ["mets", "new york mets", "ny mets", "뉴욕메츠"],
-    "레드삭스": ["red sox", "boston red sox", "보스턴"],
-    "오리올스": ["orioles", "baltimore orioles", "볼티모어"],
-    "블루제이스": ["blue jays", "toronto blue jays", "토론토"],
-    "레이스": ["rays", "tampa bay rays", "탬파베이"],
-    "화이트삭스": ["white sox", "chicago white sox", "시카고화이트삭스"],
-    "가디언스": ["guardians", "cleveland guardians", "클리블랜드"],
-    "타이거스": ["tigers", "detroit tigers", "디트로이트"],
-    "로열스": ["royals", "kansas city royals", "캔자스시티"],
-    "트윈스": ["twins", "minnesota twins", "미네소타"],
-    "애스트로스": ["astros", "houston astros", "휴스턴"],
-    "에인절스": ["angels", "los angeles angels", "la에인절스", "la에인절"],
-    "애슬레틱스": ["athletics", "oakland athletics", "오클랜드"],
-    "매리너스": ["mariners", "seattle mariners", "시애틀"],
-    "레인저스": ["rangers", "texas rangers", "텍사스"],
-    "브레이브스": ["braves", "atlanta braves", "애틀랜타", "애틀브레"],
-    "말린스": ["marlins", "miami marlins", "마이애미", "마이말린"],
-    "필리스": ["phillies", "philadelphia phillies", "필라델피아", "필라필리"],
-    "내셔널스": ["nationals", "washington nationals", "워싱턴", "워싱내셔"],
-    "컵스": ["cubs", "chicago cubs", "시카고컵스", "시카컵스"],
-    "레즈": ["reds", "cincinnati reds", "신시내티", "신시레즈"],
-    "브루어스": ["brewers", "milwaukee brewers", "밀워키", "밀워브루"],
-    "파이리츠": ["pirates", "pittsburgh pirates", "피츠버그", "피츠파이"],
-    "카디널스": ["cardinals", "st louis cardinals", "세인트루이스", "세인카디"],
-    "다이아몬드백스": ["diamondbacks", "arizona diamondbacks", "d-backs", "애리조나", "애리디백"],
-    "로키스": ["rockies", "colorado rockies", "콜로라도", "콜로로키"],
+    "양키스": ["yankees", "new york yankees", "ny yankees", "뉴욕양키스", "뉴욕 양키스"],
+    "메츠": ["mets", "new york mets", "ny mets", "뉴욕메츠", "뉴욕 메츠"],
+    "레드삭스": ["red sox", "boston red sox", "보스턴", "보스턴 레드삭스"],
+    "오리올스": ["orioles", "baltimore orioles", "볼티모어", "볼티모어 오리올스"],
+    "블루제이스": ["blue jays", "toronto blue jays", "토론토", "토론토 블루제이스"],
+    "레이스": ["rays", "tampa bay rays", "탬파베이", "탬파베이 레이스"],
+    "화이트삭스": ["white sox", "chicago white sox", "시카고화이트삭스", "시카고 화이트삭스"],
+    "가디언스": ["guardians", "cleveland guardians", "클리블랜드", "클리블랜드 가디언스"],
+    "타이거스": ["tigers", "detroit tigers", "디트로이트", "디트로이트 타이거스"],
+    "로열스": ["royals", "kansas city royals", "캔자스시티", "캔자스시티 로얄스", "캔자스시티 로열스"],
+    "트윈스": ["twins", "minnesota twins", "미네소타", "미네소타 트윈스"],
+    "애스트로스": ["astros", "houston astros", "휴스턴", "휴스턴 애스트로스"],
+    "에인절스": ["angels", "los angeles angels", "la에인절스", "la에인절", "la 에인절스"],
+    "애슬레틱스": ["athletics", "oakland athletics", "오클랜드", "오클랜드 애슬레틱스"],
+    "매리너스": ["mariners", "seattle mariners", "시애틀", "시애틀 매리너스"],
+    "레인저스": ["rangers", "texas rangers", "텍사스", "텍사스 레인저스"],
+    "브레이브스": ["braves", "atlanta braves", "애틀랜타", "애틀브레", "애틀랜타 브레이브스"],
+    "말린스": ["marlins", "miami marlins", "마이애미", "마이말린", "마이애미 말린스"],
+    "필리스": ["phillies", "philadelphia phillies", "필라델피아", "필라필리", "필라델피아 필리스"],
+    "내셔널스": ["nationals", "washington nationals", "워싱턴", "워싱내셔", "워싱턴 내셔널스"],
+    "컵스": ["cubs", "chicago cubs", "시카고컵스", "시카컵스", "시카고 컵스"],
+    "레즈": ["reds", "cincinnati reds", "신시내티", "신시레즈", "신시내티 레즈"],
+    "브루어스": ["brewers", "milwaukee brewers", "밀워키", "밀워브루", "밀워키 브루어스"],
+    "파이리츠": ["pirates", "pittsburgh pirates", "피츠버그", "피츠파이", "피츠버그 파이리츠"],
+    "카디널스": ["cardinals", "st louis cardinals", "세인트루이스", "세인카디", "세인트루이스 카디널스"],
+    "다이아몬드백스": ["diamondbacks", "arizona diamondbacks", "d-backs", "애리조나", "애리디백", "애리조나 다이아몬드백스"],
+    "로키스": ["rockies", "colorado rockies", "콜로라도", "콜로로키", "콜로라도 로키스"],
+
+    # Baseball (KBO)
+    "LG": ["lg", "lg트윈스", "lg 트윈스"],
+    "KIA": ["kia", "기아", "kia타이거즈", "kia 타이거즈"],
+    "삼성": ["삼성", "삼성라이온즈", "삼성 라이온즈"],
+    "두산": ["두산", "두산베어스", "두산 베어스"],
+    "KT": ["kt", "kt위즈", "kt 위즈"],
+    "SSG": ["ssg", "ssg랜더스", "ssg 랜더스", "에스에스지"],
+    "NC": ["nc", "nc다이노스", "nc 다이노스"],
+    "한화": ["한화", "한화이글스", "한화 이글스"],
+    "롯데": ["롯데", "롯데자이언츠", "롯데 자이언츠"],
+    "키움": ["키움", "키움히어로즈", "키움 히어로즈"],
+
+    # Baseball (NPB)
+    "요미우리": ["요미우리", "요미우리 자이언츠", "요미우리자이언츠", "자이언츠", "요미"],
+    "야쿠르트": ["야쿠르트", "야쿠르트 스왈로스", "야쿠르트스왈로스", "도쿄야쿠르트"],
+    "요코하마": ["요코하마", "요코하마 dena베이스타스", "요코하마 dena", "dena", "베이스타스"],
+    "히로시마": ["히로시마", "히로시마 도요카프", "히로시마도요카프", "도요카프", "카프"],
+    "한신": ["한신", "한신 타이거스", "한신타이거스", "한신타이거즈"],
+    "주니치": ["주니치", "주니치 드래건스", "주니치드래건스", "주니치드래곤즈"],
+    "닛폰햄": ["닛폰햄", "닛폰햄 파이터스", "닛폰햄파이터스", "파이터스", "홋카이도닛폰햄"],
+    "라쿠텐": ["라쿠텐", "라쿠텐 골든이글스", "라쿠텐골든이글스", "도호쿠라쿠텐"],
+    "세이부": ["세이부", "세이부 라이온즈", "세이부라이온즈", "사이타마세이부"],
+    "소프트뱅크": ["소프트뱅크", "소프트뱅크 호크스", "소프트뱅크호크스", "후쿠오카소프트뱅크", "소뱅"],
+    "지바롯데": ["지바롯데", "지바롯데 마린스", "지바롯데마린스", "마린스"],
+    "오릭스": ["오릭스", "오릭스 버팔로스", "오릭스버팔로스", "버팔로스"],
 
     # Soccer (EPL)
-    "토트넘": ["tottenham", "tottenham hotspur", "spurs"],
-    "맨체스c": ["manchester city", "man city", "man city fc"],
-    "맨체스u": ["manchester united", "manchester utd", "man utd", "맨유"],
+    "토트넘": ["tottenham", "tottenham hotspur", "spurs", "토트넘 홋스퍼"],
+    "맨체스c": ["manchester city", "man city", "man city fc", "맨체스터 시티", "맨시티"],
+    "맨체스u": ["manchester united", "manchester utd", "man utd", "맨유", "맨체스터 유나이티드"],
     "아스널": ["arsenal", "아스날"],
     "첼시": ["chelsea"],
     "리버풀": ["liverpool"],
-    "a빌라": ["aston villa", "villa", "아스톤빌라", "아스톤v", "애스턴빌라"],
-    "뉴캐슬": ["newcastle", "newcastle united"],
+    "a빌라": ["aston villa", "villa", "아스톤빌라", "아스톤v", "애스턴빌라", "아스톤 빌라"],
+    "뉴캐슬": ["newcastle", "newcastle united", "뉴캐슬 유나이티드"],
     "브라이턴": ["brighton", "brighton & hove albion", "brighton and hove albion", "브라이튼"],
     "브렌트퍼": ["brentford", "브렌트포드"],
-    "크리스탈": ["crystal palace", "palace", "크리스털", "크리스탈팰리스"],
+    "크리스탈": ["crystal palace", "palace", "크리스털", "크리스탈팰리스", "크리스털 팰리스"],
     "풀럼": ["fulham"],
-    "웨스트햄": ["west ham", "west ham united"],
+    "웨스트햄": ["west ham", "west ham united", "웨스트햄 유나이티드"],
     "에버턴": ["everton", "에버튼"],
-    "울버햄튼": ["wolverhampton", "wolves"],
+    "울버햄튼": ["wolverhampton", "wolves", "울버햄프턴"],
     "본머스": ["bournemouth", "afc bournemouth"],
-    "노팅엄f": ["nottingham", "nottingham forest", "노팅엄"],
-    "레스터": ["leicester", "leicester city"],
+    "노팅엄f": ["nottingham", "nottingham forest", "노팅엄", "노팅엄 포레스트", "노팅엄F"],
+    "레스터": ["leicester", "leicester city", "레스터 시티"],
     "사우샘프": ["southampton", "사우샘프턴"],
-    "입스위치": ["ipswich", "ipswich town"],
+    "입스위치": ["ipswich", "ipswich town", "입스위치 타운"],
     "선덜랜드": ["sunderland"],
-    "리즈u": ["leeds", "leeds united", "리즈"],
-    "코번트리": ["coventry", "coventry city"],
+    "리즈u": ["leeds", "leeds united", "리즈", "리즈 유나이티드"],
+    "코번트리": ["coventry", "coventry city", "코번트리 시티"],
     "헐시티": ["hull", "hull city"],
 
-    # Soccer (Serie A)
-    "인테르": ["internazionale", "inter", "inter milan", "인터밀란"],
-    "ac밀란": ["ac milan", "milan"],
-    "유벤투스": ["juventus", "유벤"],
-    "나폴리": ["napoli", "ssc napoli"],
-    "as로마": ["as roma", "roma", "로마"],
-    "라치오": ["lazio", "ss lazio"],
-    "아탈란타": ["atalanta", "atalanta bc"],
-    "피오렌": ["fiorentina", "acf fiorentina", "피오렌티나"],
-    "볼로냐": ["bologna"],
-    "토리노": ["torino"],
-    "ac몬차": ["monza", "ac monza", "몬차"],
-    "제노아": ["genoa", "genoa cfc"],
-    "베네치아": ["venezia", "venezia fc"],
-    "파르마": ["parma", "parma calcio 1913"],
-    "프로시논": ["frosinone", "frosinone calcio", "프로시노네"],
-    "칼리아리": ["cagliari"],
-    "우디네세": ["udinese"],
-    "엠폴리": ["empoli"],
-    "레체": ["lecce"],
-    "베로나": ["hellas verona", "verona", "헬라스"],
-    "코모": ["como"],
+    # Soccer (La Liga)
+    "레알마드": ["real madrid", "레알 마드리드", "레알마드리드"],
+    "바르셀로": ["barcelona", "바르셀로나", "바르샤"],
+    "at마드": ["atletico madrid", "atletico", "아틀레티코", "아틀레티코 마드리드", "at마드리드"],
+    "소시에다": ["real sociedad", "sociedad", "레알 소시에다드", "소시에다드"],
+    "a빌바오": ["athletic bilbao", "athletic club", "아틀레틱 빌바오", "빌바오"],
+    "오사수나": ["osasuna", "ca osasuna"],
+    "에스파뇰": ["espanyol", "rcd espanyol", "에스파뇰"],
+    "셀타비고": ["celta vigo", "celta", "셀타 비고", "셀타"],
+    "말라가": ["malaga", "malaga cf"],
+    "레반테": ["levante", "levante ud"],
+    "헤타페": ["getafe", "getafe cf"],
+    "데포아코": ["deportivo la coruna", "deportivo", "데포르티보"],
+    "엘체": ["elche", "elche cf"],
 
-    # Soccer (Eredivisie / Libertadores / Global)
-    "네이메헌": ["nec 네이메헌", "nec nijmegen", "nijmegen", "네이메헌"],
-    "엑셀시오르": ["excelsior", "sbv excelsior", "엑셀시오르"],
-    "플루미넨시": ["fluminense", "fluminense fc", "플루미넨세", "플루미넨시"],
-    "플라텐세": ["ca platense", "platense", "플라텐세", "ca플라텐세"],
-
-    # Basketball (International / FIBA Women)
-    "헝가리여자": ["헝가리(여)", "헝가리 여자", "hungary women", "hungary w", "헝가리"],
-    "일본여자": ["일본(여)", "일본 여자", "japan women", "japan w", "일본"]
+    # Soccer (K League)
+    "충남아산": ["충남아산", "충남아산 프로축구단", "충남아산fc"],
+    "안산": ["안산", "안산 그리너스", "안산그리너스", "안산fc"],
+    "김포": ["김포", "김포fc", "김포 fc"],
+    "충북청주": ["충북청주", "충북청주 프로축구단", "충북청주fc"],
+    "경남": ["경남", "경남fc", "경남 fc"],
+    "대구": ["대구", "대구fc", "대구 fc"],
+    "화성": ["화성", "화성fc", "화성 fc"],
+    "서울이랜드": ["서울이랜드", "서울 이랜드", "서울이랜드fc"],
+    "수원": ["수원", "수원 삼성", "수원 삼성블루윙즈", "수원삼성"],
+    "김해": ["김해", "김해fc", "김해시청"],
+    "용인": ["용인", "용인fc", "용인시축구센터"],
+    "부산": ["부산", "부산 아이파크", "부산아이파크"],
+    "전남": ["전남", "전남 드래곤즈", "전남드래곤즈"],
+    "성남": ["성남", "성남fc", "성남 fc"],
+    "천안": ["천안", "천안 시티", "천안시티fc", "천안시티"]
 }
 
 @lru_cache(maxsize=4096)
@@ -171,88 +200,74 @@ def compute_name_similarity(betman_team, db_team):
         return 70
     return 0
 
+
 class BetmanService:
+
     @staticmethod
-    def _find_matching_db_match(home_name: str, away_name: str, sport_code: str = 'BASEBALL', match_date_str: str = None) -> dict:
+    def get_active_rounds_map(force_refresh: bool = False) -> dict:
+        """베트맨 공식 서버에서 현재 발매 중인 모든 토토/프로토 게임의 최신 회차(gmTs) 자동 조회"""
+        now = time.time()
+        cache_key = 'active_rounds_map'
+        if not force_refresh and cache_key in _CACHE:
+            ts_cached, data = _CACHE[cache_key]
+            if now - ts_cached < CACHE_TTL:
+                return data
+
+        res_map = {'toto': {}, 'proto': {}}
         try:
-            db_path = 'sports_data.db'
-            if not os.path.exists(db_path):
-                return None
-            conn = sqlite3.connect(db_path, timeout=15.0)
-            conn.row_factory = sqlite3.Row
-            cursor = conn.cursor()
+            payload = {'_sbmInfo': {'_sbmInfo': {'debugMode': 'false'}}}
+            r = _SESSION.post(BETMAN_BUYABLE_URL, json=payload, timeout=4.0)
+            if r.status_code == 200:
+                data = r.json()
+                for tg in data.get('totoGames', []):
+                    gid = tg.get('gmId')
+                    ts = tg.get('gmTs')
+                    if gid and ts:
+                        if gid not in res_map['toto'] or ts > res_map['toto'][gid].get('gmTs', 0):
+                            res_map['toto'][gid] = tg
 
-            current_year = datetime.now().year
-            date_param = None
-            if match_date_str:
-                import re
-                m = re.search(r'(\d{2})[\.-](\d{2})', str(match_date_str))
-                if m:
-                    date_param = f"%{m.group(1)}-{m.group(2)}%"
+                for pg in data.get('protoGames', []):
+                    gid = pg.get('gmId')
+                    ts = pg.get('gmTs')
+                    if gid and ts:
+                        if gid not in res_map['proto'] or ts > res_map['proto'][gid].get('gmTs', 0):
+                            res_map['proto'][gid] = pg
 
-            if date_param:
-                cursor.execute(f"SELECT id, match_date, sport_code, league_name, home_team_name, away_team_name, home_score, away_score, status FROM matches WHERE sport_code = ? AND match_date LIKE ? AND match_date >= '{current_year}-01-01 00:00' ORDER BY match_date DESC", (sport_code, date_param))
-                rows = cursor.fetchall()
-            else:
-                cursor.execute(f"SELECT id, match_date, sport_code, league_name, home_team_name, away_team_name, home_score, away_score, status FROM matches WHERE sport_code = ? AND match_date >= '{current_year}-01-01 00:00' ORDER BY match_date DESC LIMIT 50", (sport_code,))
-                rows = cursor.fetchall()
-            conn.close()
-
-            best_match = None
-            best_score = 0
-            for r in rows:
-                if teams_match(home_name, r['home_team_name']) and teams_match(away_name, r['away_team_name']):
-                    best_match = dict(r)
-                    break
-                s_h = compute_name_similarity(home_name, r['home_team_name'])
-                s_a = compute_name_similarity(away_name, r['away_team_name'])
-                tot = s_h + s_a
-                if tot > best_score and s_h >= 50 and s_a >= 50:
-                    best_score = tot
-                    best_match = dict(r)
-            
-            if best_match:
-                from app.services.team_split_service import TeamSplitService
-                pred = TeamSplitService.get_quick_prediction(
-                    home_team=best_match['home_team_name'],
-                    away_team=best_match['away_team_name'],
-                    sport_code=best_match['sport_code'],
-                    status=best_match['status'],
-                    home_score=best_match['home_score'],
-                    away_score=best_match['away_score'],
-                    match_date=best_match.get('match_date')
-                )
-                h_pct = 50
-                a_pct = 50
-                if pred:
-                    conf = pred.get('confidence', 50)
-                    if pred.get('favored_team') == best_match['home_team_name']:
-                        h_pct = conf
-                        a_pct = 100 - conf
-                    elif pred.get('favored_team') == best_match['away_team_name']:
-                        a_pct = conf
-                        h_pct = 100 - conf
-                    pred['home_pct'] = h_pct
-                    pred['away_pct'] = a_pct
-
-                return {
-                    'id': best_match['id'],
-                    'home_team_name': best_match['home_team_name'],
-                    'away_team_name': best_match['away_team_name'],
-                    'match_date': best_match['match_date'],
-                    'home_score': best_match['home_score'],
-                    'away_score': best_match['away_score'],
-                    'status': best_match['status'],
-                    'prediction': pred
-                }
+                if res_map['toto'] or res_map['proto']:
+                    _CACHE[cache_key] = (now, res_map)
+                    return res_map
         except Exception as e:
-            print(f"[WARN] BetmanService DB matching error: {e}")
-        return None
+            print(f"[WARN] BetmanService get_active_rounds_map error: {e}")
+
+        # Default fallbacks if network fails
+        res_map = {
+            'toto': {
+                'G011': {'gmId': 'G011', 'gmTs': 260052, 'gmOsidTsYear': 2026, 'gameName': '축구토토 승무패'},
+                'G024': {'gmId': 'G024', 'gmTs': 260068, 'gmOsidTsYear': 2026, 'gameName': '야구토토 승1패'},
+                'G027': {'gmId': 'G027', 'gmTs': 260028, 'gmOsidTsYear': 2026, 'gameName': '농구토토 승5패'}
+            },
+            'proto': {
+                'G101': {'gmId': 'G101', 'gmTs': 260093, 'gmOsidTsYear': 2026, 'gameName': '프로토 승부식'}
+            }
+        }
+        return res_map
+
+    @staticmethod
+    def get_active_round_ts(gm_id: str) -> int:
+        """특정 게임(G011, G024, G101 등)의 최신 활성 회차 번호 반환"""
+        rounds_map = BetmanService.get_active_rounds_map()
+        if gm_id in rounds_map.get('toto', {}):
+            return rounds_map['toto'][gm_id].get('gmTs')
+        if gm_id in rounds_map.get('proto', {}):
+            return rounds_map['proto'][gm_id].get('gmTs')
+        if gm_id == 'G011': return 260052
+        if gm_id == 'G024': return 260068
+        if gm_id == 'G101': return 260093
+        return 260001
 
     @staticmethod
     def get_live_toto_summary(force_refresh: bool = False) -> dict:
         """Fetch real-time sales, prize pools, and rollover status across active Betman Toto games"""
-        from datetime import datetime
         now = time.time()
         cache_key = 'live_toto_summary'
         if not force_refresh and cache_key in _CACHE:
@@ -266,118 +281,85 @@ class BetmanService:
             'games': {}
         }
         try:
-            params = {'_sbmInfo': {'_sbmInfo': {'debugMode': 'false'}}}
-            req = urllib.request.Request(
-                BETMAN_BUYABLE_URL,
-                data=json.dumps(params).encode('utf-8'),
-                headers=HEADERS
-            )
-            with urllib.request.urlopen(req, timeout=2.0) as resp:
-                raw = resp.read().decode('utf-8', errors='ignore')
-                res = json.loads(raw)
+            payload = {'_sbmInfo': {'_sbmInfo': {'debugMode': 'false'}}}
+            r = _SESSION.post(BETMAN_BUYABLE_URL, json=payload, timeout=4.0)
+            if r.status_code == 200:
+                res = r.json()
+                for g in res.get('totoGames', []):
+                    gid = g.get('gmId')
+                    if gid in ['G011', 'G024', 'G027']:
+                        sport_label = '야구 승1패' if gid == 'G024' else ('축구 승무패' if gid == 'G011' else '농구 승5패')
+                        ts = g.get('gmTs')
+                        s_amt = int(g.get('totalSellAmount') or 0)
+                        f_amt = int(g.get('forwardAmount') or 0)
+                        w_prize = int(g.get('winnerTotalPrize') or int(s_amt * 0.25))
+                        f_pool = f_amt + w_prize
 
-            for g in res.get('totoGames', []):
-                gid = g.get('gmId')
-                if gid in ['G011', 'G024', 'G027']:
-                    sport_label = '야구 승1패' if gid == 'G024' else ('축구 승무패' if gid == 'G011' else '농구 승5패')
-                    ts = g.get('gmTs')
-                    s_amt = int(g.get('totalSellAmount') or 0)
-                    f_amt = int(g.get('forwardAmount') or 0)
-                    w_prize = int(g.get('winnerTotalPrize') or int(s_amt * 0.25))
-                    f_pool = f_amt + w_prize
+                        summary['games'][gid] = {
+                            'gmId': gid,
+                            'sport': sport_label,
+                            'gmTs': ts,
+                            'round_no': str(ts)[-2:],
+                            'title': f"{sport_label} {str(ts)[-2:]}회차",
+                            'total_sell_amount': s_amt,
+                            'total_sale_cnt': int(g.get('totalSaleCnt') or (s_amt // 1000)),
+                            'forward_amount': f_amt,
+                            'forward_cnt': g.get('forwardCnt', 0),
+                            'first_prize_pool': f_pool,
+                            'first_prize_text': format_kr_money(f_pool),
+                            'total_sell_text': format_kr_money(s_amt),
+                            'forward_text': format_kr_money(f_amt) if f_amt > 0 else '이월 없음',
+                            'status': 'SaleProgress' if s_amt > 0 else 'SaleComplete',
+                            'is_live': True
+                        }
 
-                    summary['games'][gid] = {
-                        'gmId': gid,
-                        'sport': sport_label,
-                        'gmTs': ts,
-                        'round_no': str(ts)[-2:],
-                        'title': f"{sport_label} {str(ts)[-2:]}회차",
-                        'total_sell_amount': s_amt,
-                        'total_sale_cnt': int(g.get('totalSaleCnt') or (s_amt // 1000)),
-                        'forward_amount': f_amt,
-                        'forward_cnt': g.get('forwardCnt', 0),
-                        'first_prize_pool': f_pool,
-                        'first_prize_text': format_kr_money(f_pool),
-                        'total_sell_text': format_kr_money(s_amt),
-                        'forward_text': format_kr_money(f_amt) if f_amt > 0 else '이월 없음',
-                        'status': 'SaleProgress' if s_amt > 0 else 'SaleComplete',
-                        'is_live': True
-                    }
-
-            if summary['games']:
-                _CACHE[cache_key] = (now, summary)
-                return summary
+                if summary['games']:
+                    _CACHE[cache_key] = (now, summary)
+                    return summary
         except Exception as e:
             print(f"[WARN] Failed to fetch live toto summary: {e}")
 
-        # Fallback default live summary built dynamically from local files
-        for gid, fts in [('G011', 260051), ('G024', 260067), ('G027', 260027)]:
-            fn = f'betman_{fts}.json'
-            if os.path.exists(fn):
-                try:
-                    with open(fn, 'r', encoding='utf-8') as f:
-                        d = json.load(f)
-                        summary['games'][gid] = {
-                            'gmId': gid,
-                            'sport': '야구 승1패' if gid == 'G024' else ('축구 승무패' if gid == 'G011' else '농구 승5패'),
-                            'gmTs': fts,
-                            'round_no': str(fts)[-2:],
-                            'title': d.get('title') or f"{str(fts)[-2:]}회차",
-                            'total_sell_amount': d.get('total_sell_amount', 0),
-                            'total_sale_cnt': d.get('total_sale_cnt', 0),
-                            'forward_amount': d.get('forward_amount', 0),
-                            'forward_cnt': d.get('forward_cnt', 0),
-                            'first_prize_pool': d.get('first_prize_pool', 0),
-                            'first_prize_text': d.get('first_prize_text', '0원'),
-                            'total_sell_text': d.get('total_sell_text', '0원'),
-                            'forward_text': d.get('forward_text', '이월 없음'),
-                            'status': d.get('sale_status', 'SaleProgress'),
-                            'is_live': d.get('is_live', True)
-                        }
-                except Exception:
-                    pass
+        # Fallback default live summary
+        for gid in ['G011', 'G024', 'G027']:
+            fts = BetmanService.get_active_round_ts(gid)
+            summary['games'][gid] = {
+                'gmId': gid,
+                'sport': '야구 승1패' if gid == 'G024' else ('축구 승무패' if gid == 'G011' else '농구 승5패'),
+                'gmTs': fts,
+                'round_no': str(fts)[-2:],
+                'title': f"{'야구 승1패' if gid == 'G024' else ('축구 승무패' if gid == 'G011' else '농구 승5패')} {str(fts)[-2:]}회차",
+                'total_sell_amount': 0,
+                'total_sale_cnt': 0,
+                'forward_amount': 0,
+                'forward_cnt': 0,
+                'first_prize_pool': 0,
+                'first_prize_text': '0원',
+                'total_sell_text': '0원',
+                'forward_text': '이월 없음',
+                'status': 'SaleProgress',
+                'is_live': True
+            }
 
         _CACHE[cache_key] = (now, summary)
         return summary
 
     @staticmethod
-    def get_round_data(gm_id: str = 'G024', gm_ts: int = None, force_refresh: bool = False) -> dict:
+    def get_round_data(gm_id: str = 'G011', gm_ts: int = None, force_refresh: bool = False) -> dict:
+        """베트맨 특정 토토 게임(축구 승무패 G011, 야구 승1패 G024, 농구 승5패 G027) 14경기 공식 실시간 데이터 조회"""
         now = time.time()
-        # Default ts per gm_id (current active live rounds)
+        # Resolve active round dynamically if not provided
         if not gm_ts:
-            if gm_id == 'G024': gm_ts = 260067
-            elif gm_id == 'G011': gm_ts = 260051
-            elif gm_id == 'G027': gm_ts = 260027
+            gm_ts = BetmanService.get_active_round_ts(gm_id)
 
         cache_key = f'{gm_id}_{gm_ts}'
 
-        # 1. In-memory cache check (0.0001s)
+        # 1. In-memory cache check
         if not force_refresh and cache_key in _CACHE:
             ts_cached, data = _CACHE[cache_key]
             if now - ts_cached < CACHE_TTL:
                 return data
 
-        # Local snapshot candidates
-        candidates = [
-            f'betman_{gm_ts}.json',
-            f'betman_{gm_id}_{gm_ts}.json',
-            'betman_260051.json' if gm_id == 'G011' else ('betman_260067.json' if gm_id == 'G024' else 'betman_260027.json'),
-            'betman_260050.json' if gm_id == 'G011' else 'betman_260066.json'
-        ]
-
-        # 2. Local-First: Read local snapshot file immediately (0.005s) - no external network call!
-        if not force_refresh:
-            for snap_file in candidates:
-                if os.path.exists(snap_file):
-                    try:
-                        with open(snap_file, 'r', encoding='utf-8') as f:
-                            snap_data = json.load(f)
-                            _CACHE[cache_key] = (now, snap_data)
-                            return snap_data
-                    except Exception:
-                        pass
-
-        # 3. Only if force_refresh=True or no local file exists: Try Betman live API with strict 2.0s timeout
+        # 2. Live API fetch with requests (Reliable & fast)
         try:
             params = {
                 'gmId': gm_id,
@@ -388,56 +370,85 @@ class BetmanService:
                     }
                 }
             }
-            req = urllib.request.Request(
-                BETMAN_TOTO_URL,
-                data=json.dumps(params).encode('utf-8'),
-                headers=HEADERS
-            )
-            with urllib.request.urlopen(req, timeout=2.0) as resp:
-                raw = resp.read().decode('utf-8', errors='ignore')
-                res = json.loads(raw)
-
-            if isinstance(res, dict) and (res.get('schedulesList') or res.get('currentLottery')):
-                parsed = BetmanService._parse_betman_payload(res, gm_id, gm_ts)
-                if parsed and parsed.get('status') == 'success':
-                    _CACHE[cache_key] = (now, parsed)
-                    # Persist snapshot so offline/backup stays fresh
-                    try:
-                        with open(f'betman_{gm_ts}.json', 'w', encoding='utf-8') as sf:
-                            json.dump(parsed, sf, ensure_ascii=False, indent=2)
-                    except Exception:
-                        pass
-                    return parsed
+            r = _SESSION.post(BETMAN_TOTO_URL, json=params, timeout=4.0)
+            if r.status_code == 200:
+                res = r.json()
+                if isinstance(res, dict) and (res.get('schedulesList') or res.get('currentLottery')):
+                    parsed = BetmanService._parse_betman_payload(res, gm_id, gm_ts)
+                    if parsed and parsed.get('status') == 'success':
+                        _CACHE[cache_key] = (now, parsed)
+                        # Save local snapshot for fast offline recovery
+                        try:
+                            with open(f'betman_{gm_id}_{gm_ts}.json', 'w', encoding='utf-8') as sf:
+                                json.dump(parsed, sf, ensure_ascii=False, indent=2)
+                        except Exception:
+                            pass
+                        return parsed
         except Exception as e:
             print(f"[WARN] Betman totoGameData live fetch error ({gm_id} {gm_ts}): {e}")
 
-        # 4. Fallback to local snapshot if external fetch fails
-        for snap_file in candidates:
+        # 3. Fallback snapshot
+        for snap_file in [f'betman_{gm_id}_{gm_ts}.json', f'betman_{gm_ts}.json']:
             if os.path.exists(snap_file):
                 try:
                     with open(snap_file, 'r', encoding='utf-8') as f:
                         snap_data = json.load(f)
                         _CACHE[cache_key] = (now, snap_data)
                         return snap_data
-                except Exception as ex:
-                    print(f"[WARN] Failed to load snapshot {snap_file}: {ex}")
+                except Exception:
+                    pass
 
-        return {'status': 'error', 'message': '베트맨 공식 사이트 응답 지연'}
+        return {'status': 'error', 'message': f'베트맨 {gm_id} {gm_ts}회차 데이터를 불러올 수 없습니다.'}
+
+    @staticmethod
+    def get_proto_odds(force_refresh: bool = False) -> dict:
+        """베트맨 프로토 승부식(G101) 최신 회차의 전체 700~800개 배당 및 투표율 일괄 수집"""
+        now = time.time()
+        active_ts = BetmanService.get_active_round_ts('G101')
+        cache_key = f'proto_G101_{active_ts}'
+        if not force_refresh and cache_key in _CACHE:
+            ts_cached, data = _CACHE[cache_key]
+            if now - ts_cached < CACHE_TTL:
+                return data
+
+        try:
+            payload = {
+                "gmId": "G101",
+                "gmTs": active_ts,
+                "gameYear": "2026",
+                "_sbmInfo": {"_sbmInfo": {"debugMode": "false"}}
+            }
+            r = _SESSION.post(BETMAN_INQ_URL, json=payload, timeout=6.0)
+            if r.status_code == 200:
+                data = r.json()
+                keys = data.get('compSchedules', {}).get('keys', [])
+                datas = data.get('compSchedules', {}).get('datas', [])
+                vote_dict = {v.get('GM_SEQ'): v for v in data.get('voteStatus', [])}
+
+                parsed_result = {
+                    'gmTs': active_ts,
+                    'total_lines': len(datas),
+                    'keys': keys,
+                    'datas': datas,
+                    'votes': vote_dict
+                }
+                _CACHE[cache_key] = (now, parsed_result)
+                return parsed_result
+        except Exception as e:
+            print(f"[WARN] Betman get_proto_odds error: {e}")
+
+        return {'gmTs': active_ts, 'total_lines': 0, 'keys': [], 'datas': [], 'votes': {}}
 
     @staticmethod
     def get_match_full_odds(match_id: int) -> dict:
         """
-        특정 경기(match_id)에 대한 베트맨 전체 배당 조합 조회
-        - 야구: 승패, 승1패, 핸디캡, U/O, SUM, 전반 승무패, 전반 핸디캡, 전반 U/O
-        - 축구: 승무패, 핸디캡, U/O, SUM
-        - 농구: 승패, 핸디캡, U/O, SUM
-        DB에서 경기 정보 조회 후, 베트맨 gameInfoInq 엔드포인트에서 해당 경기 배당 파싱
+        특정 경기(match_id)에 대한 베트맨 공식 배당 및 실시간 투표율 조회
         """
         try:
             db_path = 'sports_data.db'
             if not os.path.exists(db_path):
                 return {'status': 'error', 'message': 'DB 없음'}
-            conn = sqlite3.connect(db_path, timeout=15.0)
+            conn = sqlite3.connect(db_path, timeout=10.0)
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
             cursor.execute(
@@ -457,48 +468,38 @@ class BetmanService:
         away_name = match.get('away_team_name', '')
         match_date = match.get('match_date', '')
 
-        # 종목별 게임ID 결정
-        if sport_code == 'SOCCER':
-            gm_ids = [('G011', '승무패')]
-        elif sport_code == 'BASKETBALL':
-            gm_ids = [('G027', '승5패')]
-        else:  # BASEBALL
-            gm_ids = [('G024', '승1패')]
+        # 1. 프로토(G101) 전체 배당 목록에서 해당 경기 매칭
+        proto_data = BetmanService.get_proto_odds()
+        keys = proto_data.get('keys', [])
+        datas = proto_data.get('datas', [])
+        vote_dict = proto_data.get('votes', {})
 
-        # 현재 발매중인 회차에서 해당 경기 찾기
-        result_groups = []
+        matched_odds = []
+        for row in datas:
+            d = dict(zip(keys, row))
+            h = d.get('homeName', '')
+            a = d.get('awayName', '')
+            if teams_match(h, home_name) and teams_match(a, away_name):
+                seq = d.get('matchSeq')
+                v = vote_dict.get(seq, {})
+                tot = v.get('W_BET_CNT', 0) + v.get('D_BET_CNT', 0) + v.get('L_BET_CNT', 0)
+                w_pct = round(v.get('W_BET_CNT', 0) / tot * 100, 1) if tot else 0.0
+                l_pct = round(v.get('L_BET_CNT', 0) / tot * 100, 1) if tot else 0.0
+                d_pct = round(v.get('D_BET_CNT', 0) / tot * 100, 1) if tot else 0.0
 
-        for gm_id, gm_label in gm_ids:
-            # 현재 발매중 회차 조회
-            if gm_id == 'G011':
-                ts_list = [260051, 260052, 260050]
-            elif gm_id == 'G024':
-                ts_list = [260067, 260068, 260066]
-            else:
-                ts_list = [260027, 260028]
-
-            for gm_ts in ts_list:
-                data = BetmanService.get_round_data(gm_id=gm_id, gm_ts=gm_ts)
-                if not data or data.get('status') == 'error':
-                    continue
-                matches_in_round = data.get('matches', [])
-                for m in matches_in_round:
-                    if teams_match(m.get('home', ''), home_name) and teams_match(m.get('away', ''), away_name):
-                        result_groups.append({
-                            'gm_id': gm_id,
-                            'gm_ts': gm_ts,
-                            'label': gm_label,
-                            'round_name': data.get('round_name', ''),
-                            'match_data': m
-                        })
-                        break
-                else:
-                    continue
-                break
-
-        # 베트맨 gameInfoInq 엔드포인트에서 전체 배당 조합 가져오기
-        # 이 API는 특정 경기의 모든 게임 타입을 반환
-        betman_odds_map = BetmanService._fetch_betman_game_info(home_name, away_name, sport_code, match_date)
+                matched_odds.append({
+                    'seq': seq,
+                    'type': d.get('betTypNm', '일반 승패'),
+                    'handicap': d.get('winHandi') or d.get('handi') or '',
+                    'uo': d.get('winHandi') or d.get('handi') or '',
+                    'home_odds': float(d.get('winAllot') or 0.0),
+                    'draw_odds': float(d.get('drawAllot') or 0.0),
+                    'away_odds': float(d.get('loseAllot') or 0.0),
+                    'win_vote_pct': f"{w_pct}%",
+                    'draw_vote_pct': f"{d_pct}%",
+                    'loss_vote_pct': f"{l_pct}%",
+                    'total_votes': tot
+                })
 
         return {
             'status': 'success',
@@ -507,116 +508,161 @@ class BetmanService:
             'away': away_name,
             'sport_code': sport_code,
             'match_date': match_date,
-            'toto_groups': result_groups,
-            'full_odds': betman_odds_map
+            'toto_groups': [],
+            'full_odds': matched_odds
         }
 
     @staticmethod
-    def _fetch_betman_game_info(home_name: str, away_name: str, sport_code: str, match_date: str) -> list:
+    def sync_betman_proto_matches(db) -> dict:
         """
-        베트맨 gameInfoInq.do 호출 → 전체 배당 조합 파싱
-        종목별 모든 게임타입(승패/핸디캡/U/O/SUM/전반 등) 반환
+        베트맨 최신 프로토(G101) 전 경기를 DB에 자동으로 동기화
+        - 신규 경기 자동 등록
+        - 공식 배당 및 실시간 투표율을 match_details에 저장
         """
-        # 종목별 게임ID
-        if sport_code == 'SOCCER':
-            gm_id = 'G011'
-            gm_ts_candidates = [260051, 260052]
-        elif sport_code == 'BASKETBALL':
-            gm_id = 'G027'
-            gm_ts_candidates = [260027, 260028]
-        else:
-            gm_id = 'G024'
-            gm_ts_candidates = [260067, 260068]
+        from app.models.models import Match, MatchDetail
 
-        odds_rows = []
-        for gm_ts in gm_ts_candidates:
-            try:
-                params = {
-                    'gmId': gm_id,
-                    'gmTs': int(gm_ts),
-                    '_sbmInfo': {'_sbmInfo': {'debugMode': 'false'}}
+        proto_data = BetmanService.get_proto_odds(force_refresh=True)
+        keys = proto_data.get('keys', [])
+        datas = proto_data.get('datas', [])
+        vote_dict = proto_data.get('votes', {})
+        active_ts = proto_data.get('gmTs', 260093)
+
+        if not datas:
+            return {'status': 'error', 'message': '프로토 데이터를 불러올 수 없습니다.'}
+
+        # 1. Group rows by distinct match
+        grouped = {}
+        for row in datas:
+            d = dict(zip(keys, row))
+            h = d.get('homeName', '').strip()
+            a = d.get('awayName', '').strip()
+            l = d.get('leagueName', '').strip()
+            sp = d.get('itemCode', 'BS')
+            seq = d.get('matchSeq')
+            m_key = f"{sp}_{l}_{h}_{a}"
+
+            if m_key not in grouped:
+                g_ts = d.get('gameDate')
+                m_date_str = ""
+                if g_ts:
+                    try:
+                        dt = datetime.fromtimestamp(g_ts / 1000, tz=timezone(timedelta(hours=9)))
+                        m_date_str = dt.strftime("%Y-%m-%d %H:%M")
+                    except Exception:
+                        m_date_str = ""
+
+                sport_code = "BASEBALL" if sp == "BS" else ("SOCCER" if sp == "SC" else ("BASKETBALL" if sp == "BK" else "VOLLEYBALL"))
+                grouped[m_key] = {
+                    'official_id': f"BETMAN_G101_{active_ts}_{seq}",
+                    'sport_code': sport_code,
+                    'league_name': l,
+                    'home_team_name': h,
+                    'away_team_name': a,
+                    'match_date': m_date_str,
+                    'stadium': d.get('meetStadiumFullName') or d.get('meetStadium') or '스타디움',
+                    'odds_list': [],
+                    'main_odds': {}
                 }
-                req = urllib.request.Request(
-                    BETMAN_INQ_URL,
-                    data=json.dumps(params).encode('utf-8'),
-                    headers=HEADERS
+
+            v = vote_dict.get(seq, {})
+            tot = v.get('W_BET_CNT', 0) + v.get('D_BET_CNT', 0) + v.get('L_BET_CNT', 0)
+            w_pct = round(v.get('W_BET_CNT', 0) / tot * 100, 1) if tot else 0.0
+            l_pct = round(v.get('L_BET_CNT', 0) / tot * 100, 1) if tot else 0.0
+            d_pct = round(v.get('D_BET_CNT', 0) / tot * 100, 1) if tot else 0.0
+
+            odd_item = {
+                'seq': seq,
+                'type': d.get('betTypNm', '일반 승패'),
+                'home_odds': float(d.get('winAllot') or 0.0),
+                'draw_odds': float(d.get('drawAllot') or 0.0),
+                'away_odds': float(d.get('loseAllot') or 0.0),
+                'handicap': d.get('winHandi') or d.get('handi') or '',
+                'win_votes': v.get('W_BET_CNT', 0),
+                'draw_votes': v.get('D_BET_CNT', 0),
+                'loss_votes': v.get('L_BET_CNT', 0),
+                'win_pct': w_pct,
+                'draw_pct': d_pct,
+                'loss_pct': l_pct
+            }
+            grouped[m_key]['odds_list'].append(odd_item)
+            if not grouped[m_key]['main_odds'] or '승무패' in d.get('betTypNm', '') or '일반 승패' in d.get('betTypNm', ''):
+                grouped[m_key]['main_odds'] = odd_item
+
+        synced_count = 0
+        updated_count = 0
+
+        for m_key, g_info in grouped.items():
+            # Check existing match in DB
+            match = db.query(Match).filter(
+                Match.home_team_name == g_info['home_team_name'],
+                Match.away_team_name == g_info['away_team_name'],
+                Match.match_date == g_info['match_date']
+            ).first()
+
+            if not match:
+                # Also try fuzzy match
+                match = db.query(Match).filter(
+                    Match.sport_code == g_info['sport_code'],
+                    Match.match_date == g_info['match_date']
+                ).first()
+                if match and not (teams_match(match.home_team_name, g_info['home_team_name']) and teams_match(match.away_team_name, g_info['away_team_name'])):
+                    match = None
+
+            if not match:
+                match = Match(
+                    official_id=g_info['official_id'],
+                    sport_code=g_info['sport_code'],
+                    league_name=g_info['league_name'],
+                    season="2026",
+                    round_name=f"프로토 {str(active_ts)[-2:]}회차",
+                    match_date=g_info['match_date'],
+                    stadium=g_info['stadium'],
+                    home_team_name=g_info['home_team_name'],
+                    away_team_name=g_info['away_team_name'],
+                    home_score=0,
+                    away_score=0,
+                    status="SCHEDULED"
                 )
-                with urllib.request.urlopen(req, timeout=3.0) as resp:
-                    raw = resp.read().decode('utf-8', errors='ignore')
-                    res = json.loads(raw)
+                db.add(match)
+                db.commit()
+                db.refresh(match)
+                synced_count += 1
+            else:
+                updated_count += 1
 
-                game_list = res.get('totoGames', []) or res.get('schedulesList', []) or []
-                # 배당 테이블이 있는 경우 파싱 (베트맨 gameInfoInq 응답 구조)
-                all_odds = res.get('oddsList', []) or res.get('gameOddsList', []) or []
-                if all_odds:
-                    for odd_item in all_odds:
-                        h = odd_item.get('homeName', '') or odd_item.get('homeTeam', '')
-                        a = odd_item.get('awayName', '') or odd_item.get('awayTeam', '')
-                        if teams_match(h, home_name) and teams_match(a, away_name):
-                            # 해당 경기의 배당 조합 파싱
-                            game_type = odd_item.get('gameTypeName', '') or odd_item.get('gmTypeName', '')
-                            odds_rows.append({
-                                'type': game_type,
-                                'handicap': odd_item.get('hdpVal') or odd_item.get('handicap') or '',
-                                'uo': odd_item.get('uoVal') or odd_item.get('underOver') or '',
-                                'home_odds': odd_item.get('homeOdds') or odd_item.get('winOdds') or 0,
-                                'draw_odds': odd_item.get('drawOdds') or odd_item.get('midOdds') or 0,
-                                'away_odds': odd_item.get('awayOdds') or odd_item.get('loseOdds') or 0,
-                            })
-                if odds_rows:
-                    break
+            # Update match_details with betman odds
+            detail = db.query(MatchDetail).filter(MatchDetail.match_id == match.id).first()
+            if not detail:
+                detail = MatchDetail(match_id=match.id, period_scores="{}", team_stats="{}", source_url="https://www.betman.co.kr")
+                db.add(detail)
+                db.commit()
+                db.refresh(detail)
+
+            try:
+                ts = json.loads(detail.team_stats or "{}")
             except Exception:
-                continue
+                ts = {}
 
-        # API에서 실시간 배당을 못 가져온 경우 → 기존 캐시(get_round_data)에서 조합 생성
-        if not odds_rows:
-            odds_rows = BetmanService._build_odds_from_round_cache(home_name, away_name, sport_code)
+            ts['betman_odds'] = g_info['odds_list']
+            ts['betman_main_odds'] = g_info['main_odds']
+            ts['betman_gm_ts'] = active_ts
+            detail.team_stats = json.dumps(ts, ensure_ascii=False)
+            db.commit()
 
-        return odds_rows
-
-    @staticmethod
-    def _build_odds_from_round_cache(home_name: str, away_name: str, sport_code: str) -> list:
-        """
-        gameInfoInq 실패 시 get_round_data 캐시에서 기본 배당 조합 생성
-        현재 캐시에는 승패(W1L)/승무패(WDL)/승5패(W5L)만 있으므로
-        핸디캡/U/O 등은 N/A로 표시
-        """
-        if sport_code == 'SOCCER':
-            gm_id, gm_ts = 'G011', 260051
-        elif sport_code == 'BASKETBALL':
-            gm_id, gm_ts = 'G027', 260027
-        else:
-            gm_id, gm_ts = 'G024', 260067
-
-        data = BetmanService.get_round_data(gm_id=gm_id, gm_ts=gm_ts)
-        if not data or data.get('status') == 'error':
-            return []
-
-        for m in data.get('matches', []):
-            if teams_match(m.get('home', ''), home_name) and teams_match(m.get('away', ''), away_name):
-                # 기본 승패/승무패 배당만 구성 (핸디캡/U/O는 베트맨 직접 참조 안내)
-                rows = []
-                if sport_code == 'BASEBALL':
-                    rows = [
-                        {'type': '야구 승1패', 'handicap': '', 'uo': '', 'home_odds': 0, 'draw_odds': 0, 'away_odds': 0, 'note': '베트맨 사이트 참조'},
-                    ]
-                elif sport_code == 'SOCCER':
-                    rows = [
-                        {'type': '축구 승무패', 'handicap': '', 'uo': '', 'home_odds': 0, 'draw_odds': 0, 'away_odds': 0, 'note': '베트맨 사이트 참조'},
-                    ]
-                else:
-                    rows = [
-                        {'type': '농구 승5패', 'handicap': '', 'uo': '', 'home_odds': 0, 'draw_odds': 0, 'away_odds': 0, 'note': '베트맨 사이트 참조'},
-                    ]
-                return rows
-        return []
-
+        return {
+            'status': 'success',
+            'active_gm_ts': active_ts,
+            'total_matches': len(grouped),
+            'synced_new': synced_count,
+            'updated_existing': updated_count
+        }
 
     @staticmethod
     def _parse_betman_payload(data: dict, gm_id: str, gm_ts: int) -> dict:
         cur = data.get('currentLottery', {})
         schedules = data.get('schedulesList', [])
-        vote_list = data.get('voteStatus', {}).get('homeVoteStatusList', [])
+        vote_data = data.get('voteStatus', {})
+        vote_list = vote_data.get('homeVoteStatusList', []) if isinstance(vote_data, dict) else (vote_data if isinstance(vote_data, list) else [])
 
         actual_gm_ts = data.get('gmTs') or cur.get('gmTs') or gm_ts
         round_no = str(actual_gm_ts)[-2:]
@@ -628,7 +674,8 @@ class BetmanService:
         for idx, s in enumerate(schedules):
             votes = {'win': 0.0, 'draw': 0.0, 'loss': 0.0, 'win_count': 0, 'draw_count': 0, 'loss_count': 0}
             if idx < len(vote_list):
-                v_items = vote_list[idx].get('awayVoteStatusList', [])
+                v_item = vote_list[idx]
+                v_items = v_item.get('awayVoteStatusList', []) if isinstance(v_item, dict) else []
                 if len(v_items) >= 3:
                     w_cnt = v_items[0].get('voteCount', 0)
                     d_cnt = v_items[1].get('voteCount', 0)
@@ -652,88 +699,7 @@ class BetmanService:
 
             home_n = s.get('homeName', '')
             away_n = s.get('awayName', '')
-            match_date_str = s.get('gameDateStr') or s.get('gameDate') or s.get('date') or ''
-
-            # Match with our database to get internal match ID and AI probabilities!
-            db_match = BetmanService._find_matching_db_match(home_n, away_n, sport_code, match_date_str)
-
-            db_match_id = db_match['id'] if db_match else None
-            db_pred = db_match.get('prediction', {}) if db_match else {}
-            db_status = db_match['status'] if db_match else 'SCHEDULED'
-            db_h_score = db_match['home_score'] if db_match else 0
-            db_a_score = db_match['away_score'] if db_match else 0
-
-            # Guard against future matches being marked as FINISHED
-            from datetime import datetime, timezone, timedelta
-            KST = timezone(timedelta(hours=9))
-            now_kst = datetime.now(KST)
-
-            is_future_match = False
-            check_date = (db_match['match_date'] if db_match else None) or match_date_str
-            if check_date:
-                try:
-                    import re
-                    m_m = re.search(r'(\d{4})[-.](\d{2})[-.](\d{2})\s+(\d{2}):(\d{2})', check_date)
-                    if m_m:
-                        m_dt = datetime(int(m_m.group(1)), int(m_m.group(2)), int(m_m.group(3)), int(m_m.group(4)), int(m_m.group(5)), tzinfo=KST)
-                        if m_dt > now_kst:
-                            is_future_match = True
-                    elif '09.07' in check_date or '09-07' in check_date or '09.08' in check_date:
-                        is_future_match = True
-                except Exception:
-                    pass
-
-            if is_future_match:
-                db_status = 'SCHEDULED'
-                result_label = None
-                res_code = None
-                db_h_score = 0
-                db_a_score = 0
-            # If match is finished in DB, derive official result label and code
-            elif db_status == 'FINISHED':
-                if gm_id == 'G024': # Baseball W1L
-                    diff = abs(db_h_score - db_a_score)
-                    if diff <= 1:
-                        result_label = '1'
-                        res_code = 'D'
-                    elif db_h_score > db_a_score:
-                        result_label = '승'
-                        res_code = 'A'
-                    else:
-                        result_label = '패'
-                        res_code = 'B'
-                else: # Soccer WDL
-                    if db_h_score > db_a_score:
-                        result_label = '승'
-                        res_code = 'A'
-                    elif db_h_score == db_a_score:
-                        result_label = '무'
-                        res_code = 'D'
-                    else:
-                        result_label = '패'
-                        res_code = 'B'
-            elif db_status == 'LIVE':
-                result_label = 'LIVE'
-
-            # AI pick preference: DB model prediction if available, else votes
-            ai_pick = '승'
-            ai_conf = votes['win']
-            if db_pred and db_pred.get('favored_team'):
-                fav = db_pred.get('favored_team')
-                if fav == db_match['home_team_name']:
-                    ai_pick = '승'
-                elif fav == db_match['away_team_name']:
-                    ai_pick = '패'
-                elif fav == '무승부' or db_pred.get('pick_type') == 'DRAW' or db_pred.get('expected_label') == '예상무':
-                    ai_pick = '1' if gm_id == 'G024' else ('5' if gm_id == 'G027' else '무')
-                ai_conf = db_pred.get('confidence', votes['win'])
-            else:
-                if votes['loss'] > votes['win'] and votes['loss'] > votes['draw']:
-                    ai_pick = '패'
-                    ai_conf = votes['loss']
-                elif votes['draw'] > votes['win'] and votes['draw'] > votes['loss']:
-                    ai_pick = '1' if gm_id == 'G024' else ('5' if gm_id == 'G027' else '무')
-                    ai_conf = votes['draw']
+            match_date_str = s.get('gameDateStr') or s.get('gameDate') or ''
 
             matches.append({
                 'seq': s.get('matchSeq', idx + 1),
@@ -743,18 +709,12 @@ class BetmanService:
                 'away': away_n,
                 'result': result_label,
                 'result_code': res_code,
-                'status': db_status,
-                'home_score': db_h_score,
-                'away_score': db_a_score,
+                'status': 'SCHEDULED',
+                'home_score': 0,
+                'away_score': 0,
                 'votes': votes,
-                'ai_pick': ai_pick,
-                'ai_conf': ai_conf,
-                'db_match_id': db_match_id,
-                'db_home_team': db_match['home_team_name'] if db_match else home_n,
-                'db_away_team': db_match['away_team_name'] if db_match else away_n,
-                'db_prob_home': db_pred.get('home_pct', 50),
-                'db_prob_away': db_pred.get('away_pct', 50),
-                'series_context': db_pred.get('series_context')
+                'ai_pick': '승' if votes['win'] >= votes['loss'] else '패',
+                'ai_conf': max(votes['win'], votes['loss'])
             })
 
         forward_amt = int(cur.get('forwardAmount') or 0)
@@ -762,28 +722,12 @@ class BetmanService:
         sale_cnt = int(cur.get('totalSaleCnt') or (sell_amt // 1000) or 0)
         winner_prize = int(cur.get('winnerTotalPrize') or int(sell_amt * 0.25))
 
-        # Fallback prize if sell_amt is 0 (e.g. between rounds or finished)
-        if forward_amt == 0 and sell_amt == 0:
-            if gm_id == 'G011':
-                forward_amt = 582400000
-                sell_amt = 1428500000
-            elif gm_id == 'G024':
-                forward_amt = 128450000
-                sell_amt = 452180000
-            else:
-                forward_amt = 0
-                sell_amt = 52320000
-            sale_cnt = sell_amt // 1000
-            winner_prize = int(sell_amt * 0.25)
-
         first_prize_pool = forward_amt + winner_prize
         second_prize_pool = int(sell_amt * 0.10)
         third_prize_pool = int(sell_amt * 0.05)
         fourth_prize_pool = int(sell_amt * 0.10)
 
-        from datetime import datetime
         now_str = datetime.now().strftime("%H:%M:%S")
-
         is_currently_selling = (sell_amt > 0 and cur.get('saleProgress') != False)
 
         return {
