@@ -478,6 +478,7 @@ class LiveApiSportsService:
         d_today = date_str or now_dt.strftime("%Y-%m-%d")
         d_yesterday = (now_dt - timedelta(days=1)).strftime("%Y-%m-%d")
         d_tomorrow = (now_dt + timedelta(days=1)).strftime("%Y-%m-%d")
+        d_day_after = (now_dt + timedelta(days=2)).strftime("%Y-%m-%d")
 
         # 1. Fetch all live soccer matches
         data_live = cls._make_request("/fixtures?live=all", sport="football")
@@ -487,20 +488,23 @@ class LiveApiSportsService:
         data_today = cls._make_request(f"/fixtures?date={d_today}", sport="football")
         fixtures_today = (data_today or {}).get("response", [])
 
+        # 3. 내일(D+1) 및 모레(D+2) 예정 경기 항시 자동 수집 (매일 365일 지속 갱신)
+        data_tomorrow = cls._make_request(f"/fixtures?date={d_tomorrow}", sport="football")
+        fixtures_tomorrow = (data_tomorrow or {}).get("response", [])
+
+        fixtures_day_after = []
+        if include_adjacent or now_dt.hour >= 12:
+            data_day_after = cls._make_request(f"/fixtures?date={d_day_after}", sport="football")
+            fixtures_day_after = (data_day_after or {}).get("response", [])
+
         fixtures_yesterday = []
-        fixtures_tomorrow = []
-        if include_adjacent or now_dt.hour < 10:
-            # 아침 시간대(10시 이전)에는 새벽에 끝난 어제 유럽 경기 결과 포함
+        if include_adjacent or now_dt.hour < 12:
+            # 새벽/오전에는 어제 유럽 경기 결과 최신화
             data_yesterday = cls._make_request(f"/fixtures?date={d_yesterday}", sport="football")
             fixtures_yesterday = (data_yesterday or {}).get("response", [])
 
-        if include_adjacent or now_dt.hour >= 15:
-            # 오후/저녁 시간대에는 내일 예정 경기 목록도 자동 동기화
-            data_tomorrow = cls._make_request(f"/fixtures?date={d_tomorrow}", sport="football")
-            fixtures_tomorrow = (data_tomorrow or {}).get("response", [])
-
         all_fixtures_dict = {}
-        for f in (fixtures_today + fixtures_yesterday + fixtures_tomorrow + fixtures_live):
+        for f in (fixtures_today + fixtures_yesterday + fixtures_tomorrow + fixtures_day_after + fixtures_live):
             fid = f.get("fixture", {}).get("id")
             if fid:
                 all_fixtures_dict[fid] = f
@@ -509,14 +513,15 @@ class LiveApiSportsService:
         updated = 0
         db = SessionLocal()
         try:
-            # Match against yesterday, today, tomorrow, or ANY match currently marked LIVE
+            # Match against yesterday, today, tomorrow, day_after, or ANY match currently marked LIVE
             db_matches = db.query(Match).filter(
                 Match.sport_code == "SOCCER",
                 or_(
                     Match.status == "LIVE",
                     Match.match_date.like(f"{d_yesterday}%"),
                     Match.match_date.like(f"{d_today}%"),
-                    Match.match_date.like(f"{d_tomorrow}%")
+                    Match.match_date.like(f"{d_tomorrow}%"),
+                    Match.match_date.like(f"{d_day_after}%")
                 )
             ).all()
 
