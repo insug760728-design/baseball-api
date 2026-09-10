@@ -10,7 +10,7 @@ from sqlalchemy import or_
 
 from app.core.config import settings
 from app.core.database import SessionLocal
-from app.models.models import Match, MatchDetail, MatchEvent
+from app.models.models import Match, MatchDetail, MatchEvent, PlayerMatchStat
 
 logger = logging.getLogger("live_api_sports")
 logger.setLevel(logging.INFO)
@@ -1244,14 +1244,57 @@ class LiveApiSportsService:
                 date_str = (m.match_date or '')[:10]
                 home_away = '홈' if is_home else '원정'
 
-                # 선발 정보 (야구)
-                starter_info = ''
+                # 선발투수 정보 (야구) 및 주요 선수 정보
+                home_starter = {}
+                away_starter = {}
+                home_scorers = []
+                away_scorers = []
+
                 if sport_code == 'BASEBALL':
                     try:
-                        if is_home and m.details and hasattr(m.details, 'home_starter_name'):
-                            starter_info = getattr(m.details, 'home_starter_name', '') or ''
-                        elif not is_home and m.details and hasattr(m.details, 'away_starter_name'):
-                            starter_info = getattr(m.details, 'away_starter_name', '') or ''
+                        pstats = db.query(PlayerMatchStat).filter(PlayerMatchStat.match_id == m.id).all()
+                        for ps in pstats:
+                            pos = ps.position or ''
+                            extra = {}
+                            if ps.extra_stats:
+                                try:
+                                    extra = json.loads(ps.extra_stats) if isinstance(ps.extra_stats, str) else ps.extra_stats
+                                except Exception:
+                                    extra = {}
+                            is_st = '선발' in pos or extra.get('is_starter') is True or extra.get('starter') is True or extra.get('pitcher_order') == 1
+                            if is_st and (extra.get('player_type') == 'PITCHER' or extra.get('type') == 'PITCHER' or 'P' in pos or '투수' in pos):
+                                st_obj = {
+                                    'name': ps.player_name,
+                                    'ip': str(extra.get('ip', '')),
+                                    'r': extra.get('r', 0),
+                                    'er': extra.get('er', 0),
+                                    'so': extra.get('so', 0),
+                                    'bb': extra.get('bb', 0),
+                                    'h': extra.get('h', 0),
+                                    'hr': extra.get('hr', 0),
+                                    'np': extra.get('np', 0),
+                                    'era': str(extra.get('era', '')),
+                                    'decision': extra.get('decision', '')
+                                }
+                                if ps.team_name == m.home_team_name or m.home_team_name in ps.team_name or ps.team_name in m.home_team_name:
+                                    if not home_starter:
+                                        home_starter = st_obj
+                                else:
+                                    if not away_starter:
+                                        away_starter = st_obj
+                    except Exception as e:
+                        logger.warning(f"Error fetching starters for match {m.id}: {e}")
+
+                elif sport_code == 'SOCCER':
+                    try:
+                        pstats = db.query(PlayerMatchStat).filter(PlayerMatchStat.match_id == m.id).all()
+                        for ps in pstats:
+                            if ps.points and ps.points > 0:
+                                sc_entry = f"{ps.player_name} ({ps.points}골)"
+                                if ps.team_name == m.home_team_name or m.home_team_name in ps.team_name:
+                                    home_scorers.append(sc_entry)
+                                else:
+                                    away_scorers.append(sc_entry)
                     except Exception:
                         pass
 
@@ -1269,6 +1312,9 @@ class LiveApiSportsService:
                     except Exception:
                         team_stats = {}
 
+                starter_info = (home_starter.get('name') if is_home else away_starter.get('name')) or ''
+                starter_detail = home_starter if is_home else away_starter
+
                 return {
                     'match_id': m.id,
                     'date': date_str,
@@ -1285,6 +1331,11 @@ class LiveApiSportsService:
                     'result': result,
                     'result_emoji': result_emoji,
                     'starter': starter_info,
+                    'starter_detail': starter_detail,
+                    'home_starter': home_starter,
+                    'away_starter': away_starter,
+                    'home_scorers': home_scorers,
+                    'away_scorers': away_scorers,
                     'period_scores': period_scores,
                     'team_stats': team_stats,
                     'events': [],  # API-Sports 이벤트는 별도 패치
