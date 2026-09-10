@@ -206,8 +206,30 @@ class MatchService:
 
         db.commit()
 
-    @staticmethod
-    def get_matches(db: Session, sport_code: Optional[str] = None, league_name: Optional[str] = None, status: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None, limit: Optional[int] = None, order: Optional[str] = "asc"):
+    @classmethod
+    def cleanup_stale_live_matches(cls, db: Session):
+        """경기 시작 시간으로부터 4시간 이상 경과한 LIVE 상태 경기를 FINISHED로 자동 정리"""
+        try:
+            now = datetime.now()
+            cutoff = (now - timedelta(hours=4)).strftime("%Y-%m-%d %H:%M")
+            stale_matches = db.query(Match).filter(
+                Match.status.in_(['LIVE', 'IN_PLAY', '1H', '2H', 'HT']),
+                Match.match_date < cutoff
+            ).all()
+            if stale_matches:
+                for m in stale_matches:
+                    m.status = 'FINISHED'
+                db.commit()
+                logger.info(f"Auto-cleaned {len(stale_matches)} stale LIVE matches to FINISHED")
+        except Exception as e:
+            logger.warning(f"Error cleaning up stale live matches: {e}")
+            db.rollback()
+
+    @classmethod
+    def get_matches(cls, db: Session, sport_code: Optional[str] = None, league_name: Optional[str] = None, status: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None, limit: Optional[int] = None, order: Optional[str] = "asc"):
+        # stale LIVE 경기 자동 종결 (시작 후 4시간 이상 지난 경기 FINISHED 처리)
+        cls.cleanup_stale_live_matches(db)
+
         query = db.query(Match).options(joinedload(Match.details))
 
         # 리그명에 따라 sport_code 자동 감지

@@ -3734,13 +3734,25 @@
         filtered = filtered.filter(m => m.sport_code === sport);
       }
 
-      // Priority 1: LIVE matches
-      const liveMatches = filtered.filter(m => m.status === 'LIVE');
+      // Helper to check if a match is truly live (started within 4 hours)
+      function isRealTimeLive(m) {
+        if (m.status !== 'LIVE') return false;
+        if (m.match_date) {
+          try {
+            const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+            if ((Date.now() - mTime) / (1000 * 60 * 60) > 4) return false;
+          } catch(e) {}
+        }
+        return true;
+      }
+
+      // Priority 1: LIVE matches (strictly real-time)
+      const liveMatches = filtered.filter(isRealTimeLive);
       // Priority 2: Upcoming matches from now onwards, strict chronological order ASC
       const upcomingMatches = filtered.filter(m => (m.status === 'SCHEDULED') && (m.match_date || '') >= nowKstStr)
         .sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
-      // Priority 3: Recently finished matches (most recent first)
-      const finishedMatches = filtered.filter(m => m.status === 'FINISHED')
+      // Priority 3: Recently finished matches (most recent first, including stale LIVE matches)
+      const finishedMatches = filtered.filter(m => m.status === 'FINISHED' || (m.status === 'LIVE' && !isRealTimeLive(m)))
         .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
 
       // Ensure deduplication in display strip
@@ -3765,10 +3777,10 @@
         if (m.sport_code === 'SOCCER') sportIcon = '⚽';
         if (m.sport_code === 'BASKETBALL') sportIcon = '🏀';
 
-        const isLive = m.status === 'LIVE';
+        const isLive = isRealTimeLive(m);
         const stBadge = isLive 
           ? '<span class="badge bg-danger">LIVE</span>' 
-          : (m.status === 'FINISHED' ? '<span class="badge bg-secondary">종료</span>' : '<span class="badge bg-primary">예정</span>');
+          : ((m.status === 'FINISHED' || m.status === 'LIVE') ? '<span class="badge bg-secondary">종료</span>' : '<span class="badge bg-primary">예정</span>');
 
         html += `
           <div class="strip-card" onclick="openMatchModal(${m.id})">
@@ -9258,9 +9270,21 @@ function getFullModalMatchList() {
         const nowKstDateTime = getKSTDateTimeString(now);
         const maxUpcomingStr = getKSTDateString(new Date(now.getTime() + 2 * 86400000)) + ' 23:59:59';
 
-        const liveMatches = list.filter(m => m.status === 'LIVE');
+        // 경기 시작 시간으로부터 4시간 이상 경과한 LIVE는 실제 종료된 stale 경기
+        const isMatchTrulyLive = (m) => {
+          if (m.status !== 'LIVE') return false;
+          if (m.match_date) {
+            try {
+              const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+              if ((now.getTime() - mTime) / (1000 * 60 * 60) > 4) return false;
+            } catch(e) {}
+          }
+          return true;
+        };
+
+        const liveMatches = list.filter(isMatchTrulyLive);
         const upcomingMatches = list.filter(m => {
-          if (m.status === 'CANCELLED' || m.status === 'POSTPONED' || m.status === 'FINISHED' || m.status === 'LIVE') return false;
+          if (m.status === 'CANCELLED' || m.status === 'POSTPONED' || m.status === 'FINISHED' || isMatchTrulyLive(m)) return false;
           return (m.match_date || '') >= nowKstDateTime && (m.match_date || '') <= maxUpcomingStr;
         });
         const todayOrRecentFinished = list.filter(m => {
@@ -9268,7 +9292,8 @@ function getFullModalMatchList() {
           const raw = m.match_date || '';
           const isToday = raw.startsWith(d0Str);
           const isYesterdayNight = raw.startsWith(yesterdayStr) && raw.slice(11, 16) >= '18:00';
-          return (isToday || isYesterdayNight) && (m.status === 'FINISHED' || raw < nowKstDateTime);
+          const isStale = (m.status === 'LIVE' && !isMatchTrulyLive(m));
+          return (isToday || isYesterdayNight) && (m.status === 'FINISHED' || isStale || raw < nowKstDateTime);
         });
 
         liveMatches.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
@@ -9803,8 +9828,16 @@ function getFullModalMatchList() {
         }
 
         // 스코어 or 상태
+        let isCardStaleLive = false;
+        if (m.status === 'LIVE' && m.match_date) {
+          try {
+            const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+            isCardStaleLive = ((now.getTime() - mTime) / (1000 * 60 * 60)) > 4;
+          } catch(e) {}
+        }
+
         let scoreLabel = '';
-        if (m.status === 'FINISHED') {
+        if (m.status === 'FINISHED' || isCardStaleLive) {
           scoreLabel = `<span style="font-size:0.70rem; font-weight:800; color:#111827;">${m.home_score}:${m.away_score}</span> <span style="font-size:0.60rem; color:#9ca3af;">종료</span>`;
         } else if (m.status === 'LIVE') {
           scoreLabel = `<span style="font-size:0.70rem; font-weight:800; color:#dc2626;">${m.home_score}:${m.away_score}</span> <span style="font-size:0.60rem; color:#dc2626; font-weight:700;">LIVE</span>`;
