@@ -3630,15 +3630,35 @@
           }));
 
           let added = false;
+          const matchMap = new Map((allMatches || []).map(m => [m.id, m]));
+          const nowTs = Date.now();
           for (const m of rawMatches) {
-            if (m.id && seenIds.has(m.id)) continue;
-            const dPart = (m.match_date || '').slice(0, 10);
-            const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
-            if (!seenKeys.has(key)) {
-              if (m.id) seenIds.add(m.id);
-              seenKeys.add(key);
-              allMatches.push(m);
-              added = true;
+            if (!m || !m.id) continue;
+            if (m.status === 'LIVE' && m.match_date) {
+              try {
+                const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+                if ((nowTs - mTime) / (1000 * 60 * 60) > 4) {
+                  m.status = 'FINISHED';
+                }
+              } catch(e) {}
+            }
+            if (matchMap.has(m.id)) {
+              const existing = matchMap.get(m.id);
+              if (existing.status !== m.status) {
+                existing.status = m.status;
+                existing.home_score = m.home_score;
+                existing.away_score = m.away_score;
+                added = true;
+              }
+            } else {
+              const dPart = (m.match_date || '').slice(0, 10);
+              const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
+              if (!seenKeys.has(key)) {
+                seenKeys.add(key);
+                allMatches.push(m);
+                matchMap.set(m.id, m);
+                added = true;
+              }
             }
           }
           archiveLoaded = true;
@@ -3675,11 +3695,21 @@
         const uniqueList = [];
         const seenIds = new Set();
         const seenKeys = new Set();
+        const nowTs = Date.now();
         for (const m of rawMatches) {
           if (m.id && seenIds.has(m.id)) continue;
           if (m) {
             if (m.home_team_name) m.home_team_name = formatTeamName(m.home_team_name);
             if (m.away_team_name) m.away_team_name = formatTeamName(m.away_team_name);
+            // 4시간 이상 경과한 LIVE 경기는 FINISHED로 강제 보정
+            if (m.status === 'LIVE' && m.match_date) {
+              try {
+                const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+                if ((nowTs - mTime) / (1000 * 60 * 60) > 4) {
+                  m.status = 'FINISHED';
+                }
+              } catch(e) {}
+            }
           }
           const dPart = (m.match_date || '').slice(0, 10);
           const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
@@ -3692,7 +3722,7 @@
         allMatches = uniqueList;
         window.matchesLoadedInitial = true;
         try {
-          localStorage.setItem('tokeon_matches_cache_v4', JSON.stringify(uniqueList));
+          localStorage.setItem('tokeon_matches_cache_v5', JSON.stringify(uniqueList));
         } catch (e) {}
 
         renderMatchStrip('ALL');
@@ -8793,14 +8823,24 @@ function getFullModalMatchList() {
     function initPredictionSection() {
       // ⚡ 0초(0ms) 즉시 렌더링: 브라우저 캐시가 있으면 대기 없이 즉각 경기 목록 & 전광판 표출
       try {
-        const cached = localStorage.getItem('tokeon_matches_cache_v4');
+        const cached = localStorage.getItem('tokeon_matches_cache_v5');
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
+            const nowTs = Date.now();
             parsed.forEach(m => {
               if (m) {
                 if (m.home_team_name) m.home_team_name = formatTeamName(m.home_team_name);
                 if (m.away_team_name) m.away_team_name = formatTeamName(m.away_team_name);
+                // 4시간 이상 경과한 LIVE 경기는 FINISHED로 강제 보정
+                if (m.status === 'LIVE' && m.match_date) {
+                  try {
+                    const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+                    if ((nowTs - mTime) / (1000 * 60 * 60) > 4) {
+                      m.status = 'FINISHED';
+                    }
+                  } catch(e) {}
+                }
               }
             });
             allMatches = parsed;
@@ -9164,9 +9204,22 @@ function getFullModalMatchList() {
       if (!allMatches || allMatches.length === 0) return [];
 
       const now = new Date();
+      const nowTs = now.getTime();
       const d0Str = getKSTDateString(now);
       const d1Str = getKSTDateString(new Date(now.getTime() + 86400000));
       const yesterdayStr = getKSTDateString(new Date(now.getTime() - 86400000));
+
+      // 경기 시작 시간으로부터 4시간 이상 경과한 LIVE는 실제 종료된 stale 경기
+      const isMatchTrulyLive = (m) => {
+        if (m.status !== 'LIVE') return false;
+        if (m.match_date) {
+          try {
+            const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+            if ((nowTs - mTime) / (1000 * 60 * 60) > 4) return false;
+          } catch(e) {}
+        }
+        return true;
+      };
 
       let list = [...allMatches];
 
@@ -9233,7 +9286,7 @@ function getFullModalMatchList() {
         const todayLiveAndUpcoming = list.filter(m => {
           const raw = m.match_date || '';
           if (m.status === 'CANCELLED' || m.status === 'POSTPONED' || m.status === 'FINISHED') return false;
-          if (m.status === 'LIVE') return true;
+          if (m.status === 'LIVE') return isMatchTrulyLive(m);
           const isTodayUpcoming = raw.startsWith(d0Str) && raw >= nowKstDateTime;
           const isTonightDawn = raw.startsWith(d1Str) && raw.slice(11, 16) < '06:00';
           return isTodayUpcoming || isTonightDawn;
@@ -9242,7 +9295,8 @@ function getFullModalMatchList() {
           const raw = m.match_date || '';
           const isToday = raw.startsWith(d0Str);
           const isYesterdayNight = raw.startsWith(yesterdayStr) && raw.slice(11, 16) >= '18:00';
-          return (isToday || isYesterdayNight) && (m.status === 'FINISHED' || (m.status !== 'LIVE' && raw < nowKstDateTime));
+          const isStale = (m.status === 'LIVE' && !isMatchTrulyLive(m));
+          return (isToday || isYesterdayNight) && (m.status === 'FINISHED' || isStale || raw < nowKstDateTime);
         });
         todayLiveAndUpcoming.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
         todayFinished.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
@@ -9269,18 +9323,6 @@ function getFullModalMatchList() {
         // [진행/예정]: LIVE 진행 중 + 2일 이내 예정 경기 + 오늘 완결된 경기(새벽/아침 및 어젯밤 경기 포함) 상시 표시
         const nowKstDateTime = getKSTDateTimeString(now);
         const maxUpcomingStr = getKSTDateString(new Date(now.getTime() + 2 * 86400000)) + ' 23:59:59';
-
-        // 경기 시작 시간으로부터 4시간 이상 경과한 LIVE는 실제 종료된 stale 경기
-        const isMatchTrulyLive = (m) => {
-          if (m.status !== 'LIVE') return false;
-          if (m.match_date) {
-            try {
-              const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
-              if ((now.getTime() - mTime) / (1000 * 60 * 60) > 4) return false;
-            } catch(e) {}
-          }
-          return true;
-        };
 
         const liveMatches = list.filter(isMatchTrulyLive);
         const upcomingMatches = list.filter(m => {
