@@ -479,7 +479,13 @@ class BetmanService:
             _CACHE[cache_key] = (now, snapshot_data)
             return snapshot_data
 
-        # 2. 실시간 라이브 페칭 시도 (짧은 1.5초 타임아웃으로 블로킹 방지)
+        if not force_refresh:
+            # 웹 요청 처리 중에는 외부 블로킹 방지를 위해 스냅샷/캐시 즉시 반환
+            if snapshot_data:
+                return snapshot_data
+            return {'gmTs': active_ts, 'total_lines': 0, 'keys': [], 'datas': [], 'votes': {}}
+
+        # 2. 백그라운드 스케줄러에서만 실시간 라이브 페칭 시도 (짧은 1.0초 타임아웃)
         try:
             payload = {
                 "gmId": "G101",
