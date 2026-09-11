@@ -1064,13 +1064,13 @@ class LiveApiSportsService:
                     raw_lname = league.get("name", "")
                     country = league.get("country", "")
                     
-                    # 사우디 및 독일 2부/하부리그 완벽 차단
-                    if country in ["Saudi-Arabia", "Saudi Arabia"] or "사우디" in raw_lname or "Saudi" in raw_lname:
+                    # 사우디, 멕시코 및 독일 2부/하부리그 완벽 차단
+                    if country in ["Saudi-Arabia", "Saudi Arabia", "Mexico"] or any(kw in raw_lname for kw in ["사우디", "Saudi", "멕시코", "Mexico", "Liga MX", "LigaMX"]):
                         continue
                     if country == "Germany" and any(sub in raw_lname for sub in ["2. Bundesliga", "2.Bundesliga", "2. Liga", "3. Liga", "Regionalliga"]):
                         continue
 
-                    if country in ["England", "Spain", "Germany", "Italy", "France", "Netherlands", "Japan", "South-Korea", "Brazil", "Mexico", "Portugal", "Belgium", "Turkey", "USA", "World"]:
+                    if country in ["England", "Spain", "Germany", "Italy", "France", "Netherlands", "Japan", "South-Korea", "Brazil", "Portugal", "Belgium", "Turkey", "USA", "World"]:
                         new_m = Match(
                             official_id=str(fixture_info.get("id", "")),
                             sport_code="SOCCER",
