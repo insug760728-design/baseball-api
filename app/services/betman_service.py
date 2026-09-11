@@ -436,15 +436,33 @@ class BetmanService:
 
     @staticmethod
     def get_proto_odds(force_refresh: bool = False) -> dict:
-        """베트맨 프로토 승부식(G101) 최신 회차의 전체 700~1100개 배당 및 투표율 일괄 수집"""
+        """베트맨 프로토 승부식(G101) 최신 회차의 전체 700~1100개 배당 및 투표율 일괄 수집 (스냅샷 즉시 로드 + 실시간 백그라운드 갱신)"""
         now = time.time()
-        active_ts = BetmanService.get_active_round_ts('G101')
+        active_ts = 260093
+        try:
+            active_ts = BetmanService.get_active_round_ts('G101')
+        except Exception:
+            active_ts = 260093
+
         cache_key = f'proto_G101_{active_ts}'
         if not force_refresh and cache_key in _CACHE:
             ts_cached, data = _CACHE[cache_key]
             if now - ts_cached < CACHE_TTL:
                 return data
 
+        # 1. 스냅샷 파일이 있으면 즉시 메모리 캐시에 적재 (0ms)
+        snapshot_data = None
+        for s_file in ['betman_proto_G101_latest.json', f'betman_proto_G101_{active_ts}.json', 'betman_G101.json']:
+            if os.path.exists(s_file):
+                try:
+                    with open(s_file, 'r', encoding='utf-8') as f:
+                        snapshot_data = json.load(f)
+                        if snapshot_data and snapshot_data.get('datas'):
+                            break
+                except Exception:
+                    pass
+
+        # 2. 실시간 라이브 페칭 시도 (짧은 2.5초 타임아웃으로 블로킹 방지)
         try:
             payload = {
                 "gmId": "G101",
@@ -452,24 +470,35 @@ class BetmanService:
                 "gameYear": "2026",
                 "_sbmInfo": {"_sbmInfo": {"debugMode": "false"}}
             }
-            r = _SESSION.post(BETMAN_INQ_URL, json=payload, timeout=6.0)
+            r = _SESSION.post(BETMAN_INQ_URL, json=payload, timeout=2.5)
             if r.status_code == 200:
                 data = r.json()
                 keys = data.get('compSchedules', {}).get('keys', [])
                 datas = data.get('compSchedules', {}).get('datas', [])
                 vote_dict = {v.get('GM_SEQ'): v for v in data.get('voteStatus', [])}
 
-                parsed_result = {
-                    'gmTs': active_ts,
-                    'total_lines': len(datas),
-                    'keys': keys,
-                    'datas': datas,
-                    'votes': vote_dict
-                }
-                _CACHE[cache_key] = (now, parsed_result)
-                return parsed_result
+                if datas:
+                    parsed_result = {
+                        'gmTs': active_ts,
+                        'total_lines': len(datas),
+                        'keys': keys,
+                        'datas': datas,
+                        'votes': vote_dict
+                    }
+                    _CACHE[cache_key] = (now, parsed_result)
+                    try:
+                        with open('betman_proto_G101_latest.json', 'w', encoding='utf-8') as sf:
+                            json.dump(parsed_result, sf, ensure_ascii=False, indent=2)
+                    except Exception:
+                        pass
+                    return parsed_result
         except Exception as e:
-            print(f"[WARN] Betman get_proto_odds error: {e}")
+            pass
+
+        # 3. 네트워크 실패 시 스냅샷 데이터 반환
+        if snapshot_data and snapshot_data.get('datas'):
+            _CACHE[cache_key] = (now, snapshot_data)
+            return snapshot_data
 
         return {'gmTs': active_ts, 'total_lines': 0, 'keys': [], 'datas': [], 'votes': {}}
 
