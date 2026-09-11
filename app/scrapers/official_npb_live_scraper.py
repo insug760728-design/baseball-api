@@ -86,68 +86,15 @@ def translate_npb_position(raw: str) -> str:
         return "/".join(res)
     return raw or "타자"
 
-NPB_PLAYER_KO_MAP = {
-    '戸郷 翔征': '토고 쇼세이', '戸郷　翔征': '토고 쇼세이', '戸郷翔征': '토고 쇼세이',
-    '柳 裕也': '야나기 유야', '柳　裕也': '야나기 유야', '柳裕也': '야나기 유야',
-    '東 克樹': '아즈마 카츠키', '東　克樹': '아즈마 카츠키', '東克樹': '아즈마 카츠키',
-    '奥川 恭伸': '오쿠가와 야스노부', '奥川　恭伸': '오쿠가와 야스노부', '奥川恭伸': '오쿠가와 야스노부',
-    '才木 浩人': '사이키 히로토', '才木　浩人': '사이키 히로토', '才木浩人': '사이키 히로토',
-    '床田 寛樹': '토코다 히로키', '床田　寛樹': '토코다 히로키', '床田寛樹': '토코다 히로키',
-    '田中 晴也': '타나카 세이야', '田中　晴也': '타나카 세이야', '田中晴也': '타나카 세이야',
-    '前田 健太': '마에다 켄타', '前田　健太': '마에다 켄타', '前田健太': '마에다 켄타',
-    'Ｓ．ジェリー': 'S.젤리', 'S.ジェリー': 'S.젤리', 'ジェリー': 'S.젤리',
-    '平良 海馬': '타이라 카이마', '平良　海馬': '타이라 카이마', '平良海馬': '타이라 카이마',
-    'Ｌ．モイネロ': 'L.모이넬로', 'L.モイネロ': 'L.모이넬로', 'モイネロ': 'L.모이넬로',
-    '山﨑 福也': '야마사키 사치야', '山﨑　福也': '야마사키 사치야', '山﨑福也': '야마사키 사치야', '山崎 福也': '야마사키 사치야',
-    '有原 航平': '아리하라 코헤이', '宮城 大弥': '미야기 히로야', '村上 頌樹': '무라카미 쇼키',
-    '今井 達也': '이마이 타츠야', '伊藤 大海': '이토 히로미', '小島 和哉': '코지마 카즈야',
-    '早川 隆久': '하야카와 타카히사', '小川 泰弘': '오가와 야스히로', '高橋 宏斗': '타카하시 히로토',
-    '九里 亜蓮': '쿠리 아렌', '大瀬良 大地': '오오세라 다이치', '菅野 智之': '스가노 토모유키',
-    '髙橋 光成': '다카하시 코나', '高橋 光成': '다카하시 코나', '隅田 知一郎': '스미다 치히로',
-    '松本 航': '마츠모토 와타루', '山下 舜平大': '야마시타 슌페이타', '田嶋 大樹': '타지마 다이키',
-    '種市 篤暉': '타네이치 아츠키', '佐々木 朗希': '사사키 로키', '岸 孝之': '키시 타카유키',
-    '則本 昂大': '노리모토 타카히로', '加藤 貴之': '카토 타카유키', '上原 健太': '우에하라 켄타',
-    '東浜 巨': '히가시하마 나오', '大津 亮介': '오오츠 료스케', '和田 毅': '와다 츠요시',
-    '森下 暢仁': '모리시타 마사토', '小園 健太': '코조노 켄타', '大貫 晋一': '오오누키 신이치',
-    '高橋 奎二': '타카하시 케이지', '吉村 貢司郎': '요시무라 코지로', '小笠原 慎之介': '오가사와라 신노스케',
-    '大野 雄大': '오오노 유다이', '西 勇輝': '니시 유키', '伊藤 将司': '이토 마사시',
-    '佐藤 爽': '사토 소우', '佐藤爽': '사토 소우',
-    '髙島 泰都': '타카시마 타이스케', '高島 泰都': '타카시마 타이스케', '高島泰都': '타카시마 타이스케',
-    '高野 脩汰': '타카노 슈타', '高野脩汰': '타카노 슈타',
-    '松本 晴': '마츠모토 하루', '松本晴': '마츠모토 하루',
-    '井上 温大': '이노우에 하루토', '井上温大': '이노우에 하루토',
-    '深沢 鳳介': '후카자와 호스케', '深沢鳳介': '후카자와 호스케',
-    '栗林 良吏': '쿠리바야시 료지', '栗林良吏': '쿠리바야시 료지',
-    '金丸 夢斗': '카네마루 유메토', '金丸夢斗': '카네마루 유메토',
-    '達': '타츠', '菅井': '스가이', '九里': '쿠리', '上沢': '우와사와',
-    '荘司': '쇼지', '毛利': '모리', '床田': '토코다', '髙橋': '다카하시', '高橋': '다카하시',
-    '山野': '야마노', '石田裕': '이시다 유', '大野': '오오노', 'マタ': '마타',
-    '豆田': '마메다', '石井': '이시이', '松本': '마츠모토', '加藤': '카토', '岸': '키시',
-    '加藤貴': '카토 타카유키', '加藤 貴之': '카토 타카유키',
-    '髙島': '타카시마 타이스케', '高島': '타카시마 타이스케',
-    '高野脩': '타카노 슈타', '高野': '타카노 슈타',
-    '井上': '이노우에 하루토',
-    '吉村': '요시무라 코지로',
-    '深沢': '후카자와 호스케',
-    '金丸': '카네마루 유메토',
-    'オスナ': '오수나', 'ヘルナンデス': '에르난데스', 'マルティネス': '마르티네스', 'ルイーズ': '루이즈',
-    '吉田': '요시다', '坂本': '사카모토', '堀': '호리', '堀田': '호타', '大西': '오오니시',
-    '山岡': '야마오카', '岩嵜': '이와사키', '杉山': '스기야마', '松本健': '마츠모토 켄',
-    '柴田': '시바타', '森博': '모리 히로토', '森脇': '모리와키', '片山': '카타야마',
-    '田中瑛': '타나카 에이', '田嶋大': '타지마 다이키', '益田': '마스다', '篠原': '시노하라',
-    '若松': '와카마츠', '鈴木豪': '스즈키 고', '阪口': '사카구치', '黒木': '쿠로키', '齋藤': '사이토'
-}
+from app.services.player_translation import translate_player_name, FULL_NAMES, NPB_FAMILY_NAME_MAP
 
 def translate_npb_player_name(raw: str) -> str:
     if not raw:
         return ""
     clean = sanitize_player_name(raw)
-    if clean in NPB_PLAYER_KO_MAP:
-        return NPB_PLAYER_KO_MAP[clean]
-    no_space = clean.replace(' ', '')
-    if no_space in NPB_PLAYER_KO_MAP:
-        return NPB_PLAYER_KO_MAP[no_space]
-    # Fallback: clean symbols
+    res = translate_player_name(clean)
+    if res:
+        return res
     return clean
 
 class NpbOfficialScraper:
@@ -168,56 +115,111 @@ class NpbOfficialScraper:
         self.ctx.verify_mode = ssl.CERT_NONE
 
     def scrape_probable_starters(self, target_date: Optional[str] = None) -> List[Dict[str, Any]]:
-        """NPB 공식 예고선발 페이지(https://npb.jp/announcement/starter/)에서 실시간 공식 발표 선발투수 수집"""
-        url = "https://npb.jp/announcement/starter/"
+        """
+        NPB 선발투수 듀얼 채널(야후 재팬 야구 스케줄 + NPB 공식 npb.jp) 실시간 통합 수집
+        - 야후 재팬: 경기 전날 저녁/당일 새벽에 조기 공시되는 예고선발 실시간 수집
+        - npb.jp 공식: 오전 10~11시 공식 확정 발표 선발 수집 및 교차 검증
+        """
+        starters_dict = {}
+
+        # 1. 야후 재팬 (가장 빠른 예고선발 수집)
         try:
-            html = self._fetch_html(url)
-        except Exception as e:
-            print(f"[NPB Scraper] Failed to fetch starter page: {e}")
-            return []
+            yahoo_url = "https://baseball.yahoo.co.jp/npb/schedule/"
+            if target_date:
+                yahoo_url = f"https://baseball.yahoo.co.jp/npb/schedule/?date={target_date}"
+            
+            y_html = self._fetch_html(yahoo_url)
+            y_soup = BeautifulSoup(y_html, 'html.parser')
+            y_items = y_soup.find_all('li', class_='bb-score__item')
 
-        soup = BeautifulSoup(html, 'html.parser')
-        units = soup.find_all('div', class_=re.compile(r'unit\s+(cl|pl)'))
-        starters_list = []
-
-        for u in units:
-            try:
-                left_div = u.find('div', class_='team_left')
-                right_div = u.find('div', class_='team_right')
-                info_div = u.find('div', class_='info')
-
-                if not left_div or not right_div:
+            for it in y_items:
+                all_texts = list(it.stripped_strings)
+                if len(all_texts) < 3:
                     continue
 
-                raw_t_left = left_div.find('img').get('alt', '') if left_div.find('img') else ''
-                raw_t_right = right_div.find('img').get('alt', '') if right_div.find('img') else ''
-                p_left_raw = left_div.find('span').get_text(strip=True) if left_div.find('span') else ''
-                p_right_raw = right_div.find('span').get_text(strip=True) if right_div.find('span') else ''
-                stadium_info = info_div.get_text(strip=True) if info_div else ''
+                home_el = it.find('p', class_=re.compile(r'bb-score__homeLogo'))
+                away_el = it.find('p', class_=re.compile(r'bb-score__awayLogo'))
+                home_raw_name = home_el.get_text(strip=True) if home_el else (all_texts[1] if len(all_texts) > 2 else '')
+                away_raw_name = away_el.get_text(strip=True) if away_el else (all_texts[2] if len(all_texts) > 2 else '')
 
-                t_left = map_npb_team(raw_t_left)
-                t_right = map_npb_team(raw_t_right)
-                p_left = translate_npb_player_name(p_left_raw)
-                p_right = translate_npb_player_name(p_right_raw)
+                t_home = map_npb_team(home_raw_name)
+                t_away = map_npb_team(away_raw_name)
 
-                # NPB 예고선발 페이지에서 unit 내 좌측(team_left)은 해당 경기 구장의 홈팀 또는 제1팀입니다.
-                starters_list.append({
-                    "league_id": "NPB",
-                    "home_team_name": t_left,
-                    "away_team_name": t_right,
-                    "home_starter": p_left,
-                    "away_starter": p_right,
-                    "home_starter_confirmed": bool(p_left),
-                    "away_starter_confirmed": bool(p_right),
-                    "stadium_info": stadium_info,
-                    "raw_home_starter": p_left_raw,
-                    "raw_away_starter": p_right_raw
-                })
-            except Exception as e:
-                print(f"[NPB Scraper] Error parsing unit: {e}")
-                continue
+                starter_texts = [t for t in all_texts if '(予)' in t or '予告' in t or '先発' in t]
+                p_h_raw = starter_texts[0] if len(starter_texts) > 0 else ''
+                p_a_raw = starter_texts[1] if len(starter_texts) > 1 else ''
 
-        return starters_list
+                clean_p_h = re.sub(r'\(予\)|\(예상\)|予告|先発|：|:', '', p_h_raw).strip()
+                clean_p_a = re.sub(r'\(予\)|\(예상\)|予告|先発|：|:', '', p_a_raw).strip()
+
+                p_h = translate_npb_player_name(clean_p_h)
+                p_a = translate_npb_player_name(clean_p_a)
+
+                if t_home and (p_h or p_a):
+                    starters_dict[t_home] = {
+                        "league_id": "NPB",
+                        "home_team_name": t_home,
+                        "away_team_name": t_away,
+                        "home_starter": p_h,
+                        "away_starter": p_a,
+                        "home_starter_confirmed": bool(p_h),
+                        "away_starter_confirmed": bool(p_a),
+                        "raw_home_starter": clean_p_h,
+                        "raw_away_starter": clean_p_a,
+                        "source": "yahoo_japan"
+                    }
+        except Exception as e:
+            print(f"[NPB Scraper] Yahoo Japan starter fetch error: {e}")
+
+        # 2. NPB 공식 사이트 (npb.jp/announcement/starter/)
+        try:
+            npb_url = "https://npb.jp/announcement/starter/"
+            html = self._fetch_html(npb_url)
+            soup = BeautifulSoup(html, 'html.parser')
+            units = soup.find_all('div', class_=re.compile(r'unit\s+(cl|pl)'))
+
+            for u in units:
+                try:
+                    left_div = u.find('div', class_='team_left')
+                    right_div = u.find('div', class_='team_right')
+                    info_div = u.find('div', class_='info')
+
+                    if not left_div or not right_div:
+                        continue
+
+                    raw_t_left = left_div.find('img').get('alt', '') if left_div.find('img') else ''
+                    raw_t_right = right_div.find('img').get('alt', '') if right_div.find('img') else ''
+                    p_left_raw = left_div.find('span').get_text(strip=True) if left_div.find('span') else ''
+                    p_right_raw = right_div.find('span').get_text(strip=True) if right_div.find('span') else ''
+                    stadium_info = info_div.get_text(strip=True) if info_div else ''
+
+                    t_left = map_npb_team(raw_t_left)
+                    t_right = map_npb_team(raw_t_right)
+                    p_left = translate_npb_player_name(p_left_raw)
+                    p_right = translate_npb_player_name(p_right_raw)
+
+                    # 공식 발표 데이터로 병합 또는 보강
+                    existing = starters_dict.get(t_left, {})
+                    starters_dict[t_left] = {
+                        "league_id": "NPB",
+                        "home_team_name": t_left,
+                        "away_team_name": t_right,
+                        "home_starter": p_left or existing.get("home_starter", ""),
+                        "away_starter": p_right or existing.get("away_starter", ""),
+                        "home_starter_confirmed": bool(p_left) or existing.get("home_starter_confirmed", False),
+                        "away_starter_confirmed": bool(p_right) or existing.get("away_starter_confirmed", False),
+                        "stadium_info": stadium_info,
+                        "raw_home_starter": p_left_raw or existing.get("raw_home_starter", ""),
+                        "raw_away_starter": p_right_raw or existing.get("raw_away_starter", ""),
+                        "source": "npb_official"
+                    }
+                except Exception as e:
+                    print(f"[NPB Scraper] Error parsing npb.jp unit: {e}")
+                    continue
+        except Exception as e:
+            print(f"[NPB Scraper] Failed to fetch starter page: {e}")
+
+        return list(starters_dict.values())
 
     def _fetch_html(self, url: str) -> str:
         req = urllib.request.Request(url, headers=self.headers)
@@ -269,52 +271,91 @@ class NpbOfficialScraper:
                 if target_date and not (start_date or end_date) and cur_date_str != target_date:
                     continue
 
-                link = tr.find('a', href=re.compile(r'/scores/'))
-                if not link:
-                    continue
-
-                href = link.get('href', '')
-                clean_path = href.strip('/').replace('/', '_')
-                official_id = f"NPB_{clean_path}" if not clean_path.startswith("NPB_") else clean_path
-
                 row_text = ' '.join(tr.get_text().split())
+                link = tr.find('a', href=re.compile(r'/scores/'))
 
-                score_m = re.search(r'([^\d\s]+)\s+(\d+)\s*-\s*(\d+)\s+([^\d\s]+)', row_text)
-                if not score_m:
-                    continue
+                score_m = re.search(r'([^\d\s\-]+)\s+(\d+)\s*-\s*(\d+)\s+([^\d\s\-]+)', row_text)
+                if score_m:
+                    # 1. 종료/진행 중 경기 (스코어 존재)
+                    raw_home = score_m.group(1).strip()
+                    home_score = int(score_m.group(2))
+                    away_score = int(score_m.group(3))
+                    raw_away = score_m.group(4).strip()
+                    home_team = map_npb_team(raw_home)
+                    away_team = map_npb_team(raw_away)
 
-                raw_home = score_m.group(1).strip()
-                home_score = int(score_m.group(2))
-                away_score = int(score_m.group(3))
-                raw_away = score_m.group(4).strip()
+                    remaining = row_text[score_m.end():].strip()
+                    tokens = remaining.split()
+                    stadium = tokens[0] if len(tokens) > 0 else "NPB 구장"
+                    start_time = "18:00"
+                    for tok in tokens:
+                        if re.match(r'^\d{1,2}:\d{2}$', tok):
+                            start_time = tok
+                            break
 
-                home_team = map_npb_team(raw_home)
-                away_team = map_npb_team(raw_away)
+                    href = link.get('href', '') if link else f"/scores/{s_year}/{cur_date_str.replace('-', '')}_{raw_home}_{raw_away}"
+                    clean_path = href.strip('/').replace('/', '_')
+                    official_id = f"NPB_{clean_path}" if not clean_path.startswith("NPB_") else clean_path
+                    match_dt = f"{cur_date_str} {start_time}"
 
-                remaining = row_text[score_m.end():].strip()
-                tokens = remaining.split()
-                stadium = tokens[0] if len(tokens) > 0 else "NPB 구장"
-                start_time = "18:00"
-                for tok in tokens:
-                    if re.match(r'^\d{1,2}:\d{2}$', tok):
-                        start_time = tok
-                        break
+                    all_games.append({
+                        "sport_code": "BASEBALL",
+                        "league_name": "일본 프로야구 (NPB)",
+                        "official_id": official_id,
+                        "match_date": match_dt,
+                        "status": "FINISHED",
+                        "home_team_name": home_team,
+                        "away_team_name": away_team,
+                        "home_score": home_score,
+                        "away_score": away_score,
+                        "stadium": stadium,
+                        "league_id": "NPB"
+                    })
+                else:
+                    # 2. 예정 경기 (SCHEDULED) - 대진표 및 예고선발 파싱
+                    cleaned_row = re.sub(r'^\d{1,2}/\d{1,2}(?:（[^）]+）|\([^)]+\))?', '', row_text).strip()
+                    sched_m = re.search(r'([^\d\s\-]+)\s*-\s*([^\d\s\-]+)', cleaned_row)
+                    if not sched_m:
+                        continue
+                    raw_home = sched_m.group(1).replace('先発：', '').replace('先発:', '').strip()
+                    raw_away = sched_m.group(2).replace('先発：', '').replace('先発:', '').strip()
+                    if not raw_home or not raw_away or raw_home == raw_away:
+                        continue
+                    home_team = map_npb_team(raw_home)
+                    away_team = map_npb_team(raw_away)
+                    if home_team == away_team or home_team == raw_home and away_team == raw_away and len(raw_home) > 10:
+                        continue
 
-                match_dt = f"{cur_date_str} {start_time}"
+                    time_m = re.search(r'(\d{1,2}:\d{2})', cleaned_row)
+                    start_time = time_m.group(1) if time_m else "18:00"
+                    
+                    # 경기장 파싱
+                    stadium_m = re.search(r'([^\s]+(?:スタジアム|ドーム|球場|PayPay|D大阪|ZOZO|神宮|甲子园|甲子園|横浜))', cleaned_row)
+                    stadium = stadium_m.group(1) if stadium_m else "NPB 구장"
 
-                all_games.append({
-                    "sport_code": "BASEBALL",
-                    "league_name": "일본 프로야구 (NPB)",
-                    "official_id": official_id,
-                    "match_date": match_dt,
-                    "status": "FINISHED",
-                    "home_team_name": home_team,
-                    "away_team_name": away_team,
-                    "home_score": home_score,
-                    "away_score": away_score,
-                    "stadium": stadium,
-                    "league_id": "NPB"
-                })
+                    # 예고선발 파싱
+                    starters = re.findall(r'先発[：:]\s*([^\s]+)', cleaned_row)
+                    p_home = translate_npb_player_name(starters[0]) if len(starters) > 0 else None
+                    p_away = translate_npb_player_name(starters[1]) if len(starters) > 1 else None
+
+                    official_id = f"NPB_{cur_date_str.replace('-', '')}_{raw_home}_{raw_away}"
+                    match_dt = f"{cur_date_str} {start_time}"
+
+                    all_games.append({
+                        "sport_code": "BASEBALL",
+                        "league_name": "일본 프로야구 (NPB)",
+                        "official_id": official_id,
+                        "match_date": match_dt,
+                        "status": "SCHEDULED",
+                        "home_team_name": home_team,
+                        "away_team_name": away_team,
+                        "home_score": 0,
+                        "away_score": 0,
+                        "stadium": stadium,
+                        "league_id": "NPB",
+                        "probable_pitcher_home": p_home,
+                        "probable_pitcher_away": p_away
+                    })
 
             if all_games:
                 break

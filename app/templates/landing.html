@@ -2434,9 +2434,95 @@
   <!-- Real News & Matches Script -->
   <script>
 // =============================================================
-    // 🏟️ NPB / MLB / 해외 구단명 간결 표기 변환기
+    // 🏟️ KBO / NPB / MLB / 해외 구단명 간결 표기 변환기
     // =============================================================
     const TEAM_NAME_MAP = {
+      // [KBO 한국프로야구 10개 구단 간소화]
+      '한화 이글스': '한화',
+      '한화이글스': '한화',
+      'Hanwha Eagles': '한화',
+      '한화': '한화',
+
+      'KT 위즈': 'KT',
+      'KT위즈': 'KT',
+      'kt 위즈': 'KT',
+      'kt위즈': 'KT',
+      '케이티 위즈': 'KT',
+      '케이티': 'KT',
+      'KT Wiz': 'KT',
+      'kt wiz': 'KT',
+      'KT': 'KT',
+      'kt': 'KT',
+
+      '롯데 자이언츠': '롯데',
+      '롯데자이언츠': '롯데',
+      'Lotte Giants': '롯데',
+      '롯데': '롯데',
+
+      'KIA 타이거즈': 'KIA',
+      'KIA타이거즈': 'KIA',
+      '기아 타이거즈': 'KIA',
+      '기아타이거즈': 'KIA',
+      '기아': 'KIA',
+      'kia 타이거즈': 'KIA',
+      'kia타이거즈': 'KIA',
+      'KIA Tigers': 'KIA',
+      'kia tigers': 'KIA',
+      'KIA': 'KIA',
+      'kia': 'KIA',
+
+      'NC 다이노스': 'NC',
+      'NC다이노스': 'NC',
+      '엔씨 다이노스': 'NC',
+      '엔씨다이노스': 'NC',
+      '엔씨': 'NC',
+      'nc 다이노스': 'NC',
+      'nc다이노스': 'NC',
+      'NC Dinos': 'NC',
+      'nc dinos': 'NC',
+      'NA 다이노스': 'NC',
+      'na 다이노스': 'NC',
+      'NC': 'NC',
+      'nc': 'NC',
+
+      'SSG 랜더스': 'SSG',
+      'SSG랜더스': 'SSG',
+      '에스에스지 랜더스': 'SSG',
+      '에스에스지': 'SSG',
+      'ssg 랜더스': 'SSG',
+      'ssg랜더스': 'SSG',
+      'SSG Landers': 'SSG',
+      'ssg landers': 'SSG',
+      'SSG': 'SSG',
+      'ssg': 'SSG',
+
+      '두산 베어스': '두산',
+      '두산베어스': '두산',
+      'Doosan Bears': '두산',
+      '두산': '두산',
+
+      '삼성 라이온즈': '삼성',
+      '삼성라이온즈': '삼성',
+      'Samsung Lions': '삼성',
+      '삼성': '삼성',
+
+      '키움 히어로즈': '키움',
+      '키움히어로즈': '키움',
+      'Kiwoom Heroes': '키움',
+      '키움': '키움',
+
+      'LG 트윈스': 'LG',
+      'LG트윈스': 'LG',
+      '엘지 트윈스': 'LG',
+      '엘지트윈스': 'LG',
+      '엘지': 'LG',
+      'lg 트윈스': 'LG',
+      'lg트윈스': 'LG',
+      'LG Twins': 'LG',
+      'lg twins': 'LG',
+      'LG': 'LG',
+      'lg': 'LG',
+
       // [NPB 일본야구 12개 구단]
       '사이타마 세이부 라이온즈': '세이부',
       '세이부 라이온즈': '세이부',
@@ -2449,6 +2535,8 @@
       '치바 롯데 마린스': '지바롯데',
       '지바롯데 마린스': '지바롯데',
       '지바 롯데': '지바롯데',
+      '치바 롯데': '지바롯데',
+      '치바롯데': '지바롯데',
       '도호쿠 라쿠텐 골든이글스': '라쿠텐',
       '도호쿠 라쿠텐 골든 이글스': '라쿠텐',
       '라쿠텐 골든이글스': '라쿠텐',
@@ -2887,6 +2975,14 @@
       '델바예': '델 바예',
     };
 
+    let _CACHED_SORTED_TEAM_KEYS = null;
+    function getSortedTeamKeys() {
+      if (!_CACHED_SORTED_TEAM_KEYS) {
+        _CACHED_SORTED_TEAM_KEYS = Object.keys(TEAM_NAME_MAP).sort((a, b) => b.length - a.length);
+      }
+      return _CACHED_SORTED_TEAM_KEYS;
+    }
+
     function formatTeamName(name) {
       if (!name) return '';
       const trimmed = String(name).trim();
@@ -2895,8 +2991,10 @@
       for (const [k, v] of Object.entries(TEAM_NAME_MAP)) {
         if (clean === k.replace(/\s+/g, '')) return v;
       }
-      for (const [k, v] of Object.entries(TEAM_NAME_MAP)) {
-        if (trimmed.includes(k)) return v;
+      // 긴 구단명부터 우선 매칭 (예: '지바 롯데'가 '롯데'보다 먼저 매칭되도록)
+      const sortedKeys = getSortedTeamKeys();
+      for (const k of sortedKeys) {
+        if (trimmed.includes(k)) return TEAM_NAME_MAP[k];
       }
       return trimmed;
     }
@@ -4262,7 +4360,7 @@
         allMatches = uniqueList;
         window.matchesLoadedInitial = true;
         try {
-          localStorage.setItem('tokeon_matches_cache_v9', JSON.stringify(uniqueList));
+          localStorage.setItem('tokeon_matches_cache_v10', JSON.stringify(uniqueList));
         } catch (e) {}
 
         renderMatchStrip('ALL');
@@ -9800,17 +9898,17 @@ function getFullModalMatchList() {
     function initPredictionSection() {
       // ⚡ 0초(0ms) 즉시 렌더링 & 구버전 브라우저 캐시 전량 자동 정리
       try {
-        // 구버전(v1~v8) 로컬 캐시 전량 자동 제거 (가짜 대진표 잔존 원천 차단)
+        // 구버전(v1~v9) 로컬 캐시 전량 자동 제거 (가짜/혼합 대진표 잔존 원천 차단)
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
-          if (k && k.startsWith('tokeon_matches_cache') && k !== 'tokeon_matches_cache_v9') {
+          if (k && k.startsWith('tokeon_matches_cache') && k !== 'tokeon_matches_cache_v10') {
             keysToRemove.push(k);
           }
         }
         keysToRemove.forEach(k => localStorage.removeItem(k));
 
-        const cached = localStorage.getItem('tokeon_matches_cache_v9');
+        const cached = localStorage.getItem('tokeon_matches_cache_v10');
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -10276,7 +10374,7 @@ function getFullModalMatchList() {
         }
         list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
       } else if (currentPredDate === 'D0') {
-        // [오늘 경기]: 오늘 진행 중(LIVE), 오늘 예정 경기, 내일 새벽(00:00~06:00) 유럽 축구, 및 오늘 완결/어젯밤 경기 보존
+        // [오늘 경기]: 오늘 진행 중(LIVE), 오늘 예정 경기, 및 오늘 완결 경기
         const nowKstDateTime = getKSTDateTimeString(now);
         const todayLiveAndUpcoming = list.filter(m => {
           const raw = m.match_date || '';
@@ -10287,11 +10385,11 @@ function getFullModalMatchList() {
           return isTodayUpcoming || isTonightDawn;
         });
         const todayFinished = list.filter(m => {
+          if (m.status === 'CANCELLED' || m.status === 'POSTPONED') return false;
           const raw = m.match_date || '';
           const isToday = raw.startsWith(d0Str);
-          const isYesterdayNight = raw.startsWith(yesterdayStr) && raw.slice(11, 16) >= '18:00';
           const isStale = (m.status === 'LIVE' && !isMatchTrulyLive(m));
-          return (isToday || isYesterdayNight) && (m.status === 'FINISHED' || isStale || raw < nowKstDateTime);
+          return isToday && (m.status === 'FINISHED' || isStale || raw < nowKstDateTime);
         });
         todayLiveAndUpcoming.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
         todayFinished.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
@@ -10315,7 +10413,7 @@ function getFullModalMatchList() {
         list = list.filter(m => (m.match_date || '').startsWith(d1Str) && m.status !== 'CANCELLED' && m.status !== 'POSTPONED');
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       } else {
-        // [진행/예정]: LIVE 진행 중 + 2일 이내 예정 경기 + 오늘 완결된 경기(새벽/아침 및 어젯밤 경기 포함) 상시 표시
+        // [진행/예정]: LIVE 진행 중 + 2일 이내 예정 경기 + 오늘 완결된 경기
         const nowKstDateTime = getKSTDateTimeString(now);
         const maxUpcomingStr = getKSTDateString(new Date(now.getTime() + 2 * 86400000)) + ' 23:59:59';
 
@@ -10324,20 +10422,19 @@ function getFullModalMatchList() {
           if (m.status === 'CANCELLED' || m.status === 'POSTPONED' || m.status === 'FINISHED' || isMatchTrulyLive(m)) return false;
           return (m.match_date || '') >= nowKstDateTime && (m.match_date || '') <= maxUpcomingStr;
         });
-        const todayOrRecentFinished = list.filter(m => {
+        const todayFinished = list.filter(m => {
           if (m.status === 'CANCELLED' || m.status === 'POSTPONED') return false;
           const raw = m.match_date || '';
           const isToday = raw.startsWith(d0Str);
-          const isYesterdayNight = raw.startsWith(yesterdayStr) && raw.slice(11, 16) >= '18:00';
           const isStale = (m.status === 'LIVE' && !isMatchTrulyLive(m));
-          return (isToday || isYesterdayNight) && (m.status === 'FINISHED' || isStale || raw < nowKstDateTime);
+          return isToday && (m.status === 'FINISHED' || isStale || raw < nowKstDateTime);
         });
 
         liveMatches.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
         upcomingMatches.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
-        todayOrRecentFinished.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+        todayFinished.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
 
-        list = [...liveMatches, ...upcomingMatches, ...todayOrRecentFinished];
+        list = [...liveMatches, ...upcomingMatches, ...todayFinished];
 
         // Off-season or 0 upcoming matches fallback: show recent finished matches so the screen is NEVER blank
         if (list.length === 0) {

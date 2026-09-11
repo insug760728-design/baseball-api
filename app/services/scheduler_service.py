@@ -71,12 +71,12 @@ class SchedulerService:
                 id="betman_10min_sync_job",
                 replace_existing=True
             )
-            # 10분마다 KBO 및 NPB 공식 선발투수 발표 실시간 동기화 (기존 15분 -> 10분)
-            starters_trigger = CronTrigger(minute="*/10")
+            # 5분마다 KBO 및 NPB 공식 선발투수 발표 실시간 동기화 (기존 10분 -> 5분 단축)
+            starters_trigger = CronTrigger(minute="*/5")
             scheduler.add_job(
                 cls.execute_starters_sync_job,
                 trigger=starters_trigger,
-                id="starters_10min_sync_job",
+                id="starters_5min_sync_job",
                 replace_existing=True
             )
             # 1분마다 바탕화면 실시간 접속자 및 시간대별 트래픽 파일 자동 갱신
