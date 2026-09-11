@@ -332,8 +332,9 @@ class MatchService:
                 query = query.filter(Match.match_date >= f"{start_date} 00:00")
         else:
             if status == "FINISHED" or (order and order.lower() == "desc"):
-                # 최근 종료 경기 또는 내림차순(최신순) 조회: 현재 연도(2026년) 1월 1일 이후 및 오늘 밤 이전
-                query = query.filter(Match.match_date >= f"{current_year}-01-01 00:00")
+                # 최근 종료 경기 또는 내림차순(최신순) 조회: 최근 14일 경기 위주로 고속 조회
+                past_14d = (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d 00:00")
+                query = query.filter(Match.match_date >= past_14d)
                 if not end_date:
                     query = query.filter(Match.match_date <= f"{today_str} 23:59")
             else:
@@ -445,7 +446,7 @@ class MatchService:
                     a_confirmed = False
                 m.starters_confirmed = bool(m.home_starter_name and m.away_starter_name and h_confirmed and a_confirmed)
 
-            if m.status == "FINISHED" or (m.status != "LIVE" and pred_calc_count >= 30):
+            if m.status == "FINISHED" or (m.status != "LIVE" and pred_calc_count >= 10):
                 m.prediction = None
                 m.odds = None
                 m.ou_line = None
