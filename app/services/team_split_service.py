@@ -1852,16 +1852,15 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "name_raw": "Erick Fedde",
         "jersey": 13,
         "throws": "우완",
-        "wins": 14,
-        "losses": 5,
-        "games": 24,
-        "season_era": "3.30",
-        "season_ip": "155.0",
-        "season_so": 170,
-        "season_bb": 35,
+        "wins": 4,
+        "losses": 2,
+        "games": 8,
+        "season_era": "2.55",
+        "season_ip": "49.1",
+        "season_so": 52,
+        "season_bb": 14,
         "recent_starts": [
-            {"date": "09.04(금)", "venue": "홈", "opponent": "LG", "ip": "7.0", "bf": 27, "h": 4, "hr": 0, "bb": 1, "so": 9, "er": 1, "era": "1.29", "result": "승"},
-            {"date": "08.29(토)", "venue": "원", "opponent": "두산", "ip": "6.0", "bf": 25, "h": 5, "hr": 1, "bb": 2, "so": 7, "er": 2, "era": "3.00", "result": "승"}
+            {"date": "09.04(금)", "venue": "홈", "opponent": "LG", "ip": "7.0", "bf": 27, "h": 4, "hr": 0, "bb": 1, "so": 9, "er": 1, "era": "1.29", "result": "승"}
         ]
     },
     "전준표": {
@@ -1901,13 +1900,13 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "name_raw": "Logan",
         "jersey": 32,
         "throws": "우완",
-        "wins": 8,
-        "losses": 6,
-        "games": 20,
-        "season_era": "3.65",
-        "season_ip": "108.1",
-        "season_so": 98,
-        "season_bb": 31,
+        "wins": 5,
+        "losses": 3,
+        "games": 12,
+        "season_era": "3.07",
+        "season_ip": "67.1",
+        "season_so": 65,
+        "season_bb": 19,
         "recent_starts": [
             {"date": "09.03(목)", "venue": "홈", "opponent": "한화", "ip": "6.0", "bf": 26, "h": 6, "hr": 1, "bb": 2, "so": 6, "er": 3, "era": "4.50", "result": "패"}
         ]
