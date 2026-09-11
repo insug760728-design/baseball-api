@@ -1899,6 +1899,14 @@
       padding-top: 52px;
       background-color: #ffffff !important;
     }
+
+    /* ⚡ 간편 로그인 모달 최상단 노출 보장 (토토/상세 모달 위) */
+    #simpleLoginModal {
+      z-index: 1090 !important;
+    }
+    .modal-backdrop.login-backdrop {
+      z-index: 1085 !important;
+    }
   </style>
 </head>
 <body>
@@ -1972,9 +1980,11 @@
           <div class="dash-card-column">
             
             <div class="dash-card-header pb-2">
-              <!-- Date Filter (전체/오늘 vs 지난결과) -->
+              <!-- Date Filter (오늘 / 내일 / 전체 / 지난결과) -->
               <div class="d-flex gap-1 mb-2">
-                <button class="btn btn-sm pred-date-btn active flex-fill text-nowrap fw-bold" id="predDateALL" onclick="filterPredDate('ALL')"><i class="bi bi-calendar2-week me-1"></i>전체/오늘</button>
+                <button class="btn btn-sm pred-date-btn active flex-fill text-nowrap fw-bold" id="predDateD0" onclick="filterPredDate('D0')"><i class="bi bi-calendar-check me-1"></i>오늘</button>
+                <button class="btn btn-sm pred-date-btn flex-fill text-nowrap fw-bold" id="predDateD1" onclick="filterPredDate('D1')"><i class="bi bi-calendar-plus me-1"></i>내일</button>
+                <button class="btn btn-sm pred-date-btn flex-fill text-nowrap fw-bold" id="predDateALL" onclick="filterPredDate('ALL')"><i class="bi bi-calendar2-week me-1"></i>전체</button>
                 <button class="btn btn-sm pred-date-btn flex-fill text-nowrap fw-bold" id="predDateFINISHED" onclick="filterPredDate('FINISHED')" style="color: #dc2626; border-color: #fecaca; background: #fef2f2;"><i class="bi bi-check2-circle me-1"></i>지난결과</button>
               </div>
 
@@ -2973,6 +2983,80 @@
       '인디펜디엔테 델 바예': '델 바예',
       '인디펜디엔테델바예': '델 바예',
       '델바예': '델 바예',
+      '비셀 고베': '비셀고베',
+      'Vissel Kobe': '비셀고베',
+      '가시마 앤틀러스': '가시마',
+      'Kashima Antlers': '가시마',
+      '교토 상가': '교토상가',
+      'Kyoto Sanga': '교토상가',
+      '가시와 레이솔': '가시와',
+      'Kashiwa Reysol': '가시와',
+      '도쿄 베르디': '도쿄베르디',
+      '제프 유나이티드': '제프유나이티드',
+      '알비렉스 니가타': '니가타',
+      '콘사도레 삿포로': '삿포로',
+      '몬테디오 야마가타': '야마가타',
+      '베갈타 센다이': '베갈타센다이',
+      '사우샘프턴': '사우샘프턴',
+      '사우샘프': '사우샘프턴',
+      'Southampton': '사우샘프턴',
+      '브리스틀 시티': '브리스톨시티',
+      '브리스톨 시티': '브리스톨시티',
+      '브리스톨시티': '브리스톨시티',
+      'Bristol City': '브리스톨시티',
+      '셰필드 유나이티드': '셰필드U',
+      'Sheffield United': '셰필드U',
+      '울버햄튼 원더러스': '울버햄튼',
+      'Wolverhampton Wanderers': '울버햄튼',
+      '블랙번 로버스': '블랙번',
+      'Blackburn Rovers': '블랙번',
+      '찰턴 애슬레틱': '찰턴',
+      'Charlton Athletic': '찰턴',
+      '미들즈브러': '미들즈브러',
+      'Middlesbrough': '미들즈브러',
+      '노리치 시티': '노리치',
+      'Norwich City': '노리치',
+      '프레스턴 노스 엔드': '프레스턴',
+      'Preston North End': '프레스턴',
+      '링컨 시티': '링컨시티',
+      'Lincoln City': '링컨시티',
+      '스완지 시티': '스완지',
+      'Swansea City': '스완지',
+      'Stoke City': '스토크시티',
+      '스토크 시티': '스토크시티',
+      '트벤테': '트벤테',
+      'FC 트벤테': '트벤테',
+      'FC Twente': '트벤테',
+      'ADO Den Haag': '덴하그',
+      'ADO 덴하흐': '덴하그',
+      'ADO덴하흐': '덴하그',
+      '덴하그': '덴하그',
+      '덴하흐': '덴하그',
+      'PEC Zwolle': '즈볼러',
+      'PEC 즈볼러': '즈볼러',
+      'Feyenoord Rotterdam': '페예노르트',
+      'SC Heerenveen': '헤이렌베인',
+      'SC Telstar': '텔스타',
+      'FC Utrecht': '위트레흐트',
+      'SBV Excelsior': '엑셀시오르',
+      'US레체': '레체',
+      'US 레체': '레체',
+      'AC몬차': '몬차',
+      'AC 몬차': '몬차',
+      '릴OSC': '릴',
+      '릴 OSC': '릴',
+      '트루아AC': '트루아',
+      '트루아 AC': '트루아',
+      '김해FC 2008': '김해시청',
+      '김해FC': '김해시청',
+      '천안 시티FC': '천안시티',
+      '천안 시티': '천안시티',
+      '전남 드래곤즈': '전남드래곤즈',
+      '부산 아이파크': '부산아이파크',
+      '호펜하임': '호펜하임',
+      '슈투트가르트': '슈투트가르트',
+      '쾰른': '쾰른',
+      '브레멘': '브레멘'
     };
 
     let _CACHED_SORTED_TEAM_KEYS = null;
@@ -3002,9 +3086,11 @@
     function getMatchFixtureKey(m) {
       if (!m) return '';
       const dPart = (m.match_date || '').slice(0, 10);
+      const sport = (m.sport_code || 'BASEBALL').toUpperCase();
       const h = formatTeamName(m.home_team_name || '').trim();
       const a = formatTeamName(m.away_team_name || '').trim();
-      return `${m.sport_code}_${h}_${a}_${dPart}`;
+      if (!h || !a) return '';
+      return `${sport}_${dPart}_${h}_${a}`;
     }
 
     // =============================================================
@@ -3766,14 +3852,36 @@
       }
     }
 
-    function openLoginModal(defaultTab = 'login') {
+    function openLoginModal(defaultTab = 'login', noticeMsg = null) {
       switchAuthTab(defaultTab);
       if (currentUser) {
         const nickEl = document.getElementById('loginNicknameInput');
         if (nickEl) nickEl.value = currentUser.nickname || '';
       }
-      const modal = new bootstrap.Modal(document.getElementById('simpleLoginModal'));
+
+      const bannerEl = document.getElementById('authNoticeBanner');
+      const textEl = document.getElementById('authNoticeText');
+      if (bannerEl && textEl) {
+        if (noticeMsg) {
+          textEl.innerHTML = noticeMsg;
+          bannerEl.classList.remove('d-none');
+        } else {
+          bannerEl.classList.add('d-none');
+        }
+      }
+
+      const modalEl = document.getElementById('simpleLoginModal');
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
       modal.show();
+    }
+
+    // 🔒 로그인 필수 검사 가드 (미로그인 시 로그인 화면 즉시 호출)
+    function checkUserLoggedIn(actionName = '이 기능') {
+      if (!currentUser || !currentUser.nickname) {
+        openLoginModal('login', `🔒 <b>${actionName}</b>은(는) 로그인 후 이용하실 수 있습니다.<br><span class="text-muted" style="font-size:0.75rem;">별명과 비밀번호로 간편 로그인하거나 3초 만에 신규 가입하세요.</span>`);
+        return false;
+      }
+      return true;
     }
 
     // 🔑 1. 간편 로그인 (별명 + 비밀번호)
@@ -3830,6 +3938,15 @@
         renderAuthUI();
         if (passEl) passEl.value = '';
         alert(`🎉 [${currentUser.nickname}]님 환영합니다!\n로그인이 완료되었습니다.`);
+
+        // Pending action after login execution
+        if (typeof window._pendingAuthAction === 'function') {
+          const action = window._pendingAuthAction;
+          window._pendingAuthAction = null;
+          setTimeout(() => {
+            try { action(); } catch (err) { console.error('Pending auth action error:', err); }
+          }, 250);
+        }
       } catch (err) {
         console.error('Login error:', err);
         alert('로그인 처리 중 통신 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
@@ -3901,6 +4018,15 @@
         renderAuthUI();
         if (passEl) passEl.value = '';
         alert(`🎉 [${nickname}]님 (${age}세) 환영합니다!\n회원가입 및 로그인이 완료되었습니다.`);
+
+        // Pending action after register execution
+        if (typeof window._pendingAuthAction === 'function') {
+          const action = window._pendingAuthAction;
+          window._pendingAuthAction = null;
+          setTimeout(() => {
+            try { action(); } catch (err) { console.error('Pending auth action error:', err); }
+          }, 250);
+        }
       } catch (err) {
         console.error('Register error:', err);
         alert('회원가입 처리 중 통신 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
@@ -9776,7 +9902,7 @@ function getFullModalMatchList() {
     // 3-Day Match Predictor (Strict KST Chronological Stream & Real Official Scores)
     // ----------------------------------------------------
     let selectedPredMatchId = null;
-    let currentPredDate = 'ALL'; // 'ALL' (전체/오늘 - 기본값: LIVE + 오늘 예정 + 오늘 결과)
+    let currentPredDate = 'D0'; // 'D0' (오늘 경기 - 기본값: LIVE + 오늘 예정 + 오늘 결과)
     let currentPredSport = 'ALL'; // 'ALL', 'SOCCER', 'BASEBALL', 'BASKETBALL', 'HOCKEY', 'VOLLEYBALL'
     let currentPredLeague = 'ALL';
     let currentPredConfidence = 'ALL'; // 'ALL', '80', '70', '50'
@@ -9938,11 +10064,14 @@ function getFullModalMatchList() {
       const d0Str = getKSTDateString(now);
       const d1Str = getKSTDateString(new Date(now.getTime() + 86400000));
       
-      currentPredDate = 'ALL';
-      const btnAll = document.getElementById('predDateALL');
-      if (btnAll) btnAll.classList.add('active');
-      const btnFin = document.getElementById('predDateFINISHED');
-      if (btnFin) btnFin.classList.remove('active');
+      currentPredDate = 'D0';
+      ['D0', 'D1', 'ALL', 'FINISHED'].forEach(k => {
+        const btn = document.getElementById('predDate' + k);
+        if (btn) {
+          if (k === 'D0') btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
       loadBetmanToto('W1L', 260067);
 
       startLiveAutoSync(5);
@@ -10448,10 +10577,51 @@ function getFullModalMatchList() {
           }
           list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
                        .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+      // 🚀 실시간 완벽 중복 제거 (팀명 변형/다중 스크래핑으로 인한 동일 대진 중복 원천 차단)
+      const dedupedList = [];
+      const seenFixtureKeys = new Map();
+
+      for (const m of list) {
+        if (!m) continue;
+        const fKey = getMatchFixtureKey(m);
+        if (!fKey) {
+          dedupedList.push(m);
+          continue;
+        }
+
+        if (!seenFixtureKeys.has(fKey)) {
+          seenFixtureKeys.set(fKey, m);
+          dedupedList.push(m);
+        } else {
+          // 동일 대진 발견 시: 더 완성도 높은 데이터(종료/라이브/점수/선발확정/배당)로 자동 교체
+          const existing = seenFixtureKeys.get(fKey);
+          let shouldReplace = false;
+
+          const mScore = (m.status === 'FINISHED' ? 100 : (m.status === 'LIVE' ? 50 : 0)) +
+                         ((m.home_score !== null && m.home_score !== undefined && (m.home_score > 0 || m.away_score > 0)) ? 20 : 0) +
+                         (m.starters_confirmed ? 10 : 0) +
+                         (m.odds ? 5 : 0);
+
+          const exScore = (existing.status === 'FINISHED' ? 100 : (existing.status === 'LIVE' ? 50 : 0)) +
+                          ((existing.home_score !== null && existing.home_score !== undefined && (existing.home_score > 0 || existing.away_score > 0)) ? 20 : 0) +
+                          (existing.starters_confirmed ? 10 : 0) +
+                          (existing.odds ? 5 : 0);
+
+          if (mScore > exScore) {
+            shouldReplace = true;
+          }
+
+          if (shouldReplace) {
+            const idx = dedupedList.indexOf(existing);
+            if (idx !== -1) {
+              dedupedList[idx] = m;
+            }
+            seenFixtureKeys.set(fKey, m);
+          }
         }
       }
 
-      return list;
+      return dedupedList;
     }
 
     // ------------------------------------------------------------------
@@ -10878,6 +11048,8 @@ function getFullModalMatchList() {
         }
       }
 
+      let lastDateHeader = null;
+
       filtered.forEach(m => {
         const isSel = (currentCenterMode === 'DETAIL' && m.id === selectedPredMatchId);
         let sportIcon = '⚾';
@@ -10885,6 +11057,65 @@ function getFullModalMatchList() {
         if (m.sport_code === 'BASKETBALL') sportIcon = '🏀';
 
         const rawDate = m.match_date || '';
+        const matchDay = rawDate.slice(0, 10);
+
+        // 📅 날짜 그룹 구분선 (오늘 / 내일 / 이전 날짜별 명확한 분리)
+        if (matchDay && matchDay !== lastDateHeader) {
+          lastDateHeader = matchDay;
+          const isD0 = (matchDay === d0Str);
+          const isD1 = (matchDay === d1Str);
+          const isPast = (matchDay < d0Str);
+
+          const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+          let dayOfWeekStr = '';
+          try {
+            const dtParts = matchDay.split('-');
+            const dObj = new Date(parseInt(dtParts[0], 10), parseInt(dtParts[1], 10) - 1, parseInt(dtParts[2], 10));
+            dayOfWeekStr = dayNames[dObj.getDay()] || '';
+          } catch(e) {}
+
+          const mNum = parseInt(matchDay.slice(5, 7), 10);
+          const dNum = parseInt(matchDay.slice(8, 10), 10);
+
+          let dateHeaderBadge = '';
+          let dateHeaderBg = '#f8fafc';
+          let dateHeaderBorder = '#cbd5e1';
+          let dateHeaderTextColor = '#0f172a';
+
+          if (isD0) {
+            dateHeaderBadge = `<span class="badge bg-danger text-white px-2 py-0.5" style="font-size: 0.66rem; font-weight: 800;"><i class="bi bi-calendar-check me-1"></i>오늘 경기</span>`;
+            dateHeaderBg = '#eff6ff';
+            dateHeaderBorder = '#93c5fd';
+            dateHeaderTextColor = '#1d4ed8';
+          } else if (isD1) {
+            dateHeaderBadge = `<span class="badge bg-primary text-white px-2 py-0.5" style="font-size: 0.66rem; font-weight: 800;"><i class="bi bi-calendar-plus me-1"></i>내일 예정</span>`;
+            dateHeaderBg = '#f8fafc';
+            dateHeaderBorder = '#cbd5e1';
+            dateHeaderTextColor = '#334155';
+          } else if (isPast) {
+            dateHeaderBadge = `<span class="badge bg-secondary text-white px-2 py-0.5" style="font-size: 0.66rem; font-weight: 700;"><i class="bi bi-clock-history me-1"></i>종료 경기</span>`;
+            dateHeaderBg = '#f3f4f6';
+            dateHeaderBorder = '#e5e7eb';
+            dateHeaderTextColor = '#4b5563';
+          } else {
+            dateHeaderBadge = `<span class="badge bg-dark text-white px-2 py-0.5" style="font-size: 0.66rem; font-weight: 700;">예정 일정</span>`;
+            dateHeaderBg = '#f8fafc';
+            dateHeaderBorder = '#cbd5e1';
+            dateHeaderTextColor = '#334155';
+          }
+
+          html += `
+            <div class="pred-date-group-divider my-2 py-1 px-2.5 rounded d-flex align-items-center justify-content-between" style="background: ${dateHeaderBg}; border: 1.5px solid ${dateHeaderBorder}; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+              <div class="d-flex align-items-center gap-1.5">
+                <i class="bi bi-calendar-event" style="color: ${dateHeaderTextColor}; font-size: 0.78rem;"></i>
+                <span class="fw-bold" style="color: ${dateHeaderTextColor}; font-size: 0.78rem;">${mNum}월 ${dNum}일 (${dayOfWeekStr})</span>
+              </div>
+              <div>
+                ${dateHeaderBadge}
+              </div>
+            </div>
+          `;
+        }
 
         // Insert Current Time Anchor Divider right before the first upcoming or in-progress match
         if (!dividerInserted && (currentPredDate === 'ALL' || currentPredDate === 'D0')) {
@@ -12432,6 +12663,10 @@ function getFullModalMatchList() {
     // 3번 요구사항: 배트맨 스타일 14경기 전용 팝업창 컨트롤러
     // ------------------------------------------------------------------
     function openTotoModal(roundKey = null, gmTs = null) {
+      if (!checkUserLoggedIn('14경기 실시간 토토 및 분석 계산기')) {
+        window._pendingAuthAction = () => openTotoModal(roundKey, gmTs);
+        return;
+      }
       if (roundKey) currentTotoRound = roundKey;
       const defaultTs = (currentTotoRound === 'WDL') ? 260051 : ((currentTotoRound === 'W1L') ? 260067 : 260027);
       if (gmTs) {
@@ -12783,6 +13018,10 @@ function getFullModalMatchList() {
 
     // 🎯 [당첨 계산] 실행 및 계산 결과로 부드럽게 이동
     function executeTotoCalculation(totoKey) {
+      if (!checkUserLoggedIn('14경기 당첨 확률 & 실시간 예상 수령액 계산')) {
+        window._pendingAuthAction = () => executeTotoCalculation(totoKey);
+        return;
+      }
       if (!totoKey) totoKey = currentTotoRound || 'W1L';
       const targetTs = currentBetmanTs;
       let toto = TOTO_DATA[totoKey + '_' + targetTs] || 
@@ -13108,6 +13347,10 @@ function getFullModalMatchList() {
     }
 
     function autoPickTotoAi(totoKey) {
+      if (!checkUserLoggedIn('AI 올픽 자동 마킹')) {
+        window._pendingAuthAction = () => autoPickTotoAi(totoKey);
+        return;
+      }
       let toto = (totoKey === 'W1L' && TOTO_DATA.W1L_LIVE) ? TOTO_DATA.W1L_LIVE : TOTO_DATA[totoKey];
       if (!toto) toto = TOTO_DATA.W1L;
 
@@ -13170,6 +13413,10 @@ function getFullModalMatchList() {
     }
 
     function fillRemaining100PctMatches(totoKey) {
+      if (!checkUserLoggedIn('100% 당첨 올커버 완성')) {
+        window._pendingAuthAction = () => fillRemaining100PctMatches(totoKey);
+        return;
+      }
       let toto = (totoKey === 'W1L' && TOTO_DATA.W1L_LIVE) ? TOTO_DATA.W1L_LIVE : TOTO_DATA[totoKey];
       if (!toto) toto = TOTO_DATA.W1L;
 
@@ -13212,6 +13459,10 @@ function getFullModalMatchList() {
 
     // ⚡ 2픽 스마트 압축 (금액 대폭 절약 아이디어!)
     function compressTotoTo2Picks(totoKey) {
+      if (!checkUserLoggedIn('2픽 스마트 압축')) {
+        window._pendingAuthAction = () => compressTotoTo2Picks(totoKey);
+        return;
+      }
       let toto = (totoKey === 'W1L' && TOTO_DATA.W1L_LIVE) ? TOTO_DATA.W1L_LIVE : TOTO_DATA[totoKey];
       if (!toto) toto = TOTO_DATA.W1L;
 
@@ -13250,6 +13501,10 @@ function getFullModalMatchList() {
     }
 
     function saveTotoMarkingSlip(totoKey) {
+      if (!checkUserLoggedIn('마킹 조합 영구 보관')) {
+        window._pendingAuthAction = () => saveTotoMarkingSlip(totoKey);
+        return;
+      }
       let toto = (totoKey === 'W1L' && TOTO_DATA.W1L_LIVE) ? TOTO_DATA.W1L_LIVE : TOTO_DATA[totoKey];
       if (!toto) toto = TOTO_DATA.W1L;
 
@@ -13314,6 +13569,10 @@ function getFullModalMatchList() {
     }
 
     function openTotoSavedBox(totoKey) {
+      if (!checkUserLoggedIn('마킹 보관함')) {
+        window._pendingAuthAction = () => openTotoSavedBox(totoKey);
+        return;
+      }
       let savedList = [];
       try {
         savedList = JSON.parse(localStorage.getItem('tokeon_saved_toto_slips') || '[]');
@@ -15984,7 +16243,10 @@ function getFullModalMatchList() {
     }
 
     async function handleSendCommunityMessage(e) {
-      e.preventDefault();
+      if (e) e.preventDefault();
+      if (!checkUserLoggedIn('팬 응원톡 메시지 전송')) {
+        return;
+      }
       const contentEl = document.getElementById('chatContentInput');
       const authorEl = document.getElementById('chatAuthorInput');
       const tagEl = document.getElementById('chatSportTagSelect');
@@ -16485,6 +16747,12 @@ function getFullModalMatchList() {
         </div>
 
         <div class="modal-body p-4">
+          <!-- 🔒 알림 배너 (버튼 클릭 시 로그인 유도 안내) -->
+          <div id="authNoticeBanner" class="alert alert-warning py-2 px-3 mb-3 d-none d-flex align-items-center gap-2" style="font-size: 0.82rem; border-radius: 8px; border: 1px solid #fde68a; background: #fffbeb; color: #92400e;">
+            <i class="bi bi-shield-lock-fill text-warning fs-5 flex-shrink-0"></i>
+            <span id="authNoticeText" class="fw-semibold">로그인이 필요한 기능입니다.</span>
+          </div>
+
           <!-- 탭 선택기 (로그인 / 회원가입) -->
           <div class="d-flex p-1 mb-3 rounded-3" style="background: #f1f5f9; border: 1px solid #e2e8f0;">
             <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5 rounded-2 shadow-sm" id="authTabBtnLogin" onclick="switchAuthTab('login')" style="background: #ffffff; color: #0284c7; border: none; font-size: 0.86rem;">
