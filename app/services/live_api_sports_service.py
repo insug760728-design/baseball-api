@@ -1004,6 +1004,7 @@ class LiveApiSportsService:
 
             for f in all_fixtures:
                 fixture_info = f.get("fixture", {})
+                league = f.get("league", {})
                 teams = f.get("teams", {})
                 goals = f.get("goals", {})
                 score = f.get("score", {})
@@ -1011,6 +1012,7 @@ class LiveApiSportsService:
                 h_name = teams.get("home", {}).get("name", "")
                 a_name = teams.get("away", {}).get("name", "")
                 status_short = fixture_info.get("status", {}).get("short", "")
+                country = league.get("country", "") or ""
 
                 mapped_status = FOOTBALL_STATUS_MAP.get(status_short, "SCHEDULED")
                 h_score = goals.get("home") if goals.get("home") is not None else 0
