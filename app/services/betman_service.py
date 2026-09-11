@@ -527,7 +527,7 @@ class BetmanService:
         cache_key = 'indexed_proto_matches'
         if not force_refresh and cache_key in _CACHE:
             ts_cached, data = _CACHE[cache_key]
-            if now - ts_cached < 60: # 1분 캐시
+            if now - ts_cached < CACHE_TTL: # 5분 캐시
                 return data
 
         proto_data = BetmanService.get_proto_odds(force_refresh=force_refresh)

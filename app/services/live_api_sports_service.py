@@ -1198,12 +1198,31 @@ class LiveApiSportsService:
                     best_match.away_score = a_score
                     best_match.status = mapped_status
 
-                    # Store baseball inning scores if available
-                    innings = scores.get("home", {}).get("innings", {})
-                    if innings and not best_match.details:
+                    # Store baseball inning scores if available (preserve official MLB/KBO/NPB structured period_scores)
+                    home_inns = scores.get("home", {}).get("innings", {}) if isinstance(scores.get("home"), dict) else {}
+                    away_inns = scores.get("away", {}).get("innings", {}) if isinstance(scores.get("away"), dict) else {}
+                    
+                    if (home_inns or away_inns) and not best_match.details:
                         best_match.details = MatchDetail(match_id=best_match.id)
-                    if innings and best_match.details:
-                        best_match.details.period_scores = json.dumps(innings)
+                    
+                    if best_match.details:
+                        cur_ps = best_match.details.period_scores
+                        has_structured = cur_ps and ('"innings"' in cur_ps or '"summary"' in cur_ps)
+                        # Only update period_scores if not already populated with rich official structured data
+                        if not has_structured and (home_inns or away_inns):
+                            all_inns = {}
+                            for inn_k in set(list(home_inns.keys()) + list(away_inns.keys())):
+                                all_inns[str(inn_k)] = {
+                                    "home": home_inns.get(inn_k, "-"),
+                                    "away": away_inns.get(inn_k, "-")
+                                }
+                            best_match.details.period_scores = json.dumps({
+                                "innings": all_inns,
+                                "summary": {
+                                    "home": {"r": h_score, "h": "-", "e": "-"},
+                                    "away": {"r": a_score, "h": "-", "e": "-"}
+                                }
+                            }, ensure_ascii=False)
 
                     updated += 1
             db.commit()
