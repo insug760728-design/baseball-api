@@ -10469,6 +10469,8 @@ function getFullModalMatchList() {
     }
 
     // ---- 전경기 패널 렌더 (사용자 지정: [홈팀][선발] — [가운데 승무패/스코어] — [원정팀][선발] 경기 바) ----
+    const _historyClientCache = new Map();
+
     async function loadSlimHistoryPanel(matchId) {
       const match = allMatches.find(m => m.id === matchId);
       if (!match) {
@@ -10476,15 +10478,22 @@ function getFullModalMatchList() {
         return;
       }
 
-      let data = null;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3500);
-      try {
-        const resp = await fetch(`/api/v1/live/match-history/${matchId}?max_games=1`, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (resp.ok) data = await resp.json();
-      } catch(e) {
-        clearTimeout(timeoutId);
+      let data = _historyClientCache.get(matchId) || null;
+      if (!data) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        try {
+          const resp = await fetch(`/api/v1/live/match-history/${matchId}?max_games=1`, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (resp.ok) {
+            data = await resp.json();
+            if (data && data.status === 'success') {
+              _historyClientCache.set(matchId, data);
+            }
+          }
+        } catch(e) {
+          clearTimeout(timeoutId);
+        }
       }
 
       const hasRecent = (data && data.status === 'success' && 

@@ -1327,30 +1327,70 @@ class LiveApiSportsService:
             away_team = target.away_team_name
             match_date = target.match_date or ''
 
-            # 최근 경기 날짜 범위 (경기일 기준 30일 이내)
-            import re
-            date_match = re.match(r'(\d{4}-\d{2}-\d{2})', match_date)
-            base_date = date_match.group(1) if date_match else match_date[:10]
+            league_name = target.league_name or ''
 
-            # 홈팀 최근 경기 (현재 경기 제외)
-            home_recent = db.query(Match).filter(
-                Match.sport_code == sport_code,
-                Match.status == 'FINISHED',
-                Match.id != match_id,
-                (Match.home_team_name == home_team) | (Match.away_team_name == home_team)
-            ).order_by(Match.match_date.desc()).limit(max_games).all()
+            def get_league_category(l_name: str, s_code: str) -> str:
+                ln = (l_name or '').upper()
+                if 'MLB' in ln or '메이저리그' in ln: return 'MLB'
+                if 'KBO' in ln or '한국' in ln: return 'KBO'
+                if 'NPB' in ln or '일본' in ln: return 'NPB'
+                if 'EPL' in ln or '프리미어' in ln: return 'EPL'
+                if '라리가' in ln or 'LALIGA' in ln: return 'LALIGA'
+                if '분데스' in ln or 'BUNDES' in ln: return 'BUNDESLIGA'
+                if '세리에' in ln or 'SERIE' in ln: return 'SERIE_A'
+                if '리그1' in ln or 'LIGUE1' in ln: return 'LIGUE_1'
+                if 'K리그' in ln or 'K LEAGUE' in ln: return 'K_LEAGUE'
+                if 'J리그' in ln or 'J1' in ln or 'J.LEAGUE' in ln: return 'J_LEAGUE'
+                if 'NBA' in ln: return 'NBA'
+                if 'KBL' in ln: return 'KBL'
+                return s_code
 
-            # 원정팀 최근 경기 (현재 경기 제외)
-            away_recent = db.query(Match).filter(
-                Match.sport_code == sport_code,
-                Match.status == 'FINISHED',
-                Match.id != match_id,
-                (Match.home_team_name == away_team) | (Match.away_team_name == away_team)
-            ).order_by(Match.match_date.desc()).limit(max_games).all()
+            def resolve_recent_matches(tm_name: str) -> list:
+                # 1. SQL 직접 일치 검색
+                direct = db.query(Match).filter(
+                    Match.sport_code == sport_code,
+                    Match.status == 'FINISHED',
+                    Match.id != match_id,
+                    (Match.home_team_name == tm_name) | (Match.away_team_name == tm_name)
+                ).order_by(Match.match_date.desc()).limit(max_games).all()
+                if len(direct) >= max_games:
+                    return direct
+
+                # 2. 동의어/별칭 기반 유연한 검색 (최근 완료 경기 대상)
+                target_cat = get_league_category(league_name, sport_code)
+                candidates = db.query(Match).filter(
+                    Match.sport_code == sport_code,
+                    Match.status == 'FINISHED',
+                    Match.id != match_id
+                ).order_by(Match.match_date.desc()).limit(300).all()
+
+                matched = list(direct)
+                # 1순위: 동일 리그 카테고리 내 매칭
+                for c in candidates:
+                    if c in matched: continue
+                    if get_league_category(c.league_name, c.sport_code) == target_cat:
+                        if teams_match(c.home_team_name, tm_name) or teams_match(c.away_team_name, tm_name):
+                            matched.append(c)
+                            if len(matched) >= max_games:
+                                return matched
+
+                # 2순위: 동일 종목 전체 내 매칭
+                for c in candidates:
+                    if c in matched: continue
+                    if teams_match(c.home_team_name, tm_name) or teams_match(c.away_team_name, tm_name):
+                        matched.append(c)
+                        if len(matched) >= max_games:
+                            return matched
+
+                return matched
+
+            # 홈팀 & 원정팀 최근 경기 조회
+            home_recent = resolve_recent_matches(home_team)
+            away_recent = resolve_recent_matches(away_team)
 
             def format_match_basic(m: Match, perspective_team: str) -> Dict[str, Any]:
                 """경기 기본 정보 포맷"""
-                is_home = (m.home_team_name == perspective_team)
+                is_home = (m.home_team_name == perspective_team or teams_match(m.home_team_name, perspective_team))
                 opponent = m.away_team_name if is_home else m.home_team_name
                 team_score = m.home_score if is_home else m.away_score
                 opp_score = m.away_score if is_home else m.home_score
@@ -1584,7 +1624,7 @@ class LiveApiSportsService:
                     'away_scorers': away_scorers,
                     'period_scores': period_scores,
                     'team_stats': team_stats,
-                    'events': [],  # API-Sports 이벤트는 별도 패치
+                    'events': [],
                     'stats': {}
                 }
 
@@ -1593,15 +1633,6 @@ class LiveApiSportsService:
 
         finally:
             db.close()
-
-        # 2. API-Sports로 이벤트/통계 패치 (키 설정되어 있는 경우만)
-        if cls.is_configured():
-            if sport_code == 'SOCCER':
-                home_games = cls._enrich_football_events(home_games, home_team, home_recent)
-                away_games = cls._enrich_football_events(away_games, away_team, away_recent)
-            elif sport_code == 'BASEBALL':
-                home_games = cls._enrich_baseball_stats(home_games, home_team, home_recent)
-                away_games = cls._enrich_baseball_stats(away_games, away_team, away_recent)
 
         res = {
             'status': 'success',
