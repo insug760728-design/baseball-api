@@ -1059,6 +1059,7 @@ class LiveApiSportsService:
                     best_match.details.period_scores = json.dumps(period_dict)
                     updated += 1
                 elif mapped_status == "SCHEDULED" and kst_dt:
+                    raw_lname = league.get("name", "")
                     # DB에 없는 신규 예정 경기 자동 등록 (사우디리그 및 독일 2부리그 등 비대상 리그 제외)
                     # 배트맨 프로토/토토 및 주요 공식 리그만 엄격 허용
                     allowed_major_leagues = [
@@ -1083,7 +1084,22 @@ class LiveApiSportsService:
 
                     if country in ["England", "Spain", "Germany", "Italy", "France", "Netherlands", "Japan", "South-Korea", "USA", "World"]:
                         fix_id_str = str(fixture_info.get("id", ""))
+                        m_date_str = kst_dt.strftime("%Y-%m-%d %H:%M")
+                        d_str = m_date_str[:10]
+                        h_trans = translate_soccer_team(h_name)
+                        a_trans = translate_soccer_team(a_name)
+
                         existing_m = db.query(Match).filter(Match.official_id == fix_id_str).first() if fix_id_str else None
+                        if not existing_m:
+                            day_m = db.query(Match).filter(
+                                Match.sport_code == "SOCCER",
+                                Match.match_date.like(f"{d_str}%")
+                            ).all()
+                            for dm in day_m:
+                                if teams_match(dm.home_team_name, h_trans) and teams_match(dm.away_team_name, a_trans):
+                                    existing_m = dm
+                                    break
+
                         if not existing_m and fix_id_str:
                             new_m = Match(
                                 official_id=fix_id_str,
@@ -1091,9 +1107,9 @@ class LiveApiSportsService:
                                 league_name=f"{country} - {raw_lname}" if country != "World" else raw_lname,
                                 season=str(league.get("season", "2026")),
                                 round_name=league.get("round", "정규시즌"),
-                                match_date=kst_dt.strftime("%Y-%m-%d %H:%M"),
-                                home_team_name=translate_soccer_team(h_name),
-                                away_team_name=translate_soccer_team(a_name),
+                                match_date=m_date_str,
+                                home_team_name=h_trans,
+                                away_team_name=a_trans,
                                 home_score=0,
                                 away_score=0,
                                 status="SCHEDULED",
