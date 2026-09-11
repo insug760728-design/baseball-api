@@ -462,7 +462,7 @@ class BetmanService:
             if now - ts_cached < CACHE_TTL:
                 return data
 
-        # 1. 스냅샷 파일이 있으면 즉시 메모리 캐시에 적재 (0ms)
+        # 1. 스냅샷 파일이 있으면 즉시 메모리 캐시에 적재하여 0ms로 반환
         snapshot_data = None
         for s_file in ['betman_proto_G101_latest.json', f'betman_proto_G101_{active_ts}.json', 'betman_G101.json']:
             if os.path.exists(s_file):
@@ -474,7 +474,11 @@ class BetmanService:
                 except Exception:
                     pass
 
-        # 2. 실시간 라이브 페칭 시도 (짧은 2.5초 타임아웃으로 블로킹 방지)
+        if snapshot_data and not force_refresh:
+            _CACHE[cache_key] = (now, snapshot_data)
+            return snapshot_data
+
+        # 2. 실시간 라이브 페칭 시도 (짧은 1.5초 타임아웃으로 블로킹 방지)
         try:
             payload = {
                 "gmId": "G101",
@@ -482,7 +486,7 @@ class BetmanService:
                 "gameYear": "2026",
                 "_sbmInfo": {"_sbmInfo": {"debugMode": "false"}}
             }
-            r = _SESSION.post(BETMAN_INQ_URL, json=payload, timeout=2.5)
+            r = _SESSION.post(BETMAN_INQ_URL, json=payload, timeout=1.5)
             if r.status_code == 200:
                 data = r.json()
                 keys = data.get('compSchedules', {}).get('keys', [])
