@@ -70,32 +70,14 @@ class MatchService:
                             break
 
                 if not match:
-                    match = Match(
-                        official_id=m_data["official_id"],
-                        sport_code=m_data.get("sport_code", scraper.get_sport_code()),
-                        league_name=m_data["league_name"],
-                        season=m_data.get("season", "2026"),
-                        round_name=m_data.get("round_name"),
-                        match_date=m_data["match_date"],
-                        stadium=m_data.get("stadium"),
-                        home_team_name=m_data["home_team_name"],
-                        away_team_name=m_data["away_team_name"],
-                        home_score=m_data["home_score"],
-                        away_score=m_data["away_score"],
-                        status=m_data["status"]
-                    )
-                    db.add(match)
-                    db.commit()
-                    db.refresh(match)
+                    # 베트맨 등록 경기 외 임의 외부 경기 중복 추가 차단
+                    continue
                 else:
                     if not match.is_customized:
-                        match.home_team_name = m_data["home_team_name"]
-                        match.away_team_name = m_data["away_team_name"]
-                        match.stadium = m_data.get("stadium")
+                        match.stadium = m_data.get("stadium") or match.stadium
                         match.home_score = m_data["home_score"]
                         match.away_score = m_data["away_score"]
                         match.status = m_data["status"]
-                        match.match_date = m_data["match_date"]
                         db.commit()
 
                 # 선발 예고 투수(probablePitcher) 및 라이브 이닝/스코어보드 자동 등록 및 최신화
