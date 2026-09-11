@@ -161,8 +161,8 @@ TEAM_SYNONYMS = {
     "ac밀란": ["ac milan", "milan", "ac 밀란"],
     "나폴리": ["napoli", "ssc napoli", "ssc 나폴리"],
     "파리생제": ["psg", "paris saint-germain", "파리 생제르맹", "파리생제르맹"],
-    "플라멩구": ["flamengo", "cr flamengo", "cr플라멩구"],
-    "인디델바": ["independiente del valle", "인디펜디엔테 델바예"],
+    "플라멩구": ["flamengo", "cr flamengo", "cr플라멩구", "cr 플라멩구", "플라멩고", "플라멩구 rj"],
+    "인디델바": ["independiente del valle", "인디펜디엔테 델바예", "인디펜디엔테 델 바예", "인디펜디엔테델바예", "델 바예", "델바예", "인디델바"],
 
     # Soccer (K League)
     "충남아산": ["충남아산", "충남아산 프로축구단", "충남아산fc"],
@@ -202,6 +202,18 @@ _PRECOMPUTED_SYNONYM_GROUPS = [
     tuple([clean_name(k)] + [clean_name(a) for a in aliases])
     for k, aliases in TEAM_SYNONYMS.items()
 ]
+
+def get_canonical_team_key(team_name: str) -> str:
+    """팀명을 대표 정규 키로 변환"""
+    if not team_name:
+        return ""
+    c = clean_name(team_name)
+    if not c:
+        return ""
+    for grp in _PRECOMPUTED_SYNONYM_GROUPS:
+        if any(g == c or (len(g) >= 3 and (g in c or c in g)) for g in grp):
+            return grp[0]
+    return c
 
 def teams_match(api_name: str, db_name: str) -> bool:
     norm_api = clean_name(api_name)
@@ -450,7 +462,7 @@ class BetmanService:
             if now - ts_cached < CACHE_TTL:
                 return data
 
-        # 1. 스냅샷 파일이 있으면 즉시 메모리 캐시에 적재 (0ms)
+        # 1. 스냅샷 파일이 있으면 즉시 메모리 캐시에 적재하여 0ms로 반환
         snapshot_data = None
         for s_file in ['betman_proto_G101_latest.json', f'betman_proto_G101_{active_ts}.json', 'betman_G101.json']:
             if os.path.exists(s_file):
@@ -462,7 +474,11 @@ class BetmanService:
                 except Exception:
                     pass
 
-        # 2. 실시간 라이브 페칭 시도 (짧은 2.5초 타임아웃으로 블로킹 방지)
+        if snapshot_data and not force_refresh:
+            _CACHE[cache_key] = (now, snapshot_data)
+            return snapshot_data
+
+        # 2. 실시간 라이브 페칭 시도 (짧은 1.5초 타임아웃으로 블로킹 방지)
         try:
             payload = {
                 "gmId": "G101",
@@ -470,7 +486,7 @@ class BetmanService:
                 "gameYear": "2026",
                 "_sbmInfo": {"_sbmInfo": {"debugMode": "false"}}
             }
-            r = _SESSION.post(BETMAN_INQ_URL, json=payload, timeout=2.5)
+            r = _SESSION.post(BETMAN_INQ_URL, json=payload, timeout=1.5)
             if r.status_code == 200:
                 data = r.json()
                 keys = data.get('compSchedules', {}).get('keys', [])
@@ -511,7 +527,7 @@ class BetmanService:
         cache_key = 'indexed_proto_matches'
         if not force_refresh and cache_key in _CACHE:
             ts_cached, data = _CACHE[cache_key]
-            if now - ts_cached < 60: # 1분 캐시
+            if now - ts_cached < CACHE_TTL: # 5분 캐시
                 return data
 
         proto_data = BetmanService.get_proto_odds(force_refresh=force_refresh)
@@ -856,21 +872,24 @@ class BetmanService:
         updated_count = 0
 
         for m_key, g_info in grouped.items():
-            # Check existing match in DB
-            match = db.query(Match).filter(
-                Match.home_team_name == g_info['home_team_name'],
-                Match.away_team_name == g_info['away_team_name'],
-                Match.match_date == g_info['match_date']
-            ).first()
-
-            if not match:
-                # Also try fuzzy match
-                match = db.query(Match).filter(
+            # Check existing match in DB by exact or canonical team match on that date
+            d_prefix = g_info['match_date'][:10] if g_info['match_date'] else ""
+            match = None
+            if d_prefix:
+                candidates = db.query(Match).filter(
                     Match.sport_code == g_info['sport_code'],
+                    Match.match_date.like(f"{d_prefix}%")
+                ).all()
+                for cm in candidates:
+                    if teams_match(cm.home_team_name, g_info['home_team_name']) and teams_match(cm.away_team_name, g_info['away_team_name']):
+                        match = cm
+                        break
+            if not match:
+                match = db.query(Match).filter(
+                    Match.home_team_name == g_info['home_team_name'],
+                    Match.away_team_name == g_info['away_team_name'],
                     Match.match_date == g_info['match_date']
                 ).first()
-                if match and not (teams_match(match.home_team_name, g_info['home_team_name']) and teams_match(match.away_team_name, g_info['away_team_name'])):
-                    match = None
 
             if not match:
                 match = Match(

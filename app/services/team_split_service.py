@@ -1164,7 +1164,17 @@ VERIFIED_PITCHER_3_STARTS = {
     }
 }
 
+_PITCHER_STARTS_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+_series_context_cache: Dict[Tuple[str, str, str], Any] = {}
+
 def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, team_name: str, throws: str = "우완", league_name: Optional[str] = None, allow_remote: bool = True) -> Dict[str, Any]:
+    p_cache_key = f"{pitcher_name}:{team_name}:{throws}:{league_name}:{allow_remote}"
+    now_ts = time.time()
+    if p_cache_key in _PITCHER_STARTS_CACHE:
+        cached_ts, cached_val = _PITCHER_STARTS_CACHE[p_cache_key]
+        if now_ts - cached_ts < 300:
+            return cached_val
+
     c = conn.cursor()
     
     # 0. Check Verified Authentic Pitcher Starts Map
@@ -1206,7 +1216,7 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
             trend_icon = "─"
             trend_label = "최근3G 유지 (안정)"
         
-        return {
+        res_v = {
             "pitcher_name": pitcher_name,
             "team_name": team_name,
             "throws": v_throws,
@@ -1227,6 +1237,8 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
                 "record": f"{w_cnt}승 {l_cnt}패"
             }
         }
+        _PITCHER_STARTS_CACHE[p_cache_key] = (now_ts, res_v)
+        return res_v
     
     # Strict League Classification (NPB -> MLB -> KBO)
     m_league_str = (league_name or "").upper()
@@ -1258,6 +1270,7 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
             JOIN matches m ON p.match_id = m.id
             WHERE (p.player_name = ? OR p.player_name LIKE ?)
               AND m.sport_code = 'BASEBALL'
+              AND m.status = 'FINISHED'
               AND (m.league_name = ? OR m.league_name LIKE ?)
               AND (p.position LIKE '%투수%' OR p.extra_stats LIKE '%"type": "PITCHER"%' OR p.extra_stats LIKE '%"ip"%')
             ORDER BY m.match_date DESC
@@ -1598,7 +1611,7 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
         trend_icon = "─"
         trend_label = "최근3G 유지 (안정)"
     
-    return {
+    res_final = {
         "pitcher_name": pitcher_name,
         "team_name": team_name,
         "throws": throws,
@@ -1619,6 +1632,8 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
             "record": f"{w_cnt}승 {l_cnt}패"
         }
     }
+    _PITCHER_STARTS_CACHE[p_cache_key] = (now_ts, res_final)
+    return res_final
 
 UNANNOUNCED_STARTER_TERMS = {
     "", "none", "null", "undefined", "tbd", "tba", "미정", "선발 미정", "미확정", "미확정 (tbd)",
@@ -1772,7 +1787,7 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
         home_name_ko = translate_player_name(home_name_clean)
         if any(k in home_name_clean for k in ["菅井", "스가이", "Sugai"]):
             home_throws = "좌완"
-        home_data = _get_pitcher_recent_3_starts(conn, home_name_clean, home_team, home_throws, league_name=league_name)
+        home_data = _get_pitcher_recent_3_starts(conn, home_name_clean, home_team, home_throws, league_name=league_name, allow_remote=False)
         home_res = {
             "name": home_name_ko,
             "name_en": home_name_clean,
@@ -1813,7 +1828,7 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
         away_name_ko = translate_player_name(away_name_clean)
         if any(k in away_name_clean for k in ["菅井", "스가이", "Sugai"]):
             away_throws = "좌완"
-        away_data = _get_pitcher_recent_3_starts(conn, away_name_clean, away_team, away_throws, league_name=league_name)
+        away_data = _get_pitcher_recent_3_starts(conn, away_name_clean, away_team, away_throws, league_name=league_name, allow_remote=False)
         away_res = {
             "name": away_name_ko,
             "name_en": away_name_clean,
@@ -3435,6 +3450,7 @@ class TeamSplitService:
                         c_conn_ctx = sqlite3.connect("sports_data.db", timeout=3.0)
                         series_ctx = _detect_baseball_series_context(c_conn_ctx, home_team, away_team, match_date)
                         c_conn_ctx.close()
+                        _series_context_cache[cache_key_ctx] = series_ctx
                 except Exception as e:
                     series_ctx = None
             else:

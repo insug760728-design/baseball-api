@@ -2914,6 +2914,16 @@
       '수원FC': '수원FC',
       '오스틴 FC': '오스틴FC',
       '토론토 FC': '토론토FC',
+      'Flamengo': '플라멩구',
+      'CR Flamengo': '플라멩구',
+      'CR플라멩구': '플라멩구',
+      'CR 플라멩구': '플라멩구',
+      '플라멩고': '플라멩구',
+      'Independiente del Valle': '델 바예',
+      '인디펜디엔테 델바예': '델 바예',
+      '인디펜디엔테 델 바예': '델 바예',
+      '인디펜디엔테델바예': '델 바예',
+      '델바예': '델 바예',
     };
 
     function formatTeamName(name) {
@@ -2928,6 +2938,14 @@
         if (trimmed.includes(k)) return v;
       }
       return trimmed;
+    }
+
+    function getMatchFixtureKey(m) {
+      if (!m) return '';
+      const dPart = (m.match_date || '').slice(0, 10);
+      const h = formatTeamName(m.home_team_name || '').trim();
+      const a = formatTeamName(m.away_team_name || '').trim();
+      return `${m.sport_code}_${h}_${a}_${dPart}`;
     }
 
     // =============================================================
@@ -3779,16 +3797,15 @@
           const rawMatches = [...upMatches, ...finMatches];
 
           const seenIds = new Set(allMatches.map(m => m.id));
-          const seenKeys = new Set(allMatches.map(m => {
-            const dPart = (m.match_date || '').slice(0, 10);
-            return `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
-          }));
+          const seenKeys = new Set(allMatches.map(m => getMatchFixtureKey(m)));
 
           let added = false;
           const matchMap = new Map((allMatches || []).map(m => [m.id, m]));
           const nowTs = Date.now();
           for (const m of rawMatches) {
             if (!m || !m.id) continue;
+            if (m.home_team_name) m.home_team_name = formatTeamName(m.home_team_name);
+            if (m.away_team_name) m.away_team_name = formatTeamName(m.away_team_name);
             if (m.status === 'LIVE' && m.match_date) {
               try {
                 const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
@@ -3806,8 +3823,7 @@
                 added = true;
               }
             } else {
-              const dPart = (m.match_date || '').slice(0, 10);
-              const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
+              const key = getMatchFixtureKey(m);
               if (!seenKeys.has(key)) {
                 seenKeys.add(key);
                 allMatches.push(m);
@@ -3866,8 +3882,7 @@
               } catch(e) {}
             }
           }
-          const dPart = (m.match_date || '').slice(0, 10);
-          const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
+          const key = getMatchFixtureKey(m);
           if (!seenKeys.has(key)) {
             if (m.id) seenIds.add(m.id);
             seenKeys.add(key);
@@ -3945,8 +3960,7 @@
       const uniqueStrip = [];
       const seenStripKeys = new Set();
       for (const m of combined) {
-        const dPart = (m.match_date || '').slice(0, 10);
-        const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
+        const key = getMatchFixtureKey(m);
         if (!seenStripKeys.has(key)) {
           seenStripKeys.add(key);
           uniqueStrip.push(m);
@@ -5618,11 +5632,40 @@ function getFullModalMatchList() {
             </div>
           `;
         } else {
-          const inn = (pScores && pScores.innings) ? pScores.innings : {};
-          const hHitsVal = (tStats && tStats.hits) ? (tStats.hits.home ?? '-') : '-';
-          const aHitsVal = (tStats && tStats.hits) ? (tStats.hits.away ?? '-') : '-';
-          const hErr = (tStats && tStats.errors) ? (tStats.errors.home ?? '0') : '0';
-          const aErr = (tStats && tStats.errors) ? (tStats.errors.away ?? '0') : '0';
+          // Robust Baseball scoreboard parser for all formats
+          const getInningVal = (side, i) => {
+            if (!pScores) return '-';
+            const strI = String(i);
+            if (pScores.innings) {
+              const innObj = pScores.innings[i] || pScores.innings[strI];
+              if (innObj && innObj[side] !== undefined && innObj[side] !== null) return innObj[side];
+            }
+            if (pScores[side] && pScores[side].innings) {
+              const val = pScores[side].innings[i] ?? pScores[side].innings[strI];
+              if (val !== undefined && val !== null) return val;
+            }
+            if (pScores[side] && typeof pScores[side] === 'object') {
+              const val = pScores[side][i] ?? pScores[side][strI];
+              if (val !== undefined && val !== null) return val;
+            }
+            if (pScores[i] && typeof pScores[i] === 'object' && pScores[i][side] !== undefined) {
+              return pScores[i][side];
+            }
+            if (pScores[strI] && typeof pScores[strI] === 'object' && pScores[strI][side] !== undefined) {
+              return pScores[strI][side];
+            }
+            return '-';
+          };
+
+          const hHitsVal = (tStats && tStats.hits && tStats.hits.home !== undefined) ? tStats.hits.home :
+                           (pScores && pScores.summary && pScores.summary.home && pScores.summary.home.h !== undefined ? pScores.summary.home.h : '-');
+          const aHitsVal = (tStats && tStats.hits && tStats.hits.away !== undefined) ? tStats.hits.away :
+                           (pScores && pScores.summary && pScores.summary.away && pScores.summary.away.h !== undefined ? pScores.summary.away.h : '-');
+          const hErr = (tStats && tStats.errors && tStats.errors.home !== undefined) ? tStats.errors.home :
+                       (pScores && pScores.summary && pScores.summary.home && pScores.summary.home.e !== undefined ? pScores.summary.home.e : '0');
+          const aErr = (tStats && tStats.errors && tStats.errors.away !== undefined) ? tStats.errors.away :
+                       (pScores && pScores.summary && pScores.summary.away && pScores.summary.away.e !== undefined ? pScores.summary.away.e : '0');
+
           scoreboardHtml = `
             <div class="table-responsive mb-2 rounded-2" style="border: 1px solid #e5e7eb; background: #ffffff;">
               <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.78rem; background: #ffffff;">
@@ -5632,14 +5675,14 @@ function getFullModalMatchList() {
                 <tbody style="background: #ffffff;">
                   <tr>
                     <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 120px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}</td>
-                    ${[1,2,3,4,5,6,7,8,9].map(i => `<td style="color: #111827;">${inn[i] ? inn[i].home : '-'}</td>`).join('')}
+                    ${[1,2,3,4,5,6,7,8,9].map(i => `<td style="color: #111827;">${getInningVal('home', i)}</td>`).join('')}
                     <td class="fw-bold" style="color: #111827; font-weight: 800; font-size: 0.92rem;">${m.home_score}</td>
                     <td class="fw-bold" style="color: #111827;">${hHitsVal}</td>
                     <td style="color: #4b5563;">${hErr}</td>
                   </tr>
                   <tr>
                     <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 120px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}</td>
-                    ${[1,2,3,4,5,6,7,8,9].map(i => `<td style="color: #111827;">${inn[i] ? inn[i].away : '-'}</td>`).join('')}
+                    ${[1,2,3,4,5,6,7,8,9].map(i => `<td style="color: #111827;">${getInningVal('away', i)}</td>`).join('')}
                     <td class="fw-bold" style="color: #111827; font-weight: 800; font-size: 0.92rem;">${m.away_score}</td>
                     <td class="fw-bold" style="color: #111827;">${aHitsVal}</td>
                     <td style="color: #4b5563;">${aErr}</td>
