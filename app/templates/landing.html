@@ -14783,6 +14783,163 @@ function getFullModalMatchList() {
       `;
     }
 
+    // ============================================================
+    // 📅 양 팀 최근 경기 결과 10개 (클릭 시 펼치기 토글)
+    // ============================================================
+    const _recent10StateMap = new Map();
+
+    window.toggleRecent10Games = function(matchId) {
+      const cur = _recent10StateMap.get(String(matchId)) === true;
+      _recent10StateMap.set(String(matchId), !cur);
+      const el = document.getElementById('recent10DetailContent_' + matchId);
+      const btn = document.getElementById('recent10DetailBtn_' + matchId);
+      if (el) el.style.display = !cur ? 'block' : 'none';
+      if (btn) {
+        btn.innerHTML = !cur ? '<i class="bi bi-chevron-up me-1"></i>접기' : '<i class="bi bi-chevron-down me-1"></i>상세보기';
+      }
+    };
+
+    function renderTeamRecent10TableHtml(recentMatches, teamName, isHomeTeam, sportCode) {
+      if (!recentMatches || recentMatches.length === 0) {
+        return `<div class="p-2.5 text-center text-muted small">최근 경기 데이터 집계 중입니다.</div>`;
+      }
+
+      const rows = recentMatches.slice(0, 10).map((rm, idx) => {
+        const dStr = (rm.date || '').replace(/^2026-/, '').replace(/^2025-/, '').replace(/-/g, '.');
+        const locBadge = rm.is_home 
+          ? `<span class="badge" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:0.62rem; padding:1px 4px;">홈</span>` 
+          : `<span class="badge" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.62rem; padding:1px 4px;">원정</span>`;
+        const oppName = formatTeamName(rm.opponent || rm.opp_team || '상대팀');
+        const tSc = rm.team_score !== undefined ? rm.team_score : (rm.home_score !== undefined ? rm.home_score : 0);
+        const oSc = rm.opp_score !== undefined ? rm.opp_score : (rm.away_score !== undefined ? rm.away_score : 0);
+        
+        let res = rm.result;
+        if (!res) {
+          res = Number(tSc) > Number(oSc) ? 'W' : (Number(tSc) < Number(oSc) ? 'L' : 'D');
+        }
+        const isW = res === 'W' || res === 'WIN';
+        const isD = res === 'D' || res === 'DRAW';
+        const resBg = isW ? '#dc2626' : (isD ? '#64748b' : '#2563eb');
+        const resText = isW ? '승' : (isD ? '무' : '패');
+
+        const scoreText = rm.is_home 
+          ? `<b>${tSc}</b> : ${oSc}` 
+          : `${oSc} : <b>${tSc}</b>`;
+
+        const matchTitle = rm.is_home 
+          ? `<span class="${isW ? 'text-danger fw-bold' : 'text-dark'}">${teamName}</span> vs ${oppName}`
+          : `${oppName} vs <span class="${isW ? 'text-danger fw-bold' : 'text-dark'}">${teamName}</span>`;
+
+        return `
+          <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'}; border-bottom: 1px solid #f1f5f9;">
+            <td class="py-1 px-1 text-muted text-truncate" style="width: 20%; font-size: 0.72rem; font-family: monospace;">${dStr}</td>
+            <td class="py-1 px-1 text-center" style="width: 14%;">${locBadge}</td>
+            <td class="py-1 px-1 fw-bold text-dark text-truncate text-start" style="width: 48%; font-size: 0.74rem;">
+              ${matchTitle}
+              <span class="ms-1 px-1 py-0.5 rounded bg-light border text-dark fw-bold" style="font-size: 0.70rem;">${scoreText}</span>
+            </td>
+            <td class="py-1 px-1 text-center" style="width: 18%;">
+              <span class="badge py-0.5 px-1.5 text-white fw-bold" style="background: ${resBg}; font-size: 0.62rem;">${resText}</span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <table class="table table-sm text-center mb-0" style="table-layout: fixed; width: 100%; font-size: 0.72rem; border-collapse: collapse;">
+          <thead style="background: #f8fafc; color: #475569; font-size: 0.70rem; border-bottom: 1px solid #e2e8f0;">
+            <tr>
+              <th style="width: 20%; padding: 4px 2px;">일자</th>
+              <th style="width: 14%; padding: 4px 2px;">구분</th>
+              <th style="width: 48%; padding: 4px 2px; text-align: left;">대진 / 스코어</th>
+              <th style="width: 18%; padding: 4px 2px;">결과</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderCollapsibleRecent10SectionHtml(m, matchup) {
+      matchup = ensureMatchupData(m, matchup);
+      const sportCode = (m.sport_code || (matchup && matchup.sport_code) || '').toUpperCase();
+      const homeName = formatTeamName(m.home_team_name);
+      const awayName = formatTeamName(m.away_team_name);
+
+      const homeRecent = [...(matchup.home_recent_matches || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      const awayRecent = [...(matchup.away_recent_matches || [])].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+      // Summaries
+      let hW = 0, hD = 0, hL = 0;
+      homeRecent.slice(0, 10).forEach(rm => {
+        const res = rm.result || (Number(rm.team_score) > Number(rm.opp_score) ? 'W' : (Number(rm.team_score) < Number(rm.opp_score) ? 'L' : 'D'));
+        if (res === 'W' || res === 'WIN') hW++;
+        else if (res === 'D' || res === 'DRAW') hD++;
+        else hL++;
+      });
+      const hSummary = `${hW}승 ${hD > 0 ? hD + '무 ' : ''}${hL}패`;
+
+      let aW = 0, aD = 0, aL = 0;
+      awayRecent.slice(0, 10).forEach(rm => {
+        const res = rm.result || (Number(rm.team_score) > Number(rm.opp_score) ? 'W' : (Number(rm.team_score) < Number(rm.opp_score) ? 'L' : 'D'));
+        if (res === 'W' || res === 'WIN') aW++;
+        else if (res === 'D' || res === 'DRAW') aD++;
+        else aL++;
+      });
+      const aSummary = `${aW}승 ${aD > 0 ? aD + '무 ' : ''}${aL}패`;
+
+      const isOpen = _recent10StateMap.get(String(m.id)) === true;
+      const displayStyle = isOpen ? 'display: block;' : 'display: none;';
+      const btnText = isOpen ? '<i class="bi bi-chevron-up me-1"></i>접기' : '<i class="bi bi-chevron-down me-1"></i>상세보기';
+
+      return `
+        <!-- 5. 📅 양 팀 최근 경기 결과 (최근 10경기 흐름, 클릭 시 펼치기 토글) -->
+        <div class="mb-2 rounded-2" style="background: #ffffff; border: 1.5px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+          <!-- Header Bar (Clickable) -->
+          <div class="d-flex justify-content-between align-items-center px-2 py-1.5" style="background: #1e293b; color: #ffffff; cursor: pointer;" onclick="toggleRecent10Games(${m.id})">
+            <div class="d-flex align-items-center gap-1.5 text-truncate" style="flex: 1; min-width: 0;">
+              <span class="fw-bold text-truncate" style="font-size: 0.78rem;">
+                <i class="bi bi-calendar-check text-warning me-1"></i>📅 최근 경기 결과 (최근 10경기)
+              </span>
+              <span class="badge" style="background: rgba(255,255,255,0.15); color: #f8fafc; font-size: 0.64rem; font-weight: 600;">
+                [홈] ${hSummary} · [원정] ${aSummary}
+              </span>
+            </div>
+            <button id="recent10DetailBtn_${m.id}" class="btn btn-sm btn-outline-light py-0 px-1.5 flex-shrink-0" style="font-size: 0.65rem; border-color: rgba(255,255,255,0.4);">
+              ${btnText}
+            </button>
+          </div>
+
+          <!-- Collapsible Content Tables -->
+          <div id="recent10DetailContent_${m.id}" style="${displayStyle} background: #ffffff;">
+            <!-- Home Team Recent 10 Matches -->
+            <div class="p-2 border-bottom" style="background: #f8fafc;">
+              <div class="fw-bold text-dark mb-1 d-flex align-items-center justify-content-between" style="font-size: 0.76rem;">
+                <span><span class="badge me-1" style="background:#1e40af; color:#fff; font-size:0.64rem;">[홈팀]</span>${homeName} 최근 10경기</span>
+                <span class="text-muted small fw-normal">${hSummary}</span>
+              </div>
+              <div class="border rounded bg-white overflow-hidden">
+                ${renderTeamRecent10TableHtml(homeRecent, homeName, true, sportCode)}
+              </div>
+            </div>
+
+            <!-- Away Team Recent 10 Matches -->
+            <div class="p-2" style="background: #f8fafc;">
+              <div class="fw-bold text-dark mb-1 d-flex align-items-center justify-content-between" style="font-size: 0.76rem;">
+                <span><span class="badge me-1" style="background:#991b1b; color:#fff; font-size:0.64rem;">[원정팀]</span>${awayName} 최근 10경기</span>
+                <span class="text-muted small fw-normal">${aSummary}</span>
+              </div>
+              <div class="border rounded bg-white overflow-hidden">
+                ${renderTeamRecent10TableHtml(awayRecent, awayName, false, sportCode)}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     function renderPredDetail(m, customDetailData = null) {
       const panel = document.getElementById('predDetailPanel');
       if (!panel) return;
@@ -15734,6 +15891,9 @@ function getFullModalMatchList() {
 
           <!-- 4. 🤝 양 팀 맞대결 최근 상대전적 (클릭 시 펼치기 토글, 최대 10경기) -->
           ${renderCollapsibleH2HSectionHtml(m, matchup)}
+
+          <!-- 5. 📅 양 팀 최근 경기 결과 (클릭 시 펼치기 토글, 각 팀 최근 10경기) -->
+          ${renderCollapsibleRecent10SectionHtml(m, matchup)}
         </div>
       `;
 
