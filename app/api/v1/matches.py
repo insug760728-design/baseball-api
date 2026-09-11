@@ -56,7 +56,7 @@ def list_matches(
     now = time.time()
     if cache_key in _MATCHES_CACHE:
         cache_time, cached_res = _MATCHES_CACHE[cache_key]
-        if now - cache_time < 30: # 30초 캐시로 초고속 응답 보장
+        if now - cache_time < 3: # 3초 캐시로 초고속 실시간 점수 즉시 갱신 보장
             return cached_res
 
     res = MatchService.get_matches(

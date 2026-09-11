@@ -14611,17 +14611,10 @@ function getFullModalMatchList() {
       selectedPredMatchId = m.id;
 
       let detailData = customDetailData || matchDetailCache.get(Number(m.id)) || matchDetailCache.get(m.id);
-      
-      const isBaseball = (m.sport_code || '').toUpperCase() === 'BASEBALL';
-      const mHasAnnouncedStarter = isBaseball && (isStarterAnnounced(m.home_starter_name) || isStarterAnnounced(m.away_starter_name));
-      const cachedHasUnannounced = detailData && detailData.matchup_analysis && detailData.matchup_analysis.starting_pitchers &&
-        (!isStarterAnnounced(detailData.matchup_analysis.starting_pitchers.home?.name) || !isStarterAnnounced(detailData.matchup_analysis.starting_pitchers.away?.name));
-      const needsFreshStarters = mHasAnnouncedStarter && cachedHasUnannounced;
 
-      if ((!detailData || needsFreshStarters) && !isNaN(Number(m.id)) && Number(m.id) > 0) {
-        // 🚀 [초고속 0.01초 즉시 표출]: 서버 응답(3~5초 대기)을 기다리지 않고 화면을 즉시 렌더링!
-        // 세부 심층 지표는 백그라운드 비동기로 불러와 자연스럽게 보강합니다 (로딩중 랙 100% 제거).
-        fetchMatchDetailCached(m.id, needsFreshStarters).then(freshData => {
+      if (!detailData && !isNaN(Number(m.id)) && Number(m.id) > 0) {
+        // 🚀 [초고속 0.01초 즉시 표출]: 서버 캐시된 세부 심층 지표를 비동기로 불러와 갱신 (로딩 랙 100% 제거)
+        fetchMatchDetailCached(m.id).then(freshData => {
           if (freshData && selectedPredMatchId === m.id) {
             renderPredDetail(m, freshData);
           }
