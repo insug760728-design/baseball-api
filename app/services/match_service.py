@@ -12,7 +12,7 @@ from app.scrapers.basketball_scraper import BasketballScraper
 from app.core.sports_catalog import SPORTS_CATALOG
 from app.services.team_split_service import TeamSplitService, is_valid_starter_name
 from app.services.player_translation import translate_player_name, sanitize_player_name, sanitize_text
-from app.services.betman_service import BetmanService
+from app.services.betman_service import BetmanService, teams_match, clean_name, get_canonical_team_key
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -60,11 +60,14 @@ class MatchService:
                 match = db.query(Match).filter(Match.official_id == m_data["official_id"]).first()
                 if not match:
                     # Also check by home/away teams and date to prevent duplicates from differing official_id prefixes
-                    match = db.query(Match).filter(
-                        Match.home_team_name == m_data["home_team_name"],
-                        Match.away_team_name == m_data["away_team_name"],
+                    day_matches = db.query(Match).filter(
+                        Match.sport_code == m_data.get("sport_code", scraper.get_sport_code()),
                         Match.match_date.like(f"{current_d}%")
-                    ).first()
+                    ).all()
+                    for dm in day_matches:
+                        if teams_match(dm.home_team_name, m_data["home_team_name"]) and teams_match(dm.away_team_name, m_data["away_team_name"]):
+                            match = dm
+                            break
 
                 if not match:
                     match = Match(
@@ -256,9 +259,6 @@ class MatchService:
 
     @classmethod
     def get_matches(cls, db: Session, sport_code: Optional[str] = None, league_name: Optional[str] = None, status: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None, limit: Optional[int] = None, order: Optional[str] = "asc"):
-        # stale LIVE 경기 자동 종결 (시작 후 4시간 이상 지난 경기 FINISHED 처리)
-        cls.cleanup_stale_live_matches(db)
-
         query = db.query(Match).options(joinedload(Match.details))
 
         # 리그명에 따라 sport_code 자동 감지
@@ -332,8 +332,9 @@ class MatchService:
                 query = query.filter(Match.match_date >= f"{start_date} 00:00")
         else:
             if status == "FINISHED" or (order and order.lower() == "desc"):
-                # 최근 종료 경기 또는 내림차순(최신순) 조회: 현재 연도(2026년) 1월 1일 이후 및 오늘 밤 이전
-                query = query.filter(Match.match_date >= f"{current_year}-01-01 00:00")
+                # 최근 종료 경기 또는 내림차순(최신순) 조회: 최근 14일 경기 위주로 고속 조회
+                past_14d = (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d 00:00")
+                query = query.filter(Match.match_date >= past_14d)
                 if not end_date:
                     query = query.filter(Match.match_date <= f"{today_str} 23:59")
             else:
@@ -351,14 +352,18 @@ class MatchService:
         target_limit = limit if (limit and limit > 0) else 150
         matches = q.limit(target_limit).all()
         
-        # Deduplicate matches by fixture key (sport, home, away, date)
+        # Deduplicate matches by canonical fixture key (sport, home, away, date)
         unique_matches = []
-        seen_keys = set()
         for m in matches:
             d_part = (m.match_date or "")[:10]
-            f_key = f"{m.sport_code}_{m.home_team_name}_{m.away_team_name}_{d_part}"
-            if f_key not in seen_keys:
-                seen_keys.add(f_key)
+            is_dup = False
+            for um in unique_matches:
+                ud_part = (um.match_date or "")[:10]
+                if m.sport_code == um.sport_code and d_part == ud_part:
+                    if teams_match(m.home_team_name, um.home_team_name) and teams_match(m.away_team_name, um.away_team_name):
+                        is_dup = True
+                        break
+            if not is_dup:
                 unique_matches.append(m)
         matches = unique_matches
         pred_calc_count = 0
@@ -441,7 +446,7 @@ class MatchService:
                     a_confirmed = False
                 m.starters_confirmed = bool(m.home_starter_name and m.away_starter_name and h_confirmed and a_confirmed)
 
-            if m.status == "FINISHED" or (m.status != "LIVE" and pred_calc_count >= 30):
+            if m.status != "LIVE":
                 m.prediction = None
                 m.odds = None
                 m.ou_line = None
@@ -460,8 +465,6 @@ class MatchService:
                         starter_a=m.away_starter_name,
                         league_name=m.league_name
                     )
-                    if m.status != "LIVE":
-                        pred_calc_count += 1
                 except Exception:
                     m.prediction = None
 
