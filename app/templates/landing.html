@@ -83,6 +83,34 @@
       font-weight: 700;
       letter-spacing: 0.5px;
     }
+    .nav-tab-pill {
+      background: #f8fafc !important;
+      color: #334155 !important;
+      border: 1.5px solid #cbd5e1 !important;
+      border-radius: 6px !important;
+      font-size: 0.78rem !important;
+      padding: 3px 10px !important;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      line-height: 1.3;
+    }
+    .nav-tab-pill:hover {
+      background: #eff6ff !important;
+      border-color: #93c5fd !important;
+      color: #1d4ed8 !important;
+    }
+    .nav-tab-pill.active {
+      background: #111827 !important;
+      color: #ffffff !important;
+      border-color: #111827 !important;
+      font-weight: 800 !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .nav-tab-pill.active i {
+      color: #ffffff !important;
+    }
 
     @media (max-width: 768px) {
       html, body {
@@ -93,7 +121,7 @@
         overscroll-behavior-x: none !important;
       }
       #mainAppWrapper {
-        padding-top: 96px !important;
+        padding-top: 54px !important;
       }
       .navbar-glass {
         position: fixed !important;
@@ -112,67 +140,25 @@
         padding: 0 !important;
       }
       .nav-brand-title {
-        font-size: 1.1rem !important;
+        font-size: 1.05rem !important;
       }
       .domain-badge {
         display: none !important;
       }
       #navAuthContainer {
-        gap: 4px !important;
+        gap: 3px !important;
       }
       #viewModeToggleGroup .btn {
-        font-size: 0.72rem !important;
-        padding: 2px 6px !important;
+        font-size: 0.7rem !important;
+        padding: 2px 5px !important;
+      }
+      #navCenterTabsGroup .nav-tab-pill {
+        font-size: 0.74rem !important;
+        padding: 2px 7px !important;
       }
       #mobileTabBar {
-        display: flex !important;
-        position: fixed !important;
-        top: 50px !important;
-        left: 0 !important;
-        right: 0 !important;
-        width: 100% !important;
-        height: 46px !important;
-        margin: 0 !important;
-        padding: 2px 4px !important;
-        border-radius: 0 !important;
-        border-top: none !important;
-        border-left: none !important;
-        border-right: none !important;
-        border-bottom: 2px solid #111827 !important;
-        background: #ffffff !important;
-        z-index: 1045 !important;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05) !important;
+        display: none !important;
       }
-      #mobileTabBar .dash-container {
-        padding: 0 !important;
-        width: 100% !important;
-      }
-      #mobileTabBar .mobile-tab-btn {
-        min-height: 40px !important;
-        height: 40px !important;
-        padding: 2px 4px !important;
-        font-size: 0.76rem !important;
-        font-weight: 600 !important;
-        color: #4b5563 !important;
-        background: transparent !important;
-        border: none !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        border-radius: 6px !important;
-        transition: all 0.15s ease;
-      }
-      #mobileTabBar .mobile-tab-btn.active {
-        color: #1d4ed8 !important;
-        font-weight: 800 !important;
-        background: #eff6ff !important;
-        border-bottom: 2.5px solid #1d4ed8 !important;
-      }
-      #mobileTabBar .mobile-tab-btn i {
-        font-size: 0.95rem !important;
-        line-height: 1 !important;
-        margin-bottom: 2px !important;
       }
       .breaking-ticker {
         padding: 4px 0 !important;
@@ -1932,25 +1918,35 @@
             <span class="domain-badge d-none d-md-inline-block" style="background: #1d4ed8; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 700; color: white;">tokeon.co.kr</span>
           </div>
         </a>
-        <span class="badge fw-bold py-1 px-2 d-none d-md-inline-flex align-items-center ms-2" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.72rem; border-radius: 6px;">
+        <span class="badge fw-bold py-1 px-2 d-none d-xl-inline-flex align-items-center ms-2" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.72rem; border-radius: 6px;">
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
       </div>
 
+      <!-- 📌 [경기목록 / 톡방] 네비게이션 탭 (토큰 브랜드와 PC앱/로그인 사이 완벽 배치) -->
+      <div class="d-flex align-items-center gap-1 mx-1" id="navCenterTabsGroup">
+        <button class="btn btn-sm nav-tab-pill active fw-bold text-nowrap" id="mobTabSchedule" onclick="switchMobileTab('schedule')">
+          <i class="bi bi-calendar-event me-1 text-primary"></i>경기목록
+        </button>
+        <button class="btn btn-sm nav-tab-pill fw-bold text-nowrap" id="mobTabCommunity" onclick="switchMobileTab('community')">
+          <i class="bi bi-chat-dots-fill me-1 text-success"></i>톡방
+        </button>
+      </div>
+
       <!-- Simple Auth Section, PC/Mobile View Switcher & Member Registry -->
-      <div id="navAuthContainer" class="d-flex align-items-center gap-1.5">
+      <div id="navAuthContainer" class="d-flex align-items-center gap-1.5 flex-shrink-0">
         <!-- 💻 PC / 📱 핸드폰 버전 전환 버튼 -->
         <div class="btn-group btn-group-sm" role="group" id="viewModeToggleGroup" style="border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden;">
-          <button type="button" class="btn btn btn-primary fw-bold px-2 py-1" id="btnModePC" onclick="setViewMode('pc')" title="PC 최적화 대화면 4분할 뷰">
+          <button type="button" class="btn btn-primary fw-bold px-2 py-1" id="btnModePC" onclick="setViewMode('pc')" title="PC 최적화 대화면 4분할 뷰">
             <i class="bi bi-display me-1"></i><span class="d-none d-sm-inline">PC</span>버전
           </button>
-          <button type="button" class="btn btn btn-outline-secondary fw-bold px-2 py-1" id="btnModeMobile" onclick="setViewMode('mobile')" title="스마트폰 모바일 최적화 뷰">
+          <button type="button" class="btn btn-outline-secondary fw-bold px-2 py-1" id="btnModeMobile" onclick="setViewMode('mobile')" title="스마트폰 모바일 최적화 뷰">
             <i class="bi bi-phone me-1"></i><span class="d-none d-sm-inline">핸드폰</span>앱
           </button>
         </div>
 
         <!-- 👥 회원 가입 현황 (data/members 폴더 연동) 버튼 -->
-        <button class="btn btn-sm btn-outline-dark fw-bold px-2 py-1" onclick="openMembersModal()" title="실제 가입한 별명·나이 인원수 목록 확인 (data/members 폴더 연동)" style="border-radius: 8px; font-size: 0.75rem; border-color: rgba(255, 255, 255, 0.2);">
+        <button class="btn btn-sm btn-outline-dark fw-bold px-2 py-1" onclick="openMembersModal()" title="실제 가입한 별명·나이 인원수 목록 확인 (data/members 폴더 연동)" style="border-radius: 8px; font-size: 0.75rem; border-color: #d1d5db;">
           <i class="bi bi-people-fill text-warning"></i><span class="d-none d-sm-inline ms-1">회원</span>
         </button>
 
@@ -1961,20 +1957,6 @@
       </div>
     </div>
   </nav>
-
-  <!-- 📱 핸드폰 모바일 전용 1-Tap 상단 탭 단축키 (경기 목록 & 실시간 팬톡) -->
-  <div id="mobileTabBar" class="d-none flex-column p-1" style="background: #ffffff; border-bottom: 2px solid #111827; z-index: 1045;">
-    <div class="dash-container">
-      <div class="d-flex justify-content-between align-items-center gap-1 w-100">
-        <button class="btn btn-sm mobile-tab-btn flex-fill active" id="mobTabSchedule" onclick="switchMobileTab('schedule')">
-          <i class="bi bi-calendar-event d-block mb-0.5 text-primary" style="font-size: 1.05rem;"></i>경기 목록
-        </button>
-        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabCommunity" onclick="switchMobileTab('community')">
-          <i class="bi bi-chat-dots-fill d-block mb-0.5 text-success" style="font-size: 1.05rem;"></i>실시간 팬톡
-        </button>
-      </div>
-    </div>
-  </div>
 
   <div id="mainAppWrapper">
 
