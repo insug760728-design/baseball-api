@@ -2138,9 +2138,20 @@
 
             <!-- Body: Match Detail Studio (1:1 세이버 정밀 분석실) -->
             <div class="dash-card-body p-2" id="predDetailPanel" style="flex: 1; width: 100%; box-sizing: border-box; overflow-y: auto; height: 100%;">
-              <div class="text-center text-muted py-5">
-                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
-                <div>1:1 세이버 정밀 분석실 데이터를 불러오는 중...</div>
+              <div class="p-4 text-center bg-white rounded-3 shadow-sm border m-2" style="min-height: 380px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-color: #e2e8f0 !important;">
+                <div class="mb-3">
+                  <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 56px; height: 56px; background: #eff6ff; color: #2563eb; font-size: 1.6rem;">
+                    <i class="bi bi-shield-lock-fill"></i>
+                  </span>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">🔒 1:1 세이버 정밀 승부분석실</h5>
+                <p class="text-muted small mb-3" style="line-height: 1.6;">
+                  경기바에서 원하시는 경기를 선택하시거나<br>
+                  로그인 후 정밀 승부예측 데이터와 대칭 비교를 확인하세요.
+                </p>
+                <button class="btn btn-primary fw-bold px-4 py-2" onclick="openLoginModal('login', '🔒 <b>경기 상세 분석</b>은 로그인 후 이용하실 수 있습니다.')" style="border-radius: 6px; font-size: 0.85rem;">
+                  <i class="bi bi-box-arrow-in-right me-1"></i> 3초 간편 로그인 / 회원가입
+                </button>
               </div>
             </div>
 
@@ -4526,6 +4537,9 @@
               allMatches = parsed;
               renderMatchStrip('ALL');
               renderPredMatches();
+              if (!selectedPredMatchId && allMatches.length > 0) {
+                selectPredMatch(allMatches[0].id);
+              }
             }
           }
         } catch(e) {}
@@ -8914,6 +8928,9 @@ function getFullModalMatchList() {
           lob = isHome ? `${bs.home_lob} : ${bs.away_lob}` : `${bs.away_lob} : ${bs.home_lob}`;
         }
 
+        let starter = '-';
+        const hSp = (bs && bs.home_starter) || (tStats && tStats.home_starter) || g.home_starter || null;
+        const aSp = (bs && bs.away_starter) || (tStats && tStats.away_starter) || g.away_starter || null;
         if (hSp || aSp) {
           const hStr = hSp ? (hSp.ip ? `${hSp.ip}이닝/${hSp.er ?? 0}자` : (hSp.name || '-')) : '-';
           const aStr = aSp ? (aSp.ip ? `${aSp.ip}이닝/${aSp.er ?? 0}자` : (aSp.name || '-')) : '-';
@@ -12852,17 +12869,15 @@ function getFullModalMatchList() {
         activeCard.classList.add('active-match-card');
       }
 
-      // 🚀 모바일 성능 최적화: 모바일 화면에서는 중앙 상세 패널(#predDetailPanel)이 숨겨져 있으므로 렌더링을 건너뛰어 CPU/통신 절약
-      const isMobileView = (window.innerWidth <= 768 || currentViewMode === 'mobile');
-      if (!isMobileView) {
-        renderPredDetail(target);
-      }
+      // 🚀 0ms 즉각 렌더링: 중앙 상세 패널(#predDetailPanel) 즉시 갱신
+      renderPredDetail(target);
 
       if (userClicked) {
         if (typeof isMultiPlayMode !== 'undefined' && isMultiPlayMode) {
           isMultiPlayMode = false;
           if (typeof updateMultiPlayBtnState === 'function') updateMultiPlayBtnState();
         }
+        const isMobileView = (window.innerWidth <= 768 || currentViewMode === 'mobile');
         if (isMobileView) {
           openMatchModal(matchId);
         } else {
@@ -14707,6 +14722,7 @@ function getFullModalMatchList() {
       }
 
       // Home & Away split data extraction
+      const isBaseball = (m.sport_code || '').toUpperCase() === 'BASEBALL';
       const isSoccer = (m.sport_code || '').toUpperCase() === 'SOCCER';
       const isBasketball = (m.sport_code || '').toUpperCase() === 'BASKETBALL';
 
