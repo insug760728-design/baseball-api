@@ -1060,17 +1060,28 @@ class LiveApiSportsService:
                     updated += 1
                 elif mapped_status == "SCHEDULED" and kst_dt:
                     # DB에 없는 신규 예정 경기 자동 등록 (사우디리그 및 독일 2부리그 등 비대상 리그 제외)
-                    league = f.get("league", {})
-                    raw_lname = league.get("name", "")
-                    country = league.get("country", "")
-                    
-                    # 사우디, 멕시코 및 독일 2부/하부리그 완벽 차단
-                    if country in ["Saudi-Arabia", "Saudi Arabia", "Mexico"] or any(kw in raw_lname for kw in ["사우디", "Saudi", "멕시코", "Mexico", "Liga MX", "LigaMX"]):
+                    # 배트맨 프로토/토토 및 주요 공식 리그만 엄격 허용
+                    allowed_major_leagues = [
+                        "Premier League", "Championship", "FA Cup", "EFL Cup", "Carabao Cup",
+                        "La Liga", "Copa del Rey",
+                        "Bundesliga", "DFB Pokal",
+                        "Serie A", "Coppa Italia",
+                        "Ligue 1", "Coupe de France",
+                        "Eredivisie",
+                        "K League 1", "K League 2", "FA Cup",
+                        "J1 League", "J2 League", "J.League",
+                        "Major League Soccer", "MLS",
+                        "UEFA Champions League", "UEFA Europa League", "UEFA Conference League", "UCL", "UEL",
+                        "AFC Champions League", "Club World Cup", "World Cup", "Euro"
+                    ]
+                    # 하부/아마추어/청소년/비인기 리그 제외
+                    lower_name = raw_lname.lower()
+                    if any(bad in lower_name for bad in ["amateur", "reserve", "u18", "u19", "u20", "u21", "oberliga", "serie c", "serie d", "national league", "isthmian", "southern", "northern", "women", "frauen", "feminine", "2. bundesliga", "2.bundesliga", "3. liga", "regionalliga", "primavera", "derde", "tweede", "eerste", "challenger", "next pro", "usl", "friendlies", "trophy"]):
                         continue
-                    if country == "Germany" and any(sub in raw_lname for sub in ["2. Bundesliga", "2.Bundesliga", "2. Liga", "3. Liga", "Regionalliga"]):
+                    if not any(good.lower() in lower_name for good in allowed_major_leagues):
                         continue
 
-                    if country in ["England", "Spain", "Germany", "Italy", "France", "Netherlands", "Japan", "South-Korea", "Brazil", "Portugal", "Belgium", "Turkey", "USA", "World"]:
+                    if country in ["England", "Spain", "Germany", "Italy", "France", "Netherlands", "Japan", "South-Korea", "USA", "World"]:
                         fix_id_str = str(fixture_info.get("id", ""))
                         existing_m = db.query(Match).filter(Match.official_id == fix_id_str).first() if fix_id_str else None
                         if not existing_m and fix_id_str:

@@ -1990,9 +1990,10 @@
           <div class="dash-card-column">
             
             <div class="dash-card-header pb-2">
-              <!-- Date Filter (지난결과 전용) -->
+              <!-- Date Filter (전체/오늘 vs 지난결과) -->
               <div class="d-flex gap-1 mb-2">
-                <button class="btn btn-sm pred-date-btn active w-100 text-nowrap fw-bold" id="predDateFINISHED" onclick="filterPredDate('FINISHED')" style="color: #dc2626; border-color: #fecaca; background: #fef2f2;"><i class="bi bi-check2-circle me-1"></i>지난결과</button>
+                <button class="btn btn-sm pred-date-btn active flex-fill text-nowrap fw-bold" id="predDateALL" onclick="filterPredDate('ALL')"><i class="bi bi-calendar2-week me-1"></i>전체/오늘</button>
+                <button class="btn btn-sm pred-date-btn flex-fill text-nowrap fw-bold" id="predDateFINISHED" onclick="filterPredDate('FINISHED')" style="color: #dc2626; border-color: #fecaca; background: #fef2f2;"><i class="bi bi-check2-circle me-1"></i>지난결과</button>
               </div>
 
               <!-- 6대 스포츠 고정 필터 (전체, 축구, 야구, 농구, 하키, 배구) -->
@@ -3870,7 +3871,7 @@
         allMatches = uniqueList;
         window.matchesLoadedInitial = true;
         try {
-          localStorage.setItem('tokeon_matches_cache_v5', JSON.stringify(uniqueList));
+          localStorage.setItem('tokeon_matches_cache_v7', JSON.stringify(uniqueList));
         } catch (e) {}
 
         renderMatchStrip('ALL');
@@ -8887,7 +8888,7 @@ function getFullModalMatchList() {
     // 3-Day Match Predictor (Strict KST Chronological Stream & Real Official Scores)
     // ----------------------------------------------------
     let selectedPredMatchId = null;
-    let currentPredDate = 'FINISHED'; // 'FINISHED' (지난결과 전용 - 기본값)
+    let currentPredDate = 'ALL'; // 'ALL' (전체/오늘 - 기본값: LIVE + 오늘 예정 + 오늘 결과)
     let currentPredSport = 'ALL'; // 'ALL', 'SOCCER', 'BASEBALL', 'BASKETBALL', 'HOCKEY', 'VOLLEYBALL'
     let currentPredLeague = 'ALL';
     let currentPredConfidence = 'ALL'; // 'ALL', '80', '70', '50'
@@ -9009,7 +9010,7 @@ function getFullModalMatchList() {
     function initPredictionSection() {
       // ⚡ 0초(0ms) 즉시 렌더링: 브라우저 캐시가 있으면 대기 없이 즉각 경기 목록 & 전광판 표출
       try {
-        const cached = localStorage.getItem('tokeon_matches_cache_v5');
+        const cached = localStorage.getItem('tokeon_matches_cache_v7');
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -9040,9 +9041,11 @@ function getFullModalMatchList() {
       const d0Str = getKSTDateString(now);
       const d1Str = getKSTDateString(new Date(now.getTime() + 86400000));
       
-      currentPredDate = 'FINISHED';
+      currentPredDate = 'ALL';
+      const btnAll = document.getElementById('predDateALL');
+      if (btnAll) btnAll.classList.add('active');
       const btnFin = document.getElementById('predDateFINISHED');
-      if (btnFin) btnFin.classList.add('active');
+      if (btnFin) btnFin.classList.remove('active');
       loadBetmanToto('W1L', 260067);
 
       startLiveAutoSync(5);
@@ -9464,11 +9467,11 @@ function getFullModalMatchList() {
       }
 
       if (currentPredDate === 'FINISHED') {
-        // [지난결과]: 종료된 경기(FINISHED), 취소/연기(CANCELLED/POSTPONED) 또는 시작 시각이 이미 지난 경기를 최신순 정렬
+        // [지난결과]: 종료된 경기(FINISHED), 취소/연기(CANCELLED/POSTPONED)를 최신순 정렬
         const nowKstDateTime = getKSTDateTimeString(now);
-        list = list.filter(m => m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED' || (m.match_date || '') < nowKstDateTime);
+        list = list.filter(m => m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED' || (m.match_date && m.match_date < nowKstDateTime && m.status !== 'SCHEDULED'));
         if (list.length === 0 && allMatches && allMatches.length > 0) {
-          list = allMatches.filter(m => currentPredSport === 'ALL' || m.sport_code === currentPredSport);
+          list = allMatches.filter(m => (m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED' || (m.match_date && m.match_date < nowKstDateTime && m.status !== 'SCHEDULED')) && (currentPredSport === 'ALL' || m.sport_code === currentPredSport));
         }
         list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
       } else if (currentPredDate === 'D0') {
