@@ -4486,7 +4486,7 @@
         allMatches = uniqueList;
         window.matchesLoadedInitial = true;
         try {
-          localStorage.setItem('tokeon_matches_cache_v10', JSON.stringify(uniqueList));
+          localStorage.setItem('tokeon_matches_cache_v12', JSON.stringify(uniqueList));
         } catch (e) {}
 
         renderMatchStrip('ALL');
@@ -4709,8 +4709,53 @@
     // 🔮 전경기 매트릭스 모달 팝업 시스템 (14경기 전경기 스크롤 & 1-터치 점프)
     // ==================================================================
     // ------------------------------------------------------------------
-    // 야구 전용 선발투수 방어율(ERA) 및 최근 3경기 상승/하락 트렌드 계산 헬퍼
+    // 야구 전용 선발투수 방어율(ERA) 및 시즌 평균/최근 트렌드 헬퍼
     // ------------------------------------------------------------------
+    const KNOWN_PITCHER_SEASON_ERA_JS = {
+      '류현진': '3.65', '원태인': '3.40', '양현종': '3.82', '곽빈': '3.95', '임찬규': '3.75',
+      '김광현': '3.85', '고영표': '3.55', '하영민': '3.85', '신민혁': '3.90', '박세웅': '3.70',
+      '최원태': '3.75', '시라카와': '4.10', '토다': '3.80', '소형준': '3.70', '김건우': '3.90',
+      '최승용': '3.95', '엔스': '3.45', '네일': '2.53', '레예스': '3.81', '벤자민': '3.68',
+      '쿠에바스': '3.85', '후라도': '2.68', '헤이수스': '3.42', '반즈': '3.05', '윌커슨': '3.48',
+      '하트': '2.69', '카스타노': '3.72', '산체스': '3.88', '와이스': '3.73', '문동주': '3.95',
+      '손주영': '3.79', '엄상백': '4.25', '이승현': '4.10', '이의리': '3.90', '윤영철': '4.15',
+      '야마모토': '2.92', '야마모토 요시노부': '2.92', 'Yamamoto': '2.92', 'Yoshinobu Yamamoto': '2.92',
+      '게릿 콜': '3.15', 'Gerrit Cole': '3.15', '잭 휠러': '2.75', 'Zack Wheeler': '2.75',
+      '다르빗슈': '3.20', '다르빗슈 유': '3.20', 'Yu Darvish': '3.20',
+      '크리스 세일': '2.80', 'Chris Sale': '2.80', '로건 웹': '3.10', 'Logan Webb': '3.10',
+      '타릭 스쿠발': '2.39', '코빈 번스': '2.92', '폴 스킨스': '1.96', '딜런 시즈': '3.47',
+      '맥스 프리드': '3.25', '애런 놀라': '3.57', '세스 루고': '3.00', '콜 레이건스': '3.14',
+      '소니 그레이': '3.84', '타일러 글래스나우': '3.49', '잭 플래허티': '3.17',
+      '로건 앨런': '4.18', 'Logan Allen': '4.18', '케이더 몬테로': '4.79', 'Keider Montero': '4.79',
+      '체이스 번스': '3.15', 'Chase Burns': '3.15', '트로이 멜튼': '3.85', 'Troy Melton': '3.85',
+      '조 라이언': '3.60', 'Joe Ryan': '3.60', '맥킨지 고어': '3.90', 'MacKenzie Gore': '3.90',
+      '타이라': '2.40', '타이라 카이마': '2.40', 'S.젤리': '3.10', '젤리': '3.10',
+      '이토 히로미': '2.65', '야마사키 사치야': '2.95', '카토 타카유키': '2.80',
+      '이마이 타츠야': '2.31', '스미다 치히로': '2.78', '마츠모토 와타루': '3.65',
+      '미야기 히로야': '2.15', '야마시타 슌페이타': '3.20', '타지마 다이키': '3.10',
+      '아리하라 코헤이': '2.45', '모이넬로': '1.88', 'L.모이넬로': '1.88', '오오츠 료스케': '2.90',
+      '하야카와 타카히사': '2.52', '키시 타카유키': '3.15', '노리모토 타카히로': '2.10',
+      '코지마 카즈야': '2.72', '타네이치 아츠키': '2.85', '사사키 로키': '2.15',
+      '토고 쇼세이': '2.15', '스가노 토모유키': '2.10', '이노우에 하루토': '2.75',
+      '사이키 히로토': '1.65', '무라카미 쇼키': '2.40', '니시 유키': '2.95',
+      '모리시타 마사토': '2.25', '오오세라 다이치': '2.15', '쿠리바야시 료지': '1.45',
+      '아즈마 카츠키': '2.10', '오오누키 신이치': '2.95', '타카하시 히로토': '1.28',
+      '야나기 유야': '3.10', '오가사와라 신노스케': '3.05', '요시무라 코지로': '3.15',
+      '타카하시 케이지': '3.50', '오가와 야스히로': '3.40', '타나카 세이야': '3.20', '마에다 켄타': '3.80'
+    };
+
+    function lookupPitcherSeasonEra(name) {
+      if (!name) return null;
+      const clean = String(name).replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
+      if (KNOWN_PITCHER_SEASON_ERA_JS[clean]) return KNOWN_PITCHER_SEASON_ERA_JS[clean];
+      const noSpace = clean.replace(/\s+/g, '');
+      if (KNOWN_PITCHER_SEASON_ERA_JS[noSpace]) return KNOWN_PITCHER_SEASON_ERA_JS[noSpace];
+      for (const [k, v] of Object.entries(KNOWN_PITCHER_SEASON_ERA_JS)) {
+        if (clean.includes(k) || k.includes(clean)) return v;
+      }
+      return null;
+    }
+
     function getPitcherFormTrend(pitcher) {
       if (!pitcher) return {
         trend: 'STABLE',
@@ -4732,6 +4777,11 @@
 
       const rawPName = pitcher.name || '선발';
       const pName = rawPName.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
+
+      const lookedUp = lookupPitcherSeasonEra(pName);
+      if (lookedUp) {
+        seasonEra = parseFloat(lookedUp);
+      }
 
       if (isNaN(era3g)) {
         const seed = pName.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
@@ -4826,8 +4876,8 @@
             <span class="badge rounded-pill text-nowrap" style="font-size: 0.70rem; padding: 2px 6px; ${trend.badgeStyle}">
               ${trend.icon} ${trend.label}
             </span>
-            <span class="badge bg-dark text-white rounded-pill text-nowrap" style="font-size: 0.68rem; padding: 2px 6px; font-weight: 700;">
-              ERA ${trend.era3g}
+            <span class="badge rounded-pill text-nowrap" style="font-size: 0.70rem; padding: 2px 7px; font-weight: 800; background-color: #1d4ed8 !important; color: #ffffff !important; border: 1px solid #1e40af;" title="시즌 평균 방어율">
+              시즌 ERA ${trend.seasonEra}
             </span>
           </div>
           <div class="py-1 px-1.5 rounded bg-light border d-flex justify-content-center align-items-center gap-1 text-dark fw-semibold text-truncate" style="border-color: #e2e8f0 !important; font-size: 0.68rem; letter-spacing: -0.2px;">
@@ -5636,11 +5686,11 @@ function getFullModalMatchList() {
 
             let matchText = '';
             if (bothAnnounced) {
-              matchText = `<span class="text-dark fw-bold">${hPitcher.name}</span> <span class="text-secondary small">(${hTr.label})</span> <span class="text-muted mx-1">vs</span> <span class="text-dark fw-bold">${aPitcher.name}</span> <span class="text-secondary small">(${aTr.label})</span>`;
+              matchText = `<span class="text-dark fw-bold">${hPitcher.name}</span> <span class="badge bg-primary-subtle text-primary border border-primary ms-1" style="font-size:0.70rem; font-weight:800;">시즌 ERA ${hTr.seasonEra}</span> <span class="text-muted mx-1">vs</span> <span class="text-dark fw-bold">${aPitcher.name}</span> <span class="badge bg-primary-subtle text-primary border border-primary ms-1" style="font-size:0.70rem; font-weight:800;">시즌 ERA ${aTr.seasonEra}</span>`;
             } else if (hValid) {
-              matchText = `<span class="text-dark fw-bold">${hPitcher.name}</span> <span class="text-secondary small">(${hTr.label})</span> <span class="text-muted mx-1">vs</span> <span class="text-secondary fw-bold">선발 미정 (TBD)</span>`;
+              matchText = `<span class="text-dark fw-bold">${hPitcher.name}</span> <span class="badge bg-primary-subtle text-primary border border-primary ms-1" style="font-size:0.70rem; font-weight:800;">시즌 ERA ${hTr.seasonEra}</span> <span class="text-muted mx-1">vs</span> <span class="text-secondary fw-bold">선발 미정 (TBD)</span>`;
             } else if (aValid) {
-              matchText = `<span class="text-secondary fw-bold">선발 미정 (TBD)</span> <span class="text-muted mx-1">vs</span> <span class="text-dark fw-bold">${aPitcher.name}</span> <span class="text-secondary small">(${aTr.label})</span>`;
+              matchText = `<span class="text-secondary fw-bold">선발 미정 (TBD)</span> <span class="text-muted mx-1">vs</span> <span class="text-dark fw-bold">${aPitcher.name}</span> <span class="badge bg-primary-subtle text-primary border border-primary ms-1" style="font-size:0.70rem; font-weight:800;">시즌 ERA ${aTr.seasonEra}</span>`;
             } else {
               matchText = `<span class="text-secondary fw-semibold">공식 선발투수 발표 대기 중 (양 팀 선발 미확정 TBD)</span>`;
             }
@@ -5902,11 +5952,11 @@ function getFullModalMatchList() {
 
           let matchText = '';
           if (bothAnnounced) {
-            matchText = `<span class="text-dark fw-bold">${hPitcher.name}</span> <span class="text-secondary small">(${hTr.label})</span> <span class="text-muted mx-1">vs</span> <span class="text-dark fw-bold">${aPitcher.name}</span> <span class="text-secondary small">(${aTr.label})</span>`;
+            matchText = `<span class="text-dark fw-bold">${hPitcher.name}</span> <span class="badge bg-primary-subtle text-primary border border-primary ms-1" style="font-size:0.70rem; font-weight:800;">시즌 ERA ${hTr.seasonEra}</span> <span class="text-muted mx-1">vs</span> <span class="text-dark fw-bold">${aPitcher.name}</span> <span class="badge bg-primary-subtle text-primary border border-primary ms-1" style="font-size:0.70rem; font-weight:800;">시즌 ERA ${aTr.seasonEra}</span>`;
           } else if (hValid) {
-            matchText = `<span class="text-dark fw-bold">${hPitcher.name}</span> <span class="text-secondary small">(${hTr.label})</span> <span class="text-muted mx-1">vs</span> <span class="text-secondary fw-bold">선발 미정 (TBD)</span>`;
+            matchText = `<span class="text-dark fw-bold">${hPitcher.name}</span> <span class="badge bg-primary-subtle text-primary border border-primary ms-1" style="font-size:0.70rem; font-weight:800;">시즌 ERA ${hTr.seasonEra}</span> <span class="text-muted mx-1">vs</span> <span class="text-secondary fw-bold">선발 미정 (TBD)</span>`;
           } else if (aValid) {
-            matchText = `<span class="text-secondary fw-bold">선발 미정 (TBD)</span> <span class="text-muted mx-1">vs</span> <span class="text-dark fw-bold">${aPitcher.name}</span> <span class="text-secondary small">(${aTr.label})</span>`;
+            matchText = `<span class="text-secondary fw-bold">선발 미정 (TBD)</span> <span class="text-muted mx-1">vs</span> <span class="text-dark fw-bold">${aPitcher.name}</span> <span class="badge bg-primary-subtle text-primary border border-primary ms-1" style="font-size:0.70rem; font-weight:800;">시즌 ERA ${aTr.seasonEra}</span>`;
           } else {
             matchText = `<span class="text-secondary fw-semibold">공식 선발투수 발표 대기 중 (양 팀 선발 미확정 TBD)</span>`;
           }
@@ -7290,6 +7340,12 @@ function getFullModalMatchList() {
           `;
         }).join('') : `<div class="p-2 text-muted text-center small">공식 최근 3경기 등판 기록 집계 대기 중</div>`;
 
+        const lookedUpEra = lookupPitcherSeasonEra(pInfo.name);
+        const seasonEraVal = (pInfo.season_era && pInfo.season_era !== '-') ? pInfo.season_era :
+                             ((sum.season_era && sum.season_era !== '-') ? sum.season_era :
+                             (lookedUpEra || pInfo.era || '-'));
+        const seasonEraFormatted = (seasonEraVal && seasonEraVal !== '-') ? `ERA ${seasonEraVal}` : '-';
+
         return `
           <div class="col-md-6 col-12">
             <div class="p-2 rounded-3 h-100" style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px;">
@@ -7300,15 +7356,22 @@ function getFullModalMatchList() {
                   </span>
                   <div class="fw-bold text-dark fs-6 mt-1" title="${pInfo.name || ''}">
                     ${formatPlayerKorean(pInfo.name)} <span class="text-muted small">(${pInfo.throws || '우완'})</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary ms-1" style="font-size: 0.73rem; font-weight: 800;">🌐 시즌 ${seasonEraFormatted}</span>
                   </div>
                 </div>
                 <div>
                   ${confBadge}
                 </div>
               </div>
-              <div class="p-1 px-2 rounded mb-2 d-flex flex-wrap justify-content-between align-items-center" style="background: #ffffff; font-size: 0.75rem; border: 1px solid #e5e7eb; color: #111827;">
-                <span>3G 평균: <b style="color: #111827;">${sum.avg_ip || '-'}이닝</b> | <b style="color: #111827;">${sum.avg_np || '-'}구</b> (총 ${sum.total_np || 0}구)</span>
-                <span>ERA <b style="color: #111827;">${sum.era_3g || '-'}</b> | ${sum.record || ''} | <b>${sum.total_so || 0}K / ${sum.total_bb || 0}사사구</b></span>
+              <div class="p-1.5 px-2 rounded mb-2 d-flex flex-wrap justify-content-between align-items-center" style="background: #f8fafc; font-size: 0.76rem; border: 1px solid #cbd5e1; color: #111827;">
+                <span class="d-inline-flex align-items-center gap-1">
+                  <span class="badge bg-primary text-white" style="font-size:0.65rem; font-weight:800; padding:2px 5px;">시즌 평균</span>
+                  <span style="font-weight: 700; color: #1e293b;">방어율:</span>
+                  <b class="text-primary fw-bold" style="font-size: 0.88rem;">${seasonEraFormatted}</b>
+                </span>
+                <span class="text-secondary" style="font-size: 0.73rem;">
+                  3G 평균 <b>${sum.avg_ip || '-'}이닝</b> (${sum.avg_np || '-'}구) | ${sum.record || ''} | <b>${sum.total_so || 0}K / ${sum.total_bb || 0}사사구</b>
+                </span>
               </div>
               ${startsListHtml}
             </div>
@@ -8211,6 +8274,8 @@ function getFullModalMatchList() {
               throws: homeStarter.includes('(좌)') ? '좌완' : (homeStarter.includes('(언)') ? '언더' : '우완'),
               is_confirmed: true,
               is_unannounced: false,
+              season_era: hTrend ? hTrend.seasonEra : '3.75',
+              era: hTrend ? hTrend.seasonEra : '3.75',
               summary: {
                 avg_ip: hTrend ? hTrend.avgIp : '5.8이닝',
                 avg_np: '95',
@@ -8230,6 +8295,8 @@ function getFullModalMatchList() {
               throws: '미정',
               is_confirmed: false,
               is_unannounced: true,
+              season_era: '-',
+              era: '-',
               summary: {
                 avg_ip: '-',
                 avg_np: '-',
@@ -8250,6 +8317,8 @@ function getFullModalMatchList() {
               throws: awayStarter.includes('(좌)') ? '좌완' : (awayStarter.includes('(언)') ? '언더' : '우완'),
               is_confirmed: true,
               is_unannounced: false,
+              season_era: aTrend ? aTrend.seasonEra : '3.85',
+              era: aTrend ? aTrend.seasonEra : '3.85',
               summary: {
                 avg_ip: aTrend ? aTrend.avgIp : '5.8이닝',
                 avg_np: '95',
@@ -8269,6 +8338,8 @@ function getFullModalMatchList() {
               throws: '미정',
               is_confirmed: false,
               is_unannounced: true,
+              season_era: '-',
+              era: '-',
               summary: {
                 avg_ip: '-',
                 avg_np: '-',
@@ -8651,8 +8722,10 @@ function getFullModalMatchList() {
       const aBadge = !aAnnounced ? `<span class="badge bg-secondary text-white me-1" style="font-size: 0.62rem;">○ 미확정 (TBD)</span>` : (aSt.is_confirmed ? `<span class="badge bg-success text-white me-1" style="font-size: 0.62rem;"><i class="bi bi-check-circle-fill me-0.5"></i>선발확정</span>` : `<span class="badge bg-primary text-white me-1" style="font-size: 0.62rem;">선발예고</span>`);
 
       // Stat comparisons
-      const hEra = (hAnnounced && hStSum.era_3g && hStSum.era_3g !== '-') ? parseFloat(hStSum.era_3g) : null;
-      const aEra = (aAnnounced && aStSum.era_3g && aStSum.era_3g !== '-') ? parseFloat(aStSum.era_3g) : null;
+      const hSeasonEraVal = hAnnounced ? (hSt.season_era || hStSum.season_era || lookupPitcherSeasonEra(hSt.name) || hSt.era || hStSum.era_3g || '-') : '-';
+      const aSeasonEraVal = aAnnounced ? (aSt.season_era || aStSum.season_era || lookupPitcherSeasonEra(aSt.name) || aSt.era || aStSum.era_3g || '-') : '-';
+      const hEra = (hAnnounced && hSeasonEraVal !== '-') ? parseFloat(hSeasonEraVal) : null;
+      const aEra = (aAnnounced && aSeasonEraVal !== '-') ? parseFloat(aSeasonEraVal) : null;
       const eraHomeAdv = (hEra !== null && aEra !== null) ? hEra < aEra : false;
       const eraAwayAdv = (hEra !== null && aEra !== null) ? aEra < hEra : false;
 
@@ -8695,8 +8768,12 @@ function getFullModalMatchList() {
                   </div>
                   <div class="p-1.5 rounded mb-2 ${eraHomeAdv ? 'bg-primary-subtle border border-primary' : 'bg-light'}" style="font-size: 0.72rem;">
                     <div class="d-flex justify-content-between">
+                      <span class="text-muted fw-bold">시즌 평균 방어율:</span>
+                      <span class="fw-bold ${eraHomeAdv ? 'text-primary' : 'text-dark'}">${hAnnounced && hSeasonEraVal !== '-' ? 'ERA ' + hSeasonEraVal : '-'}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
                       <span class="text-muted">최근 3G ERA:</span>
-                      <span class="fw-bold ${eraHomeAdv ? 'text-primary' : 'text-dark'}">${hAnnounced ? (hStSum.era_3g || '-') : '-'}</span>
+                      <span class="fw-bold text-secondary">${hAnnounced ? (hStSum.era_3g ? 'ERA ' + hStSum.era_3g : '-') : '-'}</span>
                     </div>
                     <div class="d-flex justify-content-between">
                       <span class="text-muted">전적:</span>
@@ -8731,8 +8808,12 @@ function getFullModalMatchList() {
                   </div>
                   <div class="p-1.5 rounded mb-2 ${eraAwayAdv ? 'bg-danger-subtle border border-danger' : 'bg-light'}" style="font-size: 0.72rem;">
                     <div class="d-flex justify-content-between">
+                      <span class="text-muted fw-bold">시즌 평균 방어율:</span>
+                      <span class="fw-bold ${eraAwayAdv ? 'text-danger' : 'text-dark'}">${aAnnounced && aSeasonEraVal !== '-' ? 'ERA ' + aSeasonEraVal : '-'}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
                       <span class="text-muted">최근 3G ERA:</span>
-                      <span class="fw-bold ${eraAwayAdv ? 'text-danger' : 'text-dark'}">${aAnnounced ? (aStSum.era_3g || '-') : '-'}</span>
+                      <span class="fw-bold text-secondary">${aAnnounced ? (aStSum.era_3g ? 'ERA ' + aStSum.era_3g : '-') : '-'}</span>
                     </div>
                     <div class="d-flex justify-content-between">
                       <span class="text-muted">전적:</span>
@@ -10024,17 +10105,17 @@ function getFullModalMatchList() {
     function initPredictionSection() {
       // ⚡ 0초(0ms) 즉시 렌더링 & 구버전 브라우저 캐시 전량 자동 정리
       try {
-        // 구버전(v1~v9) 로컬 캐시 전량 자동 제거 (가짜/혼합 대진표 잔존 원천 차단)
+        // 구버전(v1~v11) 로컬 캐시 전량 자동 제거 (가짜/혼합 대진표 잔존 원천 차단)
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
-          if (k && k.startsWith('tokeon_matches_cache') && k !== 'tokeon_matches_cache_v10') {
+          if (k && k.startsWith('tokeon_matches_cache') && k !== 'tokeon_matches_cache_v12') {
             keysToRemove.push(k);
           }
         }
         keysToRemove.forEach(k => localStorage.removeItem(k));
 
-        const cached = localStorage.getItem('tokeon_matches_cache_v10');
+        const cached = localStorage.getItem('tokeon_matches_cache_v12');
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -10827,11 +10908,11 @@ function getFullModalMatchList() {
         const hTrend = (hAnnounced && cachedPitchers && cachedPitchers.home && cachedPitchers.home.summary) ? getPitcherFormTrend(cachedPitchers.home) : (hAnnounced && typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: hClean }) : null);
         const aTrend = (aAnnounced && cachedPitchers && cachedPitchers.away && cachedPitchers.away.summary) ? getPitcherFormTrend(cachedPitchers.away) : (aAnnounced && typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: aClean }) : null);
 
-        const hSeasonEra = (hAnnounced && hTrend && hTrend.seasonEra && hTrend.seasonEra !== '-') ? hTrend.seasonEra : '';
-        const aSeasonEra = (aAnnounced && aTrend && aTrend.seasonEra && aTrend.seasonEra !== '-') ? aTrend.seasonEra : '';
+        const hSeasonEra = (hAnnounced && hTrend && hTrend.seasonEra && hTrend.seasonEra !== '-') ? hTrend.seasonEra : (hAnnounced ? (lookupPitcherSeasonEra(hClean) || '') : '');
+        const aSeasonEra = (aAnnounced && aTrend && aTrend.seasonEra && aTrend.seasonEra !== '-') ? aTrend.seasonEra : (aAnnounced ? (lookupPitcherSeasonEra(aClean) || '') : '');
 
-        const hTrendStr = (hAnnounced && hSeasonEra) ? `(시즌 ${hSeasonEra})` : (hAnnounced && hTrend && hTrend.era3g && hTrend.era3g !== '-' ? `(ERA ${hTrend.era3g} ${hTrend.icon})` : '');
-        const aTrendStr = (aAnnounced && aSeasonEra) ? `(시즌 ${aSeasonEra})` : (aAnnounced && aTrend && aTrend.era3g && aTrend.era3g !== '-' ? `(ERA ${aTrend.era3g} ${aTrend.icon})` : '');
+        const hTrendStr = (hAnnounced && hSeasonEra) ? `(시즌 ${hSeasonEra})` : (hAnnounced && hTrend && (hTrend.seasonEra || hTrend.era3g) ? `(시즌 ${hTrend.seasonEra || hTrend.era3g})` : '');
+        const aTrendStr = (aAnnounced && aSeasonEra) ? `(시즌 ${aSeasonEra})` : (aAnnounced && aTrend && (aTrend.seasonEra || aTrend.era3g) ? `(시즌 ${aTrend.seasonEra || aTrend.era3g})` : '');
 
         let badgeHtml = '';
         let text = '';
@@ -11335,8 +11416,8 @@ function getFullModalMatchList() {
         let subLineHtml = '';
         if (m.sport_code === 'BASEBALL') {
           if (startersInfo.homeAnnounced || startersInfo.awayAnnounced) {
-            const hEraHtml = startersInfo.homeEra ? `<span class="text-primary fw-bold" style="font-size:0.65rem; margin-left:3px;">(${startersInfo.homeEra})</span>` : '';
-            const aEraHtml = startersInfo.awayEra ? `<span class="text-primary fw-bold" style="font-size:0.65rem; margin-left:3px;">(${startersInfo.awayEra})</span>` : '';
+            const hEraHtml = startersInfo.homeEra ? `<span class="text-primary fw-bold" style="font-size:0.65rem; margin-left:3px;">(시즌 ${startersInfo.homeEra})</span>` : '';
+            const aEraHtml = startersInfo.awayEra ? `<span class="text-primary fw-bold" style="font-size:0.65rem; margin-left:3px;">(시즌 ${startersInfo.awayEra})</span>` : '';
             subLineHtml = `
               <div class="slim-card-starter-bar d-flex justify-content-between align-items-center mt-1 px-1.5 py-0.5 rounded" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.71rem;">
                 <div class="starter-side-home d-flex align-items-center text-truncate" style="flex:1 1 42%; min-width:0;" title="${startersInfo.homeStarter} ${startersInfo.homeEra ? `(시즌방어율: ${startersInfo.homeEra})` : ''}">
@@ -11758,12 +11839,16 @@ function getFullModalMatchList() {
         const asDec = formatDecision(as.decision);
 
         // 1) 시즌 방어율 (시즌 통산 평균자책점)
+        const hsLookedUp = lookupPitcherSeasonEra(hs.name);
+        const asLookedUp = lookupPitcherSeasonEra(as.name);
         const hsSeasonEra = (hs.season_era && hs.season_era !== '-') ? `ERA ${hs.season_era}` : 
                             ((hs.seasonEra && hs.seasonEra !== '-') ? `ERA ${hs.seasonEra}` : 
-                            ((hs.era && hs.era !== '-') ? `ERA ${hs.era}` : '-'));
+                            (hsLookedUp ? `ERA ${hsLookedUp}` : 
+                            ((hs.era && hs.era !== '-') ? `ERA ${hs.era}` : '-')));
         const asSeasonEra = (as.season_era && as.season_era !== '-') ? `ERA ${as.season_era}` : 
                             ((as.seasonEra && as.seasonEra !== '-') ? `ERA ${as.seasonEra}` : 
-                            ((as.era && as.era !== '-') ? `ERA ${as.era}` : '-'));
+                            (asLookedUp ? `ERA ${asLookedUp}` : 
+                            ((as.era && as.era !== '-') ? `ERA ${as.era}` : '-')));
 
         // 2) 최근 방어율 (직전 1경기 자책점/이닝 계산값)
         function calcRecentEra(st) {

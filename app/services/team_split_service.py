@@ -1421,7 +1421,23 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
             matched_info = val
             break
 
-    base_season_era = matched_info[0] if matched_info else round(3.20 + (p_seed % 17) * 0.08, 2)
+    looked_up_era = None
+    try:
+        from app.services.live_api_sports_service import lookup_pitcher_season_era
+        looked_up_era = lookup_pitcher_season_era(pitcher_name)
+    except Exception:
+        pass
+
+    if looked_up_era:
+        try:
+            base_season_era = float(looked_up_era)
+        except Exception:
+            base_season_era = matched_info[0] if matched_info else round(3.20 + (p_seed % 17) * 0.08, 2)
+    elif matched_info:
+        base_season_era = matched_info[0]
+    else:
+        base_season_era = round(3.20 + (p_seed % 17) * 0.08, 2)
+
     base_3g_era = matched_info[1] if matched_info else round(base_season_era + (((p_seed % 7) - 3) * 0.35), 2)
     base_3g_era = max(1.20, min(6.80, base_3g_era))
 
@@ -1788,10 +1804,13 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
         if any(k in home_name_clean for k in ["菅井", "스가이", "Sugai"]):
             home_throws = "좌완"
         home_data = _get_pitcher_recent_3_starts(conn, home_name_clean, home_team, home_throws, league_name=league_name, allow_remote=False)
+        h_season_era = home_data.get("season_era") or home_data.get("summary", {}).get("season_era") or "-"
         home_res = {
             "name": home_name_ko,
             "name_en": home_name_clean,
             "throws": home_data.get("throws", home_throws),
+            "season_era": h_season_era,
+            "era": h_season_era,
             "is_confirmed": home_confirmed,
             "is_unannounced": False,
             "status_label": "선발 확정" if home_confirmed else "선발 예고",
@@ -1803,6 +1822,8 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
             "name": "선발 미정",
             "name_en": "TBD",
             "throws": "미정",
+            "season_era": "-",
+            "era": "-",
             "is_confirmed": False,
             "is_unannounced": True,
             "status_label": "선발 미정 (TBD)",
@@ -1829,10 +1850,13 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
         if any(k in away_name_clean for k in ["菅井", "스가이", "Sugai"]):
             away_throws = "좌완"
         away_data = _get_pitcher_recent_3_starts(conn, away_name_clean, away_team, away_throws, league_name=league_name, allow_remote=False)
+        a_season_era = away_data.get("season_era") or away_data.get("summary", {}).get("season_era") or "-"
         away_res = {
             "name": away_name_ko,
             "name_en": away_name_clean,
             "throws": away_data.get("throws", away_throws),
+            "season_era": a_season_era,
+            "era": a_season_era,
             "is_confirmed": away_confirmed,
             "is_unannounced": False,
             "status_label": "선발 확정" if away_confirmed else "선발 예고",
@@ -1844,6 +1868,8 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
             "name": "선발 미정",
             "name_en": "TBD",
             "throws": "미정",
+            "season_era": "-",
+            "era": "-",
             "is_confirmed": False,
             "is_unannounced": True,
             "status_label": "선발 미정 (TBD)",
@@ -3405,7 +3431,7 @@ class TeamSplitService:
                         sh_clean = starter_h.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
                         sh_data = _get_pitcher_recent_3_starts(c_conn_qp, sh_clean, home_team, "우완", league_name=league_name, allow_remote=False)
                         if sh_data and "summary" in sh_data:
-                            era_str = sh_data["summary"].get("era_3g") or sh_data["summary"].get("season_era")
+                            era_str = sh_data.get("season_era") or sh_data["summary"].get("season_era") or sh_data["summary"].get("era_3g")
                             if era_str and era_str != "-":
                                 try: h_starter_era = float(era_str)
                                 except: pass
@@ -3413,7 +3439,7 @@ class TeamSplitService:
                         sa_clean = starter_a.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
                         sa_data = _get_pitcher_recent_3_starts(c_conn_qp, sa_clean, away_team, "우완", league_name=league_name, allow_remote=False)
                         if sa_data and "summary" in sa_data:
-                            era_str = sa_data["summary"].get("era_3g") or sa_data["summary"].get("season_era")
+                            era_str = sa_data.get("season_era") or sa_data["summary"].get("season_era") or sa_data["summary"].get("era_3g")
                             if era_str and era_str != "-":
                                 try: a_starter_era = float(era_str)
                                 except: pass
@@ -4186,8 +4212,8 @@ class TeamSplitService:
                     ast = starting_pitchers_analysis.get("away", {})
                     hsum = hst.get("summary", {})
                     asum = ast.get("summary", {})
-                    h_era_val = hsum.get("era_3g") or hsum.get("season_era")
-                    a_era_val = asum.get("era_3g") or asum.get("season_era")
+                    h_era_val = hst.get("season_era") or hsum.get("season_era") or hsum.get("era_3g")
+                    a_era_val = ast.get("season_era") or asum.get("season_era") or asum.get("era_3g")
                     if h_era_val and h_era_val != "-":
                         try: h_starter_era = float(h_era_val)
                         except: pass
@@ -4275,14 +4301,18 @@ class TeamSplitService:
                 drivers_list.insert(0, "[선발 매치업] 양 팀 선발투수 공식 발표 전 (선발 미확정 TBD 상태)")
             elif h_un:
                 a_b = "[선발 확정]" if ast.get("is_confirmed") else "[선발 예고]"
-                drivers_list.insert(0, f"[선발 매치업] [홈] 선발 미확정 (TBD) vs {a_b} [원정] {ast.get('name')}({ast.get('throws')}, 3G 평균 {asum.get('avg_ip')}이닝 {asum.get('avg_np')}구 ERA {asum.get('era_3g')})")
+                a_s_era = ast.get("season_era") or asum.get("season_era") or asum.get("era_3g") or "-"
+                drivers_list.insert(0, f"[선발 매치업] [홈] 선발 미확정 (TBD) vs {a_b} [원정] {ast.get('name')}({ast.get('throws')}, 시즌 평균 ERA {a_s_era}, 3G 평균 {asum.get('avg_ip')}이닝 {asum.get('avg_np')}구)")
             elif a_un:
                 h_b = "[선발 확정]" if hst.get("is_confirmed") else "[선발 예고]"
-                drivers_list.insert(0, f"[선발 매치업] {h_b} [홈] {hst.get('name')}({hst.get('throws')}, 3G 평균 {hsum.get('avg_ip')}이닝 {hsum.get('avg_np')}구 ERA {hsum.get('era_3g')}) vs [원정] 선발 미확정 (TBD)")
+                h_s_era = hst.get("season_era") or hsum.get("season_era") or hsum.get("era_3g") or "-"
+                drivers_list.insert(0, f"[선발 매치업] {h_b} [홈] {hst.get('name')}({hst.get('throws')}, 시즌 평균 ERA {h_s_era}, 3G 평균 {hsum.get('avg_ip')}이닝 {hsum.get('avg_np')}구) vs [원정] 선발 미확정 (TBD)")
             else:
                 h_b = "[선발 확정]" if hst.get("is_confirmed") else "[선발 예고]"
                 a_b = "[선발 확정]" if ast.get("is_confirmed") else "[선발 예고]"
-                drivers_list.insert(0, f"[선발 매치업] {h_b} [홈] {hst.get('name')}({hst.get('throws')}, 3G 평균 {hsum.get('avg_ip')}이닝 {hsum.get('avg_np')}구 ERA {hsum.get('era_3g')}) vs {a_b} [원정] {ast.get('name')}({ast.get('throws')}, 3G 평균 {asum.get('avg_ip')}이닝 {asum.get('avg_np')}구 ERA {asum.get('era_3g')})")
+                h_s_era = hst.get("season_era") or hsum.get("season_era") or hsum.get("era_3g") or "-"
+                a_s_era = ast.get("season_era") or asum.get("season_era") or asum.get("era_3g") or "-"
+                drivers_list.insert(0, f"[선발 매치업] {h_b} [홈] {hst.get('name')}({hst.get('throws')}, 시즌 평균 ERA {h_s_era}, 3G 평균 {hsum.get('avg_ip')}이닝 {hsum.get('avg_np')}구) vs {a_b} [원정] {ast.get('name')}({ast.get('throws')}, 시즌 평균 ERA {a_s_era}, 3G 평균 {asum.get('avg_ip')}이닝 {asum.get('avg_np')}구)")
         # Relative batting trend calibration between home and away (anti-contradiction guard)
         if sport_code == "BASEBALL" and home_batting_3g and away_batting_3g:
             h_bsum = home_batting_3g.get("summary", {})
