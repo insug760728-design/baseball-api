@@ -2136,6 +2136,40 @@
               </button>
             </div>
 
+            <!-- Center Studio Header Mode Tabs -->
+            <div class="dash-card-header p-1.5 pb-1 d-flex justify-content-between align-items-center border-bottom" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+              <div class="d-flex gap-1">
+                <button class="btn btn-sm fw-bold btn-dark active text-white py-1 px-2.5" id="tabBtnSaberDetail" onclick="switchCenterViewMode('SABER')" style="font-size: 0.76rem; border-radius: 6px;">
+                  <i class="bi bi-cpu-fill text-warning me-1"></i>세이버 승부분석
+                </button>
+                <button class="btn btn-sm fw-bold btn-outline-secondary py-1 px-2.5" id="tabBtnLiveRelay" onclick="switchCenterViewMode('RELAY')" style="font-size: 0.76rem; border-radius: 6px;">
+                  <span class="live-blink-dot me-1" style="display:inline-block; width:6px; height:6px; background:#ef4444; border-radius:50%;"></span>실시간 중계센터
+                </button>
+              </div>
+              <div class="d-flex align-items-center gap-1 d-none" id="relayTopActions">
+                <button class="btn btn-sm btn-primary py-0.5 px-2 fw-bold text-nowrap" id="btnToggleMultiPlay" onclick="toggleMultiPlayMode()" style="font-size: 0.70rem; border-radius: 5px;">
+                  <i class="bi bi-grid-fill me-0.5"></i><span id="multiPlayBtnText">6경기 동시 (ON)</span>
+                </button>
+                <button class="btn btn-sm py-0.5 px-2 fw-bold text-nowrap border" id="btnLiveDemoMode" onclick="toggleLiveDemoSimulator()" style="font-size: 0.70rem; border-radius: 5px; background: #f8fafc; color: #475569;">
+                  <i class="bi bi-play-circle-fill text-danger me-0.5" id="demoIcon"></i><span id="demoText">시뮬 데모</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Live Relay Sub-filter Bar (Visible when in RELAY mode) -->
+            <div class="p-1 px-2 border-bottom d-none bg-light d-flex justify-content-between align-items-center" id="relaySubControlBar" style="border-color: #e2e8f0 !important; font-size: 0.72rem;">
+              <div class="d-flex gap-1 overflow-auto">
+                <button class="btn btn-sm btn-outline-dark py-0 px-2 fw-bold active" id="chipRelayALL" onclick="setRelaySportFilter('ALL')" style="font-size: 0.68rem; border-radius: 4px;">전체</button>
+                <button class="btn btn-sm btn-outline-dark py-0 px-2 fw-bold" id="chipRelayBASEBALL" onclick="setRelaySportFilter('BASEBALL')" style="font-size: 0.68rem; border-radius: 4px;">⚾야구</button>
+                <button class="btn btn-sm btn-outline-dark py-0 px-2 fw-bold" id="chipRelaySOCCER" onclick="setRelaySportFilter('SOCCER')" style="font-size: 0.68rem; border-radius: 4px;">⚽축구</button>
+                <button class="btn btn-sm btn-outline-dark py-0 px-2 fw-bold" id="chipRelayBASKETBALL" onclick="setRelaySportFilter('BASKETBALL')" style="font-size: 0.68rem; border-radius: 4px;">🏀농구</button>
+                <button class="btn btn-sm btn-outline-dark py-0 px-2 fw-bold" id="chipRelayVOLLEYBALL" onclick="setRelaySportFilter('VOLLEYBALL')" style="font-size: 0.68rem; border-radius: 4px;">🏐배구</button>
+              </div>
+              <span class="text-muted small" style="font-size: 0.66rem;">
+                <i class="bi bi-broadcast text-danger me-0.5"></i>0ms 초고속 동기화
+              </span>
+            </div>
+
             <!-- Body: Match Detail Studio (1:1 세이버 정밀 분석실) -->
             <div class="dash-card-body p-2" id="predDetailPanel" style="flex: 1; width: 100%; box-sizing: border-box; overflow-y: auto; height: 100%;">
               <div class="p-4 text-center bg-white rounded-3 shadow-sm border m-2" style="min-height: 380px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-color: #e2e8f0 !important;">
@@ -2155,8 +2189,8 @@
               </div>
             </div>
 
-            <!-- Hidden Live Relay Container (완벽히 업데이트 후 공개) -->
-            <div class="d-none" id="liveRelayContainer"></div>
+            <!-- Live Relay Container (실시간 중계센터 화면) -->
+            <div class="dash-card-body p-2 d-none" id="liveRelayContainer" style="flex: 1; width: 100%; box-sizing: border-box; overflow-y: auto; height: 100%;"></div>
 
           </div>
         </div>
@@ -4584,6 +4618,9 @@
         renderMatchStrip('ALL');
         renderPredMatches();
         initRealTimeSportsTicker();
+        if (currentCenterSubTab === 'RELAY') {
+          renderLiveRelayCenter();
+        }
 
         if (!selectedPredMatchId) {
           const list = getFilteredPredMatches();
@@ -10788,6 +10825,9 @@ function getFullModalMatchList() {
             renderPredDetail(currentTarget);
           }
         }
+        if (currentCenterSubTab === 'RELAY') {
+          renderLiveRelayCenter();
+        }
       } catch (e) {
         console.warn('Live sync error:', e);
       } finally {
@@ -15591,31 +15631,31 @@ function getFullModalMatchList() {
       const relayContainer = document.getElementById('liveRelayContainer');
       const saberPanel = document.getElementById('predDetailPanel');
       const subControlBar = document.getElementById('relaySubControlBar');
-      const multiPlayBtn = document.getElementById('btnToggleMultiPlay');
+      const relayTop = document.getElementById('relayTopActions');
 
       if (mode === 'RELAY') {
         if (tabRelay) {
-          tabRelay.className = 'btn btn-sm fw-bold btn-dark active text-white';
+          tabRelay.className = 'btn btn-sm fw-bold btn-dark active text-white py-1 px-2.5';
         }
         if (tabSaber) {
-          tabSaber.className = 'btn btn-sm fw-bold btn-outline-secondary';
+          tabSaber.className = 'btn btn-sm fw-bold btn-outline-secondary py-1 px-2.5';
         }
         if (relayContainer) relayContainer.classList.remove('d-none');
         if (saberPanel) saberPanel.classList.add('d-none');
         if (subControlBar) subControlBar.classList.remove('d-none');
-        if (multiPlayBtn) multiPlayBtn.classList.remove('d-none');
+        if (relayTop) relayTop.classList.remove('d-none');
         renderLiveRelayCenter();
       } else {
         if (tabSaber) {
-          tabSaber.className = 'btn btn-sm fw-bold btn-dark active text-white';
+          tabSaber.className = 'btn btn-sm fw-bold btn-dark active text-white py-1 px-2.5';
         }
         if (tabRelay) {
-          tabRelay.className = 'btn btn-sm fw-bold btn-outline-secondary';
+          tabRelay.className = 'btn btn-sm fw-bold btn-outline-secondary py-1 px-2.5';
         }
         if (saberPanel) saberPanel.classList.remove('d-none');
         if (relayContainer) relayContainer.classList.add('d-none');
         if (subControlBar) subControlBar.classList.add('d-none');
-        if (multiPlayBtn) multiPlayBtn.classList.add('d-none');
+        if (relayTop) relayTop.classList.add('d-none');
         
         let target = null;
         if (selectedPredMatchId && typeof allMatches !== 'undefined') {
@@ -15648,16 +15688,16 @@ function getFullModalMatchList() {
       const text = document.getElementById('multiPlayBtnText');
       if (isMultiPlayMode) {
         if (btn) {
-          btn.className = 'btn btn-sm btn-primary py-1 px-2 fw-bold text-nowrap';
+          btn.className = 'btn btn-sm btn-primary py-0.5 px-2 fw-bold text-nowrap';
           btn.style.boxShadow = '0 0 8px rgba(29, 78, 216, 0.4)';
         }
-        if (text) text.innerText = '8경기 동시 (ON)';
+        if (text) text.innerText = '6경기 동시 (ON)';
       } else {
         if (btn) {
-          btn.className = 'btn btn-sm btn-outline-primary py-1 px-2 fw-bold text-nowrap';
+          btn.className = 'btn btn-sm btn-outline-primary py-0.5 px-2 fw-bold text-nowrap';
           btn.style.boxShadow = '';
         }
-        if (text) text.innerText = '8경기 동시보기';
+        if (text) text.innerText = '6경기 동시보기';
       }
     }
 
@@ -15726,35 +15766,56 @@ function getFullModalMatchList() {
       const sport = (m.sport_code || 'SOCCER').toUpperCase();
       let state = {};
 
+      let pScores = {};
+      let tStats = {};
+      if (m.details) {
+        if (m.details.period_scores) {
+          try {
+            pScores = typeof m.details.period_scores === 'string' ? JSON.parse(m.details.period_scores) : m.details.period_scores;
+          } catch(e) {}
+        }
+        if (m.details.team_stats) {
+          try {
+            tStats = typeof m.details.team_stats === 'string' ? JSON.parse(m.details.team_stats) : m.details.team_stats;
+          } catch(e) {}
+        }
+      }
+      const sb = tStats.scoreboard || {};
+
       if (sport === 'BASEBALL') {
         const seed = mid % 5;
+        const realInning = sb.current_inning || pScores.current_inning || m.inning_text || m.current_inning || (seed === 0 ? '5회말 ▾' : (seed === 1 ? '7회초 ▲' : (seed === 2 ? '3회말 ▾' : '8회말 ▾')));
+        const realOuts = sb.outs !== undefined ? sb.outs : (m.outs !== undefined ? m.outs : (seed % 3));
+        const realBalls = sb.balls !== undefined ? sb.balls : (m.balls !== undefined ? m.balls : (seed % 4));
+        const realStrikes = sb.strikes !== undefined ? sb.strikes : (m.strikes !== undefined ? m.strikes : (seed % 3));
+
         state = {
           sport: 'BASEBALL',
-          inning_text: seed === 0 ? '5회말 ▾' : (seed === 1 ? '7회초 ▲' : (seed === 2 ? '3회말 ▾' : '8회말 ▾')),
-          outs: (seed % 3),
-          balls: (seed % 4),
-          strikes: (seed % 3),
+          inning_text: realInning,
+          outs: Number(realOuts),
+          balls: Number(realBalls),
+          strikes: Number(realStrikes),
           base1: true,
           base2: (seed % 2 === 0),
-          base3: true, // 3루 점등 (사용자 요청 예시 충족)
-          pitcher_name: (m.home_starter_name && isStarterAnnounced(m.home_starter_name)) ? m.home_starter_name : `${m.home_team_name} 선발`,
+          base3: true,
+          pitcher_name: (m.home_starter_name && isStarterAnnounced(m.home_starter_name)) ? m.home_starter_name : (m.home_starter_name || `${m.home_team_name} 선발`),
           pitcher_np: 68 + (seed * 7),
           pitcher_so: 4 + seed,
-          batter_name: `${m.away_team_name} 4번타자`,
-          recent_play: '풀카운트 승부 끝 좌중간 1타점 적시 2루타! 🏃‍♂️',
-          score_h: Number(m.home_score ?? 4),
-          score_a: Number(m.away_score ?? 3)
+          batter_name: `${m.away_team_name} 타자`,
+          recent_play: '실시간 투타 대결 진행 중 ⚾',
+          score_h: m.home_score !== null && m.home_score !== undefined ? Number(m.home_score) : 0,
+          score_a: m.away_score !== null && m.away_score !== undefined ? Number(m.away_score) : 0
         };
       } else if (sport === 'BASKETBALL') {
         state = {
           sport: 'BASKETBALL',
-          quarter: 'Q3',
-          clock: '04:18',
+          quarter: sb.quarter || 'Q3',
+          clock: sb.clock || '04:18',
           shot_clock: '12',
           possession: 'HOME',
-          score_h: Number(m.home_score ?? 76),
-          score_a: Number(m.away_score ?? 72),
-          recent_event: '3PT! 🎯 외곽 클린 3점슛 작렬 (3점차 맹추격)'
+          score_h: m.home_score !== null && m.home_score !== undefined ? Number(m.home_score) : 76,
+          score_a: m.away_score !== null && m.away_score !== undefined ? Number(m.away_score) : 72,
+          recent_event: '치열한 리바운드 및 외곽 3점슛 공방 🏀'
         };
       } else if (sport === 'VOLLEYBALL') {
         state = {
@@ -15763,22 +15824,22 @@ function getFullModalMatchList() {
           current_set: '4세트',
           set_points: '21 - 19',
           serve_team: m.home_team_name,
-          score_h: Number(m.home_score ?? 2),
-          score_a: Number(m.away_score ?? 1),
+          score_h: m.home_score !== null && m.home_score !== undefined ? Number(m.home_score) : 2,
+          score_a: m.away_score !== null && m.away_score !== undefined ? Number(m.away_score) : 1,
           recent_event: '네트 정면 강력한 블로킹 득점 성공! ✋'
         };
       } else {
         // SOCCER
         state = {
           sport: 'SOCCER',
-          match_minute: m.status === 'FINISHED' ? '종료' : (m.status === 'SCHEDULED' ? '전반' : "74'"),
+          match_minute: m.status === 'FINISHED' ? '종료' : (m.status === 'SCHEDULED' ? '전반' : (m.match_minute || "74'")),
           half: m.status === 'FINISHED' ? 'FT' : '후반전',
           ball_x: 168,
           ball_y: 65,
           is_goal: false,
-          score_h: Number(m.home_score ?? 2),
-          score_a: Number(m.away_score ?? 1),
-          recent_event: '페널티 아크 정면 날카로운 왼발 중거리 슛! ⚽'
+          score_h: m.home_score !== null && m.home_score !== undefined ? Number(m.home_score) : 0,
+          score_a: m.away_score !== null && m.away_score !== undefined ? Number(m.away_score) : 0,
+          recent_event: '실시간 그라운드 공방전 전개 중 ⚽'
         };
       }
 
@@ -15866,7 +15927,13 @@ function getFullModalMatchList() {
       if (relaySportFilter && relaySportFilter !== 'ALL') {
         list = list.filter(m => (m.sport_code || '').toUpperCase() === relaySportFilter);
       }
-      return list;
+      return [...list].sort((a, b) => {
+        const order = { 'LIVE': 0, 'SCHEDULED': 1, 'FINISHED': 2, 'CANCELLED': 3, 'POSTPONED': 4 };
+        const scoreA = order[a.status] ?? 9;
+        const scoreB = order[b.status] ?? 9;
+        if (scoreA !== scoreB) return scoreA - scoreB;
+        return (a.match_date || '').localeCompare(b.match_date || '');
+      });
     }
 
     function renderPreMatchWidget(m) {
@@ -16877,6 +16944,9 @@ function getFullModalMatchList() {
               if (currentTarget) {
                 renderPredDetail(currentTarget);
               }
+            }
+            if (currentCenterSubTab === 'RELAY') {
+              renderLiveRelayCenter();
             }
           }
         } else {
