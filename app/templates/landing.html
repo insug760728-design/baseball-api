@@ -4564,6 +4564,12 @@
           }
         }
 
+        // 🚀 오늘 및 주요 경기 상세 분석 데이터 사전 캐싱 (백그라운드 병렬 프리패치)
+        const topMatches = uniqueList.slice(0, 25);
+        topMatches.forEach(tm => {
+          if (tm && tm.id) fetchMatchDetailCached(tm.id);
+        });
+
         // Fast Phase 2: Lazily load the full archive in the background after 2.5s without blocking initial UI
         setTimeout(() => {
           loadFullMatchesArchive();
@@ -14613,12 +14619,20 @@ function getFullModalMatchList() {
       let detailData = customDetailData || matchDetailCache.get(Number(m.id)) || matchDetailCache.get(m.id);
 
       if (!detailData && !isNaN(Number(m.id)) && Number(m.id) > 0) {
-        // 🚀 [초고속 0.01초 즉시 표출]: 서버 캐시된 세부 심층 지표를 비동기로 불러와 갱신 (로딩 랙 100% 제거)
+        // 🚀 불완전한 임시 수치를 먼저 노출하지 않고, 세부 데이터 수신 완료 후 온전한 공식 데이터를 한 번에 표출
+        panel.innerHTML = `
+          <div class="p-4 text-center bg-white rounded-3 shadow-sm border m-2" style="min-height: 480px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-color: #e2e8f0 !important;">
+            <div class="spinner-border text-primary mb-3" style="width: 2.2rem; height: 2.2rem;" role="status"></div>
+            <h6 class="fw-bold text-dark mb-1">⚾ ${formatTeamName(m.home_team_name)} vs ${formatTeamName(m.away_team_name)}</h6>
+            <p class="text-muted small mb-0">공식 선발투수 및 직전경기 정밀 분석 데이터를 불러오는 중입니다...</p>
+          </div>
+        `;
         fetchMatchDetailCached(m.id).then(freshData => {
           if (freshData && selectedPredMatchId === m.id) {
             renderPredDetail(m, freshData);
           }
         });
+        return;
       }
 
       const pScores = (detailData && detailData.details) ? detailData.details.period_scores : {};
