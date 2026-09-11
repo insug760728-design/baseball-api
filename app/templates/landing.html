@@ -9040,7 +9040,9 @@ function getFullModalMatchList() {
       const d0Str = getKSTDateString(now);
       const d1Str = getKSTDateString(new Date(now.getTime() + 86400000));
       
-      filterPredDate('FINISHED');
+      currentPredDate = 'FINISHED';
+      const btnFin = document.getElementById('predDateFINISHED');
+      if (btnFin) btnFin.classList.add('active');
       loadBetmanToto('W1L', 260067);
 
       startLiveAutoSync(5);
