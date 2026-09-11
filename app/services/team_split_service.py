@@ -4799,6 +4799,13 @@ class TeamSplitService:
                 "total": h2h_record["total"]
             },
             "h2h_matches": recent_h2h_matches,
+            "recent_h2h_matches": recent_h2h_matches,
+            "h2h": {
+                "home_wins": sum(1 for m in recent_h2h_matches if m.get("result") == "W"),
+                "away_wins": sum(1 for m in recent_h2h_matches if m.get("result") == "L"),
+                "draws": sum(1 for m in recent_h2h_matches if m.get("result") == "D"),
+                "total": len(recent_h2h_matches)
+            },
             "home_recent_matches": home_recent_matches,
             "away_recent_matches": away_recent_matches,
             "home_pitching_recent_3": home_pitching_3g,

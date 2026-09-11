@@ -14554,6 +14554,139 @@ function getFullModalMatchList() {
       }
     }
 
+    // ============================================================
+    // 🤝 양 팀 맞대결 최근 상대전적 (클릭 시 펼치기 토글)
+    // - 실제 DB에 존재하는 경기만 있는 그대로 표출 (억지로 10경기 생성 금지)
+    // ============================================================
+    const _h2hRecentStateMap = new Map();
+
+    window.toggleH2HRecent = function(matchId) {
+      const cur = _h2hRecentStateMap.get(String(matchId)) === true;
+      _h2hRecentStateMap.set(String(matchId), !cur);
+      const el = document.getElementById('h2hDetailContent_' + matchId);
+      const btn = document.getElementById('h2hDetailBtn_' + matchId);
+      if (el) el.style.display = !cur ? 'block' : 'none';
+      if (btn) {
+        btn.innerHTML = !cur ? '<i class="bi bi-chevron-up me-1"></i>접기' : '<i class="bi bi-chevron-down me-1"></i>상세보기';
+      }
+    };
+
+    function renderCollapsibleH2HSectionHtml(m, matchup) {
+      matchup = ensureMatchupData(m, matchup);
+      const homeName = formatTeamName(m.home_team_name);
+      const awayName = formatTeamName(m.away_team_name);
+
+      const h2hMatches = (matchup && (matchup.recent_h2h_matches || matchup.h2h_matches)) ? (matchup.recent_h2h_matches || matchup.h2h_matches) : [];
+      const matchCount = h2hMatches.length;
+
+      // Summary
+      let homeWins = 0, awayWins = 0, draws = 0;
+      h2hMatches.forEach(gm => {
+        const hSc = Number(gm.home_score !== undefined ? gm.home_score : 0);
+        const aSc = Number(gm.away_score !== undefined ? gm.away_score : 0);
+        const isH = (gm.home_team === homeName || gm.is_home);
+
+        if (gm.result === 'W' || gm.result === 'WIN') {
+          if (isH) homeWins++; else awayWins++;
+        } else if (gm.result === 'D' || gm.result === 'DRAW' || hSc === aSc) {
+          draws++;
+        } else if (gm.result === 'L' || gm.result === 'LOSS') {
+          if (isH) awayWins++; else homeWins++;
+        } else {
+          if (hSc > aSc) { if (isH) homeWins++; else awayWins++; }
+          else if (aSc > hSc) { if (isH) awayWins++; else homeWins++; }
+          else draws++;
+        }
+      });
+
+      let summaryText = '기록 없음';
+      if (matchCount > 0) {
+        summaryText = `${homeName} ${homeWins}승 ${draws > 0 ? draws + '무 ' : ''}${awayWins}패`;
+        if (homeWins > awayWins) summaryText += ' (우세)';
+        else if (awayWins > homeWins) summaryText += ' (열세)';
+        else summaryText += ' (호각)';
+      }
+
+      const isOpen = _h2hRecentStateMap.get(String(m.id)) === true;
+      const displayStyle = isOpen ? 'display: block;' : 'display: none;';
+      const btnText = isOpen ? '<i class="bi bi-chevron-up me-1"></i>접기' : '<i class="bi bi-chevron-down me-1"></i>상세보기';
+
+      let rowsHtml = '';
+      if (matchCount === 0) {
+        rowsHtml = `<tr><td colspan="4" class="py-3 text-center text-muted" style="font-size: 0.74rem;">공식 최근 맞대결 기록이 없습니다.</td></tr>`;
+      } else {
+        rowsHtml = h2hMatches.map((gm, idx) => {
+          const dStr = (gm.date || '').replace(/^2026-/, '').replace(/^2025-/, '').replace(/-/g, '.');
+          const venue = gm.venue || (gm.is_home ? '홈' : '원정');
+          const stadium = gm.stadium || gm.stadium_info || (venue === '홈' ? (m.stadium || '홈구장') : '원정구장');
+          const hTeam = formatTeamName(gm.home_team || homeName);
+          const aTeam = formatTeamName(gm.away_team || awayName);
+          const hScore = gm.home_score !== undefined ? gm.home_score : 0;
+          const aScore = gm.away_score !== undefined ? gm.away_score : 0;
+          
+          let resText = '무';
+          let resBg = '#64748b';
+          if (Number(hScore) > Number(aScore)) {
+            resText = `${hTeam === homeName ? '홈' : '원정'} 승`;
+            resBg = '#dc2626';
+          } else if (Number(hScore) < Number(aScore)) {
+            resText = `${hTeam === homeName ? '홈' : '원정'} 패`;
+            resBg = '#2563eb';
+          }
+
+          return `
+            <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'}; border-bottom: 1px solid #f1f5f9;">
+              <td class="py-1 px-1 text-muted text-truncate" style="width: 20%; font-size: 0.72rem;">${dStr}</td>
+              <td class="py-1 px-1 text-muted text-truncate" style="width: 20%; font-size: 0.70rem;">${stadium}</td>
+              <td class="py-1 px-1 fw-bold text-dark text-truncate" style="width: 42%; font-size: 0.75rem;">
+                <span class="${hScore > aScore ? 'text-danger fw-extrabold' : ''}">${hTeam}</span>
+                <span class="mx-1 px-1 py-0.5 rounded bg-light border text-dark fw-bold" style="font-size: 0.72rem;">${hScore} : ${aScore}</span>
+                <span class="${aScore > hScore ? 'text-danger fw-extrabold' : ''}">${aTeam}</span>
+              </td>
+              <td class="py-1 px-1" style="width: 18%;">
+                <span class="badge py-0.5 px-1.5 text-white fw-bold" style="background: ${resBg}; font-size: 0.62rem;">${resText}</span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      return `
+        <!-- 4. 🤝 양 팀 맞대결 최근 상대전적 (클릭 시 펼치기 토글) -->
+        <div class="mb-2 rounded-2" style="background: #ffffff; border: 1.5px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+          <!-- Header Bar (Clickable) -->
+          <div class="d-flex justify-content-between align-items-center px-2 py-1.5" style="background: #1e293b; color: #ffffff; cursor: pointer;" onclick="toggleH2HRecent(${m.id})">
+            <div class="d-flex align-items-center gap-1.5 text-truncate" style="flex: 1; min-width: 0;">
+              <span class="fw-bold text-truncate" style="font-size: 0.78rem;">
+                <i class="bi bi-shuffle text-warning me-1"></i>🤝 맞대결 최근 상대전적 ${matchCount > 0 ? `(최근 ${matchCount}경기)` : ''}
+              </span>
+              ${matchCount > 0 ? `<span class="badge" style="background: rgba(255,255,255,0.15); color: #f8fafc; font-size: 0.64rem; font-weight: 600;">${summaryText}</span>` : ''}
+            </div>
+            <button id="h2hDetailBtn_${m.id}" class="btn btn-sm btn-outline-light py-0 px-1.5 flex-shrink-0" style="font-size: 0.65rem; border-color: rgba(255,255,255,0.4);">
+              ${btnText}
+            </button>
+          </div>
+
+          <!-- Collapsible Content Table -->
+          <div id="h2hDetailContent_${m.id}" style="${displayStyle} background: #ffffff;">
+            <table class="table table-sm text-center mb-0" style="table-layout: fixed; width: 100%; font-size: 0.72rem; border-collapse: collapse;">
+              <thead style="background: #f1f5f9; color: #475569; font-size: 0.70rem; border-bottom: 1px solid #e2e8f0;">
+                <tr>
+                  <th style="width: 20%; padding: 4px 2px;">날짜</th>
+                  <th style="width: 20%; padding: 4px 2px;">구장</th>
+                  <th style="width: 42%; padding: 4px 2px;">대진 / 스코어</th>
+                  <th style="width: 18%; padding: 4px 2px;">결과</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
     function renderPredDetail(m, customDetailData = null) {
       const panel = document.getElementById('predDetailPanel');
       if (!panel) return;
@@ -15508,6 +15641,9 @@ function getFullModalMatchList() {
 
           <!-- 3. 📊 직전경기 3열 대칭 비교 표 (홈팀 수치 — 비교지표 — 원정팀 수치) -->
           ${buildUnifiedSymmetricTableHtml(m, matchup)}
+
+          <!-- 4. 🤝 양 팀 맞대결 최근 상대전적 (클릭 시 펼치기 토글, 최대 10경기) -->
+          ${renderCollapsibleH2HSectionHtml(m, matchup)}
         </div>
       `;
 
