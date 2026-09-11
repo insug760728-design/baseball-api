@@ -10577,6 +10577,9 @@ function getFullModalMatchList() {
           }
           list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
                        .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+        }
+      }
+
       // 🚀 실시간 완벽 중복 제거 (팀명 변형/다중 스크래핑으로 인한 동일 대진 중복 원천 차단)
       const dedupedList = [];
       const seenFixtureKeys = new Map();

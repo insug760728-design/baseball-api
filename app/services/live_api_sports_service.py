@@ -1321,6 +1321,11 @@ class LiveApiSportsService:
         - 야구: /games/statistics → 선발, 이닝, 안타, 홈런, 볼넷, 삼진
         - 공통: DB에서 최근 N경기 조회 후 API-Sports external_id로 이벤트 패치
         """
+        try:
+            max_games = int(max_games)
+        except Exception:
+            max_games = 5
+
         cache_key = f"{match_id}_{max_games}"
         now_ts = time.time()
         cached = cls._history_cache.get(cache_key)
