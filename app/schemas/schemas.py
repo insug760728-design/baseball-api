@@ -99,6 +99,8 @@ class MatchResponse(MatchBase):
     ou_pick: Optional[str] = None
     home_starter_name: Optional[str] = None
     away_starter_name: Optional[str] = None
+    home_starter_era: Optional[str] = None
+    away_starter_era: Optional[str] = None
     starters_confirmed: Optional[bool] = False
     current_inning: Optional[str] = None
     inning_text: Optional[str] = None

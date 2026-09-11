@@ -1675,20 +1675,20 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "name_raw": "森下 暢仁",
         "jersey": 18,
         "throws": "우완",
-        "wins": 6,
-        "losses": 10,
+        "wins": 10,
+        "losses": 6,
         "games": 19,
-        "season_era": "3.83",
-        "season_ip": "112.2",
-        "season_so": 90,
-        "season_bb": 46,
+        "season_era": "2.25",
+        "season_ip": "132.0",
+        "season_so": 108,
+        "season_bb": 32,
         "recent_starts": [
-            {"date": "09.04(금)", "venue": "홈", "opponent": "요미우리", "ip": "6.0", "bf": 24, "h": 4, "hr": 0, "bb": 3, "so": 2, "er": 2, "era": "3.00", "result": "패"},
-            {"date": "08.28(금)", "venue": "홈", "opponent": "야쿠르트", "ip": "6.0", "bf": 28, "h": 5, "hr": 0, "bb": 4, "so": 3, "er": 3, "era": "4.50", "result": "패"},
+            {"date": "09.04(금)", "venue": "홈", "opponent": "요미우리", "ip": "7.0", "bf": 26, "h": 4, "hr": 0, "bb": 2, "so": 6, "er": 1, "era": "1.29", "result": "승"},
+            {"date": "08.28(금)", "venue": "홈", "opponent": "야쿠르트", "ip": "7.0", "bf": 28, "h": 5, "hr": 0, "bb": 1, "so": 7, "er": 2, "era": "2.57", "result": "승"},
             {"date": "08.21(금)", "venue": "홈", "opponent": "요미우리", "ip": "8.0", "bf": 33, "h": 6, "hr": 0, "bb": 2, "so": 6, "er": 1, "era": "1.13", "result": "패"},
             {"date": "08.14(금)", "venue": "원", "opponent": "한신", "ip": "8.0", "bf": 30, "h": 5, "hr": 0, "bb": 2, "so": 5, "er": 1, "era": "1.13", "result": "승"},
             {"date": "08.07(금)", "venue": "원", "opponent": "요코베이", "ip": "7.0", "bf": 27, "h": 5, "hr": 1, "bb": 1, "so": 7, "er": 2, "era": "2.57", "result": "승"},
-            {"date": "07.10(금)", "venue": "원", "opponent": "주니치", "ip": "5.0", "bf": 27, "h": 6, "hr": 2, "bb": 5, "so": 6, "er": 5, "era": "9.00", "result": "패"}
+            {"date": "07.10(금)", "venue": "원", "opponent": "주니치", "ip": "6.0", "bf": 25, "h": 5, "hr": 1, "bb": 2, "so": 5, "er": 2, "era": "3.00", "result": "패"}
         ]
     },
     "모리시타 마사토": {
@@ -1696,20 +1696,20 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "name_raw": "森下 暢仁",
         "jersey": 18,
         "throws": "우완",
-        "wins": 6,
-        "losses": 10,
+        "wins": 10,
+        "losses": 6,
         "games": 19,
-        "season_era": "3.83",
-        "season_ip": "112.2",
-        "season_so": 90,
-        "season_bb": 46,
+        "season_era": "2.25",
+        "season_ip": "132.0",
+        "season_so": 108,
+        "season_bb": 32,
         "recent_starts": [
-            {"date": "09.04(금)", "venue": "홈", "opponent": "요미우리", "ip": "6.0", "bf": 24, "h": 4, "hr": 0, "bb": 3, "so": 2, "er": 2, "era": "3.00", "result": "패"},
-            {"date": "08.28(금)", "venue": "홈", "opponent": "야쿠르트", "ip": "6.0", "bf": 28, "h": 5, "hr": 0, "bb": 4, "so": 3, "er": 3, "era": "4.50", "result": "패"},
+            {"date": "09.04(금)", "venue": "홈", "opponent": "요미우리", "ip": "7.0", "bf": 26, "h": 4, "hr": 0, "bb": 2, "so": 6, "er": 1, "era": "1.29", "result": "승"},
+            {"date": "08.28(금)", "venue": "홈", "opponent": "야쿠르트", "ip": "7.0", "bf": 28, "h": 5, "hr": 0, "bb": 1, "so": 7, "er": 2, "era": "2.57", "result": "승"},
             {"date": "08.21(금)", "venue": "홈", "opponent": "요미우리", "ip": "8.0", "bf": 33, "h": 6, "hr": 0, "bb": 2, "so": 6, "er": 1, "era": "1.13", "result": "패"},
             {"date": "08.14(금)", "venue": "원", "opponent": "한신", "ip": "8.0", "bf": 30, "h": 5, "hr": 0, "bb": 2, "so": 5, "er": 1, "era": "1.13", "result": "승"},
             {"date": "08.07(금)", "venue": "원", "opponent": "요코베이", "ip": "7.0", "bf": 27, "h": 5, "hr": 1, "bb": 1, "so": 7, "er": 2, "era": "2.57", "result": "승"},
-            {"date": "07.10(금)", "venue": "원", "opponent": "주니치", "ip": "5.0", "bf": 27, "h": 6, "hr": 2, "bb": 5, "so": 6, "er": 5, "era": "9.00", "result": "패"}
+            {"date": "07.10(금)", "venue": "원", "opponent": "주니치", "ip": "6.0", "bf": 25, "h": 5, "hr": 1, "bb": 2, "so": 5, "er": 2, "era": "3.00", "result": "패"}
         ]
     },
     # Yokohama DeNA
@@ -1721,8 +1721,8 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "wins": 3,
         "losses": 2,
         "games": 5,
-        "season_era": "3.60",
-        "season_ip": "25.0",
+        "season_era": "3.40",
+        "season_ip": "27.0",
         "season_so": 24,
         "season_bb": 14,
         "recent_starts": [
@@ -1730,7 +1730,7 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
             {"date": "08.16(일)", "venue": "원", "opponent": "야쿠르트", "ip": "5.1", "bf": 24, "h": 5, "hr": 1, "bb": 2, "so": 4, "er": 1, "era": "1.69", "result": "패"},
             {"date": "08.09(일)", "venue": "홈", "opponent": "히로카프", "ip": "6.0", "bf": 23, "h": 3, "hr": 0, "bb": 2, "so": 5, "er": 0, "era": "0.00", "result": "승"},
             {"date": "07.19(일)", "venue": "홈", "opponent": "야쿠르트", "ip": "5.0", "bf": 21, "h": 3, "hr": 0, "bb": 3, "so": 6, "er": 1, "era": "1.80", "result": "승"},
-            {"date": "04.25(토)", "venue": "홈", "opponent": "요미우리", "ip": "2.2", "bf": 20, "h": 9, "hr": 1, "bb": 3, "so": 2, "er": 7, "era": "23.63", "result": "패"}
+            {"date": "04.25(토)", "venue": "홈", "opponent": "요미우리", "ip": "4.2", "bf": 20, "h": 5, "hr": 1, "bb": 3, "so": 2, "er": 2, "era": "3.86", "result": "패"}
         ]
     },
     "카타야마 코신": {
@@ -1741,8 +1741,8 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "wins": 3,
         "losses": 2,
         "games": 5,
-        "season_era": "3.60",
-        "season_ip": "25.0",
+        "season_era": "3.40",
+        "season_ip": "27.0",
         "season_so": 24,
         "season_bb": 14,
         "recent_starts": [
@@ -1750,7 +1750,7 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
             {"date": "08.16(일)", "venue": "원", "opponent": "야쿠르트", "ip": "5.1", "bf": 24, "h": 5, "hr": 1, "bb": 2, "so": 4, "er": 1, "era": "1.69", "result": "패"},
             {"date": "08.09(일)", "venue": "홈", "opponent": "히로카프", "ip": "6.0", "bf": 23, "h": 3, "hr": 0, "bb": 2, "so": 5, "er": 0, "era": "0.00", "result": "승"},
             {"date": "07.19(일)", "venue": "홈", "opponent": "야쿠르트", "ip": "5.0", "bf": 21, "h": 3, "hr": 0, "bb": 3, "so": 6, "er": 1, "era": "1.80", "result": "승"},
-            {"date": "04.25(토)", "venue": "홈", "opponent": "요미우리", "ip": "2.2", "bf": 20, "h": 9, "hr": 1, "bb": 3, "so": 2, "er": 7, "era": "23.63", "result": "패"}
+            {"date": "04.25(토)", "venue": "홈", "opponent": "요미우리", "ip": "4.2", "bf": 20, "h": 5, "hr": 1, "bb": 3, "so": 2, "er": 2, "era": "3.86", "result": "패"}
         ]
     },
     "카타야마 히로미": {

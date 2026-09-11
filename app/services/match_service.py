@@ -11,6 +11,7 @@ from app.scrapers.soccer_scraper import SoccerScraper, SOCCER_LEAGUE_CODES
 from app.scrapers.basketball_scraper import BasketballScraper
 from app.core.sports_catalog import SPORTS_CATALOG
 from app.services.team_split_service import TeamSplitService, is_valid_starter_name
+from app.services.live_api_sports_service import lookup_pitcher_season_era
 from app.services.player_translation import translate_player_name, sanitize_player_name, sanitize_text
 from app.services.betman_service import BetmanService, teams_match, clean_name, get_canonical_team_key
 
@@ -354,6 +355,8 @@ class MatchService:
         for m in matches:
             m.home_starter_name = None
             m.away_starter_name = None
+            m.home_starter_era = None
+            m.away_starter_era = None
             m.starters_confirmed = False
             m.current_inning = None
             m.inning_text = None
@@ -424,9 +427,13 @@ class MatchService:
                 if not is_valid_starter_name(m.home_starter_name):
                     m.home_starter_name = None
                     h_confirmed = False
+                else:
+                    m.home_starter_era = lookup_pitcher_season_era(m.home_starter_name)
                 if not is_valid_starter_name(m.away_starter_name):
                     m.away_starter_name = None
                     a_confirmed = False
+                else:
+                    m.away_starter_era = lookup_pitcher_season_era(m.away_starter_name)
                 m.starters_confirmed = bool(m.home_starter_name and m.away_starter_name and h_confirmed and a_confirmed)
 
             if m.status != "LIVE":
