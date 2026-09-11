@@ -4711,27 +4711,28 @@
       };
     }
 
+    const _starterRecentStateMap = new Map();
+
     function toggleStarterRecentGames(matchId) {
+      const sId = String(matchId);
+      const isCurrentlyOpen = _starterRecentStateMap.get(sId) === true;
+      const nextOpen = !isCurrentlyOpen;
+      _starterRecentStateMap.set(sId, nextOpen);
+
       const hEl = document.getElementById(`starterHomeRecent_${matchId}`);
       const aEl = document.getElementById(`starterAwayRecent_${matchId}`);
       const icon = document.getElementById(`starterToggleIcon_${matchId}`);
       const btn = document.getElementById(`starterToggleBtn_${matchId}`);
-      if (!hEl || !aEl) return;
-      const isHidden = (hEl.style.display === 'none' || !hEl.style.display);
-      if (isHidden) {
-        hEl.style.display = 'block';
-        aEl.style.display = 'block';
-        if (icon) icon.className = 'bi bi-chevron-up';
-        if (btn) {
+      
+      if (hEl) hEl.style.display = nextOpen ? 'block' : 'none';
+      if (aEl) aEl.style.display = nextOpen ? 'block' : 'none';
+      if (icon) icon.className = nextOpen ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+      if (btn) {
+        if (nextOpen) {
           btn.style.background = '#ffffff';
           btn.style.color = '#1e293b';
           btn.style.borderColor = '#ffffff';
-        }
-      } else {
-        hEl.style.display = 'none';
-        aEl.style.display = 'none';
-        if (icon) icon.className = 'bi bi-chevron-down';
-        if (btn) {
+        } else {
           btn.style.background = 'rgba(255,255,255,0.15)';
           btn.style.color = '#ffffff';
           btn.style.borderColor = 'rgba(255,255,255,0.35)';
@@ -4865,6 +4866,13 @@
       const hRecentStarts = hPitcher.recent_starts || hPitcher.recent_3_starts || [];
       const aRecentStarts = aPitcher.recent_starts || aPitcher.recent_3_starts || [];
 
+      const isOpen = _starterRecentStateMap.get(String(m.id)) === true;
+      const displayStyle = isOpen ? 'display: block;' : 'display: none;';
+      const iconClass = isOpen ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+      const btnBg = isOpen ? '#ffffff' : 'rgba(255,255,255,0.15)';
+      const btnColor = isOpen ? '#1e293b' : '#ffffff';
+      const btnBorder = isOpen ? '#ffffff' : 'rgba(255,255,255,0.35)';
+
       return `
         <!-- ⚾ 예상 선발투수 메인 카드 (Clean & High-End Visuals matching reference) -->
         <div class="card mb-2.5 overflow-hidden border-0 shadow-sm" id="modalStartersCard_${m.id}" style="border-radius: 8px; border: 1px solid #cbd5e1 !important; background: #ffffff;">
@@ -4873,13 +4881,13 @@
             <div class="d-flex align-items-center gap-1.5 fw-bold" style="font-size: 0.86rem; letter-spacing: -0.3px;">
               <span>예상 선발투수</span>
             </div>
-            <button class="btn btn-sm py-0.5 px-2 text-white fw-bold d-inline-flex align-items-center gap-1" 
+            <button class="btn btn-sm py-0.5 px-2 fw-bold d-inline-flex align-items-center gap-1" 
                     id="starterToggleBtn_${m.id}"
                     type="button" 
                     onclick="toggleStarterRecentGames('${m.id}')"
-                    style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35); border-radius: 4px; font-size: 0.73rem; transition: all 0.2s;">
+                    style="background: ${btnBg}; color: ${btnColor}; border: 1px solid ${btnBorder}; border-radius: 4px; font-size: 0.73rem; transition: all 0.2s;">
               <span>최근경기</span>
-              <i class="bi bi-chevron-down" id="starterToggleIcon_${m.id}" style="font-size: 0.68rem;"></i>
+              <i class="${iconClass}" id="starterToggleIcon_${m.id}" style="font-size: 0.68rem;"></i>
             </button>
           </div>
 
@@ -4913,7 +4921,7 @@
             </div>
 
             <!-- Home Pitcher 10-Column Recent Starts Table -->
-            <div id="starterHomeRecent_${m.id}" style="display: none; background: #fafafa; border-bottom: 1px solid #e2e8f0;">
+            <div id="starterHomeRecent_${m.id}" style="${displayStyle} background: #fafafa; border-bottom: 1px solid #e2e8f0;">
               ${renderPitcher10ColRecentStartsTable(hRecentStarts, hPitcher, m.home_team_name, true)}
             </div>
 
@@ -4945,7 +4953,7 @@
             </div>
 
             <!-- Away Pitcher 10-Column Recent Starts Table -->
-            <div id="starterAwayRecent_${m.id}" style="display: none; background: #fafafa;">
+            <div id="starterAwayRecent_${m.id}" style="${displayStyle} background: #fafafa;">
               ${renderPitcher10ColRecentStartsTable(aRecentStarts, aPitcher, m.away_team_name, false)}
             </div>
           </div>
@@ -5104,12 +5112,7 @@ function getFullModalMatchList() {
       const numId = Number(matchId);
       if (isNaN(numId) || numId <= 0) return Promise.resolve(null);
       if (!forceRefresh && matchDetailCache.has(numId)) {
-        const cached = matchDetailCache.get(numId);
-        const sp = cached && cached.matchup_analysis && cached.matchup_analysis.starting_pitchers;
-        const isStillUnannounced = !sp || !sp.home || !isStarterAnnounced(sp.home.name) || !sp.away || !isStarterAnnounced(sp.away.name);
-        if (!isStillUnannounced) {
-          return Promise.resolve(cached);
-        }
+        return Promise.resolve(matchDetailCache.get(numId));
       }
       if (!forceRefresh && _matchDetailFetchPromises.has(numId)) {
         return _matchDetailFetchPromises.get(numId);
@@ -6368,6 +6371,8 @@ function getFullModalMatchList() {
       `;
     }
 
+    const _eventDrawerStateMap = new Map();
+
     function toggleMatchEventDrawer(drawerId) {
       const el = document.getElementById('drawer_' + drawerId);
       const chev = document.getElementById('chev_' + drawerId);
@@ -6375,7 +6380,10 @@ function getFullModalMatchList() {
       const btn = document.getElementById('btnChev_' + drawerId);
       if (!el) return;
       const isClosed = (el.style.display === 'none' || window.getComputedStyle(el).display === 'none');
-      if (isClosed) {
+      const nextOpen = isClosed;
+      _eventDrawerStateMap.set(drawerId, nextOpen);
+
+      if (nextOpen) {
         el.style.display = 'block';
         if (chev) {
           chev.style.transform = 'rotate(180deg)';
@@ -7048,7 +7056,7 @@ function getFullModalMatchList() {
           </div>
         </div>
 
-        <div id="drawer_${drawerId}" class="soccer-event-drawer px-3 py-2 border-bottom" style="display: none; background: #ffffff; border-top: 1px solid #e5e7eb; border-left: 3px solid #111827; animation: fadeIn 0.15s ease;">
+        <div id="drawer_${drawerId}" class="soccer-event-drawer px-3 py-2 border-bottom" style="${_eventDrawerStateMap.get(drawerId) === true ? 'display: block;' : 'display: none;'} background: #ffffff; border-top: 1px solid #e5e7eb; border-left: 3px solid #111827; animation: fadeIn 0.15s ease;">
           ${drawerContentHtml}
         </div>
       `;
@@ -10121,7 +10129,7 @@ function getFullModalMatchList() {
       currentPredDate = 'ALL';
       loadBetmanToto('W1L', 260068);
 
-      startLiveAutoSync(5);
+      startLiveAutoSync(20);
       startBetman10MinSync();
 
       // Auto-scroll match list to current time match ONCE on initial page load
@@ -11403,7 +11411,7 @@ function getFullModalMatchList() {
               const cachedAccordionHtml = realCachedHtml || '<div class="slim-accordion-loading">⏳ 불러오는 중...</div>';
               return `
                 <div class="slim-card-actions">
-                  <button class="slim-action-btn odds-btn ${isAccordionOpen && activeAccordionType === 'odds' ? 'active' : ''}" id="oddsBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'odds')">📊 배당</button>
+                  <button class="slim-action-btn odds-btn ${isAccordionOpen && activeAccordionType === 'odds' ? 'active' : ''}" id="oddsBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'odds')">📈 배당흐름 <span style="font-size: 0.65rem; font-weight: normal; opacity: 0.85;">(서비스준비중)</span></button>
                   <button class="slim-action-btn history-btn ${isAccordionOpen && activeAccordionType === 'history' ? 'active' : ''}" id="histBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'history')">📋 전경기</button>
                   <button class="slim-action-btn detail-btn" onclick="event.stopPropagation(); selectPredMatch(${m.id}, true)">🔍 상세</button>
                 </div>
@@ -11643,22 +11651,23 @@ function getFullModalMatchList() {
         return;
       }
 
-      // 캐시에 없으면 고속 API fetch (30~50ms)
+      // 🚀 0초 즉시 렌더: 로컬 데이터로 즉시 UI 표출 (로딩 대기 0ms)
+      const localData = buildLocalHistory(match);
+      renderSlimHistoryDom(matchId, match, localData);
+
+      // 백그라운드에서 실시간 상세 기록 보강
       try {
         const resp = await fetch(`/api/v1/live/match-history/${matchId}?max_games=1`);
         if (resp.ok) {
-          data = await resp.json();
-          if (data && data.status === 'success') {
-            _historyClientCache.set(matchId, data);
+          const remoteData = await resp.json();
+          if (remoteData && remoteData.status === 'success' && (remoteData.home_recent || remoteData.away_recent)) {
+            _historyClientCache.set(matchId, remoteData);
+            if (_slimAccordionState[matchId]?.type === 'history') {
+              renderSlimHistoryDom(matchId, match, remoteData);
+            }
           }
         }
       } catch(e) {}
-
-      if (!data || data.status !== 'success' || (!data.home_recent && !data.away_recent)) {
-        data = buildLocalHistory(match);
-      }
-
-      renderSlimHistoryDom(matchId, match, data);
     }
 
     function renderSlimHistoryDom(matchId, match, data) {
