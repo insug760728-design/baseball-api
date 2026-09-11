@@ -1071,22 +1071,25 @@ class LiveApiSportsService:
                         continue
 
                     if country in ["England", "Spain", "Germany", "Italy", "France", "Netherlands", "Japan", "South-Korea", "Brazil", "Portugal", "Belgium", "Turkey", "USA", "World"]:
-                        new_m = Match(
-                            official_id=str(fixture_info.get("id", "")),
-                            sport_code="SOCCER",
-                            league_name=f"{country} - {raw_lname}" if country != "World" else raw_lname,
-                            season=str(league.get("season", "2026")),
-                            round_name=league.get("round", "정규시즌"),
-                            match_date=kst_dt.strftime("%Y-%m-%d %H:%M"),
-                            home_team_name=translate_soccer_team(h_name),
-                            away_team_name=translate_soccer_team(a_name),
-                            home_score=0,
-                            away_score=0,
-                            status="SCHEDULED",
-                            stadium=fixture_info.get("venue", {}).get("name") or "스타디움"
-                        )
-                        db.add(new_m)
-                        updated += 1
+                        fix_id_str = str(fixture_info.get("id", ""))
+                        existing_m = db.query(Match).filter(Match.official_id == fix_id_str).first() if fix_id_str else None
+                        if not existing_m and fix_id_str:
+                            new_m = Match(
+                                official_id=fix_id_str,
+                                sport_code="SOCCER",
+                                league_name=f"{country} - {raw_lname}" if country != "World" else raw_lname,
+                                season=str(league.get("season", "2026")),
+                                round_name=league.get("round", "정규시즌"),
+                                match_date=kst_dt.strftime("%Y-%m-%d %H:%M"),
+                                home_team_name=translate_soccer_team(h_name),
+                                away_team_name=translate_soccer_team(a_name),
+                                home_score=0,
+                                away_score=0,
+                                status="SCHEDULED",
+                                stadium=fixture_info.get("venue", {}).get("name") or "스타디움"
+                            )
+                            db.add(new_m)
+                            updated += 1
             db.commit()
 
             # Broadcast real-time update via WebSocket & clear cache if any scores changed
@@ -1345,48 +1348,40 @@ class LiveApiSportsService:
                 if 'KBL' in ln: return 'KBL'
                 return s_code
 
-            def resolve_recent_matches(tm_name: str) -> list:
-                # 1. SQL 직접 일치 검색
-                direct = db.query(Match).filter(
-                    Match.sport_code == sport_code,
-                    Match.status == 'FINISHED',
-                    Match.id != match_id,
-                    (Match.home_team_name == tm_name) | (Match.away_team_name == tm_name)
-                ).order_by(Match.match_date.desc()).limit(max_games).all()
-                if len(direct) >= max_games:
-                    return direct
+            target_cat = get_league_category(league_name, sport_code)
+            candidate_tuples = db.query(Match.id, Match.match_date, Match.home_team_name, Match.away_team_name, Match.league_name, Match.sport_code)\
+                .filter(Match.sport_code == sport_code, Match.status == 'FINISHED', Match.id != match_id)\
+                .order_by(Match.match_date.desc()).limit(150).all()
 
-                # 2. 동의어/별칭 기반 유연한 검색 (최근 완료 경기 대상)
-                target_cat = get_league_category(league_name, sport_code)
-                candidates = db.query(Match).filter(
-                    Match.sport_code == sport_code,
-                    Match.status == 'FINISHED',
-                    Match.id != match_id
-                ).order_by(Match.match_date.desc()).limit(300).all()
-
-                matched = list(direct)
+            def find_match_ids_for_team(tm_name: str) -> list:
+                matched_ids = []
                 # 1순위: 동일 리그 카테고리 내 매칭
-                for c in candidates:
-                    if c in matched: continue
-                    if get_league_category(c.league_name, c.sport_code) == target_cat:
-                        if teams_match(c.home_team_name, tm_name) or teams_match(c.away_team_name, tm_name):
-                            matched.append(c)
-                            if len(matched) >= max_games:
-                                return matched
-
+                for cid, cdt, chome, caway, clname, cscode in candidate_tuples:
+                    if get_league_category(clname, cscode) == target_cat:
+                        if chome == tm_name or caway == tm_name or teams_match(chome, tm_name) or teams_match(caway, tm_name):
+                            matched_ids.append(cid)
+                            if len(matched_ids) >= max_games:
+                                return matched_ids
                 # 2순위: 동일 종목 전체 내 매칭
-                for c in candidates:
-                    if c in matched: continue
-                    if teams_match(c.home_team_name, tm_name) or teams_match(c.away_team_name, tm_name):
-                        matched.append(c)
-                        if len(matched) >= max_games:
-                            return matched
+                for cid, cdt, chome, caway, clname, cscode in candidate_tuples:
+                    if cid not in matched_ids:
+                        if chome == tm_name or caway == tm_name or teams_match(chome, tm_name) or teams_match(caway, tm_name):
+                            matched_ids.append(cid)
+                            if len(matched_ids) >= max_games:
+                                return matched_ids
+                return matched_ids
 
-                return matched
+            h_ids = find_match_ids_for_team(home_team)
+            a_ids = find_match_ids_for_team(away_team)
 
-            # 홈팀 & 원정팀 최근 경기 조회
-            home_recent = resolve_recent_matches(home_team)
-            away_recent = resolve_recent_matches(away_team)
+            all_needed_ids = list(set(h_ids + a_ids))
+            matches_map = {}
+            if all_needed_ids:
+                m_objs = db.query(Match).filter(Match.id.in_(all_needed_ids)).all()
+                matches_map = {m.id: m for m in m_objs}
+
+            home_recent = [matches_map[mid] for mid in h_ids if mid in matches_map]
+            away_recent = [matches_map[mid] for mid in a_ids if mid in matches_map]
 
             def format_match_basic(m: Match, perspective_team: str) -> Dict[str, Any]:
                 """경기 기본 정보 포맷"""
