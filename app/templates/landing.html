@@ -3833,8 +3833,8 @@
         const rollingStartStr = getKSTDateString(new Date(now.getTime() - 86400000));
         // Fast Phase 1: 롤링 윈도우(D-1 어제부터 시작) 및 최근 종료 경기 고속 로드
         const [upResp, finResp] = await Promise.all([
-          fetch(`/api/v1/matches?start_date=${rollingStartStr}&order=asc&limit=150`),
-          fetch('/api/v1/matches?status=FINISHED&order=desc&limit=300')
+          fetch(`/api/v1/matches?start_date=${rollingStartStr}&order=asc&limit=80`),
+          fetch('/api/v1/matches?status=FINISHED&order=desc&limit=80')
         ]);
         const upMatches = upResp.ok ? await upResp.json() : [];
         const finMatches = finResp.ok ? await finResp.json() : [];
@@ -9192,7 +9192,7 @@ function getFullModalMatchList() {
 
       if (dKey === 'FINISHED') {
         try {
-          let finishedUrl = '/api/v1/matches?status=FINISHED&order=desc&limit=1200';
+          let finishedUrl = '/api/v1/matches?status=FINISHED&order=desc&limit=80';
           if (currentPredLeague && currentPredLeague !== 'ALL') {
             const leagueParam = getLeagueQueryParam(currentPredLeague);
             finishedUrl += `&league_name=${encodeURIComponent(leagueParam)}`;
