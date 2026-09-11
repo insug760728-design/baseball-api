@@ -15132,21 +15132,23 @@ function getFullModalMatchList() {
 
       let baseballStartersSection = isBaseball ? renderExpectedStartersCard(m, matchup) : '';
 
-      // 2. 두 번째: 전경기결과 섹션 (축구 및 야구 공통 지원)
+      // 2. 두 번째: 전경기결과 심층 분석 섹션 (축구 및 야구 공통 지원)
       let recentMatchesSection = '';
       if (isBaseball) {
         recentMatchesSection = `
-          <!-- ⚾ 야구 직전 경기 스코어보드 & 최근 5경기 결과 비교 -->
+          <!-- ⚾ 야구 직전 경기 스코어보드 & 최근 5경기 결과 & 맞대결 전적 -->
           <div class="mb-3">
             ${buildRecent2MatchScoreboardHtml(m, matchup)}
             ${buildSoccerMobileAppRecentOnlyHtml(m, matchup, 'dtRec_' + (m.id || 0))}
+            ${buildSoccerMobileAppH2HOnlyHtml(m, matchup, 'dtH2h_' + (m.id || 0))}
           </div>
         `;
       } else {
         recentMatchesSection = `
-          <!-- ⚽ 축구 최근 전경기 결과 & 득실점 분석 -->
+          <!-- ⚽ 축구 최근 전경기 결과 & 득실점 분석 & 맞대결 전적 -->
           <div class="mb-3">
             ${buildSoccerMobileAppRecentOnlyHtml(m, matchup, 'dtRec_' + (m.id || 0))}
+            ${buildSoccerMobileAppH2HOnlyHtml(m, matchup, 'dtH2h_' + (m.id || 0))}
           </div>
         `;
       }
@@ -15170,10 +15172,10 @@ function getFullModalMatchList() {
             </div>
           </div>
 
-          <!-- 2. 선발투수 정보 섹션 (야구) -->
+          <!-- 2. 예상 선발투수 섹션 (야구) -->
           ${baseballStartersSection}
 
-          <!-- 3. 두번째로 전경기결과 (축구 & 야구) -->
+          <!-- 3. 심층 전경기 분석 (직전경기 스코어보드 + 최근5G + 맞대결 H2H) -->
           ${recentMatchesSection}
         </div>
       `;
