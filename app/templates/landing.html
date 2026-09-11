@@ -9977,57 +9977,18 @@ function getFullModalMatchList() {
     let initialScheduleAutoScrollDone = false;
 
     function initPredictionSection() {
-      // ⚡ 0초(0ms) 즉시 렌더링 & 구버전 브라우저 캐시 전량 자동 정리
+      // ⚡ 로컬 캐시 전량 초기화 및 전체 경기 기본 설정
       try {
-        // 구버전(v1~v11) 로컬 캐시 전량 자동 제거 (가짜/혼합 대진표 잔존 원천 차단)
-        const keysToRemove = [];
-        for (let i = 0; i < localStorage.length; i++) {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
           const k = localStorage.key(i);
-          if (k && k.startsWith('tokeon_matches_cache') && k !== 'tokeon_matches_cache_v12') {
-            keysToRemove.push(k);
-          }
-        }
-        keysToRemove.forEach(k => localStorage.removeItem(k));
-
-        const cached = localStorage.getItem('tokeon_matches_cache_v12');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const nowTs = Date.now();
-            parsed.forEach(m => {
-              if (m) {
-                if (m.home_team_name) m.home_team_name = formatTeamName(m.home_team_name);
-                if (m.away_team_name) m.away_team_name = formatTeamName(m.away_team_name);
-                if (m.status === 'LIVE' && m.match_date) {
-                  try {
-                    const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
-                    if ((nowTs - mTime) / (1000 * 60 * 60) > 4) {
-                      m.status = 'FINISHED';
-                    }
-                  } catch(e) {}
-                }
-              }
-            });
-            allMatches = parsed;
-            window.matchesLoadedInitial = true;
-            renderMatchStrip('ALL');
+          if (k && k.includes('matches_cache')) {
+            localStorage.removeItem(k);
           }
         }
       } catch (e) {}
 
-      const now = new Date();
-      const d0Str = getKSTDateString(now);
-      const d1Str = getKSTDateString(new Date(now.getTime() + 86400000));
-      
-      currentPredDate = 'D0';
-      ['D0', 'D1', 'ALL', 'FINISHED'].forEach(k => {
-        const btn = document.getElementById('predDate' + k);
-        if (btn) {
-          if (k === 'D0') btn.classList.add('active');
-          else btn.classList.remove('active');
-        }
-      });
-      loadBetmanToto('W1L', 260067);
+      currentPredDate = 'ALL';
+      loadBetmanToto('W1L', 260068);
 
       startLiveAutoSync(5);
       startBetman10MinSync();
@@ -10086,30 +10047,19 @@ function getFullModalMatchList() {
       if (isSilentRefreshing) return;
       isSilentRefreshing = true;
       try {
-        const d0Str = getKSTDateString(new Date());
-        const resp = await fetch(`/api/v1/matches?start_date=${d0Str}&order=asc&limit=100`);
+        const resp = await fetch(`/api/v1/matches?order=asc&limit=250&_t=${Date.now()}`);
         if (!resp.ok) return;
         const rawMatches = await resp.json();
 
-        // 🚀 안전한 최신 갱신: 오늘자 경기는 서버 최신 데이터로 완전 대체하고, 다른 날짜 경기는 보존
-        const serverTodayIds = new Set(rawMatches.map(m => m.id));
-        const nonTodayMatches = (allMatches || []).filter(m => !m.match_date || !m.match_date.startsWith(d0Str) || serverTodayIds.has(m.id));
-        const existingMap = new Map(nonTodayMatches.map(m => [m.id, m]));
-        
+        const formatted = [];
         for (const m of rawMatches) {
           if (m && m.id) {
             if (m.home_team_name) m.home_team_name = formatTeamName(m.home_team_name);
             if (m.away_team_name) m.away_team_name = formatTeamName(m.away_team_name);
-
-            const prevM = existingMap.get(m.id);
-            if (prevM && (prevM.home_starter_name !== m.home_starter_name || prevM.away_starter_name !== m.away_starter_name)) {
-              matchDetailCache.delete(m.id);
-              matchDetailCache.delete(Number(m.id));
-            }
-            existingMap.set(m.id, m);
+            formatted.push(m);
           }
         }
-        allMatches = Array.from(existingMap.values());
+        allMatches = formatted;
 
         renderMatchStrip('ALL');
         renderPredMatches();
