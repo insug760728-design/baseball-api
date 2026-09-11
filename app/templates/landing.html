@@ -1962,17 +1962,11 @@
     </div>
   </nav>
 
-  <!-- 📱 핸드폰 모바일 전용 1-Tap 상단 탭 단축키 (고정 네비게이션 - 3대 핵심 탭) -->
+  <!-- 📱 핸드폰 모바일 전용 1-Tap 상단 탭 단축키 (실시간 팬톡) -->
   <div id="mobileTabBar" class="d-none flex-column p-1" style="background: #ffffff; border-bottom: 2px solid #111827; z-index: 1045;">
     <div class="dash-container">
       <div class="d-flex justify-content-between align-items-center gap-1 w-100">
-        <button class="btn btn-sm mobile-tab-btn flex-fill active" id="mobTabSchedule" onclick="switchMobileTab('schedule')">
-          <i class="bi bi-calendar3 d-block mb-0.5" style="font-size: 1.05rem;"></i>일정/스코어
-        </button>
-        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabToto" onclick="openTotoModal(currentTotoRound)">
-          <i class="bi bi-card-checklist d-block mb-0.5 text-warning" style="font-size: 1.05rem;"></i>승무패 경기목록
-        </button>
-        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabCommunity" onclick="switchMobileTab('community')">
+        <button class="btn btn-sm mobile-tab-btn flex-fill active" id="mobTabCommunity" onclick="switchMobileTab('community')">
           <i class="bi bi-chat-dots-fill d-block mb-0.5 text-success" style="font-size: 1.05rem;"></i>실시간 팬톡
         </button>
       </div>
@@ -1993,12 +1987,9 @@
           <div class="dash-card-column">
             
             <div class="dash-card-header pb-2">
-              <!-- Date Filters (진행/예정, 오늘, 내일, 지난결과) -->
-              <div class="d-flex gap-1 mb-2 overflow-x-auto" style="scrollbar-width: none;">
-                <button class="btn btn-sm pred-date-btn active flex-fill text-nowrap" id="predDateALL" onclick="filterPredDate('ALL')">진행/예정</button>
-                <button class="btn btn-sm pred-date-btn flex-fill text-nowrap" id="predDateD0" onclick="filterPredDate('D0')">오늘</button>
-                <button class="btn btn-sm pred-date-btn flex-fill text-nowrap" id="predDateD1" onclick="filterPredDate('D1')">내일</button>
-                <button class="btn btn-sm pred-date-btn flex-fill text-nowrap fw-bold" id="predDateFINISHED" onclick="filterPredDate('FINISHED')" style="color: #dc2626; border-color: #fecaca; background: #fef2f2;"><i class="bi bi-check2-circle me-1"></i>지난결과</button>
+              <!-- Date Filter (지난결과 전용) -->
+              <div class="d-flex gap-1 mb-2">
+                <button class="btn btn-sm pred-date-btn active w-100 text-nowrap fw-bold" id="predDateFINISHED" onclick="filterPredDate('FINISHED')" style="color: #dc2626; border-color: #fecaca; background: #fef2f2;"><i class="bi bi-check2-circle me-1"></i>지난결과</button>
               </div>
 
               <!-- 6대 스포츠 고정 필터 (전체, 축구, 야구, 농구, 하키, 배구) -->
@@ -2009,22 +2000,6 @@
                 <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportBASKETBALL" onclick="filterPredSport('BASKETBALL')">🏀 농구</button>
                 <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportHOCKEY" onclick="filterPredSport('HOCKEY')">🏒 하키</button>
                 <button class="btn btn-sm sport-chip-btn flex-fill text-nowrap" id="predSportVOLLEYBALL" onclick="filterPredSport('VOLLEYBALL')">🏐 배구</button>
-              </div>
-
-              <!-- 🌐 주요 리그 퀵 필터 칩 바 (MLS, EPL, UCL, 라리가, MLB, KBO, NPB, NBA, KBL 등) -->
-              <div class="d-flex gap-1 overflow-x-auto py-1" id="predLeagueBar" style="scrollbar-width: none;">
-                <button class="btn btn-xs league-chip-btn active text-nowrap" id="predLeagueALL" onclick="filterPredLeague('ALL')">전체 리그</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueMLS" onclick="filterPredLeague('MLS')">🇺🇸 MLS</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueEPL" onclick="filterPredLeague('EPL')">🏴󠁧󠁢󠁥󠁮󠁧󠁿 EPL</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueUCL" onclick="filterPredLeague('UCL')">🇪🇺 UCL</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueCHAMPIONSHIP" onclick="filterPredLeague('CHAMPIONSHIP')">🏴󠁧󠁢󠁥󠁮󠁧󠁿 챔피언십</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueENGLAND_CUP" onclick="filterPredLeague('ENGLAND_CUP')">🏆 카라바오/FA</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueLALIGA" onclick="filterPredLeague('LALIGA')">🇪🇸 라리가</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueMLB" onclick="filterPredLeague('MLB')">⚾ MLB</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueKBO" onclick="filterPredLeague('KBO')">🇰🇷 KBO</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueNPB" onclick="filterPredLeague('NPB')">🇯🇵 NPB</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueNBA" onclick="filterPredLeague('NBA')">🏀 NBA</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueKBL" onclick="filterPredLeague('KBL')">🇰🇷 KBL</button>
               </div>
 
               <!-- 🏆 배트맨 공식 14경기 승무패 / 승1패 / 승5패 전용 팝업 퀵 바 -->
@@ -8909,9 +8884,9 @@ function getFullModalMatchList() {
     // 3-Day Match Predictor (Strict KST Chronological Stream & Real Official Scores)
     // ----------------------------------------------------
     let selectedPredMatchId = null;
-    let currentPredDate = 'ALL'; // 'ALL' (진행/예정 전체 - 기본값), 'D0' (오늘), 'D1' (내일), 'FINISHED' (지난결과)
-    let currentPredSport = 'ALL'; // 'ALL', 'KBO', 'MLB', 'NPB', 'SOCCER'
-    let currentPredLeague = 'ALL'; // 'ALL', 'UCL', 'CHAMPIONSHIP', 'EPL', 'LALIGA', etc.
+    let currentPredDate = 'FINISHED'; // 'FINISHED' (지난결과 전용 - 기본값)
+    let currentPredSport = 'ALL'; // 'ALL', 'SOCCER', 'BASEBALL', 'BASKETBALL', 'HOCKEY', 'VOLLEYBALL'
+    let currentPredLeague = 'ALL';
     let currentPredConfidence = 'ALL'; // 'ALL', '80', '70', '50'
     let syncIntervalSeconds = 10; // 10초 실시간 자동 갱신
     let nextSyncSeconds = 10;
@@ -9062,19 +9037,7 @@ function getFullModalMatchList() {
       const d0Str = getKSTDateString(now);
       const d1Str = getKSTDateString(new Date(now.getTime() + 86400000));
       
-      const b0 = document.getElementById('predDateD0');
-      const b1 = document.getElementById('predDateD1');
-      if (b0) b0.innerText = `오늘 (${parseInt(d0Str.slice(5,7),10)}/${parseInt(d0Str.slice(8,10),10)})`;
-      if (b1) b1.innerText = `내일 (${parseInt(d1Str.slice(5,7),10)}/${parseInt(d1Str.slice(8,10),10)})`;
-
-      if (allMatches && allMatches.length > 0) {
-        renderPredMatches();
-        currentCenterMode = 'DETAIL';
-        const initMatches = getFilteredPredMatches();
-        if (initMatches.length > 0) {
-          selectPredMatch(initMatches[0].id);
-        }
-      }
+      filterPredDate('FINISHED');
       loadBetmanToto('W1L', 260067);
 
       startLiveAutoSync(5);
