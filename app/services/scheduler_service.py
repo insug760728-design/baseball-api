@@ -558,12 +558,12 @@ class SchedulerService:
                 if has_live_or_active:
                     updated_total = 0
                     
-                    # (A) MLB 공식 실시간 동기화
+                    # (A) MLB 공식 실시간 동기화 (초고속 스케줄/라인스코어/이닝 동기화)
                     if mlb_active:
                         def _sync_mlb():
                             d_db = SessionLocal()
                             try:
-                                res = MatchService.sync_from_official_site(d_db, league_id="MLB", target_date=today_str)
+                                res = MatchService.sync_from_official_site(d_db, league_id="MLB", target_date=today_str, sync_boxscore=False)
                                 return res.get("synced_matches_count", 0)
                             except Exception as e:
                                 logger.warning(f"[Scheduler Live5Sec MLB] 동기화 경고: {e}")
@@ -580,7 +580,7 @@ class SchedulerService:
                             cnt = 0
                             try:
                                 for lid in ["KBO", "NPB"]:
-                                    res = MatchService.sync_from_official_site(d_db, league_id=lid, target_date=today_str)
+                                    res = MatchService.sync_from_official_site(d_db, league_id=lid, target_date=today_str, sync_boxscore=False)
                                     cnt += res.get("synced_matches_count", 0)
                                 return cnt
                             except Exception as e:
@@ -600,11 +600,59 @@ class SchedulerService:
 
                     if updated_total > 0:
                         clear_matches_cache()
+                        
+                        # 활성 LIVE 경기 상태 목록 추출하여 WebSocket에 직접 전송 (브라우저 추가 fetch 부하 0)
+                        def _extract_live_items():
+                            d_db = SessionLocal()
+                            items = []
+                            try:
+                                from app.models.models import Match
+                                live_list = d_db.query(Match).filter(Match.status == "LIVE").all()
+                                for m in live_list:
+                                    cur_inn = None
+                                    outs_val = None
+                                    balls_val = None
+                                    strikes_val = None
+                                    if m.details:
+                                        if m.details.period_scores:
+                                            try:
+                                                ps = json.loads(m.details.period_scores) if isinstance(m.details.period_scores, str) else m.details.period_scores
+                                                cur_inn = ps.get("current_inning")
+                                            except Exception:
+                                                pass
+                                        if m.details.team_stats:
+                                            try:
+                                                ts = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
+                                                sb = ts.get("scoreboard", {})
+                                                if sb:
+                                                    cur_inn = sb.get("current_inning") or cur_inn
+                                                    outs_val = sb.get("outs")
+                                                    balls_val = sb.get("balls")
+                                                    strikes_val = sb.get("strikes")
+                                            except Exception:
+                                                pass
+                                    items.append({
+                                        "id": m.id,
+                                        "home_score": m.home_score,
+                                        "away_score": m.away_score,
+                                        "status": m.status,
+                                        "current_inning": cur_inn,
+                                        "inning_text": cur_inn,
+                                        "outs": outs_val,
+                                        "balls": balls_val,
+                                        "strikes": strikes_val
+                                    })
+                            finally:
+                                d_db.close()
+                            return items
+
+                        live_items = await asyncio.to_thread(_extract_live_items)
                         try:
                             from app.core.websocket_manager import manager
                             await manager.broadcast({
                                 "type": "LIVE_SCORE_UPDATE",
                                 "timestamp": datetime.now().isoformat(),
+                                "matches": live_items,
                                 "message": f"실시간 스코어/이닝보드 자동 갱신 ({updated_total}건)"
                             })
                         except Exception:

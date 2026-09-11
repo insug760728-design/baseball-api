@@ -9086,7 +9086,10 @@ function getFullModalMatchList() {
       }
     }
 
+    let isSilentRefreshing = false;
     async function silentLiveRefresh() {
+      if (isSilentRefreshing) return;
+      isSilentRefreshing = true;
       try {
         const d0Str = getKSTDateString(new Date());
         const resp = await fetch(`/api/v1/matches?start_date=${d0Str}&order=asc&limit=100`);
@@ -9121,6 +9124,8 @@ function getFullModalMatchList() {
         }
       } catch (e) {
         console.warn('Live sync error:', e);
+      } finally {
+        isSilentRefreshing = false;
       }
     }
 
@@ -14891,9 +14896,38 @@ function getFullModalMatchList() {
           setTimeout(() => { badge.innerText = '1시간 자동 업데이트 활성'; }, 5000);
         }
       } else if (data.type === 'LIVE_SCORE_UPDATE') {
-        // Real-time score update pushed from backend!
-        console.log('[WebSocket] Live score update received!', data);
-        loadLiveMatches();
+        // Real-time score update pushed from backend (0ms latency, zero extra fetch)!
+        if (data.matches && Array.isArray(data.matches) && data.matches.length > 0) {
+          let hasChange = false;
+          data.matches.forEach(item => {
+            const m = (allMatches || []).find(x => x.id === item.id);
+            if (m) {
+              if (m.home_score !== item.home_score || m.away_score !== item.away_score || m.current_inning !== item.current_inning || m.status !== item.status || m.outs !== item.outs) {
+                m.home_score = item.home_score;
+                m.away_score = item.away_score;
+                m.status = item.status;
+                m.current_inning = item.current_inning;
+                m.inning_text = item.inning_text || item.current_inning;
+                m.outs = item.outs;
+                m.balls = item.balls;
+                m.strikes = item.strikes;
+                hasChange = true;
+              }
+            }
+          });
+          if (hasChange) {
+            renderMatchStrip('ALL');
+            renderPredMatches();
+            if (currentCenterMode === 'DETAIL' && selectedPredMatchId) {
+              const currentTarget = allMatches.find(m => m.id === selectedPredMatchId);
+              if (currentTarget) {
+                renderPredDetail(currentTarget);
+              }
+            }
+          }
+        } else {
+          silentLiveRefresh();
+        }
       }
     }
 

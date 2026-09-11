@@ -20,7 +20,7 @@ logger.setLevel(logging.INFO)
 class MatchService:
 
     @classmethod
-    def sync_from_official_site(cls, db: Session, league_id: str = "MLB", league_name: Optional[str] = None, target_date: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None):
+    def sync_from_official_site(cls, db: Session, league_id: str = "MLB", league_name: Optional[str] = None, target_date: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None, sync_boxscore: bool = False):
         resolved_name = league_name
         for cat_key, cat_val in SPORTS_CATALOG.items():
             for l in cat_val["leagues"]:
@@ -142,8 +142,14 @@ class MatchService:
                     except Exception:
                         pass
 
-                if match.status in ["FINISHED", "LIVE"]:
-                    if not match.details or not match.player_stats or match.status == "LIVE":
+                # 상세 박스스코어 및 선수 지표 동기화
+                if sync_boxscore:
+                    if match.status in ["FINISHED", "LIVE"]:
+                        if not match.details or not match.player_stats or match.status == "LIVE":
+                            cls._sync_match_details_and_players(db, match, scraper)
+                else:
+                    # 고속 5초 라이브 루프: 세부정보가 아예 없는 초기 경기만 생성
+                    if not match.details:
                         cls._sync_match_details_and_players(db, match, scraper)
 
                 total_synced_matches += 1
