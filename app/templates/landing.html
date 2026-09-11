@@ -4745,7 +4745,7 @@
       
       if (!rows || rows.length === 0) {
         const pName = pitcher ? (pitcher.name || '') : '';
-        const isAnnounced = isStarterAnnounced(pName) && !pitcher.is_unannounced;
+        const isAnnounced = isStarterAnnounced(pName) && !pitcher.is_unannounced && !pName.includes('미정');
         if (!isAnnounced) {
           return `
             <div class="p-2.5 text-center text-muted" style="font-size: 0.76rem; background: #f8fafc; border-top: 1px solid #f1f5f9;">
@@ -4753,13 +4753,11 @@
             </div>
           `;
         }
-        const eraVal = parseFloat(pitcher.season_era || pitcher.era || '3.60') || 3.60;
-        const oppList = isHome ? ['요미우리', '야쿠르트', '한신', '주니치'] : ['히로카프', '요코베이', '소프트뱅', '라쿠텐'];
-        rows = [
-          { date: '09.04(금)', venue: isHome ? '홈' : '원', opponent: oppList[0], ip: '6.0', bf: 24, h: 4, hr: 0, bb: 3, so: 5, er: Math.round(eraVal * 0.6), era: (eraVal * 0.85).toFixed(2), result: '승' },
-          { date: '08.28(금)', venue: isHome ? '홈' : '원', opponent: oppList[1], ip: '6.0', bf: 26, h: 5, hr: 1, bb: 2, so: 4, er: Math.round(eraVal * 0.8), era: eraVal.toFixed(2), result: '패' },
-          { date: '08.21(금)', venue: isHome ? '원' : '홈', opponent: oppList[2], ip: '7.0', bf: 28, h: 5, hr: 0, bb: 1, so: 6, er: Math.max(1, Math.round(eraVal * 0.5)), era: (eraVal * 0.75).toFixed(2), result: '승' }
-        ];
+        return `
+          <div class="p-2.5 text-center text-muted" style="font-size: 0.76rem; background: #f8fafc; border-top: 1px solid #f1f5f9;">
+            최근 등판 경기 상세 기록을 확인 중입니다.
+          </div>
+        `;
       }
 
       let rowsHtml = '';
@@ -4844,24 +4842,38 @@
       const hNameClean = formatPlayerKorean(hPitcher.name || homeStarter).replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
       const aNameClean = formatPlayerKorean(aPitcher.name || awayStarter).replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
 
+      const hIsUnannounced = !hAnnounced || hPitcher.is_unannounced || hNameClean.includes('미정');
+      const aIsUnannounced = !aAnnounced || aPitcher.is_unannounced || aNameClean.includes('미정');
+
+      // Home Stats
       const hRecStr = (hPitcher.season_record && hPitcher.season_record !== '-') ? hPitcher.season_record : (hPitcher.season_wins !== undefined && hPitcher.season_wins !== null ? `${hPitcher.season_wins}승 ${hPitcher.season_losses}패` : '');
+      const hEraStr = (hPitcher.season_era && hPitcher.season_era !== '-') ? hPitcher.season_era : ((hPitcher.era && hPitcher.era !== '-') ? hPitcher.era : '');
+      let hMainStat = '공식 발표 대기';
+      if (!hIsUnannounced) {
+        if (hRecStr && hEraStr) hMainStat = `${hRecStr} ${hEraStr}`;
+        else if (hEraStr) hMainStat = `방어율 ${hEraStr}`;
+        else if (hRecStr) hMainStat = `${hRecStr}`;
+        else hMainStat = '기록 확인 중';
+      }
+      const hIp = (hPitcher.season_ip && hPitcher.season_ip !== '-') ? hPitcher.season_ip : (hPitcher.ip || '');
+      const hSo = (hPitcher.season_so !== undefined && hPitcher.season_so !== null) ? hPitcher.season_so : '';
+      const hBb = (hPitcher.season_bb !== undefined && hPitcher.season_bb !== null) ? hPitcher.season_bb : '';
+      const hSubStats = (!hIsUnannounced && hIp) ? `${hIp}이닝 ${hSo !== '' ? hSo + 'K ' : ''}${hBb !== '' ? hBb + 'BB' : ''}`.trim() : '-';
+
+      // Away Stats
       const aRecStr = (aPitcher.season_record && aPitcher.season_record !== '-') ? aPitcher.season_record : (aPitcher.season_wins !== undefined && aPitcher.season_wins !== null ? `${aPitcher.season_wins}승 ${aPitcher.season_losses}패` : '');
-
-      const hEraStr = (hPitcher.season_era && hPitcher.season_era !== '-') ? hPitcher.season_era : ((hPitcher.era && hPitcher.era !== '-') ? hPitcher.era : '3.83');
-      const aEraStr = (aPitcher.season_era && aPitcher.season_era !== '-') ? aPitcher.season_era : ((aPitcher.era && aPitcher.era !== '-') ? aPitcher.era : '3.60');
-
-      const hMainStat = hRecStr ? `${hRecStr} ${hEraStr}` : `방어율 ${hEraStr}`;
-      const aMainStat = aRecStr ? `${aRecStr} ${aEraStr}` : `방어율 ${aEraStr}`;
-
-      const hIp = (hPitcher.season_ip && hPitcher.season_ip !== '-') ? hPitcher.season_ip : (hPitcher.ip || '112.2');
-      const hSo = (hPitcher.season_so !== undefined && hPitcher.season_so !== null) ? hPitcher.season_so : '90';
-      const hBb = (hPitcher.season_bb !== undefined && hPitcher.season_bb !== null) ? hPitcher.season_bb : '46';
-      const hSubStats = `${hIp}이닝 ${hSo}K ${hBb}BB`;
-
-      const aIp = (aPitcher.season_ip && aPitcher.season_ip !== '-') ? aPitcher.season_ip : (aPitcher.ip || '25.0');
-      const aSo = (aPitcher.season_so !== undefined && aPitcher.season_so !== null) ? aPitcher.season_so : '24';
-      const aBb = (aPitcher.season_bb !== undefined && aPitcher.season_bb !== null) ? aPitcher.season_bb : '14';
-      const aSubStats = `${aIp}이닝 ${aSo}K ${aBb}BB`;
+      const aEraStr = (aPitcher.season_era && aPitcher.season_era !== '-') ? aPitcher.season_era : ((aPitcher.era && aPitcher.era !== '-') ? aPitcher.era : '');
+      let aMainStat = '공식 발표 대기';
+      if (!aIsUnannounced) {
+        if (aRecStr && aEraStr) aMainStat = `${aRecStr} ${aEraStr}`;
+        else if (aEraStr) aMainStat = `방어율 ${aEraStr}`;
+        else if (aRecStr) aMainStat = `${aRecStr}`;
+        else aMainStat = '기록 확인 중';
+      }
+      const aIp = (aPitcher.season_ip && aPitcher.season_ip !== '-') ? aPitcher.season_ip : (aPitcher.ip || '');
+      const aSo = (aPitcher.season_so !== undefined && aPitcher.season_so !== null) ? aPitcher.season_so : '';
+      const aBb = (aPitcher.season_bb !== undefined && aPitcher.season_bb !== null) ? aPitcher.season_bb : '';
+      const aSubStats = (!aIsUnannounced && aIp) ? `${aIp}이닝 ${aSo !== '' ? aSo + 'K ' : ''}${aBb !== '' ? aBb + 'BB' : ''}`.trim() : '-';
 
       const hRecentStarts = hPitcher.recent_starts || hPitcher.recent_3_starts || [];
       const aRecentStarts = aPitcher.recent_starts || aPitcher.recent_3_starts || [];
@@ -12214,7 +12226,7 @@ function getFullModalMatchList() {
       currentCenterMode = 'DETAIL';
       updateCenterTabs();
 
-      const target = allMatches.find(m => m.id === matchId);
+      const target = allMatches.find(m => String(m.id) === String(matchId));
       if (!target) return;
 
       // Efficiently update active highlight without rebuilding all DOM elements
