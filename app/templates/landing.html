@@ -4790,7 +4790,7 @@
       '이시다 유': '3.25', '이시다 유타로': '3.25', '石田裕': '3.25', '이시다': '3.25',
       '쇼지': '3.55', '쇼지 코세이': '3.55', '荘司': '3.55', '荘司 康誠': '3.55',
       '모리': '3.80', '모리 케이토': '3.80', '毛利': '3.80',
-      '모리시타': '2.25', '모리시타 마사토': '2.25', '森下': '2.25', '森下 暢仁': '2.25',
+      '모리시타': '3.83', '모리시타 마사토': '3.83', '森下': '3.83', '森下 暢仁': '3.83',
       '마타': '2.95', 'マタ': '2.95',
       '야마노': '4.20', '야마노 타이키': '4.20', '山野': '4.20',
       '평량': '2.40', '타이라': '2.40', '타이라 카이마': '2.40', '平良': '2.40', '平良 海馬': '2.40',
@@ -4803,12 +4803,12 @@
       '코지마 카즈야': '2.72', '타네이치 아츠키': '2.85', '사사키 로키': '2.15',
       '토고 쇼세이': '2.15', '스가노 토모유키': '2.10', '이노우에 하루토': '2.75',
       '사이키 히로토': '1.65', '무라카미 쇼키': '2.40', '니시 유키': '2.95',
-      '모리시타 마사토': '2.25', '오오세라 다이치': '2.15', '쿠리바야시 료지': '1.45',
+      '오오세라 다이치': '2.15', '쿠리바야시 료지': '1.45',
       '아즈마 카츠키': '2.10', '오오누키 신이치': '2.95',
       '타카하시 히로토': '1.28', '야나기 유야': '3.10', '오가사와라 신노스케': '3.05',
       '타카하시 케이지': '3.45', '오가와 야스히로': '3.75', '요시무라 코지로': '3.20',
       '아오야기 코요': '3.20', '카츠노 아키요시': '2.85',
-      '카타야마': '3.40', '야마구치': '3.50', '와타나베': '3.65', '마에다 유고': '3.10',
+      '카타야마': '3.60', '카타야마 히로미': '3.60', '카타야마 코신': '3.60', '야마구치': '3.50', '와타나베': '3.65', '마에다 유고': '3.10',
       '이시카와 슈타': '3.20', '이시카와': '3.20',
 
       // KBO
@@ -5490,6 +5490,11 @@ function getFullModalMatchList() {
     }
 
     function openMatchModal(targetMatchId, customMatchList) {
+      if (!checkUserLoggedIn('경기 상세 분석')) {
+        window._pendingAuthAction = () => openMatchModal(targetMatchId, customMatchList);
+        return;
+      }
+
       const allList = getFullModalMatchList();
 
       if (targetMatchId) {
@@ -12927,6 +12932,13 @@ function getFullModalMatchList() {
     }
 
     function selectPredMatch(matchId, userClicked = false) {
+      if (userClicked) {
+        if (!checkUserLoggedIn('경기 상세 분석')) {
+          window._pendingAuthAction = () => selectPredMatch(matchId, true);
+          return;
+        }
+      }
+
       selectedPredMatchId = matchId;
       currentCenterMode = 'DETAIL';
       updateCenterTabs();
@@ -14545,6 +14557,27 @@ function getFullModalMatchList() {
     function renderPredDetail(m, customDetailData = null) {
       const panel = document.getElementById('predDetailPanel');
       if (!panel) return;
+
+      if (!currentUser || !currentUser.nickname) {
+        panel.innerHTML = `
+          <div class="p-4 text-center bg-white rounded-3 shadow-sm border m-2" style="min-height: 480px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-color: #e2e8f0 !important;">
+            <div class="mb-3">
+              <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 64px; height: 64px; background: #eff6ff; color: #2563eb; font-size: 1.8rem;">
+                <i class="bi bi-shield-lock-fill"></i>
+              </span>
+            </div>
+            <h5 class="fw-bold text-dark mb-2">🔒 경기 상세 분석 로그인 안내</h5>
+            <p class="text-muted small mb-4" style="line-height: 1.6;">
+              예상 선발투수, 양 팀 직전경기 대칭 비교 등<br>
+              정밀 승부예측 데이터는 로그인 후 이용하실 수 있습니다.
+            </p>
+            <button class="btn btn-primary fw-bold px-4 py-2" onclick="openLoginModal('login', '🔒 <b>경기 상세 분석</b>은 로그인 후 이용하실 수 있습니다.')">
+              <i class="bi bi-box-arrow-in-right me-1"></i> 3초 간편 로그인 / 회원가입
+            </button>
+          </div>
+        `;
+        return;
+      }
 
       const prevScrollTop = panel.scrollTop;
       selectedPredMatchId = m.id;
