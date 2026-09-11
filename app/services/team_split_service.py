@@ -1679,11 +1679,16 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "losses": 10,
         "games": 19,
         "season_era": "3.83",
+        "season_ip": "112.2",
+        "season_so": 90,
+        "season_bb": 46,
         "recent_starts": [
-            {"date": "9/4", "opponent": "요미우리 자이언츠", "result": "패", "ip": "6.0", "np": 109, "h": 4, "so": 2, "r": 3},
-            {"date": "8/28", "opponent": "도쿄 야쿠르트 스왈로스", "result": "패", "ip": "6.0", "np": 104, "h": 5, "so": 3, "r": 3},
-            {"date": "8/21", "opponent": "요미우리 자이언츠", "result": "패", "ip": "8.0", "np": 125, "h": 6, "so": 6, "r": 2},
-            {"date": "8/14", "opponent": "한신 타이거스", "result": "승", "ip": "8.0", "np": 113, "h": 5, "so": 5, "r": 1}
+            {"date": "09.04(금)", "venue": "홈", "opponent": "요미우리", "ip": "6.0", "bf": 24, "h": 4, "hr": 0, "bb": 3, "so": 2, "er": 2, "era": "3.00", "result": "패"},
+            {"date": "08.28(금)", "venue": "홈", "opponent": "야쿠르트", "ip": "6.0", "bf": 28, "h": 5, "hr": 0, "bb": 4, "so": 3, "er": 3, "era": "4.50", "result": "패"},
+            {"date": "08.21(금)", "venue": "홈", "opponent": "요미우리", "ip": "8.0", "bf": 33, "h": 6, "hr": 0, "bb": 2, "so": 6, "er": 1, "era": "1.13", "result": "패"},
+            {"date": "08.14(금)", "venue": "원", "opponent": "한신", "ip": "8.0", "bf": 30, "h": 5, "hr": 0, "bb": 2, "so": 5, "er": 1, "era": "1.13", "result": "승"},
+            {"date": "08.07(금)", "venue": "원", "opponent": "요코베이", "ip": "7.0", "bf": 27, "h": 5, "hr": 1, "bb": 1, "so": 7, "er": 2, "era": "2.57", "result": "승"},
+            {"date": "07.10(금)", "venue": "원", "opponent": "주니치", "ip": "5.0", "bf": 27, "h": 6, "hr": 2, "bb": 5, "so": 6, "er": 5, "era": "9.00", "result": "패"}
         ]
     },
     "모리시타 마사토": {
@@ -1695,16 +1700,21 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "losses": 10,
         "games": 19,
         "season_era": "3.83",
+        "season_ip": "112.2",
+        "season_so": 90,
+        "season_bb": 46,
         "recent_starts": [
-            {"date": "9/4", "opponent": "요미우리 자이언츠", "result": "패", "ip": "6.0", "np": 109, "h": 4, "so": 2, "r": 3},
-            {"date": "8/28", "opponent": "도쿄 야쿠르트 스왈로스", "result": "패", "ip": "6.0", "np": 104, "h": 5, "so": 3, "r": 3},
-            {"date": "8/21", "opponent": "요미우리 자이언츠", "result": "패", "ip": "8.0", "np": 125, "h": 6, "so": 6, "r": 2},
-            {"date": "8/14", "opponent": "한신 타이거스", "result": "승", "ip": "8.0", "np": 113, "h": 5, "so": 5, "r": 1}
+            {"date": "09.04(금)", "venue": "홈", "opponent": "요미우리", "ip": "6.0", "bf": 24, "h": 4, "hr": 0, "bb": 3, "so": 2, "er": 2, "era": "3.00", "result": "패"},
+            {"date": "08.28(금)", "venue": "홈", "opponent": "야쿠르트", "ip": "6.0", "bf": 28, "h": 5, "hr": 0, "bb": 4, "so": 3, "er": 3, "era": "4.50", "result": "패"},
+            {"date": "08.21(금)", "venue": "홈", "opponent": "요미우리", "ip": "8.0", "bf": 33, "h": 6, "hr": 0, "bb": 2, "so": 6, "er": 1, "era": "1.13", "result": "패"},
+            {"date": "08.14(금)", "venue": "원", "opponent": "한신", "ip": "8.0", "bf": 30, "h": 5, "hr": 0, "bb": 2, "so": 5, "er": 1, "era": "1.13", "result": "승"},
+            {"date": "08.07(금)", "venue": "원", "opponent": "요코베이", "ip": "7.0", "bf": 27, "h": 5, "hr": 1, "bb": 1, "so": 7, "er": 2, "era": "2.57", "result": "승"},
+            {"date": "07.10(금)", "venue": "원", "opponent": "주니치", "ip": "5.0", "bf": 27, "h": 6, "hr": 2, "bb": 5, "so": 6, "er": 5, "era": "9.00", "result": "패"}
         ]
     },
     # Yokohama DeNA
     "카타야마": {
-        "name": "카타야마 코신",
+        "name": "카타야마 히로미",
         "name_raw": "片山 皓心",
         "jersey": 47,
         "throws": "좌완",
@@ -1712,15 +1722,19 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "losses": 2,
         "games": 5,
         "season_era": "3.60",
+        "season_ip": "25.0",
+        "season_so": 24,
+        "season_bb": 14,
         "recent_starts": [
-            {"date": "9/4", "opponent": "도호쿠 라쿠텐 골든이글스", "result": "-", "ip": "1.0", "np": 10, "h": 0, "so": 2, "r": 0},
-            {"date": "8/27", "opponent": "히로시마 도요 카프", "result": "승", "ip": "6.0", "np": 104, "h": 2, "so": 7, "r": 1},
-            {"date": "8/16", "opponent": "도쿄 야쿠르트 스왈로스", "result": "패", "ip": "5.1", "np": 95, "h": 5, "so": 4, "r": 2},
-            {"date": "8/9", "opponent": "히로시마 도요 카프", "result": "승", "ip": "6.0", "np": 91, "h": 3, "so": 5, "r": 0}
+            {"date": "08.27(목)", "venue": "원", "opponent": "히로카프", "ip": "6.0", "bf": 23, "h": 2, "hr": 0, "bb": 4, "so": 7, "er": 1, "era": "1.50", "result": "승"},
+            {"date": "08.16(일)", "venue": "원", "opponent": "야쿠르트", "ip": "5.1", "bf": 24, "h": 5, "hr": 1, "bb": 2, "so": 4, "er": 1, "era": "1.69", "result": "패"},
+            {"date": "08.09(일)", "venue": "홈", "opponent": "히로카프", "ip": "6.0", "bf": 23, "h": 3, "hr": 0, "bb": 2, "so": 5, "er": 0, "era": "0.00", "result": "승"},
+            {"date": "07.19(일)", "venue": "홈", "opponent": "야쿠르트", "ip": "5.0", "bf": 21, "h": 3, "hr": 0, "bb": 3, "so": 6, "er": 1, "era": "1.80", "result": "승"},
+            {"date": "04.25(토)", "venue": "홈", "opponent": "요미우리", "ip": "2.2", "bf": 20, "h": 9, "hr": 1, "bb": 3, "so": 2, "er": 7, "era": "23.63", "result": "패"}
         ]
     },
     "카타야마 코신": {
-        "name": "카타야마 코신",
+        "name": "카타야마 히로미",
         "name_raw": "片山 皓心",
         "jersey": 47,
         "throws": "좌완",
@@ -1728,11 +1742,35 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "losses": 2,
         "games": 5,
         "season_era": "3.60",
+        "season_ip": "25.0",
+        "season_so": 24,
+        "season_bb": 14,
         "recent_starts": [
-            {"date": "9/4", "opponent": "도호쿠 라쿠텐 골든이글스", "result": "-", "ip": "1.0", "np": 10, "h": 0, "so": 2, "r": 0},
-            {"date": "8/27", "opponent": "히로시마 도요 카프", "result": "승", "ip": "6.0", "np": 104, "h": 2, "so": 7, "r": 1},
-            {"date": "8/16", "opponent": "도쿄 야쿠르트 스왈로스", "result": "패", "ip": "5.1", "np": 95, "h": 5, "so": 4, "r": 2},
-            {"date": "8/9", "opponent": "히로시마 도요 카프", "result": "승", "ip": "6.0", "np": 91, "h": 3, "so": 5, "r": 0}
+            {"date": "08.27(목)", "venue": "원", "opponent": "히로카프", "ip": "6.0", "bf": 23, "h": 2, "hr": 0, "bb": 4, "so": 7, "er": 1, "era": "1.50", "result": "승"},
+            {"date": "08.16(일)", "venue": "원", "opponent": "야쿠르트", "ip": "5.1", "bf": 24, "h": 5, "hr": 1, "bb": 2, "so": 4, "er": 1, "era": "1.69", "result": "패"},
+            {"date": "08.09(일)", "venue": "홈", "opponent": "히로카프", "ip": "6.0", "bf": 23, "h": 3, "hr": 0, "bb": 2, "so": 5, "er": 0, "era": "0.00", "result": "승"},
+            {"date": "07.19(일)", "venue": "홈", "opponent": "야쿠르트", "ip": "5.0", "bf": 21, "h": 3, "hr": 0, "bb": 3, "so": 6, "er": 1, "era": "1.80", "result": "승"},
+            {"date": "04.25(토)", "venue": "홈", "opponent": "요미우리", "ip": "2.2", "bf": 20, "h": 9, "hr": 1, "bb": 3, "so": 2, "er": 7, "era": "23.63", "result": "패"}
+        ]
+    },
+    "카타야마 히로미": {
+        "name": "카타야마 히로미",
+        "name_raw": "片山 皓心",
+        "jersey": 47,
+        "throws": "좌완",
+        "wins": 3,
+        "losses": 2,
+        "games": 5,
+        "season_era": "3.60",
+        "season_ip": "25.0",
+        "season_so": 24,
+        "season_bb": 14,
+        "recent_starts": [
+            {"date": "08.27(목)", "venue": "원", "opponent": "히로카프", "ip": "6.0", "bf": 23, "h": 2, "hr": 0, "bb": 4, "so": 7, "er": 1, "era": "1.50", "result": "승"},
+            {"date": "08.16(일)", "venue": "원", "opponent": "야쿠르트", "ip": "5.1", "bf": 24, "h": 5, "hr": 1, "bb": 2, "so": 4, "er": 1, "era": "1.69", "result": "패"},
+            {"date": "08.09(일)", "venue": "홈", "opponent": "히로카프", "ip": "6.0", "bf": 23, "h": 3, "hr": 0, "bb": 2, "so": 5, "er": 0, "era": "0.00", "result": "승"},
+            {"date": "07.19(일)", "venue": "홈", "opponent": "야쿠르트", "ip": "5.0", "bf": 21, "h": 3, "hr": 0, "bb": 3, "so": 6, "er": 1, "era": "1.80", "result": "승"},
+            {"date": "04.25(토)", "venue": "홈", "opponent": "요미우리", "ip": "2.2", "bf": 20, "h": 9, "hr": 1, "bb": 3, "so": 2, "er": 7, "era": "23.63", "result": "패"}
         ]
     },
     # SoftBank
@@ -1745,7 +1783,14 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "losses": 0,
         "games": 16,
         "season_era": "1.95",
-        "recent_starts": []
+        "season_ip": "87.2",
+        "season_so": 82,
+        "season_bb": 22,
+        "recent_starts": [
+            {"date": "09.03(목)", "venue": "홈", "opponent": "오릭스", "ip": "7.0", "bf": 27, "h": 4, "hr": 0, "bb": 1, "so": 8, "er": 1, "era": "1.29", "result": "승"},
+            {"date": "08.27(목)", "venue": "원", "opponent": "세이부", "ip": "6.2", "bf": 26, "h": 5, "hr": 1, "bb": 2, "so": 6, "er": 2, "era": "2.70", "result": "승"},
+            {"date": "08.20(목)", "venue": "홈", "opponent": "라쿠텐", "ip": "8.0", "bf": 30, "h": 3, "hr": 0, "bb": 1, "so": 9, "er": 0, "era": "0.00", "result": "승"}
+        ]
     },
     # Lotte
     "이시카와 슈타": {
@@ -1757,7 +1802,13 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "losses": 0,
         "games": 5,
         "season_era": "3.75",
-        "recent_starts": []
+        "season_ip": "19.1",
+        "season_so": 18,
+        "season_bb": 7,
+        "recent_starts": [
+            {"date": "09.02(수)", "venue": "원", "opponent": "라쿠텐", "ip": "5.0", "bf": 22, "h": 4, "hr": 0, "bb": 2, "so": 5, "er": 2, "era": "3.60", "result": "-"},
+            {"date": "08.25(화)", "venue": "홈", "opponent": "닛폰햄", "ip": "5.1", "bf": 23, "h": 6, "hr": 1, "bb": 2, "so": 4, "er": 2, "era": "3.38", "result": "-"}
+        ]
     },
     # Orix
     "야마구치 레오": {
@@ -1769,7 +1820,12 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "losses": 0,
         "games": 1,
         "season_era": "6.75",
-        "recent_starts": []
+        "season_ip": "5.1",
+        "season_so": 5,
+        "season_bb": 3,
+        "recent_starts": [
+            {"date": "09.01(화)", "venue": "홈", "opponent": "소프트뱅", "ip": "5.1", "bf": 25, "h": 7, "hr": 1, "bb": 3, "so": 5, "er": 4, "era": "6.75", "result": "-"}
+        ]
     },
     # Seibu
     "와타나베 유타로": {
@@ -1781,7 +1837,143 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "losses": 7,
         "games": 19,
         "season_era": "3.58",
-        "recent_starts": []
+        "season_ip": "78.0",
+        "season_so": 64,
+        "season_bb": 28,
+        "recent_starts": [
+            {"date": "09.04(금)", "venue": "원", "opponent": "닛폰햄", "ip": "6.0", "bf": 25, "h": 5, "hr": 0, "bb": 2, "so": 6, "er": 2, "era": "3.00", "result": "승"},
+            {"date": "08.28(금)", "venue": "홈", "opponent": "소프트뱅", "ip": "5.0", "bf": 24, "h": 6, "hr": 1, "bb": 3, "so": 4, "er": 3, "era": "5.40", "result": "패"}
+        ]
+    },
+    # KBO Starters
+    "페덱": {
+        "name": "페덱",
+        "name_raw": "Erick Fedde",
+        "jersey": 13,
+        "throws": "우완",
+        "wins": 14,
+        "losses": 5,
+        "games": 24,
+        "season_era": "2.45",
+        "season_ip": "155.0",
+        "season_so": 170,
+        "season_bb": 35,
+        "recent_starts": [
+            {"date": "09.04(금)", "venue": "홈", "opponent": "LG", "ip": "7.0", "bf": 27, "h": 4, "hr": 0, "bb": 1, "so": 9, "er": 1, "era": "1.29", "result": "승"},
+            {"date": "08.29(토)", "venue": "원", "opponent": "두산", "ip": "6.0", "bf": 25, "h": 5, "hr": 1, "bb": 2, "so": 7, "er": 2, "era": "3.00", "result": "승"}
+        ]
+    },
+    "전준표": {
+        "name": "전준표",
+        "name_raw": "전준표",
+        "jersey": 41,
+        "throws": "우완",
+        "wins": 3,
+        "losses": 4,
+        "games": 12,
+        "season_era": "4.50",
+        "season_ip": "42.0",
+        "season_so": 38,
+        "season_bb": 21,
+        "recent_starts": [
+            {"date": "09.03(목)", "venue": "원", "opponent": "NC", "ip": "5.0", "bf": 22, "h": 5, "hr": 1, "bb": 3, "so": 4, "er": 3, "era": "5.40", "result": "패"}
+        ]
+    },
+    "김진욱": {
+        "name": "김진욱",
+        "name_raw": "김진욱",
+        "jersey": 15,
+        "throws": "좌완",
+        "wins": 4,
+        "losses": 2,
+        "games": 14,
+        "season_era": "3.95",
+        "season_ip": "66.0",
+        "season_so": 62,
+        "season_bb": 34,
+        "recent_starts": [
+            {"date": "09.04(금)", "venue": "홈", "opponent": "SSG", "ip": "5.1", "bf": 24, "h": 4, "hr": 0, "bb": 3, "so": 5, "er": 2, "era": "3.38", "result": "승"}
+        ]
+    },
+    "로건": {
+        "name": "로건",
+        "name_raw": "Logan",
+        "jersey": 32,
+        "throws": "우완",
+        "wins": 8,
+        "losses": 6,
+        "games": 20,
+        "season_era": "3.65",
+        "season_ip": "108.1",
+        "season_so": 98,
+        "season_bb": 31,
+        "recent_starts": [
+            {"date": "09.03(목)", "venue": "홈", "opponent": "한화", "ip": "6.0", "bf": 26, "h": 6, "hr": 1, "bb": 2, "so": 6, "er": 3, "era": "4.50", "result": "패"}
+        ]
+    },
+    "양현종": {
+        "name": "양현종",
+        "name_raw": "양현종",
+        "jersey": 54,
+        "throws": "좌완",
+        "wins": 11,
+        "losses": 4,
+        "games": 23,
+        "season_era": "3.55",
+        "season_ip": "142.0",
+        "season_so": 120,
+        "season_bb": 38,
+        "recent_starts": [
+            {"date": "09.04(금)", "venue": "홈", "opponent": "KT", "ip": "6.2", "bf": 28, "h": 5, "hr": 0, "bb": 2, "so": 7, "er": 2, "era": "2.70", "result": "승"}
+        ]
+    },
+    "이준기": {
+        "name": "이준기",
+        "name_raw": "이준기",
+        "jersey": 48,
+        "throws": "우완",
+        "wins": 1,
+        "losses": 2,
+        "games": 8,
+        "season_era": "5.20",
+        "season_ip": "26.0",
+        "season_so": 22,
+        "season_bb": 15,
+        "recent_starts": [
+            {"date": "09.02(수)", "venue": "원", "opponent": "롯데", "ip": "4.1", "bf": 20, "h": 6, "hr": 1, "bb": 2, "so": 3, "er": 3, "era": "6.23", "result": "패"}
+        ]
+    },
+    "황준서": {
+        "name": "황준서",
+        "name_raw": "황준서",
+        "jersey": 29,
+        "throws": "좌완",
+        "wins": 2,
+        "losses": 8,
+        "games": 18,
+        "season_era": "5.15",
+        "season_ip": "61.0",
+        "season_so": 55,
+        "season_bb": 39,
+        "recent_starts": [
+            {"date": "09.03(목)", "venue": "원", "opponent": "KT", "ip": "5.0", "bf": 23, "h": 5, "hr": 0, "bb": 4, "so": 4, "er": 3, "era": "5.40", "result": "패"}
+        ]
+    },
+    "이재학": {
+        "name": "이재학",
+        "name_raw": "이재학",
+        "jersey": 51,
+        "throws": "우완",
+        "wins": 3,
+        "losses": 7,
+        "games": 16,
+        "season_era": "4.88",
+        "season_ip": "70.0",
+        "season_so": 58,
+        "season_bb": 32,
+        "recent_starts": [
+            {"date": "09.04(금)", "venue": "홈", "opponent": "키움", "ip": "5.1", "bf": 25, "h": 6, "hr": 1, "bb": 3, "so": 5, "er": 3, "era": "5.06", "result": "-"}
+        ]
     }
 }
 
@@ -1930,6 +2122,10 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
         h_record_str = f"{h_wins}승 {h_losses}패" if (h_wins is not None and h_losses is not None) else "-"
         h_recent_starts = h_prof.get("recent_starts") or h_st_dict.get("recent_starts") or []
 
+        h_ip = h_prof.get("season_ip") or h_st_dict.get("season_ip") or h_st_dict.get("ip") or "-"
+        h_so = h_prof.get("season_so") if h_prof.get("season_so") is not None else h_st_dict.get("season_so")
+        h_bb = h_prof.get("season_bb") if h_prof.get("season_bb") is not None else h_st_dict.get("season_bb")
+
         home_res = {
             "name": home_name_ko,
             "name_raw": h_prof.get("name_raw") or h_st_dict.get("name_raw") or home_name_clean,
@@ -1942,6 +2138,9 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
             "season_losses": h_losses,
             "season_games": h_games,
             "season_record": h_record_str,
+            "season_ip": h_ip,
+            "season_so": h_so,
+            "season_bb": h_bb,
             "is_confirmed": home_confirmed,
             "is_unannounced": False,
             "status_label": "선발 확정" if home_confirmed else "선발 예고",
@@ -1966,6 +2165,9 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
             "season_losses": None,
             "season_games": None,
             "season_record": "-",
+            "season_ip": "-",
+            "season_so": None,
+            "season_bb": None,
             "is_confirmed": False,
             "is_unannounced": True,
             "status_label": "선발 미정 (TBD)",
@@ -1990,6 +2192,9 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
         a_jersey = a_prof.get("jersey") or a_st_dict.get("jersey")
         a_record_str = f"{a_wins}승 {a_losses}패" if (a_wins is not None and a_losses is not None) else "-"
         a_recent_starts = a_prof.get("recent_starts") or a_st_dict.get("recent_starts") or []
+        a_ip = a_prof.get("season_ip") or a_st_dict.get("season_ip") or a_st_dict.get("ip") or "-"
+        a_so = a_prof.get("season_so") if a_prof.get("season_so") is not None else a_st_dict.get("season_so")
+        a_bb = a_prof.get("season_bb") if a_prof.get("season_bb") is not None else a_st_dict.get("season_bb")
 
         away_res = {
             "name": away_name_ko,
@@ -2003,6 +2208,9 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
             "season_losses": a_losses,
             "season_games": a_games,
             "season_record": a_record_str,
+            "season_ip": a_ip,
+            "season_so": a_so,
+            "season_bb": a_bb,
             "is_confirmed": away_confirmed,
             "is_unannounced": False,
             "status_label": "선발 확정" if away_confirmed else "선발 예고",
@@ -2027,6 +2235,9 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
             "season_losses": None,
             "season_games": None,
             "season_record": "-",
+            "season_ip": "-",
+            "season_so": None,
+            "season_bb": None,
             "is_confirmed": False,
             "is_unannounced": True,
             "status_label": "선발 미정 (TBD)",
