@@ -100,6 +100,12 @@ class MatchResponse(MatchBase):
     home_starter_name: Optional[str] = None
     away_starter_name: Optional[str] = None
     starters_confirmed: Optional[bool] = False
+    current_inning: Optional[str] = None
+    inning_text: Optional[str] = None
+    outs: Optional[int] = None
+    balls: Optional[int] = None
+    strikes: Optional[int] = None
+    all_odds: Optional[List[Dict[str, Any]]] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

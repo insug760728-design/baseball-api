@@ -9572,7 +9572,7 @@ function getFullModalMatchList() {
         } catch (e) {}
       }
 
-      // 2. 백엔드 사전 계산된 정합 배당 및 기준점 우선 사용
+      // 2. 실제 베트맨 공식 배당 및 기준점 우선 사용
       const backendOdds = m.odds || pred.odds || null;
       const backendOu = m.ou_line || pred.ou_line || (backendOdds ? backendOdds.ou_line : null);
 
@@ -9584,24 +9584,22 @@ function getFullModalMatchList() {
       const marginOvs = 1.045;
       const marginDom = 1.145;
 
-      if (is3Way) {
+      if (backendOdds && (backendOdds.is_betman_official || (backendOdds.home && backendOdds.away))) {
+        oddH = (backendOdds.home !== undefined && backendOdds.home !== null) ? Number(backendOdds.home).toFixed(2) : '-';
+        oddD = (backendOdds.draw !== undefined && backendOdds.draw !== null && backendOdds.draw !== '-') ? Number(backendOdds.draw).toFixed(2) : (is3Way ? '-' : null);
+        oddA = (backendOdds.away !== undefined && backendOdds.away !== null) ? Number(backendOdds.away).toFixed(2) : '-';
+        domH = oddH;
+        domD = oddD;
+        domA = oddA;
+        ouBase = backendOu ? String(backendOu) : (is3Way ? '2.5' : (sport === 'BASEBALL' ? '8.5' : '160.5'));
+      } else if (is3Way) {
         if (backendOdds && backendOdds.home && backendOdds.draw && backendOdds.away) {
           oddH = Number(backendOdds.home).toFixed(2);
           oddD = Number(backendOdds.draw).toFixed(2);
           oddA = Number(backendOdds.away).toFixed(2);
-          if (backendOdds.domestic_home && backendOdds.domestic_away && backendOdds.domestic_draw) {
-            domH = Number(backendOdds.domestic_home).toFixed(2);
-            domD = Number(backendOdds.domestic_draw).toFixed(2);
-            domA = Number(backendOdds.domestic_away).toFixed(2);
-          } else if (backendOdds.domestic && backendOdds.domestic.home) {
-            domH = Number(backendOdds.domestic.home).toFixed(2);
-            domD = Number(backendOdds.domestic.draw).toFixed(2);
-            domA = Number(backendOdds.domestic.away).toFixed(2);
-          } else {
-            domH = (Number(oddH) * (marginOvs / marginDom)).toFixed(2);
-            domD = (Number(oddD) * (marginOvs / marginDom)).toFixed(2);
-            domA = (Number(oddA) * (marginOvs / marginDom)).toFixed(2);
-          }
+          domH = oddH;
+          domD = oddD;
+          domA = oddA;
         } else {
           let pH = 0.40, pD = 0.28, pA = 0.32;
           if (isDraw) {
@@ -9629,17 +9627,11 @@ function getFullModalMatchList() {
         // 2WAY: BASEBALL, BASKETBALL, HOCKEY, VOLLEYBALL
         if (backendOdds && backendOdds.home && backendOdds.away) {
           oddH = Number(backendOdds.home).toFixed(2);
+          oddD = backendOdds.draw ? Number(backendOdds.draw).toFixed(2) : null;
           oddA = Number(backendOdds.away).toFixed(2);
-          if (backendOdds.domestic_home && backendOdds.domestic_away) {
-            domH = Number(backendOdds.domestic_home).toFixed(2);
-            domA = Number(backendOdds.domestic_away).toFixed(2);
-          } else if (backendOdds.domestic && backendOdds.domestic.home) {
-            domH = Number(backendOdds.domestic.home).toFixed(2);
-            domA = Number(backendOdds.domestic.away).toFixed(2);
-          } else {
-            domH = (Number(oddH) * (marginOvs / marginDom)).toFixed(2);
-            domA = (Number(oddA) * (marginOvs / marginDom)).toFixed(2);
-          }
+          domH = oddH;
+          domD = oddD;
+          domA = oddA;
         } else {
           let pH = 0.50;
           if (isHomeFav) {
@@ -9649,8 +9641,10 @@ function getFullModalMatchList() {
           }
           const pA = 1.0 - pH;
           oddH = (1.0 / (pH * marginOvs)).toFixed(2);
+          oddD = null;
           oddA = (1.0 / (pA * marginOvs)).toFixed(2);
           domH = (1.0 / (pH * marginDom)).toFixed(2);
+          domD = null;
           domA = (1.0 / (pA * marginDom)).toFixed(2);
         }
         if (backendOu) {
@@ -10068,19 +10062,31 @@ function getFullModalMatchList() {
 
         if (isLive) {
           if (m.sport_code === 'BASEBALL') {
-            if (details.current_inning) {
+            if (m.current_inning) {
+              innText = m.current_inning;
+            } else if (m.inning_text) {
+              innText = m.inning_text;
+            } else if (details.current_inning) {
               innText = details.current_inning;
             } else if (details.inning_text) {
               innText = details.inning_text;
+            } else if (details.team_stats && details.team_stats.scoreboard && details.team_stats.scoreboard.current_inning) {
+              innText = details.team_stats.scoreboard.current_inning;
+            } else if (details.team_stats && details.team_stats.current_inning) {
+              innText = details.team_stats.current_inning;
+            } else if (details.period_scores && details.period_scores.current_inning) {
+              innText = details.period_scores.current_inning;
             } else if (details.period_scores && details.period_scores.innings) {
-              const innKeys = Object.keys(details.period_scores.innings).filter(k => !isNaN(parseInt(k, 10))).map(k => parseInt(k, 10)).sort((a, b) => a - b);
-              if (innKeys.length > 0) {
-                const maxInn = innKeys[innKeys.length - 1];
-                const innData = details.period_scores.innings[String(maxInn)] || {};
-                if (innData.home !== undefined && innData.home !== null && innData.home !== '-') {
-                  innText = `${maxInn}회말`;
+              const activeInns = Object.entries(details.period_scores.innings)
+                .filter(([k, v]) => v && ((v.away !== '-' && v.away !== null && v.away !== undefined) || (v.home !== '-' && v.home !== null && v.home !== undefined)))
+                .map(([k, v]) => ({ num: parseInt(k, 10), data: v }))
+                .sort((a, b) => a.num - b.num);
+              if (activeInns.length > 0) {
+                const latest = activeInns[activeInns.length - 1];
+                if (latest.data.home !== '-' && latest.data.home !== null && latest.data.home !== undefined) {
+                  innText = `${latest.num}회말`;
                 } else {
-                  innText = `${maxInn}회초`;
+                  innText = `${latest.num}회초`;
                 }
               }
             }
@@ -10318,132 +10324,97 @@ function getFullModalMatchList() {
       const homeName = formatTeamName(match.home_team_name);
       const awayName = formatTeamName(match.away_team_name);
 
-      // 1. 먼저 기존 getMatchOdds로 해외/국내 배당 가져오기
-      const oddsInfo = getMatchOdds(match);
-
-      // 2. 베트맨 전체 배당 API 호출
-      let fullOdds = [];
+      let fullOdds = (match.all_odds && match.all_odds.length > 0) ? match.all_odds : [];
       let totoGroups = [];
-      try {
-        const resp = await fetch(`/api/v1/toto/match-odds/${matchId}`);
-        if (resp.ok) {
-          const data = await resp.json();
-          fullOdds = data.full_odds || [];
-          totoGroups = data.toto_groups || [];
-        }
-      } catch(e) {}
-
-      // 3. 종목별 기본 배당 테이블 생성 (베트맨 스타일)
-      let tableHtml = '';
-
-      if (sport === 'SOCCER') {
-        // 축구: 해외배당 기반 테이블 + 베트맨 조합
-        const h = oddsInfo.home || '-', d = oddsInfo.draw || '-', a = oddsInfo.away || '-';
-        tableHtml = `
-          <div style="font-size:0.68rem; color:#1e293b; margin-bottom:4px; font-weight:700;">
-            ${homeName} <span style="color:#9ca3af">vs</span> ${awayName}
-          </div>
-          <table class="slim-odds-table">
-            <tr>
-              <td class="type-col">축구 승무패</td>
-              <td class="odds-val win">${h}</td>
-              <td class="odds-val draw">${d}</td>
-              <td class="odds-val lose">${a}</td>
-            </tr>`;
-        if (oddsInfo.domHome || oddsInfo.domDraw || oddsInfo.domAway) {
-          tableHtml += `
-            <tr>
-              <td class="type-col" style="color:#059669;">↳ 국내(토토)</td>
-              <td class="odds-val win">${oddsInfo.domHome || '-'}</td>
-              <td class="odds-val draw">${oddsInfo.domDraw || '-'}</td>
-              <td class="odds-val lose">${oddsInfo.domAway || '-'}</td>
-            </tr>`;
-        }
-        tableHtml += `
-            <tr style="background:#fafafa;">
-              <td class="type-col" style="color:#9ca3af; font-size:0.60rem;">핸디캡/U&O</td>
-              <td colspan="3" style="color:#9ca3af; font-size:0.60rem; text-align:center;"><a href="https://www.betman.co.kr" target="_blank" style="color:#2563eb;">베트맨 사이트 확인 →</a></td>
-            </tr>
-          </table>`;
-      } else if (sport === 'BASEBALL') {
-        const h = oddsInfo.home || '-', d = oddsInfo.draw || '-', a = oddsInfo.away || '-';
-        tableHtml = `
-          <div style="font-size:0.68rem; color:#1e293b; margin-bottom:4px; font-weight:700;">
-            ${homeName} <span style="color:#9ca3af">vs</span> ${awayName}
-          </div>
-          <table class="slim-odds-table">
-            <tr>
-              <td class="type-col">야구 승패</td>
-              <td class="odds-val win">${h}</td>
-              <td class="odds-val" style="color:#9ca3af;">-</td>
-              <td class="odds-val lose">${a}</td>
-            </tr>`;
-        if (d && d !== '-') {
-          tableHtml += `
-            <tr>
-              <td class="type-col">야구 승1패</td>
-              <td class="odds-val win">${h}</td>
-              <td class="odds-val draw">${d}</td>
-              <td class="odds-val lose">${a}</td>
-            </tr>`;
-        }
-        if (oddsInfo.domHome || oddsInfo.domAway) {
-          tableHtml += `
-            <tr>
-              <td class="type-col" style="color:#059669;">↳ 국내(토토)</td>
-              <td class="odds-val win">${oddsInfo.domHome || '-'}</td>
-              <td class="odds-val draw">${oddsInfo.domDraw || '-'}</td>
-              <td class="odds-val lose">${oddsInfo.domAway || '-'}</td>
-            </tr>`;
-        }
-        // 베트맨 fullOdds 렌더
-        if (fullOdds.length > 0) {
-          fullOdds.forEach(odd => {
-            if (odd.home_odds || odd.away_odds) {
-              const hdpStr = odd.handicap ? ` H${odd.handicap}` : (odd.uo ? ` U/O ${odd.uo}` : '');
-              tableHtml += `
-                <tr>
-                  <td class="type-col">${odd.type}${hdpStr}</td>
-                  <td class="odds-val win">${odd.home_odds || '-'}</td>
-                  <td class="odds-val draw">${odd.draw_odds || '-'}</td>
-                  <td class="odds-val lose">${odd.away_odds || '-'}</td>
-                </tr>`;
-            }
-          });
-        } else {
-          tableHtml += `
-            <tr style="background:#fafafa;">
-              <td class="type-col" style="color:#9ca3af; font-size:0.60rem;">핸디캡/U&O/SUM</td>
-              <td colspan="3" style="color:#9ca3af; font-size:0.60rem; text-align:center;"><a href="https://www.betman.co.kr" target="_blank" style="color:#2563eb;">베트맨 사이트 확인 →</a></td>
-            </tr>`;
-        }
-        tableHtml += '</table>';
-      } else {
-        // 농구
-        const h = oddsInfo.home || '-', a = oddsInfo.away || '-';
-        tableHtml = `
-          <div style="font-size:0.68rem; color:#1e293b; margin-bottom:4px; font-weight:700;">
-            ${homeName} <span style="color:#9ca3af">vs</span> ${awayName}
-          </div>
-          <table class="slim-odds-table">
-            <tr>
-              <td class="type-col">농구 승패</td>
-              <td class="odds-val win">${h}</td>
-              <td class="odds-val" style="color:#9ca3af;">-</td>
-              <td class="odds-val lose">${a}</td>
-            </tr>
-            <tr style="background:#fafafa;">
-              <td class="type-col" style="color:#9ca3af; font-size:0.60rem;">핸디캡/U&O</td>
-              <td colspan="3" style="color:#9ca3af; font-size:0.60rem; text-align:center;"><a href="https://www.betman.co.kr" target="_blank" style="color:#2563eb;">베트맨 사이트 확인 →</a></td>
-            </tr>
-          </table>`;
+      if (fullOdds.length === 0) {
+        try {
+          const resp = await fetch(`/api/v1/toto/match-odds/${matchId}`);
+          if (resp.ok) {
+            const data = await resp.json();
+            fullOdds = data.full_odds || [];
+            totoGroups = data.toto_groups || [];
+          }
+        } catch(e) {}
       }
 
-      // 토토 회차 포함 시 표시
+      const oddsInfo = getMatchOdds(match);
+      let tableHtml = `
+        <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom" style="border-color:#e2e8f0 !important;">
+          <span style="font-size:0.72rem; color:#1e293b; font-weight:800;">
+            ${homeName} <span style="color:#9ca3af; font-weight:400;">vs</span> ${awayName}
+          </span>
+          <span class="badge" style="background:#1e40af; color:#fff; font-size:0.62rem; font-weight:700;">베트맨 프로토 공식 배당</span>
+        </div>
+      `;
+
+      if (fullOdds && fullOdds.length > 0) {
+        tableHtml += `
+          <table class="slim-odds-table">
+            <thead>
+              <tr style="background:#f8fafc; font-size:0.65rem; color:#64748b;">
+                <th class="text-start ps-1 py-1">유형/기준</th>
+                <th class="text-center py-1">홈(승)</th>
+                <th class="text-center py-1">${sport === 'SOCCER' ? '무' : (sport === 'BASEBALL' ? '1' : (sport === 'BASKETBALL' ? '5' : '무'))}</th>
+                <th class="text-center py-1">원정(패)</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        fullOdds.forEach(odd => {
+          if (odd.home_odds > 0 || odd.away_odds > 0) {
+            const hdpStr = odd.handicap ? ` <span class="badge bg-light text-dark border px-1" style="font-size:0.60rem;">${odd.handicap}</span>` : '';
+            const is3Opt = (odd.draw_odds && odd.draw_odds > 0);
+            const wVote = odd.win_vote_pct && odd.win_vote_pct !== '0.0%' ? `<div style="font-size:0.58rem; color:#64748b; font-weight:600;">${odd.win_vote_pct}</div>` : '';
+            const dVote = odd.draw_vote_pct && odd.draw_vote_pct !== '0.0%' ? `<div style="font-size:0.58rem; color:#64748b; font-weight:600;">${odd.draw_vote_pct}</div>` : '';
+            const lVote = odd.loss_vote_pct && odd.loss_vote_pct !== '0.0%' ? `<div style="font-size:0.58rem; color:#64748b; font-weight:600;">${odd.loss_vote_pct}</div>` : '';
+
+            tableHtml += `
+              <tr>
+                <td class="type-col" style="font-weight:700; color:#334155;">
+                  ${odd.type}${hdpStr}
+                </td>
+                <td class="odds-val win text-center">
+                  <div class="fw-bold">${odd.home_odds || '-'}</div>
+                  ${wVote}
+                </td>
+                <td class="odds-val draw text-center">
+                  <div class="fw-bold">${is3Opt ? odd.draw_odds : '-'}</div>
+                  ${is3Opt ? dVote : ''}
+                </td>
+                <td class="odds-val lose text-center">
+                  <div class="fw-bold">${odd.away_odds || '-'}</div>
+                  ${lVote}
+                </td>
+              </tr>
+            `;
+          }
+        });
+        tableHtml += `
+            </tbody>
+          </table>
+        `;
+      } else {
+        const h = oddsInfo.home || '-', d = oddsInfo.draw || '-', a = oddsInfo.away || '-';
+        tableHtml += `
+          <table class="slim-odds-table">
+            <tr>
+              <td class="type-col">${sport === 'SOCCER' ? '축구 승무패' : (sport === 'BASEBALL' ? '야구 승1패' : '일반 승패')}</td>
+              <td class="odds-val win text-center">${h}</td>
+              <td class="odds-val draw text-center">${(d && d !== '-') ? d : '-'}</td>
+              <td class="odds-val lose text-center">${a}</td>
+            </tr>
+            <tr style="background:#fafafa;">
+              <td class="type-col" style="color:#9ca3af; font-size:0.60rem;">핸디캡/U&O/SUM</td>
+              <td colspan="3" style="color:#9ca3af; font-size:0.60rem; text-align:center;"><a href="https://www.betman.co.kr" target="_blank" style="color:#2563eb; font-weight:700;">베트맨 사이트 확인 →</a></td>
+            </tr>
+          </table>
+        `;
+      }
+
       let totoHtml = '';
       if (totoGroups.length > 0) {
         const g = totoGroups[0];
-        totoHtml = `<div style="margin-top:4px; font-size:0.62rem; color:#059669;">📋 베트맨 ${g.round_name} 포함 경기</div>`;
+        totoHtml = `<div style="margin-top:4px; font-size:0.62rem; color:#059669; font-weight:700;">📋 베트맨 ${g.round_name} 포함 경기</div>`;
       }
 
       updateSlimPanel(matchId, 'odds', tableHtml + totoHtml);

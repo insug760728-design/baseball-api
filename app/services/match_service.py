@@ -12,6 +12,7 @@ from app.scrapers.basketball_scraper import BasketballScraper
 from app.core.sports_catalog import SPORTS_CATALOG
 from app.services.team_split_service import TeamSplitService, is_valid_starter_name
 from app.services.player_translation import translate_player_name, sanitize_player_name, sanitize_text
+from app.services.betman_service import BetmanService
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -94,8 +95,8 @@ class MatchService:
                         match.match_date = m_data["match_date"]
                         db.commit()
 
-                # 선발 예고 투수(probablePitcher)가 제공된 경우 match_details.team_stats에 자동 등록 및 최신화
-                if m_data.get("probable_pitcher_home") or m_data.get("probable_pitcher_away"):
+                # 선발 예고 투수(probablePitcher) 및 라이브 이닝/스코어보드 자동 등록 및 최신화
+                if m_data.get("probable_pitcher_home") or m_data.get("probable_pitcher_away") or m_data.get("period_scores") or m_data.get("scoreboard") or m_data.get("current_inning"):
                     detail = db.query(MatchDetail).filter(MatchDetail.match_id == match.id).first()
                     if not detail:
                         detail = MatchDetail(match_id=match.id, period_scores="{}", team_stats="{}", source_url=None)
@@ -124,14 +125,22 @@ class MatchService:
                             "home": {"name": final_h or "선발 예고", "confirmed": bool(final_h), "throws": "우완"},
                             "away": {"name": final_a or "선발 예고", "confirmed": bool(final_a), "throws": "우완"}
                         }
-                        detail.team_stats = json.dumps(ts, ensure_ascii=False)
-                        db.commit()
-                        try:
-                            from app.api.v1.matches import clear_matches_cache, clear_match_full_cache
-                            clear_matches_cache(match.id)
-                            clear_match_full_cache(match.id)
-                        except Exception:
-                            pass
+
+                    if m_data.get("scoreboard"):
+                        ts["scoreboard"] = m_data["scoreboard"]
+                    if m_data.get("current_inning"):
+                        ts["current_inning"] = m_data["current_inning"]
+
+                    detail.team_stats = json.dumps(ts, ensure_ascii=False)
+                    if m_data.get("period_scores") and not detail.is_customized:
+                        detail.period_scores = json.dumps(m_data["period_scores"], ensure_ascii=False)
+                    db.commit()
+                    try:
+                        from app.api.v1.matches import clear_matches_cache, clear_match_full_cache
+                        clear_matches_cache(match.id)
+                        clear_match_full_cache(match.id)
+                    except Exception:
+                        pass
 
                 if match.status in ["FINISHED", "LIVE"]:
                     if not match.details or not match.player_stats or match.status == "LIVE":
@@ -352,25 +361,51 @@ class MatchService:
             m.home_starter_name = None
             m.away_starter_name = None
             m.starters_confirmed = False
+            m.current_inning = None
+            m.inning_text = None
+            m.outs = None
+            m.balls = None
+            m.strikes = None
             h_confirmed = False
             a_confirmed = False
 
-            if m.details and m.details.team_stats:
-                try:
-                    ts = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
-                    st = ts.get("starters", {})
-                    h_st = st.get("home", {})
-                    a_st = st.get("away", {})
-                    h_raw = h_st.get("name")
-                    a_raw = a_st.get("name")
-                    if is_valid_starter_name(h_raw):
-                        m.home_starter_name = translate_player_name(h_raw.strip())
-                        h_confirmed = bool(h_st.get("confirmed", True))
-                    if is_valid_starter_name(a_raw):
-                        m.away_starter_name = translate_player_name(a_raw.strip())
-                        a_confirmed = bool(a_st.get("confirmed", True))
-                except Exception:
-                    pass
+            if m.details:
+                if m.details.period_scores:
+                    try:
+                        ps = json.loads(m.details.period_scores) if isinstance(m.details.period_scores, str) else m.details.period_scores
+                        if ps.get("current_inning"):
+                            m.current_inning = ps.get("current_inning")
+                            m.inning_text = ps.get("current_inning")
+                    except Exception:
+                        pass
+
+                if m.details.team_stats:
+                    try:
+                        ts = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
+                        sb = ts.get("scoreboard", {})
+                        if sb:
+                            m.current_inning = sb.get("current_inning") or m.current_inning
+                            m.inning_text = sb.get("current_inning") or m.inning_text
+                            m.outs = sb.get("outs")
+                            m.balls = sb.get("balls")
+                            m.strikes = sb.get("strikes")
+                        elif ts.get("current_inning"):
+                            m.current_inning = ts.get("current_inning") or m.current_inning
+                            m.inning_text = ts.get("current_inning") or m.inning_text
+
+                        st = ts.get("starters", {})
+                        h_st = st.get("home", {})
+                        a_st = st.get("away", {})
+                        h_raw = h_st.get("name")
+                        a_raw = a_st.get("name")
+                        if is_valid_starter_name(h_raw):
+                            m.home_starter_name = translate_player_name(h_raw.strip())
+                            h_confirmed = bool(h_st.get("confirmed", True))
+                        if is_valid_starter_name(a_raw):
+                            m.away_starter_name = translate_player_name(a_raw.strip())
+                            a_confirmed = bool(a_st.get("confirmed", True))
+                    except Exception:
+                        pass
 
             # 진행 중인 LIVE 야구 경기의 경우 player_match_stats 박스스코어에서 실제 등판 투수 식별
             if m.sport_code == "BASEBALL" and (not m.home_starter_name or not m.away_starter_name) and m.status == "LIVE":
@@ -432,6 +467,13 @@ class MatchService:
                     m.odds = None
                     m.ou_line = None
                     m.ou_pick = None
+
+        # 실제 베트맨 프로토(G101) 공식 배당 및 전체 배당 목록을 경기 데이터에 직접 연동
+        try:
+            matches = BetmanService.attach_betman_odds_to_matches(matches, db)
+        except Exception as e:
+            logger.warning(f"Betman odds attachment skipped: {e}")
+
         return matches
 
     @staticmethod

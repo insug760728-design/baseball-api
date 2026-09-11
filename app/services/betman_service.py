@@ -436,7 +436,7 @@ class BetmanService:
 
     @staticmethod
     def get_proto_odds(force_refresh: bool = False) -> dict:
-        """베트맨 프로토 승부식(G101) 최신 회차의 전체 700~800개 배당 및 투표율 일괄 수집"""
+        """베트맨 프로토 승부식(G101) 최신 회차의 전체 700~1100개 배당 및 투표율 일괄 수집"""
         now = time.time()
         active_ts = BetmanService.get_active_round_ts('G101')
         cache_key = f'proto_G101_{active_ts}'
@@ -474,6 +474,216 @@ class BetmanService:
         return {'gmTs': active_ts, 'total_lines': 0, 'keys': [], 'datas': [], 'votes': {}}
 
     @staticmethod
+    def get_indexed_proto_matches(force_refresh: bool = False) -> dict:
+        """
+        베트맨 프로토 G101 전체 배당 데이터를 경기 단위(홈팀, 원정팀)로 완벽하게 인덱싱 및 메인 배당 계산
+        """
+        now = time.time()
+        cache_key = 'indexed_proto_matches'
+        if not force_refresh and cache_key in _CACHE:
+            ts_cached, data = _CACHE[cache_key]
+            if now - ts_cached < 60: # 1분 캐시
+                return data
+
+        proto_data = BetmanService.get_proto_odds(force_refresh=force_refresh)
+        keys = proto_data.get('keys', [])
+        datas = proto_data.get('datas', [])
+        vote_dict = proto_data.get('votes', {})
+
+        indexed = {}
+        for r in datas:
+            d = dict(zip(keys, r))
+            h_raw = d.get('homeName', '').strip()
+            a_raw = d.get('awayName', '').strip()
+            if not h_raw or not a_raw or h_raw == '미정' or a_raw == '미정':
+                continue
+
+            w_allot = float(d.get('winAllot') or 0.0)
+            d_allot = float(d.get('drawAllot') or 0.0)
+            l_allot = float(d.get('loseAllot') or 0.0)
+
+            # 발매 전 0.0 더미 배당 제외
+            if w_allot <= 0.0 and l_allot <= 0.0:
+                continue
+
+            h_norm = clean_name(h_raw)
+            a_norm = clean_name(a_raw)
+            sp = d.get('itemCode', 'BS')
+            seq = d.get('matchSeq')
+            handi_val = d.get('winHandi') if d.get('winHandi') is not None else d.get('handi')
+
+            v = vote_dict.get(seq, {})
+            tot = v.get('W_BET_CNT', 0) + v.get('D_BET_CNT', 0) + v.get('L_BET_CNT', 0)
+            w_pct = round(v.get('W_BET_CNT', 0) / tot * 100, 1) if tot else 0.0
+            l_pct = round(v.get('L_BET_CNT', 0) / tot * 100, 1) if tot else 0.0
+            d_pct = round(v.get('D_BET_CNT', 0) / tot * 100, 1) if tot else 0.0
+
+            odd_item = {
+                'seq': seq,
+                'type': d.get('betTypNm', '일반 승패'),
+                'handicap': str(handi_val) if handi_val not in (None, '', 0, 0.0) else '',
+                'uo': str(handi_val) if handi_val not in (None, '', 0, 0.0) else '',
+                'home_odds': w_allot,
+                'draw_odds': d_allot,
+                'away_odds': l_allot,
+                'win_vote_pct': f"{w_pct}%",
+                'draw_vote_pct': f"{d_pct}%",
+                'loss_vote_pct': f"{l_pct}%",
+                'win_votes': v.get('W_BET_CNT', 0),
+                'draw_votes': v.get('D_BET_CNT', 0),
+                'loss_votes': v.get('L_BET_CNT', 0),
+                'total_votes': tot
+            }
+
+            key = (h_norm, a_norm)
+            if key not in indexed:
+                sport_name = 'BASEBALL' if sp == 'BS' else ('SOCCER' if sp == 'SC' else ('BASKETBALL' if sp == 'BK' else 'VOLLEYBALL'))
+                indexed[key] = {
+                    'home_name': h_raw,
+                    'away_name': a_raw,
+                    'sport_code': sport_name,
+                    'league_name': d.get('leagueName', ''),
+                    'all_odds': [],
+                    'main_odds': {},
+                    'ou_line': None
+                }
+
+            indexed[key]['all_odds'].append(odd_item)
+
+            btype = d.get('betTypNm', '')
+            if '언더오버' in btype and handi_val:
+                indexed[key]['ou_line'] = str(handi_val)
+
+            if sp == 'BS': # 야구
+                if '승1패' in btype or '승N패' in btype:
+                    indexed[key]['s1p'] = {'home': w_allot, 'draw': d_allot, 'away': l_allot}
+                elif '일반 승패' in btype or '승패' in btype:
+                    indexed[key]['general'] = {'home': w_allot, 'draw': None, 'away': l_allot}
+            elif sp == 'SC': # 축구
+                if '승무패' in btype:
+                    indexed[key]['main_odds'] = {
+                        'home': w_allot,
+                        'draw': d_allot,
+                        'away': l_allot,
+                        'domestic_home': w_allot,
+                        'domestic_draw': d_allot,
+                        'domestic_away': l_allot,
+                        'is_betman_official': True
+                    }
+            elif sp == 'BK': # 농구
+                if '일반 승패' in btype or '승패' in btype:
+                    indexed[key]['general'] = {'home': w_allot, 'draw': None, 'away': l_allot}
+                elif '승5패' in btype or '승N패' in btype:
+                    indexed[key]['s5p'] = {'home': w_allot, 'draw': d_allot, 'away': l_allot}
+
+        # 야구, 농구, 배구 메인 배당 최종 정립
+        for k, v in indexed.items():
+            if v['sport_code'] == 'BASEBALL':
+                s1p = v.get('s1p')
+                gen = v.get('general')
+                if s1p:
+                    v['main_odds'] = {
+                        'home': s1p['home'],
+                        'draw': s1p['draw'],
+                        'away': s1p['away'],
+                        's1p_home': s1p['home'],
+                        's1p_draw': s1p['draw'],
+                        's1p_away': s1p['away'],
+                        'general_home': gen['home'] if gen else s1p['home'],
+                        'general_away': gen['away'] if gen else s1p['away'],
+                        'domestic_home': s1p['home'],
+                        'domestic_draw': s1p['draw'],
+                        'domestic_away': s1p['away'],
+                        'is_betman_official': True
+                    }
+                elif gen:
+                    v['main_odds'] = {
+                        'home': gen['home'],
+                        'draw': None,
+                        'away': gen['away'],
+                        'general_home': gen['home'],
+                        'general_away': gen['away'],
+                        'domestic_home': gen['home'],
+                        'domestic_draw': None,
+                        'domestic_away': gen['away'],
+                        'is_betman_official': True
+                    }
+            elif v['sport_code'] == 'BASKETBALL':
+                s5p = v.get('s5p')
+                gen = v.get('general')
+                if s5p:
+                    v['main_odds'] = {
+                        'home': s5p['home'],
+                        'draw': s5p['draw'],
+                        'away': s5p['away'],
+                        'domestic_home': s5p['home'],
+                        'domestic_draw': s5p['draw'],
+                        'domestic_away': s5p['away'],
+                        'is_betman_official': True
+                    }
+                elif gen:
+                    v['main_odds'] = {
+                        'home': gen['home'],
+                        'draw': None,
+                        'away': gen['away'],
+                        'domestic_home': gen['home'],
+                        'domestic_draw': None,
+                        'domestic_away': gen['away'],
+                        'is_betman_official': True
+                    }
+            elif v['sport_code'] == 'VOLLEYBALL':
+                for o in v['all_odds']:
+                    if '승패' in o['type']:
+                        v['main_odds'] = {
+                            'home': o['home_odds'],
+                            'draw': None,
+                            'away': o['away_odds'],
+                            'domestic_home': o['home_odds'],
+                            'domestic_away': o['away_odds'],
+                            'is_betman_official': True
+                        }
+                        break
+
+        _CACHE[cache_key] = (now, indexed)
+        return indexed
+
+    @staticmethod
+    def attach_betman_odds_to_matches(matches: list, db=None) -> list:
+        """
+        MatchService.get_matches가 반환하는 경기 목록에 실제 베트맨 공식 배당(G101) 및 all_odds 주입
+        """
+        if not matches:
+            return matches
+
+        indexed_proto = BetmanService.get_indexed_proto_matches()
+        if not indexed_proto:
+            return matches
+
+        for m in matches:
+            h_norm = clean_name(m.home_team_name)
+            a_norm = clean_name(m.away_team_name)
+
+            proto_info = indexed_proto.get((h_norm, a_norm))
+            if not proto_info:
+                # Fuzzy matching fallback
+                for (ih, ia), info in indexed_proto.items():
+                    if teams_match(ih, h_norm) and teams_match(ia, a_norm):
+                        proto_info = info
+                        break
+
+            if proto_info and proto_info.get('main_odds'):
+                m.odds = proto_info['main_odds']
+                m.all_odds = proto_info.get('all_odds', [])
+                if proto_info.get('ou_line'):
+                    m.ou_line = proto_info['ou_line']
+                if getattr(m, 'prediction', None) and isinstance(m.prediction, dict):
+                    m.prediction['odds'] = proto_info['main_odds']
+                    if proto_info.get('ou_line'):
+                        m.prediction['ou_line'] = proto_info['ou_line']
+
+        return matches
+
+    @staticmethod
     def get_match_full_odds(match_id: int) -> dict:
         """
         특정 경기(match_id)에 대한 베트맨 공식 배당 및 실시간 투표율 조회
@@ -502,38 +712,18 @@ class BetmanService:
         away_name = match.get('away_team_name', '')
         match_date = match.get('match_date', '')
 
-        # 1. 프로토(G101) 전체 배당 목록에서 해당 경기 매칭
-        proto_data = BetmanService.get_proto_odds()
-        keys = proto_data.get('keys', [])
-        datas = proto_data.get('datas', [])
-        vote_dict = proto_data.get('votes', {})
+        indexed = BetmanService.get_indexed_proto_matches()
+        h_norm = clean_name(home_name)
+        a_norm = clean_name(away_name)
 
-        matched_odds = []
-        for row in datas:
-            d = dict(zip(keys, row))
-            h = d.get('homeName', '')
-            a = d.get('awayName', '')
-            if teams_match(h, home_name) and teams_match(a, away_name):
-                seq = d.get('matchSeq')
-                v = vote_dict.get(seq, {})
-                tot = v.get('W_BET_CNT', 0) + v.get('D_BET_CNT', 0) + v.get('L_BET_CNT', 0)
-                w_pct = round(v.get('W_BET_CNT', 0) / tot * 100, 1) if tot else 0.0
-                l_pct = round(v.get('L_BET_CNT', 0) / tot * 100, 1) if tot else 0.0
-                d_pct = round(v.get('D_BET_CNT', 0) / tot * 100, 1) if tot else 0.0
+        proto_info = indexed.get((h_norm, a_norm))
+        if not proto_info:
+            for (ih, ia), info in indexed.items():
+                if teams_match(ih, h_norm) and teams_match(ia, a_norm):
+                    proto_info = info
+                    break
 
-                matched_odds.append({
-                    'seq': seq,
-                    'type': d.get('betTypNm', '일반 승패'),
-                    'handicap': d.get('winHandi') or d.get('handi') or '',
-                    'uo': d.get('winHandi') or d.get('handi') or '',
-                    'home_odds': float(d.get('winAllot') or 0.0),
-                    'draw_odds': float(d.get('drawAllot') or 0.0),
-                    'away_odds': float(d.get('loseAllot') or 0.0),
-                    'win_vote_pct': f"{w_pct}%",
-                    'draw_vote_pct': f"{d_pct}%",
-                    'loss_vote_pct': f"{l_pct}%",
-                    'total_votes': tot
-                })
+        matched_odds = proto_info.get('all_odds', []) if proto_info else []
 
         return {
             'status': 'success',
@@ -543,7 +733,8 @@ class BetmanService:
             'sport_code': sport_code,
             'match_date': match_date,
             'toto_groups': [],
-            'full_odds': matched_odds
+            'full_odds': matched_odds,
+            'main_odds': proto_info.get('main_odds', {}) if proto_info else {}
         }
 
     @staticmethod
