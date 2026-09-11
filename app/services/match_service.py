@@ -259,9 +259,6 @@ class MatchService:
 
     @classmethod
     def get_matches(cls, db: Session, sport_code: Optional[str] = None, league_name: Optional[str] = None, status: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None, limit: Optional[int] = None, order: Optional[str] = "asc"):
-        # stale LIVE 경기 자동 종결 (시작 후 4시간 이상 지난 경기 FINISHED 처리)
-        cls.cleanup_stale_live_matches(db)
-
         query = db.query(Match).options(joinedload(Match.details))
 
         # 리그명에 따라 sport_code 자동 감지
