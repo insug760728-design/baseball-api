@@ -711,11 +711,10 @@ class MatchService:
                 st_h = None
                 st_a = None
                 for t_name, s_name in kbo_team_starters.items():
-                    if is_kbo_team_name(t_name):
-                        if (t_name == m.home_team_name) or (len(t_name) >= 2 and t_name in m.home_team_name and not ("지바" in m.home_team_name and "롯데" in t_name)):
-                            st_h = s_name
-                        if (t_name == m.away_team_name) or (len(t_name) >= 2 and t_name in m.away_team_name and not ("지바" in m.away_team_name and "롯데" in t_name)):
-                            st_a = s_name
+                    if teams_match(t_name, m.home_team_name):
+                        st_h = s_name
+                    if teams_match(t_name, m.away_team_name):
+                        st_a = s_name
 
                 if st_h or st_a:
                     # 기존 저장된 선발투수가 이미 있으면 보존하며 신규 발표분 병합
@@ -765,11 +764,10 @@ class MatchService:
                 st_h = None
                 st_a = None
                 for t_name, s_name in npb_team_starters.items():
-                    if is_npb_team_name(t_name):
-                        if (t_name == m.home_team_name) or (len(t_name) >= 2 and t_name in m.home_team_name and not ("자이언츠" in m.home_team_name and "요미우리" not in m.home_team_name)):
-                            st_h = s_name
-                        if (t_name == m.away_team_name) or (len(t_name) >= 2 and t_name in m.away_team_name and not ("자이언츠" in m.away_team_name and "요미우리" not in m.away_team_name)):
-                            st_a = s_name
+                    if teams_match(t_name, m.home_team_name):
+                        st_h = s_name
+                    if teams_match(t_name, m.away_team_name):
+                        st_a = s_name
 
                 if st_h or st_a:
                     curr_dt = db.query(MatchDetail).filter(MatchDetail.match_id == m.id).first()

@@ -1133,22 +1133,9 @@ class LiveApiSportsService:
                                     existing_m = dm
                                     break
 
-                        if not existing_m and fix_id_str:
-                            new_m = Match(
-                                official_id=fix_id_str,
-                                sport_code="SOCCER",
-                                league_name=f"{country} - {raw_lname}" if country != "World" else raw_lname,
-                                season=str(league.get("season", "2026")),
-                                round_name=league.get("round", "정규시즌"),
-                                match_date=m_date_str,
-                                home_team_name=h_trans,
-                                away_team_name=a_trans,
-                                home_score=0,
-                                away_score=0,
-                                status="SCHEDULED",
-                                stadium=fixture_info.get("venue", {}).get("name") or "스타디움"
-                            )
-                            db.add(new_m)
+                        # Only update existing DB matches to maintain strict alignment with Betman
+                        if existing_m and existing_m.status != "FINISHED":
+                            existing_m.status = mapped_status
                             updated += 1
             db.commit()
 

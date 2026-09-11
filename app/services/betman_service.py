@@ -910,6 +910,8 @@ class BetmanService:
             d = dict(zip(keys, row))
             h = d.get('homeName', '').strip()
             a = d.get('awayName', '').strip()
+            if not h or not a or h in ['미정', 'TBD', ''] or a in ['미정', 'TBD', '']:
+                continue
             l = d.get('leagueName', '').strip()
             sp = d.get('itemCode', 'BS')
             seq = d.get('matchSeq')

@@ -103,9 +103,9 @@ def sync_matches(payload: DateRangeSyncRequest, db: Session = Depends(get_db)):
     return result
 
 @router.get("/{match_id}", summary="경기 상세 정보, 1~9회 스코어보드, 타자/투수 세부 기록 종합 조회")
-def get_match_full(match_id: int, response: Response, db: Session = Depends(get_db)):
+def get_match_full(match_id: int, response: Response, force: bool = False, db: Session = Depends(get_db)):
     now = time.time()
-    if match_id in _MATCH_FULL_CACHE:
+    if not force and match_id in _MATCH_FULL_CACHE:
         cache_time, cached_res = _MATCH_FULL_CACHE[match_id]
         ttl = 10 if (cached_res.get("status") == "LIVE") else (180 if cached_res.get("status") == "SCHEDULED" else 1800)
         if now - cache_time < ttl:
