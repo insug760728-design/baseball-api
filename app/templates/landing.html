@@ -2009,10 +2009,13 @@
         </span>
       </div>
 
-      <!-- 📌 [경기목록 / 톡방] 네비게이션 탭 (토큰 브랜드와 PC앱/로그인 사이 완벽 배치) -->
+      <!-- 📌 [경기목록 / 실시간 / 톡방] 네비게이션 탭 (토큰 브랜드와 PC앱/로그인 사이 완벽 배치) -->
       <div class="d-flex align-items-center gap-1 mx-1" id="navCenterTabsGroup">
         <button class="btn btn-sm nav-tab-pill active fw-bold text-nowrap" id="mobTabSchedule" onclick="switchMobileTab('schedule')">
           <i class="bi bi-calendar-event me-1 text-primary"></i>경기목록
+        </button>
+        <button class="btn btn-sm nav-tab-pill fw-bold text-nowrap" id="mobTabLive" onclick="openLiveBroadcastCenter()" style="color: #dc2626 !important; border-color: #fecaca !important; background: #fff5f5 !important;" title="실시간 경기장 전광판 중계센터">
+          <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#ef4444; vertical-align: middle; animation: pulseGlow 1.5s infinite;"></span>실시간
         </button>
         <button class="btn btn-sm nav-tab-pill fw-bold text-nowrap" id="mobTabCommunity" onclick="switchMobileTab('community')">
           <i class="bi bi-chat-dots-fill me-1 text-success"></i>톡방
@@ -17062,7 +17065,15 @@ function getFullModalMatchList() {
       }
     }
 
+    function openLiveBroadcastCenter() {
+      window.location.href = '/live';
+    }
+
     function switchMobileTab(tabKey) {
+      if (tabKey === 'live') {
+        openLiveBroadcastCenter();
+        return;
+      }
       if (tabKey === 'center') tabKey = 'toto';
       if (tabKey === 'news') tabKey = 'community';
       currentMobileTab = tabKey;
