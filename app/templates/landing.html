@@ -10306,10 +10306,10 @@ function getFullModalMatchList() {
             else if (curHScore > prevHScore) scoringTeam = hTeam;
             else scoringTeam = aTeam;
 
-            const title = isGoal ? `⚽ [골! 득점 알림] ${scoringTeam}` : `⚾ [야구 득점 알림] ${scoringTeam}`;
+            const title = isGoal ? `⚽ [골!] ${scoringTeam} 득점!` : `⚾ [득점!] ${scoringTeam}`;
             const msg = `${hTeam} ${curHScore} : ${curAScore} ${aTeam}`;
 
-            // 1. 브라우저/스마트폰 시스템 푸시 알림 발송
+            // 1. 브라우저/스마트폰 시스템 푸시 알림 발송 (0초 즉시)
             if ('Notification' in window && Notification.permission === 'granted') {
               try {
                 new Notification(title, {
@@ -10329,8 +10329,8 @@ function getFullModalMatchList() {
             // 3. 효과음 재생
             playScoreNotificationBeep(isGoal);
 
-            // 4. 화면 상단 플로팅 토스트 팝업 표출
-            showNotifToast(`🚨 <b>${title}</b><br><span style="font-size:0.95rem; font-weight:800; color:#ef4444;">${msg}</span>`, 'goal');
+            // 4. 화면 상단 플로팅 토스트 팝업 표출 (군더더기 없는 즉시 스코어)
+            showNotifToast(`🚨 <b style="font-size: 0.95rem;">${title}</b><div style="font-size:1.1rem; font-weight:900; color:#ef4444; margin-top:2px; letter-spacing: -0.3px;">${msg}</div>`, 'goal');
 
             // 점수 최신화 기록
             sub.home_score = curHScore;
