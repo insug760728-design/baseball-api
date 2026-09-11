@@ -1059,11 +1059,18 @@ class LiveApiSportsService:
                     best_match.details.period_scores = json.dumps(period_dict)
                     updated += 1
                 elif mapped_status == "SCHEDULED" and kst_dt:
-                    # DB에 없는 신규 예정 경기 자동 등록
+                    # DB에 없는 신규 예정 경기 자동 등록 (사우디리그 및 독일 2부리그 등 비대상 리그 제외)
                     league = f.get("league", {})
                     raw_lname = league.get("name", "")
                     country = league.get("country", "")
-                    if country in ["England", "Spain", "Germany", "Italy", "France", "Netherlands", "Japan", "South-Korea", "Brazil", "Mexico", "Saudi-Arabia", "Portugal", "Belgium", "Turkey", "USA", "World"]:
+                    
+                    # 사우디 및 독일 2부/하부리그 완벽 차단
+                    if country in ["Saudi-Arabia", "Saudi Arabia"] or "사우디" in raw_lname or "Saudi" in raw_lname:
+                        continue
+                    if country == "Germany" and any(sub in raw_lname for sub in ["2. Bundesliga", "2.Bundesliga", "2. Liga", "3. Liga", "Regionalliga"]):
+                        continue
+
+                    if country in ["England", "Spain", "Germany", "Italy", "France", "Netherlands", "Japan", "South-Korea", "Brazil", "Mexico", "Portugal", "Belgium", "Turkey", "USA", "World"]:
                         new_m = Match(
                             official_id=str(fixture_info.get("id", "")),
                             sport_code="SOCCER",

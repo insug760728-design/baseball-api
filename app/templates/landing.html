@@ -10478,7 +10478,7 @@ function getFullModalMatchList() {
 
       let data = null;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
       try {
         const resp = await fetch(`/api/v1/live/match-history/${matchId}?max_games=1`, { signal: controller.signal });
         clearTimeout(timeoutId);
@@ -10487,8 +10487,10 @@ function getFullModalMatchList() {
         clearTimeout(timeoutId);
       }
 
-      if (!data || data.status !== 'success' || (!data.home_recent && !data.away_recent)) {
-        // API 실패 or 타임아웃 시 allMatches 로컬 데이터로 폴백
+      const hasRecent = (data && data.status === 'success' && 
+        ((data.home_recent && data.home_recent.length > 0) || (data.away_recent && data.away_recent.length > 0)));
+      if (!hasRecent) {
+        // API 실패 or 빈 데이터 시 allMatches 로컬 데이터로 초고속 폴백
         data = buildLocalHistory(match);
       }
 
