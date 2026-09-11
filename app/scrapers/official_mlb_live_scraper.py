@@ -150,6 +150,55 @@ class MlbOfficialScraper:
                 if target_date and match_kst_date_str != target_date:
                     continue
 
+                # 이닝 및 라이브 상황 추출 (linescore)
+                ls = g.get("linescore", {})
+                curr_inn = ls.get("currentInning")
+                inn_half = ls.get("inningHalf", "")
+                is_top = ls.get("isTopInning", True)
+                outs = ls.get("outs")
+                balls = ls.get("balls")
+                strikes = ls.get("strikes")
+
+                half_ko = "초" if (is_top or inn_half == "Top") else "말"
+                inning_text = f"{curr_inn}회{half_ko}" if curr_inn else None
+
+                raw_innings = ls.get("innings", [])
+                innings_dict = {}
+                for inn in raw_innings:
+                    num_str = str(inn.get("num"))
+                    away_r = inn.get("away", {}).get("runs")
+                    home_r = inn.get("home", {}).get("runs")
+                    innings_dict[num_str] = {
+                        "away": away_r if away_r is not None else "-",
+                        "home": home_r if home_r is not None else "-"
+                    }
+                for i in range(1, 10):
+                    if str(i) not in innings_dict:
+                        innings_dict[str(i)] = {"away": "-", "home": "-"}
+
+                teams_summary = ls.get("teams", {})
+                h_sum = teams_summary.get("home", {})
+                a_sum = teams_summary.get("away", {})
+                period_scores = {
+                    "current_inning": inning_text,
+                    "innings": innings_dict,
+                    "summary": {
+                        "home": {"R": h_sum.get("runs", home_score), "H": h_sum.get("hits", 0), "E": h_sum.get("errors", 0), "B": h_sum.get("leftOnBase", 0)},
+                        "away": {"R": a_sum.get("runs", away_score), "H": a_sum.get("hits", 0), "E": a_sum.get("errors", 0), "B": a_sum.get("leftOnBase", 0)}
+                    }
+                }
+
+                scoreboard = {
+                    "current_inning": inning_text,
+                    "inning_num": curr_inn,
+                    "inning_half": inn_half,
+                    "inning_state": half_ko,
+                    "outs": outs,
+                    "balls": balls,
+                    "strikes": strikes,
+                    "bso": f"{balls or 0}B-{strikes or 0}S-{outs or 0}O" if curr_inn else None
+                }
+
                 results.append({
                     "official_id": f"MLB_{game_pk}",
                     "sport_code": "BASEBALL",
@@ -167,7 +216,14 @@ class MlbOfficialScraper:
                     "raw_away_team": away_team_raw,
                     "raw_home_team": home_team_raw,
                     "probable_pitcher_home": h_prob_p,
-                    "probable_pitcher_away": a_prob_p
+                    "probable_pitcher_away": a_prob_p,
+                    "current_inning": inning_text,
+                    "inning_text": inning_text,
+                    "outs": outs,
+                    "balls": balls,
+                    "strikes": strikes,
+                    "period_scores": period_scores,
+                    "scoreboard": scoreboard
                 })
 
         return results
@@ -185,6 +241,15 @@ class MlbOfficialScraper:
         linescore_data = live_data.get("linescore", {})
         boxscore_data = live_data.get("boxscore", {})
         plays_data = live_data.get("plays", {})
+
+        curr_inn = linescore_data.get("currentInning")
+        inn_half = linescore_data.get("inningHalf", "")
+        is_top = linescore_data.get("isTopInning", True)
+        outs = linescore_data.get("outs")
+        balls = linescore_data.get("balls")
+        strikes = linescore_data.get("strikes")
+        half_ko = "초" if (is_top or inn_half == "Top") else "말"
+        inning_text = f"{curr_inn}회{half_ko}" if curr_inn else None
 
         # (1) 1~9회+ 이닝별 전광판 스코어 가공
         innings_dict = {}
@@ -209,6 +274,7 @@ class MlbOfficialScraper:
         away_summary = teams_summary.get("away", {})
 
         period_scores = {
+            "current_inning": inning_text,
             "innings": innings_dict,
             "summary": {
                 "home": {
@@ -226,8 +292,21 @@ class MlbOfficialScraper:
             }
         }
 
+        scoreboard = {
+            "current_inning": inning_text,
+            "inning_num": curr_inn,
+            "inning_half": inn_half,
+            "inning_state": half_ko,
+            "outs": outs,
+            "balls": balls,
+            "strikes": strikes,
+            "bso": f"{balls or 0}B-{strikes or 0}S-{outs or 0}O" if curr_inn else None
+        }
+
         # (2) 팀 스탯
         team_stats = {
+            "scoreboard": scoreboard,
+            "current_inning": inning_text,
             "hits": {"home": home_summary.get("hits", 0), "away": away_summary.get("hits", 0)},
             "errors": {"home": home_summary.get("errors", 0), "away": away_summary.get("errors", 0)},
             "left_on_base": {"home": home_summary.get("leftOnBase", 0), "away": away_summary.get("leftOnBase", 0)}
