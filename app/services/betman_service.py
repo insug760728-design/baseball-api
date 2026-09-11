@@ -644,13 +644,30 @@ class BetmanService:
                         }
                         break
 
-        _CACHE[cache_key] = (now, indexed)
-        return indexed
+        # 초고속 O(1) 별칭 사전(alias_map) 빌드: 모든 동의어 조합을 사전 키로 매핑
+        alias_map = {}
+        for (h_norm, a_norm), match_info in indexed.items():
+            h_aliases = [h_norm]
+            for grp in _PRECOMPUTED_SYNONYM_GROUPS:
+                if any(g == h_norm or g in h_norm or h_norm in g for g in grp):
+                    h_aliases.extend(grp)
+                    break
+            a_aliases = [a_norm]
+            for grp in _PRECOMPUTED_SYNONYM_GROUPS:
+                if any(g == a_norm or g in a_norm or a_norm in g for g in grp):
+                    a_aliases.extend(grp)
+                    break
+            for ha in set(h_aliases):
+                for aa in set(a_aliases):
+                    alias_map[(ha, aa)] = match_info
+
+        _CACHE[cache_key] = (now, alias_map)
+        return alias_map
 
     @staticmethod
     def attach_betman_odds_to_matches(matches: list, db=None) -> list:
         """
-        MatchService.get_matches가 반환하는 경기 목록에 실제 베트맨 공식 배당(G101) 및 all_odds 주입
+        MatchService.get_matches가 반환하는 경기 목록에 실제 베트맨 공식 배당(G101) 및 all_odds 주입 (O(1) 속도)
         """
         if not matches:
             return matches
@@ -664,13 +681,6 @@ class BetmanService:
             a_norm = clean_name(m.away_team_name)
 
             proto_info = indexed_proto.get((h_norm, a_norm))
-            if not proto_info:
-                # Fuzzy matching fallback
-                for (ih, ia), info in indexed_proto.items():
-                    if teams_match(ih, h_norm) and teams_match(ia, a_norm):
-                        proto_info = info
-                        break
-
             if proto_info and proto_info.get('main_odds'):
                 m.odds = proto_info['main_odds']
                 m.all_odds = proto_info.get('all_odds', [])
