@@ -163,7 +163,7 @@ class SchedulerService:
     async def execute_startup_sync(cls):
         """서버 시작 직후 어제~오늘+1일 전 종목(UCL/UEL 포함) 즉시 동기화.
         Render 슬립 후 재시작 시에도 최신 경기 데이터가 바로 반영되도록 보장."""
-        await asyncio.sleep(5)  # lifespan 초기화 완료 대기
+        await asyncio.sleep(30)  # lifespan 초기화 및 웹 서버 안정화 대기
         if cls._is_running_task:
             logger.info("[Startup Sync] 다른 작업 진행 중 - 시작 동기화 건너뜀")
             return
@@ -599,6 +599,7 @@ class SchedulerService:
                         updated_total += (fb_res.get('updated_db_matches', 0) or 0) + (bb_res.get('updated_db_matches', 0) or 0)
 
                     if updated_total > 0:
+                        from app.api.v1.matches import clear_matches_cache
                         clear_matches_cache()
                         
                         # 활성 LIVE 경기 상태 목록 추출하여 WebSocket에 직접 전송 (브라우저 추가 fetch 부하 0)
