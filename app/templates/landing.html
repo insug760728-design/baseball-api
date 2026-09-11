@@ -11521,93 +11521,26 @@ function getFullModalMatchList() {
       }
     }
 
-    // ---- 배당 패널 렌더 (상세보기와 동일하게 메모리 데이터로 0초 즉시 렌더) ----
+    // ---- 배당흐름 패널 렌더 (서비스 준비 중) ----
     function buildSlimOddsHtml(match, fullOdds, totoGroups) {
-      const sport = match.sport_code;
       const homeName = formatTeamName(match.home_team_name);
       const awayName = formatTeamName(match.away_team_name);
-      const oddsInfo = getMatchOdds(match);
 
-      let tableHtml = `
-        <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom" style="border-color:#e2e8f0 !important;">
-          <span style="font-size:0.72rem; color:#1e293b; font-weight:800;">
-            ${homeName} <span style="color:#9ca3af; font-weight:400;">vs</span> ${awayName}
-          </span>
-          <span class="badge" style="background:#1e40af; color:#fff; font-size:0.62rem; font-weight:700;">베트맨 프로토 공식 배당</span>
+      return `
+        <div class="p-3 text-center my-1" style="background:#f8fafc; border-radius:6px; font-size:0.80rem; border: 1px dashed #cbd5e1;">
+          <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color:#e2e8f0 !important;">
+            <span style="font-size:0.72rem; color:#1e293b; font-weight:800;">
+              ${homeName} <span style="color:#9ca3af; font-weight:400;">vs</span> ${awayName}
+            </span>
+            <span class="badge" style="background:#475569; color:#fff; font-size:0.62rem; font-weight:700;">배당흐름</span>
+          </div>
+          <div class="py-2">
+            <div style="font-size:1.25rem; margin-bottom:4px;">📈</div>
+            <div class="fw-bold text-dark mb-1" style="font-size: 0.82rem;">실시간 배당흐름 추적 시스템</div>
+            <div class="text-secondary" style="font-size: 0.75rem;">국내·해외 북메이커 실시간 배당 변동 및 머니라인 흐름 기능은 현재 <b class="text-primary">서비스 준비 중</b>입니다.</div>
+          </div>
         </div>
       `;
-
-      if (fullOdds && fullOdds.length > 0) {
-        tableHtml += `
-          <table class="slim-odds-table">
-            <thead>
-              <tr style="background:#f8fafc; font-size:0.65rem; color:#64748b;">
-                <th class="text-start ps-1 py-1">유형/기준</th>
-                <th class="text-center py-1">홈(승)</th>
-                <th class="text-center py-1">${sport === 'SOCCER' ? '무' : (sport === 'BASEBALL' ? '1' : (sport === 'BASKETBALL' ? '5' : '무'))}</th>
-                <th class="text-center py-1">원정(패)</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
-        fullOdds.forEach(odd => {
-          if (odd.home_odds > 0 || odd.away_odds > 0) {
-            const hdpStr = odd.handicap ? ` <span class="badge bg-light text-dark border px-1" style="font-size:0.60rem;">${odd.handicap}</span>` : '';
-            const is3Opt = (odd.draw_odds && odd.draw_odds > 0);
-            const wVote = odd.win_vote_pct && odd.win_vote_pct !== '0.0%' ? `<div style="font-size:0.58rem; color:#64748b; font-weight:600;">${odd.win_vote_pct}</div>` : '';
-            const dVote = odd.draw_vote_pct && odd.draw_vote_pct !== '0.0%' ? `<div style="font-size:0.58rem; color:#64748b; font-weight:600;">${odd.draw_vote_pct}</div>` : '';
-            const lVote = odd.loss_vote_pct && odd.loss_vote_pct !== '0.0%' ? `<div style="font-size:0.58rem; color:#64748b; font-weight:600;">${odd.loss_vote_pct}</div>` : '';
-
-            tableHtml += `
-              <tr>
-                <td class="type-col" style="font-weight:700; color:#334155;">
-                  ${odd.type}${hdpStr}
-                </td>
-                <td class="odds-val win text-center">
-                  <div class="fw-bold">${odd.home_odds || '-'}</div>
-                  ${wVote}
-                </td>
-                <td class="odds-val draw text-center">
-                  <div class="fw-bold">${is3Opt ? odd.draw_odds : '-'}</div>
-                  ${is3Opt ? dVote : ''}
-                </td>
-                <td class="odds-val lose text-center">
-                  <div class="fw-bold">${odd.away_odds || '-'}</div>
-                  ${lVote}
-                </td>
-              </tr>
-            `;
-          }
-        });
-        tableHtml += `
-            </tbody>
-          </table>
-        `;
-      } else {
-        const h = oddsInfo.home || '-', d = oddsInfo.draw || '-', a = oddsInfo.away || '-';
-        tableHtml += `
-          <table class="slim-odds-table">
-            <tr>
-              <td class="type-col">${sport === 'SOCCER' ? '축구 승무패' : (sport === 'BASEBALL' ? '야구 승1패' : '일반 승패')}</td>
-              <td class="odds-val win text-center">${h}</td>
-              <td class="odds-val draw text-center">${(d && d !== '-') ? d : '-'}</td>
-              <td class="odds-val lose text-center">${a}</td>
-            </tr>
-            <tr style="background:#fafafa;">
-              <td class="type-col" style="color:#9ca3af; font-size:0.60rem;">핸디캡/U&O/SUM</td>
-              <td colspan="3" style="color:#9ca3af; font-size:0.60rem; text-align:center;"><a href="https://www.betman.co.kr" target="_blank" style="color:#2563eb; font-weight:700;">베트맨 사이트 확인 →</a></td>
-            </tr>
-          </table>
-        `;
-      }
-
-      let totoHtml = '';
-      if (totoGroups && totoGroups.length > 0) {
-        const g = totoGroups[0];
-        totoHtml = `<div style="margin-top:4px; font-size:0.62rem; color:#059669; font-weight:700;">📋 베트맨 ${g.round_name} 포함 경기</div>`;
-      }
-
-      return tableHtml + totoHtml;
     }
 
     function loadSlimOddsPanel(matchId) {
