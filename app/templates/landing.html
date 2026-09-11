@@ -10751,19 +10751,33 @@ function getFullModalMatchList() {
       if (isSilentRefreshing) return;
       isSilentRefreshing = true;
       try {
-        const resp = await fetch(`/api/v1/matches?order=asc&limit=250&_t=${Date.now()}`);
+        const resp = await fetch(`/api/v1/matches?order=asc&limit=300&_t=${Date.now()}`);
         if (!resp.ok) return;
         const rawMatches = await resp.json();
 
-        const formatted = [];
+        const freshMap = new Map();
         for (const m of rawMatches) {
           if (m && m.id) {
             if (m.home_team_name) m.home_team_name = formatTeamName(m.home_team_name);
             if (m.away_team_name) m.away_team_name = formatTeamName(m.away_team_name);
-            formatted.push(m);
+            freshMap.set(m.id, m);
           }
         }
-        allMatches = formatted;
+
+        let merged = [];
+        if (allMatches && allMatches.length > 0) {
+          merged = allMatches.map(m => freshMap.has(m.id) ? { ...m, ...freshMap.get(m.id) } : m);
+          const existingIds = new Set(merged.map(m => m.id));
+          for (const [id, m] of freshMap.entries()) {
+            if (!existingIds.has(id)) {
+              merged.push(m);
+            }
+          }
+        } else {
+          merged = Array.from(freshMap.values());
+        }
+
+        allMatches = merged;
         checkLiveScoreNotifications(allMatches);
 
         renderMatchStrip('ALL');
