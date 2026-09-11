@@ -889,7 +889,7 @@ class BetmanService:
     @staticmethod
     def sync_betman_proto_matches(db) -> dict:
         """
-        베트맨 최신 프로토(G101) 전 경기를 DB에 자동으로 동기화
+        베트맨 최신 프로토(G101) 전체 경기를 DB에 자동으로 동기화
         - 신규 경기 자동 등록
         - 공식 배당 및 실시간 투표율을 match_details에 저장
         """
@@ -912,21 +912,22 @@ class BetmanService:
             a = d.get('awayName', '').strip()
             if not h or not a or h in ['미정', 'TBD', ''] or a in ['미정', 'TBD', '']:
                 continue
+
+            g_ts = d.get('gameDate')
+            m_date_str = ""
+            if g_ts:
+                try:
+                    dt = datetime.fromtimestamp(g_ts / 1000, tz=timezone(timedelta(hours=9)))
+                    m_date_str = dt.strftime("%Y-%m-%d %H:%M")
+                except Exception:
+                    m_date_str = ""
+
             l = d.get('leagueName', '').strip()
             sp = d.get('itemCode', 'BS')
             seq = d.get('matchSeq')
             m_key = f"{sp}_{l}_{h}_{a}"
 
             if m_key not in grouped:
-                g_ts = d.get('gameDate')
-                m_date_str = ""
-                if g_ts:
-                    try:
-                        dt = datetime.fromtimestamp(g_ts / 1000, tz=timezone(timedelta(hours=9)))
-                        m_date_str = dt.strftime("%Y-%m-%d %H:%M")
-                    except Exception:
-                        m_date_str = ""
-
                 sport_code = "BASEBALL" if sp == "BS" else ("SOCCER" if sp == "SC" else ("BASKETBALL" if sp == "BK" else "VOLLEYBALL"))
                 grouped[m_key] = {
                     'official_id': f"BETMAN_G101_{active_ts}_{seq}",

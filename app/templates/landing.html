@@ -1980,14 +1980,6 @@
           <div class="dash-card-column">
             
             <div class="dash-card-header pb-2">
-              <!-- Date Filter (오늘 / 내일 / 전체 / 지난결과) -->
-              <div class="d-flex gap-1 mb-2">
-                <button class="btn btn-sm pred-date-btn active flex-fill text-nowrap fw-bold" id="predDateD0" onclick="filterPredDate('D0')"><i class="bi bi-calendar-check me-1"></i>오늘</button>
-                <button class="btn btn-sm pred-date-btn flex-fill text-nowrap fw-bold" id="predDateD1" onclick="filterPredDate('D1')"><i class="bi bi-calendar-plus me-1"></i>내일</button>
-                <button class="btn btn-sm pred-date-btn flex-fill text-nowrap fw-bold" id="predDateALL" onclick="filterPredDate('ALL')"><i class="bi bi-calendar2-week me-1"></i>전체</button>
-                <button class="btn btn-sm pred-date-btn flex-fill text-nowrap fw-bold" id="predDateFINISHED" onclick="filterPredDate('FINISHED')" style="color: #dc2626; border-color: #fecaca; background: #fef2f2;"><i class="bi bi-check2-circle me-1"></i>지난결과</button>
-              </div>
-
               <!-- 6대 스포츠 고정 필터 (전체, 축구, 야구, 농구, 하키, 배구) -->
               <div class="d-flex gap-1 overflow-x-auto py-0.5" style="scrollbar-width: none;">
                 <button class="btn btn-sm sport-chip-btn active flex-fill text-nowrap" id="predSportALL" onclick="filterPredSport('ALL')">전체</button>
@@ -9865,7 +9857,7 @@ function getFullModalMatchList() {
     // 3-Day Match Predictor (Strict KST Chronological Stream & Real Official Scores)
     // ----------------------------------------------------
     let selectedPredMatchId = null;
-    let currentPredDate = 'D0'; // 'D0' (오늘 경기 - 기본값: LIVE + 오늘 예정 + 오늘 결과)
+    let currentPredDate = 'ALL'; // 'ALL' (전체 경기 - 기본값: 전체 경기 직접 표출)
     let currentPredSport = 'ALL'; // 'ALL', 'SOCCER', 'BASEBALL', 'BASKETBALL', 'HOCKEY', 'VOLLEYBALL'
     let currentPredLeague = 'ALL';
     let currentPredConfidence = 'ALL'; // 'ALL', '80', '70', '50'
@@ -10505,42 +10497,22 @@ function getFullModalMatchList() {
         list = list.filter(m => (m.match_date || '').startsWith(d1Str) && m.status !== 'CANCELLED' && m.status !== 'POSTPONED');
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       } else {
-        // [진행/예정]: LIVE 진행 중 + 2일 이내 예정 경기 + 오늘 완결된 경기
-        const nowKstDateTime = getKSTDateTimeString(now);
-        const maxUpcomingStr = getKSTDateString(new Date(now.getTime() + 2 * 86400000)) + ' 23:59:59';
-
+        // [전체 경기 스트림]: LIVE 진행 중 + 전체 예정 경기 (시간순 정렬) + 종료 경기
         const liveMatches = list.filter(isMatchTrulyLive);
         const upcomingMatches = list.filter(m => {
           if (m.status === 'CANCELLED' || m.status === 'POSTPONED' || m.status === 'FINISHED' || isMatchTrulyLive(m)) return false;
-          return (m.match_date || '') >= nowKstDateTime && (m.match_date || '') <= maxUpcomingStr;
+          return true;
         });
-        const todayFinished = list.filter(m => {
+        const finishedMatches = list.filter(m => {
           if (m.status === 'CANCELLED' || m.status === 'POSTPONED') return false;
-          const raw = m.match_date || '';
-          const isToday = raw.startsWith(d0Str);
-          const isStale = (m.status === 'LIVE' && !isMatchTrulyLive(m));
-          return isToday && (m.status === 'FINISHED' || isStale || raw < nowKstDateTime);
+          return m.status === 'FINISHED' || (m.status === 'LIVE' && !isMatchTrulyLive(m));
         });
 
         liveMatches.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
         upcomingMatches.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
-        todayFinished.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+        finishedMatches.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
 
-        list = [...liveMatches, ...upcomingMatches, ...todayFinished];
-
-        // Off-season or 0 upcoming matches fallback: show recent finished matches so the screen is NEVER blank
-        if (list.length === 0) {
-          let fbList = [...allMatches];
-          if (currentPredSport !== 'ALL') {
-            fbList = fbList.filter(m => m.sport_code === currentPredSport);
-          }
-          if (currentPredLeague !== 'ALL') {
-            const leagueParam = getLeagueQueryParam(currentPredLeague);
-            fbList = fbList.filter(m => m.league_name && m.league_name.includes(leagueParam));
-          }
-          list = fbList.filter(m => m.status === 'FINISHED' || (m.match_date || '') < nowKstDateTime)
-                       .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
-        }
+        list = [...liveMatches, ...upcomingMatches, ...finishedMatches];
       }
 
       // 🚀 실시간 완벽 중복 제거 (팀명 변형/다중 스크래핑으로 인한 동일 대진 중복 원천 차단)
