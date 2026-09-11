@@ -2914,6 +2914,16 @@
       '수원FC': '수원FC',
       '오스틴 FC': '오스틴FC',
       '토론토 FC': '토론토FC',
+      'Flamengo': '플라멩구',
+      'CR Flamengo': '플라멩구',
+      'CR플라멩구': '플라멩구',
+      'CR 플라멩구': '플라멩구',
+      '플라멩고': '플라멩구',
+      'Independiente del Valle': '델 바예',
+      '인디펜디엔테 델바예': '델 바예',
+      '인디펜디엔테 델 바예': '델 바예',
+      '인디펜디엔테델바예': '델 바예',
+      '델바예': '델 바예',
     };
 
     function formatTeamName(name) {
@@ -2928,6 +2938,14 @@
         if (trimmed.includes(k)) return v;
       }
       return trimmed;
+    }
+
+    function getMatchFixtureKey(m) {
+      if (!m) return '';
+      const dPart = (m.match_date || '').slice(0, 10);
+      const h = formatTeamName(m.home_team_name || '').trim();
+      const a = formatTeamName(m.away_team_name || '').trim();
+      return `${m.sport_code}_${h}_${a}_${dPart}`;
     }
 
     // =============================================================
@@ -3779,16 +3797,15 @@
           const rawMatches = [...upMatches, ...finMatches];
 
           const seenIds = new Set(allMatches.map(m => m.id));
-          const seenKeys = new Set(allMatches.map(m => {
-            const dPart = (m.match_date || '').slice(0, 10);
-            return `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
-          }));
+          const seenKeys = new Set(allMatches.map(m => getMatchFixtureKey(m)));
 
           let added = false;
           const matchMap = new Map((allMatches || []).map(m => [m.id, m]));
           const nowTs = Date.now();
           for (const m of rawMatches) {
             if (!m || !m.id) continue;
+            if (m.home_team_name) m.home_team_name = formatTeamName(m.home_team_name);
+            if (m.away_team_name) m.away_team_name = formatTeamName(m.away_team_name);
             if (m.status === 'LIVE' && m.match_date) {
               try {
                 const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
@@ -3806,8 +3823,7 @@
                 added = true;
               }
             } else {
-              const dPart = (m.match_date || '').slice(0, 10);
-              const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
+              const key = getMatchFixtureKey(m);
               if (!seenKeys.has(key)) {
                 seenKeys.add(key);
                 allMatches.push(m);
@@ -3866,8 +3882,7 @@
               } catch(e) {}
             }
           }
-          const dPart = (m.match_date || '').slice(0, 10);
-          const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
+          const key = getMatchFixtureKey(m);
           if (!seenKeys.has(key)) {
             if (m.id) seenIds.add(m.id);
             seenKeys.add(key);
@@ -3945,8 +3960,7 @@
       const uniqueStrip = [];
       const seenStripKeys = new Set();
       for (const m of combined) {
-        const dPart = (m.match_date || '').slice(0, 10);
-        const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
+        const key = getMatchFixtureKey(m);
         if (!seenStripKeys.has(key)) {
           seenStripKeys.add(key);
           uniqueStrip.push(m);

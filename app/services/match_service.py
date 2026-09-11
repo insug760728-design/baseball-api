@@ -12,7 +12,7 @@ from app.scrapers.basketball_scraper import BasketballScraper
 from app.core.sports_catalog import SPORTS_CATALOG
 from app.services.team_split_service import TeamSplitService, is_valid_starter_name
 from app.services.player_translation import translate_player_name, sanitize_player_name, sanitize_text
-from app.services.betman_service import BetmanService
+from app.services.betman_service import BetmanService, teams_match, clean_name, get_canonical_team_key
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -60,11 +60,14 @@ class MatchService:
                 match = db.query(Match).filter(Match.official_id == m_data["official_id"]).first()
                 if not match:
                     # Also check by home/away teams and date to prevent duplicates from differing official_id prefixes
-                    match = db.query(Match).filter(
-                        Match.home_team_name == m_data["home_team_name"],
-                        Match.away_team_name == m_data["away_team_name"],
+                    day_matches = db.query(Match).filter(
+                        Match.sport_code == m_data.get("sport_code", scraper.get_sport_code()),
                         Match.match_date.like(f"{current_d}%")
-                    ).first()
+                    ).all()
+                    for dm in day_matches:
+                        if teams_match(dm.home_team_name, m_data["home_team_name"]) and teams_match(dm.away_team_name, m_data["away_team_name"]):
+                            match = dm
+                            break
 
                 if not match:
                     match = Match(
@@ -351,14 +354,18 @@ class MatchService:
         target_limit = limit if (limit and limit > 0) else 150
         matches = q.limit(target_limit).all()
         
-        # Deduplicate matches by fixture key (sport, home, away, date)
+        # Deduplicate matches by canonical fixture key (sport, home, away, date)
         unique_matches = []
-        seen_keys = set()
         for m in matches:
             d_part = (m.match_date or "")[:10]
-            f_key = f"{m.sport_code}_{m.home_team_name}_{m.away_team_name}_{d_part}"
-            if f_key not in seen_keys:
-                seen_keys.add(f_key)
+            is_dup = False
+            for um in unique_matches:
+                ud_part = (um.match_date or "")[:10]
+                if m.sport_code == um.sport_code and d_part == ud_part:
+                    if teams_match(m.home_team_name, um.home_team_name) and teams_match(m.away_team_name, um.away_team_name):
+                        is_dup = True
+                        break
+            if not is_dup:
                 unique_matches.append(m)
         matches = unique_matches
         pred_calc_count = 0
