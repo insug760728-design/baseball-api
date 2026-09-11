@@ -262,7 +262,7 @@ class BetmanService:
         res_map = {'toto': {}, 'proto': {}}
         try:
             payload = {'_sbmInfo': {'_sbmInfo': {'debugMode': 'false'}}}
-            r = _SESSION.post(BETMAN_BUYABLE_URL, json=payload, timeout=4.0)
+            r = _SESSION.post(BETMAN_BUYABLE_URL, json=payload, timeout=1.0)
             if r.status_code == 200:
                 data = r.json()
                 for tg in data.get('totoGames', []):
@@ -283,9 +283,9 @@ class BetmanService:
                     _CACHE[cache_key] = (now, res_map)
                     return res_map
         except Exception as e:
-            print(f"[WARN] BetmanService get_active_rounds_map error: {e}")
+            pass
 
-        # Default fallbacks if network fails
+        # Fallback cached for 60s so failed outbound connections don't block subsequent requests
         res_map = {
             'toto': {
                 'G011': {'gmId': 'G011', 'gmTs': 260052, 'gmOsidTsYear': 2026, 'gameName': '축구토토 승무패'},
@@ -296,6 +296,7 @@ class BetmanService:
                 'G101': {'gmId': 'G101', 'gmTs': 260093, 'gmOsidTsYear': 2026, 'gameName': '프로토 승부식'}
             }
         }
+        _CACHE[cache_key] = (now, res_map)
         return res_map
 
     @staticmethod
