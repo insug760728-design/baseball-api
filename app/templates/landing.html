@@ -10972,7 +10972,7 @@ function getFullModalMatchList() {
 
       if (sKey === 'BASKETBALL') {
         try {
-          const resp = await fetch('/api/v1/matches?sport_code=BASKETBALL&order=desc&limit=1200');
+          const resp = await fetch('/api/v1/matches?sport_code=BASKETBALL&order=desc&limit=100');
           if (resp.ok) {
             const bData = await resp.json();
             const existingIds = new Set(allMatches.map(m => m.id));
@@ -11043,7 +11043,7 @@ function getFullModalMatchList() {
       if (lKey !== 'ALL') {
         try {
           const leagueParam = getLeagueQueryParam(lKey);
-          const resp = await fetch(`/api/v1/matches?league_name=${encodeURIComponent(leagueParam)}&order=desc&limit=1200`);
+          const resp = await fetch(`/api/v1/matches?league_name=${encodeURIComponent(leagueParam)}&order=desc&limit=100`);
           if (resp.ok) {
             const leagueData = await resp.json();
             const existingIds = new Set(allMatches.map(m => m.id));

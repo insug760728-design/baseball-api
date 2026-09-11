@@ -336,18 +336,16 @@ class MatchService:
         target_limit = limit if (limit and limit > 0) else 150
         matches = q.limit(target_limit).all()
         
-        # Deduplicate matches by canonical fixture key (sport, home, away, date)
+        # High-Speed O(N) Deduplicate matches by canonical fixture key (sport, home, away, date)
+        seen_keys = set()
         unique_matches = []
         for m in matches:
             d_part = (m.match_date or "")[:10]
-            is_dup = False
-            for um in unique_matches:
-                ud_part = (um.match_date or "")[:10]
-                if m.sport_code == um.sport_code and d_part == ud_part:
-                    if teams_match(m.home_team_name, um.home_team_name) and teams_match(m.away_team_name, um.away_team_name):
-                        is_dup = True
-                        break
-            if not is_dup:
+            hk = get_canonical_team_key(m.home_team_name)
+            ak = get_canonical_team_key(m.away_team_name)
+            key = (m.sport_code, d_part, hk, ak)
+            if key not in seen_keys:
+                seen_keys.add(key)
                 unique_matches.append(m)
         matches = unique_matches
         pred_calc_count = 0
