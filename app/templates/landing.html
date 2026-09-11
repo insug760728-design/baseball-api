@@ -4503,17 +4503,22 @@
     async function loadLiveMatches() {
       const container = document.getElementById('stripContainer');
       try {
-        const now = new Date();
-        const d0Str = getKSTDateString(now);
-        const rollingStartStr = getKSTDateString(new Date(now.getTime() - 86400000));
-        // Fast Phase 1: 롤링 윈도우(D-1 어제부터 시작) 및 최근 종료 경기 고속 로드
-        const [upResp, finResp] = await Promise.all([
-          fetch(`/api/v1/matches?start_date=${rollingStartStr}&order=asc&limit=80`),
-          fetch('/api/v1/matches?status=FINISHED&order=desc&limit=80')
-        ]);
-        const upMatches = upResp.ok ? await upResp.json() : [];
-        const finMatches = finResp.ok ? await finResp.json() : [];
-        const rawMatches = [...upMatches, ...finMatches];
+        // 🚀 Fast 0ms Local Cache First (화면 즉시 표출)
+        try {
+          const cached = localStorage.getItem('tokeon_matches_cache_v12');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              allMatches = parsed;
+              renderMatchStrip('ALL');
+              renderPredMatches();
+            }
+          }
+        } catch(e) {}
+
+        // 전체 경기 데이터 1회 직접 로드 (모든 종목 100% 포괄)
+        const resp = await fetch('/api/v1/matches?order=asc&limit=300');
+        const rawMatches = resp.ok ? await resp.json() : [];
 
         // Ensure absolute fixture-level uniqueness (id or sport + home + away + YYYY-MM-DD)
         const uniqueList = [];
