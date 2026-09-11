@@ -4262,7 +4262,7 @@
         allMatches = uniqueList;
         window.matchesLoadedInitial = true;
         try {
-          localStorage.setItem('tokeon_matches_cache_v7', JSON.stringify(uniqueList));
+          localStorage.setItem('tokeon_matches_cache_v9', JSON.stringify(uniqueList));
         } catch (e) {}
 
         renderMatchStrip('ALL');
@@ -8104,95 +8104,81 @@ function getFullModalMatchList() {
       const aLast = (awayRecent && awayRecent.length > 0) ? awayRecent[0] : null;
 
       if (!hLast && !aLast) {
-        return `<div class="p-2 mb-2 rounded text-center text-muted border bg-light" style="font-size:0.75rem;">공식 직전 경기 기록 집계 중입니다.</div>`;
+        return `<div class="p-2.5 mb-1 rounded text-center text-muted border bg-white" style="font-size:0.75rem;">공식 직전 경기 기록 집계 중입니다.</div>`;
       }
 
-      // Home Last Game data
-      let hTitle = '-', hResultBadge = '', hScore = '-', hPoss = '-', hShots = '-', hCorners = '-', hCards = '-', hFouls = '-';
-      if (hLast) {
-        const opp = formatTeamName(hLast.opponent || '상대팀');
-        const hIsHome = hLast.is_home;
-        const tScore = hLast.team_score !== undefined && hLast.team_score !== null ? hLast.team_score : '-';
-        const oScore = hLast.opp_score !== undefined && hLast.opp_score !== null ? hLast.opp_score : '-';
-        const resText = hLast.result === 'W' ? '승' : (hLast.result === 'D' ? '무' : '패');
-        const resBg = hLast.result === 'W' ? '#dc2626' : (hLast.result === 'D' ? '#4b5563' : '#2563eb');
+      function parseSoccerGame(g, myTeam) {
+        if (!g) return null;
+        const isHome = g.is_home !== undefined ? g.is_home : (g.home_away === '홈' || g.home_team_name === myTeam || g.perspective_team === g.home_team_name);
+        const opp = formatTeamName(g.opponent || (isHome ? g.away_team_name : g.home_team_name) || '상대팀');
+        const myName = formatTeamName(myTeam);
 
-        if (hIsHome) {
-          hTitle = `${homeName} vs ${opp}`;
-          hScore = `<b>${tScore}</b> : ${oScore}`;
-        } else {
-          hTitle = `${opp} vs ${homeName}`;
-          hScore = `${oScore} : <b>${tScore}</b>`;
+        const tScore = g.team_score !== undefined ? g.team_score : (isHome ? g.home_score : g.away_score);
+        const oScore = g.opp_score !== undefined ? g.opp_score : (isHome ? g.away_score : g.home_score);
+
+        let res = g.result;
+        if (!res) {
+          res = Number(tScore) > Number(oScore) ? 'W' : (Number(tScore) < Number(oScore) ? 'L' : 'D');
         }
-        hResultBadge = `<span class="badge py-0.5 px-1.5 text-white fw-bold" style="background:${resBg}; font-size:0.62rem;">${hIsHome ? '홈' : '원정'} ${resText}</span>`;
+        const resText = res === 'W' || res === 'WIN' ? '승' : (res === 'D' || res === 'DRAW' ? '무' : '패');
+        const resBg = res === 'W' || res === 'WIN' ? '#dc2626' : (res === 'D' || res === 'DRAW' ? '#4b5563' : '#2563eb');
 
-        const st = hLast.stats || {};
+        const title = isHome ? `${myName} vs ${opp}` : `${opp} vs ${myName}`;
+        const score = isHome ? `<b>${tScore ?? 0}</b> : ${oScore ?? 0}` : `${oScore ?? 0} : <b>${tScore ?? 0}</b>`;
+        const badge = `<span class="badge py-0.5 px-1.5 text-white fw-bold" style="background:${resBg}; font-size:0.62rem;">${isHome ? '홈' : '원정'} ${resText}</span>`;
+
+        const st = g.stats || {};
+        const tStats = g.team_stats || {};
+        let poss = '-';
         if (st.possession_home !== undefined && st.possession_away !== undefined) {
-          hPoss = `${st.possession_home}% : ${st.possession_away}%`;
+          poss = `${st.possession_home}% : ${st.possession_away}%`;
+        } else if (tStats.home && tStats.home.possessionPct) {
+          poss = `${tStats.home.possessionPct} : ${tStats.away.possessionPct || ''}`;
         }
+
+        let shots = '-';
         if (st.shots_home || st.shots_away) {
-          hShots = `${st.shots_home || '-'} : ${st.shots_away || '-'}`;
+          shots = `${st.shots_home || '-'} : ${st.shots_away || '-'}`;
+        } else if (tStats.home && tStats.home.totalShots) {
+          shots = `${tStats.home.totalShots}(${tStats.home.shotsOnTarget || 0}) : ${tStats.away.totalShots || 0}(${tStats.away?.shotsOnTarget || 0})`;
         }
+
+        let corners = '-';
         if (st.corners_home !== undefined || st.corners_away !== undefined) {
-          hCorners = `${st.corners_home ?? '-'} : ${st.corners_away ?? '-'}`;
+          corners = `${st.corners_home ?? '-'} : ${st.corners_away ?? '-'}`;
+        } else if (tStats.home && tStats.home.wonCorners !== undefined) {
+          corners = `${tStats.home.wonCorners ?? '-'} : ${tStats.away.wonCorners ?? '-'}`;
         }
+
+        let fouls = '-';
         if (st.fouls_home !== undefined || st.fouls_away !== undefined) {
-          hFouls = `${st.fouls_home ?? '-'} : ${st.fouls_away ?? '-'}`;
+          fouls = `${st.fouls_home ?? '-'} : ${st.fouls_away ?? '-'}`;
+        } else if (tStats.home && tStats.home.foulsCommitted !== undefined) {
+          fouls = `${tStats.home.foulsCommitted ?? '-'} : ${tStats.away.foulsCommitted ?? '-'}`;
         }
-        let hY = 0, aY = 0;
-        (hLast.events || []).forEach(ev => {
-          if (ev.type === 'YELLOW_CARD') {
-            if (ev.team === homeName || (hIsHome && ev.team === hLast.team_name)) hY++;
-            else aY++;
-          }
-        });
-        hCards = (hLast.events && hLast.events.length > 0) ? `${hIsHome ? hY : aY} : ${hIsHome ? aY : hY}` : '-';
+
+        let cards = '-';
+        if (g.events && g.events.length > 0) {
+          let hY = 0, aY = 0;
+          g.events.forEach(ev => {
+            if (ev.type === 'YELLOW_CARD') {
+              if (ev.team === myTeam || (isHome && ev.team === g.team_name)) hY++;
+              else aY++;
+            }
+          });
+          cards = `${isHome ? hY : aY} : ${isHome ? aY : hY}`;
+        } else if (tStats.home && tStats.home.yellowCards !== undefined) {
+          cards = `${tStats.home.yellowCards ?? 0} : ${tStats.away.yellowCards ?? 0}`;
+        }
+
+        return { title, badge, score, poss, shots, corners, cards, fouls };
       }
 
-      // Away Last Game data
-      let aTitle = '-', aResultBadge = '', aScore = '-', aPoss = '-', aShots = '-', aCorners = '-', aCards = '-', aFouls = '-';
-      if (aLast) {
-        const opp = formatTeamName(aLast.opponent || '상대팀');
-        const aIsHome = aLast.is_home;
-        const tScore = aLast.team_score !== undefined && aLast.team_score !== null ? aLast.team_score : '-';
-        const oScore = aLast.opp_score !== undefined && aLast.opp_score !== null ? aLast.opp_score : '-';
-        const resText = aLast.result === 'W' ? '승' : (aLast.result === 'D' ? '무' : '패');
-        const resBg = aLast.result === 'W' ? '#dc2626' : (aLast.result === 'D' ? '#4b5563' : '#2563eb');
-
-        if (aIsHome) {
-          aTitle = `${awayName} vs ${opp}`;
-          aScore = `<b>${tScore}</b> : ${oScore}`;
-        } else {
-          aTitle = `${opp} vs ${awayName}`;
-          aScore = `${oScore} : <b>${tScore}</b>`;
-        }
-        aResultBadge = `<span class="badge py-0.5 px-1.5 text-white fw-bold" style="background:${resBg}; font-size:0.62rem;">${aIsHome ? '홈' : '원정'} ${resText}</span>`;
-
-        const st = aLast.stats || {};
-        if (st.possession_home !== undefined && st.possession_away !== undefined) {
-          aPoss = `${st.possession_home}% : ${st.possession_away}%`;
-        }
-        if (st.shots_home || st.shots_away) {
-          aShots = `${st.shots_home || '-'} : ${st.shots_away || '-'}`;
-        }
-        if (st.corners_home !== undefined || st.corners_away !== undefined) {
-          aCorners = `${st.corners_home ?? '-'} : ${st.corners_away ?? '-'}`;
-        }
-        if (st.fouls_home !== undefined || st.fouls_away !== undefined) {
-          aFouls = `${st.fouls_home ?? '-'} : ${st.fouls_away ?? '-'}`;
-        }
-        let hY = 0, aY = 0;
-        (aLast.events || []).forEach(ev => {
-          if (ev.type === 'YELLOW_CARD') {
-            if (ev.team === awayName || (aIsHome && ev.team === aLast.team_name)) hY++;
-            else aY++;
-          }
-        });
-        aCards = (aLast.events && aLast.events.length > 0) ? `${aIsHome ? hY : aY} : ${aIsHome ? aY : hY}` : '-';
-      }
+      const hParsed = parseSoccerGame(hLast, homeName) || { title: '-', badge: '', score: '-', poss: '-', shots: '-', corners: '-', cards: '-', fouls: '-' };
+      const aParsed = parseSoccerGame(aLast, awayName) || { title: '-', badge: '', score: '-', poss: '-', shots: '-', corners: '-', cards: '-', fouls: '-' };
 
       return `
-        <div class="mb-2.5 rounded-2" style="background: #ffffff; border: 1.5px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div class="mb-2 rounded-2" style="background: #ffffff; border: 1.5px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
           <div class="d-flex justify-content-between align-items-center px-2 py-1" style="background: #0f172a; color: #ffffff;">
             <span class="fw-bold text-truncate" style="font-size: 0.78rem;">
               <i class="bi bi-bar-chart-fill text-warning me-1"></i>⚽ 양 팀 직전경기(전경기) 핵심 비교
@@ -8203,48 +8189,48 @@ function getFullModalMatchList() {
             <thead style="background: #f8fafc;">
               <tr>
                 <th style="width: 38%; padding: 4px 2px;" class="text-primary text-truncate">
-                  <div class="fw-bold text-truncate">[${hTitle}]</div>
-                  <div class="mt-0.5">${hResultBadge}</div>
+                  <div class="fw-bold text-truncate">[${hParsed.title}]</div>
+                  <div class="mt-0.5">${hParsed.badge}</div>
                 </th>
                 <th style="width: 24%; padding: 4px 2px; background: #f1f5f9; color: #334155; font-size: 0.72rem; vertical-align: middle;">
                   비교지표<br><span style="font-size: 0.60rem; color: #64748b;">(전경기)</span>
                 </th>
                 <th style="width: 38%; padding: 4px 2px;" class="text-danger text-truncate">
-                  <div class="fw-bold text-truncate">[${aTitle}]</div>
-                  <div class="mt-0.5">${aResultBadge}</div>
+                  <div class="fw-bold text-truncate">[${aParsed.title}]</div>
+                  <div class="mt-0.5">${aParsed.badge}</div>
                 </th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td class="fw-bold text-dark py-1 px-1">${hScore}</td>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.score}</td>
                 <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">스코어</td>
-                <td class="fw-bold text-dark py-1 px-1">${aScore}</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.score}</td>
               </tr>
               <tr>
-                <td class="fw-bold text-dark py-1 px-1">${hPoss}</td>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.poss}</td>
                 <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">점유율</td>
-                <td class="fw-bold text-dark py-1 px-1">${aPoss}</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.poss}</td>
               </tr>
               <tr>
-                <td class="fw-bold text-dark py-1 px-1">${hShots}</td>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.shots}</td>
                 <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">유효/총슈팅</td>
-                <td class="fw-bold text-dark py-1 px-1">${aShots}</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.shots}</td>
               </tr>
               <tr>
-                <td class="fw-bold text-dark py-1 px-1">${hCorners}</td>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.corners}</td>
                 <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">코너킥</td>
-                <td class="fw-bold text-dark py-1 px-1">${aCorners}</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.corners}</td>
               </tr>
               <tr>
-                <td class="fw-bold text-dark py-1 px-1">${hCards}</td>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.cards}</td>
                 <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">옐로카드</td>
-                <td class="fw-bold text-dark py-1 px-1">${aCards}</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.cards}</td>
               </tr>
               <tr>
-                <td class="fw-bold text-dark py-1 px-1">${hFouls}</td>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.fouls}</td>
                 <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">파울</td>
-                <td class="fw-bold text-dark py-1 px-1">${aFouls}</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.fouls}</td>
               </tr>
             </tbody>
           </table>
@@ -8257,107 +8243,81 @@ function getFullModalMatchList() {
       const aLast = (awayRecent && awayRecent.length > 0) ? awayRecent[0] : null;
 
       if (!hLast && !aLast) {
-        return `<div class="p-2 mb-2 rounded text-center text-muted border bg-light" style="font-size:0.75rem;">공식 직전 경기 기록 집계 중입니다.</div>`;
+        return `<div class="p-2.5 mb-1 rounded text-center text-muted border bg-white" style="font-size:0.75rem;">공식 직전 경기 기록 집계 중입니다.</div>`;
       }
 
-      // Home Last Game data
-      let hTitle = '-', hResultBadge = '', hScore = '-', hHits = '-', hHr = '-', hBbSo = '-', hErr = '-', hLob = '-', hStarter = '-';
-      if (hLast) {
-        const opp = formatTeamName(hLast.opponent || '상대팀');
-        const hIsHome = hLast.is_home;
-        const tScore = hLast.team_score !== undefined && hLast.team_score !== null ? hLast.team_score : '-';
-        const oScore = hLast.opp_score !== undefined && hLast.opp_score !== null ? hLast.opp_score : '-';
-        const resText = hLast.result === 'W' ? '승' : (hLast.result === 'D' ? '무' : '패');
-        const resBg = hLast.result === 'W' ? '#dc2626' : (hLast.result === 'D' ? '#4b5563' : '#2563eb');
+      function parseBaseballGame(g, myTeam) {
+        if (!g) return null;
+        const isHome = g.is_home !== undefined ? g.is_home : (g.home_away === '홈' || g.home_team_name === myTeam || g.perspective_team === g.home_team_name);
+        const opp = formatTeamName(g.opponent || (isHome ? g.away_team_name : g.home_team_name) || '상대팀');
+        const myName = formatTeamName(myTeam);
 
-        if (hIsHome) {
-          hTitle = `${homeName} vs ${opp}`;
-          hScore = `<b>${tScore}</b> : ${oScore}`;
-        } else {
-          hTitle = `${opp} vs ${homeName}`;
-          hScore = `${oScore} : <b>${tScore}</b>`;
-        }
-        hResultBadge = `<span class="badge py-0.5 px-1.5 text-white fw-bold" style="background:${resBg}; font-size:0.62rem;">${hIsHome ? '홈' : '원정'} ${resText}</span>`;
+        const tScore = g.team_score !== undefined ? g.team_score : (isHome ? g.home_score : g.away_score);
+        const oScore = g.opp_score !== undefined ? g.opp_score : (isHome ? g.away_score : g.home_score);
 
-        const bs = hLast.baseball_stats || {};
-        if (bs.home_hits !== undefined || bs.away_hits !== undefined) {
-          hHits = `${bs.home_hits ?? '-'} : ${bs.away_hits ?? '-'}`;
+        let res = g.result;
+        if (!res) {
+          res = Number(tScore) > Number(oScore) ? 'W' : (Number(tScore) < Number(oScore) ? 'L' : 'D');
         }
-        if (bs.home_hr !== undefined || bs.away_hr !== undefined) {
-          hHr = `${bs.home_hr ?? '-'} : ${bs.away_hr ?? '-'}`;
-        } else {
-          hHr = '-';
+        const resText = res === 'W' || res === 'WIN' ? '승' : (res === 'D' || res === 'DRAW' ? '무' : '패');
+        const resBg = res === 'W' || res === 'WIN' ? '#dc2626' : (res === 'D' || res === 'DRAW' ? '#4b5563' : '#2563eb');
+
+        const title = isHome ? `${myName} vs ${opp}` : `${opp} vs ${myName}`;
+        const score = isHome ? `<b>${tScore ?? 0}</b> : ${oScore ?? 0}` : `${oScore ?? 0} : <b>${tScore ?? 0}</b>`;
+        const badge = `<span class="badge py-0.5 px-1.5 text-white fw-bold" style="background:${resBg}; font-size:0.62rem;">${isHome ? '홈' : '원정'} ${resText}</span>`;
+
+        const bs = g.baseball_stats || {};
+        const tStats = g.team_stats || {};
+        const pScores = g.period_scores || {};
+
+        let hits = '-';
+        if (bs.home_hits !== undefined && bs.away_hits !== undefined) {
+          hits = isHome ? `${bs.home_hits} : ${bs.away_hits}` : `${bs.away_hits} : ${bs.home_hits}`;
+        } else if (tStats.hits && tStats.hits.home !== undefined) {
+          hits = isHome ? `${tStats.hits.home} : ${tStats.hits.away}` : `${tStats.hits.away} : ${tStats.hits.home}`;
+        } else if (pScores.summary && pScores.summary.home && pScores.summary.home.H !== undefined) {
+          hits = isHome ? `${pScores.summary.home.H} : ${pScores.summary.away.H}` : `${pScores.summary.away.H} : ${pScores.summary.home.H}`;
         }
-        if (bs.home_bb !== undefined || bs.home_so !== undefined || bs.away_bb !== undefined || bs.away_so !== undefined) {
-          hBbSo = `${bs.home_bb ?? '-'}/${bs.home_so ?? '-'} : ${bs.away_bb ?? '-'}/${bs.away_so ?? '-'}`;
+
+        let hr = '-';
+        if (bs.home_hr !== undefined && bs.away_hr !== undefined) {
+          hr = isHome ? `${bs.home_hr} : ${bs.away_hr}` : `${bs.away_hr} : ${bs.home_hr}`;
         }
-        if (bs.home_errors !== undefined || bs.away_errors !== undefined) {
-          hErr = `${bs.home_errors ?? '-'} : ${bs.away_errors ?? '-'}`;
+
+        let bbSo = '-';
+        if (bs.home_bb !== undefined || bs.home_so !== undefined) {
+          bbSo = isHome ? `${bs.home_bb ?? '-'}/${bs.home_so ?? '-'} : ${bs.away_bb ?? '-'}/${bs.away_so ?? '-'}` : `${bs.away_bb ?? '-'}/${bs.away_so ?? '-'} : ${bs.home_bb ?? '-'}/${bs.home_so ?? '-'}`;
         }
-        if (bs.home_lob !== undefined || bs.away_lob !== undefined) {
-          hLob = `${bs.home_lob ?? '-'} : ${bs.away_lob ?? '-'}`;
-        } else {
-          hLob = '-';
+
+        let err = '-';
+        if (bs.home_errors !== undefined && bs.away_errors !== undefined) {
+          err = isHome ? `${bs.home_errors} : ${bs.away_errors}` : `${bs.away_errors} : ${bs.home_errors}`;
+        } else if (tStats.errors && tStats.errors.home !== undefined) {
+          err = isHome ? `${tStats.errors.home} : ${tStats.errors.away}` : `${tStats.errors.away} : ${tStats.errors.home}`;
         }
-        const hSp = bs.home_starter_obj;
-        const aSp = bs.away_starter_obj;
+
+        let lob = '-';
+        if (bs.home_lob !== undefined && bs.away_lob !== undefined) {
+          lob = isHome ? `${bs.home_lob} : ${bs.away_lob}` : `${bs.away_lob} : ${bs.home_lob}`;
+        }
+
+        let starter = '-';
+        const hSp = bs.home_starter_obj || g.home_starter;
+        const aSp = bs.away_starter_obj || g.away_starter;
         if (hSp || aSp) {
-          const hSpStr = hSp ? `${hSp.ip || '-'}이닝/${hSp.er ?? '-'}자` : '-';
-          const aSpStr = aSp ? `${aSp.ip || '-'}이닝/${aSp.er ?? '-'}자` : '-';
-          hStarter = `${hSpStr} : ${aSpStr}`;
+          const hStr = hSp ? (hSp.ip ? `${hSp.ip}이닝/${hSp.er ?? 0}자` : (hSp.name || '-')) : '-';
+          const aStr = aSp ? (aSp.ip ? `${aSp.ip}이닝/${aSp.er ?? 0}자` : (aSp.name || '-')) : '-';
+          starter = isHome ? `${hStr} : ${aStr}` : `${aStr} : ${hStr}`;
         }
+
+        return { title, badge, score, hits, hr, bbSo, err, lob, starter };
       }
 
-      // Away Last Game data
-      let aTitle = '-', aResultBadge = '', aScore = '-', aHits = '-', aHr = '-', aBbSo = '-', aErr = '-', aLob = '-', aStarter = '-';
-      if (aLast) {
-        const opp = formatTeamName(aLast.opponent || '상대팀');
-        const aIsHome = aLast.is_home;
-        const tScore = aLast.team_score !== undefined && aLast.team_score !== null ? aLast.team_score : '-';
-        const oScore = aLast.opp_score !== undefined && aLast.opp_score !== null ? aLast.opp_score : '-';
-        const resText = aLast.result === 'W' ? '승' : (aLast.result === 'D' ? '무' : '패');
-        const resBg = aLast.result === 'W' ? '#dc2626' : (aLast.result === 'D' ? '#4b5563' : '#2563eb');
-
-        if (aIsHome) {
-          aTitle = `${awayName} vs ${opp}`;
-          aScore = `<b>${tScore}</b> : ${oScore}`;
-        } else {
-          aTitle = `${opp} vs ${awayName}`;
-          aScore = `${oScore} : <b>${tScore}</b>`;
-        }
-        aResultBadge = `<span class="badge py-0.5 px-1.5 text-white fw-bold" style="background:${resBg}; font-size:0.62rem;">${aIsHome ? '홈' : '원정'} ${resText}</span>`;
-
-        const bs = aLast.baseball_stats || {};
-        if (bs.home_hits !== undefined || bs.away_hits !== undefined) {
-          aHits = `${bs.home_hits ?? '-'} : ${bs.away_hits ?? '-'}`;
-        }
-        if (bs.home_hr !== undefined || bs.away_hr !== undefined) {
-          aHr = `${bs.home_hr ?? '-'} : ${bs.away_hr ?? '-'}`;
-        } else {
-          aHr = '-';
-        }
-        if (bs.home_bb !== undefined || bs.home_so !== undefined || bs.away_bb !== undefined || bs.away_so !== undefined) {
-          aBbSo = `${bs.home_bb ?? '-'}/${bs.home_so ?? '-'} : ${bs.away_bb ?? '-'}/${bs.away_so ?? '-'}`;
-        }
-        if (bs.home_errors !== undefined || bs.away_errors !== undefined) {
-          aErr = `${bs.home_errors ?? '-'} : ${bs.away_errors ?? '-'}`;
-        }
-        if (bs.home_lob !== undefined || bs.away_lob !== undefined) {
-          aLob = `${bs.home_lob ?? '-'} : ${bs.away_lob ?? '-'}`;
-        } else {
-          aLob = '-';
-        }
-        const hSp = bs.home_starter_obj;
-        const aSp = bs.away_starter_obj;
-        if (hSp || aSp) {
-          const hSpStr = hSp ? `${hSp.ip || '-'}이닝/${hSp.er ?? '-'}자` : '-';
-          const aSpStr = aSp ? `${aSp.ip || '-'}이닝/${aSp.er ?? '-'}자` : '-';
-          aStarter = `${hSpStr} : ${aSpStr}`;
-        }
-      }
+      const hParsed = parseBaseballGame(hLast, homeName) || { title: '-', badge: '', score: '-', hits: '-', hr: '-', bbSo: '-', err: '-', lob: '-', starter: '-' };
+      const aParsed = parseBaseballGame(aLast, awayName) || { title: '-', badge: '', score: '-', hits: '-', hr: '-', bbSo: '-', err: '-', lob: '-', starter: '-' };
 
       return `
-        <div class="mb-2.5 rounded-2" style="background: #ffffff; border: 1.5px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div class="mb-2 rounded-2" style="background: #ffffff; border: 1.5px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
           <div class="d-flex justify-content-between align-items-center px-2 py-1" style="background: #0f172a; color: #ffffff;">
             <span class="fw-bold text-truncate" style="font-size: 0.78rem;">
               <i class="bi bi-bar-chart-fill text-warning me-1"></i>⚾ 양 팀 직전경기(전경기) 핵심 비교
@@ -8368,53 +8328,53 @@ function getFullModalMatchList() {
             <thead style="background: #f8fafc;">
               <tr>
                 <th style="width: 38%; padding: 4px 2px;" class="text-primary text-truncate">
-                  <div class="fw-bold text-truncate">[${hTitle}]</div>
-                  <div class="mt-0.5">${hResultBadge}</div>
+                  <div class="fw-bold text-truncate">[${hParsed.title}]</div>
+                  <div class="mt-0.5">${hParsed.badge}</div>
                 </th>
                 <th style="width: 24%; padding: 4px 2px; background: #f1f5f9; color: #334155; font-size: 0.72rem; vertical-align: middle;">
                   비교지표<br><span style="font-size: 0.60rem; color: #64748b;">(전경기)</span>
                 </th>
                 <th style="width: 38%; padding: 4px 2px;" class="text-danger text-truncate">
-                  <div class="fw-bold text-truncate">[${aTitle}]</div>
-                  <div class="mt-0.5">${aResultBadge}</div>
+                  <div class="fw-bold text-truncate">[${aParsed.title}]</div>
+                  <div class="mt-0.5">${aParsed.badge}</div>
                 </th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td class="fw-bold text-dark py-1 px-1">${hScore}</td>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.score}</td>
                 <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">스코어</td>
-                <td class="fw-bold text-dark py-1 px-1">${aScore}</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.score}</td>
               </tr>
               <tr>
-                <td class="fw-bold text-dark py-1 px-1">${hHits}</td>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.hits}</td>
                 <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">안타(H)</td>
-                <td class="fw-bold text-dark py-1 px-1">${aHits}</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.hits}</td>
               </tr>
               <tr>
-                <td class="fw-bold text-dark py-1 px-1">${hHr}</td>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.hr}</td>
                 <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">홈런(HR)</td>
-                <td class="fw-bold text-dark py-1 px-1">${aHr}</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.hr}</td>
               </tr>
               <tr>
-                <td class="fw-bold text-dark py-1 px-1">${hBbSo}</td>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.bbSo}</td>
                 <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">사사구/삼진</td>
-                <td class="fw-bold text-dark py-1 px-1">${aBbSo}</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.bbSo}</td>
               </tr>
               <tr>
-                <td class="fw-bold text-dark py-1 px-1">${hErr}</td>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.err}</td>
                 <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">실책(E)</td>
-                <td class="fw-bold text-dark py-1 px-1">${aErr}</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.err}</td>
               </tr>
               <tr>
-                <td class="fw-bold text-dark py-1 px-1">${hLob}</td>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.lob}</td>
                 <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">잔루(LOB)</td>
-                <td class="fw-bold text-dark py-1 px-1">${aLob}</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.lob}</td>
               </tr>
               <tr>
-                <td class="fw-bold text-dark py-1 px-1" style="font-size: 0.68rem;">${hStarter}</td>
+                <td class="fw-bold text-dark py-1 px-1" style="font-size: 0.68rem;">${hParsed.starter}</td>
                 <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.68rem;">선발(이닝/자)</td>
-                <td class="fw-bold text-dark py-1 px-1" style="font-size: 0.68rem;">${aStarter}</td>
+                <td class="fw-bold text-dark py-1 px-1" style="font-size: 0.68rem;">${aParsed.starter}</td>
               </tr>
             </tbody>
           </table>
@@ -9838,9 +9798,19 @@ function getFullModalMatchList() {
     let initialScheduleAutoScrollDone = false;
 
     function initPredictionSection() {
-      // ⚡ 0초(0ms) 즉시 렌더링: 브라우저 캐시가 있으면 대기 없이 즉각 경기 목록 & 전광판 표출
+      // ⚡ 0초(0ms) 즉시 렌더링 & 구버전 브라우저 캐시 전량 자동 정리
       try {
-        const cached = localStorage.getItem('tokeon_matches_cache_v7');
+        // 구버전(v1~v8) 로컬 캐시 전량 자동 제거 (가짜 대진표 잔존 원천 차단)
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('tokeon_matches_cache') && k !== 'tokeon_matches_cache_v9') {
+            keysToRemove.push(k);
+          }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+
+        const cached = localStorage.getItem('tokeon_matches_cache_v9');
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -9849,7 +9819,6 @@ function getFullModalMatchList() {
               if (m) {
                 if (m.home_team_name) m.home_team_name = formatTeamName(m.home_team_name);
                 if (m.away_team_name) m.away_team_name = formatTeamName(m.away_team_name);
-                // 4시간 이상 경과한 LIVE 경기는 FINISHED로 강제 보정
                 if (m.status === 'LIVE' && m.match_date) {
                   try {
                     const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
@@ -9940,15 +9909,17 @@ function getFullModalMatchList() {
         if (!resp.ok) return;
         const rawMatches = await resp.json();
 
-        // 🚀 안전한 병합(Merge): 기존에 로드된 내일/이후 경기나 이전 종료 경기를 유실하지 않고 업데이트
-        const existingMap = new Map((allMatches || []).map(m => [m.id, m]));
+        // 🚀 안전한 최신 갱신: 오늘자 경기는 서버 최신 데이터로 완전 대체하고, 다른 날짜 경기는 보존
+        const serverTodayIds = new Set(rawMatches.map(m => m.id));
+        const nonTodayMatches = (allMatches || []).filter(m => !m.match_date || !m.match_date.startsWith(d0Str) || serverTodayIds.has(m.id));
+        const existingMap = new Map(nonTodayMatches.map(m => [m.id, m]));
+        
         for (const m of rawMatches) {
           if (m && m.id) {
             if (m.home_team_name) m.home_team_name = formatTeamName(m.home_team_name);
             if (m.away_team_name) m.away_team_name = formatTeamName(m.away_team_name);
 
             const prevM = existingMap.get(m.id);
-            // 선발투수가 미정에서 확정으로 변경되었거나 바뀐 경우 캐시 무효화하여 화면 즉시 갱신
             if (prevM && (prevM.home_starter_name !== m.home_starter_name || prevM.away_starter_name !== m.away_starter_name)) {
               matchDetailCache.delete(m.id);
               matchDetailCache.delete(Number(m.id));
@@ -10585,8 +10556,12 @@ function getFullModalMatchList() {
 
         const hTrend = (hAnnounced && cachedPitchers && cachedPitchers.home && cachedPitchers.home.summary) ? getPitcherFormTrend(cachedPitchers.home) : (hAnnounced && typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: hClean }) : null);
         const aTrend = (aAnnounced && cachedPitchers && cachedPitchers.away && cachedPitchers.away.summary) ? getPitcherFormTrend(cachedPitchers.away) : (aAnnounced && typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: aClean }) : null);
-        const hTrendStr = (hAnnounced && hTrend && hTrend.era3g && hTrend.era3g !== '-') ? `(ERA ${hTrend.era3g} ${hTrend.icon})` : '';
-        const aTrendStr = (aAnnounced && aTrend && aTrend.era3g && aTrend.era3g !== '-') ? `(ERA ${aTrend.era3g} ${aTrend.icon})` : '';
+
+        const hSeasonEra = (hAnnounced && hTrend && hTrend.seasonEra && hTrend.seasonEra !== '-') ? hTrend.seasonEra : '';
+        const aSeasonEra = (aAnnounced && aTrend && aTrend.seasonEra && aTrend.seasonEra !== '-') ? aTrend.seasonEra : '';
+
+        const hTrendStr = (hAnnounced && hSeasonEra) ? `(시즌 ${hSeasonEra})` : (hAnnounced && hTrend && hTrend.era3g && hTrend.era3g !== '-' ? `(ERA ${hTrend.era3g} ${hTrend.icon})` : '');
+        const aTrendStr = (aAnnounced && aSeasonEra) ? `(시즌 ${aSeasonEra})` : (aAnnounced && aTrend && aTrend.era3g && aTrend.era3g !== '-' ? `(ERA ${aTrend.era3g} ${aTrend.icon})` : '');
 
         let badgeHtml = '';
         let text = '';
@@ -10611,7 +10586,15 @@ function getFullModalMatchList() {
         return {
           title: '선발투수',
           text: text,
-          badge: badgeHtml
+          badge: badgeHtml,
+          homeStarter: hDisp,
+          awayStarter: aDisp,
+          homeEra: hSeasonEra,
+          awayEra: aSeasonEra,
+          homeAnnounced: hAnnounced,
+          awayAnnounced: aAnnounced,
+          homeTrend: hTrend,
+          awayTrend: aTrend
         };
       } else if (sport === 'SOCCER') {
         const fH = (m.id % 2 === 0) ? '4-3-3' : '4-2-3-1';
@@ -11019,10 +11002,36 @@ function getFullModalMatchList() {
         const startersInfo = getMatchStarters(m);
         const absInfo = getMatchAbsences(m);
         let subLineHtml = '';
-        if (m.sport_code === 'BASEBALL' && startersInfo.text && startersInfo.text !== '-') {
-          subLineHtml = `<div class="slim-card-sub">👤 ${startersInfo.text}</div>`;
+        if (m.sport_code === 'BASEBALL') {
+          if (startersInfo.homeAnnounced || startersInfo.awayAnnounced) {
+            const hEraHtml = startersInfo.homeEra ? `<span class="text-primary fw-bold" style="font-size:0.65rem; margin-left:3px;">(${startersInfo.homeEra})</span>` : '';
+            const aEraHtml = startersInfo.awayEra ? `<span class="text-primary fw-bold" style="font-size:0.65rem; margin-left:3px;">(${startersInfo.awayEra})</span>` : '';
+            subLineHtml = `
+              <div class="slim-card-starter-bar d-flex justify-content-between align-items-center mt-1 px-1.5 py-0.5 rounded" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.71rem;">
+                <div class="starter-side-home d-flex align-items-center text-truncate" style="flex:1 1 42%; min-width:0;" title="${startersInfo.homeStarter} ${startersInfo.homeEra ? `(시즌방어율: ${startersInfo.homeEra})` : ''}">
+                  <span class="fw-bold text-dark text-truncate">${startersInfo.homeStarter}</span>
+                  ${hEraHtml}
+                </div>
+                <div class="starter-center-badge text-center px-1" style="flex:0 0 auto;">
+                  <span class="badge bg-white text-secondary border px-1 py-0.5" style="font-size:0.58rem; font-weight:700;">선발</span>
+                </div>
+                <div class="starter-side-away d-flex align-items-center justify-content-end text-truncate" style="flex:1 1 42%; min-width:0; text-align:right;" title="${startersInfo.awayStarter} ${startersInfo.awayEra ? `(시즌방어율: ${startersInfo.awayEra})` : ''}">
+                  <span class="fw-bold text-dark text-truncate">${startersInfo.awayStarter}</span>
+                  ${aEraHtml}
+                </div>
+              </div>
+            `;
+          } else {
+            subLineHtml = `
+              <div class="slim-card-starter-bar d-flex justify-content-between align-items-center mt-1 px-1.5 py-0.5 rounded" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.68rem; color:#64748b;">
+                <span style="flex:1; text-align:left;">선발 미정</span>
+                <span class="badge bg-white text-muted border px-1 py-0.5" style="font-size:0.58rem;">선발</span>
+                <span style="flex:1; text-align:right;">선발 미정</span>
+              </div>
+            `;
+          }
         } else if ((m.sport_code === 'SOCCER' || m.sport_code === 'BASKETBALL') && absInfo.text && absInfo.text !== '-') {
-          subLineHtml = `<div class="slim-card-sub">🚑 ${absInfo.text}</div>`;
+          subLineHtml = `<div class="slim-card-sub mt-1">🚑 ${absInfo.text}</div>`;
         }
 
         // 시간 표시
@@ -11715,7 +11724,9 @@ function getFullModalMatchList() {
 
       let barsHtml = '';
       if (sport === 'BASEBALL') {
-        barsHtml = renderBaseballSymmetricTable(homeLast, awayLast, isH2H, match);
+        barsHtml = buildBaseballLastMatchCompareTableHtml(data.home_recent, data.away_recent, match.home_team_name, match.away_team_name);
+      } else if (sport === 'SOCCER') {
+        barsHtml = buildSoccerLastMatchCompareTableHtml(data.home_recent, data.away_recent, match.home_team_name, match.away_team_name);
       } else if (isH2H) {
         // 단일 3열 맞대결 경기 바
         const badge = `<span class="badge bg-primary text-white me-1" style="font-size:0.65rem; font-weight:800;">맞대결</span>`;
