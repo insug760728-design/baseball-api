@@ -122,7 +122,9 @@ FULL_NAMES = {
     "Valente Bellozo": "발렌테 벨로조", "Adam Oller": "아담 올러", "Darren McCaughan": "대런 맥코건",
     "Xzavion Curry": "즈자비온 커리", "Michael Lorenzen": "마이클 로렌젠", "Jose Urena": "호세 우레냐",
     "Michael Wacha": "마이클 와카", "Cole Ragans": "콜 레이건스", "Seth Lugo": "세스 루고",
-    "Brady Singer": "브래디 싱어", "Alec Marsh": "알렉 마쉬",
+    "Brady Singer": "브래디 싱어", "Alec Marsh": "알렉 마쉬", "Aaron Nola": "애런 놀라",
+    "Parker Messick": "파커 메식", "Anthony Kay": "앤서니 케이", "Mason Montgomery": "메이슨 몽고메리",
+    "Cade Cavalli": "케이드 카발리", "Jacob Misiorowski": "제이콥 미시오로우스키",
     # Korean MLB
     "Jung Hoo Lee": "이정후", "Jung-Hoo Lee": "이정후", "Ha-Seong Kim": "김하성", "Ha-seong Kim": "김하성",
     "Ji-Hwan Bae": "배지환", "Ji Hwan Bae": "배지환", "Hyun Jin Ryu": "류현진", "Kwang Hyun Kim": "김광현",

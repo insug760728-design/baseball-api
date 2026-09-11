@@ -5185,30 +5185,46 @@
       const aIsUnannounced = !aAnnounced || aPitcher.is_unannounced || aNameClean.includes('미정');
 
       // Home Stats
-      const hEraLookup = KNOWN_JS_PITCHER_ERA[hNameClean] || KNOWN_JS_PITCHER_ERA[hPitcher.name] || (hPitcher.summary && hPitcher.summary.season_era && hPitcher.summary.season_era !== '-' ? hPitcher.summary.season_era : '3.65');
-      const hRecStr = (hPitcher.season_record && hPitcher.season_record !== '-') ? hPitcher.season_record : (hPitcher.season_wins !== undefined && hPitcher.season_wins !== null ? `${hPitcher.season_wins}승 ${hPitcher.season_losses}패` : (hPitcher.summary && hPitcher.summary.record && hPitcher.summary.record !== '기록 없음' ? hPitcher.summary.record : '2승 1패'));
+      const hEraLookup = KNOWN_JS_PITCHER_ERA[hNameClean] || KNOWN_JS_PITCHER_ERA[hPitcher.name] || (hPitcher.summary && hPitcher.summary.season_era && hPitcher.summary.season_era !== '-' ? hPitcher.summary.season_era : '');
+      const hRecStr = (hPitcher.season_record && hPitcher.season_record !== '-' && hPitcher.season_record !== '기록 없음') ? hPitcher.season_record : (hPitcher.season_wins !== undefined && hPitcher.season_wins !== null ? `${hPitcher.season_wins}승 ${hPitcher.season_losses}패` : (hPitcher.summary && hPitcher.summary.record && hPitcher.summary.record !== '기록 없음' && hPitcher.summary.record !== '-' ? hPitcher.summary.record : ''));
       const hEraStr = (hPitcher.season_era && hPitcher.season_era !== '-') ? hPitcher.season_era : ((hPitcher.era && hPitcher.era !== '-') ? hPitcher.era : hEraLookup);
       let hMainStat = '공식 발표 대기';
       if (!hIsUnannounced) {
-        hMainStat = `${hRecStr} ERA ${hEraStr}`;
+        if (hRecStr && hEraStr) {
+          hMainStat = `${hRecStr} | ERA ${hEraStr}`;
+        } else if (hEraStr) {
+          hMainStat = `ERA ${hEraStr}`;
+        } else if (hRecStr) {
+          hMainStat = hRecStr;
+        } else {
+          hMainStat = '시즌 기록 집계 중';
+        }
       }
-      const hIp = (hPitcher.season_ip && hPitcher.season_ip !== '-') ? hPitcher.season_ip : (hPitcher.ip || (hPitcher.summary && hPitcher.summary.avg_ip && hPitcher.summary.avg_ip !== '-' ? hPitcher.summary.avg_ip : '58.0'));
-      const hSo = (hPitcher.season_so !== undefined && hPitcher.season_so !== null) ? hPitcher.season_so : (hPitcher.summary && hPitcher.summary.total_so ? hPitcher.summary.total_so : '56');
-      const hBb = (hPitcher.season_bb !== undefined && hPitcher.season_bb !== null) ? hPitcher.season_bb : (hPitcher.summary && hPitcher.summary.total_bb ? hPitcher.summary.total_bb : '18');
-      const hSubStats = !hIsUnannounced ? `${hIp}이닝 ${hSo}K ${hBb}BB` : '-';
+      const hIp = (hPitcher.season_ip && hPitcher.season_ip !== '-') ? hPitcher.season_ip : (hPitcher.ip || (hPitcher.summary && hPitcher.summary.avg_ip && hPitcher.summary.avg_ip !== '-' ? hPitcher.summary.avg_ip : ''));
+      const hSo = (hPitcher.season_so !== undefined && hPitcher.season_so !== null) ? hPitcher.season_so : (hPitcher.summary && hPitcher.summary.total_so ? hPitcher.summary.total_so : '');
+      const hBb = (hPitcher.season_bb !== undefined && hPitcher.season_bb !== null) ? hPitcher.season_bb : (hPitcher.summary && hPitcher.summary.total_bb ? hPitcher.summary.total_bb : '');
+      const hSubStats = (!hIsUnannounced && (hIp || hSo || hBb)) ? `${hIp ? hIp + '이닝 ' : ''}${hSo ? hSo + 'K ' : ''}${hBb ? hBb + 'BB' : ''}`.trim() : '-';
 
       // Away Stats
-      const aEraLookup = KNOWN_JS_PITCHER_ERA[aNameClean] || KNOWN_JS_PITCHER_ERA[aPitcher.name] || (aPitcher.summary && aPitcher.summary.season_era && aPitcher.summary.season_era !== '-' ? aPitcher.summary.season_era : '3.80');
-      const aRecStr = (aPitcher.season_record && aPitcher.season_record !== '-') ? aPitcher.season_record : (aPitcher.season_wins !== undefined && aPitcher.season_wins !== null ? `${aPitcher.season_wins}승 ${aPitcher.season_losses}패` : (aPitcher.summary && aPitcher.summary.record && aPitcher.summary.record !== '기록 없음' ? aPitcher.summary.record : '1승 2패'));
+      const aEraLookup = KNOWN_JS_PITCHER_ERA[aNameClean] || KNOWN_JS_PITCHER_ERA[aPitcher.name] || (aPitcher.summary && aPitcher.summary.season_era && aPitcher.summary.season_era !== '-' ? aPitcher.summary.season_era : '');
+      const aRecStr = (aPitcher.season_record && aPitcher.season_record !== '-' && aPitcher.season_record !== '기록 없음') ? aPitcher.season_record : (aPitcher.season_wins !== undefined && aPitcher.season_wins !== null ? `${aPitcher.season_wins}승 ${aPitcher.season_losses}패` : (aPitcher.summary && aPitcher.summary.record && aPitcher.summary.record !== '기록 없음' && aPitcher.summary.record !== '-' ? aPitcher.summary.record : ''));
       const aEraStr = (aPitcher.season_era && aPitcher.season_era !== '-') ? aPitcher.season_era : ((aPitcher.era && aPitcher.era !== '-') ? aPitcher.era : aEraLookup);
       let aMainStat = '공식 발표 대기';
       if (!aIsUnannounced) {
-        aMainStat = `${aRecStr} ERA ${aEraStr}`;
+        if (aRecStr && aEraStr) {
+          aMainStat = `${aRecStr} | ERA ${aEraStr}`;
+        } else if (aEraStr) {
+          aMainStat = `ERA ${aEraStr}`;
+        } else if (aRecStr) {
+          aMainStat = aRecStr;
+        } else {
+          aMainStat = '시즌 기록 집계 중';
+        }
       }
-      const aIp = (aPitcher.season_ip && aPitcher.season_ip !== '-') ? aPitcher.season_ip : (aPitcher.ip || (aPitcher.summary && aPitcher.summary.avg_ip && aPitcher.summary.avg_ip !== '-' ? aPitcher.summary.avg_ip : '54.2'));
-      const aSo = (aPitcher.season_so !== undefined && aPitcher.season_so !== null) ? aPitcher.season_so : (aPitcher.summary && aPitcher.summary.total_so ? aPitcher.summary.total_so : '49');
-      const aBb = (aPitcher.season_bb !== undefined && aPitcher.season_bb !== null) ? aPitcher.season_bb : (aPitcher.summary && aPitcher.summary.total_bb ? aPitcher.summary.total_bb : '22');
-      const aSubStats = !aIsUnannounced ? `${aIp}이닝 ${aSo}K ${aBb}BB` : '-';
+      const aIp = (aPitcher.season_ip && aPitcher.season_ip !== '-') ? aPitcher.season_ip : (aPitcher.ip || (aPitcher.summary && aPitcher.summary.avg_ip && aPitcher.summary.avg_ip !== '-' ? aPitcher.summary.avg_ip : ''));
+      const aSo = (aPitcher.season_so !== undefined && aPitcher.season_so !== null) ? aPitcher.season_so : (aPitcher.summary && aPitcher.summary.total_so ? aPitcher.summary.total_so : '');
+      const aBb = (aPitcher.season_bb !== undefined && aPitcher.season_bb !== null) ? aPitcher.season_bb : (aPitcher.summary && aPitcher.summary.total_bb ? aPitcher.summary.total_bb : '');
+      const aSubStats = (!aIsUnannounced && (aIp || aSo || aBb)) ? `${aIp ? aIp + '이닝 ' : ''}${aSo ? aSo + 'K ' : ''}${aBb ? aBb + 'BB' : ''}`.trim() : '-';
 
       const hRecentStarts = hPitcher.recent_starts || hPitcher.recent_3_starts || [];
       const aRecentStarts = aPitcher.recent_starts || aPitcher.recent_3_starts || [];
@@ -8507,96 +8523,12 @@ function getFullModalMatchList() {
         });
       }
 
-      if (!matchup.home_recent_matches || matchup.home_recent_matches.length === 0) {
-        if (isSoccer) {
-          matchup.home_recent_matches = [
-            { date: '26.08.30', is_home: true, opponent: hOpps[0] || '포항', team_score: 2, opp_score: 1, result: 'W' },
-            { date: '26.08.23', is_home: false, opponent: hOpps[1] || '울산', team_score: 1, opp_score: 1, result: 'D' },
-            { date: '26.08.16', is_home: true, opponent: hOpps[2] || '전북', team_score: 2, opp_score: 0, result: 'W' },
-            { date: '26.08.09', is_home: false, opponent: hOpps[3] || '서울', team_score: 0, opp_score: 1, result: 'L' },
-            { date: '26.08.02', is_home: true, opponent: hOpps[4] || '광주', team_score: 3, opp_score: 1, result: 'W' },
-            { date: '26.07.26', is_home: false, opponent: hOpps[5] || '강원', team_score: 1, opp_score: 0, result: 'W' },
-            { date: '26.07.19', is_home: true, opponent: hOpps[6] || '제주', team_score: 2, opp_score: 2, result: 'D' },
-            { date: '26.07.12', is_home: false, opponent: hOpps[7] || '김천', team_score: 0, opp_score: 2, result: 'L' },
-            { date: '26.07.05', is_home: true, opponent: hOpps[8] || '대전', team_score: 1, opp_score: 0, result: 'W' },
-            { date: '26.06.28', is_home: false, opponent: hOpps[9] || '안양', team_score: 3, opp_score: 2, result: 'W' }
-          ];
-        } else if (isBasketball) {
-          matchup.home_recent_matches = [
-            { date: '26.09.06', is_home: true, opponent: hOpps[0] || 'DB', team_score: 86, opp_score: 82, result: 'W' },
-            { date: '26.09.05', is_home: true, opponent: hOpps[1] || 'LG', team_score: 79, opp_score: 84, result: 'L' },
-            { date: '26.09.03', is_home: false, opponent: hOpps[2] || 'KCC', team_score: 88, opp_score: 81, result: 'W' },
-            { date: '26.09.02', is_home: false, opponent: hOpps[2] || 'KCC', team_score: 95, opp_score: 89, result: 'W' },
-            { date: '26.08.31', is_home: true, opponent: hOpps[3] || 'SK', team_score: 76, opp_score: 80, result: 'L' },
-            { date: '26.08.28', is_home: true, opponent: hOpps[4] || 'KT', team_score: 91, opp_score: 85, result: 'W' },
-            { date: '26.08.26', is_home: false, opponent: hOpps[5] || '모비스', team_score: 84, opp_score: 89, result: 'L' },
-            { date: '26.08.24', is_home: true, opponent: hOpps[6] || '소노', team_score: 89, opp_score: 83, result: 'W' },
-            { date: '26.08.21', is_home: false, opponent: hOpps[7] || '정관장', team_score: 92, opp_score: 87, result: 'W' },
-            { date: '26.08.18', is_home: true, opponent: hOpps[8] || '가스공사', team_score: 78, opp_score: 81, result: 'L' }
-          ];
-        } else {
-          const getOpp = (opps, i) => (opps && opps.length > 0) ? opps[i % opps.length] : (isBaseball ? '상대팀' : '상대');
-          matchup.home_recent_matches = [
-            { date: '26.09.06', is_home: true, opponent: getOpp(hOpps, 0), team_score: 5, opp_score: 3, result: 'W' },
-            { date: '26.09.05', is_home: true, opponent: getOpp(hOpps, 0), team_score: 4, opp_score: 6, result: 'L' },
-            { date: '26.09.03', is_home: false, opponent: getOpp(hOpps, 1), team_score: 6, opp_score: 2, result: 'W' },
-            { date: '26.09.02', is_home: false, opponent: getOpp(hOpps, 1), team_score: 7, opp_score: 5, result: 'W' },
-            { date: '26.08.31', is_home: true, opponent: getOpp(hOpps, 2), team_score: 3, opp_score: 4, result: 'L' },
-            { date: '26.08.30', is_home: true, opponent: getOpp(hOpps, 2), team_score: 8, opp_score: 2, result: 'W' },
-            { date: '26.08.28', is_home: false, opponent: getOpp(hOpps, 3), team_score: 5, opp_score: 1, result: 'W' },
-            { date: '26.08.26', is_home: true, opponent: getOpp(hOpps, 4), team_score: 2, opp_score: 5, result: 'L' },
-            { date: '26.08.24', is_home: false, opponent: getOpp(hOpps, 5), team_score: 6, opp_score: 4, result: 'W' },
-            { date: '26.08.22', is_home: true, opponent: getOpp(hOpps, 6), team_score: 4, opp_score: 3, result: 'W' }
-          ];
-        }
-      }
+      matchup.home_recent_matches = matchup.home_recent_matches || [];
       matchup.home_recent_matches.forEach((item, idx) => {
         ensureItemStats(item, ((m.id || 100) * 1000) + 100 + idx, idx);
       });
 
-      if (!matchup.away_recent_matches || matchup.away_recent_matches.length === 0) {
-        if (isSoccer) {
-          matchup.away_recent_matches = [
-            { date: '26.08.30', is_home: false, opponent: aOpps[0] || '포항', team_score: 1, opp_score: 2, result: 'L' },
-            { date: '26.08.23', is_home: true, opponent: aOpps[1] || '울산', team_score: 1, opp_score: 1, result: 'D' },
-            { date: '26.08.16', is_home: false, opponent: aOpps[2] || '전북', team_score: 0, opp_score: 2, result: 'L' },
-            { date: '26.08.09', is_home: true, opponent: aOpps[3] || '서울', team_score: 2, opp_score: 1, result: 'W' },
-            { date: '26.08.02', is_home: false, opponent: aOpps[4] || '광주', team_score: 0, opp_score: 0, result: 'D' },
-            { date: '26.07.26', is_home: true, opponent: aOpps[5] || '강원', team_score: 2, opp_score: 0, result: 'W' },
-            { date: '26.07.19', is_home: false, opponent: aOpps[6] || '제주', team_score: 1, opp_score: 3, result: 'L' },
-            { date: '26.07.12', is_home: true, opponent: aOpps[7] || '김천', team_score: 3, opp_score: 1, result: 'W' },
-            { date: '26.07.05', is_home: false, opponent: aOpps[8] || '대전', team_score: 1, opp_score: 1, result: 'D' },
-            { date: '26.06.28', is_home: true, opponent: aOpps[9] || '안양', team_score: 0, opp_score: 1, result: 'L' }
-          ];
-        } else if (isBasketball) {
-          matchup.away_recent_matches = [
-            { date: '26.09.06', is_home: false, opponent: aOpps[0] || 'SK', team_score: 82, opp_score: 86, result: 'L' },
-            { date: '26.09.05', is_home: false, opponent: aOpps[0] || 'SK', team_score: 84, opp_score: 79, result: 'W' },
-            { date: '26.09.03', is_home: true, opponent: aOpps[1] || 'DB', team_score: 80, opp_score: 85, result: 'L' },
-            { date: '26.09.02', is_home: true, opponent: aOpps[1] || 'DB', team_score: 89, opp_score: 81, result: 'W' },
-            { date: '26.08.30', is_home: false, opponent: aOpps[2] || 'LG', team_score: 78, opp_score: 82, result: 'L' },
-            { date: '26.08.28', is_home: false, opponent: aOpps[3] || 'KT', team_score: 85, opp_score: 90, result: 'L' },
-            { date: '26.08.25', is_home: true, opponent: aOpps[4] || '모비스', team_score: 94, opp_score: 88, result: 'W' },
-            { date: '26.08.22', is_home: false, opponent: aOpps[5] || '소노', team_score: 81, opp_score: 86, result: 'L' },
-            { date: '26.08.19', is_home: true, opponent: aOpps[6] || '정관장', team_score: 88, opp_score: 83, result: 'W' },
-            { date: '26.08.16', is_home: false, opponent: aOpps[7] || '가스공사', team_score: 79, opp_score: 84, result: 'L' }
-          ];
-        } else {
-          const getOpp = (opps, i) => (opps && opps.length > 0) ? opps[i % opps.length] : (isBaseball ? '상대팀' : '상대');
-          matchup.away_recent_matches = [
-            { date: '26.09.06', is_home: false, opponent: getOpp(aOpps, 0), team_score: 3, opp_score: 5, result: 'L' },
-            { date: '26.09.05', is_home: false, opponent: getOpp(aOpps, 0), team_score: 6, opp_score: 4, result: 'W' },
-            { date: '26.09.03', is_home: true, opponent: getOpp(aOpps, 1), team_score: 2, opp_score: 4, result: 'L' },
-            { date: '26.09.02', is_home: true, opponent: getOpp(aOpps, 1), team_score: 5, opp_score: 3, result: 'W' },
-            { date: '26.08.30', is_home: false, opponent: getOpp(aOpps, 2), team_score: 4, opp_score: 5, result: 'L' },
-            { date: '26.08.29', is_home: false, opponent: getOpp(aOpps, 2), team_score: 3, opp_score: 7, result: 'L' },
-            { date: '26.08.27', is_home: true, opponent: getOpp(aOpps, 3), team_score: 6, opp_score: 2, result: 'W' },
-            { date: '26.08.25', is_home: false, opponent: getOpp(aOpps, 4), team_score: 2, opp_score: 4, result: 'L' },
-            { date: '26.08.23', is_home: true, opponent: getOpp(aOpps, 5), team_score: 5, opp_score: 1, result: 'W' },
-            { date: '26.08.21', is_home: false, opponent: getOpp(aOpps, 6), team_score: 3, opp_score: 6, result: 'L' }
-          ];
-        }
-      }
+      matchup.away_recent_matches = matchup.away_recent_matches || [];
       matchup.away_recent_matches.forEach((item, idx) => {
         ensureItemStats(item, ((m.id || 100) * 1000) + 200 + idx, idx);
       });
@@ -8968,41 +8900,10 @@ function getFullModalMatchList() {
           lob = isHome ? `${bs.home_lob} : ${bs.away_lob}` : `${bs.away_lob} : ${bs.home_lob}`;
         }
 
-        let starter = '-';
-        const hSp = bs.home_starter_obj || g.home_starter;
-        const aSp = bs.away_starter_obj || g.away_starter;
-        if (hits === '-') {
-          const tH = Math.max(Number(tScore) || 5, Math.round((Number(tScore) || 5) * 1.5));
-          const oH = Math.max(Number(oScore) || 3, Math.round((Number(oScore) || 3) * 1.4));
-          hits = isHome ? `${tH} : ${oH}` : `${oH} : ${tH}`;
-        }
-
-        if (hr === '-') {
-          const tHr = Number(tScore) >= 4 ? 1 : 0;
-          const oHr = Number(oScore) >= 4 ? 1 : 0;
-          hr = isHome ? `${tHr} : ${oHr}` : `${oHr} : ${tHr}`;
-        }
-
-        if (bbSo === '-') {
-          bbSo = isHome ? '3/8 : 2/7' : '2/7 : 3/8';
-        }
-
-        if (err === '-') {
-          err = isHome ? '0 : 1' : '1 : 0';
-        }
-
-        if (lob === '-') {
-          lob = isHome ? '6 : 5' : '5 : 6';
-        }
-
         if (hSp || aSp) {
           const hStr = hSp ? (hSp.ip ? `${hSp.ip}이닝/${hSp.er ?? 0}자` : (hSp.name || '-')) : '-';
           const aStr = aSp ? (aSp.ip ? `${aSp.ip}이닝/${aSp.er ?? 0}자` : (aSp.name || '-')) : '-';
           starter = isHome ? `${hStr} : ${aStr}` : `${aStr} : ${hStr}`;
-        }
-
-        if (starter === '-' || starter === '- : -') {
-          starter = isHome ? '6.0이닝/1자 : 5.0이닝/4자' : '5.0이닝/4자 : 6.0이닝/1자';
         }
 
         return { title, badge, score, hits, hr, bbSo, err, lob, starter };
