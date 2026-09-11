@@ -274,20 +274,6 @@ class MatchService:
         if sport_code and sport_code.upper() not in ["ALL", "NONE", ""]:
             query = query.filter(Match.sport_code == sport_code.upper())
 
-        # 사우디 프로리그, 독일 2부리그, 멕시코 리그 등 비대상 리그 원천 제외
-        query = query.filter(
-            ~Match.league_name.contains("사우디"),
-            ~Match.league_name.contains("Saudi"),
-            ~Match.league_name.contains("독일 2"),
-            ~Match.league_name.contains("2. 분데스"),
-            ~Match.league_name.contains("2.분데스"),
-            ~Match.league_name.contains("2. Bundesliga"),
-            ~Match.league_name.contains("멕시코"),
-            ~Match.league_name.contains("Mexico"),
-            ~Match.league_name.contains("Liga MX"),
-            ~Match.league_name.contains("LigaMX")
-        )
-
         if league_name:
             ln_u = league_name.upper()
             if ln_u in ["MLS", "MAJOR_LEAGUE_SOCCER", "미국축구"]:
