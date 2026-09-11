@@ -1855,7 +1855,7 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "wins": 14,
         "losses": 5,
         "games": 24,
-        "season_era": "2.45",
+        "season_era": "3.30",
         "season_ip": "155.0",
         "season_so": 170,
         "season_bb": 35,
@@ -1869,15 +1869,15 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "name_raw": "전준표",
         "jersey": 41,
         "throws": "우완",
-        "wins": 3,
-        "losses": 4,
-        "games": 12,
-        "season_era": "4.50",
-        "season_ip": "42.0",
-        "season_so": 38,
-        "season_bb": 21,
+        "wins": 0,
+        "losses": 3,
+        "games": 17,
+        "season_era": "4.57",
+        "season_ip": "43.1",
+        "season_so": 27,
+        "season_bb": 39,
         "recent_starts": [
-            {"date": "09.03(목)", "venue": "원", "opponent": "NC", "ip": "5.0", "bf": 22, "h": 5, "hr": 1, "bb": 3, "so": 4, "er": 3, "era": "5.40", "result": "패"}
+            {"date": "06.30(일)", "venue": "원", "opponent": "LG", "ip": "0.0", "bf": 1, "h": 0, "hr": 0, "bb": 1, "so": 0, "er": 0, "era": "0.00", "result": "-"}
         ]
     },
     "김진욱": {
@@ -1885,15 +1885,15 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "name_raw": "김진욱",
         "jersey": 15,
         "throws": "좌완",
-        "wins": 4,
-        "losses": 2,
-        "games": 14,
-        "season_era": "3.95",
-        "season_ip": "66.0",
-        "season_so": 62,
-        "season_bb": 34,
+        "wins": 6,
+        "losses": 7,
+        "games": 23,
+        "season_era": "3.90",
+        "season_ip": "129.1",
+        "season_so": 112,
+        "season_bb": 45,
         "recent_starts": [
-            {"date": "09.04(금)", "venue": "홈", "opponent": "SSG", "ip": "5.1", "bf": 24, "h": 4, "hr": 0, "bb": 3, "so": 5, "er": 2, "era": "3.38", "result": "승"}
+            {"date": "07.09(화)", "venue": "원", "opponent": "KIA", "ip": "6.0", "bf": 25, "h": 6, "hr": 1, "bb": 2, "so": 4, "er": 3, "era": "4.50", "result": "패"}
         ]
     },
     "로건": {
@@ -1917,15 +1917,15 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "name_raw": "양현종",
         "jersey": 54,
         "throws": "좌완",
-        "wins": 11,
-        "losses": 4,
-        "games": 23,
+        "wins": 10,
+        "losses": 6,
+        "games": 22,
         "season_era": "4.25",
-        "season_ip": "142.0",
-        "season_so": 120,
-        "season_bb": 38,
+        "season_ip": "106.0",
+        "season_so": 70,
+        "season_bb": 53,
         "recent_starts": [
-            {"date": "09.04(금)", "venue": "홈", "opponent": "KT", "ip": "6.2", "bf": 28, "h": 5, "hr": 0, "bb": 2, "so": 7, "er": 2, "era": "2.70", "result": "승"}
+            {"date": "07.01(월)", "venue": "홈", "opponent": "SSG", "ip": "5.0", "bf": 21, "h": 4, "hr": 0, "bb": 3, "so": 3, "er": 1, "era": "1.80", "result": "-"}
         ]
     },
     "이준기": {
@@ -1933,15 +1933,15 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "name_raw": "이준기",
         "jersey": 48,
         "throws": "우완",
-        "wins": 1,
-        "losses": 2,
-        "games": 8,
+        "wins": 0,
+        "losses": 0,
+        "games": 2,
         "season_era": "6.00",
-        "season_ip": "26.0",
-        "season_so": 22,
-        "season_bb": 15,
+        "season_ip": "3.0",
+        "season_so": 1,
+        "season_bb": 2,
         "recent_starts": [
-            {"date": "09.02(수)", "venue": "원", "opponent": "롯데", "ip": "4.1", "bf": 20, "h": 6, "hr": 1, "bb": 2, "so": 3, "er": 3, "era": "6.23", "result": "패"}
+            {"date": "07.08(월)", "venue": "원", "opponent": "두산", "ip": "1.0", "bf": 4, "h": 1, "hr": 0, "bb": 0, "so": 0, "er": 0, "era": "0.00", "result": "-"}
         ]
     },
     "황준서": {
@@ -1949,15 +1949,15 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "name_raw": "황준서",
         "jersey": 29,
         "throws": "좌완",
-        "wins": 2,
-        "losses": 8,
-        "games": 18,
-        "season_era": "5.15",
-        "season_ip": "61.0",
-        "season_so": 55,
-        "season_bb": 39,
+        "wins": 1,
+        "losses": 2,
+        "games": 25,
+        "season_era": "4.95",
+        "season_ip": "43.2",
+        "season_so": 45,
+        "season_bb": 26,
         "recent_starts": [
-            {"date": "09.03(목)", "venue": "원", "opponent": "KT", "ip": "5.0", "bf": 23, "h": 5, "hr": 0, "bb": 4, "so": 4, "er": 3, "era": "5.40", "result": "패"}
+            {"date": "08.02(금)", "venue": "원", "opponent": "KT", "ip": "1.0", "bf": 5, "h": 1, "hr": 0, "bb": 1, "so": 1, "er": 0, "era": "0.00", "result": "-"}
         ]
     },
     "이재학": {
@@ -1965,15 +1965,15 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "name_raw": "이재학",
         "jersey": 51,
         "throws": "우완",
-        "wins": 3,
-        "losses": 7,
-        "games": 16,
-        "season_era": "4.88",
-        "season_ip": "70.0",
-        "season_so": 58,
-        "season_bb": 32,
+        "wins": 0,
+        "losses": 0,
+        "games": 1,
+        "season_era": "2.25",
+        "season_ip": "4.0",
+        "season_so": 4,
+        "season_bb": 3,
         "recent_starts": [
-            {"date": "09.04(금)", "venue": "홈", "opponent": "키움", "ip": "5.1", "bf": 25, "h": 6, "hr": 1, "bb": 3, "so": 5, "er": 3, "era": "5.06", "result": "-"}
+            {"date": "09.05(목)", "venue": "홈", "opponent": "키움", "ip": "4.0", "bf": 16, "h": 3, "hr": 0, "bb": 3, "so": 4, "er": 1, "era": "2.25", "result": "-"}
         ]
     }
 }
