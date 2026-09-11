@@ -1,5 +1,9 @@
 import sys, re, unicodedata, html
-sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
 
 def fix_mojibake(text: str) -> str:
     """Fix common Mojibake caused by UTF-8 bytes being decoded as Latin-1 (ISO-8859-1) or CP1252."""

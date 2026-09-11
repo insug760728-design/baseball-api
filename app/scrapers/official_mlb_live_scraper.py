@@ -77,9 +77,18 @@ class MlbOfficialScraper:
         return "2026-09-04"
 
     def scrape_schedule(self, target_date: Optional[str] = None) -> List[Dict[str, Any]]:
-        """지정일의 공식 MLB 경기 목록 (스코어 및 라인스코어 포함)"""
-        d = target_date or self.get_latest_available_date()
-        url = f"{MLB_API_BASE}/schedule?sportId=1&date={d}&hydrate=probablePitcher,linescore,team"
+        """지정일의 공식 MLB 경기 목록 (스코어 및 라인스코어 포함) - 한국 표준시(KST) 완벽 지원"""
+        d = target_date or datetime.now().strftime("%Y-%m-%d")
+        
+        try:
+            d_obj = datetime.strptime(d, "%Y-%m-%d")
+            d_prev = (d_obj - timedelta(days=1)).strftime("%Y-%m-%d")
+            d_next = (d_obj + timedelta(days=1)).strftime("%Y-%m-%d")
+        except Exception:
+            d_prev = d
+            d_next = d
+
+        url = f"{MLB_API_BASE}/schedule?sportId=1&startDate={d_prev}&endDate={d}&hydrate=probablePitcher,linescore,team"
         
         try:
             data = self._fetch_json(url)
@@ -99,59 +108,67 @@ class MlbOfficialScraper:
         if not dates:
             return []
 
-        games = dates[0].get("games", [])
         results = []
-        for g in games:
-            game_pk = g["gamePk"]
-            away_team_raw = g["teams"]["away"]["team"]["name"]
-            home_team_raw = g["teams"]["home"]["team"]["name"]
-            away_team_ko = get_team_name_ko(away_team_raw)
-            home_team_ko = get_team_name_ko(home_team_raw)
+        for date_obj in dates:
+            games = date_obj.get("games", [])
+            for g in games:
+                game_pk = g["gamePk"]
+                away_team_raw = g["teams"]["away"]["team"]["name"]
+                home_team_raw = g["teams"]["home"]["team"]["name"]
+                away_team_ko = get_team_name_ko(away_team_raw)
+                home_team_ko = get_team_name_ko(home_team_raw)
 
-            away_score = g["teams"]["away"].get("score", 0)
-            home_score = g["teams"]["home"].get("score", 0)
+                away_score = g["teams"]["away"].get("score", 0)
+                home_score = g["teams"]["home"].get("score", 0)
 
-            # 공식 선발 예고 투수 (probablePitcher)
-            h_prob_p = sanitize_player_name(g.get("teams", {}).get("home", {}).get("probablePitcher", {}).get("fullName") or "") or None
-            a_prob_p = sanitize_player_name(g.get("teams", {}).get("away", {}).get("probablePitcher", {}).get("fullName") or "") or None
+                # 공식 선발 예고 투수 (probablePitcher)
+                h_prob_p = sanitize_player_name(g.get("teams", {}).get("home", {}).get("probablePitcher", {}).get("fullName") or "") or None
+                a_prob_p = sanitize_player_name(g.get("teams", {}).get("away", {}).get("probablePitcher", {}).get("fullName") or "") or None
 
-            # 상태 (FINAL, IN_PROGRESS, SCHEDULED)
-            raw_state = g.get("status", {}).get("abstractGameState", "Scheduled")
-            status = "FINISHED" if raw_state == "Final" else ("LIVE" if raw_state == "Live" else "SCHEDULED")
+                # 상태 (FINAL, IN_PROGRESS, SCHEDULED)
+                raw_state = g.get("status", {}).get("abstractGameState", "Scheduled")
+                status = "FINISHED" if raw_state == "Final" else ("LIVE" if raw_state == "Live" else "SCHEDULED")
 
-            venue_name = g.get("venue", {}).get("name", "MLB Stadium")
-            game_time_raw = g.get("gameDate", "")
-            # 100% 한국 표준시 (KST = UTC + 9시간) 변환
-            if game_time_raw:
-                try:
-                    clean = game_time_raw.replace("Z", "+00:00")
-                    dt = datetime.fromisoformat(clean)
-                    kst_dt = dt + timedelta(hours=9)
-                    match_time_display = kst_dt.strftime("%Y-%m-%d %H:%M")
-                except Exception:
+                venue_name = g.get("venue", {}).get("name", "MLB Stadium")
+                game_time_raw = g.get("gameDate", "")
+                
+                # 100% 한국 표준시 (KST = UTC + 9시간) 변환
+                match_kst_date_str = d
+                if game_time_raw:
+                    try:
+                        clean = game_time_raw.replace("Z", "+00:00")
+                        dt = datetime.fromisoformat(clean)
+                        kst_dt = dt + timedelta(hours=9)
+                        match_time_display = kst_dt.strftime("%Y-%m-%d %H:%M")
+                        match_kst_date_str = kst_dt.strftime("%Y-%m-%d")
+                    except Exception:
+                        match_time_display = f"{d} 10:00"
+                else:
                     match_time_display = f"{d} 10:00"
-            else:
-                match_time_display = f"{d} 10:00"
 
-            results.append({
-                "official_id": f"MLB_{game_pk}",
-                "sport_code": "BASEBALL",
-                "league_name": "미국 메이저리그 (MLB)",
-                "season": str(g.get("season", "2026")),
-                "round_name": "정규시즌",
-                "match_date": match_time_display,
-                "stadium": venue_name,
-                "home_team_name": home_team_ko,
-                "away_team_name": away_team_ko,
-                "home_score": home_score,
-                "away_score": away_score,
-                "status": status,
-                "game_pk": game_pk,
-                "raw_away_team": away_team_raw,
-                "raw_home_team": home_team_raw,
-                "probable_pitcher_home": h_prob_p,
-                "probable_pitcher_away": a_prob_p
-            })
+                # target_date가 지정된 경우 한국 시간(KST) 기준 해당 날짜의 경기만 필터링
+                if target_date and match_kst_date_str != target_date:
+                    continue
+
+                results.append({
+                    "official_id": f"MLB_{game_pk}",
+                    "sport_code": "BASEBALL",
+                    "league_name": "미국 메이저리그 (MLB)",
+                    "season": str(g.get("season", "2026")),
+                    "round_name": "정규시즌",
+                    "match_date": match_time_display,
+                    "stadium": venue_name,
+                    "home_team_name": home_team_ko,
+                    "away_team_name": away_team_ko,
+                    "home_score": home_score,
+                    "away_score": away_score,
+                    "status": status,
+                    "game_pk": game_pk,
+                    "raw_away_team": away_team_raw,
+                    "raw_home_team": home_team_raw,
+                    "probable_pitcher_home": h_prob_p,
+                    "probable_pitcher_away": a_prob_p
+                })
 
         return results
 
