@@ -80,7 +80,11 @@ def translate_soccer_team_name(name: str) -> str:
     for eng, kor in MLS_TEAM_TRANSLATION.items():
         if eng.lower() == clean_name.lower() or (len(eng) >= 5 and eng.lower() in clean_name.lower()):
             return kor
-    return clean_name
+    try:
+        from app.services.live_api_sports_service import translate_soccer_team
+        return translate_soccer_team(clean_name)
+    except Exception:
+        return clean_name
 
 class SoccerScraper(BaseScraper):
     """

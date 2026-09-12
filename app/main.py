@@ -166,17 +166,12 @@ live_center_path = os.path.join(current_dir, "templates", "live_center.html")
 _PORTAL_HTML_CACHE = {"path": "", "content": "", "mtime": 0, "etag": ""}
 
 def get_portal_html(target_path: str):
-    mtime = os.path.getmtime(target_path) if os.path.exists(target_path) else 0
-    if _PORTAL_HTML_CACHE["path"] == target_path and _PORTAL_HTML_CACHE["mtime"] == mtime and _PORTAL_HTML_CACHE["content"]:
-        return _PORTAL_HTML_CACHE["content"], _PORTAL_HTML_CACHE["etag"]
+    if not os.path.exists(target_path):
+        return "", ""
     with open(target_path, "r", encoding="utf-8") as f:
         content = f.read()
     import hashlib
     etag = f'"{hashlib.md5(content.encode("utf-8")).hexdigest()}"'
-    _PORTAL_HTML_CACHE["path"] = target_path
-    _PORTAL_HTML_CACHE["content"] = content
-    _PORTAL_HTML_CACHE["mtime"] = mtime
-    _PORTAL_HTML_CACHE["etag"] = etag
     return content, etag
 
 def is_b2b_domain(request: Request) -> bool:
@@ -211,10 +206,14 @@ def domain_portal(request: Request):
     try:
         target = landing_path if os.path.exists(landing_path) else dashboard_path
         content, etag = get_portal_html(target)
-        client_etag = request.headers.get("if-none-match")
-        if client_etag and client_etag == etag:
-            return Response(status_code=304, headers={"ETag": etag, "Cache-Control": "public, max-age=5, stale-while-revalidate=30"})
-        return HTMLResponse(content=content, headers={"ETag": etag, "Cache-Control": "public, max-age=5, stale-while-revalidate=30"})
+        return HTMLResponse(
+            content=content, 
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
     except Exception as e:
         return HTMLResponse(content=f"<h1>포털 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
 

@@ -56,6 +56,29 @@ TEAM_NAME_MAP = {
     '埼玉西武ライオンズ': '사이타마 세이부 라이온즈'
 }
 
+NPB_STADIUM_MAP = {
+    '東京ドーム': '도쿄 돔',
+    'バンテリンドーム': '반테린 돔 나고야',
+    'バンテリンドーム ナゴヤ': '반테린 돔 나고야',
+    'マツダスタジアム': '마쓰다 줌줌 스타디움',
+    '京セラD大阪': '교세라 돔 오사카',
+    '京セラドーム大阪': '교세라 돔 오사카',
+    'みずほPayPay': '미즈호 PayPay 돔 후쿠오카',
+    'みずほPayPayドーム福岡': '미즈호 PayPay 돔 후쿠오카',
+    'ベルーナドーム': '베루나 돔 (세이부 돔)',
+    '横浜スタジアム': '요코하마 스타디움',
+    '神宮球場': '메이지 진구 야구장',
+    '明治神宮野球場': '메이지 진구 야구장',
+    '甲子園': '한신 고시엔 구장',
+    '甲子園球場': '한신 고시엔 구장',
+    'ZOZOマリン': 'ZOZO 마린 스타디움',
+    'ZOZOマリンスタジアム': 'ZOZO 마린 스타디움',
+    '楽天モバイル': '라쿠텐 모바일 파크 미야기',
+    '楽天モバイルパーク宮城': '라쿠텐 모바일 파크 미야기',
+    'エスコンフィールド': '에스콘 필드 HOKKAIDO',
+    'エスコンフィールドHOKKAIDO': '에스콘 필드 HOKKAIDO',
+}
+
 def map_npb_team(name: str) -> str:
     s = name.strip()
     if s in TEAM_NAME_MAP:
@@ -230,9 +253,121 @@ class NpbOfficialScraper:
             except UnicodeDecodeError:
                 return content.decode('euc-jp', errors='ignore')
 
+    def _scrape_yahoo_schedule(self, target_date: str) -> List[Dict[str, Any]]:
+        yahoo_url = f"https://baseball.yahoo.co.jp/npb/schedule/?date={target_date}"
+        games = []
+        try:
+            html = self._fetch_html(yahoo_url)
+            soup = BeautifulSoup(html, 'html.parser')
+            items = soup.find_all('li', class_='bb-score__item')
+            for it in items:
+                classes = it.get('class', [])
+                home_el = it.find('p', class_=re.compile(r'bb-score__homeLogo'))
+                away_el = it.find('p', class_=re.compile(r'bb-score__awayLogo'))
+                venue_el = it.find('span', class_='bb-score__venue')
+                venue_raw = venue_el.get_text(strip=True) if venue_el else 'NPB 구장'
+                venue = NPB_STADIUM_MAP.get(venue_raw, venue_raw)
+
+                home_raw = home_el.get_text(strip=True) if home_el else ''
+                away_raw = away_el.get_text(strip=True) if away_el else ''
+
+                t_home = map_npb_team(home_raw)
+                t_away = map_npb_team(away_raw)
+                if not t_home or not t_away or t_home == t_away:
+                    continue
+
+                link_el = it.find('p', class_='bb-score__link')
+                status_text = link_el.get_text(strip=True) if link_el else ''
+
+                score_left = it.find('span', class_='bb-score__score--left')
+                score_right = it.find('span', class_='bb-score__score--right')
+
+                h_score = clean_int(score_left.get_text(strip=True)) if score_left else 0
+                a_score = clean_int(score_right.get_text(strip=True)) if score_right else 0
+
+                status = 'SCHEDULED'
+                if 'bb-score__item--live' in classes or '回' in status_text:
+                    status = 'LIVE'
+                elif 'bb-score__item--result' in classes or '試合終了' in status_text or '終了' in status_text:
+                    status = 'FINISHED'
+                elif '中止' in status_text or 'ノーゲーム' in status_text:
+                    status = 'POSTPONED'
+
+                start_time = '14:00'
+                if re.match(r'^\d{1,2}:\d{2}$', status_text):
+                    start_time = status_text
+
+                inn_ko = status_text
+                inn_ko = inn_ko.replace('回表', '회초').replace('回裏', '회말').replace('試合終了', '경기종료')
+
+                game_link = it.find('a', class_='bb-score__content')
+                game_href = game_link.get('href', '') if game_link else ''
+                game_id_m = re.search(r'/game/(\d+)/', game_href)
+                game_id = game_id_m.group(1) if game_id_m else f"{target_date.replace('-', '')}_{home_raw}_{away_raw}"
+
+                p_h = None
+                p_a = None
+                home_p_el = it.find('div', class_='bb-score__playerHome')
+                away_p_el = it.find('div', class_='bb-score__playerAway')
+                if home_p_el:
+                    clean_hp = re.sub(r'\(予\)|\(예상\)|\(投\)|\(打\)|予告|先発|：|:', '', home_p_el.get_text(strip=True)).strip()
+                    p_h = translate_npb_player_name(clean_hp)
+                if away_p_el:
+                    clean_ap = re.sub(r'\(予\)|\(예상\)|\(投\)|\(打\)|予告|先発|：|:', '', away_p_el.get_text(strip=True)).strip()
+                    p_a = translate_npb_player_name(clean_ap)
+
+                match_dt = f"{target_date} {start_time}"
+
+                games.append({
+                    "sport_code": "BASEBALL",
+                    "league_name": "일본 프로야구 (NPB)",
+                    "official_id": f"NPB_{game_id}",
+                    "match_date": match_dt,
+                    "status": status,
+                    "home_team_name": t_home,
+                    "away_team_name": t_away,
+                    "home_score": h_score,
+                    "away_score": a_score,
+                    "stadium": venue,
+                    "current_inning": inn_ko if status == "LIVE" else (None if status == "SCHEDULED" else "종료"),
+                    "probable_pitcher_home": p_h,
+                    "probable_pitcher_away": p_a,
+                    "league_id": "NPB"
+                })
+        except Exception as e:
+            print(f"[NPB Scraper] Yahoo schedule error for {target_date}: {e}")
+        return games
+
     def scrape_schedule(self, target_date: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None) -> List[Dict[str, Any]]:
-        """지정 기간 또는 특정 일자의 NPB 공식 경기 일정 및 결과 수집"""
-        d_ref = target_date or start_date or datetime.now().strftime("%Y-%m-%d")
+        """지정 기간 또는 특정 일자의 NPB 공식 경기 일정 및 결과 수집 (Yahoo Japan 실시간 + npb.jp 백업)"""
+        dates = []
+        if start_date and end_date:
+            try:
+                from datetime import timedelta
+                s_dt = datetime.strptime(start_date, "%Y-%m-%d")
+                e_dt = datetime.strptime(end_date, "%Y-%m-%d")
+                c = s_dt
+                while c <= e_dt:
+                    dates.append(c.strftime("%Y-%m-%d"))
+                    c += timedelta(days=1)
+            except Exception:
+                dates = [target_date or datetime.now().strftime("%Y-%m-%d")]
+        elif target_date:
+            dates = [target_date]
+        else:
+            dates = [datetime.now().strftime("%Y-%m-%d")]
+
+        all_games = []
+        for d in dates:
+            y_games = self._scrape_yahoo_schedule(d)
+            if y_games:
+                all_games.extend(y_games)
+
+        if all_games:
+            return all_games
+
+        # Fallback to npb.jp for older historical archives
+        d_ref = dates[0]
         parts = d_ref.split('-')
         year = parts[0] if len(parts) > 0 else "2026"
         month = parts[1] if len(parts) > 1 else "09"
@@ -243,7 +378,6 @@ class NpbOfficialScraper:
         if year != "2024":
             seasons_to_try.append("2024")
 
-        all_games = []
         for s_year in seasons_to_try:
             url = f"https://npb.jp/games/{s_year}/schedule_{month}_detail.html"
             try:
@@ -263,7 +397,6 @@ class NpbOfficialScraper:
                     if m:
                         cur_date_str = f"{s_year}-{int(m.group(1)):02d}-{int(m.group(2)):02d}"
 
-                # 필터링
                 if start_date and cur_date_str < start_date:
                     continue
                 if end_date and cur_date_str > end_date:
@@ -276,7 +409,6 @@ class NpbOfficialScraper:
 
                 score_m = re.search(r'([^\d\s\-]+)\s+(\d+)\s*-\s*(\d+)\s+([^\d\s\-]+)', row_text)
                 if score_m:
-                    # 1. 종료/진행 중 경기 (스코어 존재)
                     raw_home = score_m.group(1).strip()
                     home_score = int(score_m.group(2))
                     away_score = int(score_m.group(3))
@@ -312,7 +444,6 @@ class NpbOfficialScraper:
                         "league_id": "NPB"
                     })
                 else:
-                    # 2. 예정 경기 (SCHEDULED) - 대진표 및 예고선발 파싱
                     cleaned_row = re.sub(r'^\d{1,2}/\d{1,2}(?:（[^）]+）|\([^)]+\))?', '', row_text).strip()
                     sched_m = re.search(r'([^\d\s\-]+)\s*-\s*([^\d\s\-]+)', cleaned_row)
                     if not sched_m:
@@ -328,12 +459,10 @@ class NpbOfficialScraper:
 
                     time_m = re.search(r'(\d{1,2}:\d{2})', cleaned_row)
                     start_time = time_m.group(1) if time_m else "18:00"
-                    
-                    # 경기장 파싱
+
                     stadium_m = re.search(r'([^\s]+(?:スタジアム|ドーム|球場|PayPay|D大阪|ZOZO|神宮|甲子园|甲子園|横浜))', cleaned_row)
                     stadium = stadium_m.group(1) if stadium_m else "NPB 구장"
 
-                    # 예고선발 파싱
                     starters = re.findall(r'先発[：:]\s*([^\s]+)', cleaned_row)
                     p_home = translate_npb_player_name(starters[0]) if len(starters) > 0 else None
                     p_away = translate_npb_player_name(starters[1]) if len(starters) > 1 else None
@@ -362,9 +491,159 @@ class NpbOfficialScraper:
 
         return all_games
 
+    def _scrape_yahoo_game_detail(self, game_id: str) -> Dict[str, Any]:
+        """Yahoo Japan 야구 실시간 라인스코어 및 출전선수 지표 수집"""
+        score_url = f"https://baseball.yahoo.co.jp/npb/game/{game_id}/score"
+        top_url = f"https://baseball.yahoo.co.jp/npb/game/{game_id}/top"
+
+        try:
+            score_html = self._fetch_html(score_url)
+        except Exception as e:
+            print(f"[NPB Scraper] Failed to fetch Yahoo score ({score_url}): {e}")
+            score_html = ""
+
+        try:
+            top_html = self._fetch_html(top_url)
+        except Exception as e:
+            top_html = ""
+
+        soup = BeautifulSoup(score_html, 'html.parser') if score_html else None
+        top_soup = BeautifulSoup(top_html, 'html.parser') if top_html else None
+
+        linescore_dict = {}
+        away_r, away_h, away_e = 0, 0, 0
+        home_r, home_h, home_e = 0, 0, 0
+        away_name = "원정팀"
+        home_name = "홈팀"
+
+        if soup:
+            for t in soup.find_all('table'):
+                txt = t.get_text()
+                if '1' in txt and '9' in txt and '計' in txt:
+                    rows = t.find_all('tr')
+                    if len(rows) >= 3:
+                        away_cells = [c.get_text().strip() for c in rows[1].find_all(['th', 'td'])]
+                        home_cells = [c.get_text().strip() for c in rows[2].find_all(['th', 'td'])]
+                        away_name = map_npb_team(away_cells[0])
+                        home_name = map_npb_team(home_cells[0])
+                        for inn_idx in range(1, 10):
+                            a_v = away_cells[inn_idx] if inn_idx < len(away_cells) else '-'
+                            h_v = home_cells[inn_idx] if inn_idx < len(home_cells) else '-'
+                            linescore_dict[str(inn_idx)] = {
+                                'away': int(a_v) if a_v.isdigit() else 0,
+                                'home': int(h_v) if h_v.isdigit() else 0
+                            }
+                        if len(away_cells) >= 13:
+                            away_r = clean_int(away_cells[-3])
+                            away_h = clean_int(away_cells[-2])
+                            away_e = clean_int(away_cells[-1])
+                        if len(home_cells) >= 13:
+                            home_r = clean_int(home_cells[-3])
+                            home_h = clean_int(home_cells[-2])
+                            home_e = clean_int(home_cells[-1])
+                        break
+
+        period_scores = {
+            'innings': linescore_dict,
+            'summary': {
+                'away': {'R': away_r, 'H': away_h, 'E': away_e, 'B': 0},
+                'home': {'R': home_r, 'H': home_h, 'E': home_e, 'B': 0}
+            }
+        }
+
+        team_stats = {
+            'hits': {'home': home_h, 'away': away_h},
+            'errors': {'home': home_e, 'away': away_e},
+            'left_on_base': {'home': 0, 'away': 0}
+        }
+
+        player_stats = []
+        if soup:
+            for sec in soup.find_all('section'):
+                h = sec.find(['h1', 'h2', 'h3'])
+                sec_title = h.get_text(strip=True) if h else ''
+                t_name = map_npb_team(sec_title)
+                if t_name not in [away_name, home_name]:
+                    continue
+                for t in sec.find_all('table'):
+                    for tr in t.find_all('tr'):
+                        cells = [c.get_text(strip=True) for c in tr.find_all(['th', 'td'])]
+                        if len(cells) >= 5 and cells[0].isdigit():
+                            order = cells[0]
+                            pos_raw = cells[1]
+                            p_raw = cells[2]
+                            hand = cells[3]
+                            avg = cells[4]
+                            p_clean = sanitize_player_name(p_raw)
+                            p_ko = translate_npb_player_name(p_clean)
+                            pos_ko = translate_npb_position(pos_raw)
+                            player_stats.append({
+                                'team_name': t_name,
+                                'player_name': p_ko,
+                                'position': f'{order}번 {pos_ko}',
+                                'extra_stats': {
+                                    'type': 'HITTER',
+                                    'player_type': 'HITTER',
+                                    'name_raw': p_clean,
+                                    'avg': avg,
+                                    'hits': 0,
+                                    'runs': 0,
+                                    'rbi': 0
+                                }
+                            })
+
+        if top_soup:
+            for sec in top_soup.find_all('section'):
+                h = sec.find(['h1', 'h2', 'h3'])
+                sec_title = h.get_text(strip=True) if h else ''
+                t_name = map_npb_team(sec_title)
+                if t_name not in [away_name, home_name]:
+                    continue
+                for t in sec.find_all('table'):
+                    txt = t.get_text()
+                    if '投手' in txt and '防御率' in txt:
+                        p_order = 0
+                        for tr in t.find_all('tr'):
+                            cells = [c.get_text(strip=True) for c in tr.find_all(['th', 'td'])]
+                            if len(cells) >= 4 and any(ch in cells[0] for ch in ['先発', '投', '1', '2', '3', '4']):
+                                p_order += 1
+                                is_starter = (p_order == 1 or '先発' in cells[0])
+                                p_raw = cells[2] if len(cells) > 2 else cells[1]
+                                era_val = cells[4] if len(cells) > 4 else '-'
+                                p_clean = sanitize_player_name(p_raw)
+                                p_ko = translate_npb_player_name(p_clean)
+                                player_stats.append({
+                                    'team_name': t_name,
+                                    'player_name': p_ko,
+                                    'position': '선발투수' if is_starter else '구원투수',
+                                    'extra_stats': {
+                                        'type': 'PITCHER',
+                                        'player_type': 'PITCHER',
+                                        'is_starter': is_starter,
+                                        'starter': is_starter,
+                                        'pitcher_order': p_order,
+                                        'name_raw': p_clean,
+                                        'era': era_val,
+                                        'season_era': era_val,
+                                        'decision': ''
+                                    }
+                                })
+
+        return {
+            "period_scores": period_scores,
+            "team_stats": team_stats,
+            "source_url": score_url,
+            "events": [],
+            "player_stats": player_stats
+        }
+
     def scrape_game_detail(self, official_id: str) -> Dict[str, Any]:
         """NPB 공식 경기 상세 박스스코어, 라인스코어, 선수 지표 수집"""
-        path_part = official_id.replace("NPB_", "").replace("scores_", "")
+        raw_id = official_id.replace("NPB_", "").replace("scores_", "")
+        if raw_id.isdigit():
+            return self._scrape_yahoo_game_detail(raw_id)
+
+        path_part = raw_id
         parts = path_part.split('_')
         if len(parts) >= 3:
             rel_url = f"/scores/{parts[0]}/{parts[1]}/{parts[2]}/"

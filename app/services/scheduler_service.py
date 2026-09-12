@@ -509,7 +509,7 @@ class SchedulerService:
     @classmethod
     async def _run_live_5sec_dynamic_loop(cls):
         """⚡ 5초 실시간 동적 초고속 수집 루프
-        - LIVE 경기가 진행 중이거나 시작 직전인 경우: 5초 주기로 MLB 공식 Stats API 및 라이브 스코어보드 고속 수집
+        - LIVE 경기가 진행 중이거나 시작 직전인 경우: 5초 주기로 MLB/KBO/NPB/축구 공식 실시간 스코어보드 병렬 고속 수집
         - 진행 중인 경기가 없는 경우: 10초 대기 후 상태 재확인
         """
         logger.info("[Scheduler Live5Sec] 5초 동적 실시간 수집 루프 가동 시작")
@@ -523,11 +523,11 @@ class SchedulerService:
                 has_live_or_active = False
                 mlb_active = False
                 kbo_npb_active = False
+                soccer_active = False
 
                 db = SessionLocal()
                 try:
                     from app.models.models import Match
-                    from sqlalchemy import or_, and_
                     
                     # 1. LIVE 상태인 경기 확인
                     live_matches = db.query(Match).filter(Match.status == "LIVE").all()
@@ -538,6 +538,8 @@ class SchedulerService:
                                 mlb_active = True
                             elif m.sport_code == "BASEBALL" and any(k in (m.league_name or "") for k in ["KBO", "NPB", "한국", "일본"]):
                                 kbo_npb_active = True
+                            elif m.sport_code == "SOCCER":
+                                soccer_active = True
 
                     # 2. 현재 시간대 전후로 진행 중일 가능성이 있는 SCHEDULED 경기 확인
                     sched_matches = db.query(Match).filter(
@@ -552,13 +554,15 @@ class SchedulerService:
                                 mlb_active = True
                             elif m.sport_code == "BASEBALL" and any(k in (m.league_name or "") for k in ["KBO", "NPB", "한국", "일본"]):
                                 kbo_npb_active = True
+                            elif m.sport_code == "SOCCER":
+                                soccer_active = True
                 finally:
                     db.close()
 
                 if has_live_or_active:
-                    updated_total = 0
+                    sync_tasks = []
                     
-                    # (A) MLB 공식 실시간 동기화 (초고속 스케줄/라인스코어/이닝 동기화)
+                    # (A) MLB 공식 실시간 동기화
                     if mlb_active:
                         def _sync_mlb():
                             d_db = SessionLocal()
@@ -570,10 +574,9 @@ class SchedulerService:
                                 return 0
                             finally:
                                 d_db.close()
-                        c = await asyncio.to_thread(_sync_mlb)
-                        updated_total += c
+                        sync_tasks.append(asyncio.to_thread(_sync_mlb))
 
-                    # (B) KBO/NPB 공식 실시간 동기화 (경기 진행 시간대)
+                    # (B) KBO/NPB 공식 실시간 동기화
                     if kbo_npb_active:
                         def _sync_domestic():
                             d_db = SessionLocal()
@@ -588,73 +591,85 @@ class SchedulerService:
                                 return 0
                             finally:
                                 d_db.close()
-                        c = await asyncio.to_thread(_sync_domestic)
-                        updated_total += c
+                        sync_tasks.append(asyncio.to_thread(_sync_domestic))
 
-                    # (C) 유료 LiveApiSports 백업 (축구 등)
+                    # (C) 유료 LiveApiSports 초고속 LIVE 전용 수집 (0.4초 소요)
                     from app.services.live_api_sports_service import LiveApiSportsService
-                    if LiveApiSportsService.is_configured():
-                        fb_res = await asyncio.to_thread(LiveApiSportsService.sync_live_football)
-                        bb_res = await asyncio.to_thread(LiveApiSportsService.sync_live_baseball)
-                        updated_total += (fb_res.get('updated_db_matches', 0) or 0) + (bb_res.get('updated_db_matches', 0) or 0)
-
-                    if updated_total > 0:
-                        from app.api.v1.matches import clear_matches_cache
-                        clear_matches_cache()
-                        
-                        # 활성 LIVE 경기 상태 목록 추출하여 WebSocket에 직접 전송 (브라우저 추가 fetch 부하 0)
-                        def _extract_live_items():
-                            d_db = SessionLocal()
-                            items = []
+                    if LiveApiSportsService.is_configured() and (soccer_active or has_live_or_active):
+                        def _sync_fast_live_api():
                             try:
-                                from app.models.models import Match
-                                live_list = d_db.query(Match).filter(Match.status == "LIVE").all()
-                                for m in live_list:
-                                    cur_inn = None
-                                    outs_val = None
-                                    balls_val = None
-                                    strikes_val = None
-                                    if m.details:
-                                        if m.details.period_scores:
-                                            try:
-                                                ps = json.loads(m.details.period_scores) if isinstance(m.details.period_scores, str) else m.details.period_scores
-                                                cur_inn = ps.get("current_inning")
-                                            except Exception:
-                                                pass
-                                        if m.details.team_stats:
-                                            try:
-                                                ts = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
-                                                sb = ts.get("scoreboard", {})
-                                                if sb:
-                                                    cur_inn = sb.get("current_inning") or cur_inn
-                                                    outs_val = sb.get("outs")
-                                                    balls_val = sb.get("balls")
-                                                    strikes_val = sb.get("strikes")
-                                            except Exception:
-                                                pass
-                                    items.append({
-                                        "id": m.id,
-                                        "home_score": m.home_score,
-                                        "away_score": m.away_score,
-                                        "status": m.status,
-                                        "current_inning": cur_inn,
-                                        "inning_text": cur_inn,
-                                        "outs": outs_val,
-                                        "balls": balls_val,
-                                        "strikes": strikes_val
-                                    })
-                            finally:
-                                d_db.close()
-                            return items
+                                fb_res = LiveApiSportsService.sync_live_football(live_only=True)
+                                bb_res = LiveApiSportsService.sync_live_baseball(live_only=True)
+                                return (fb_res.get('updated_db_matches', 0) or 0) + (bb_res.get('updated_db_matches', 0) or 0)
+                            except Exception as e:
+                                logger.warning(f"[Scheduler Live5Sec LiveApi] 경고: {e}")
+                                return 0
+                        sync_tasks.append(asyncio.to_thread(_sync_fast_live_api))
 
-                        live_items = await asyncio.to_thread(_extract_live_items)
+                    # 🚀 병렬 실행으로 전체 수집 소요시간을 1초 미만으로 극대화
+                    if sync_tasks:
+                        results = await asyncio.gather(*sync_tasks, return_exceptions=True)
+                        updated_total = sum(r for r in results if isinstance(r, int))
+                    else:
+                        updated_total = 0
+
+                    from app.api.v1.matches import clear_matches_cache
+                    clear_matches_cache()
+                    
+                    # 활성 LIVE 경기 상태 목록 추출하여 WebSocket에 직접 전송 (브라우저 추가 fetch 부하 0)
+                    def _extract_live_items():
+                        d_db = SessionLocal()
+                        items = []
+                        try:
+                            from app.models.models import Match
+                            live_list = d_db.query(Match).filter(Match.status == "LIVE").all()
+                            for m in live_list:
+                                cur_inn = None
+                                outs_val = None
+                                balls_val = None
+                                strikes_val = None
+                                if m.details:
+                                    if m.details.period_scores:
+                                        try:
+                                            ps = json.loads(m.details.period_scores) if isinstance(m.details.period_scores, str) else m.details.period_scores
+                                            cur_inn = ps.get("current_inning")
+                                        except Exception:
+                                            pass
+                                    if m.details.team_stats:
+                                        try:
+                                            ts = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
+                                            sb = ts.get("scoreboard", {})
+                                            if sb:
+                                                cur_inn = sb.get("current_inning") or cur_inn
+                                                outs_val = sb.get("outs")
+                                                balls_val = sb.get("balls")
+                                                strikes_val = sb.get("strikes")
+                                        except Exception:
+                                            pass
+                                items.append({
+                                    "id": m.id,
+                                    "home_score": m.home_score,
+                                    "away_score": m.away_score,
+                                    "status": m.status,
+                                    "current_inning": cur_inn,
+                                    "inning_text": cur_inn,
+                                    "outs": outs_val,
+                                    "balls": balls_val,
+                                    "strikes": strikes_val
+                                })
+                        finally:
+                            d_db.close()
+                        return items
+
+                    live_items = await asyncio.to_thread(_extract_live_items)
+                    if live_items or updated_total > 0:
                         try:
                             from app.core.websocket_manager import manager
                             await manager.broadcast({
                                 "type": "LIVE_SCORE_UPDATE",
                                 "timestamp": datetime.now().isoformat(),
                                 "matches": live_items,
-                                "message": f"실시간 스코어/이닝보드 자동 갱신 ({updated_total}건)"
+                                "message": f"실시간 스코어/이닝보드 자동 갱신 ({len(live_items)}경기 진행 중)"
                             })
                         except Exception:
                             pass

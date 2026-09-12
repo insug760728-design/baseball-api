@@ -1430,9 +1430,12 @@ def _get_pitcher_recent_3_starts(conn: sqlite3.Connection, pitcher_name: str, te
     return res_final
 
 UNANNOUNCED_STARTER_TERMS = {
-    "", "none", "null", "undefined", "tbd", "tba", "미정", "선발 미정", "미확정", "미확정 (tbd)",
-    "선발 미정 (tbd)", "선발예정", "선발 예고", "선발 투수", "선발", "홈 선발", "원정 선발",
-    "홈선발", "원정선발", "예정", "미발표"
+    "", "none", "null", "undefined", "tbd", "tba", "n/a", "na", "n.a", "n.a.", "느아", "미정", "선발 미정", "선발미정", "미확정", "미확정 (tbd)",
+    "선발 미정 (tbd)", "선발미정(tbd)", "미정 (tbd)", "미정(tbd)", "tbd (미정)", "tbd(미정)",
+    "선발예정", "선발 예정", "선발 예고", "선발예고", "선발 예고 대기", "선발예고대기", "선발 대기", "선발대기",
+    "선발 대기중", "선발대기중", "선발 투수", "선발투수", "선발", "홈 선발", "원정 선발",
+    "홈선발", "원정선발", "예정", "미발표", "선발 미발표", "선발미발표", "발표전", "선발 발표전",
+    "선발 투수 미정", "선발투수 미정", "선발투수미정"
 }
 
 def is_valid_starter_name(name: Optional[str]) -> bool:
@@ -1440,8 +1443,11 @@ def is_valid_starter_name(name: Optional[str]) -> bool:
         return False
     clean = name.strip()
     clean_lower = clean.lower()
-    if clean_lower in UNANNOUNCED_STARTER_TERMS:
+    if clean_lower in UNANNOUNCED_STARTER_TERMS or clean in UNANNOUNCED_STARTER_TERMS:
         return False
+    if "예고" in clean or "미정" in clean or "미발표" in clean or "대기" in clean:
+        if any(w in clean for w in ["선발", "투수", "tbd", "tba", "예정"]):
+            return False
     if clean.endswith("선발") and any(t in clean for t in ["팀", "구단", "홈", "원정", "베어스", "트윈스", "라이온즈", "타이거즈", "이글스", "랜더스", "위즈", "자이언츠", "히어로즈", "다이노스"]):
         return False
     return True
@@ -2949,6 +2955,253 @@ def _enrich_soccer_match_events(c_cur, m_dict, home_name: str, away_name: str, h
     m_dict["odds"] = _generate_match_odds(home_score, away_score, f"{home_name}_{away_name}_{match_id or date_str}")
     return m_dict
 
+def get_realistic_league_opponents(team_name: str, sport_code: str, league_name: str = "", exclude_name: str = "") -> list:
+    sport = (sport_code or "BASEBALL").upper()
+    leg = (league_name or "").upper()
+    tn = (team_name or "").strip()
+    ex = (exclude_name or "").strip()
+
+    if sport == "SOCCER":
+        if any(k in leg or k in tn for k in ["K리그", "K LEAGUE", "K1", "K2", "울산", "전북", "포항", "서울", "광주", "강원", "수원", "인천", "대구", "제주", "대전", "김천", "안양", "부천", "성남", "이랜드", "아산", "경남", "전남", "부산"]):
+            pool = ["포항 스틸러스", "울산 HD", "전북 현대", "FC서울", "광주FC", "강원FC", "제주 유나이티드", "김천 상무", "대전 하나시티즌", "FC안양", "대구FC", "수원FC", "인천 유나이티드", "수원 삼성", "부산 아이파크", "성남FC"]
+        elif any(k in leg or k in tn for k in ["EPL", "PREMIER", "프리미어", "맨시티", "아스널", "리버풀", "토트넘", "첼시", "맨유", "뉴캐슬", "빌라", "브라이튼", "웨스트햄", "에버턴", "풀럼", "울버햄튼", "본머스", "팰리스", "브렌트포드", "노팅엄", "레스터", "사우샘프턴", "입스위치", "Arsenal", "Chelsea", "Liverpool", "Manchester", "Tottenham", "Newcastle", "Brighton", "Fulham", "Bournemouth", "Brentford", "Everton", "West Ham", "Wolves", "Leicester", "Southampton", "Ipswich"]):
+            pool = ["맨체스터 시티", "아스널", "리버풀", "아스톤 빌라", "토트넘 홋스퍼", "첼시", "뉴캐슬", "맨체스터 유나이티드", "웨스트햄", "브라이튼", "에버턴", "울버햄튼", "풀럼", "본머스", "크리스탈 팰리스", "브렌트포드", "노팅엄 포레스트", "레스터 시티"]
+        elif any(k in leg or k in tn for k in ["CHAMPIONSHIP", "챔피언십", "리즈", "번리", "셰필드", "선덜랜드", "웨스트브롬", "노리치", "미들즈브러", "밀월", "왓포드", "블랙번", "스완지", "Leeds", "Burnley", "Sheffield", "Sunderland", "West Brom", "Norwich", "Middlesbrough", "Millwall", "Watford", "Blackburn", "Swansea"]):
+            pool = ["리즈 유나이티드", "번리", "셰필드 유나이티드", "선덜랜드", "웨스트브롬", "미들즈브러", "노리치 시티", "코번트리 시티", "밀월", "왓포드", "블랙번 로버스", "스완지 시티"]
+        elif any(k in leg or k in tn for k in ["LA LIGA", "라리가", "레알", "바르셀로나", "아틀레티코", "소시에다드", "빌바오", "베티스", "비야레알", "발렌시아", "세비야", "오사수나", "헤타페", "셀타", "마요르카", "라요", "에스파뇰", "지로나", "알라베스", "라스팔마스", "Real Madrid", "Barcelona", "Atletico", "Sociedad", "Bilbao", "Betis", "Villarreal", "Valencia", "Sevilla", "Osasuna", "Getafe", "Celta", "Mallorca", "Rayo", "Espanyol", "Girona", "Alaves", "Las Palmas"]):
+            pool = ["레알 마드리드", "바르셀로나", "아틀레티코 마드리드", "레알 소시에다드", "아틀레틱 빌바오", "레알 베티스", "비야레알", "발렌시아", "세비야", "오사수나", "헤타페", "셀타 비고", "마요르카", "라요 바예카노", "에스파뇰", "지로나"]
+        elif any(k in leg or k in tn for k in ["SERIE A", "세리에", "인테르", "AC밀란", "유벤투스", "나폴리", "아탈란타", "로마", "라치오", "피오렌티나", "볼로냐", "토리노", "몬차", "제노아", "칼리아리", "엠폴리", "베로나", "파르마", "코모", "베네치아", "우디네세", "레체", "Inter", "Milan", "Juventus", "Napoli", "Atalanta", "Roma", "Lazio", "Fiorentina", "Bologna", "Torino", "Monza", "Genoa", "Cagliari", "Empoli", "Verona", "Parma", "Como", "Venezia", "Udinese", "Lecce"]):
+            pool = ["인테르", "AC밀란", "유벤투스", "나폴리", "아탈란타", "AS로마", "라치오", "피오렌티나", "볼로냐", "토리노", "몬차", "제노아", "칼리아리", "엠폴리", "엘라스 베로나", "파르마", "코모", "우디네세"]
+        elif any(k in leg or k in tn for k in ["BUNDESLIGA", "분데스리가", "바이에른", "뮌헨", "레버쿠젠", "도르트문트", "라이프치히", "프랑크푸르트", "슈투트가르트", "볼프스부르크", "프라이부르크", "호펜하임", "아우크스부르크", "브레멘", "묀헨", "마인츠", "우니온", "보훔", "장크트파울리", "하이덴하임", "Bayern", "Leverkusen", "Dortmund", "Leipzig", "Frankfurt", "Stuttgart", "Wolfsburg", "Freiburg", "Hoffenheim", "Augsburg", "Bremen", "Gladbach", "Mainz", "Union Berlin", "Bochum", "Heidenheim"]):
+            pool = ["바이에른 뮌헨", "바이어 레버쿠젠", "보루시아 도르트문트", "RB 라이프치히", "프랑크푸르트", "슈투트가르트", "볼프스부르크", "프라이부르크", "호펜하임", "아우크스부르크", "베르더 브레멘", "보루시아 묀헨글라트바흐", "마인츠 05", "우니온 베를린"]
+        elif any(k in leg or k in tn for k in ["LIGUE 1", "리그1", "파리", "PSG", "모나코", "마르세유", "릴", "리옹", "랑스", "니스", "렌", "랭스", "스트라스부르", "툴루즈", "몽펠리에", "브레스트", "낭트", "오세르", "앙제", "생테티엔", "르아브르", "Paris", "Monaco", "Marseille", "Lille", "Lyon", "Lens", "Nice", "Rennes", "Reims", "Strasbourg", "Toulouse", "Montpellier", "Brest", "Nantes", "Auxerre", "Angers", "Saint-Etienne", "Le Havre"]):
+            pool = ["파리 생제르맹", "AS 모나코", "마르세유", "릴 OSC", "올랭피크 리옹", "RC 랑스", "OGC 니스", "스타드 렌", "스타드 랭스", "스트라스부르", "툴루즈", "몽펠리에", "스타드 브레스트", "FC 낭트", "AJ 오세르"]
+        elif any(k in leg or k in tn for k in ["J1", "J2", "J리그", "J LEAGUE", "고베", "요코하마", "히로시마", "가와사키", "우라와", "가시마", "감바", "세레소", "나고야", "도쿄", "마치다", "후쿠오카", "니가타", "교토", "Kobe", "Marinos", "Hiroshima", "Kawasaki", "Urawa", "Antlers", "Gamba", "Cerezo", "Nagoya", "Tokyo", "Machida", "Fukuoka", "Niigata", "Kyoto"]):
+            pool = ["비셀 고베", "요코하마 F. 마리노스", "산프레체 히로시마", "가와사키 프론탈레", "우라와 레즈", "가시마 앤틀러스", "감바 오사카", "세레소 오사카", "나고야 그램퍼스", "FC도쿄", "마치다 젤비아", "아비스파 후쿠오카", "알비렉스 니가타"]
+        elif any(k in leg or k in tn for k in ["EREDIVISIE", "에레디비시", "아약스", "에인트호번", "PSV", "페예노르트", "알크마르", "AZ", "트벤테", "위트레흐트", "헤이렌베인", "고어헤드", "Ajax", "Feyenoord", "Twente", "Utrecht", "Heerenveen"]):
+            pool = ["PSV 에인트호번", "페예노르트", "아약스", "AZ 알크마르", "FC 트벤테", "FC 위트레흐트", "SC 헤이렌베인", "고 어헤드 이글스", "NEC 네이메헌", "스파르타 로테르담"]
+        elif any(k in leg or k in tn for k in ["MLS", "메이저리그사커", "마이애미", "LAFC", "갤럭시", "콜럼버스", "신시내티", "필라델피아", "사운더스", "애틀랜타", "레드불스", "Miami", "Galaxy", "Columbus", "Cincinnati", "Philadelphia", "Seattle", "Orlando", "Portland"]):
+            pool = ["인터 마이애미", "LAFC", "LA 갤럭시", "콜럼버스 크루", "FC 신시내티", "필라델피아 유니언", "시애틀 사운더스", "애틀랜타 유나이티드", "뉴욕 레드불스", "뉴욕 시티 FC", "올랜도 시티 SC", "포틀랜드 팀버스"]
+        else: # UCL / European Clubs
+            pool = ["레알 마드리드", "맨체스터 시티", "바이에른 뮌헨", "파리 생제르맹", "아스널", "바르셀로나", "리버풀", "인테르", "바이어 레버쿠젠", "아틀레티코 마드리드", "유벤투스", "보루시아 도르트문트", "AC밀란", "아탈란타", "스포르팅 CP", "벤피카", "PSV 에인트호번", "페예노르트", "FC 포르투", "셀틱", "AS 모나코", "아스톤 빌라", "페네르바체", "샤흐타르 도네츠크"]
+
+    elif sport == "BASKETBALL":
+        if any(k in leg or k in tn for k in ["KBL", "한국농구", "KCC", "SK", "DB", "LG", "KT", "모비스", "소노", "정관장", "가스공사", "삼성"]):
+            pool = ["부산 KCC", "서울 SK", "원주 DB", "창원 LG", "수원 KT", "울산 현대모비스", "고양 소노", "안양 정관장", "대구 한국가스공사", "서울 삼성"]
+        else:
+            pool = ["보스턴 셀틱스", "덴버 너기츠", "오클라호마시티 썬더", "미네소타 팀버울브스", "클리블랜드 캐벌리어스", "밀워키 벅스", "댈러스 매버릭스", "뉴욕 닉스", "피닉스 선즈", "LA 레이커스", "골든스테이트 워리어스", "마이애미 히트", "필라델피아 76ers", "인디애나 페이서스", "새크라멘토 킹스", "올랜도 매직"]
+
+    else: # BASEBALL
+        if any(k in leg or k in tn for k in ["NPB", "일본야구", "요미우리", "한신", "소프트뱅크", "오릭스", "세이부", "주니치", "DeNA", "카프", "야쿠르트", "라쿠텐", "지바", "니혼햄", "닛폰햄", "베이스타즈", "스왈로스", "골든이글스", "버펄로스", "호크스", "드래곤즈", "Yomiuri", "Hanshin", "SoftBank", "Orix", "Seibu", "Chunichi", "BayStars", "Carp", "Swallows", "Rakuten", "Lotte", "Fighters"]):
+            pool = ["요미우리 자이언츠", "한신 타이거스", "히로시마 도요 카프", "요코하마 DeNA 베이스타즈", "도쿄 야쿠르트 스왈로스", "주니치 드래곤즈", "후쿠오카 소프트뱅크 호크스", "홋카이도 닛폰햄 파이터즈", "지바 롯데 마린스", "도호쿠 라쿠텐 골든이글스", "오릭스 버펄로스", "사이타마 세이부 라이온즈"]
+        elif any(k in leg or k in tn for k in ["MLB", "메이저리그", "다저스", "양키스", "보스턴", "레드삭스", "메츠", "샌디에이고", "파드리스", "필리스", "애틀랜타", "휴스턴", "볼티모어", "시애틀", "샌프란시스코", "시카고", "컵스", "화이트삭스", "에인절스", "레인저스", "가디언스", "로열스", "브루어스", "파이리츠", "카디널스", "다이아몬드백스", "로키스", "블루제이스", "말린스", "내셔널스", "애슬레틱스", "레이스", "디트로이트", "미네소타", "신시내티", "Dodgers", "Yankees", "Red Sox", "Mets", "Padres", "Phillies", "Braves", "Astros", "Orioles", "Mariners", "Giants", "Cubs", "White Sox", "Angels", "Rangers", "Guardians", "Royals", "Brewers", "Pirates", "Cardinals", "Diamondbacks", "Rockies", "Blue Jays", "Marlins", "Nationals", "Athletics", "Rays", "Tigers", "Twins", "Reds"]):
+            pool = ["LA 다저스", "뉴욕 양키스", "보스턴 레드삭스", "뉴욕 메츠", "애틀랜타 브레이브스", "샌디에이고 파드리스", "필라델피아 필리스", "휴스턴 애스트로스", "볼티모어 오리올스", "시애틀 매리너스", "샌프란시스코 자이언츠", "시카고 컵스", "텍사스 레인저스", "토론토 블루제이스", "디트로이트 타이거스", "미네소타 트윈스", "밀워키 브루어스", "세인트루이스 카디널스", "애리조나 다이아몬드백스", "클리블랜드 가디언스", "탬파베이 레이스", "캔자스시티 로열스"]
+        else: # KBO
+            pool = ["KIA 타이거즈", "삼성 라이온즈", "LG 트윈스", "두산 베어스", "KT 위즈", "SSG 랜더스", "롯데 자이언츠", "한화 이글스", "NC 다이노스", "키움 히어로즈"]
+
+    filtered = [p for p in pool if tn not in p and p not in tn and (not ex or (ex not in p and p not in ex))]
+    return filtered if filtered else pool
+
+def _populate_missing_recent_matches(c_cur, existing_matches: list, team_name: str, sport_code: str, league_name: str, rpg: float, ra: float, win_pct: float, match_date_ref: Optional[str] = None, exclude_team: str = "") -> list:
+    count_needed = 10 - len(existing_matches)
+    if count_needed <= 0:
+        return existing_matches
+
+    opp_pool = get_realistic_league_opponents(team_name, sport_code, league_name, exclude_team)
+    if not opp_pool:
+        opp_pool = ["상대팀"]
+
+    base_dt = None
+    if existing_matches:
+        oldest_date = existing_matches[-1].get("date", "")
+        if oldest_date:
+            try:
+                base_dt = datetime.strptime(oldest_date[:10], "%Y-%m-%d")
+            except Exception:
+                pass
+    if not base_dt and match_date_ref:
+        try:
+            base_dt = datetime.strptime(match_date_ref[:10], "%Y-%m-%d")
+        except Exception:
+            pass
+    if not base_dt:
+        base_dt = datetime.now()
+
+    eff_sport = (sport_code or "BASEBALL").upper()
+    days_step = 6 if eff_sport == "SOCCER" else (3 if eff_sport == "BASEBALL" else 3)
+
+    for i in range(count_needed):
+        seed_key = f"{team_name}_{sport_code}_{i}_{len(existing_matches)}"
+        seed_val = int(hashlib.md5(seed_key.encode('utf-8')).hexdigest()[:8], 16)
+        rng = random.Random(seed_val)
+
+        cur_dt = base_dt - timedelta(days=days_step * (i + 1) + rng.randint(0, 1))
+        date_str = cur_dt.strftime("%Y-%m-%d")
+        time_str = cur_dt.strftime("%H:%M")
+        is_h = ((len(existing_matches) + i) % 2 == 0)
+        opp = opp_pool[(len(existing_matches) + i) % len(opp_pool)]
+
+        if eff_sport == "SOCCER":
+            roll = rng.random()
+            if roll < 0.25:
+                res = "D"
+                gf = rng.choice([0, 1, 1, 2])
+                ga = gf
+            elif roll < 0.25 + (win_pct * 0.75):
+                res = "W"
+                gf = max(1, round(rpg + rng.uniform(-0.5, 1.2)))
+                ga = max(0, min(gf - 1, round(ra + rng.uniform(-0.8, 0.4))))
+            else:
+                res = "L"
+                ga = max(1, round(ra + rng.uniform(-0.5, 1.2)))
+                gf = max(0, min(ga - 1, round(rpg + rng.uniform(-0.8, 0.4))))
+        elif eff_sport == "BASKETBALL":
+            roll = rng.random()
+            if roll < win_pct:
+                res = "W"
+                gf = round(rpg + rng.uniform(-5, 8))
+                ga = round(gf - rng.uniform(3, 11))
+            else:
+                res = "L"
+                ga = round(ra + rng.uniform(-4, 9))
+                gf = round(ga - rng.uniform(3, 11))
+        else: # BASEBALL
+            roll = rng.random()
+            if roll < win_pct:
+                res = "W"
+                gf = max(1, round(rpg + rng.uniform(-1.2, 2.5)))
+                ga = max(0, min(gf - 1, round(ra + rng.uniform(-1.8, 0.8))))
+            else:
+                res = "L"
+                ga = max(1, round(ra + rng.uniform(-0.8, 3.0)))
+                gf = max(0, min(ga - 1, round(rpg + rng.uniform(-1.8, 0.8))))
+
+        rec_item = {
+            "match_id": 900000 + (seed_val % 90000),
+            "date": date_str,
+            "time": time_str,
+            "is_home": is_h,
+            "opponent": opp,
+            "team_name": team_name,
+            "team_score": gf,
+            "opp_score": ga,
+            "result": res,
+            "league": league_name or ""
+        }
+
+        if eff_sport == "SOCCER":
+            rec_item = _enrich_soccer_match_events(c_cur, rec_item, team_name if is_h else opp, opp if is_h else team_name, gf if is_h else ga, ga if is_h else gf, match_id=rec_item["match_id"], date_str=date_str)
+        elif eff_sport == "BASEBALL":
+            rec_item = _enrich_baseball_match_events(c_cur, rec_item, team_name if is_h else opp, opp if is_h else team_name, gf if is_h else ga, ga if is_h else gf, match_id=rec_item["match_id"], date_str=date_str)
+        elif eff_sport == "BASKETBALL":
+            rec_item = _enrich_basketball_match_events(c_cur, rec_item, team_name if is_h else opp, opp if is_h else team_name, gf if is_h else ga, ga if is_h else gf, match_id=rec_item["match_id"], date_str=date_str)
+        else:
+            rec_item["odds"] = _generate_match_odds(gf, ga, f"{team_name}_{opp}_{rec_item['match_id']}")
+
+        existing_matches.append(rec_item)
+
+    existing_matches.sort(key=lambda x: (x.get("date", ""), x.get("time", "")), reverse=True)
+    return existing_matches
+
+def _populate_missing_h2h_matches(c_cur, existing_h2h: list, home_team: str, away_team: str, sport_code: str, league_name: str, h2h_record: dict, match_date_ref: Optional[str] = None) -> list:
+    count_needed = 10 - len(existing_h2h)
+    if count_needed <= 0:
+        return existing_h2h
+
+    base_dt = None
+    if existing_h2h:
+        oldest_date = existing_h2h[-1].get("date", "")
+        if oldest_date:
+            try:
+                base_dt = datetime.strptime(oldest_date[:10], "%Y-%m-%d")
+            except Exception:
+                pass
+    if not base_dt and match_date_ref:
+        try:
+            base_dt = datetime.strptime(match_date_ref[:10], "%Y-%m-%d")
+        except Exception:
+            pass
+    if not base_dt:
+        base_dt = datetime.now()
+
+    eff_sport = (sport_code or "BASEBALL").upper()
+    days_step = 25 if eff_sport == "SOCCER" else (14 if eff_sport == "BASEBALL" else 18)
+
+    for i in range(count_needed):
+        seed_key = f"{home_team}_{away_team}_h2h_{i}_{len(existing_h2h)}"
+        seed_val = int(hashlib.md5(seed_key.encode('utf-8')).hexdigest()[:8], 16)
+        rng = random.Random(seed_val)
+
+        cur_dt = base_dt - timedelta(days=days_step * (i + 1) + rng.randint(0, 3))
+        date_str = cur_dt.strftime("%Y-%m-%d")
+        time_str = cur_dt.strftime("%H:%M")
+        is_cur_home = ((len(existing_h2h) + i) % 2 == 0)
+
+        h_wins = h2h_record.get("teamA_wins", 0) if home_team < away_team else h2h_record.get("teamB_wins", 0)
+        a_wins = h2h_record.get("teamB_wins", 0) if home_team < away_team else h2h_record.get("teamA_wins", 0)
+        tot = max(1, h_wins + a_wins + h2h_record.get("draws", 0))
+        h_prob = max(0.35, min(0.65, h_wins / tot))
+
+        roll = rng.random()
+        if eff_sport == "SOCCER":
+            if roll < 0.28:
+                res = "D"
+                cur_home_score = rng.choice([0, 1, 1, 2])
+                cur_away_score = cur_home_score
+            elif roll < 0.28 + (h_prob * 0.72):
+                res = "W"
+                cur_home_score = rng.choice([1, 2, 2, 3])
+                cur_away_score = rng.choice([0, 1]) if cur_home_score >= 2 else 0
+            else:
+                res = "L"
+                cur_away_score = rng.choice([1, 2, 2, 3])
+                cur_home_score = rng.choice([0, 1]) if cur_away_score >= 2 else 0
+        elif eff_sport == "BASKETBALL":
+            if roll < h_prob:
+                res = "W"
+                cur_home_score = rng.randint(104, 118)
+                cur_away_score = cur_home_score - rng.randint(3, 9)
+            else:
+                res = "L"
+                cur_away_score = rng.randint(104, 118)
+                cur_home_score = cur_away_score - rng.randint(3, 9)
+        else: # BASEBALL
+            if roll < h_prob:
+                res = "W"
+                cur_home_score = rng.randint(3, 7)
+                cur_away_score = max(0, cur_home_score - rng.randint(1, 3))
+            else:
+                res = "L"
+                cur_away_score = rng.randint(3, 7)
+                cur_home_score = max(0, cur_away_score - rng.randint(1, 3))
+
+        h2h_item = {
+            "match_id": 950000 + (seed_val % 50000),
+            "date": date_str,
+            "time": time_str,
+            "home_team": home_team if is_cur_home else away_team,
+            "away_team": away_team if is_cur_home else home_team,
+            "home_score": cur_home_score,
+            "away_score": cur_away_score,
+            "venue": "홈" if is_cur_home else "원정",
+            "result": res,
+            "league": league_name or ""
+        }
+
+        if eff_sport == "SOCCER":
+            h2h_item = _enrich_soccer_match_events(c_cur, h2h_item, home_team if is_cur_home else away_team, away_team if is_cur_home else home_team, cur_home_score, cur_away_score, match_id=h2h_item["match_id"], date_str=date_str)
+        elif eff_sport == "BASEBALL":
+            h2h_item = _enrich_baseball_match_events(c_cur, h2h_item, home_team if is_cur_home else away_team, away_team if is_cur_home else home_team, cur_home_score, cur_away_score, match_id=h2h_item["match_id"], date_str=date_str)
+        elif eff_sport == "BASKETBALL":
+            h2h_item = _enrich_basketball_match_events(c_cur, h2h_item, home_team if is_cur_home else away_team, away_team if is_cur_home else home_team, cur_home_score, cur_away_score, match_id=h2h_item["match_id"], date_str=date_str)
+        else:
+            h2h_item["odds"] = _generate_match_odds(cur_home_score, cur_away_score, f"{home_team}_{away_team}_{h2h_item['match_id']}")
+
+        existing_h2h.append(h2h_item)
+
+    existing_h2h.sort(key=lambda x: (x.get("date", ""), x.get("time", "")), reverse=True)
+    return existing_h2h
+
 class TeamSplitService:
     _cached_splits: Optional[Dict[str, Any]] = None
     _cached_h2h: Optional[Dict[str, Any]] = None
@@ -3682,258 +3935,6 @@ class TeamSplitService:
             "ou_confidence": ou_info["ou_confidence"],
             "odds": odds_data
         }
-def get_realistic_league_opponents(team_name: str, sport_code: str, league_name: str = "", exclude_name: str = "") -> list:
-    sport = (sport_code or "BASEBALL").upper()
-    leg = (league_name or "").upper()
-    tn = (team_name or "").strip()
-    ex = (exclude_name or "").strip()
-
-    if sport == "SOCCER":
-        if any(k in leg or k in tn for k in ["K리그", "K LEAGUE", "K1", "K2", "울산", "전북", "포항", "서울", "광주", "강원", "수원", "인천", "대구", "제주", "대전", "김천", "안양", "부천", "성남", "이랜드", "아산", "경남", "전남", "부산"]):
-            pool = ["포항 스틸러스", "울산 HD", "전북 현대", "FC서울", "광주FC", "강원FC", "제주 유나이티드", "김천 상무", "대전 하나시티즌", "FC안양", "대구FC", "수원FC", "인천 유나이티드", "수원 삼성", "부산 아이파크", "성남FC"]
-        elif any(k in leg or k in tn for k in ["EPL", "PREMIER", "프리미어", "맨시티", "아스널", "리버풀", "토트넘", "첼시", "맨유", "뉴캐슬", "빌라", "브라이튼", "웨스트햄", "에버턴", "풀럼", "울버햄튼", "본머스", "팰리스", "브렌트포드", "노팅엄", "레스터", "사우샘프턴", "입스위치", "Arsenal", "Chelsea", "Liverpool", "Manchester", "Tottenham", "Newcastle", "Brighton", "Fulham", "Bournemouth", "Brentford", "Everton", "West Ham", "Wolves", "Leicester", "Southampton", "Ipswich"]):
-            pool = ["맨체스터 시티", "아스널", "리버풀", "아스톤 빌라", "토트넘 홋스퍼", "첼시", "뉴캐슬", "맨체스터 유나이티드", "웨스트햄", "브라이튼", "에버턴", "울버햄튼", "풀럼", "본머스", "크리스탈 팰리스", "브렌트포드", "노팅엄 포레스트", "레스터 시티"]
-        elif any(k in leg or k in tn for k in ["CHAMPIONSHIP", "챔피언십", "리즈", "번리", "셰필드", "선덜랜드", "웨스트브롬", "노리치", "미들즈브러", "밀월", "왓포드", "블랙번", "스완지", "Leeds", "Burnley", "Sheffield", "Sunderland", "West Brom", "Norwich", "Middlesbrough", "Millwall", "Watford", "Blackburn", "Swansea"]):
-            pool = ["리즈 유나이티드", "번리", "셰필드 유나이티드", "선덜랜드", "웨스트브롬", "미들즈브러", "노리치 시티", "코번트리 시티", "밀월", "왓포드", "블랙번 로버스", "스완지 시티"]
-        elif any(k in leg or k in tn for k in ["LA LIGA", "라리가", "레알", "바르셀로나", "아틀레티코", "소시에다드", "빌바오", "베티스", "비야레알", "발렌시아", "세비야", "오사수나", "헤타페", "셀타", "마요르카", "라요", "에스파뇰", "지로나", "알라베스", "라스팔마스", "Real Madrid", "Barcelona", "Atletico", "Sociedad", "Bilbao", "Betis", "Villarreal", "Valencia", "Sevilla", "Osasuna", "Getafe", "Celta", "Mallorca", "Rayo", "Espanyol", "Girona", "Alaves", "Las Palmas"]):
-            pool = ["레알 마드리드", "바르셀로나", "아틀레티코 마드리드", "레알 소시에다드", "아틀레틱 빌바오", "레알 베티스", "비야레알", "발렌시아", "세비야", "오사수나", "헤타페", "셀타 비고", "마요르카", "라요 바예카노", "에스파뇰", "지로나"]
-        elif any(k in leg or k in tn for k in ["SERIE A", "세리에", "인테르", "AC밀란", "유벤투스", "나폴리", "아탈란타", "로마", "라치오", "피오렌티나", "볼로냐", "토리노", "몬차", "제노아", "칼리아리", "엠폴리", "베로나", "파르마", "코모", "베네치아", "우디네세", "레체", "Inter", "Milan", "Juventus", "Napoli", "Atalanta", "Roma", "Lazio", "Fiorentina", "Bologna", "Torino", "Monza", "Genoa", "Cagliari", "Empoli", "Verona", "Parma", "Como", "Venezia", "Udinese", "Lecce"]):
-            pool = ["인테르", "AC밀란", "유벤투스", "나폴리", "아탈란타", "AS로마", "라치오", "피오렌티나", "볼로냐", "토리노", "몬차", "제노아", "칼리아리", "엠폴리", "엘라스 베로나", "파르마", "코모", "우디네세"]
-        elif any(k in leg or k in tn for k in ["BUNDESLIGA", "분데스리가", "바이에른", "뮌헨", "레버쿠젠", "도르트문트", "라이프치히", "프랑크푸르트", "슈투트가르트", "볼프스부르크", "프라이부르크", "호펜하임", "아우크스부르크", "브레멘", "묀헨", "마인츠", "우니온", "보훔", "장크트파울리", "하이덴하임", "Bayern", "Leverkusen", "Dortmund", "Leipzig", "Frankfurt", "Stuttgart", "Wolfsburg", "Freiburg", "Hoffenheim", "Augsburg", "Bremen", "Gladbach", "Mainz", "Union Berlin", "Bochum", "Heidenheim"]):
-            pool = ["바이에른 뮌헨", "바이어 레버쿠젠", "보루시아 도르트문트", "RB 라이프치히", "프랑크푸르트", "슈투트가르트", "볼프스부르크", "프라이부르크", "호펜하임", "아우크스부르크", "베르더 브레멘", "보루시아 묀헨글라트바흐", "마인츠 05", "우니온 베를린"]
-        elif any(k in leg or k in tn for k in ["LIGUE 1", "리그1", "파리", "PSG", "모나코", "마르세유", "릴", "리옹", "랑스", "니스", "렌", "랭스", "스트라스부르", "툴루즈", "몽펠리에", "브레스트", "낭트", "오세르", "앙제", "생테티엔", "르아브르", "Paris", "Monaco", "Marseille", "Lille", "Lyon", "Lens", "Nice", "Rennes", "Reims", "Strasbourg", "Toulouse", "Montpellier", "Brest", "Nantes", "Auxerre", "Angers", "Saint-Etienne", "Le Havre"]):
-            pool = ["파리 생제르맹", "AS 모나코", "마르세유", "릴 OSC", "올랭피크 리옹", "RC 랑스", "OGC 니스", "스타드 렌", "스타드 랭스", "스트라스부르", "툴루즈", "몽펠리에", "스타드 브레스트", "FC 낭트", "AJ 오세르"]
-        elif any(k in leg or k in tn for k in ["J1", "J2", "J리그", "J LEAGUE", "고베", "요코하마", "히로시마", "가와사키", "우라와", "가시마", "감바", "세레소", "나고야", "도쿄", "마치다", "후쿠오카", "니가타", "교토", "Kobe", "Marinos", "Hiroshima", "Kawasaki", "Urawa", "Antlers", "Gamba", "Cerezo", "Nagoya", "Tokyo", "Machida", "Fukuoka", "Niigata", "Kyoto"]):
-            pool = ["비셀 고베", "요코하마 F. 마리노스", "산프레체 히로시마", "가와사키 프론탈레", "우라와 레즈", "가시마 앤틀러스", "감바 오사카", "세레소 오사카", "나고야 그램퍼스", "FC도쿄", "마치다 젤비아", "아비스파 후쿠오카", "알비렉스 니가타"]
-        elif any(k in leg or k in tn for k in ["EREDIVISIE", "에레디비시", "아약스", "에인트호번", "PSV", "페예노르트", "알크마르", "AZ", "트벤테", "위트레흐트", "헤이렌베인", "고어헤드", "Ajax", "Feyenoord", "Twente", "Utrecht", "Heerenveen"]):
-            pool = ["PSV 에인트호번", "페예노르트", "아약스", "AZ 알크마르", "FC 트벤테", "FC 위트레흐트", "SC 헤이렌베인", "고 어헤드 이글스", "NEC 네이메헌", "스파르타 로테르담"]
-        elif any(k in leg or k in tn for k in ["MLS", "메이저리그사커", "마이애미", "LAFC", "갤럭시", "콜럼버스", "신시내티", "필라델피아", "사운더스", "애틀랜타", "레드불스", "Miami", "Galaxy", "Columbus", "Cincinnati", "Philadelphia", "Seattle", "Orlando", "Portland"]):
-            pool = ["인터 마이애미", "LAFC", "LA 갤럭시", "콜럼버스 크루", "FC 신시내티", "필라델피아 유니언", "시애틀 사운더스", "애틀랜타 유나이티드", "뉴욕 레드불스", "뉴욕 시티 FC", "올랜도 시티 SC", "포틀랜드 팀버스"]
-        else: # UCL / European Clubs
-            pool = ["레알 마드리드", "맨체스터 시티", "바이에른 뮌헨", "파리 생제르맹", "아스널", "바르셀로나", "리버풀", "인테르", "바이어 레버쿠젠", "아틀레티코 마드리드", "유벤투스", "보루시아 도르트문트", "AC밀란", "아탈란타", "스포르팅 CP", "벤피카", "PSV 에인트호번", "페예노르트", "FC 포르투", "셀틱", "AS 모나코", "아스톤 빌라", "페네르바체", "샤흐타르 도네츠크"]
-
-    elif sport == "BASKETBALL":
-        if any(k in leg or k in tn for k in ["KBL", "한국농구", "KCC", "SK", "DB", "LG", "KT", "모비스", "소노", "정관장", "가스공사", "삼성"]):
-            pool = ["부산 KCC", "서울 SK", "원주 DB", "창원 LG", "수원 KT", "울산 현대모비스", "고양 소노", "안양 정관장", "대구 한국가스공사", "서울 삼성"]
-        else:
-            pool = ["보스턴 셀틱스", "덴버 너기츠", "오클라호마시티 썬더", "미네소타 팀버울브스", "클리블랜드 캐벌리어스", "밀워키 벅스", "댈러스 매버릭스", "뉴욕 닉스", "피닉스 선즈", "LA 레이커스", "골든스테이트 워리어스", "마이애미 히트", "필라델피아 76ers", "인디애나 페이서스", "새크라멘토 킹스", "올랜도 매직"]
-
-    else: # BASEBALL
-        if any(k in leg or k in tn for k in ["NPB", "일본야구", "요미우리", "한신", "소프트뱅크", "오릭스", "세이부", "주니치", "DeNA", "카프", "야쿠르트", "라쿠텐", "지바", "니혼햄", "닛폰햄", "베이스타즈", "스왈로스", "골든이글스", "버펄로스", "호크스", "드래곤즈", "Yomiuri", "Hanshin", "SoftBank", "Orix", "Seibu", "Chunichi", "BayStars", "Carp", "Swallows", "Rakuten", "Lotte", "Fighters"]):
-            pool = ["요미우리 자이언츠", "한신 타이거스", "히로시마 도요 카프", "요코하마 DeNA 베이스타즈", "도쿄 야쿠르트 스왈로스", "주니치 드래곤즈", "후쿠오카 소프트뱅크 호크스", "홋카이도 닛폰햄 파이터즈", "지바 롯데 마린스", "도호쿠 라쿠텐 골든이글스", "오릭스 버펄로스", "사이타마 세이부 라이온즈"]
-        elif any(k in leg or k in tn for k in ["MLB", "메이저리그", "다저스", "양키스", "보스턴", "레드삭스", "메츠", "샌디에이고", "파드리스", "필리스", "애틀랜타", "휴스턴", "볼티모어", "시애틀", "샌프란시스코", "시카고", "컵스", "화이트삭스", "에인절스", "레인저스", "가디언스", "로열스", "브루어스", "파이리츠", "카디널스", "다이아몬드백스", "로키스", "블루제이스", "말린스", "내셔널스", "애슬레틱스", "레이스", "디트로이트", "미네소타", "신시내티", "Dodgers", "Yankees", "Red Sox", "Mets", "Padres", "Phillies", "Braves", "Astros", "Orioles", "Mariners", "Giants", "Cubs", "White Sox", "Angels", "Rangers", "Guardians", "Royals", "Brewers", "Pirates", "Cardinals", "Diamondbacks", "Rockies", "Blue Jays", "Marlins", "Nationals", "Athletics", "Rays", "Tigers", "Twins", "Reds"]):
-            pool = ["LA 다저스", "뉴욕 양키스", "보스턴 레드삭스", "뉴욕 메츠", "애틀랜타 브레이브스", "샌디에이고 파드리스", "필라델피아 필리스", "휴스턴 애스트로스", "볼티모어 오리올스", "시애틀 매리너스", "샌프란시스코 자이언츠", "시카고 컵스", "텍사스 레인저스", "토론토 블루제이스", "디트로이트 타이거스", "미네소타 트윈스", "밀워키 브루어스", "세인트루이스 카디널스", "애리조나 다이아몬드백스", "클리블랜드 가디언스", "탬파베이 레이스", "캔자스시티 로열스"]
-        else: # KBO
-            pool = ["KIA 타이거즈", "삼성 라이온즈", "LG 트윈스", "두산 베어스", "KT 위즈", "SSG 랜더스", "롯데 자이언츠", "한화 이글스", "NC 다이노스", "키움 히어로즈"]
-
-    filtered = [p for p in pool if tn not in p and p not in tn and (not ex or (ex not in p and p not in ex))]
-    return filtered if filtered else pool
-
-def _populate_missing_recent_matches(c_cur, existing_matches: list, team_name: str, sport_code: str, league_name: str, rpg: float, ra: float, win_pct: float, match_date_ref: Optional[str] = None, exclude_team: str = "") -> list:
-    count_needed = 10 - len(existing_matches)
-    if count_needed <= 0:
-        return existing_matches
-
-    opp_pool = get_realistic_league_opponents(team_name, sport_code, league_name, exclude_team)
-    if not opp_pool:
-        opp_pool = ["상대팀"]
-
-    base_dt = None
-    if existing_matches:
-        oldest_date = existing_matches[-1].get("date", "")
-        if oldest_date:
-            try:
-                base_dt = datetime.strptime(oldest_date[:10], "%Y-%m-%d")
-            except Exception:
-                pass
-    if not base_dt and match_date_ref:
-        try:
-            base_dt = datetime.strptime(match_date_ref[:10], "%Y-%m-%d")
-        except Exception:
-            pass
-    if not base_dt:
-        base_dt = datetime.now()
-
-    eff_sport = (sport_code or "BASEBALL").upper()
-    days_step = 6 if eff_sport == "SOCCER" else (3 if eff_sport == "BASEBALL" else 3)
-
-    for i in range(count_needed):
-        seed_key = f"{team_name}_{sport_code}_{i}_{len(existing_matches)}"
-        seed_val = int(hashlib.md5(seed_key.encode('utf-8')).hexdigest()[:8], 16)
-        rng = random.Random(seed_val)
-
-        cur_dt = base_dt - timedelta(days=days_step * (i + 1) + rng.randint(0, 1))
-        date_str = cur_dt.strftime("%Y-%m-%d")
-        time_str = cur_dt.strftime("%H:%M")
-        is_h = ((len(existing_matches) + i) % 2 == 0)
-        opp = opp_pool[(len(existing_matches) + i) % len(opp_pool)]
-
-        if eff_sport == "SOCCER":
-            roll = rng.random()
-            if roll < 0.25:
-                res = "D"
-                gf = rng.choice([0, 1, 1, 2])
-                ga = gf
-            elif roll < 0.25 + (win_pct * 0.75):
-                res = "W"
-                gf = max(1, round(rpg + rng.uniform(-0.5, 1.2)))
-                ga = max(0, min(gf - 1, round(ra + rng.uniform(-0.8, 0.4))))
-            else:
-                res = "L"
-                ga = max(1, round(ra + rng.uniform(-0.5, 1.2)))
-                gf = max(0, min(ga - 1, round(rpg + rng.uniform(-0.8, 0.4))))
-        elif eff_sport == "BASKETBALL":
-            roll = rng.random()
-            if roll < win_pct:
-                res = "W"
-                gf = round(rpg + rng.uniform(-5, 8))
-                ga = round(gf - rng.uniform(3, 11))
-            else:
-                res = "L"
-                ga = round(ra + rng.uniform(-4, 9))
-                gf = round(ga - rng.uniform(3, 11))
-        else: # BASEBALL
-            roll = rng.random()
-            if roll < win_pct:
-                res = "W"
-                gf = max(1, round(rpg + rng.uniform(-1.2, 2.5)))
-                ga = max(0, min(gf - 1, round(ra + rng.uniform(-1.8, 0.8))))
-            else:
-                res = "L"
-                ga = max(1, round(ra + rng.uniform(-0.8, 3.0)))
-                gf = max(0, min(ga - 1, round(rpg + rng.uniform(-1.8, 0.8))))
-
-        rec_item = {
-            "match_id": 900000 + (seed_val % 90000),
-            "date": date_str,
-            "time": time_str,
-            "is_home": is_h,
-            "opponent": opp,
-            "team_name": team_name,
-            "team_score": gf,
-            "opp_score": ga,
-            "result": res,
-            "league": league_name or ""
-        }
-
-        if eff_sport == "SOCCER":
-            rec_item = _enrich_soccer_match_events(c_cur, rec_item, team_name if is_h else opp, opp if is_h else team_name, gf if is_h else ga, ga if is_h else gf, match_id=rec_item["match_id"], date_str=date_str)
-        elif eff_sport == "BASEBALL":
-            rec_item = _enrich_baseball_match_events(c_cur, rec_item, team_name if is_h else opp, opp if is_h else team_name, gf if is_h else ga, ga if is_h else gf, match_id=rec_item["match_id"], date_str=date_str)
-        elif eff_sport == "BASKETBALL":
-            rec_item = _enrich_basketball_match_events(c_cur, rec_item, team_name if is_h else opp, opp if is_h else team_name, gf if is_h else ga, ga if is_h else gf, match_id=rec_item["match_id"], date_str=date_str)
-        else:
-            rec_item["odds"] = _generate_match_odds(gf, ga, f"{team_name}_{opp}_{rec_item['match_id']}")
-
-        existing_matches.append(rec_item)
-
-    existing_matches.sort(key=lambda x: (x.get("date", ""), x.get("time", "")), reverse=True)
-    return existing_matches
-
-def _populate_missing_h2h_matches(c_cur, existing_h2h: list, home_team: str, away_team: str, sport_code: str, league_name: str, h2h_record: dict, match_date_ref: Optional[str] = None) -> list:
-    count_needed = 10 - len(existing_h2h)
-    if count_needed <= 0:
-        return existing_h2h
-
-    base_dt = None
-    if existing_h2h:
-        oldest_date = existing_h2h[-1].get("date", "")
-        if oldest_date:
-            try:
-                base_dt = datetime.strptime(oldest_date[:10], "%Y-%m-%d")
-            except Exception:
-                pass
-    if not base_dt and match_date_ref:
-        try:
-            base_dt = datetime.strptime(match_date_ref[:10], "%Y-%m-%d")
-        except Exception:
-            pass
-    if not base_dt:
-        base_dt = datetime.now()
-
-    eff_sport = (sport_code or "BASEBALL").upper()
-    days_step = 25 if eff_sport == "SOCCER" else (14 if eff_sport == "BASEBALL" else 18)
-
-    for i in range(count_needed):
-        seed_key = f"{home_team}_{away_team}_h2h_{i}_{len(existing_h2h)}"
-        seed_val = int(hashlib.md5(seed_key.encode('utf-8')).hexdigest()[:8], 16)
-        rng = random.Random(seed_val)
-
-        cur_dt = base_dt - timedelta(days=days_step * (i + 1) + rng.randint(0, 3))
-        date_str = cur_dt.strftime("%Y-%m-%d")
-        time_str = cur_dt.strftime("%H:%M")
-        is_cur_home = ((len(existing_h2h) + i) % 2 == 0)
-
-        h_wins = h2h_record.get("teamA_wins", 0) if home_team < away_team else h2h_record.get("teamB_wins", 0)
-        a_wins = h2h_record.get("teamB_wins", 0) if home_team < away_team else h2h_record.get("teamA_wins", 0)
-        tot = max(1, h_wins + a_wins + h2h_record.get("draws", 0))
-        h_prob = max(0.35, min(0.65, h_wins / tot))
-
-        roll = rng.random()
-        if eff_sport == "SOCCER":
-            if roll < 0.28:
-                res = "D"
-                cur_home_score = rng.choice([0, 1, 1, 2])
-                cur_away_score = cur_home_score
-            elif roll < 0.28 + (h_prob * 0.72):
-                res = "W"
-                cur_home_score = rng.choice([1, 2, 2, 3])
-                cur_away_score = rng.choice([0, 1]) if cur_home_score >= 2 else 0
-            else:
-                res = "L"
-                cur_away_score = rng.choice([1, 2, 2, 3])
-                cur_home_score = rng.choice([0, 1]) if cur_away_score >= 2 else 0
-        elif eff_sport == "BASKETBALL":
-            if roll < h_prob:
-                res = "W"
-                cur_home_score = rng.randint(104, 118)
-                cur_away_score = cur_home_score - rng.randint(3, 9)
-            else:
-                res = "L"
-                cur_away_score = rng.randint(104, 118)
-                cur_home_score = cur_away_score - rng.randint(3, 9)
-        else: # BASEBALL
-            if roll < h_prob:
-                res = "W"
-                cur_home_score = rng.randint(3, 7)
-                cur_away_score = max(0, cur_home_score - rng.randint(1, 3))
-            else:
-                res = "L"
-                cur_away_score = rng.randint(3, 7)
-                cur_home_score = max(0, cur_away_score - rng.randint(1, 3))
-
-        h2h_item = {
-            "match_id": 950000 + (seed_val % 50000),
-            "date": date_str,
-            "time": time_str,
-            "home_team": home_team if is_cur_home else away_team,
-            "away_team": away_team if is_cur_home else home_team,
-            "home_score": cur_home_score,
-            "away_score": cur_away_score,
-            "venue": "홈" if is_cur_home else "원정",
-            "result": res,
-            "league": league_name or ""
-        }
-
-        if eff_sport == "SOCCER":
-            h2h_item = _enrich_soccer_match_events(c_cur, h2h_item, home_team if is_cur_home else away_team, away_team if is_cur_home else home_team, cur_home_score, cur_away_score, match_id=h2h_item["match_id"], date_str=date_str)
-        elif eff_sport == "BASEBALL":
-            h2h_item = _enrich_baseball_match_events(c_cur, h2h_item, home_team if is_cur_home else away_team, away_team if is_cur_home else home_team, cur_home_score, cur_away_score, match_id=h2h_item["match_id"], date_str=date_str)
-        elif eff_sport == "BASKETBALL":
-            h2h_item = _enrich_basketball_match_events(c_cur, h2h_item, home_team if is_cur_home else away_team, away_team if is_cur_home else home_team, cur_home_score, cur_away_score, match_id=h2h_item["match_id"], date_str=date_str)
-        else:
-            h2h_item["odds"] = _generate_match_odds(cur_home_score, cur_away_score, f"{home_team}_{away_team}_{h2h_item['match_id']}")
-
-        existing_h2h.append(h2h_item)
-
-    existing_h2h.sort(key=lambda x: (x.get("date", ""), x.get("time", "")), reverse=True)
-    return existing_h2h
-
-class TeamSplitService:
-    _cached_splits: Optional[Dict[str, Any]] = None
-    _cached_h2h: Optional[Dict[str, Any]] = None
-    _MATCHUP_ANALYSIS_CACHE: Dict[str, Tuple[float, Any]] = {}
-    _QUICK_PRED_CACHE: Dict[str, Tuple[float, Any]] = {}
 
     @classmethod
     def get_matchup_analysis(cls, home_team: str, away_team: str, sport_code: str = "BASEBALL", match_id: Optional[int] = None, team_stats: Optional[Dict[str, Any]] = None):

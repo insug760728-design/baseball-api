@@ -125,9 +125,27 @@ FULL_NAMES = {
     "Brady Singer": "브래디 싱어", "Alec Marsh": "알렉 마쉬", "Aaron Nola": "애런 놀라",
     "Parker Messick": "파커 메식", "Anthony Kay": "앤서니 케이", "Mason Montgomery": "메이슨 몽고메리",
     "Cade Cavalli": "케이드 카발리", "Jacob Misiorowski": "제이콥 미시오로우스키",
+    "Clay Holmes": "클레이 홈즈", "Wilber Dotel": "윌버 도텔", "Miguel Ulloa": "미겔 우요아",
+    "Walbert Ureña": "왈버트 우레냐", "Walbert Urena": "왈버트 우레냐", "Connor Prielipp": "코너 프릴립",
+    "Peter Lambert": "피터 램버트", "Tyler Mahle": "타일러 말리", "Gage Jump": "게이지 점프",
+    "Jackson Jobe": "잭슨 조브", "Gabriel Hughes": "가브리엘 휴즈", "Payton Tolle": "페이튼 톨레",
+    "Noah Cameron": "노아 카메론", "Cam Schlittler": "캠 슐리틀러", "Bubba Chandler": "버바 챈들러",
+    "Eury Pérez": "유리 페레즈", "Eury Perez": "유리 페레즈", "Zac Thornton": "잭 손튼",
+    "Zach Thornton": "잭 손튼", "Randy Dobnak": "랜디 도브낙", "Tyler Phillips": "타일러 필립스",
+    "Andrew Painter": "앤드루 페인터", "Cesar Perdomo": "세사르 페르도모", "César Perdomo": "세사르 페르도모",
+    "Andrew Alvarez": "앤드루 알바레즈", "Andrew Álvarez": "앤드루 알바레즈", "Ian Seymour": "이안 시모어",
+    "Kyle Leahy": "카일 리히", "Chase Burns": "체이스 번스", "Jacob Lopez": "제이콥 로페즈",
+    "Jacob López": "제이콥 로페즈", "Nolan McLean": "놀란 맥클레인", "Drew Rasmussen": "드류 라스무센",
+    "Ryan Gusto": "라이언 구스토", "Dustin May": "더스틴 메이", "Matthew Liberatore": "매튜 리베라토레",
+    "Anthony Molina": "앤서니 몰리나", "Hayden Wesneski": "헤이든 웨스네스키", "Christian Scott": "크리스천 스콧",
+    "Trevor Rogers": "트레버 로저스", "Tanner Gordon": "태너 고든", "Kyle Bradish": "카일 브래디시",
+    "Jacob deGrom": "제이콥 디그롬", "Jacob DeGrom": "제이콥 디그롬", "Max Scherzer": "맥스 슈어저",
+    "Luis Castillo": "루이스 카스티요", "Christian Javier": "크리스티안 하비에르", "Troy Melton": "트로이 멜튼",
+
     # Korean MLB
     "Jung Hoo Lee": "이정후", "Jung-Hoo Lee": "이정후", "Ha-Seong Kim": "김하성", "Ha-seong Kim": "김하성",
     "Ji-Hwan Bae": "배지환", "Ji Hwan Bae": "배지환", "Hyun Jin Ryu": "류현진", "Kwang Hyun Kim": "김광현",
+    
     # MLB Batters / Superstars
     "Aaron Judge": "애런 저지", "Juan Soto": "후안 소토", "Mookie Betts": "무키 베츠", "Freddie Freeman": "프레디 프리먼",
     "Bryce Harper": "브라이스 하퍼", "Gunnar Henderson": "거너 헨더슨", "Bobby Witt Jr.": "바비 위트 주니어",
@@ -189,7 +207,7 @@ FULL_NAMES = {
     "隅田 知一郎": "스미다 치히로", "隅田知一郎": "스미다 치히로", "Sumida Chihiro": "스미다 치히로",
     "松本 航": "마츠모토 와타루", "松本航": "마츠모토 와타루", "Matsumoto Wataru": "마츠모토 와타루",
     "山下 舜平大": "야마시타 슌페이타", "山下舜平大": "야마시타 슌페이타", "Yamashita Shunpeita": "야마시타 슌페이타",
-    "田嶋 大樹": "타지마 다이키", "田嶋大樹": "타지마 다이키", "Tajima Daiki": "타지마 다이키",
+    "田嶋 大樹": "타지마 다이키", "田嶋대樹": "타지마 다이키", "田嶋大樹": "타지마 다이키", "Tajima Daiki": "타지마 다이키",
     "種市 篤暉": "타네이치 아츠키", "種市篤暉": "타네이치 아츠키", "Taneichi Atsuki": "타네이치 아츠키",
     "佐々木 朗希": "사사키 로키", "佐々木朗希": "사사키 로키", "Sasaki Roki": "사사키 로키", "Roki Sasaki": "사사키 로키",
     "岸 孝之": "키시 타카유키", "岸孝之": "키시 타카유키", "Kishi Takayuki": "키시 타카유키",
@@ -215,6 +233,9 @@ FULL_NAMES = {
     "井上 温大": "이노우에 하루토", "井上温大": "이노우에 하루토", "Inoue Haruto": "이노우에 하루토",
     "武内 夏暉": "타케우치 나츠키", "武内夏暉": "타케우치 나츠키", "Takeuchi Natsuki": "타케우치 나츠키",
     "髙島 泰都": "타카시마 타이스케", "高島 泰都": "타카시마 타이스케", "高島泰都": "타카시마 타이스케",
+    "涌井 秀章": "와쿠이 히데아키", "涌井秀章": "와쿠이 히데아키", "Wakui Hideaki": "와쿠이 히데아키",
+    "高梨 雄平": "타카나시 유헤이", "高梨雄平": "타카나시 유헤이", "Takanashi Yuhei": "타카나시 유헤이",
+    "尾形 崇斗": "오가타 슈토", "尾形崇斗": "오가타 슈토", "Ogata Shuto": "오가타 슈토",
     "佐藤 爽": "사토 소우", "佐藤爽": "사토 소우",
     "高野 脩汰": "타카노 슈타", "高野脩汰": "타카노 슈타",
     "松本 晴": "마츠모토 하루", "松本晴": "마츠모토 하루",
@@ -233,20 +254,21 @@ FULL_NAMES = {
     "山田 修義": "야마다 노부요시", "山田修義": "야마다 노부요시",
     "曽谷 龍平": "소타니 류헤이", "曽谷龍平": "소타니 류헤이",
     "菅井 信也": "스가이 신야", "菅井信也": "스가이 신야",
-    "片山 皓心": "카타야마 코신", "片山皓心": "카타야마 코신", "Katayama Koshin": "카타야마 코신", "片山": "카타야마",
-    "山口 廉王": "야마구치 레오", "山口廉王": "야마구치 레오", "Yamaguchi Reo": "야마구치 레오", "山口": "야마구치",
-    "渡邉 勇太朗": "와타나베 유타로", "渡邉勇太朗": "와타나베 유타로", "渡辺 勇太朗": "와타나베 유타로", "渡辺勇太朗": "와타나베 유타로", "Watanabe Yutaro": "와타나베 유타로", "渡邉": "와타나베", "渡辺": "와타나베",
-    "前田 悠伍": "마에다 유고", "前田悠伍": "마에다 유고", "前田 悠": "마에다 유고", "前田悠": "마에다 유고", "Maeda Yugo": "마에다 유고", "前田": "마에다",
-    "石川 柊太": "이시카와 슈타", "石川柊太": "이시카와 슈타", "石川 柊": "이시카와 슈타", "石川柊": "이시카와 슈타", "Ishikawa Shuta": "이시카와 슈타", "石川": "이시카와",
+    "片山 皓心": "카타야마 코신", "片山皓心": "카타야마 코신", "Katayama Koshin": "카타야마 코신",
+    "山口 廉王": "야마구치 레오", "山口廉王": "야마구치 레오", "Yamaguchi Reo": "야마구치 레오",
+    "渡邉 勇太朗": "와타나베 유타로", "渡邉勇太朗": "와타나베 유타로", "渡辺 勇太朗": "와타나베 유타로", "渡辺勇太朗": "와타나베 유타로", "Watanabe Yutaro": "와타나베 유타로",
+    "前田 悠伍": "마에다 유고", "前田悠伍": "마에다 유고", "Maeda Yugo": "마에다 유고",
+    "石川 柊太": "이시카와 슈타", "石川柊太": "이시카와 슈타", "Ishikawa Shuta": "이시카와 슈타",
+
     # Katakana / Foreigners in NPB
     "マチャド": "마차도", "A.マチャド": "안드레스 마차도", "A.마차도": "안드레스 마차도",
     "ペルドモ": "루이스 페르도모", "L.ペルドモ": "루이스 페르도모", "L.페르도모": "루이스 페르도모",
     "エスピノーザ": "안데르손 에스피노자", "A.エスピノーザ": "안데르손 에스피노자", "A.에스피노자": "안데르손 에스피노자",
-    "モイネロ": "리반 모이넬로", "L.モイネロ": "리반 모이넬로", "L.모이넬로": "리반 모이넬로", "L.모이넬로": "리반 모이넬로",
+    "モイネロ": "리반 모이넬로", "L.モイネロ": "리반 모이넬로", "L.모이넬로": "리반 모이넬로",
     "オスナ": "로베르토 오스나", "R.オスナ": "로베르토 오스나", "J.オスナ": "호세 오스나",
     "ヘルナンデス": "에르난데스", "E.ヘルナンデス": "엘리에세르 에르난데스",
-    "マルティネス": "마르티네스", "マルチネス": "마르티네스", "R.マルティネス": "라이델 마르티네스", "R.マルチネス": "라이델 마르티네스",
-    "ルイーズ": "루이즈", "サイสニ드": "사이 스니드", "C.サイสニド": "사이 스니드", "サイスニード": "사이 스니드",
+    "マルティネス": "라이델 마르티네스", "マルチネス": "라이델 마르티네스", "R.マルティネス": "라이델 마르티네스", "R.マルチネス": "라이델 마르티네스",
+    "ルイーズ": "루이즈", "サイスニード": "사이 스니드", "C.サイスニード": "사이 스니드",
     "ケイ": "안소니 케이", "A.ケイ": "안소니 케이", "ジャクソン": "안드레 잭슨", "A.ジャクソン": "안드레 잭슨",
     "バウアー": "트레버 바우어", "T.バウアー": "트레버 바우어", "エンス": "디트릭 엔스", "D.エンス": "디트릭 엔스",
     "メルセデス": "C.C. 멜세데스", "C.C.メルセデス": "C.C. 멜세데스",
@@ -255,8 +277,10 @@ FULL_NAMES = {
     "ディアス": "디아즈", "ゴンザレス": "곤잘레스", "カスティーヨ": "카스티요",
     "バルドナード": "발도나도", "グリフィン": "포스터 그리핀", "F.グリフィン": "포스터 그리핀",
     "メンデス": "요안데르 멘데스", "Y.メンデス": "요안데르 멘데스", "ボス": "코디 보스", "C.ボス": "코디 보스",
-    "ビシエド": "다얀 비시에도", "D.ビシエド": "다얀 비시에도", "カリ스테": "올란도 칼리스테", "ロドリゲス": "로드리게스",
-    "Ｓ．ジェリー": "S.젤리", "S.ジェリー": "S.젤리", "ジェリー": "S.젤리", "마타": "데이비드 마타"
+    "ビシエド": "다얀 비시에도", "D.ビシエド": "다얀 비시에도", "カリ스테": "올란도 칼리스테", "ロドリ게스": "로드리게스", "ロドリゲス": "로드리게스",
+    "Ｓ．ジェリー": "S.젤리", "S.ジェリー": "S.젤리", "ジェリー": "S.젤리", "마타": "데이비드 마타",
+    "ラトリッジ": "러틀리지", "クラーク": "클라크", "スチュワート": "스튜어트", "C.スチュワートJr.": "카터 스튜어트 주니어",
+    "スチュワートJr.": "카터 스튜어트 주니어", "アンダーソン": "앤더슨", "ボー・タカハシ": "보 다카하시", "ボータカハシ": "보 다카하시"
 }
 
 # NPB 성씨 / 단독 이름 사전
@@ -279,7 +303,11 @@ NPB_FAMILY_NAME_MAP = {
     "田嶋大": "타지마 다이키", "小笠原": "오가사와라", "柳": "야나기", "達": "타츠 코타", "菅井": "스가이 신야",
     "髙島": "타카시마", "高島": "타카시마", "高野脩": "타카노 슈타", "大津": "오오츠", "和田": "와다",
     "小園": "코조노", "大貫": "오오누키", "前田": "마에다", "山口": "야마구치", "渡邉": "와타나베",
-    "渡辺": "와타나베", "石川": "이시카와", "石川柊": "이시카와 슈타", "前田悠": "마에다 유고"
+    "渡辺": "와타나베", "石川": "이시카와", "石川柊": "이시카와 슈타", "前田悠": "마에다 유고",
+    "竹丸": "타케마루", "村上": "무라카미", "涌井": "와쿠이", "高梨": "타카나시", "尾形": "오가타",
+    "梅津": "우메츠", "松葉": "마츠바", "根尾": "네오", "橋本": "하시모토", "清水": "시미즈",
+    "藤浪": "후지나미", "金村": "카네무라", "北山": "키타야마", "藤井": "후지이", "松井": "마츠이",
+    "上原": "우에하라", "山下": "야마시타", "東浜": "히가시하마"
 }
 
 # =============================================================
@@ -292,19 +320,19 @@ FIRST_NAMES = {
     "Ben": "벤", "Blake": "블레이크", "Bobby": "바비", "Bowden": "보든", "Brady": "브래디", "Brandon": "브랜든",
     "Braxton": "브랙스턴", "Brayan": "브라얀", "Brennan": "브레넌", "Brent": "브렌트", "Brenton": "브렌턴",
     "Brett": "브렛", "Brock": "브록", "Bryan": "브라이언", "Bryce": "브라이스", "Brycen": "브라이슨",
-    "Cade": "케이드", "Caden": "케이든", "Cal": "칼", "Carlos": "카를로스", "Carson": "카슨", "Casey": "케이시",
-    "Cesar": "세사르", "César": "세사르", "Chad": "채드", "Charlie": "찰리", "Chase": "체이스", "Chris": "크리스",
-    "Christian": "크리스천", "Christopher": "크리스토퍼", "Clarke": "클라크", "Clayton": "클레이튼", "Cody": "코디",
-    "Cole": "콜", "Colin": "콜린", "Collin": "콜린", "Colt": "콜트", "Colton": "콜턴", "Connor": "코너",
-    "Cooper": "쿠퍼", "Corbin": "코빈", "Corey": "코리", "Craig": "크레이그", "Cristian": "크리스티안",
-    "Cristopher": "크리스토퍼", "Dakota": "다코타", "Dane": "데인", "Daniel": "대니얼", "Danny": "대니",
-    "Darren": "대런", "David": "데이비드", "Davis": "데이비스", "Dean": "딘", "Derek": "데릭", "Devin": "데빈",
-    "DL": "DL", "DJ": "DJ", "Drew": "드류", "Dustin": "더스틴", "Dylan": "딜런", "Edward": "에드워드",
-    "Edwin": "에드윈", "Eli": "엘리", "Elieser": "엘리에세르", "Elly": "엘리", "Emilio": "에밀리오",
-    "Emmanuel": "엠마누엘", "Emmet": "에멧", "Eric": "에릭", "Erick": "에릭", "Erik": "에릭", "Evan": "에반",
+    "Bubba": "버바", "Cade": "케이드", "Caden": "케이든", "Cal": "칼", "Cam": "캠", "Carlos": "카를로스",
+    "Carson": "카슨", "Casey": "케이시", "Cesar": "세사르", "César": "세사르", "Chad": "채드", "Charlie": "찰리",
+    "Chase": "체이스", "Chris": "크리스", "Christian": "크리스천", "Christopher": "크리스토퍼", "Clarke": "클라크",
+    "Clay": "클레이", "Clayton": "클레이튼", "Cody": "코디", "Cole": "콜", "Colin": "콜린", "Collin": "콜린",
+    "Colt": "콜트", "Colton": "콜턴", "Connor": "코너", "Cooper": "쿠퍼", "Corbin": "코빈", "Corey": "코리",
+    "Craig": "크레이그", "Cristian": "크리스티안", "Cristopher": "크리스토퍼", "Dakota": "다코타", "Dane": "데인",
+    "Daniel": "대니얼", "Danny": "대니", "Darren": "대런", "David": "데이비드", "Davis": "데이비스", "Dean": "딘",
+    "Derek": "데릭", "Devin": "데빈", "DL": "DL", "DJ": "DJ", "Drew": "드류", "Dustin": "더스틴", "Dylan": "딜런",
+    "Edward": "에드워드", "Edwin": "에드윈", "Eli": "엘리", "Elieser": "엘리에세르", "Elly": "엘리", "Emilio": "에밀리오",
+    "Emmanuel": "엠마누엘", "Emmet": "에멧", "Eric": "에릭", "Erick": "에릭", "Erik": "에릭", "Eury": "유리", "Evan": "에반",
     "Felix": "펠릭스", "Fernando": "페르난도", "Framber": "프람버", "Francisco": "프란시스코", "Frank": "프랭크",
-    "Frankie": "프랭키", "Freddy": "프레디", "Freddie": "프레디", "Gabriel": "가브리엘", "Garrett": "개럿",
-    "Gavin": "개빈", "George": "조지", "Gerrit": "게릿", "Gleyber": "글레이버", "Graham": "그레이엄",
+    "Frankie": "프랭키", "Freddy": "프레디", "Freddie": "프레디", "Gabriel": "가브리엘", "Gage": "게이지",
+    "Garrett": "개럿", "Gavin": "개빈", "George": "조지", "Gerrit": "게릿", "Gleyber": "글레이버", "Graham": "그레이엄",
     "Grant": "그랜트", "Grayson": "그레이슨", "Gregory": "그레고리", "Griffin": "그리핀", "Gunnar": "거너",
     "Hancel": "한셀", "Harrison": "해리슨", "Hayden": "헤이든", "Hector": "엑토르", "Hunter": "헌터",
     "Hurston": "허스턴", "Ian": "이안", "Jack": "잭", "Jackson": "잭슨", "Jacob": "제이콥", "Jake": "제이크",
@@ -321,22 +349,22 @@ FIRST_NAMES = {
     "MacKenzie": "맥켄지", "Manny": "매니", "Marcell": "마르셀", "Marcus": "마커스", "Mark": "마크",
     "Martin": "마틴", "Martín": "마틴", "Mason": "메이슨", "Masataka": "마사타카", "Matt": "맷",
     "Matthew": "매튜", "Max": "맥스", "Merrill": "메릴", "Michael": "마이클", "Mick": "믹", "Mickey": "미키",
-    "Mike": "마이크", "Miles": "마일스", "Mitch": "미치", "Mitchell": "미첼", "Mookie": "무키",
+    "Miguel": "미겔", "Mike": "마이크", "Miles": "마일스", "Mitch": "미치", "Mitchell": "미첼", "Mookie": "무키",
     "Nathan": "네이선", "Nestor": "네스터", "Nick": "닉", "Nico": "니코", "Noah": "노아", "Nolan": "놀란",
-    "Oneil": "오닐", "Osvaldo": "오스발도", "Pablo": "파블로", "Patrick": "패트릭", "Paul": "폴",
-    "Pete": "피트", "Peter": "피터", "Pierce": "피어스", "Quinn": "퀸", "Rafael": "라파엘", "Randy": "랜디",
-    "Ranger": "레인저", "Reese": "리스", "Reid": "리드", "Reiver": "레이버", "Reynaldo": "레이날도",
-    "Rhett": "렛", "Rich": "리치", "Richie": "리치", "Ricky": "리키", "Riley": "라일리", "River": "리버",
-    "Robbie": "로비", "Robert": "로버트", "Ron": "론", "Ronald": "로널드", "Ronel": "로넬", "Ross": "로스",
-    "Rowdy": "라우디", "Ryan": "라이언", "Ryne": "라인", "Sal": "샐", "Sam": "샘", "Samuel": "새뮤얼",
+    "Oneil": "오닐", "Osvaldo": "오스발도", "Pablo": "파블로", "Parker": "파커", "Patrick": "패트릭", "Paul": "폴",
+    "Payton": "페이튼", "Peyton": "페이튼", "Pete": "피트", "Peter": "피터", "Pierce": "피어스", "Quinn": "퀸",
+    "Rafael": "라파엘", "Randy": "랜디", "Ranger": "레인저", "Reese": "리스", "Reid": "리드", "Reiver": "레이버",
+    "Reynaldo": "레이날도", "Rhett": "렛", "Rich": "리치", "Richie": "리치", "Ricky": "리키", "Riley": "라일리",
+    "River": "리버", "Robbie": "로비", "Robert": "로버트", "Ron": "론", "Ronald": "로널드", "Ronel": "로넬",
+    "Ross": "로스", "Rowdy": "라우디", "Ryan": "라이언", "Ryne": "라인", "Sal": "샐", "Sam": "샘", "Samuel": "새뮤얼",
     "Scott": "스콧", "Sean": "션", "Seiya": "세이야", "Seth": "세스", "Shane": "셰인", "Shawn": "숀",
     "Shea": "셰이", "Shohei": "쇼헤이", "Shota": "쇼타", "Simeon": "시미언", "Slade": "슬레이드", "Sonny": "소니",
     "Spencer": "스펜서", "Steven": "스티븐", "Taj": "타지", "Tanner": "태너", "Tarik": "타릭", "Taylor": "테일러",
     "Tejay": "티제이", "Teoscar": "테오스카", "Thomas": "토마스", "TJ": "TJ", "Tobias": "토비아스",
     "Tommy": "토미", "Tony": "토니", "Trea": "트레이", "Trent": "트렌트", "Trevor": "트레버", "Tristan": "트리스탄",
-    "Triston": "트리스톤", "Ty": "타이", "Tyler": "타일러", "Tylor": "타일러", "Valente": "발렌테",
-    "Victor": "빅터", "Vince": "빈스", "Vladimir": "블라디미르", "Wade": "웨이드", "Walker": "워커",
-    "Will": "윌", "William": "윌리엄", "Willy": "윌리", "Wyatt": "와이어트", "Xzavion": "즈자비온",
+    "Triston": "트리스톤", "Troy": "트로이", "Ty": "타이", "Tyler": "타일러", "Tylor": "타일러", "Valente": "발렌테",
+    "Victor": "빅터", "Vince": "빈스", "Vladimir": "블라디미르", "Wade": "웨이드", "Walbert": "왈버트", "Walker": "워커",
+    "Wilber": "윌버", "Will": "윌", "William": "윌리엄", "Willy": "윌리", "Wyatt": "와이어트", "Xzavion": "즈자비온",
     "Yandy": "얀디", "Yariel": "야리엘", "Yency": "옌시", "Yimi": "이미", "Yordan": "요르단",
     "Yoshinobu": "요시노부", "Yu": "유", "Yunior": "유니오르", "Yusei": "유세이", "Zac": "잭",
     "Zach": "잭", "Zack": "잭", "Zebby": "제비"
@@ -348,7 +376,7 @@ FIRST_NAMES = {
 LAST_NAMES = {
     "Abbott": "애벗", "Abrams": "에이브람스", "Abreu": "아브레우", "Acuna": "아쿠냐", "Acuña": "아쿠냐",
     "Adames": "아다메스", "Adams": "아담스", "Aguiar": "아기아르", "Alcantara": "알칸타라", "Alexander": "알렉산더",
-    "Allen": "앨런", "Alonso": "알론소", "Altuve": "알투베", "Alvarado": "알바라도", "Alvarez": "알바레즈",
+    "Allen": "앨런", "Alonso": "알론소", "Altuve": "알투베", "Alvarado": "알바라도", "Alvarez": "알바레즈", "Álvarez": "알바레즈",
     "Alzólay": "알졸레이", "Amador": "아마도르", "Anderson": "앤더슨", "Antone": "앤톤", "Arenado": "아레나도",
     "Arias": "아리아스", "Armstrong": "암스트롱", "Arrighetti": "아리게티", "Arozarena": "아로자레나",
     "Ashby": "애슈비", "Ashcraft": "애슈크래프트", "Assad": "아사드", "Bader": "베이더", "Baez": "바에즈",
@@ -363,99 +391,103 @@ LAST_NAMES = {
     "Bregman": "브레그먼", "Brieske": "브리스키", "Brown": "브라운", "Bruihl": "브루일", "Bubic": "뷰빅",
     "Buehler": "뷸러", "Bundy": "번디", "Burger": "버거", "Burke": "버크", "Burleson": "벌레슨",
     "Burnes": "번스", "Burns": "번스", "Bush": "부시", "Busto": "부스토", "Butler": "버틀러",
-    "Cabrera": "카브레라", "Canning": "캐닝", "Cannon": "캐넌", "Cano": "카노", "Canha": "칸하",
+    "Cabrera": "카브레라", "Cameron": "카메론", "Canning": "캐닝", "Cannon": "캐넌", "Cano": "카노", "Canha": "칸하",
     "Cantillo": "칸티요", "Caratini": "카라티니", "Carrasco": "카라스코", "Carroll": "캐롤",
     "Casas": "카사스", "Castellanos": "카스텔라노스", "Castillo": "카스티요", "Castro": "카스트로",
-    "Cease": "시즈", "Chafin": "채핀", "Chapman": "채프먼", "Chavez": "차베스", "Chisholm": "치좀",
-    "Chourio": "츄리오", "Civale": "시발레", "Clase": "클라세", "Cleavinger": "클레빈저", "Clevinger": "클레빈저",
-    "Cole": "콜", "Coleman": "콜먼", "Contreras": "콘트레라스", "Cook": "쿡", "Corbin": "코빈",
-    "Correa": "코레아", "Cortes": "코르테스", "Cortés": "코르테스", "Crawford": "크로포드", "Crochet": "크로셰",
-    "Cronenworth": "크로넨워스", "Cruz": "크루즈", "Cueto": "쿠에토", "Curry": "커리", "Dana": "다나",
-    "Darvish": "다르빗슈", "Davis": "데이비스", "De La Cruz": "데 라 크루즈", "Detmers": "데트머스",
-    "Devers": "디버스", "Diaz": "디아즈", "Díaz": "디아즈", "Doval": "도발", "Doyle": "도일",
-    "Dreyer": "드레이어", "Duran": "두란", "Eflin": "에플린", "Elder": "엘더", "England": "잉글랜드",
-    "Eovaldi": "이볼디", "Espada": "에스파다", "Estes": "에스테스", "Estevez": "에스테베즈", "Fairbanks": "페어뱅크스",
-    "Falter": "폴터", "Fedde": "페디", "Feltner": "펠트너", "Ferguson": "퍼거슨", "Fernandez": "페르난데스",
-    "Festa": "페스타", "Finnegan": "피네건", "Flaherty": "플래허티", "Fleming": "플레밍", "Flexen": "플렉센",
-    "Florial": "플로리얼", "Foley": "폴리", "France": "프랑스", "Francis": "프랜시스", "Freeland": "프리랜드",
-    "Freeman": "프리먼", "Frelick": "프렐릭", "Fried": "프리드", "Friedl": "프리들", "Fulmer": "풀머",
-    "Gallen": "갤런", "Gantt": "간트", "Garcia": "가르시아", "García": "가르시아", "Garver": "가버",
-    "Gastelum": "가스텔룸", "Gausman": "가우스먼", "Gentry": "젠트리", "Gibson": "깁슨", "Gilbert": "길버트",
-    "Gil": "힐", "Gimenez": "히메네스", "Giménez": "히메네스", "Ginkel": "깅켈", "Ginn": "진",
-    "Glasnow": "글래스나우", "Goldschmidt": "골드슈미트", "Gomber": "곰버", "Gonzalez": "곤잘레스",
-    "González": "곤잘레스", "Gordon": "고든", "Gore": "고어", "Gorman": "고먼", "Graterol": "그라테롤",
-    "Gray": "그레이", "Greene": "그린", "Grisham": "그리샴", "Grosjean": "그로스장", "Guenther": "귄터",
-    "Guerrero": "게레로", "Gurriel": "구리엘", "Hader": "헤이더", "Hall": "홀", "Halvorsen": "할보센",
-    "Happ": "햅", "Harper": "하퍼", "Harris": "해리스", "Harrison": "해리슨", "Hartwig": "하트윅",
-    "Harvey": "하비", "Hatcher": "해처", "Hauser": "하우저", "Hayes": "헤이즈", "Headrick": "헤드릭",
-    "Heaney": "히니", "Held": "헬드", "Helsley": "헬슬리", "Henderson": "헨더슨", "Hendriks": "헨드릭스",
-    "Hendricks": "헨드릭스", "Henriquez": "엔리케스", "Hernandez": "에르난데스", "Hernández": "에르난데스",
-    "Herz": "헤르츠", "Hicks": "힉스", "Hill": "힐", "Hjerpe": "예르페", "Hoerner": "호너",
-    "Hoffman": "호프먼", "Holderman": "홀더먼", "Holliday": "홀리데이", "Holmes": "홈즈", "Houck": "하우크",
-    "Houser": "하우저", "Hudson": "허드슨", "Hurt": "허트", "Iglesias": "이글레시아스", "Imanaga": "이마나가",
-    "India": "인디아", "Irvin": "어빈", "Jackson": "잭슨", "Jansen": "잰슨", "Javier": "하비에르",
-    "Jefferies": "제프리스", "Jimenez": "히메네스", "Johnson": "존슨", "Jones": "존스", "Jordan": "조던",
-    "Judge": "저지", "Jung": "정", "Junis": "주니스", "Keller": "켈러", "Kelly": "켈리",
-    "Kershaw": "커쇼", "Kikuchi": "기쿠치", "Kim": "김", "Kimbrel": "킴브럴", "King": "킹",
-    "Kirby": "커비", "Kirk": "커크", "Kittredge": "키트리지", "Knack": "낵", "Knebel": "크네블",
-    "Knizner": "니즈너", "Kochanowicz": "코차노위츠", "Kopech": "코펙", "Kremer": "크레머", "Kuhnel": "쿠넬",
-    "Kwan": "관", "Langeliers": "랭겔리어스", "Lange": "랭", "Lauer": "라우어", "Lawrence": "로렌스",
-    "Leahy": "리히", "Leiter": "라이터", "LeMahieu": "르메이휴", "Lewis": "루이스", "Liberatore": "리베라토레",
-    "Lindor": "린도어", "Littell": "리텔", "Lively": "라이블리", "Lodolo": "로돌로", "Long": "롱",
-    "Lopez": "로페즈", "López": "로페즈", "Lorenzen": "로렌젠", "Lowder": "라우더", "Lowe": "로우",
-    "Lugo": "루고", "Luzardo": "루자르도", "Lynn": "린", "Machado": "마차도", "Maeda": "마에다",
-    "Manaea": "마네아", "Marquez": "마르케스", "Marsh": "마쉬", "Marte": "마르테", "Martin": "마틴",
-    "Martinez": "마르티네스", "Martínez": "마르티네스", "Maton": "메이튼", "Matos": "마토스", "Matthews": "매튜스",
-    "Matz": "마츠", "Mautz": "마우츠", "May": "메이", "Mays": "메이스", "McCarthy": "매카시",
-    "McCaughan": "맥코건", "McClanahan": "맥클라나한", "McCullers": "맥컬러스", "McGough": "맥거프",
-    "McGreevy": "맥그리비", "McLean": "맥클레인", "McMahon": "맥맨", "Megill": "메길", "Menechino": "메네키노",
-    "Merrill": "메릴", "Meyer": "마이어", "Mey": "메이", "Mikolas": "마이콜라스", "Miller": "밀러",
-    "Minter": "민터", "Misiewicz": "미시에비츠", "Molina": "몰리나", "Moll": "몰", "Moncada": "몬카다",
-    "Montas": "몬타스", "Montero": "몬테로", "Montgomery": "몽고메리", "Moore": "무어", "Morejon": "모레혼",
-    "Morel": "모렐", "Moreno": "모레노", "Morgan": "모건", "Morris": "모리스", "Morton": "모튼",
-    "Muncy": "먼시", "Munoz": "무뇨스", "Muñoz": "무뇨스", "Murphy": "머피", "Musgrove": "머스그로브",
-    "Myers": "마이어스", "Nardi": "나르디", "Nastrini": "나스트리니", "Naylor": "네일러", "Nelson": "넬슨",
-    "Neris": "네리스", "Nevin": "네빈", "Nimmala": "니말라", "Nimmo": "니모", "Noda": "노다",
-    "Nola": "놀라", "Ober": "오버", "O'Brien": "오브라이언", "O'Hoppe": "오호피", "Ohtani": "오타니",
-    "Oller": "올러", "Olson": "올슨", "Ortiz": "오르티스", "Ottavino": "오타비노", "Outman": "아웃맨",
-    "Ozuna": "오주나", "Paddack": "패댁", "Pagan": "파간", "Pagán": "파간", "Painter": "페인터",
-    "Pallante": "팔란테", "Paredes": "파레데스", "Parker": "파커", "Pavin": "파빈", "Pena": "페냐",
-    "Peña": "페냐", "Pepiot": "페피오", "Peralta": "페랄타", "Perdomo": "페르도모", "Perez": "페레즈",
-    "Pérez": "페레즈", "Peterson": "피터슨", "Pfaadt": "팟", "Pham": "팜", "Phillips": "필립스",
-    "Pinckney": "핑크니", "Pivetta": "피베타", "Poche": "포셰", "Polanco": "폴랑코", "Pressly": "프레슬리",
-    "Prieto": "프리에토", "Profar": "프로파", "Quantrill": "콴트릴", "Quinn": "퀸", "Quintana": "킨타나",
-    "Rafaela": "라파엘라", "Ragans": "레이건스", "Raleigh": "랄리", "Ramirez": "라미레즈", "Ramírez": "라미레즈",
-    "Ramos": "라모스", "Rangel": "란겔", "Rasmussen": "라스무센", "Ray": "레이", "Raysor": "레이서",
-    "Rea": "레이", "Realmuto": "리얼무토", "Reed": "리드", "Rendon": "렌던", "Reynolds": "레이놀즈",
-    "Richardson": "리차드슨", "Rincon": "린콘", "Rincón": "린콘", "Rivas": "리바스", "Rivera": "리베라",
-    "Robertson": "로버트슨", "Robles": "로블레스", "Rocker": "로커", "Rodgers": "로저스", "Rodriguez": "로드리게스",
-    "Rodríguez": "로드리게스", "Rodon": "로돈", "Rodón": "로돈", "Rogers": "로저스", "Rojas": "로하스",
-    "Romero": "로메로", "Rooker": "루커", "Rosario": "로사리오", "Roupp": "룹", "Routzahn": "라우트잔",
-    "Roxby": "록스비", "Ruiz": "루이즈", "Rutschman": "러치맨", "Ryan": "라이언", "Sale": "세일",
-    "Sanchez": "산체스", "Sánchez": "산체스", "Sanmartin": "산마르틴", "Sanmartín": "산마르틴", "Santana": "산타나",
-    "Santander": "산탄데르", "Santos": "산토스", "Scherzer": "슈어저", "Schmidt": "슈미트", "Schneider": "슈나이더",
-    "Scholtens": "숄텐스", "Schreiber": "슈라이버", "Schwarber": "슈와버", "Schwellenbach": "슈웰렌바크",
-    "Scott": "스콧", "Seager": "시거", "Sears": "시어스", "Semien": "세미엔", "Senga": "센가",
-    "Severino": "세베리노", "Seymour": "시모어", "Shaw": "쇼", "Sheehan": "시한", "Singer": "싱어",
-    "Siri": "시리", "Skenes": "스킨스", "Skubal": "스쿠발", "Smeltzer": "스멜처", "Smith": "스미스",
-    "Smith-Shawver": "스미스-쇼버", "Snell": "스넬", "Snider": "스나이더", "Solano": "솔라노", "Soriano": "소리아노",
-    "Soto": "소토", "Speier": "스파이어", "Spence": "스펜스", "Springer": "스프링어", "Springs": "스프링스",
-    "Stanek": "스타넥", "Stanton": "스탠튼", "Steele": "스틸", "Steer": "스티어", "Stephenson": "스티븐슨",
-    "Stone": "스톤", "Stowers": "스타워즈", "Strahm": "스트람", "Strider": "스트라이더", "Stroman": "스트로먼",
-    "Suarez": "수아레즈", "Suárez": "수아레즈", "Suzuki": "스즈키", "Swanson": "스완슨", "Taillon": "타이욘",
-    "Tatis": "타티스", "Taylor": "테일러", "Tepera": "테페라", "Thomas": "토마스", "Thompson": "톰슨",
-    "Thornton": "손튼", "Torkelson": "토켈슨", "Torres": "토레스", "Tovar": "토바", "Treinen": "트레이넨",
-    "Tucker": "터커", "Turang": "투랑", "Turner": "터너", "Urena": "우레냐", "Urquidy": "우르키디",
+    "Cavalli": "카발리", "Cease": "시즈", "Chafin": "채핀", "Chandler": "챈들러", "Chapman": "채프먼",
+    "Chavez": "차베스", "Chisholm": "치좀", "Chourio": "츄리오", "Civale": "시발레", "Clase": "클라세",
+    "Cleavinger": "클레빈저", "Clevinger": "클레빈저", "Cole": "콜", "Coleman": "콜먼", "Contreras": "콘트레라스",
+    "Cook": "쿡", "Corbin": "코빈", "Correa": "코레아", "Cortes": "코르테스", "Cortés": "코르테스",
+    "Crawford": "크로포드", "Crochet": "크로셰", "Cronenworth": "크로넨워스", "Cruz": "크루즈", "Cueto": "쿠에토",
+    "Curry": "커리", "Dana": "다나", "Darvish": "다르빗슈", "Davis": "데이비스", "De La Cruz": "데 라 크루즈",
+    "deGrom": "디그롬", "DeGrom": "디그롬", "Detmers": "데트머스", "Devers": "디버스", "Diaz": "디아즈", "Díaz": "디아즈",
+    "Dobnak": "도브낙", "Dotel": "도텔", "Doval": "도발", "Doyle": "도일", "Dreyer": "드레이어", "Duran": "두란",
+    "Eflin": "에플린", "Elder": "엘더", "England": "잉글랜드", "Eovaldi": "이볼디", "Espada": "에스파다",
+    "Estes": "에스테스", "Estevez": "에스테베즈", "Fairbanks": "페어뱅크스", "Falter": "폴터", "Fedde": "페디",
+    "Feltner": "펠트너", "Ferguson": "퍼거슨", "Fernandez": "페르난데스", "Festa": "페스타", "Finnegan": "피네건",
+    "Flaherty": "플래허티", "Fleming": "플레밍", "Flexen": "플렉센", "Florial": "플로리얼", "Foley": "폴리",
+    "France": "프랑스", "Francis": "프랜시스", "Freeland": "프리랜드", "Freeman": "프리먼", "Frelick": "프렐릭",
+    "Fried": "프리드", "Friedl": "프리들", "Fulmer": "풀머", "Gallen": "갤런", "Gantt": "간트",
+    "Garcia": "가르시아", "García": "가르시아", "Garver": "가버", "Gastelum": "가스텔룸", "Gausman": "가우스먼",
+    "Gentry": "젠트리", "Gibson": "깁슨", "Gilbert": "길버트", "Gil": "힐", "Gimenez": "히메네스", "Giménez": "히메네스",
+    "Ginkel": "깅켈", "Ginn": "진", "Glasnow": "글래스나우", "Goldschmidt": "골드슈미트", "Gomber": "곰버",
+    "Gonzalez": "곤잘레스", "González": "곤잘레스", "Gordon": "고든", "Gore": "고어", "Gorman": "고먼",
+    "Graterol": "그라테롤", "Gray": "그레이", "Greene": "그린", "Grisham": "그리샴", "Grosjean": "그로스장",
+    "Guenther": "귄터", "Guerrero": "게레로", "Gurriel": "구리엘", "Gusto": "구스토", "Hader": "헤이더",
+    "Hall": "홀", "Halvorsen": "할보센", "Happ": "햅", "Harper": "하퍼", "Harris": "해리스", "Harrison": "해리슨",
+    "Hartwig": "하트윅", "Harvey": "하비", "Hatcher": "해처", "Hauser": "하우저", "Hayes": "헤이즈",
+    "Headrick": "헤드릭", "Heaney": "히니", "Held": "헬드", "Helsley": "헬슬리", "Henderson": "헨더슨",
+    "Hendriks": "헨드릭스", "Hendricks": "헨드릭스", "Henriquez": "엔리케스", "Hernandez": "에르난데스",
+    "Hernández": "에르난데스", "Herz": "헤르츠", "Hicks": "힉스", "Hill": "힐", "Hjerpe": "예르페",
+    "Hoerner": "호너", "Hoffman": "호프먼", "Holderman": "홀더먼", "Holliday": "홀리데이", "Holmes": "홈즈",
+    "Houck": "하우크", "Houser": "하우저", "Hudson": "허드슨", "Hughes": "휴즈", "Hurt": "허트",
+    "Iglesias": "이글레시아스", "Imanaga": "이마나가", "India": "인디아", "Irvin": "어빈", "Jackson": "잭슨",
+    "Jansen": "잰슨", "Javier": "하비에르", "Jefferies": "제프리스", "Jimenez": "히메네스", "Jobe": "조브",
+    "Johnson": "존슨", "Jones": "존스", "Jordan": "조던", "Judge": "저지", "Jump": "점프", "Jung": "정",
+    "Junis": "주니스", "Kay": "케이", "Keller": "켈러", "Kelly": "켈리", "Kershaw": "커쇼", "Kikuchi": "기쿠치",
+    "Kim": "김", "Kimbrel": "킴브럴", "King": "킹", "Kirby": "커비", "Kirk": "커크", "Kittredge": "키트리지",
+    "Knack": "낵", "Knebel": "크네블", "Knizner": "니즈너", "Kochanowicz": "코차노위츠", "Kopech": "코펙",
+    "Kremer": "크레머", "Kuhnel": "쿠넬", "Kwan": "관", "Lambert": "램버트", "Langeliers": "랭겔리어스",
+    "Lange": "랭", "Lauer": "라우어", "Lawrence": "로렌스", "Leahy": "리히", "Leiter": "라이터",
+    "LeMahieu": "르메이휴", "Lewis": "루이스", "Liberatore": "리베라토레", "Lindor": "린도어", "Littell": "리텔",
+    "Lively": "라이블리", "Lodolo": "로돌로", "Long": "롱", "Lopez": "로페즈", "López": "로페즈",
+    "Lorenzen": "로렌젠", "Lowder": "라우더", "Lowe": "로우", "Lugo": "루고", "Luzardo": "루자르도",
+    "Lynn": "린", "Machado": "마차도", "Maeda": "마에다", "Mahle": "말리", "Manaea": "마네아",
+    "Marquez": "마르케스", "Marsh": "마쉬", "Marte": "마르테", "Martin": "마틴", "Martinez": "마르티네스",
+    "Martínez": "마르티네스", "Maton": "메이튼", "Matos": "마토스", "Matthews": "매튜스", "Matz": "마츠",
+    "Mautz": "마우츠", "May": "메이", "Mays": "메이스", "McCarthy": "매카시", "McCaughan": "맥코건",
+    "McClanahan": "맥클라나한", "McCullers": "맥컬러스", "McGough": "맥거프", "McGreevy": "맥그리비",
+    "McLean": "맥클레인", "McMahon": "맥맨", "Megill": "메길", "Melton": "멜튼", "Menechino": "메네키노",
+    "Merrill": "메릴", "Messick": "메식", "Meyer": "마이어", "Mey": "메이", "Mikolas": "마이콜라스",
+    "Miller": "밀러", "Minter": "민터", "Misiewicz": "미시에비츠", "Misiorowski": "미시오로우스키",
+    "Molina": "몰리나", "Moll": "몰", "Moncada": "몬카다", "Montas": "몬타스", "Montero": "몬테로",
+    "Montgomery": "몽고메리", "Moore": "무어", "Morejon": "모레혼", "Morel": "모렐", "Moreno": "모레노",
+    "Morgan": "모건", "Morris": "모리스", "Morton": "모튼", "Muncy": "먼시", "Munoz": "무뇨스",
+    "Muñoz": "무뇨스", "Murphy": "머피", "Musgrove": "머스그로브", "Myers": "마이어스", "Nardi": "나르디",
+    "Nastrini": "나스트리니", "Naylor": "네일러", "Nelson": "넬슨", "Neris": "네리스", "Nevin": "네빈",
+    "Nimmala": "니말라", "Nimmo": "니모", "Noda": "노다", "Nola": "놀라", "Ober": "오버",
+    "O'Brien": "오브라이언", "O'Hoppe": "오호피", "Ohtani": "오타니", "Oller": "올러", "Olson": "올슨",
+    "Ortiz": "오르티스", "Ottavino": "오타비노", "Outman": "아웃맨", "Ozuna": "오주나", "Paddack": "패댁",
+    "Pagan": "파간", "Pagán": "파간", "Painter": "페인터", "Pallante": "팔란테", "Paredes": "파레데스",
+    "Parker": "파커", "Pavin": "파빈", "Pena": "페냐", "Peña": "페냐", "Pepiot": "페피오",
+    "Peralta": "페랄타", "Perdomo": "페르도모", "Perez": "페레즈", "Pérez": "페레즈", "Peterson": "피터슨",
+    "Pfaadt": "팟", "Pham": "팜", "Phillips": "필립스", "Pinckney": "핑크니", "Pivetta": "피베타",
+    "Poche": "포셰", "Polanco": "폴랑코", "Pressly": "프레슬리", "Prielipp": "프릴립", "Prieto": "프리에토",
+    "Profar": "프로파", "Quantrill": "콴트릴", "Quinn": "퀸", "Quintana": "킨타나", "Rafaela": "라파엘라",
+    "Ragans": "레이건스", "Raleigh": "랄리", "Ramirez": "라미레즈", "Ramírez": "라미레즈", "Ramos": "라모스",
+    "Rangel": "란겔", "Rasmussen": "라스무센", "Ray": "레이", "Raysor": "레이서", "Rea": "레이",
+    "Realmuto": "리얼무토", "Reed": "리드", "Rendon": "렌던", "Reynolds": "레이놀즈", "Richardson": "리차드슨",
+    "Rincon": "린콘", "Rincón": "린콘", "Rivas": "리바스", "Rivera": "리베라", "Robertson": "로버트슨",
+    "Robles": "로블레스", "Rocker": "로커", "Rodgers": "로저스", "Rodriguez": "로드리게스", "Rodríguez": "로드리게스",
+    "Rodon": "로돈", "Rodón": "로돈", "Rogers": "로저스", "Rojas": "로하스", "Romero": "로메로",
+    "Rooker": "루커", "Rosario": "로사리오", "Roupp": "룹", "Routzahn": "라우트잔", "Roxby": "록스비",
+    "Ruiz": "루이즈", "Rutschman": "러치맨", "Ryan": "라이언", "Sale": "세일", "Sanchez": "산체스",
+    "Sánchez": "산체스", "Sanmartin": "산마르틴", "Sanmartín": "산마르틴", "Santana": "산타나",
+    "Santander": "산탄데르", "Santos": "산토스", "Scherzer": "슈어저", "Schlittler": "슐리틀러",
+    "Schmidt": "슈미트", "Schneider": "슈나이더", "Scholtens": "숄텐스", "Schreiber": "슈라이버",
+    "Schwarber": "슈와버", "Schwellenbach": "슈웰렌바크", "Scott": "스콧", "Seager": "시거",
+    "Sears": "시어스", "Semien": "세미엔", "Senga": "센가", "Severino": "세베리노", "Seymour": "시모어",
+    "Shaw": "쇼", "Sheehan": "시한", "Singer": "싱어", "Siri": "시리", "Skenes": "스킨스", "Skubal": "스쿠발",
+    "Smeltzer": "스멜처", "Smith": "스미스", "Smith-Shawver": "스미스-쇼버", "Snell": "스넬", "Snider": "스나이더",
+    "Solano": "솔라노", "Soriano": "소리아노", "Soto": "소토", "Speier": "스파이어", "Spence": "스펜스",
+    "Springer": "스프링어", "Springs": "스프링스", "Stanek": "스타넥", "Stanton": "스탠튼", "Steele": "스틸",
+    "Steer": "스티어", "Stephenson": "스티븐슨", "Stone": "스톤", "Stowers": "스타워즈", "Strahm": "스트람",
+    "Strider": "스트라이더", "Stroman": "스트로먼", "Suarez": "수아레즈", "Suárez": "수아레즈", "Suzuki": "스즈키",
+    "Swanson": "스완슨", "Taillon": "타이욘", "Tatis": "타티스", "Taylor": "테일러", "Tepera": "테페라",
+    "Thomas": "토마스", "Thompson": "톰슨", "Thornton": "손튼", "Tolle": "톨레", "Torkelson": "토켈슨",
+    "Torres": "토레스", "Tovar": "토바", "Treinen": "트레이넨", "Tucker": "터커", "Turang": "투랑",
+    "Turner": "터너", "Ulloa": "우요아", "Urena": "우레냐", "Ureña": "우레냐", "Urquidy": "우르키디",
     "Valdez": "발데스", "Varland": "발랜드", "Vargas": "바르가스", "Varsho": "바쇼", "Vasquez": "바스케스",
     "Vaughn": "본", "Vesia": "베시아", "Vest": "베스트", "Vieira": "비에이라", "Vientos": "비엔토스",
     "Volpe": "볼피", "Wacha": "와카", "Waldichuk": "왈디척", "Waldrep": "왈드렙", "Waldron": "월드론",
     "Walker": "워커", "Walston": "월스턴", "Ward": "워드", "Warren": "워렌", "Webb": "웹",
-    "Weissert": "와이서트", "Wells": "웰스", "Wentz": "웬츠", "Wheeler": "휠러", "White": "화이트",
-    "Whitlock": "윗록", "Wicks": "윅스", "Wilkerson": "윌커슨", "Wilkinson": "윌킨슨", "Williams": "윌리엄스",
-    "Wilson": "윌슨", "Winder": "윈더", "Winn": "윈", "Winquest": "윈퀘스트", "Witt": "위트",
-    "Wood": "우드", "Woodruff": "우드러프", "Woods": "우즈", "Woo": "우", "Wrobleski": "로블레스키",
-    "Yarbrough": "야브로", "Yastrzemski": "야스트렘스키", "Yates": "예이츠", "Yoshida": "요시다",
-    "Young": "영", "Zamora": "자모라", "Zavala": "자발라", "Zimmermann": "짐머만", "Zuniga": "주니가"
+    "Weissert": "와이서트", "Wells": "웰스", "Wentz": "웬츠", "Wesneski": "웨스네스키", "Wheeler": "휠러",
+    "White": "화이트", "Whitlock": "윗록", "Wicks": "윅스", "Wilkerson": "윌커슨", "Wilkinson": "윌킨슨",
+    "Williams": "윌리엄스", "Wilson": "윌슨", "Winder": "윈더", "Winn": "윈", "Winquest": "윈퀘스트",
+    "Witt": "위트", "Wood": "우드", "Woodruff": "우드러프", "Woods": "우즈", "Woo": "우",
+    "Wrobleski": "로블레스키", "Yarbrough": "야브로", "Yastrzemski": "야스트렘스키", "Yates": "예이츠",
+    "Yoshida": "요시다", "Young": "영", "Zamora": "자모라", "Zavala": "자발라", "Zimmermann": "짐머만",
+    "Zuniga": "주니가"
 }
 
 PROTECTED_TERMS = {
@@ -504,18 +536,17 @@ def translate_player_name(raw: str) -> str:
     for fam, fam_ko in NPB_FAMILY_NAME_MAP.items():
         if raw.startswith(fam) and len(raw) > len(fam):
             rem = raw[len(fam):].strip()
-            return f"{fam_ko} {rem}".strip() + suffix
+            rem_ko = NPB_FAMILY_NAME_MAP.get(rem, rem)
+            return f"{fam_ko} {rem_ko}".strip() + suffix
         if no_space.startswith(fam) and len(no_space) > len(fam):
             rem = no_space[len(fam):].strip()
-            return f"{fam_ko} {rem}".strip() + suffix
+            rem_ko = NPB_FAMILY_NAME_MAP.get(rem, rem)
+            return f"{fam_ko} {rem_ko}".strip() + suffix
 
     # Already Korean?
-    if re.search(r'[가-힣]', raw):
+    if re.search(r'^[가-힣\s\d._\-()]+$', raw):
         return raw + suffix
     
-    if raw in FULL_NAMES:
-        return FULL_NAMES[raw] + suffix
-
     # Handle Jr., Sr., II, III, IV suffix
     jr_suffix = ""
     parts = raw.split()
@@ -530,6 +561,14 @@ def translate_player_name(raw: str) -> str:
         return LAST_NAMES[raw] + jr_suffix + suffix
     if raw in FIRST_NAMES:
         return FIRST_NAMES[raw] + jr_suffix + suffix
+    
+    # De / La / Del compound last names e.g. Elly De La Cruz, Jacob deGrom
+    if len(parts) > 2:
+        first_candidate = parts[0]
+        last_candidate = " ".join(parts[1:])
+        if last_candidate in LAST_NAMES:
+            first_ko = FIRST_NAMES.get(first_candidate) or FIRST_NAMES.get(first_candidate.capitalize()) or rule_transliterate_word(first_candidate)
+            return f"{first_ko} {LAST_NAMES[last_candidate]}".strip() + jr_suffix + suffix
     
     if len(parts) == 1:
         p0 = parts[0]
@@ -546,41 +585,70 @@ def translate_player_name(raw: str) -> str:
     last_ko = LAST_NAMES.get(last) or LAST_NAMES.get(last.capitalize()) or LAST_NAMES.get(last.title())
     
     if not last_ko:
-        # If compound last name or middle name (e.g. De La Cruz or Middle + Last)
-        if len(parts) == 3:
-            mid_ko = FIRST_NAMES.get(parts[1]) or LAST_NAMES.get(parts[1]) or rule_transliterate_word(parts[1])
-            end_ko = LAST_NAMES.get(parts[2]) or LAST_NAMES.get(parts[2].capitalize()) or rule_transliterate_word(parts[2])
-            last_ko = f"{mid_ko} {end_ko}"
-        else:
-            last_parts = [LAST_NAMES.get(p) or LAST_NAMES.get(p.capitalize()) or FIRST_NAMES.get(p) or FIRST_NAMES.get(p.capitalize()) or rule_transliterate_word(p) for p in parts[1:]]
-            last_ko = " ".join(last_parts)
+        last_parts = []
+        for p in parts[1:]:
+            p_cap = p.capitalize()
+            p_ko = LAST_NAMES.get(p) or LAST_NAMES.get(p_cap) or FIRST_NAMES.get(p) or FIRST_NAMES.get(p_cap) or rule_transliterate_word(p)
+            last_parts.append(p_ko)
+        last_ko = " ".join(last_parts)
         
     return f"{first_ko} {last_ko}".strip() + jr_suffix + suffix
 
 def rule_transliterate_word(word: str) -> str:
+    """Robust phoneme-based English/Foreign to Korean transliteration."""
     if not word: return ''
+    if word.lower() in ('n/a', 'na', 'none', 'null', 'undefined', 'tbd', 'tba'):
+        return ''
     if word.upper() in PROTECTED_TERMS or (len(word) <= 5 and not re.search(r'[aeiouyAEIOUY]', word)):
         return word
     clean = unicodedata.normalize('NFKD', word)
-    clean = ''.join(ch for ch in clean if not unicodedata.combining(ch)).lower()
-    clean = re.sub(r'tion$', '션', clean)
-    clean = re.sub(r'sion$', '션', clean)
-    clean = re.sub(r'son$', '슨', clean)
-    clean = re.sub(r'sen$', '센', clean)
-    clean = re.sub(r'ton$', '턴', clean)
-    clean = re.sub(r'man$', '맨', clean)
-    clean = re.sub(r'kin$', '킨', clean)
-    clean = re.sub(r'lin$', '린', clean)
-    clean = re.sub(r'tin$', '틴', clean)
-    clean = re.sub(r'rin$', '린', clean)
-    clean = re.sub(r'win$', '윈', clean)
-    clean = re.sub(r'ley$', '리', clean)
-    clean = re.sub(r'ly$', '리', clean)
-    clean = re.sub(r'quest$', '퀘스트', clean)
-    w = clean
+    clean = ''.join(ch for ch in clean if not unicodedata.combining(ch)).strip()
+    
+    # Common whole-word or special root lookups
+    special_roots = {
+        'clay': '클레이', 'gage': '게이지', 'jump': '점프', 'hughes': '휴즈',
+        'tolle': '톨레', 'schlittler': '슐리틀러', 'chandler': '챈들러',
+        'prielipp': '프릴립', 'dotel': '도텔', 'ulloa': '우요아', 'urena': '우레냐',
+        'lambert': '램버트', 'cameron': '카메론', 'mahle': '말리', 'jobe': '조브',
+        'bubba': '버바', 'eury': '유리', 'zac': '잭', 'dobnak': '도브낙',
+        'seymour': '시모어', 'leahy': '리히', 'degrom': '디그롬', 'scherzer': '슈어저',
+        'pfaadt': '팟', 'rocker': '로커', 'bibee': '바이비', 'crochet': '크로셰',
+        'chourio': '츄리오', 'profar': '프로파', 'tatis': '타티스', 'bohm': '봄',
+        'skubal': '스쿠발', 'skenes': '스킨스', 'sale': '세일', 'strider': '스트라이더',
+        'glasnow': '글래스나우', 'snell': '스넬', 'burnes': '번스', 'ragans': '레이건스',
+        'cease': '시즈', 'lugo': '루고', 'wesneski': '웨스네스키', 'painter': '페인터',
+        'gordon': '고든', 'bradish': '브래디시', 'messick': '메식', 'gusto': '구스토'
+    }
+    if clean.lower() in special_roots:
+        return special_roots[clean.lower()]
+
+    w = clean.lower()
+    
+    # Syllable endings
+    w = re.sub(r'tion$', '션', w)
+    w = re.sub(r'sion$', '션', w)
+    w = re.sub(r'son$', '슨', w)
+    w = re.sub(r'sen$', '센', w)
+    w = re.sub(r'ton$', '턴', w)
+    w = re.sub(r'man$', '맨', w)
+    w = re.sub(r'kin$', '킨', w)
+    w = re.sub(r'lin$', '린', w)
+    w = re.sub(r'tin$', '틴', w)
+    w = re.sub(r'rin$', '린', w)
+    w = re.sub(r'win$', '윈', w)
+    w = re.sub(r'ley$', '리', w)
+    w = re.sub(r'ly$', '리', w)
+    w = re.sub(r'quest$', '퀘스트', w)
+    w = re.sub(r'field$', '필드', w)
+    w = re.sub(r'ford$', '포드', w)
+    w = re.sub(r'wood$', '우드', w)
+    w = re.sub(r'berg$', '베르크', w)
+    w = re.sub(r'burg$', '버그', w)
+
+    # Phoneme replacements (ordered from longer to shorter)
     replacements = [
-        ('sh', '시'), ('ch', '치'), ('ph', '프'), ('th', '트'),
-        ('qu', '퀴'), ('wh', '화'), ('ck', '크'),
+        ('sch', '슈'), ('chr', '크리'), ('ph', '프'), ('th', '트'),
+        ('sh', '시'), ('ch', '치'), ('qu', '퀴'), ('wh', '화'), ('ck', '크'),
         ('ee', '이'), ('oo', '우'), ('ea', '이'), ('ou', '아우'),
         ('ai', '에이'), ('ay', '에이'), ('oi', '오이'), ('oy', '오이'),
         ('au', '오'), ('aw', '오'), ('oa', '오'),
