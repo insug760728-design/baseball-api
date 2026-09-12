@@ -158,10 +158,17 @@ app.add_middleware(
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+from fastapi.staticfiles import StaticFiles
+
 landing_path = os.path.join(current_dir, "templates", "landing.html")
 b2b_portal_path = os.path.join(current_dir, "templates", "b2b_api_portal.html")
 dashboard_path = os.path.join(current_dir, "templates", "index.html")
 live_center_path = os.path.join(current_dir, "templates", "live_center.html")
+mobile_path = os.path.join(current_dir, "templates", "mobile.html")
+
+static_dir = os.path.join(current_dir, "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 _PORTAL_HTML_CACHE = {"path": "", "content": "", "mtime": 0, "etag": ""}
 
@@ -201,10 +208,33 @@ def health_check():
         headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
     )
 
+@app.get("/m", response_class=HTMLResponse, summary="TOKEON 스포츠 모바일 전용 앱 화면")
+@app.get("/mobile", response_class=HTMLResponse, summary="TOKEON 스포츠 모바일 전용 앱 화면")
+@app.get("/app", response_class=HTMLResponse, summary="TOKEON 스포츠 모바일 전용 앱 화면")
+def mobile_portal(request: Request):
+    try:
+        target = mobile_path if os.path.exists(mobile_path) else landing_path
+        content, etag = get_portal_html(target)
+        return HTMLResponse(
+            content=content,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
+    except Exception as e:
+        return HTMLResponse(content=f"<h1>모바일 화면 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
+
 @app.get("/", response_class=HTMLResponse, summary="TOKEON 스포츠 분석 전문 포털 (tokeon.co.kr)")
 def domain_portal(request: Request):
     try:
-        target = landing_path if os.path.exists(landing_path) else dashboard_path
+        # 모바일 강제 뷰 요청 (?view=mobile) 확인
+        if request.query_params.get("view") == "mobile":
+            target = mobile_path if os.path.exists(mobile_path) else landing_path
+        else:
+            target = landing_path if os.path.exists(landing_path) else dashboard_path
+
         content, etag = get_portal_html(target)
         return HTMLResponse(
             content=content, 

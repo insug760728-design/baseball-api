@@ -2001,8 +2001,10 @@ class LiveApiSportsService:
             res = 'WIN' if ts > os else 'LOSS'
             res_emoji = '✅' if res == 'WIN' else '❌'
 
-            h_starter_name = match_obj.home_starter_name if is_home_team and match_obj and match_obj.home_starter_name else f"{team_name} 선발"
-            a_starter_name = match_obj.away_starter_name if not is_home_team and match_obj and match_obj.away_starter_name else f"{opp} 선발"
+            h_st = getattr(match_obj, 'home_starter_name', None)
+            a_st = getattr(match_obj, 'away_starter_name', None)
+            h_starter_name = h_st if (is_home_team and h_st) else f"{team_name} 선발"
+            a_starter_name = a_st if (not is_home_team and a_st) else f"{opp} 선발"
 
             st_obj = {
                 'name': h_starter_name if is_home else a_starter_name,

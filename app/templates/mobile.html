@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>TOKEON Sports Live Mobile</title>
+  
+  <!-- PWA & Mobile Web App Meta -->
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TOKEON Live">
+  <meta name="theme-color" content="#0f172a">
+
+  <style>
+    :root {
+      --bg-primary: #0a0f1d;
+      --bg-card: #131d31;
+      --bg-card-hover: #1c2a47;
+      --accent-blue: #3b82f6;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-gold: #f59e0b;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --border-color: #1e293b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      padding-bottom: 75px;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top App Bar */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .app-logo {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .live-status-pill {
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 3px 8px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--accent-green);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.8; }
+    }
+
+    /* Sport Category Chips */
+    .category-scroll {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      background: var(--bg-primary);
+      border-bottom: 1px solid rgba(30, 41, 59, 0.6);
+    }
+    .category-scroll::-webkit-scrollbar { display: none; }
+    .chip {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--bg-card);
+      color: var(--text-sub);
+      border: 1px solid var(--border-color);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .chip.active {
+      background: var(--accent-blue);
+      color: #ffffff;
+      border-color: var(--accent-blue);
+    }
+
+    /* Tab Content Pages */
+    .tab-page { display: none; padding: 12px 16px; }
+    .tab-page.active { display: block; }
+
+    /* Match Cards */
+    .match-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transition: transform 0.15s ease;
+    }
+    .match-card:active {
+      transform: scale(0.985);
+      background: var(--bg-card-hover);
+    }
+    .match-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-bottom: 10px;
+    }
+    .badge-status {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+    .badge-live { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.4); }
+    .badge-finished { background: #334155; color: #cbd5e1; }
+    .badge-scheduled { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+
+    .teams-layout {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 8px 0;
+    }
+    .team-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .team-col.away { text-align: right; }
+    .team-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .team-starter {
+      font-size: 11px;
+      color: #64748b;
+    }
+    .score-center {
+      padding: 0 16px;
+      text-align: center;
+    }
+    .score-text {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: var(--accent-gold);
+    }
+    .vs-text {
+      font-size: 13px;
+      font-weight: 700;
+      color: #64748b;
+    }
+
+    /* Odds Mini Bar */
+    .odds-bar {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+    }
+    .odd-box {
+      flex: 1;
+      text-align: center;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 6px 4px;
+    }
+    .odd-label { font-size: 10px; color: var(--text-sub); }
+    .odd-val { font-size: 12px; font-weight: 700; color: #38bdf8; margin-top: 2px; }
+
+    /* Scoreboard View (Tab 2) */
+    .board-container {
+      background: var(--bg-card);
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+    .board-header {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .table-scroll {
+      overflow-x: auto;
+      padding: 10px;
+    }
+    table.mobile-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: center;
+    }
+    table.mobile-table th, table.mobile-table td {
+      padding: 7px 5px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    table.mobile-table th { color: var(--text-sub); font-weight: 600; }
+
+    /* Timeline events */
+    .timeline-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 13px;
+    }
+    .time-badge {
+      background: #334155;
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    /* Calculator View (Tab 3) */
+    .calc-box {
+      background: var(--bg-card);
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .calc-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .calc-btn-group {
+      display: flex;
+      gap: 4px;
+    }
+    .calc-btn {
+      width: 44px;
+      height: 34px;
+      border-radius: 8px;
+      background: #1e293b;
+      color: #94a3b8;
+      border: 1px solid var(--border-color);
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .calc-btn.selected {
+      background: var(--accent-blue);
+      color: #ffffff;
+      border-color: #60a5fa;
+    }
+    .calc-summary {
+      background: linear-gradient(135deg, #1e3a8a, #0f172a);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: 64px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-sub);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .nav-item.active {
+      color: #38bdf8;
+    }
+    .nav-icon {
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top App Header -->
+  <header class="app-header">
+    <div class="app-logo">
+      <span>⚡</span> TOKEON LIVE
+    </div>
+    <div class="live-status-pill">
+      <span class="live-dot"></span> 실시간 동기화
+    </div>
+  </header>
+
+  <!-- Sport Filter Chips -->
+  <div class="category-scroll">
+    <div class="chip active" onclick="filterSport('ALL', this)">전체</div>
+    <div class="chip" onclick="filterSport('SOCCER', this)">⚽ 축구</div>
+    <div class="chip" onclick="filterSport('BASEBALL', this)">⚾ 야구</div>
+    <div class="chip" onclick="filterSport('BASKETBALL', this)">🏀 농구</div>
+  </div>
+
+  <!-- TAB 1: Matches / Live Scores -->
+  <main id="tab-matches" class="tab-page active">
+    <div id="match-list-container">
+      <div style="text-align:center; padding: 40px; color: #64748b;">
+        최신 경기 데이터를 불러오는 중...
+      </div>
+    </div>
+  </main>
+
+  <!-- TAB 2: Live Scoreboard / Timeline -->
+  <main id="tab-scoreboard" class="tab-page">
+    <div id="scoreboard-detail-container">
+      <div style="text-align:center; padding: 40px; color: #64748b;">
+        경기 목록에서 카드를 누르거나 경기를 선택하세요.
+      </div>
+    </div>
+  </main>
+
+  <!-- TAB 3: Toto / Odds Calculator -->
+  <main id="tab-calc" class="tab-page">
+    <div class="calc-box">
+      <div style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: #38bdf8;">
+        🧮 토토 승무패 간편 계산기
+      </div>
+      <div id="calc-match-rows">
+        <!-- Dynamically rendered rows -->
+      </div>
+      <div class="calc-summary">
+        <div>
+          <div style="font-size: 11px; color: #93c5fd;">선택 조합수</div>
+          <div id="calc-combinations" style="font-size: 18px; font-weight: 900; color: #ffffff;">1 조합</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 11px; color: #93c5fd;">예상 배당률</div>
+          <div id="calc-total-odds" style="font-size: 20px; font-weight: 900; color: #fbbf24;">1.00 배</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('tab-matches', this)">
+      <span class="nav-icon">📅</span>
+      <span>경기일정</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-scoreboard', this)">
+      <span class="nav-icon">🏟️</span>
+      <span>전광판</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-calc', this)">
+      <span class="nav-icon">🧮</span>
+      <span>승무패계산</span>
+    </div>
+  </nav>
+
+  <script>
+    let allMatches = [];
+    let currentFilter = 'ALL';
+    let selectedCalc = {};
+
+    // 1. Fetch Today Matches from Mobile API
+    async function loadMobileData() {
+      try {
+        const res = await fetch('/api/v1/app/matches/today');
+        const data = await res.json();
+        allMatches = data.matches || [];
+        renderMatchList();
+        renderCalcRows();
+        if (allMatches.length > 0) {
+          loadScoreboard(allMatches[0].id);
+        }
+      } catch (e) {
+        document.getElementById('match-list-container').innerHTML = 
+          '<div style="text-align:center; padding:30px; color:#ef4444;">데이터 로드 실패. 다시 시도해주세요.</div>';
+      }
+    }
+
+    // 2. Render Match Cards
+    function renderMatchList() {
+      const container = document.getElementById('match-list-container');
+      const filtered = currentFilter === 'ALL' ? allMatches : allMatches.filter(m => m.sport_code === currentFilter);
+
+      if (!filtered.length) {
+        container.innerHTML = '<div style="text-align:center; padding: 40px; color:#64748b;">진행 중인 경기가 없습니다.</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(m => {
+        let badgeClass = 'badge-scheduled';
+        let statusText = '예정';
+        if (m.status === 'LIVE') { badgeClass = 'badge-live'; statusText = 'LIVE'; }
+        else if (m.status === 'FINISHED') { badgeClass = 'badge-finished'; statusText = '종료'; }
+
+        const hasScore = m.home_score !== null && m.away_score !== null;
+
+        return `
+          <div class="match-card" onclick="openScoreboard(${m.id})">
+            <div class="match-meta">
+              <span><strong>${m.league_name}</strong> · ${m.match_date ? m.match_date.slice(5, 16) : ''}</span>
+              <span class="badge-status ${badgeClass}">${statusText}</span>
+            </div>
+            <div class="teams-layout">
+              <div class="team-col">
+                <div class="team-name">${m.home_team_name}</div>
+                <div class="team-starter">${m.home_starter || '선발 미정'}</div>
+              </div>
+              <div class="score-center">
+                ${hasScore ? `<div class="score-text">${m.home_score} : ${m.away_score}</div>` : `<div class="vs-text">VS</div>`}
+              </div>
+              <div class="team-col away">
+                <div class="team-name">${m.away_team_name}</div>
+                <div class="team-starter">${m.away_starter || '선발 미정'}</div>
+              </div>
+            </div>
+            ${m.odds && m.odds.home_win ? `
+              <div class="odds-bar">
+                <div class="odd-box">
+                  <div class="odd-label">홈 승</div>
+                  <div class="odd-val">${m.odds.home_win}</div>
+                </div>
+                <div class="odd-box">
+                  <div class="odd-label">무승부</div>
+                  <div class="odd-val">${m.odds.draw || '-'}</div>
+                </div>
+                <div class="odd-box">
+                  <div class="odd-label">원정 승</div>
+                  <div class="odd-val">${m.odds.away_win}</div>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 3. Load Scoreboard View
+    async function loadScoreboard(matchId) {
+      const container = document.getElementById('scoreboard-detail-container');
+      try {
+        const res = await fetch(`/api/v1/app/matches/${matchId}/scoreboard`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        
+        let eventsHtml = (data.events || []).map(ev => `
+          <div class="timeline-item">
+            <span class="time-badge">${ev.time_display || '기록'}</span>
+            <div>
+              <strong>[${ev.team_name || ''}] ${ev.player_name || ''}</strong>
+              <div style="color:#94a3b8; font-size:12px;">${ev.description || ''}</div>
+            </div>
+            <div style="margin-left:auto; font-weight:800; color:#fbbf24;">${ev.score_after || ''}</div>
+          </div>
+        `).join('');
+
+        if (!eventsHtml) {
+          eventsHtml = '<div style="padding:16px; text-align:center; color:#64748b;">주요 상황 기록이 없습니다.</div>';
+        }
+
+        container.innerHTML = `
+          <div class="board-container">
+            <div class="board-header">
+              <div>
+                <span style="font-size:12px; color:#93c5fd;">${data.league_name}</span>
+                <div style="font-size:16px; font-weight:800; margin-top:2px;">
+                  ${data.teams.home.name} vs ${data.teams.away.name}
+                </div>
+              </div>
+              <div style="font-size:22px; font-weight:900; color:#fbbf24;">
+                ${data.teams.home.score !== null ? `${data.teams.home.score} : ${data.teams.away.score}` : 'VS'}
+              </div>
+            </div>
+            <div style="padding:12px;">
+              <div style="font-size:13px; font-weight:700; color:#38bdf8; margin-bottom:8px;">⏱️ 실시간 상황 타임라인</div>
+              <div style="background:#0f172a; border-radius:10px; overflow:hidden;">
+                ${eventsHtml}
+              </div>
+            </div>
+          </div>
+        `;
+      } catch (e) {
+        container.innerHTML = '<div style="text-align:center; padding:30px; color:#ef4444;">전광판 상세 데이터를 불러올 수 없습니다.</div>';
+      }
+    }
+
+    function openScoreboard(matchId) {
+      loadScoreboard(matchId);
+      switchTab('tab-scoreboard', document.querySelectorAll('.nav-item')[1]);
+    }
+
+    // 4. Calculator Rendering
+    function renderCalcRows() {
+      const container = document.getElementById('calc-match-rows');
+      const targetMatches = allMatches.slice(0, 10);
+      if (!targetMatches.length) {
+        container.innerHTML = '<div style="padding:20px; text-align:center; color:#64748b;">계산 가능한 경기 일정이 없습니다.</div>';
+        return;
+      }
+      container.innerHTML = targetMatches.map((m, idx) => `
+        <div class="calc-row">
+          <div style="font-size:13px; font-weight:700; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            ${m.home_team_name} vs ${m.away_team_name}
+          </div>
+          <div class="calc-btn-group">
+            <button class="calc-btn ${selectedCalc[m.id]?.includes('W') ? 'selected' : ''}" onclick="toggleCalc(${m.id}, 'W', ${m.odds?.home_win || 1.8})">승</button>
+            <button class="calc-btn ${selectedCalc[m.id]?.includes('D') ? 'selected' : ''}" onclick="toggleCalc(${m.id}, 'D', ${m.odds?.draw || 3.2})">무</button>
+            <button class="calc-btn ${selectedCalc[m.id]?.includes('L') ? 'selected' : ''}" onclick="toggleCalc(${m.id}, 'L', ${m.odds?.away_win || 2.1})">패</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleCalc(matchId, pick, odds) {
+      if (!selectedCalc[matchId]) selectedCalc[matchId] = [];
+      const idx = selectedCalc[matchId].indexOf(pick);
+      if (idx > -1) {
+        selectedCalc[matchId].splice(idx, 1);
+        if (selectedCalc[matchId].length === 0) delete selectedCalc[matchId];
+      } else {
+        selectedCalc[matchId].push(pick);
+      }
+      renderCalcRows();
+      calculateTotal();
+    }
+
+    function calculateTotal() {
+      let combos = 1;
+      let totalOdds = 1.0;
+      let count = 0;
+      for (const mId in selectedCalc) {
+        const picks = selectedCalc[mId];
+        if (picks.length > 0) {
+          combos *= picks.length;
+          totalOdds *= 1.85; // 평균 예상 배당률 계산
+          count++;
+        }
+      }
+      if (count === 0) { combos = 0; totalOdds = 0; }
+      document.getElementById('calc-combinations').innerText = `${combos} 조합`;
+      document.getElementById('calc-total-odds').innerText = `${totalOdds.toFixed(2)} 배`;
+    }
+
+    // 5. Navigation & Filter Handling
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      if (el) el.classList.add('active');
+      window.scrollTo(0, 0);
+    }
+
+    function filterSport(sport, el) {
+      currentFilter = sport;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      renderMatchList();
+    }
+
+    // Auto Refresh every 30s
+    loadMobileData();
+    setInterval(loadMobileData, 30000);
+  </script>
+</body>
+</html>

@@ -8465,6 +8465,15 @@ function getFullModalMatchList() {
       }
     }
 
+    function getMatchFixtureKey(m) {
+      if (!m) return '';
+      const d = (m.match_date || '').split(' ')[0] || '';
+      const h = (m.home_team_name || '').trim().toLowerCase();
+      const a = (m.away_team_name || '').trim().toLowerCase();
+      const sp = (m.sport_code || '').trim().toUpperCase();
+      return `${sp}_${d}_${h}_${a}`;
+    }
+
     function getFilteredPredMatches() {
       if (!allMatches || allMatches.length === 0) return [];
 
@@ -9283,6 +9292,11 @@ function getFullModalMatchList() {
         if (histBtn) histBtn.classList.add('active');
         if (oddsBtn) oddsBtn.classList.remove('active');
       }
+    }
+
+    function formatTeamName(name) {
+      if (!name) return '';
+      return String(name).trim();
     }
 
     function toggleSlimAccordion(matchId, type) {
