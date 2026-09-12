@@ -13,6 +13,7 @@ from app.api.v1.live import router as live_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.traffic import router as traffic_router
 from app.api.v1.mobile_api import router as mobile_api_router
+from app.api.v1.soccer_agent_router import router as soccer_agent_router
 
 api_v1_router = APIRouter()
 api_v1_router.include_router(matches_router)
@@ -29,3 +30,4 @@ api_v1_router.include_router(live_router)
 api_v1_router.include_router(auth_router)
 api_v1_router.include_router(traffic_router)
 api_v1_router.include_router(mobile_api_router)
+api_v1_router.include_router(soccer_agent_router)

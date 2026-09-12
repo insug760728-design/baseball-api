@@ -4044,17 +4044,17 @@ class TeamSplitService:
             placeholders_h = ",".join(["?"] * len(h_aliases))
             placeholders_a = ",".join(["?"] * len(a_aliases))
 
-            # 1. Recent 10 H2H matches (strictly sorted DESC by match_date)
+            # 1. Recent 10 H2H matches (strictly sorted DESC by match_date, filtered by sport_code)
             c_cur.execute(f"""
                 SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
                 FROM matches
-                WHERE status = 'FINISHED' AND (
+                WHERE status = 'FINISHED' AND sport_code = ? AND (
                     (home_team_name COLLATE NOCASE IN ({placeholders_h}) AND away_team_name COLLATE NOCASE IN ({placeholders_a})) OR
                     (home_team_name COLLATE NOCASE IN ({placeholders_a}) AND away_team_name COLLATE NOCASE IN ({placeholders_h}))
                 )
                 ORDER BY match_date DESC
                 LIMIT 10
-            """, list(h_aliases) + list(a_aliases) + list(a_aliases) + list(h_aliases))
+            """, [sport_code] + list(h_aliases) + list(a_aliases) + list(a_aliases) + list(h_aliases))
             for row in c_cur.fetchall():
                 m_id, m_date, h_name, a_name, h_sc, a_sc, leg = row
                 is_cur_home = any(h_name.lower() == x.lower() for x in h_aliases)
@@ -4090,7 +4090,7 @@ class TeamSplitService:
                     h2h_item["odds"] = _generate_match_odds(cur_home_score, cur_away_score, f"{home_team}_{away_team}_{m_id}")
                 recent_h2h_matches.append(h2h_item)
 
-            # 2. Recent 10 matches for Home Team (strictly sorted DESC by match_date)
+            # 2. Recent 10 matches for Home Team (strictly sorted DESC by match_date, filtered by sport_code)
             is_h_npb = is_npb_team_name(home_team)
             is_h_kbo = is_kbo_team_name(home_team)
             is_h_mlb = is_mlb_team_name(home_team)
@@ -4098,13 +4098,13 @@ class TeamSplitService:
             c_cur.execute(f"""
                 SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
                 FROM matches
-                WHERE status = 'FINISHED' AND (
+                WHERE status = 'FINISHED' AND sport_code = ? AND (
                     home_team_name COLLATE NOCASE IN ({placeholders_h}) OR
                     away_team_name COLLATE NOCASE IN ({placeholders_h})
                 )
                 ORDER BY match_date DESC
                 LIMIT 25
-            """, list(h_aliases) + list(h_aliases))
+            """, [sport_code] + list(h_aliases) + list(h_aliases))
             h_rows = c_cur.fetchall()
             for row in h_rows:
                 m_id, m_date, h_name, a_name, h_sc, a_sc, leg = row
@@ -4155,7 +4155,7 @@ class TeamSplitService:
                 if len(home_recent_matches) >= 10:
                     break
 
-            # 3. Recent 10 matches for Away Team (strictly sorted DESC by match_date)
+            # 3. Recent 10 matches for Away Team (strictly sorted DESC by match_date, filtered by sport_code)
             is_a_npb = is_npb_team_name(away_team)
             is_a_kbo = is_kbo_team_name(away_team)
             is_a_mlb = is_mlb_team_name(away_team)
@@ -4163,13 +4163,13 @@ class TeamSplitService:
             c_cur.execute(f"""
                 SELECT id, match_date, home_team_name, away_team_name, home_score, away_score, league_name
                 FROM matches
-                WHERE status = 'FINISHED' AND (
+                WHERE status = 'FINISHED' AND sport_code = ? AND (
                     home_team_name COLLATE NOCASE IN ({placeholders_a}) OR
                     away_team_name COLLATE NOCASE IN ({placeholders_a})
                 )
                 ORDER BY match_date DESC
                 LIMIT 25
-            """, list(a_aliases) + list(a_aliases))
+            """, [sport_code] + list(a_aliases) + list(a_aliases))
             a_rows = c_cur.fetchall()
             for row in a_rows:
                 m_id, m_date, h_name, a_name, h_sc, a_sc, leg = row

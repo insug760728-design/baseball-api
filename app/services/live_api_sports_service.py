@@ -61,22 +61,22 @@ TEAM_SYNONYMS = {
     "닛폰햄": ["nippon ham", "nippon ham fighters", "홋카이도 닛폰햄"],
 
     # Baseball (MLB)
-    "다저스": ["dodgers", "los angeles dodgers", "la dodgers", "la다저스", "다저스"],
+    "다저스": ["dodgers", "los angeles dodgers", "la dodgers", "la다저스", "la 다저스", "다저스"],
     "파드리스": ["padres", "san diego padres", "샌디에이고", "파드리스"],
     "자이언츠": ["giants", "san francisco giants", "샌프란시스코", "자이언츠"],
-    "양키스": ["yankees", "new york yankees", "ny yankees", "뉴욕양키스", "뉴욕 양키스"],
-    "메츠": ["mets", "new york mets", "ny mets", "뉴욕메츠", "뉴욕 메츠"],
+    "양키스": ["yankees", "new york yankees", "ny yankees", "ny양키스", "뉴욕양키스", "뉴욕 양키스", "뉴욕y"],
+    "메츠": ["mets", "new york mets", "ny mets", "ny메츠", "뉴욕메츠", "뉴욕 메츠", "뉴욕m"],
     "레드삭스": ["red sox", "boston red sox", "보스턴", "레드삭스"],
     "오리올스": ["orioles", "baltimore orioles", "볼티모어", "오리올스"],
     "블루제이스": ["blue jays", "toronto blue jays", "토론토", "블루제이스"],
     "레이스": ["rays", "tampa bay rays", "탬파베이", "레이스"],
-    "화이트삭스": ["white sox", "chicago white sox", "시카고화이트삭스", "시카고 화이트삭스"],
+    "화이트삭스": ["white sox", "chicago white sox", "시카고화이트삭스", "시카고 화이트삭스", "시카고w", "시카고 w", "시카고화이트"],
     "가디언스": ["guardians", "cleveland guardians", "클리블랜드", "가디언스"],
     "타이거스": ["tigers", "detroit tigers", "디트로이트", "타이거스"],
     "로열스": ["royals", "kansas city royals", "캔자스시티", "로열스"],
     "트윈스": ["twins", "minnesota twins", "미네소타", "트윈스"],
     "애스트로스": ["astros", "houston astros", "휴스턴", "애스트로스"],
-    "에인절스": ["angels", "los angeles angels", "la에인절스", "la 에인절스"],
+    "에인절스": ["angels", "los angeles angels", "la angels", "la에인절스", "la 에인절스", "에인절스"],
     "애슬레틱스": ["athletics", "oakland athletics", "오클랜드", "애슬레틱스"],
     "매리너스": ["mariners", "seattle mariners", "시애틀", "매리너스"],
     "레인저스": ["rangers", "texas rangers", "텍사스", "레인저스"],
@@ -84,7 +84,7 @@ TEAM_SYNONYMS = {
     "말린스": ["marlins", "miami marlins", "마이애미", "말린스"],
     "필리스": ["phillies", "philadelphia phillies", "필라델피아", "필리스"],
     "내셔널스": ["nationals", "washington nationals", "워싱턴", "내셔널스"],
-    "컵스": ["cubs", "chicago cubs", "시카고컵스", "시카고 컵스"],
+    "컵스": ["cubs", "chicago cubs", "시카고컵스", "시카고 컵스", "시카고c", "시카고 c"],
     "레즈": ["reds", "cincinnati reds", "신시내티", "레즈"],
     "브루어스": ["brewers", "milwaukee brewers", "밀워키", "브루어스"],
     "파이리츠": ["pirates", "pittsburgh pirates", "피츠버그", "파이리츠"],
@@ -1632,7 +1632,7 @@ class LiveApiSportsService:
         }
 
     @classmethod
-    def get_match_history(cls, match_id: int, max_games: int = 5) -> Dict[str, Any]:
+    def get_match_history(cls, match_id: int, max_games: int = 50) -> Dict[str, Any]:
         """
         특정 경기(match_id)에 대해 홈/원정 팀 최근 경기 + 상세 이벤트 반환.
         - 축구: /fixtures/events → 득점자, 경고/퇴장, 어시스트
@@ -1642,13 +1642,11 @@ class LiveApiSportsService:
         try:
             max_games = int(max_games)
         except Exception:
-            max_games = 5
+            max_games = 50
 
+        cls._history_cache.clear() # Clear stale cache to reflect newly imported 3-year data
         cache_key = f"{match_id}_{max_games}"
         now_ts = time.time()
-        cached = cls._history_cache.get(cache_key)
-        if cached and (now_ts - cached[0] < 300):
-            return cached[1]
 
         # 1. DB에서 경기 정보 조회
         from app.core.database import SessionLocal
@@ -1668,7 +1666,11 @@ class LiveApiSportsService:
 
             def get_league_category(l_name: str, s_code: str) -> str:
                 ln = (l_name or '').upper()
-                if 'MLB' in ln or '메이저리그' in ln: return 'MLB'
+                if 'MLB' in ln or ('메이저리그' in ln and '사커' not in ln and '축구' not in ln): return 'MLB'
+                if 'MLS' in ln or '메이저리그사커' in ln or '메이저리그 축구' in ln or '미국축구' in ln: return 'MLS'
+                if 'CHAMPIONS' in ln or '챔피언스' in ln or 'UCL' in ln: return 'UCL'
+                if 'EUROPA' in ln or '유로파' in ln or 'UEL' in ln: return 'UEL'
+                if 'COPA' in ln or '코파' in ln or 'LIBERTADORES' in ln or '리베르타' in ln: return 'COPA'
                 if 'KBO' in ln or '한국' in ln: return 'KBO'
                 if 'NPB' in ln or '일본' in ln: return 'NPB'
                 if 'EPL' in ln or '프리미어' in ln: return 'EPL'
@@ -1683,39 +1685,221 @@ class LiveApiSportsService:
                 return s_code
 
             target_cat = get_league_category(league_name, sport_code)
-            candidate_tuples = db.query(Match.id, Match.match_date, Match.home_team_name, Match.away_team_name, Match.league_name, Match.sport_code)\
-                .filter(Match.sport_code == sport_code, Match.status == 'FINISHED', Match.id != match_id)\
-                .order_by(Match.match_date.desc()).limit(150).all()
 
-            def find_match_ids_for_team(tm_name: str) -> list:
-                matched_ids = []
-                # 1순위: 동일 리그 카테고리 내 매칭
-                for cid, cdt, chome, caway, clname, cscode in candidate_tuples:
-                    if get_league_category(clname, cscode) == target_cat:
-                        if chome == tm_name or caway == tm_name or teams_match(chome, tm_name) or teams_match(caway, tm_name):
-                            matched_ids.append(cid)
-                            if len(matched_ids) >= max_games:
-                                return matched_ids
-                # 2순위: 동일 종목 전체 내 매칭
-                for cid, cdt, chome, caway, clname, cscode in candidate_tuples:
-                    if cid not in matched_ids:
-                        if chome == tm_name or caway == tm_name or teams_match(chome, tm_name) or teams_match(caway, tm_name):
-                            matched_ids.append(cid)
-                            if len(matched_ids) >= max_games:
-                                return matched_ids
-                return matched_ids
+            def get_team_tokens(name: str) -> list:
+                import re
+                if not name: return []
+                clean = str(name).strip()
+                tokens = [clean]
+                
+                # Strip international gender suffixes like _남자, _여자
+                if '_' in clean:
+                    base_gender = clean.split('_')[0].strip()
+                    if len(base_gender) >= 2: tokens.append(base_gender)
 
-            h_ids = find_match_ids_for_team(home_team)
-            a_ids = find_match_ids_for_team(away_team)
+                # Strip prefixes like V-, FC, SC, AC, RC, AS, RB, FK, BK, US, AJ, ADO, NEC, OGC, SS, AFC, 포르투나, 포르튀나, 아틀레틱, 스포팅
+                clean_no_prefix = re.sub(r'^(V-|FC\s*|SC\s*|AC\s*|RC\s*|AS\s*|RB\s*|FK\s*|BK\s*|US\s*|AJ\s*|ADO\s*|NEC\s*|OGC\s*|SS\s*|AFC\s*|포르투나\s*|포르튀나\s*|아틀레틱\s*|스포팅\s*)', '', clean, flags=re.IGNORECASE).strip()
+                if clean_no_prefix and clean_no_prefix != clean and len(clean_no_prefix) >= 2:
+                    tokens.append(clean_no_prefix)
 
-            all_needed_ids = list(set(h_ids + a_ids))
-            matches_map = {}
-            if all_needed_ids:
-                m_objs = db.query(Match).filter(Match.id.in_(all_needed_ids)).all()
-                matches_map = {m.id: m for m in m_objs}
+                # Strip suffixes like SCO, AC, BC, FC, SC, 칼초, 시티, 타운, 원더러스, 유나이티드, etc.
+                clean_no_suffix = re.sub(r'(\s*(프로축구단|축구단|시청|2008|08FF|07|FC|SC|SCO|AC|BC|시티|타운|원더러스|유나이티드|유니언|레인저스|아르디자|트리니타|프론탈레|산프레체|그란포스|그램퍼스|벨마레|안틀러스|앤틀러스|레이솔|보르티스|블루윙즈|팀버즈|어스퀘이크스|레볼루션|다이나모|사운더스|화이트캡스|MYFC|MY|포트발|오슬로|칼초|이글스|알멜로))$', '', clean_no_prefix, flags=re.IGNORECASE).strip()
+                if clean_no_suffix and clean_no_suffix != clean and len(clean_no_suffix) >= 2:
+                    tokens.append(clean_no_suffix)
 
-            home_recent = [matches_map[mid] for mid in h_ids if mid in matches_map]
-            away_recent = [matches_map[mid] for mid in a_ids if mid in matches_map]
+                parts = clean.split()
+                if len(parts) > 1:
+                    for p in parts:
+                        p_c = p.strip()
+                        if len(p_c) >= 2: tokens.append(p_c)
+                if clean_no_suffix:
+                    for p in clean_no_suffix.split():
+                        p_c = p.strip()
+                        if len(p_c) >= 2: tokens.append(p_c)
+
+                special_aliases = {
+                    "앙제SCO": ["앙제", "Angers", "SCO 앙제", "앙제 SCO"],
+                    "앙제": ["앙제SCO", "Angers", "SCO 앙제", "앙제 SCO"],
+                    "르아브르AC": ["르아브르", "르 아브르", "Le Havre"],
+                    "르아브르": ["르아브르AC", "르 아브르", "Le Havre"],
+                    "AJ오세르": ["오세르", "Auxerre"],
+                    "오세르": ["AJ오세르", "Auxerre"],
+                    "OGC니스": ["니스", "Nice", "OGC Nice"],
+                    "니스": ["OGC니스", "Nice", "OGC Nice"],
+                    "SS라치오": ["라치오", "Lazio", "SS Lazio"],
+                    "라치오": ["SS라치오", "Lazio", "SS Lazio"],
+                    "RC스트라스부르": ["스트라스부르", "Strasbourg"],
+                    "스트라스부르": ["RC스트라스부르", "Strasbourg"],
+                    "아탈란타BC": ["아탈란타", "Atalanta"],
+                    "아탈란타": ["아탈란타BC", "Atalanta"],
+                    "칼리아리 칼초": ["칼리아리", "Cagliari"],
+                    "칼리아리": ["칼리아리 칼초", "Cagliari"],
+                    "AFC아약스": ["아약스", "Ajax"],
+                    "아약스": ["AFC아약스", "Ajax"],
+                    "고어헤드": ["고어헤드 이글스", "고어헤드이글스", "Go Ahead Eagles"],
+                    "고어헤드이글스": ["고어헤드", "고어헤드 이글스", "Go Ahead Eagles"],
+                    "흐로닝언": ["FC흐로닝언", "FC 흐로닝언", "Groningen"],
+                    "FC흐로닝언": ["흐로닝언", "Groningen"],
+                    "포르투나 시타르트": ["시타르트", "포르튀나 시타르트", "Fortuna Sittard"],
+                    "포르튀나 시타르트": ["시타르트", "포르투나 시타르트", "Fortuna Sittard"],
+                    "시타르트": ["포르투나 시타르트", "포르튀나 시타르트", "Fortuna Sittard"],
+                    "에버턴": ["에버튼", "에버턴FC", "Everton"],
+                    "에버턴FC": ["에버턴", "에버튼", "Everton"],
+                    "빌바오": ["아틀레틱 빌바오", "아틀레틱 클루브", "Athletic Club", "Athletic Bilbao"],
+                    "아틀레틱 빌바오": ["빌바오", "Athletic Club", "Athletic Bilbao"],
+                    "엘체": ["엘체CF", "Elche"],
+                    "엘체CF": ["엘체", "Elche"],
+                    "베르더 브레멘": ["브레멘", "베르더브레멘", "Werder Bremen"],
+                    "베르더브레멘": ["브레멘", "베르더 브레멘", "Werder Bremen"],
+                    "쾰른": ["1. FC 쾰른", "FC 쾰른", "Koln", "FC Koln"],
+                    "PSG": ["파리생제르맹", "파리 생제르맹", "파리", "Paris Saint-Germain"],
+                    "파리생제르맹": ["PSG", "파리 생제르맹", "파리", "Paris Saint-Germain"],
+                    "모나코": ["AS모나코", "AS 모나코", "Monaco", "AS Monaco"],
+                    "AS모나코": ["모나코", "AS 모나코", "Monaco", "AS Monaco"],
+                    "V-나가사키": ["나가사키", "V바렌", "V파렌", "V-파렌 나가사키"],
+                    "V-파렌 나가사키": ["V-나가사키", "나가사키", "V바렌"],
+                    "오미야 아르디자": ["오미야"],
+                    "오미야": ["오미야 아르디자"],
+                    "테게바자로 미야자키": ["미야자키"],
+                    "미야자키": ["테게바자로 미야자키"],
+                    "후지에다 MY": ["후지에다", "후지에다MYFC", "후지에다 MYFC"],
+                    "후지에다MYFC": ["후지에다", "후지에다 MY"],
+                    "후지에다": ["후지에다 MY", "후지에다MYFC"],
+                    "수원 삼성블루윙즈": ["수원삼성", "수원"],
+                    "수원삼성": ["수원 삼성블루윙즈", "수원"],
+                    "김해FC 2008": ["김해", "김해시청"],
+                    "김해시청": ["김해", "김해FC 2008"],
+                    "파주 프런티어": ["파주"],
+                    "바이에른뮌헨": ["바이에른 뮌헨", "뮌헨"],
+                    "바이에른 뮌헨": ["바이에른뮌헨", "뮌헨"],
+                    "셀타비고": ["셀타 비고", "셀타", "RC셀타데비고"],
+                    "셀타 비고": ["셀타비고", "셀타", "RC셀타데비고"],
+                    "RC셀타데비고": ["셀타비고", "셀타 비고", "셀타"],
+                    "파더보른07": ["파더보른"],
+                    "파더보른": ["파더보른07"],
+                    "US사수올로": ["사수올로"],
+                    "사수올로": ["US사수올로"],
+                    "SC캄뷔르": ["캄뷔르"],
+                    "캄뷔르": ["SC캄뷔르"],
+                    "SC헤이렌베인": ["헤이렌베인"],
+                    "헤이렌베인": ["SC헤이렌베인"],
+                    "엑셀시오르 로테르담": ["엑셀시오르"],
+                    "엑셀시오르": ["엑셀시오르 로테르담"],
+                    "NEC네이메헌": ["네이메헌"],
+                    "네이메헌": ["NEC네이메헌"],
+                    "NY시티FC": ["뉴욕 시티", "뉴욕시티"],
+                    "뉴욕 시티": ["NY시티FC", "뉴욕시티"],
+                    "새너제이 어스퀘이크스": ["산호세", "산호세 어스퀘이크스", "새너제이"],
+                    "산호세 어스퀘이크스": ["새너제이", "새너제이 어스퀘이크스", "산호세"],
+                    "필라델피아 유니언": ["필라델피아"],
+                    "스포팅 캔자스시티": ["캔자스시티", "스포팅KC"],
+                    "웨스트브로미치 앨비언": ["웨스트브롬", "웨스트 브롬위치"],
+                    "웨스트브롬": ["웨스트브로미치 앨비언", "웨스트 브롬위치"],
+                    "퀸즈파크 레인저스": ["QPR", "퀸즈파크"],
+                    "QPR": ["퀸즈파크 레인저스", "퀸즈파크"],
+                    "C.팰리스": ["크리스탈 팰리스", "크리스탈팰리스"],
+                    "크리스탈 팰리스": ["C.팰리스"],
+                    "사우샘프턴 U21": ["사우샘프턴", "소튼"],
+                    "사우샘프턴": ["사우샘프턴 U21", "소튼"],
+                    "Southampton": ["사우샘프턴", "사우샘프턴 U21"],
+                    "나고야 그램퍼스": ["나고야"],
+                    "나고야": ["나고야 그램퍼스"]
+                }
+                for k, v in special_aliases.items():
+                    if k in clean or clean in k:
+                        tokens.extend(v)
+                        tokens.append(k)
+
+                mlb_map = {
+                    "뉴욕양키스": ["New York Yankees", "Yankees", "NY Yankees", "뉴욕Y", "양키스"],
+                    "보스턴": ["Boston Red Sox", "Red Sox", "보스턴 레드삭스"],
+                    "LA다저스": ["Los Angeles Dodgers", "Dodgers", "LA 다저스", "다저스"],
+                    "샌디에이고": ["San Diego Padres", "Padres", "샌디에고", "파드리스"],
+                    "샌프란시스코": ["San Francisco Giants", "Giants", "자이언츠"],
+                    "토론토": ["Toronto Blue Jays", "Blue Jays", "블루제이스"],
+                    "볼티모어": ["Baltimore Orioles", "Orioles", "오리올스"],
+                    "탬파베이": ["Tampa Bay Rays", "Rays", "레이스"],
+                    "휴스턴": ["Houston Astros", "Astros", "애스트로스"],
+                    "텍사스": ["Texas Rangers", "Rangers", "레인저스"],
+                    "시애틀": ["Seattle Mariners", "Mariners", "매리너스"],
+                    "필라델피아": ["Philadelphia Phillies", "Phillies", "필리스"],
+                    "애틀랜타": ["Atlanta Braves", "Braves", "브레이브스"],
+                    "뉴욕메츠": ["New York Mets", "Mets", "메츠"],
+                    "시카고C": ["Chicago Cubs", "Cubs", "시카고 컵스", "컵스"],
+                    "피츠버그": ["Pittsburgh Pirates", "Pirates", "파이리츠"],
+                    "세인트루이스": ["St. Louis Cardinals", "Cardinals", "카디널스"],
+                    "밀워키": ["Milwaukee Brewers", "Brewers", "브루어스"],
+                    "애리조나": ["Arizona Diamondbacks", "D-backs", "다이아몬드백스"],
+                    "콜로라도": ["Colorado Rockies", "Rockies", "로키스"],
+                    "디트로이트": ["Detroit Tigers", "Tigers", "타이거스"],
+                    "클리블랜드": ["Cleveland Guardians", "Guardians", "가디언스"],
+                    "미네소타": ["Minnesota Twins", "Twins", "트윈스"],
+                    "캔자스시티": ["Kansas City Royals", "Royals", "로열스"],
+                    "시카고W": ["Chicago White Sox", "White Sox", "시카고 화이트삭스", "화이트삭스"],
+                    "LA에인절스": ["Los Angeles Angels", "Angels", "로스앤젤레스 에인절스", "에인절스"],
+                    "오클랜드": ["Oakland Athletics", "Athletics", "애슬레틱스"],
+                    "마이애미": ["Miami Marlins", "Marlins", "말린스"],
+                    "워싱턴": ["Washington Nationals", "Nationals", "내셔널스"],
+                    "신시내티": ["Cincinnati Reds", "Reds", "레즈"]
+                }
+                for k, v in mlb_map.items():
+                    if k in clean or clean in k:
+                        tokens.extend(v)
+                        tokens.append(k)
+
+                for k, v_list in TEAM_SYNONYMS.items():
+                    if k in clean or clean in k:
+                        tokens.extend(v_list)
+                        tokens.append(k)
+
+                seen = set()
+                result = []
+                for t in tokens:
+                    t_str = str(t).strip()
+                    if len(t_str) >= 2 and t_str not in seen:
+                        seen.add(t_str)
+                        result.append(t_str)
+                return result
+
+            def query_recent_matches_for_team(tm_name: str) -> list:
+                tokens = get_team_tokens(tm_name)
+                from sqlalchemy import or_
+                or_conditions = []
+                for t in tokens:
+                    or_conditions.append(Match.home_team_name.ilike(f"%{t}%"))
+                    or_conditions.append(Match.away_team_name.ilike(f"%{t}%"))
+
+                q = db.query(Match).filter(
+                    Match.sport_code == sport_code,
+                    Match.status == 'FINISHED',
+                    Match.id != match_id,
+                    or_(*or_conditions)
+                ).order_by(Match.match_date.desc()).limit(max_games)
+                return q.all()
+
+            def query_h2h_matches(h_name: str, a_name: str) -> list:
+                h_tokens = get_team_tokens(h_name)
+                a_tokens = get_team_tokens(a_name)
+                from sqlalchemy import or_, and_
+                h_side1 = or_(*[Match.home_team_name.ilike(f"%{t}%") for t in h_tokens])
+                a_side1 = or_(*[Match.away_team_name.ilike(f"%{t}%") for t in a_tokens])
+                h_side2 = or_(*[Match.away_team_name.ilike(f"%{t}%") for t in h_tokens])
+                a_side2 = or_(*[Match.home_team_name.ilike(f"%{t}%") for t in a_tokens])
+
+                q = db.query(Match).filter(
+                    Match.sport_code == sport_code,
+                    Match.status == 'FINISHED',
+                    Match.id != match_id,
+                    or_(
+                        and_(h_side1, a_side1),
+                        and_(h_side2, a_side2)
+                    )
+                ).order_by(Match.match_date.desc()).limit(max_games)
+                return q.all()
+
+            home_recent = query_recent_matches_for_team(home_team)
+            away_recent = query_recent_matches_for_team(away_team)
+            h2h_recent = query_h2h_matches(home_team, away_team)
 
             def format_match_basic(m: Match, perspective_team: str) -> Dict[str, Any]:
                 """경기 기본 정보 포맷"""
@@ -1824,6 +2008,34 @@ class LiveApiSportsService:
                                     'recent_era': recent_era,
                                     'decision': starter.get('decision', '')
                                 }
+                            else:
+                                fallback_name = None
+                                if m.details and m.details.team_stats:
+                                    try:
+                                        ts = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
+                                        starters_dict = ts.get('starters', {})
+                                        fallback_name = starters_dict.get('home' if is_h_side else 'away', {}).get('name')
+                                    except Exception:
+                                        pass
+                                if not fallback_name:
+                                    fallback_name = getattr(m, 'home_starter_name', None) if is_h_side else getattr(m, 'away_starter_name', None)
+                                if fallback_name and fallback_name != '-':
+                                    season_era = lookup_pitcher_season_era(fallback_name)
+                                    st_obj = {
+                                        'name': fallback_name,
+                                        'ip': '',
+                                        'np': 0,
+                                        'r': 0,
+                                        'er': 0,
+                                        'so': 0,
+                                        'bb': 0,
+                                        'h': 0,
+                                        'hr': 0,
+                                        'era': season_era or '-',
+                                        'season_era': season_era or '-',
+                                        'recent_era': '-',
+                                        'decision': ''
+                                    }
 
                             bullpen = [p for p in pitchers if p != starter]
                             bp_outs = sum(parse_ip_to_outs(p.get('ip')) for p in bullpen)
@@ -1864,11 +2076,22 @@ class LiveApiSportsService:
                             if not hitters and m.details:
                                 try:
                                     ps_dict = json.loads(m.details.period_scores) if isinstance(m.details.period_scores, str) else (m.details.period_scores or {})
+                                    # 1. Check summary format
                                     side_sum = ps_dict.get('summary', {}).get('home' if is_h_side else 'away', {})
                                     if side_sum:
-                                        tot_h = side_sum.get('H', tot_h)
-                                        tot_bb = side_sum.get('B', tot_bb)
-                                        tot_r = side_sum.get('R', tot_r)
+                                        tot_h = side_sum.get('H', side_sum.get('h', tot_h))
+                                        tot_bb = side_sum.get('B', side_sum.get('b', tot_bb))
+                                        tot_r = side_sum.get('R', side_sum.get('r', tot_r))
+                                    
+                                    # 2. Check direct format {"hits": {"home": X, "away": Y}, "runs": ...}
+                                    if ps_dict.get('hits'):
+                                        h_val = ps_dict.get('hits', {}).get('home' if is_h_side else 'away')
+                                        if h_val is not None:
+                                            tot_h = h_val
+                                    if ps_dict.get('runs'):
+                                        r_val = ps_dict.get('runs', {}).get('home' if is_h_side else 'away')
+                                        if r_val is not None:
+                                            tot_r = r_val
                                 except Exception:
                                     pass
 
@@ -1950,17 +2173,12 @@ class LiveApiSportsService:
                     'period_scores': period_scores,
                     'team_stats': team_stats,
                     'events': [],
-                    'stats': {}
+                    'stats': team_stats
                 }
 
             home_games = [format_match_basic(m, home_team) for m in home_recent]
             away_games = [format_match_basic(m, away_team) for m in away_recent]
-
-            # DB에 직전 경기 기록이 없는 경우 현실적인 구조의 폴백 경기 데이터로 100% 보강
-            if not home_games:
-                home_games = [cls._build_fallback_recent_game(sport_code, home_team, away_team, True, match_date, target)]
-            if not away_games:
-                away_games = [cls._build_fallback_recent_game(sport_code, away_team, home_team, False, match_date, target)]
+            h2h_games = [format_match_basic(m, home_team) for m in h2h_recent]
 
         finally:
             db.close()
@@ -1971,6 +2189,7 @@ class LiveApiSportsService:
             'sport_code': sport_code,
             'home_team': home_team,
             'away_team': away_team,
+            'h2h_matches': h2h_games,
             'home_recent': home_games,
             'away_recent': away_games
         }

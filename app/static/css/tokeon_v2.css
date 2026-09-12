@@ -1,0 +1,525 @@
+/* ==========================================================================
+   TOKEON V2 Modern Sports Analytics & Real-Time Live Center Stylesheet
+   ========================================================================== */
+
+:root {
+  --primary-color: #1e3a8a;
+  --primary-dark: #0f172a;
+  --accent-red: #dc2626;
+  --accent-blue: #2563eb;
+  --accent-gold: #f59e0b;
+  --accent-green: #059669;
+  --bg-body: #f8fafc;
+  --bg-card: #ffffff;
+  --border-color: #e2e8f0;
+  --border-dark: #cbd5e1;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --font-base: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
+}
+
+body {
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  font-family: var(--font-base);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* -------------------------------------------------------------
+   1. Header & Navigation Bar
+   ------------------------------------------------------------- */
+.v2-header {
+  background: #1e293b;
+  color: #ffffff;
+  border-bottom: 2px solid #0f172a;
+  padding: 0.5rem 1rem;
+}
+.v2-logo {
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: #38bdf8;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.v2-logo span {
+  color: #f8fafc;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.nav-league-btn {
+  background: #334155;
+  color: #e2e8f0;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.nav-league-btn:hover, .nav-league-btn.active {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+/* -------------------------------------------------------------
+   2. TotoCan-Style Real-time Live Board (토토캔 실시간 라이브 바)
+   ------------------------------------------------------------- */
+.live-board-wrapper {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+.live-board-header {
+  background: #0f172a;
+  color: #ffffff;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.live-board-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.80rem;
+}
+.live-board-table th {
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 700;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+  font-size: 0.74rem;
+}
+.live-board-row {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+.live-board-row:hover {
+  background: #f8fafc;
+}
+.live-board-row.active {
+  background: #eff6ff !important;
+  border-left: 3px solid #2563eb;
+}
+.live-board-row td {
+  padding: 0.5rem 0.4rem;
+  vertical-align: middle;
+}
+
+/* Mini 2D Baseball Diamond & Out Count */
+.mini-diamond-box {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+.diamond-svg {
+  width: 22px;
+  height: 22px;
+}
+.diamond-base {
+  fill: #e2e8f0;
+  stroke: #94a3b8;
+  stroke-width: 0.8;
+}
+.diamond-base.active {
+  fill: #f59e0b; /* Golden Runner */
+  stroke: #b45309;
+  filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.6));
+}
+.mini-out-dots {
+  display: flex;
+  gap: 3px;
+  margin-top: 1px;
+}
+.out-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+.out-dot.active {
+  background: #dc2626; /* Red Out Dot */
+}
+
+/* Live Inning & Time Badge (토토캔 스타일 베이지 박스) */
+.live-time-badge {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 0.2rem 0.5rem;
+  white-space: nowrap;
+  display: inline-block;
+  text-align: center;
+}
+.live-time-badge.finished {
+  background: #f1f5f9;
+  color: #64748b;
+  border-color: #cbd5e1;
+}
+
+/* -------------------------------------------------------------
+   3. Match Card Feed (좌측 경기 목록)
+   ------------------------------------------------------------- */
+.match-card-feed {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+.match-card-item, .pred-card-compact {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  padding: 8px 11px;
+  margin-bottom: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.match-card-item:hover, .pred-card-compact:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+  transform: translateX(1.5px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.match-card-item.active, .pred-card-compact.active, .active-match-card {
+  border: 2px solid #2563eb !important;
+  background: #eff6ff !important;
+}
+
+.proto-odds-btn-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+  margin-top: 0.4rem;
+}
+.proto-odds-btn-group.two-way {
+  grid-template-columns: 1fr 1fr;
+}
+.proto-odds-btn {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 0.3rem 0.2rem;
+  text-align: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+.proto-odds-btn:hover {
+  background: #e2e8f0;
+}
+.proto-odds-btn.selected {
+  background: #1e3a8a;
+  color: #ffffff;
+  border-color: #1e3a8a;
+  font-weight: 800;
+}
+.proto-odds-btn .odds-val {
+  font-weight: 800;
+  color: #0f172a;
+}
+.proto-odds-btn.selected .odds-val {
+  color: #ffffff;
+}
+
+/* -------------------------------------------------------------
+   4. Detail Analytics Panel (중앙 정밀 분석 패널 - 100% 팩트)
+   ------------------------------------------------------------- */
+.detail-panel-box {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.section-clean-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1.5px solid #f1f5f9;
+}
+
+/* Clean Open Table (접힘 없는 3경기 테이블) */
+.clean-3g-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 0.85rem;
+}
+.clean-3g-table th {
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 700;
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+}
+.clean-3g-table td {
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: center;
+}
+.clean-3g-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Betman Proto Official Odds Table & Accordion */
+.betman-proto-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.betman-proto-table th {
+  background: #f1f5f9;
+  color: #1e293b;
+  font-weight: 700;
+  padding: 0.45rem 0.4rem;
+  border: 1px solid #cbd5e1;
+  text-align: center;
+}
+.betman-proto-table td {
+  padding: 0.45rem 0.4rem;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+  vertical-align: middle;
+}
+.betman-proto-table tr.proto-main-row {
+  background: #ffffff;
+}
+.betman-proto-table tr.proto-main-row:hover {
+  background: #f8fafc;
+}
+.betman-proto-table tr.proto-sub-row {
+  background: #f8fafc;
+}
+.betman-proto-table tr.proto-sub-row:hover {
+  background: #f1f5f9;
+}
+.proto-win-odd {
+  background: #fef08a !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  padding: 2px 5px !important;
+  border-radius: 3px !important;
+}
+.proto-res-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1;
+}
+.proto-res-badge.red {
+  background: #dc2626;
+}
+.proto-res-badge.blue {
+  background: #2563eb;
+}
+.proto-res-badge.green {
+  background: #16a34a;
+}
+.proto-res-badge.gray {
+  background: #64748b;
+}
+
+/* Scoreboard Matrix */
+.scoreboard-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.80rem;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+.scoreboard-matrix-table th, .scoreboard-matrix-table td {
+  border: 1px solid #e2e8f0;
+  padding: 0.4rem;
+  text-align: center;
+}
+
+/* Detail Panel Sub-Tab Navigation (지난경기 / 배당 / 투수 / 전체보기 탭 버튼) */
+.detail-sub-nav {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.detail-sub-tab {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  font-weight: 700;
+  font-size: 0.80rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.detail-sub-tab:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+.detail-sub-tab.active {
+  background: #1e3a8a !important;
+  color: #ffffff !important;
+  border-color: #1e3a8a !important;
+  box-shadow: 0 1px 4px rgba(30,58,138,0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 991px) {
+  .v2-main-grid {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+
+/* -------------------------------------------------------------
+   Toto 14-Match Interactive Modal & Nav Buttons
+   ------------------------------------------------------------- */
+.nav-league-btn.btn-toto {
+  color: #ffffff !important;
+  font-weight: 800;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: transform 0.1s ease, filter 0.15s ease;
+}
+.nav-league-btn.btn-toto:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+.toto-tab-btn {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.toto-tab-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+.toto-tab-btn.active {
+  background: #1e3a8a !important;
+  color: #ffffff !important;
+  border-color: #1e3a8a !important;
+  box-shadow: 0 2px 4px rgba(30,58,138,0.25);
+}
+.toto-match-row:hover {
+  background-color: #f8fafc !important;
+}
+.toto-pick-btn {
+  font-size: 0.82rem !important;
+  font-weight: 800 !important;
+  transition: all 0.1s ease !important;
+}
+.toto-pick-btn.btn-outline-primary.selected {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+.toto-pick-btn.btn-outline-secondary.selected {
+  background-color: #475569 !important;
+  color: #ffffff !important;
+  border-color: #475569 !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+.toto-pick-btn.btn-outline-danger.selected {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* -------------------------------------------------------------
+   Expanded Toto 14-Match Modal & 1st~4th Tier Cards Styling
+   ------------------------------------------------------------- */
+#totoModal .modal-dialog {
+  max-width: 1440px !important;
+  width: 96vw !important;
+  margin: 1rem auto !important;
+}
+
+#totoModal .modal-body {
+  max-height: calc(88vh - 210px) !important;
+  overflow-y: auto !important;
+}
+
+.toto-tier-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.toto-tier-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.toto-tier-card.tier-1 {
+  border-top: 3.5px solid #dc2626 !important;
+  background: linear-gradient(180deg, #fff5f5 0%, #ffffff 35%);
+}
+.toto-tier-card.tier-2 {
+  border-top: 3.5px solid #2563eb !important;
+  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 35%);
+}
+.toto-tier-card.tier-3 {
+  border-top: 3.5px solid #16a34a !important;
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 35%);
+}
+.toto-tier-card.tier-4 {
+  border-top: 3.5px solid #64748b !important;
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 35%);
+}
+

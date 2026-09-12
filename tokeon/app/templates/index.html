@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TOKEON — 실시간 스포츠 분석 & 라이브 중계</title>
+  
+  <!-- Google Fonts & Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- TOKEON V2 Custom Stylesheet -->
+  <link rel="stylesheet" href="/static/css/tokeon_v2.css?v=20260913_0119">
+  
+  <style>
+    /* Global Layout & Overflow Protections */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      background: #f8fafc;
+      overflow-x: hidden;
+      word-break: keep-all;
+    }
+    .text-truncate-safe {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. Top Header -->
+  <header class="v2-header sticky-top">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+      <a href="/" class="v2-logo">
+        <i class="bi bi-shield-shaded"></i>
+        <b>TOKEON</b>
+        <span>PRO SPORTS LIVE</span>
+      </a>
+
+      <!-- Sound, Auth & Live Center Modal Trigger Button -->
+      <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-sm btn-danger fw-bold d-flex align-items-center gap-1.5 px-3 py-1.5 shadow-sm" id="btnOpenLiveModal" onclick="openLiveCenterModal()" style="border-radius: 6px;">
+          <span class="spinner-grow spinner-grow-sm" style="width: 8px; height: 8px;" role="status"></span>
+          <span>🔴 LIVE 중계 & 채팅</span>
+          <span class="badge bg-white text-danger fw-bold ms-1" id="v2LiveMatchBadge">0</span>
+        </button>
+        <button type="button" class="btn btn-sm btn-dark border py-1 px-2.5" id="btnSoundToggle" onclick="toggleSoundFx()" title="득점 사운드 알림">
+          <span id="soundIcon">🔔</span> <span class="d-none d-md-inline" style="font-size:0.75rem;">사운드 ON</span>
+        </button>
+        <div id="v2AuthHeaderContainer"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. League & Toto Nav Bar -->
+  <nav class="bg-white border-bottom py-2 px-3 shadow-sm mb-3">
+    <div class="container-fluid d-flex align-items-center justify-content-between overflow-x-auto gap-1.5" style="scrollbar-width: none;">
+      <div class="d-flex gap-1.5 flex-nowrap align-items-center">
+        <button type="button" class="nav-league-btn active" data-league="ALL" onclick="MatchFeed.filterByLeague('ALL')">
+          <i class="bi bi-grid-fill me-1"></i>전체보기
+        </button>
+        <button type="button" class="nav-league-btn" data-league="PAST" onclick="MatchFeed.filterByLeague('PAST')" style="border-right: 1.5px solid #cbd5e1; padding-right: 0.85rem; margin-right: 0.35rem;">
+          <i class="bi bi-clock-history text-danger me-1"></i>지난경기
+        </button>
+
+        <!-- 배트맨 실시간 14경기 토토 버튼 (승무패 / 승1패 / 승5패) -->
+        <button type="button" class="nav-league-btn btn-toto" data-toto="G011" onclick="openTotoModal('G011')" style="background: linear-gradient(135deg, #1e40af, #2563eb); border-color: #3b82f6;">
+          <span>⚽ 승무패</span>
+          <span class="badge bg-warning text-dark ms-1 font-monospace" id="navBadgeG011" style="font-size:0.68rem;">52회</span>
+        </button>
+        <button type="button" class="nav-league-btn btn-toto" data-toto="G024" onclick="openTotoModal('G024')" style="background: linear-gradient(135deg, #065f46, #059669); border-color: #10b981;">
+          <span>⚾ 승1패</span>
+          <span class="badge bg-warning text-dark ms-1 font-monospace" id="navBadgeG024" style="font-size:0.68rem;">69회</span>
+        </button>
+        <button type="button" class="nav-league-btn btn-toto" data-toto="G027" onclick="openTotoModal('G027')" style="background: linear-gradient(135deg, #9a3412, #ea580c); border-color: #f97316;">
+          <span>🏀 승5패</span>
+          <span class="badge bg-light text-dark ms-1 font-monospace" id="navBadgeG027" style="font-size:0.68rem;">28회</span>
+        </button>
+      </div>
+      <div class="d-flex align-items-center gap-2 ms-auto">
+        <button type="button" class="btn btn-sm btn-outline-secondary py-0.5 px-2" onclick="AuthManager.openAdminModal()" style="font-size:0.72rem;" title="관리자 전용 비밀 접속 통계">
+          <i class="bi bi-shield-lock-fill text-warning me-1"></i>접속자통계(관리자)
+        </button>
+        <div class="text-muted small fw-bold text-nowrap d-none d-lg-block" id="v2ClockDisplay">
+          실시간 라이브 센터 & 토토 14경기 공식 연동
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 3. Main Container (Cleaner 2-Column Focus Layout) -->
+  <main class="container-fluid px-2 px-md-3">
+    
+    <!-- 2-Column Split: Left Feed & Center Detail Panel -->
+    <div class="row g-3 v2-main-grid">
+      
+      <!-- Left Column: Match Card Feed -->
+      <div class="col-12 col-lg-5 col-xl-4">
+        <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+          <span class="fw-bold text-dark" style="font-size: 0.88rem;">
+            <i class="bi bi-list-columns-reverse me-1 text-primary"></i>경기 일정 & 프로토 공식 배당
+          </span>
+          <span class="badge bg-light text-secondary border font-monospace" id="v2MatchCountBadge">0경기</span>
+        </div>
+
+        <div id="v2MatchListContainer" class="v2-match-feed-box" style="max-height: calc(100vh - 145px); overflow-y: auto; padding-right: 4px;">
+          <!-- Dynamic Match Cards loaded by match_feed.js -->
+          <div class="text-center py-5 text-muted small">
+            <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+            <div>실시간 경기 피드 로딩 중...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Detail Panel (Fact-based Official Odds & 3G Stats) -->
+      <div class="col-12 col-lg-7 col-xl-8">
+        <div id="v2DetailPanelContainer" class="v2-detail-container" style="min-height: calc(100vh - 145px);">
+          <!-- Dynamic Deep Detail loaded by detail_panel.js -->
+          <div class="detail-panel-box text-center py-5 text-muted">
+            <i class="bi bi-cursor-fill fs-3 text-primary mb-2 d-block"></i>
+            <div class="fw-bold fs-6">왼쪽 경기 목록에서 경기를 선택해주세요.</div>
+            <div class="small mt-1 text-secondary">국내 프로토 공식 배당, 양 팀 직전경기 대칭 비교, 상대전적, 선발투수 3G 일지가 표시됩니다.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- 4. Modals -->
+
+  <!-- Modal A: Draggable & Resizable Live Center & Chat Popup Modal -->
+  <div class="modal fade" id="liveCenterModal" tabindex="-1" aria-labelledby="liveCenterModalLabel" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-dialog-centered modal-xl" id="liveModalDialog" style="max-width: 1200px; width: 95vw;">
+      <div class="modal-content shadow-lg border-0" style="background: #0f172a; color: #f8fafc; border-radius: 12px; overflow: hidden;">
+        
+        <!-- Modal Header (Drag Handle) -->
+        <div class="modal-header py-2.5 px-3 border-bottom border-secondary d-flex justify-content-between align-items-center" id="liveModalHeader" style="cursor: move; background: #1e293b; user-select: none;">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-arrows-move text-warning"></i>
+            <span class="spinner-grow spinner-grow-sm text-danger" style="width: 9px; height: 9px;" role="status"></span>
+            <h5 class="modal-title fw-bold fs-6 mb-0 text-white" id="liveCenterModalLabel">
+              🔴 실시간 라이브 중계 센터 & 실시간 응원 채팅
+            </h5>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-danger text-white fw-bold px-2 py-1" style="font-size: 0.72rem;">LIVE STREAM</span>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+        </div>
+
+        <!-- Modal Body: Split into Left Boards & Right Live Chat -->
+        <div class="modal-body p-2 p-md-3" style="background: #090d16; min-height: 520px; max-height: 80vh; overflow-y: auto;">
+          <div class="row g-2.5 h-100">
+            
+            <!-- Left: Live Scoreboard Cards Grid (Baseball & Soccer) -->
+            <div class="col-12 col-lg-8">
+              <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                <span class="fw-bold text-white small"><i class="bi bi-broadcast text-danger me-1"></i>실시간 진행 경기 현황</span>
+                <span class="text-secondary small font-monospace" id="liveBoardCountBadge">진행중 0경기</span>
+              </div>
+              <div id="v2LiveCenterBoardGrid" class="row g-2">
+                <!-- Dynamically populated by live_board.js -->
+              </div>
+            </div>
+
+            <!-- Right: Real-time Live Community Chat -->
+            <div class="col-12 col-lg-4">
+              <div class="card h-100 border-secondary bg-dark text-light" style="border-radius: 8px;">
+                <div class="card-header py-2 px-3 border-secondary bg-black bg-opacity-40 d-flex justify-content-between align-items-center">
+                  <span class="fw-bold small text-warning"><i class="bi bi-chat-dots-fill me-1"></i>실시간 라이브 채팅</span>
+                  <span class="badge bg-secondary text-white font-monospace" style="font-size:0.65rem;">ONLINE</span>
+                </div>
+                
+                <div class="card-body p-2.5 d-flex flex-column" style="height: 380px;">
+                  <div id="liveChatMessages" class="flex-grow-1 overflow-y-auto mb-2 p-2 rounded bg-black bg-opacity-30 border border-secondary font-monospace" style="font-size: 0.76rem; max-height: 320px;">
+                    <div class="text-muted small text-center py-3">실시간 채팅방에 연결되었습니다.<br>경기 응원 메시지를 남겨보세요!</div>
+                  </div>
+
+                  <form id="liveChatForm" onsubmit="sendLiveChatMessage(event)" class="d-flex gap-1.5">
+                    <input type="text" id="chatNickInput" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="별명" value="스포츠팬" style="width: 80px; font-size: 0.75rem;">
+                    <input type="text" id="chatMsgInput" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="응원 메시지 입력..." style="font-size: 0.75rem;" required>
+                    <button type="submit" class="btn btn-sm btn-primary px-3 fw-bold" style="font-size: 0.75rem;">전송</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal B: Draggable & Resizable Toto 14-Match Official Modal (승무패 / 승1패 / 승5패) -->
+  <div class="modal fade" id="v2TotoModal" tabindex="-1" aria-labelledby="v2TotoModalLabel" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-dialog-centered modal-xl" id="v2TotoModalDialog" style="max-width: 1440px; width: 96vw;">
+      <div class="modal-content shadow-lg border-0" style="border-radius: 12px; overflow: hidden;">
+        
+        <!-- Modal Header (Drag Handle) -->
+        <div class="modal-header py-2.5 px-4 bg-dark text-white d-flex justify-content-between align-items-center" id="v2TotoModalHeader" style="cursor: move; user-select: none;">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-arrows-move text-warning"></i>
+            <span id="totoModalIcon" class="fs-5">⚽</span>
+            <h5 class="modal-title fw-bold fs-6 mb-0" id="v2TotoModalLabel">베트맨 스포츠토토 14경기 공식 발매 현황</h5>
+            <span class="badge bg-warning text-dark fw-bold ms-1" id="totoModalRoundBadge">-</span>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-secondary small d-none d-md-inline" id="totoModalDeadline">-</span>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+        </div>
+
+        <div class="modal-body p-0 bg-white" style="max-height: 540px; overflow-y: auto;">
+          <div id="totoMatchListContainer">
+            <div class="text-center py-5 text-muted">
+              <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+              <div>베트맨 공식 실시간 14경기 데이터를 불러오는 중입니다...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer: Combination & Purchase Calculator & 1st~4th Tier Winning Probabilities -->
+        <div class="modal-footer bg-light py-2 px-3 flex-column align-items-stretch">
+          <div id="totoCalcSummary" class="w-100">
+            <span class="text-muted small">경기별 승/무/패 버튼을 눌러 마킹하세요 (복식 선택 가능).</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center w-100 mt-1 pt-1 border-top">
+            <span class="text-muted" style="font-size:0.72rem;">※ 실시간 베트맨 공식 투표율 및 누적 상금풀 기반 1등~4등 푸아송 이항 당첨확률 & 예상 상금 계산</span>
+            <button type="button" class="btn btn-sm btn-dark px-3 fw-bold" data-bs-dismiss="modal">닫기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal C: Login & Access Modal (별명, 나이, 비밀번호 간편 접속) -->
+  <div class="modal fade" id="v2LoginModal" tabindex="-1" aria-labelledby="v2LoginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+        <div class="modal-header bg-dark text-white py-3 px-4">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-shield-lock-fill text-warning fs-5"></i>
+            <h5 class="modal-title fw-bold fs-6 mb-0" id="v2LoginModalLabel">TOKEON 간편 로그인 & 접속</h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4 bg-light">
+          <form id="v2LoginForm" onsubmit="event.preventDefault(); AuthManager.submitLogin();">
+            <div class="mb-3">
+              <label for="loginNickname" class="form-label fw-bold text-dark small">
+                <i class="bi bi-person-fill text-primary me-1"></i>별명 (닉네임 / 아이디)
+              </label>
+              <input type="text" class="form-control form-control-lg fs-6" id="loginNickname" placeholder="별명을 입력하세요 (예: 축구도사)" required autofocus>
+            </div>
+            
+            <div class="mb-3">
+              <label for="loginAge" class="form-label fw-bold text-dark small">
+                <i class="bi bi-calendar-event text-success me-1"></i>나이 (연령)
+              </label>
+              <input type="number" class="form-control form-control-lg fs-6" id="loginAge" placeholder="나이를 입력하세요 (예: 32)" min="1" max="120" value="30" required>
+            </div>
+
+            <div class="mb-3">
+              <label for="loginPassword" class="form-label fw-bold text-dark small">
+                <i class="bi bi-key-fill text-warning me-1"></i>비밀번호
+              </label>
+              <input type="password" class="form-control form-control-lg fs-6" id="loginPassword" placeholder="비밀번호 입력 (4자리 이상)" required>
+            </div>
+
+            <div id="loginAlertBox" class="alert alert-danger py-2 small d-none" role="alert"></div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold shadow-sm py-2.5 mt-2" id="btnLoginSubmit">
+              <i class="bi bi-box-arrow-in-right me-1.5"></i>로그인 및 즉시 접속
+            </button>
+            <div class="text-muted text-center mt-3" style="font-size: 0.72rem; line-height: 1.4;">
+              * 처음 접속 시 별명, 나이, 비번을 입력하시면 자동으로 안전하게 등록되어 즉시 접속됩니다.
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal D: [관리자 전용] 회원별 접속 횟수 및 실시간 접속자 현황 비밀 모달 -->
+  <div class="modal fade" id="v2AdminAccessModal" tabindex="-1" aria-labelledby="v2AdminAccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 900px;">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+        <div class="modal-header bg-dark text-white py-3 px-4 d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-shield-shaded text-warning fs-5"></i>
+            <h5 class="modal-title fw-bold fs-6 mb-0 text-white" id="v2AdminAccessModalLabel">
+              🔒 [관리자 전용] 회원 접속 횟수 & 실시간 접속자 현황 통계
+            </h5>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4 bg-light" id="adminAccessDataContainer">
+          <!-- Populated by AuthManager.openAdminModal() -->
+        </div>
+        <div class="modal-footer py-2 px-4 bg-white d-flex justify-content-between align-items-center">
+          <span class="text-muted small" style="font-size:0.75rem;">
+            * 저장 위치: <code>data/members/registered_users.json</code> & <code>member_summary.txt</code> (실시간 자동 백업)
+          </span>
+          <button type="button" class="btn btn-sm btn-dark px-3 fw-bold" data-bs-dismiss="modal">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sound FX Audio Assets -->
+  <audio id="sndGoal" preload="none" src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"></audio>
+  <audio id="sndHit" preload="none" src="https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3"></audio>
+
+  <!-- Script Modules -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/static/js/common_utils.js?v=20260913_0119"></script>
+  <script src="/static/js/auth_manager.js?v=20260913_0119"></script>
+  <script src="/static/js/live_board.js?v=20260913_0119"></script>
+  <script src="/static/js/match_feed.js?v=20260913_0119"></script>
+  <script src="/static/js/detail_panel.js?v=20260913_0119"></script>
+  <script src="/static/js/toto_modal.js?v=20260913_0119"></script>
+
+  <script>
+    let isSoundOn = true;
+
+    function toggleSoundFx() {
+      isSoundOn = !isSoundOn;
+      const icon = document.getElementById('soundIcon');
+      const text = document.querySelector('#btnSoundToggle span:last-child');
+      if (icon) icon.innerText = isSoundOn ? '🔔' : '🔕';
+      if (text) text.innerText = isSoundOn ? '사운드 ON' : '사운드 OFF';
+    }
+
+    let _liveCenterModalInstance = null;
+
+    function openLiveCenterModal() {
+      const modalEl = document.getElementById('liveCenterModal');
+      if (modalEl) {
+        if (!_liveCenterModalInstance) {
+          _liveCenterModalInstance = new bootstrap.Modal(modalEl);
+        }
+        _liveCenterModalInstance.show();
+      }
+    }
+
+    function sendLiveChatMessage(event) {
+      event.preventDefault();
+      const nickInput = document.getElementById('chatNickInput');
+      const msgInput = document.getElementById('chatMsgInput');
+      const chatContainer = document.getElementById('liveChatMessages');
+
+      const nick = (nickInput && nickInput.value.trim()) || '스포츠팬';
+      const msg = (msgInput && msgInput.value.trim()) || '';
+
+      if (!msg) return;
+
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+      const msgEl = document.createElement('div');
+      msgEl.className = 'chat-msg mb-2';
+      msgEl.innerHTML = `
+        <b class="text-primary">${escapeHtml(nick)}:</b> <span class="text-dark">${escapeHtml(msg)}</span>
+        <span class="text-muted" style="font-size:0.65rem; margin-left:4px;">${timeStr}</span>
+      `;
+      chatContainer.appendChild(msgEl);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+
+      if (msgInput) msgInput.value = '';
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Initialize application
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 0. Initialize Authentication State
+      AuthManager.init();
+
+      // 1. Initialize Toto Modals
+      TotoModal.init();
+      TotoModal.syncNavBadges();
+      setInterval(() => {
+        TotoModal.init();
+        TotoModal.syncNavBadges();
+      }, 10000);
+
+      // 2. Initialize Live Board
+      LiveBoard.init((matchId) => {
+        if (_liveCenterModalInstance) {
+          _liveCenterModalInstance.hide();
+        }
+
+        const m = MatchFeed.getMatchById(matchId);
+        if (m) {
+          MatchFeed.selectMatch(matchId);
+        } else {
+          fetch(`/api/v1/matches/${matchId}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(res => {
+              if (res) DetailPanel.render(res.match || res);
+            })
+            .catch(() => {});
+        }
+      });
+
+      // 3. Fetch all matches & initialize Match Feed
+      try {
+        const resp = await fetch('/api/v1/matches');
+        if (resp.ok) {
+          const json = await resp.json();
+          const matches = Array.isArray(json) ? json : (json.matches || json.data || []);
+          MatchFeed.init(matches, (selectedMatch) => {
+            DetailPanel.render(selectedMatch);
+          });
+        }
+      } catch(e) {
+        console.error('Matches init error:', e);
+      }
+    });
+  </script>
+</body>
+</html>
