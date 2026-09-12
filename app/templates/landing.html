@@ -878,6 +878,7 @@
     .slim-action-btn:hover { background: #e2e8f0; }
     .slim-action-btn.odds-btn { color: #1e40af; border-color: #bfdbfe; background: #eff6ff; }
     .slim-action-btn.history-btn { color: #065f46; border-color: #a7f3d0; background: #ecfdf5; }
+    .slim-action-btn.relay-btn { color: #dc2626; border-color: #fca5a5; background: #fef2f2; }
     .slim-action-btn.detail-btn { color: #1f2937; border-color: #d1d5db; }
     .slim-action-btn.active { background: #1e40af; color: #fff; border-color: #1e40af; }
     /* 아코디언 패널 */
@@ -5128,15 +5129,16 @@
       const nextOpen = !isCurrentlyOpen;
       _starterRecentStateMap.set(sId, nextOpen);
 
-      const hEl = document.getElementById(`starterHomeRecent_${matchId}`);
-      const aEl = document.getElementById(`starterAwayRecent_${matchId}`);
-      const icon = document.getElementById(`starterToggleIcon_${matchId}`);
-      const btn = document.getElementById(`starterToggleBtn_${matchId}`);
-      
-      if (hEl) hEl.style.display = nextOpen ? 'block' : 'none';
-      if (aEl) aEl.style.display = nextOpen ? 'block' : 'none';
-      if (icon) icon.className = nextOpen ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
-      if (btn) {
+      document.querySelectorAll(`[id="starterHomeRecent_${matchId}"]`).forEach(el => {
+        el.style.display = nextOpen ? 'block' : 'none';
+      });
+      document.querySelectorAll(`[id="starterAwayRecent_${matchId}"]`).forEach(el => {
+        el.style.display = nextOpen ? 'block' : 'none';
+      });
+      document.querySelectorAll(`[id="starterToggleIcon_${matchId}"]`).forEach(icon => {
+        icon.className = nextOpen ? 'bi bi-chevron-up' : 'bi bi-chevron-down';
+      });
+      document.querySelectorAll(`[id="starterToggleBtn_${matchId}"]`).forEach(btn => {
         if (nextOpen) {
           btn.style.background = '#ffffff';
           btn.style.color = '#1e293b';
@@ -5146,7 +5148,7 @@
           btn.style.color = '#ffffff';
           btn.style.borderColor = 'rgba(255,255,255,0.35)';
         }
-      }
+      });
     }
 
     function renderPitcher10ColRecentStartsTable(starts, pitcher, teamName, isHome) {
@@ -6354,6 +6356,10 @@ function getFullModalMatchList() {
 
             <!-- Core 6 Decisive Metrics Bars -->
             ${barsHtml}
+
+            <!-- 🤝 맞대결 최근 상대전적 & 📅 최근 경기 결과 10개 (클릭 시 펼치기 토글) -->
+            ${renderCollapsibleH2HSectionHtml(m, matchup)}
+            ${renderCollapsibleRecent10SectionHtml(m, matchup)}
 
             <!-- Dynamic Summary Deep (Sweep factor & Scoreboard) -->
             <div id="mSubSummary_${m.id}">
@@ -12166,6 +12172,7 @@ function getFullModalMatchList() {
                 <div class="slim-card-actions">
                   <button class="slim-action-btn odds-btn ${isAccordionOpen && activeAccordionType === 'odds' ? 'active' : ''}" id="oddsBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'odds')">📊 배당</button>
                   <button class="slim-action-btn history-btn ${isAccordionOpen && activeAccordionType === 'history' ? 'active' : ''}" id="histBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'history')">📋 전경기</button>
+                  <button class="slim-action-btn relay-btn" onclick="event.stopPropagation(); assignMatchToRelaySlot(${m.id})" title="실시간 중계센터 6개 슬롯에 이 경기 배치">📡 중계</button>
                   <button class="slim-action-btn detail-btn" onclick="event.stopPropagation(); selectPredMatch(${m.id}, true)">🔍 상세</button>
                 </div>
                 <div class="slim-accordion-panel ${isAccordionOpen ? 'open' : ''}" id="slimPanel_${m.id}">
@@ -14658,13 +14665,14 @@ function getFullModalMatchList() {
 
     window.toggleH2HRecent = function(matchId) {
       const cur = _h2hRecentStateMap.get(String(matchId)) === true;
-      _h2hRecentStateMap.set(String(matchId), !cur);
-      const el = document.getElementById('h2hDetailContent_' + matchId);
-      const btn = document.getElementById('h2hDetailBtn_' + matchId);
-      if (el) el.style.display = !cur ? 'block' : 'none';
-      if (btn) {
-        btn.innerHTML = !cur ? '<i class="bi bi-chevron-up me-1"></i>접기' : '<i class="bi bi-chevron-down me-1"></i>상세보기';
-      }
+      const nextOpen = !cur;
+      _h2hRecentStateMap.set(String(matchId), nextOpen);
+      document.querySelectorAll(`[id="h2hDetailContent_${matchId}"]`).forEach(el => {
+        el.style.display = nextOpen ? 'block' : 'none';
+      });
+      document.querySelectorAll(`[id="h2hDetailBtn_${matchId}"]`).forEach(btn => {
+        btn.innerHTML = nextOpen ? '<i class="bi bi-chevron-up me-1"></i>접기' : '<i class="bi bi-chevron-down me-1"></i>상세보기';
+      });
     };
 
     function renderCollapsibleH2HSectionHtml(m, matchup) {
@@ -14790,13 +14798,14 @@ function getFullModalMatchList() {
 
     window.toggleRecent10Games = function(matchId) {
       const cur = _recent10StateMap.get(String(matchId)) === true;
-      _recent10StateMap.set(String(matchId), !cur);
-      const el = document.getElementById('recent10DetailContent_' + matchId);
-      const btn = document.getElementById('recent10DetailBtn_' + matchId);
-      if (el) el.style.display = !cur ? 'block' : 'none';
-      if (btn) {
-        btn.innerHTML = !cur ? '<i class="bi bi-chevron-up me-1"></i>접기' : '<i class="bi bi-chevron-down me-1"></i>상세보기';
-      }
+      const nextOpen = !cur;
+      _recent10StateMap.set(String(matchId), nextOpen);
+      document.querySelectorAll(`[id="recent10DetailContent_${matchId}"]`).forEach(el => {
+        el.style.display = nextOpen ? 'block' : 'none';
+      });
+      document.querySelectorAll(`[id="recent10DetailBtn_${matchId}"]`).forEach(btn => {
+        btn.innerHTML = nextOpen ? '<i class="bi bi-chevron-up me-1"></i>접기' : '<i class="bi bi-chevron-down me-1"></i>상세보기';
+      });
     };
 
     function renderTeamRecent10TableHtml(recentMatches, teamName, isHomeTeam, sportCode) {
@@ -15908,6 +15917,7 @@ function getFullModalMatchList() {
     let currentCenterSubTab = 'SABER'; // 'RELAY' (실시간 중계) or 'SABER' (세이버 정밀 분석)
     let relaySportFilter = 'ALL';      // 'ALL', 'BASEBALL', 'SOCCER', 'BASKETBALL', 'VOLLEYBALL'
     let isMultiPlayMode = true;        // true: 멀티플레이 최대 6경기 동시 시청, false: 단일 집중 시청
+    let selectedMultiPlayMatchIds = [null, null, null, null, null, null]; // 멀티플레이 6개 슬롯별 선택된 경기 ID
     let isLiveDemoMode = false;        // 실시간 가상 경기 시뮬레이터 데모 모드
     let liveDemoInterval = null;
     const liveDemoStateMap = new Map();
@@ -16816,15 +16826,170 @@ function getFullModalMatchList() {
       `;
     }
 
+    function changeMultiPlaySlotMatch(slotIdx, matchId) {
+      if (slotIdx < 0 || slotIdx >= 6) return;
+      if (!matchId || matchId === 'null' || matchId === '') {
+        selectedMultiPlayMatchIds[slotIdx] = null;
+      } else {
+        selectedMultiPlayMatchIds[slotIdx] = Number(matchId);
+      }
+      renderLiveRelayCenter();
+    }
+
+    function clearMultiPlaySlot(slotIdx) {
+      if (slotIdx >= 0 && slotIdx < 6) {
+        selectedMultiPlayMatchIds[slotIdx] = null;
+        renderLiveRelayCenter();
+      }
+    }
+
+    function assignMatchToRelaySlot(matchId, targetSlotIdx = -1) {
+      const mId = Number(matchId);
+      if (!mId) return;
+      
+      if (targetSlotIdx >= 0 && targetSlotIdx < 6) {
+        selectedMultiPlayMatchIds[targetSlotIdx] = mId;
+      } else {
+        const existingIdx = selectedMultiPlayMatchIds.indexOf(mId);
+        if (existingIdx === -1) {
+          const emptyIdx = selectedMultiPlayMatchIds.findIndex(id => id === null);
+          if (emptyIdx !== -1) {
+            selectedMultiPlayMatchIds[emptyIdx] = mId;
+          } else {
+            selectedMultiPlayMatchIds[0] = mId;
+          }
+        }
+      }
+      
+      isMultiPlayMode = true;
+      updateMultiPlayBtnState();
+      switchCenterViewMode('RELAY');
+      renderLiveRelayCenter();
+    }
+
+    function autoAssignMultiPlayLive() {
+      const all = (typeof allMatches !== 'undefined' && allMatches) ? allMatches : [];
+      const lives = all.filter(m => m.status === 'LIVE' || (typeof isRealTimeLive === 'function' && isRealTimeLive(m)));
+      const sched = all.filter(m => m.status === 'SCHEDULED');
+      const fin = all.filter(m => m.status === 'FINISHED');
+      const pool = [...lives, ...sched, ...fin];
+      for (let i = 0; i < 6; i++) {
+        selectedMultiPlayMatchIds[i] = pool[i] ? pool[i].id : null;
+      }
+      renderLiveRelayCenter();
+    }
+
+    function autoAssignMultiPlayBySport(sportCode) {
+      const all = (typeof allMatches !== 'undefined' && allMatches) ? allMatches : [];
+      const filtered = all.filter(m => (m.sport_code || '').toUpperCase() === sportCode.toUpperCase());
+      for (let i = 0; i < 6; i++) {
+        selectedMultiPlayMatchIds[i] = filtered[i] ? filtered[i].id : null;
+      }
+      renderLiveRelayCenter();
+    }
+
+    function autoAssignMultiPlayByToto() {
+      const toto = (typeof currentPredSport !== 'undefined' && (currentPredSport === 'WDL' || (typeof currentTotoRound !== 'undefined' && currentTotoRound === 'WDL'))) ? (TOTO_DATA.WDL_LIVE || TOTO_DATA.WDL) : (TOTO_DATA.W1L_LIVE || TOTO_DATA.W1L);
+      const tMatches = (toto && toto.matches) ? toto.matches : [];
+      const all = (typeof allMatches !== 'undefined' && allMatches) ? allMatches : [];
+      for (let i = 0; i < 6; i++) {
+        if (tMatches[i] && tMatches[i].db_match_id) {
+          selectedMultiPlayMatchIds[i] = tMatches[i].db_match_id;
+        } else if (all[i]) {
+          selectedMultiPlayMatchIds[i] = all[i].id;
+        } else {
+          selectedMultiPlayMatchIds[i] = null;
+        }
+      }
+      renderLiveRelayCenter();
+    }
+
+    function resetMultiPlaySlots() {
+      autoAssignMultiPlayLive();
+    }
+
+    function buildMultiPlayMatchOptionsHtml(selectedMatchId) {
+      const all = (typeof allMatches !== 'undefined' && allMatches) ? allMatches : [];
+      const sports = [
+        { code: 'BASEBALL', name: '⚾ 야구' },
+        { code: 'SOCCER', name: '⚽ 축구' },
+        { code: 'BASKETBALL', name: '🏀 농구' },
+        { code: 'VOLLEYBALL', name: '🏐 배구' }
+      ];
+      
+      let optionsHtml = `<option value="">-- [슬롯 비우기 / 경기 선택] --</option>`;
+      
+      sports.forEach(sp => {
+        const list = all.filter(m => (m.sport_code || '').toUpperCase() === sp.code);
+        if (list.length > 0) {
+          optionsHtml += `<optgroup label="${sp.name} (${list.length}경기)">`;
+          list.forEach(m => {
+            const isSel = (Number(m.id) === Number(selectedMatchId)) ? 'selected' : '';
+            const statusTag = (m.status === 'LIVE') ? '🔴LIVE' : (m.status === 'FINISHED' ? '🏁종료' : '⏳예정');
+            const hTeam = formatTeamName(m.home_team_name);
+            const aTeam = formatTeamName(m.away_team_name);
+            const optText = `[${statusTag}] ${hTeam} vs ${aTeam}`;
+            optionsHtml += `<option value="${m.id}" ${isSel}>${optText}</option>`;
+          });
+          optionsHtml += `</optgroup>`;
+        }
+      });
+      
+      const otherMatches = all.filter(m => !sports.some(sp => sp.code === (m.sport_code || '').toUpperCase()));
+      if (otherMatches.length > 0) {
+        optionsHtml += `<optgroup label="기타 종목">`;
+        otherMatches.forEach(m => {
+          const isSel = (Number(m.id) === Number(selectedMatchId)) ? 'selected' : '';
+          const statusTag = (m.status === 'LIVE') ? '🔴LIVE' : (m.status === 'FINISHED' ? '🏁종료' : '⏳예정');
+          optionsHtml += `<option value="${m.id}" ${isSel}>[${statusTag}] ${formatTeamName(m.home_team_name)} vs ${formatTeamName(m.away_team_name)}</option>`;
+        });
+        optionsHtml += `</optgroup>`;
+      }
+      
+      return optionsHtml;
+    }
+
     function renderLiveMultiPlayGrid(matches) {
-      if (!matches || matches.length === 0) {
-        return `<div class="text-center text-muted py-5">선택된 종목의 진행 중인 경기가 없습니다.</div>`;
+      const all = (typeof allMatches !== 'undefined' && allMatches) ? allMatches : [];
+      
+      // If all 6 slots are currently null, initialize with default filtered matches
+      if (selectedMultiPlayMatchIds.every(id => id === null)) {
+        const pool = (matches && matches.length > 0) ? matches : all;
+        for (let i = 0; i < 6; i++) {
+          selectedMultiPlayMatchIds[i] = pool[i] ? pool[i].id : null;
+        }
       }
 
-      // 최대 6경기 동시 시청 (2열 3행 텍스트 그리드)
-      const targets = matches.slice(0, 6);
+      let activeCount = 0;
 
-      const cardsHtml = targets.map((m, idx) => {
+      const cardsHtml = [0, 1, 2, 3, 4, 5].map(slotIdx => {
+        const matchId = selectedMultiPlayMatchIds[slotIdx];
+        const m = matchId ? all.find(x => Number(x.id) === Number(matchId)) : null;
+
+        const optionsHtml = buildMultiPlayMatchOptionsHtml(matchId);
+
+        if (!m) {
+          return `
+            <div class="col-12 col-md-6 mb-2">
+              <div class="multi-relay-card empty-slot-card h-100 d-flex flex-column justify-content-between p-2.5 rounded-3" style="background:#f8fafc; border:2px dashed #cbd5e1; min-height:160px;">
+                <div class="text-center py-2">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge" style="background:#e2e8f0; color:#475569; font-size:0.70rem; font-weight:800;">슬롯 #${slotIdx + 1}</span>
+                    <span class="text-muted small fw-bold" style="font-size:0.68rem;">대기 중</span>
+                  </div>
+                  <div style="font-size: 1.4rem; color: #94a3b8;" class="mb-1">📡</div>
+                  <div class="fw-bold text-dark" style="font-size: 0.78rem;">슬롯 #${slotIdx + 1} 경기를 선택하세요</div>
+                  <div class="text-muted" style="font-size: 0.68rem; margin-bottom: 8px;">원하는 팀/경기를 직접 지정하여 실시간 중계를 시청할 수 있습니다.</div>
+                  <select class="form-select form-select-sm fw-bold border-primary shadow-sm" onchange="changeMultiPlaySlotMatch(${slotIdx}, this.value)" style="font-size:0.74rem; background-color:#ffffff;">
+                    ${optionsHtml}
+                  </select>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        activeCount++;
         const st = getLiveMatchState(m);
         const sport = (m.sport_code || 'SOCCER').toUpperCase();
         const odds = getMatchOdds(m);
@@ -16849,9 +17014,9 @@ function getFullModalMatchList() {
         if (isSched) {
           centerContent = `
             <div class="d-flex justify-content-between align-items-center text-center my-1">
-              <div class="fw-bold text-truncate" style="font-size:0.80rem; max-width:44%; color:#0f172a;" title="${m.home_team_name}">${m.home_team_name}</div>
+              <div class="fw-bold text-truncate" style="font-size:0.82rem; max-width:44%; color:#0f172a;" title="${m.home_team_name}">${formatTeamName(m.home_team_name)}</div>
               <span class="badge bg-light text-primary border px-1.5 py-0.5 fw-bold" style="font-size:0.65rem;">VS</span>
-              <div class="fw-bold text-truncate" style="font-size:0.80rem; max-width:44%; color:#0f172a;" title="${m.away_team_name}">${m.away_team_name}</div>
+              <div class="fw-bold text-truncate" style="font-size:0.82rem; max-width:44%; color:#0f172a;" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</div>
             </div>
             <div class="rounded py-1 px-1.5 my-1 text-center font-monospace fw-bold" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.68rem; color:#1e293b;">
               <span class="text-primary">승 ${odds.home}</span> / <span class="text-secondary">무 ${odds.draw || '-'}</span> / <span class="text-danger">패 ${odds.away}</span>
@@ -16863,9 +17028,9 @@ function getFullModalMatchList() {
         } else if (isFin) {
           centerContent = `
             <div class="d-flex justify-content-between align-items-center text-center my-1">
-              <div class="fw-bold text-truncate" style="font-size:0.80rem; max-width:40%; color:#0f172a;" title="${m.home_team_name}">${m.home_team_name}</div>
+              <div class="fw-bold text-truncate" style="font-size:0.82rem; max-width:40%; color:#0f172a;" title="${m.home_team_name}">${formatTeamName(m.home_team_name)}</div>
               <div class="fw-bold text-dark fs-5 font-monospace">${scoreH} : ${scoreA}</div>
-              <div class="fw-bold text-truncate" style="font-size:0.80rem; max-width:40%; color:#0f172a;" title="${m.away_team_name}">${m.away_team_name}</div>
+              <div class="fw-bold text-truncate" style="font-size:0.82rem; max-width:40%; color:#0f172a;" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</div>
             </div>
             <div class="rounded py-0.5 my-1 text-center text-muted fw-bold" style="background:#f1f5f9; font-size:0.68rem;">
               공식 경기 종료 (FINAL)
@@ -16878,9 +17043,9 @@ function getFullModalMatchList() {
           // LIVE or DEMO
           centerContent = `
             <div class="d-flex justify-content-between align-items-center text-center my-1">
-              <div class="fw-bold text-truncate" style="font-size:0.82rem; max-width:38%; color:#0f172a;" title="${m.home_team_name}">${m.home_team_name}</div>
+              <div class="fw-bold text-truncate" style="font-size:0.84rem; max-width:38%; color:#0f172a;" title="${m.home_team_name}">${formatTeamName(m.home_team_name)}</div>
               <div class="fw-bold text-danger fs-4 font-monospace px-1">${scoreH} : ${scoreA}</div>
-              <div class="fw-bold text-truncate" style="font-size:0.82rem; max-width:38%; color:#0f172a;" title="${m.away_team_name}">${m.away_team_name}</div>
+              <div class="fw-bold text-truncate" style="font-size:0.84rem; max-width:38%; color:#0f172a;" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</div>
             </div>
             <div class="p-1 rounded text-center my-1" style="background:#fef2f2; border:1px solid #fee2e2; font-size:0.70rem;">
               <span class="text-danger fw-bold"><i class="bi bi-broadcast me-0.5"></i>${st.inning_text || st.match_minute || '진행중'}</span>
@@ -16890,12 +17055,21 @@ function getFullModalMatchList() {
         }
 
         return `
-          <div class="col-6 mb-2">
+          <div class="col-12 col-md-6 mb-2">
             <div class="multi-relay-card h-100 d-flex flex-column justify-content-between p-2 rounded-3 border ${isLive ? 'border-danger' : ''}" style="${isLive ? 'border-color:#fca5a5 !important; background:#ffffff; box-shadow:0 2px 6px rgba(239,68,68,0.08);' : 'background:#ffffff; border-color:#e2e8f0;'}">
               <div>
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                  <span class="badge bg-light text-dark border text-truncate fw-bold" style="font-size:0.66rem; max-width:58%;">${m.league_name || sport}</span>
-                  ${statusBadge}
+                <!-- Slot Selector Header -->
+                <div class="d-flex justify-content-between align-items-center mb-1 gap-1">
+                  <div class="d-flex align-items-center gap-1 text-truncate" style="flex:1; min-width:0;">
+                    <span class="badge bg-dark text-white fw-bold px-1.5 py-0.5" style="font-size:0.65rem; flex-shrink:0;">슬롯 #${slotIdx + 1}</span>
+                    <select class="form-select form-select-sm py-0 px-1 fw-bold border-secondary text-truncate" onchange="changeMultiPlaySlotMatch(${slotIdx}, this.value)" style="font-size:0.68rem; height:22px; max-width:75%;" title="다른 경기로 교체">
+                      ${optionsHtml}
+                    </select>
+                  </div>
+                  <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                    ${statusBadge}
+                    <button class="btn btn-xs btn-outline-secondary py-0 px-1 fw-bold" onclick="clearMultiPlaySlot(${slotIdx})" title="이 슬롯 비우기" style="font-size:0.65rem; border-radius:3px; line-height:1.2;">✕</button>
+                  </div>
                 </div>
                 ${centerContent}
               </div>
@@ -16914,13 +17088,24 @@ function getFullModalMatchList() {
 
       return `
         <div class="live-multiplay-wrapper">
-          <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-            <span class="fw-bold text-dark" style="font-size: 0.82rem;">
-              <i class="bi bi-grid-3x3-gap-fill text-primary me-1"></i>실시간 텍스트 중계센터 멀티플레이
-            </span>
-            <span class="badge bg-light text-secondary border fw-bold" style="font-size: 0.70rem;">
-              최대 6경기 동시 중계 (${targets.length}/${matches.length})
-            </span>
+          <!-- Preset Selector Toolbar -->
+          <div class="p-2 mb-2 rounded-2 d-flex flex-wrap gap-1 align-items-center justify-content-between" style="background:#f8fafc; border:1px solid #e2e8f0;">
+            <div class="d-flex align-items-center gap-1 flex-wrap">
+              <span class="fw-bold text-dark me-1" style="font-size: 0.78rem;">
+                <i class="bi bi-grid-3x3-gap-fill text-primary me-1"></i>실시간 6-중계 슬롯:
+              </span>
+              <button class="btn btn-xs btn-primary py-0.5 px-2 fw-bold" onclick="autoAssignMultiPlayLive()" style="font-size:0.68rem; border-radius:4px;">⚡ LIVE 자동배치</button>
+              <button class="btn btn-xs btn-outline-secondary py-0.5 px-1.5 fw-bold" onclick="autoAssignMultiPlayBySport('BASEBALL')" style="font-size:0.68rem; border-radius:4px;">⚾ 야구 6개</button>
+              <button class="btn btn-xs btn-outline-secondary py-0.5 px-1.5 fw-bold" onclick="autoAssignMultiPlayBySport('SOCCER')" style="font-size:0.68rem; border-radius:4px;">⚽ 축구 6개</button>
+              <button class="btn btn-xs btn-outline-secondary py-0.5 px-1.5 fw-bold" onclick="autoAssignMultiPlayBySport('BASKETBALL')" style="font-size:0.68rem; border-radius:4px;">🏀 농구 6개</button>
+              <button class="btn btn-xs btn-outline-secondary py-0.5 px-1.5 fw-bold" onclick="autoAssignMultiPlayByToto()" style="font-size:0.68rem; border-radius:4px;">📋 토토 14경기</button>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+              <span class="badge bg-light text-secondary border fw-bold" style="font-size: 0.68rem;">
+                선택 중 (${activeCount}/6)
+              </span>
+              <button class="btn btn-xs btn-outline-danger py-0.5 px-1.5 fw-bold" onclick="resetMultiPlaySlots()" style="font-size:0.68rem; border-radius:4px;" title="슬롯 전체 초기화">🔄 초기화</button>
+            </div>
           </div>
           <div class="row g-2">
             ${cardsHtml}
