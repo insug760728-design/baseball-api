@@ -10,11 +10,15 @@ engine = create_engine(
 if 'sqlite' in settings.DATABASE_URL:
     @event.listens_for(engine, "connect")
     def set_sqlite_pragma(dbapi_connection, connection_record):
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA journal_mode=WAL")
-        cursor.execute("PRAGMA busy_timeout=10000")
-        cursor.execute("PRAGMA synchronous=NORMAL")
-        cursor.close()
+        try:
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA busy_timeout=10000")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.close()
+        except Exception as e:
+            print(f"[WARN] SQLite PRAGMA 설정 중 오류 (무시하고 계속 진행): {e}")
+
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
