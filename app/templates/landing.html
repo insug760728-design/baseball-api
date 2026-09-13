@@ -2572,8 +2572,22 @@
         const nickEl = document.getElementById('loginNicknameInput');
         if (nickEl) nickEl.value = currentUser.nickname || '';
       }
-      const modal = new bootstrap.Modal(document.getElementById('simpleLoginModal'));
-      modal.show();
+      try {
+        const modalEl = document.getElementById('simpleLoginModal');
+        if (modalEl) {
+          if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const modal = (typeof bootstrap.Modal.getOrCreateInstance === 'function') 
+              ? bootstrap.Modal.getOrCreateInstance(modalEl) 
+              : new bootstrap.Modal(modalEl);
+            modal.show();
+          } else {
+            modalEl.classList.add('show');
+            modalEl.style.display = 'block';
+          }
+        }
+      } catch(e) {
+        console.warn('Modal open error:', e);
+      }
     }
 
     // 🔑 1. 간편 로그인 (별명 + 비밀번호)
@@ -2787,29 +2801,15 @@
     }
 
     function renderAuthUI() {
-      const mainWrapper = document.getElementById('mainAppWrapper');
       const navContainer = document.getElementById('navAuthContainer');
       const subDisplay = document.getElementById('subBarAuthDisplay');
       const chatAuthorEl = document.getElementById('chatAuthorInput');
 
-      let authOverlay = document.getElementById('authBlockOverlay');
-      if (!authOverlay) {
-        authOverlay = document.createElement('div');
-        authOverlay.id = 'authBlockOverlay';
-        authOverlay.style.cssText = 'position: fixed; top: 52px; left: 0; right: 0; bottom: 0; z-index: 1040; background: rgba(15, 23, 42, 0.05); cursor: pointer; display: none;';
-        authOverlay.title = '클릭 시 로그인 창이 열립니다.';
-        authOverlay.onclick = function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          openLoginModal('login');
-        };
-        document.body.appendChild(authOverlay);
-      }
+      // 기존 차단 오버레이 제거 (화면 클릭 100% 허용)
+      const existingOverlay = document.getElementById('authBlockOverlay');
+      if (existingOverlay) existingOverlay.remove();
 
       if (currentUser && currentUser.nickname) {
-        // [로그인 상태]: 회원 버튼 없이 닉네임, 나이, 로그아웃 표시 & 모든 화면 자유 클릭 허용
-        if (authOverlay) authOverlay.style.display = 'none';
-
         if (navContainer) {
           navContainer.innerHTML = `
             <div class="btn-group btn-group-sm" role="group" id="viewModeToggleGroup" style="border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden;">
@@ -2841,9 +2841,6 @@
           chatAuthorEl.title = "간편 로그인된 별명입니다.";
         }
       } else {
-        // [비로그인 상태]: 회원 버튼 삭제, 로그인 버튼만 표시 & 클릭 시 로그인 모달 호출 가드 활성화
-        if (authOverlay) authOverlay.style.display = 'block';
-
         if (navContainer) {
           navContainer.innerHTML = `
             <div class="btn-group btn-group-sm me-1" role="group" id="viewModeToggleGroup" style="border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden;">
