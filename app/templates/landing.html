@@ -3056,16 +3056,18 @@
       if (archiveLoadingPromise) return archiveLoadingPromise;
       archiveLoadingPromise = (async () => {
         try {
-          // 🚀 롤링 윈도우 기반 연속 페칭 (어제 D-1 12:00 ~ 내일 D+2 23:59): 자정 경계 단절 완전 방지
+          // 🚀 롤링 윈도우 기반 연속 페칭 (어제 D-1 ~ 내일 D+2): 경기 데이터 페칭
           const now = new Date();
           const rollingStartStr = getKSTDateString(new Date(now.getTime() - 86400000));
-          const [upResp, finResp] = await Promise.all([
+          const [upResp, finResp, allResp] = await Promise.all([
             fetch(`/api/v1/matches?start_date=${rollingStartStr}&order=asc&limit=300`),
-            fetch('/api/v1/matches?status=FINISHED&order=desc&limit=150')
+            fetch('/api/v1/matches?status=FINISHED&order=desc&limit=150'),
+            fetch('/api/v1/matches?limit=300&order=desc')
           ]);
           const upMatches = upResp.ok ? await upResp.json() : [];
           const finMatches = finResp.ok ? await finResp.json() : [];
-          const rawMatches = [...upMatches, ...finMatches];
+          const allDbMatches = allResp.ok ? await allResp.json() : [];
+          const rawMatches = [...upMatches, ...finMatches, ...allDbMatches];
 
           const seenIds = new Set(allMatches.map(m => m.id));
           const seenKeys = new Set(allMatches.map(m => {
@@ -3087,8 +3089,9 @@
           }
           archiveLoaded = true;
 
-          // Refresh active view if user has switched to FINISHED or ALL
-          if (added && (currentPredDate === 'FINISHED' || currentPredDate === 'ALL')) {
+          // Refresh active view
+          if (added) {
+            renderMatchStrip('ALL');
             renderPredMatches();
           }
         } catch (e) {
@@ -3106,14 +3109,16 @@
         const now = new Date();
         const d0Str = getKSTDateString(now);
         const rollingStartStr = getKSTDateString(new Date(now.getTime() - 86400000));
-        // Fast Phase 1: 롤링 윈도우(D-1 어제부터 시작)로 오늘 새벽/아침 및 어젯밤 경기 무누락 보존 (~60KB JSON)
-        const [upResp, finResp] = await Promise.all([
+        // Fast Phase 1: 롤링 윈도우 + 전체 최신 경기 즉시 로드
+        const [upResp, finResp, allResp] = await Promise.all([
           fetch(`/api/v1/matches?start_date=${rollingStartStr}&order=asc&limit=150`),
-          fetch('/api/v1/matches?status=FINISHED&order=desc&limit=60')
+          fetch('/api/v1/matches?status=FINISHED&order=desc&limit=60'),
+          fetch('/api/v1/matches?limit=150&order=desc')
         ]);
         const upMatches = upResp.ok ? await upResp.json() : [];
         const finMatches = finResp.ok ? await finResp.json() : [];
-        const rawMatches = [...upMatches, ...finMatches];
+        const allDbMatches = allResp.ok ? await allResp.json() : [];
+        let rawMatches = [...upMatches, ...finMatches, ...allDbMatches];
 
         // Ensure absolute fixture-level uniqueness (id or sport + home + away + YYYY-MM-DD)
         const uniqueList = [];
@@ -8564,8 +8569,7 @@ function getFullModalMatchList() {
         }
         list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
       } else {
-        // 📅 [경기목록 (진행/예정)]: LIVE 진행 중인 경기 + 앞으로 열릴 예정(SCHEDULED) 경기만!
-        // 마감되거나 종료된 지난 경기는 100% 분리하여 제외
+        // 📅 [경기목록 (진행/예정)]: LIVE 진행 중인 경기 + 앞으로 열릴 예정(SCHEDULED) 경기
         const liveMatches = list.filter(isMatchTrulyLive);
         const upcomingMatches = list.filter(m => {
           if (m.status === 'CANCELLED' || m.status === 'POSTPONED' || m.status === 'FINISHED') return false;
@@ -8577,7 +8581,17 @@ function getFullModalMatchList() {
         liveMatches.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
         upcomingMatches.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
 
-        list = [...liveMatches, ...upcomingMatches];
+        if (liveMatches.length === 0 && upcomingMatches.length === 0 && allMatches && allMatches.length > 0) {
+          // 예정 경기가 아직 수집 전이거나 날짜 전환 시점에도 전체 최신 경기 목록으로 즉시 노출
+          let fallbackList = [...allMatches];
+          if (currentPredSport !== 'ALL') {
+            fallbackList = fallbackList.filter(m => m.sport_code === currentPredSport);
+          }
+          fallbackList.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+          list = fallbackList;
+        } else {
+          list = [...liveMatches, ...upcomingMatches];
+        }
       }
 
       // 실시간 중복 제거

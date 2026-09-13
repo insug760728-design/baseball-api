@@ -45,6 +45,8 @@ def get_mobile_today_matches(
     모바일 앱 메인 카드 뷰에 최적화된 경량 경기 목록
     """
     matches = MatchService.get_matches(db, sport_code=sport, status=status, limit=30, order="asc")
+    if not matches:
+        matches = MatchService.get_matches(db, sport_code=sport, limit=30, order="desc")
     
     result = []
     for m in matches:
