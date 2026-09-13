@@ -8907,6 +8907,10 @@ function getFullModalMatchList() {
       'LA 다저스': '베츠(손목)', '신시내티 레즈': '맥클레인(어깨)'
     };
 
+    function renderMatchNotifButtonHtml(m) {
+      return '';
+    }
+
     function getMatchAbsences(m) {
       const absences = typeof KNOWN_ABSENCES !== 'undefined' ? KNOWN_ABSENCES : {};
       const hAbs = absences[m.home_team_name];
@@ -9389,7 +9393,6 @@ function getFullModalMatchList() {
             <div class="d-flex justify-content-between align-items-center mb-1">
               <span class="slim-card-sport-time">${sportIcon} ${m.league_name || m.sport_code} · ${timeStr}${sweepBadge}</span>
               <div class="d-flex align-items-center gap-1.5" style="flex-shrink:0;">
-                ${renderMatchNotifButtonHtml(m)}
                 ${scoreLabel ? `<span>${scoreLabel}</span>` : ''}
               </div>
             </div>
