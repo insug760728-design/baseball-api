@@ -269,14 +269,22 @@ TEAM_SYNONYMS = {
     "스토크시티": ["스토크 시티", "스토크", "stoke city", "stoke"],
 
     # Soccer (Europe / Latin America)
+    "브레스트": ["브레스트", "스타드 브레스트 29", "스타드 브레스트", "스타드브레스트29", "stade brestois 29", "brest"],
+    "파리생제": ["psg", "paris saint-germain", "파리 생제르맹", "파리생제르맹", "파리 생제르망", "파리생제르망"],
+    "르망": ["르망", "르망fc", "르망 fc", "le mans", "le mans fc"],
+    "랑스": ["랑스", "rc 랑스", "rc랑스", "rc lens", "lens"],
     "레체": ["레체", "us레체", "us 레체", "lecce", "us lecce"],
     "몬차": ["몬차", "ac몬차", "ac 몬차", "monza", "ac monza"],
+    "코모": ["코모", "코모 1907", "como", "como 1907"],
     "릴": ["릴", "릴osc", "릴 osc", "lille", "lille osc", "lille losc"],
     "트루아": ["트루아", "트루아ac", "트루아 ac", "troyes", "estac troyes"],
     "호펜하임": ["호펜하임", "1899 hoffenheim", "hoffenheim", "tsg hoffenheim"],
     "슈투트가르트": ["슈투트가르트", "vfb stuttgart", "stuttgart", "슈투트가"],
     "쾰른": ["쾰른", "1. fc köln", "1. fc koln", "cologne", "fc koln"],
-    "브레멘": ["브레멘", "werder bremen", "베르더 브레멘", "bremen"]
+    "브레멘": ["브레멘", "werder bremen", "베르더 브레멘", "bremen"],
+    "볼프스부르크": ["볼프스부르크", "vfl 볼프스부르크", "vfl wolfsburg", "wolfsburg"],
+    "마인츠": ["1. fsv 마인츠 05", "마인츠", "mainz 05", "1. fsv mainz 05"],
+    "헤라클레스": ["헤라클레스", "헤라클레스 알멜로", "헤라클레스알멜로", "heracles almelo"]
 }
 
 @lru_cache(maxsize=4096)

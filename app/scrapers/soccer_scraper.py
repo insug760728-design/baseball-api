@@ -175,6 +175,16 @@ class SoccerScraper(BaseScraper):
             stadium = comps.get("venue", {}).get("fullName") or "스타디움"
             round_name = ev.get("season", {}).get("slug", "정규시즌")
 
+            clock_detail = comps.get("status", {}).get("type", {}).get("shortDetail") or comps.get("status", {}).get("displayClock") or ""
+            if "Halftime" in clock_detail or "HT" == clock_detail:
+                clock_detail = "HT (하프타임)"
+            elif "Full Time" in clock_detail or "FT" == clock_detail:
+                clock_detail = "경기종료"
+            elif "1st Half" in clock_detail:
+                clock_detail = clock_detail.replace(" - 1st Half", " (전반)")
+            elif "2nd Half" in clock_detail:
+                clock_detail = clock_detail.replace(" - 2nd Half", " (후반)")
+
             result.append({
                 "official_id": f"{self.league_id}_{ev_id}",
                 "sport_code": "SOCCER",
@@ -187,7 +197,9 @@ class SoccerScraper(BaseScraper):
                 "away_team_name": away_team,
                 "home_score": home_score,
                 "away_score": away_score,
-                "status": status
+                "status": status,
+                "current_inning": clock_detail if status == "LIVE" else None,
+                "scoreboard": {"current_inning": clock_detail} if status == "LIVE" else {}
             })
 
         return result

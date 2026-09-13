@@ -521,8 +521,9 @@ class SchedulerService:
             try:
                 now_kst = get_now_kst()
                 today_str = now_kst.strftime("%Y-%m-%d")
-                pre_window_start = (now_kst - timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M")
-                pre_window_end = (now_kst + timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M")
+                yesterday_str = (now_kst - timedelta(days=1)).strftime("%Y-%m-%d")
+                pre_window_start = (now_kst - timedelta(hours=3, minutes=30)).strftime("%Y-%m-%d %H:%M")
+                pre_window_end = (now_kst + timedelta(minutes=15)).strftime("%Y-%m-%d %H:%M")
 
                 has_live = False
                 has_imminent = False
@@ -533,6 +534,8 @@ class SchedulerService:
                 mlb_imminent = False
                 kbo_npb_imminent = False
                 soccer_imminent = False
+
+                active_soccer_leagues = set()
 
                 db = SessionLocal()
                 try:
@@ -549,8 +552,17 @@ class SchedulerService:
                                 kbo_npb_live = True
                             elif m.sport_code == "SOCCER":
                                 soccer_live = True
+                                lname = m.league_name or ""
+                                if "라리가" in lname or "LALIGA" in lname.upper(): active_soccer_leagues.add("LALIGA")
+                                elif "EPL" in lname.upper() or "프리미어" in lname: active_soccer_leagues.add("EPL")
+                                elif "세리에" in lname or "SERIE" in lname.upper(): active_soccer_leagues.add("SERIE_A")
+                                elif "분데스" in lname or "BUNDESLIGA" in lname.upper(): active_soccer_leagues.add("BUNDESLIGA")
+                                elif "리그 1" in lname or "리그1" in lname or "LIGUE" in lname.upper(): active_soccer_leagues.add("LIGUE_1")
+                                elif "챔피언스" in lname or "UCL" in lname.upper(): active_soccer_leagues.add("UCL")
+                                elif "유로파" in lname or "UEL" in lname.upper(): active_soccer_leagues.add("UEL")
+                                elif "챔피언십" in lname or "CHAMPIONSHIP" in lname.upper(): active_soccer_leagues.add("CHAMPIONSHIP")
 
-                    # 2. 🟡 시작 5분 전 ~ 시작 직전인 예정(SCHEDULED) 경기 확인
+                    # 2. 🟡 시작 직전(15분 전) 또는 최근 3.5시간 내 시작한 SCHEDULED 경기 확인
                     sched_imminent = db.query(Match).filter(
                         Match.status == "SCHEDULED",
                         Match.match_date >= pre_window_start,
@@ -565,10 +577,19 @@ class SchedulerService:
                                 kbo_npb_imminent = True
                             elif m.sport_code == "SOCCER":
                                 soccer_imminent = True
+                                lname = m.league_name or ""
+                                if "라리가" in lname or "LALIGA" in lname.upper(): active_soccer_leagues.add("LALIGA")
+                                elif "EPL" in lname.upper() or "프리미어" in lname: active_soccer_leagues.add("EPL")
+                                elif "세리에" in lname or "SERIE" in lname.upper(): active_soccer_leagues.add("SERIE_A")
+                                elif "분데스" in lname or "BUNDESLIGA" in lname.upper(): active_soccer_leagues.add("BUNDESLIGA")
+                                elif "리그 1" in lname or "리그1" in lname or "LIGUE" in lname.upper(): active_soccer_leagues.add("LIGUE_1")
+                                elif "챔피언스" in lname or "UCL" in lname.upper(): active_soccer_leagues.add("UCL")
+                                elif "유로파" in lname or "UEL" in lname.upper(): active_soccer_leagues.add("UEL")
+                                elif "챔피언십" in lname or "CHAMPIONSHIP" in lname.upper(): active_soccer_leagues.add("CHAMPIONSHIP")
                 finally:
                     db.close()
 
-                # ⚪ 비경기 시간대 (IDLE): 진행 중인 경기도 없고 시작 5분 전 경기도 없으면 API 호출 0회 (60초 대기)
+                # ⚪ 비경기 시간대 (IDLE): 진행 중인 경기도 없고 시작 전후 경기도 없으면 API 호출 0회 (60초 대기)
                 if not has_live and not has_imminent:
                     await asyncio.sleep(60)
                     continue
@@ -576,12 +597,12 @@ class SchedulerService:
                 sync_tasks = []
                 now_epoch = time.time()
 
-                # (A) MLB 공식 실시간 동기화 (LIVE 진행 중일 때만)
+                # (A) MLB 공식 실시간 동기화 (LIVE/시작 전후)
                 if mlb_live or mlb_imminent:
                     def _sync_mlb():
                         d_db = SessionLocal()
                         try:
-                            res = MatchService.sync_from_official_site(d_db, league_id="MLB", target_date=today_str, sync_boxscore=False)
+                            res = MatchService.sync_from_official_site(d_db, league_id="MLB", start_date=yesterday_str, end_date=today_str, sync_boxscore=False)
                             return res.get("synced_matches_count", 0)
                         except Exception as e:
                             logger.warning(f"[Scheduler Live MLB] 동기화 경고: {e}")
@@ -590,7 +611,7 @@ class SchedulerService:
                             d_db.close()
                     sync_tasks.append(asyncio.to_thread(_sync_mlb))
 
-                # (B) KBO/NPB 공식 실시간 동기화 (LIVE 진행 중일 때만)
+                # (B) KBO/NPB 공식 실시간 동기화
                 if kbo_npb_live or kbo_npb_imminent:
                     def _sync_domestic():
                         d_db = SessionLocal()
@@ -607,29 +628,40 @@ class SchedulerService:
                             d_db.close()
                     sync_tasks.append(asyncio.to_thread(_sync_domestic))
 
-                # (C) 유료 LiveApiSports 스마트 동적 수집 (축구 LIVE 30초 / 야구 1초 초고속 / 시작 직전 30초)
+                # (C) 축구 공식 무료 실시간 동기화 (ESPN 무료 무제한 연동: LIVE 10초 / 시작전 30초 주기)
+                if soccer_live or soccer_imminent:
+                    soccer_interval = 10.0 if soccer_live else 30.0
+                    if now_epoch - cls._last_football_sync_ts >= soccer_interval:
+                        cls._last_football_sync_ts = now_epoch
+                        def _sync_free_soccer():
+                            d_db = SessionLocal()
+                            cnt = 0
+                            leagues_to_sync = active_soccer_leagues or {"LALIGA", "SERIE_A", "LIGUE_1", "EPL", "BUNDESLIGA"}
+                            try:
+                                for lid in leagues_to_sync:
+                                    res = MatchService.sync_from_official_site(d_db, league_id=lid, start_date=yesterday_str, end_date=today_str, sync_boxscore=False)
+                                    cnt += res.get("synced_matches_count", 0)
+                                return cnt
+                            except Exception as e:
+                                logger.warning(f"[Scheduler Live Soccer] 동기화 경고: {e}")
+                                return 0
+                            finally:
+                                d_db.close()
+                        sync_tasks.append(asyncio.to_thread(_sync_free_soccer))
+
+                # (D) 유료 LiveApiSports 스마트 동적 수집 (쿼터 잔여시 보조 연동)
                 from app.services.live_api_sports_service import LiveApiSportsService
                 if LiveApiSportsService.is_configured():
-                    # 축구: LIVE 중이면 30초, 시작 직전이면 60초 주기 (유료 쿼터 절약)
-                    fb_interval = 30.0 if soccer_live else 60.0
-                    should_sync_fb = (soccer_live or soccer_imminent) and (now_epoch - cls._last_football_sync_ts >= fb_interval)
-
-                    # 야구: LIVE 중이면 1.0초 초고속, 시작 직전이면 15초 주기 (MLB 공식 무제한 연동)
                     bb_interval = 1.0 if (mlb_live or kbo_npb_live) else 15.0
                     should_sync_bb = (mlb_live or mlb_imminent or kbo_npb_live or kbo_npb_imminent) and (now_epoch - cls._last_baseball_sync_ts >= bb_interval)
 
-                    if should_sync_fb or should_sync_bb:
+                    if should_sync_bb:
                         def _sync_smart_live_api():
                             total_up = 0
                             try:
-                                if should_sync_fb:
-                                    cls._last_football_sync_ts = time.time()
-                                    fb_res = LiveApiSportsService.sync_live_football(live_only=True)
-                                    total_up += (fb_res.get('updated_db_matches', 0) or 0)
-                                if should_sync_bb:
-                                    cls._last_baseball_sync_ts = time.time()
-                                    bb_res = LiveApiSportsService.sync_live_baseball(live_only=True)
-                                    total_up += (bb_res.get('updated_db_matches', 0) or 0)
+                                cls._last_baseball_sync_ts = time.time()
+                                bb_res = LiveApiSportsService.sync_live_baseball(live_only=True)
+                                total_up += (bb_res.get('updated_db_matches', 0) or 0)
                                 return total_up
                             except Exception as e:
                                 logger.warning(f"[Scheduler Smart LiveApi] 경고: {e}")
@@ -658,6 +690,9 @@ class SchedulerService:
                             outs_val = None
                             balls_val = None
                             strikes_val = None
+                            b1_val = False
+                            b2_val = False
+                            b3_val = False
                             if m.details:
                                 if m.details.period_scores:
                                     try:
@@ -674,10 +709,17 @@ class SchedulerService:
                                             outs_val = sb.get("outs")
                                             balls_val = sb.get("balls")
                                             strikes_val = sb.get("strikes")
+                                            b1_val = bool(sb.get("runner_on_1b") or sb.get("first_base") or sb.get("base_1"))
+                                            b2_val = bool(sb.get("runner_on_2b") or sb.get("second_base") or sb.get("base_2"))
+                                            b3_val = bool(sb.get("runner_on_3b") or sb.get("third_base") or sb.get("base_3"))
                                     except Exception:
                                         pass
                             items.append({
                                 "id": m.id,
+                                "sport_code": m.sport_code,
+                                "league_name": m.league_name,
+                                "home_team_name": m.home_team_name,
+                                "away_team_name": m.away_team_name,
                                 "home_score": m.home_score,
                                 "away_score": m.away_score,
                                 "status": m.status,
@@ -685,7 +727,10 @@ class SchedulerService:
                                 "inning_text": cur_inn,
                                 "outs": outs_val,
                                 "balls": balls_val,
-                                "strikes": strikes_val
+                                "strikes": strikes_val,
+                                "base_1": b1_val,
+                                "base_2": b2_val,
+                                "base_3": b3_val
                             })
                     finally:
                         d_db.close()

@@ -61,9 +61,15 @@ class MatchService:
                 match = db.query(Match).filter(Match.official_id == m_data["official_id"]).first()
                 if not match:
                     # Also check by home/away teams and date to prevent duplicates from differing official_id prefixes
+                    m_date_part = (m_data.get("match_date") or "")[:10]
+                    target_dates = {current_d}
+                    if m_date_part:
+                        target_dates.add(m_date_part)
+                    
+                    date_filters = [Match.match_date.like(f"{d}%") for d in target_dates]
                     day_matches = db.query(Match).filter(
                         Match.sport_code == m_data.get("sport_code", scraper.get_sport_code()),
-                        Match.match_date.like(f"{current_d}%")
+                        or_(*date_filters)
                     ).all()
                     for dm in day_matches:
                         if teams_match(dm.home_team_name, m_data["home_team_name"]) and teams_match(dm.away_team_name, m_data["away_team_name"]):
