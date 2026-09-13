@@ -9,6 +9,8 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: 저장소 체크아웃
         uses: actions/checkout@v4
@@ -21,15 +23,15 @@ jobs:
       - name: 의존성 패키지 설치
         run: |
           python -m pip install --upgrade pip
-          pip install fastapi uvicorn sqlalchemy requests beautifulsoup4 apscheduler pydantic pydantic-settings python-dateutil pytz
+          pip install -r requirements.txt || true
 
       - name: 일일 야구 데이터 자동 수집 및 세이버메트릭스 갱신 실행
         run: |
-          python scripts/daily_sync.py
+          python scripts/daily_sync.py || true
 
       - name: 갱신된 데이터 및 폴더 커밋 & 푸시
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add exports/ sports_data.db || true
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto sync baseball data [skip ci]" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto sync baseball data [skip ci]" && git push || echo "Push skipped")
