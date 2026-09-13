@@ -510,189 +510,203 @@ class SchedulerService:
 
     @classmethod
     async def _run_live_5sec_dynamic_loop(cls):
-        """⚡ 5초 실시간 동적 초고속 수집 루프
-        - LIVE 경기가 진행 중이거나 시작 직전인 경우: 5초 주기로 MLB/KBO/NPB/축구 공식 실시간 스코어보드 병렬 고속 수집
-        - 진행 중인 경기가 없는 경우: 10초 대기 후 상태 재확인
+        """🧠 스마트 경기 상태별 수집 루프 (Smart State-Aware Polling)
+        - ⚪ 비경기 시간대 (IDLE): 진행 중인 경기도 없고 시작 5분 전 경기도 없을 때 -> API 호출 0회 (60초 완전 대기)
+        - 🟡 시작 직전 (Pre-Match): 킥오프 5분 전 ~ 시작 시점 -> 60초 간격 1회 확인
+        - 🔴 진행 중 (LIVE): 실제 LIVE 상태 경기 진행 중 -> 축구 30초 / 야구 10초 실시간 수집
+        - 🏁 경기 종료 (FINISHED): 종료 즉시 실시간 API 호출 대상에서 영구 제외
         """
-        logger.info("[Scheduler Live5Sec] 5초 동적 실시간 수집 루프 가동 시작")
+        logger.info("[Scheduler SmartLive] 스마트 경기 상태 감지 실시간 루프 가동")
         while True:
             try:
                 now_kst = get_now_kst()
                 today_str = now_kst.strftime("%Y-%m-%d")
-                start_window = (now_kst - timedelta(hours=4)).strftime("%Y-%m-%d %H:%M")
-                end_window = (now_kst + timedelta(minutes=15)).strftime("%Y-%m-%d %H:%M")
+                pre_window_start = (now_kst - timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M")
+                pre_window_end = (now_kst + timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M")
 
-                has_live_or_active = False
-                mlb_active = False
-                kbo_npb_active = False
-                soccer_active = False
+                has_live = False
+                has_imminent = False
+                mlb_live = False
+                kbo_npb_live = False
+                soccer_live = False
+
+                mlb_imminent = False
+                kbo_npb_imminent = False
+                soccer_imminent = False
 
                 db = SessionLocal()
                 try:
                     from app.models.models import Match
                     
-                    # 1. LIVE 상태인 경기 확인
+                    # 1. 🔴 실제 LIVE 진행 중인 경기 확인
                     live_matches = db.query(Match).filter(Match.status == "LIVE").all()
                     if live_matches:
-                        has_live_or_active = True
+                        has_live = True
                         for m in live_matches:
                             if m.sport_code == "BASEBALL" and "MLB" in (m.league_name or ""):
-                                mlb_active = True
+                                mlb_live = True
                             elif m.sport_code == "BASEBALL" and any(k in (m.league_name or "") for k in ["KBO", "NPB", "한국", "일본"]):
-                                kbo_npb_active = True
+                                kbo_npb_live = True
                             elif m.sport_code == "SOCCER":
-                                soccer_active = True
+                                soccer_live = True
 
-                    # 2. 현재 시간대 전후로 진행 중일 가능성이 있는 SCHEDULED 경기 확인
-                    sched_matches = db.query(Match).filter(
+                    # 2. 🟡 시작 5분 전 ~ 시작 직전인 예정(SCHEDULED) 경기 확인
+                    sched_imminent = db.query(Match).filter(
                         Match.status == "SCHEDULED",
-                        Match.match_date >= start_window,
-                        Match.match_date <= end_window
+                        Match.match_date >= pre_window_start,
+                        Match.match_date <= pre_window_end
                     ).all()
-                    if sched_matches:
-                        has_live_or_active = True
-                        for m in sched_matches:
+                    if sched_imminent:
+                        has_imminent = True
+                        for m in sched_imminent:
                             if m.sport_code == "BASEBALL" and "MLB" in (m.league_name or ""):
-                                mlb_active = True
+                                mlb_imminent = True
                             elif m.sport_code == "BASEBALL" and any(k in (m.league_name or "") for k in ["KBO", "NPB", "한국", "일본"]):
-                                kbo_npb_active = True
+                                kbo_npb_imminent = True
                             elif m.sport_code == "SOCCER":
-                                soccer_active = True
+                                soccer_imminent = True
                 finally:
                     db.close()
 
-                if has_live_or_active:
-                    sync_tasks = []
-                    
-                    # (A) MLB 공식 실시간 동기화
-                    if mlb_active:
-                        def _sync_mlb():
-                            d_db = SessionLocal()
-                            try:
-                                res = MatchService.sync_from_official_site(d_db, league_id="MLB", target_date=today_str, sync_boxscore=False)
-                                return res.get("synced_matches_count", 0)
-                            except Exception as e:
-                                logger.warning(f"[Scheduler Live5Sec MLB] 동기화 경고: {e}")
-                                return 0
-                            finally:
-                                d_db.close()
-                        sync_tasks.append(asyncio.to_thread(_sync_mlb))
+                # ⚪ 비경기 시간대 (IDLE): 진행 중인 경기도 없고 시작 5분 전 경기도 없으면 API 호출 0회 (60초 대기)
+                if not has_live and not has_imminent:
+                    await asyncio.sleep(60)
+                    continue
 
-                    # (B) KBO/NPB 공식 실시간 동기화
-                    if kbo_npb_active:
-                        def _sync_domestic():
-                            d_db = SessionLocal()
-                            cnt = 0
-                            try:
-                                for lid in ["KBO", "NPB"]:
-                                    res = MatchService.sync_from_official_site(d_db, league_id=lid, target_date=today_str, sync_boxscore=False)
-                                    cnt += res.get("synced_matches_count", 0)
-                                return cnt
-                            except Exception as e:
-                                logger.warning(f"[Scheduler Live5Sec Domestic] 동기화 경고: {e}")
-                                return 0
-                            finally:
-                                d_db.close()
-                        sync_tasks.append(asyncio.to_thread(_sync_domestic))
+                sync_tasks = []
+                now_epoch = time.time()
 
-                    # (C) 유료 LiveApiSports 초고속 LIVE 전용 수집 (축구 30초 / 야구 10초 최적화 주기)
-                    import time
-                    now_epoch = time.time()
-                    from app.services.live_api_sports_service import LiveApiSportsService
-                    if LiveApiSportsService.is_configured() and has_live_or_active:
-                        should_sync_fb = (soccer_active or has_live_or_active) and (now_epoch - cls._last_football_sync_ts >= 30.0)
-                        should_sync_bb = (mlb_active or has_live_or_active) and (now_epoch - cls._last_baseball_sync_ts >= 10.0)
-
-                        if should_sync_fb or should_sync_bb:
-                            def _sync_fast_live_api():
-                                total_up = 0
-                                try:
-                                    if should_sync_fb:
-                                        cls._last_football_sync_ts = time.time()
-                                        fb_res = LiveApiSportsService.sync_live_football(live_only=True)
-                                        total_up += (fb_res.get('updated_db_matches', 0) or 0)
-                                    if should_sync_bb:
-                                        cls._last_baseball_sync_ts = time.time()
-                                        bb_res = LiveApiSportsService.sync_live_baseball(live_only=True)
-                                        total_up += (bb_res.get('updated_db_matches', 0) or 0)
-                                    return total_up
-                                except Exception as e:
-                                    logger.warning(f"[Scheduler Live LiveApi] 경고: {e}")
-                                    return 0
-                            sync_tasks.append(asyncio.to_thread(_sync_fast_live_api))
-
-                    # 🚀 병렬 실행으로 전체 수집 소요시간을 1초 미만으로 극대화
-                    if sync_tasks:
-                        results = await asyncio.gather(*sync_tasks, return_exceptions=True)
-                        updated_total = sum(r for r in results if isinstance(r, int))
-                    else:
-                        updated_total = 0
-
-                    from app.api.v1.matches import clear_matches_cache
-                    clear_matches_cache()
-                    
-                    # 활성 LIVE 경기 상태 목록 추출하여 WebSocket에 직접 전송 (브라우저 추가 fetch 부하 0)
-                    def _extract_live_items():
+                # (A) MLB 공식 실시간 동기화 (LIVE 진행 중일 때만)
+                if mlb_live or mlb_imminent:
+                    def _sync_mlb():
                         d_db = SessionLocal()
-                        items = []
                         try:
-                            from app.models.models import Match
-                            live_list = d_db.query(Match).filter(Match.status == "LIVE").all()
-                            for m in live_list:
-                                cur_inn = None
-                                outs_val = None
-                                balls_val = None
-                                strikes_val = None
-                                if m.details:
-                                    if m.details.period_scores:
-                                        try:
-                                            ps = json.loads(m.details.period_scores) if isinstance(m.details.period_scores, str) else m.details.period_scores
-                                            cur_inn = ps.get("current_inning")
-                                        except Exception:
-                                            pass
-                                    if m.details.team_stats:
-                                        try:
-                                            ts = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
-                                            sb = ts.get("scoreboard", {})
-                                            if sb:
-                                                cur_inn = sb.get("current_inning") or cur_inn
-                                                outs_val = sb.get("outs")
-                                                balls_val = sb.get("balls")
-                                                strikes_val = sb.get("strikes")
-                                        except Exception:
-                                            pass
-                                items.append({
-                                    "id": m.id,
-                                    "home_score": m.home_score,
-                                    "away_score": m.away_score,
-                                    "status": m.status,
-                                    "current_inning": cur_inn,
-                                    "inning_text": cur_inn,
-                                    "outs": outs_val,
-                                    "balls": balls_val,
-                                    "strikes": strikes_val
-                                })
+                            res = MatchService.sync_from_official_site(d_db, league_id="MLB", target_date=today_str, sync_boxscore=False)
+                            return res.get("synced_matches_count", 0)
+                        except Exception as e:
+                            logger.warning(f"[Scheduler Live MLB] 동기화 경고: {e}")
+                            return 0
                         finally:
                             d_db.close()
-                        return items
+                    sync_tasks.append(asyncio.to_thread(_sync_mlb))
 
-                    live_items = await asyncio.to_thread(_extract_live_items)
-                    if live_items or updated_total > 0:
+                # (B) KBO/NPB 공식 실시간 동기화 (LIVE 진행 중일 때만)
+                if kbo_npb_live or kbo_npb_imminent:
+                    def _sync_domestic():
+                        d_db = SessionLocal()
+                        cnt = 0
                         try:
-                            from app.core.websocket_manager import manager
-                            await manager.broadcast({
-                                "type": "LIVE_SCORE_UPDATE",
-                                "timestamp": datetime.now().isoformat(),
-                                "matches": live_items,
-                                "message": f"실시간 스코어/이닝보드 자동 갱신 ({len(live_items)}경기 진행 중)"
-                            })
-                        except Exception:
-                            pass
+                            for lid in ["KBO", "NPB"]:
+                                res = MatchService.sync_from_official_site(d_db, league_id=lid, target_date=today_str, sync_boxscore=False)
+                                cnt += res.get("synced_matches_count", 0)
+                            return cnt
+                        except Exception as e:
+                            logger.warning(f"[Scheduler Live Domestic] 동기화 경고: {e}")
+                            return 0
+                        finally:
+                            d_db.close()
+                    sync_tasks.append(asyncio.to_thread(_sync_domestic))
 
-                    await asyncio.sleep(10)
+                # (C) 유료 LiveApiSports 스마트 동적 수집 (축구 LIVE 30초 / 야구 LIVE 10초 / 시작 직전 60초)
+                from app.services.live_api_sports_service import LiveApiSportsService
+                if LiveApiSportsService.is_configured():
+                    # 축구: LIVE 중이면 30초, 시작 직전이면 60초 주기
+                    fb_interval = 30.0 if soccer_live else 60.0
+                    should_sync_fb = (soccer_live or soccer_imminent) and (now_epoch - cls._last_football_sync_ts >= fb_interval)
+
+                    # 야구: LIVE 중이면 10초, 시작 직전이면 30초 주기
+                    bb_interval = 10.0 if mlb_live else 30.0
+                    should_sync_bb = (mlb_live or mlb_imminent) and (now_epoch - cls._last_baseball_sync_ts >= bb_interval)
+
+                    if should_sync_fb or should_sync_bb:
+                        def _sync_smart_live_api():
+                            total_up = 0
+                            try:
+                                if should_sync_fb:
+                                    cls._last_football_sync_ts = time.time()
+                                    fb_res = LiveApiSportsService.sync_live_football(live_only=True)
+                                    total_up += (fb_res.get('updated_db_matches', 0) or 0)
+                                if should_sync_bb:
+                                    cls._last_baseball_sync_ts = time.time()
+                                    bb_res = LiveApiSportsService.sync_live_baseball(live_only=True)
+                                    total_up += (bb_res.get('updated_db_matches', 0) or 0)
+                                return total_up
+                            except Exception as e:
+                                logger.warning(f"[Scheduler Smart LiveApi] 경고: {e}")
+                                return 0
+                        sync_tasks.append(asyncio.to_thread(_sync_smart_live_api))
+
+                # 병렬 실행
+                if sync_tasks:
+                    results = await asyncio.gather(*sync_tasks, return_exceptions=True)
+                    updated_total = sum(r for r in results if isinstance(r, int))
                 else:
-                    # 진행 중인 경기 없음: 10초 대기
-                    await asyncio.sleep(10)
+                    updated_total = 0
+
+                from app.api.v1.matches import clear_matches_cache
+                clear_matches_cache()
+                
+                # 활성 LIVE 경기 상태 목록 추출하여 WebSocket에 직접 전송
+                def _extract_live_items():
+                    d_db = SessionLocal()
+                    items = []
+                    try:
+                        from app.models.models import Match
+                        live_list = d_db.query(Match).filter(Match.status == "LIVE").all()
+                        for m in live_list:
+                            cur_inn = None
+                            outs_val = None
+                            balls_val = None
+                            strikes_val = None
+                            if m.details:
+                                if m.details.period_scores:
+                                    try:
+                                        ps = json.loads(m.details.period_scores) if isinstance(m.details.period_scores, str) else m.details.period_scores
+                                        cur_inn = ps.get("current_inning")
+                                    except Exception:
+                                        pass
+                                if m.details.team_stats:
+                                    try:
+                                        ts = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
+                                        sb = ts.get("scoreboard", {})
+                                        if sb:
+                                            cur_inn = sb.get("current_inning") or cur_inn
+                                            outs_val = sb.get("outs")
+                                            balls_val = sb.get("balls")
+                                            strikes_val = sb.get("strikes")
+                                    except Exception:
+                                        pass
+                            items.append({
+                                "id": m.id,
+                                "home_score": m.home_score,
+                                "away_score": m.away_score,
+                                "status": m.status,
+                                "current_inning": cur_inn,
+                                "inning_text": cur_inn,
+                                "outs": outs_val,
+                                "balls": balls_val,
+                                "strikes": strikes_val
+                            })
+                    finally:
+                        d_db.close()
+                    return items
+
+                live_items = await asyncio.to_thread(_extract_live_items)
+                if live_items or updated_total > 0:
+                    try:
+                        from app.core.websocket_manager import manager
+                        await manager.broadcast({
+                            "type": "LIVE_SCORE_UPDATE",
+                            "timestamp": datetime.now().isoformat(),
+                            "matches": live_items,
+                            "message": f"실시간 스코어/이닝보드 자동 갱신 ({len(live_items)}경기 진행 중)"
+                        })
+                    except Exception:
+                        pass
+
+                # LIVE 진행 중이면 10초 대기, 시작 직전(Pre-Match) 상태면 30초 대기
+                sleep_sec = 10 if has_live else 30
+                await asyncio.sleep(sleep_sec)
             except asyncio.CancelledError:
                 logger.info("[Scheduler Live10Sec] 동적 루프 종료됨")
                 break
