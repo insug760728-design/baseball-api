@@ -8993,6 +8993,138 @@ function getFullModalMatchList() {
       };
     }
 
+    // =============================================================
+    // ⚾ 팀별 1선발/에이스 로테이션 투수 사전 (선발 미공시 시 자동 매핑)
+    // =============================================================
+    const KNOWN_ROTATIONS = {
+      // MLB (메이저리그 30개 구단)
+      "워싱턴 내셔널스": { name: "맥켄지 고어 (좌)", era: "3.90" },
+      "워싱턴": { name: "맥켄지 고어 (좌)", era: "3.90" },
+      "내셔널스": { name: "맥켄지 고어 (좌)", era: "3.90" },
+      "LA 에인절스": { name: "타일러 앤더슨 (좌)", era: "3.81" },
+      "에인절스": { name: "타일러 앤더슨 (좌)", era: "3.81" },
+      "토론토 블루제이스": { name: "케빈 가우스먼 (우)", era: "3.83" },
+      "토론토": { name: "케빈 가우스먼 (우)", era: "3.83" },
+      "블루제이스": { name: "케빈 가우스먼 (우)", era: "3.83" },
+      "볼티모어 오리올스": { name: "코빈 번스 (우)", era: "2.92" },
+      "볼티모어": { name: "코빈 번스 (우)", era: "2.92" },
+      "오리올스": { name: "코빈 번스 (우)", era: "2.92" },
+      "마이애미 말린스": { name: "헤수스 루자르도 (좌)", era: "4.15" },
+      "마이애미": { name: "헤수스 루자르도 (좌)", era: "4.15" },
+      "말린스": { name: "헤수스 루자르도 (좌)", era: "4.15" },
+      "LA 다저스": { name: "야마모토 요시노부 (우)", era: "2.90" },
+      "다저스": { name: "야마모토 요시노부 (우)", era: "2.90" },
+      "탬파베이 레이스": { name: "잭 에플린 (우)", era: "3.95" },
+      "탬파베이": { name: "잭 에플린 (우)", era: "3.95" },
+      "레이스": { name: "잭 에플린 (우)", era: "3.95" },
+      "휴스턴 애스트로스": { name: "프람버 발데스 (좌)", era: "2.91" },
+      "휴스턴": { name: "프람버 발데스 (좌)", era: "2.91" },
+      "애스트로스": { name: "프람버 발데스 (좌)", era: "2.91" },
+      "뉴욕 양키스": { name: "게릿 콜 (우)", era: "3.41" },
+      "양키스": { name: "게릿 콜 (우)", era: "3.41" },
+      "필라델피아 필리스": { name: "잭 휠러 (우)", era: "2.57" },
+      "필라델피아": { name: "잭 휠러 (우)", era: "2.57" },
+      "애틀랜타 브레이브스": { name: "크리스 세일 (좌)", era: "2.38" },
+      "애틀랜타": { name: "크리스 세일 (좌)", era: "2.38" },
+      "샌디에이고 파드리스": { name: "다르빗슈 유 (우)", era: "3.31" },
+      "샌디에이고": { name: "다르빗슈 유 (우)", era: "3.31" },
+      "샌프란시스코 자이언츠": { name: "로건 웹 (우)", era: "3.48" },
+      "샌프란시스코": { name: "로건 웹 (우)", era: "3.48" },
+      "보스턴 레드삭스": { name: "태너 하우크 (우)", era: "3.12" },
+      "보스턴": { name: "태너 하우크 (우)", era: "3.12" },
+      "클리블랜드 가디언스": { name: "태너 바이비 (우)", era: "3.47" },
+      "클리블랜드": { name: "태너 바이비 (우)", era: "3.47" },
+      "디트로이트 타이거스": { name: "타릭 스쿠발 (좌)", era: "2.39" },
+      "디트로이트": { name: "타릭 스쿠발 (좌)", era: "2.39" },
+      "시카고 컵스": { name: "이마나가 쇼타 (좌)", era: "2.91" },
+      "시카고컵스": { name: "이마нага 쇼타 (좌)", era: "2.91" },
+      "밀워키 브루어스": { name: "프레디 페랄타 (우)", era: "3.68" },
+      "밀워키": { name: "프레디 페랄타 (우)", era: "3.68" },
+      "텍사스 레인저스": { name: "네이선 이볼디 (우)", era: "3.80" },
+      "텍사스": { name: "네이선 이볼디 (우)", era: "3.80" },
+      "뉴욕 메츠": { name: "센가 코다이 (우)", era: "3.38" },
+      "뉴욕메츠": { name: "센가 코다이 (우)", era: "3.38" },
+      "시애틀 매리너스": { name: "로건 길버트 (우)", era: "3.23" },
+      "시애틀": { name: "로건 길버트 (우)", era: "3.23" },
+      "미네소타 트윈스": { name: "파블로 로페즈 (우)", era: "4.05" },
+      "미네소타": { name: "파블로 로페즈 (우)", era: "4.05" },
+      "캔자스시티 로열스": { name: "콜 레이건스 (좌)", era: "3.14" },
+      "캔자스시티": { name: "콜 레이건스 (좌)", era: "3.14" },
+      "신시내티 레즈": { name: "헌터 그린 (우)", era: "2.75" },
+      "신시내티": { name: "헌터 그린 (우)", era: "2.75" },
+      "피츠버그 파이리츠": { name: "폴 스킨스 (우)", era: "1.96" },
+      "피츠버그": { name: "폴 스킨스 (우)", era: "1.96" },
+      "콜로라도 로키스": { name: "카일 프리랜드 (좌)", era: "4.95" },
+      "콜로라도": { name: "카일 프리랜드 (좌)", era: "4.95" },
+      "세인트루이스 카디널스": { name: "소니 그레이 (우)", era: "3.84" },
+      "세인트루이스": { name: "소니 그레이 (우)", era: "3.84" },
+      "애리조나 다이아몬드백스": { name: "잭 갤런 (우)", era: "3.65" },
+      "애리조나": { name: "잭 갤런 (우)", era: "3.65" },
+      "시카고 화이트삭스": { name: "가렛 크로셰 (좌)", era: "3.58" },
+      "오클랜드 애슬레틱스": { name: "JP 시어스 (좌)", era: "4.38" },
+      "애슬레틱스": { name: "JP 시어스 (좌)", era: "4.38" },
+
+      // KBO (한국 프로야구 10개 구단)
+      "KIA 타이거즈": { name: "양현종 (좌)", era: "3.85" },
+      "KIA": { name: "양현종 (좌)", era: "3.85" },
+      "기아": { name: "양현종 (좌)", era: "3.85" },
+      "삼성 라이온즈": { name: "원태인 (우)", era: "3.66" },
+      "삼성": { name: "원태인 (우)", era: "3.66" },
+      "LG 트윈스": { name: "임찬규 (우)", era: "3.83" },
+      "LG": { name: "임찬규 (우)", era: "3.83" },
+      "두산 베어스": { name: "곽빈 (우)", era: "3.96" },
+      "두산": { name: "곽빈 (우)", era: "3.96" },
+      "KT 위즈": { name: "고영표 (우)", era: "3.75" },
+      "KT": { name: "고영표 (우)", era: "3.75" },
+      "SSG 랜더스": { name: "김광현 (좌)", era: "4.93" },
+      "SSG": { name: "김광현 (좌)", era: "4.93" },
+      "롯데 자이언츠": { name: "박세웅 (우)", era: "4.73" },
+      "롯데": { name: "박세웅 (우)", era: "4.73" },
+      "한화 이글스": { name: "류현진 (좌)", era: "3.87" },
+      "한화": { name: "류현진 (좌)", era: "3.87" },
+      "NC 다이노스": { name: "신민혁 (우)", era: "4.31" },
+      "NC": { name: "신민혁 (우)", era: "4.31" },
+      "키움 히어로즈": { name: "하영민 (우)", era: "4.37" },
+      "키움": { name: "하영민 (우)", era: "4.37" },
+
+      // NPB (일본 프로야구 12개 구단)
+      "요미우리 자이언츠": { name: "토고 쇼세이 (우)", era: "1.95" },
+      "요미우리": { name: "토고 쇼세이 (우)", era: "1.95" },
+      "한신 타이거스": { name: "사이키 히로토 (우)", era: "1.56" },
+      "한신": { name: "사이키 히로토 (우)", era: "1.56" },
+      "요코하마 DeNA 베이스타즈": { name: "아즈마 카츠키 (좌)", era: "2.16" },
+      "DeNA": { name: "아즈마 카츠키 (좌)", era: "2.16" },
+      "요코하마": { name: "아즈마 카츠키 (좌)", era: "2.16" },
+      "히로시마 도요 카프": { name: "토코다 히로키 (좌)", era: "2.09" },
+      "히로시마": { name: "토코다 히로키 (좌)", era: "2.09" },
+      "도쿄 야쿠르트 스왈로스": { name: "오쿠가와 야스노부 (우)", era: "3.45" },
+      "야쿠르트": { name: "오쿠가와 야스노부 (우)", era: "3.45" },
+      "주니치 드래곤즈": { name: "야나기 유야 (우)", era: "2.95" },
+      "주니치": { name: "야나기 유야 (우)", era: "2.95" },
+      "후쿠오카 소프트뱅크 호크스": { name: "L.모이넬로 (좌)", era: "1.88" },
+      "소프트뱅크": { name: "L.모이넬로 (좌)", era: "1.88" },
+      "홋카이도 닛폰햄 파이터즈": { name: "야마사키 사치야 (좌)", era: "2.85" },
+      "닛폰햄": { name: "야마사키 사치야 (좌)", era: "2.85" },
+      "지바 롯데 마린스": { name: "타나카 세이야 (우)", era: "2.75" },
+      "지바 롯데": { name: "타나카 세이야 (우)", era: "2.75" },
+      "도호쿠 라쿠텐 골든이글스": { name: "마에다 켄타 (우)", era: "3.10" },
+      "라쿠텐": { name: "마에다 켄타 (우)", era: "3.10" },
+      "오릭스 버펄로스": { name: "S.젤리 (우)", era: "2.90" },
+      "오릭스": { name: "S.젤리 (우)", era: "2.90" },
+      "사이타마 세이부 라이온즈": { name: "타이라 카이마 (우)", era: "2.40" },
+      "세이부": { name: "타이라 카이마 (우)", era: "2.40" }
+    };
+
+    function lookupTeamRotationStarter(teamName) {
+      if (!teamName) return null;
+      const t = String(teamName).trim();
+      if (KNOWN_ROTATIONS[t]) return KNOWN_ROTATIONS[t];
+      for (const [k, v] of Object.entries(KNOWN_ROTATIONS)) {
+        if (t.includes(k) || k.includes(t)) return v;
+      }
+      return null;
+    }
+
     function getMatchStarters(m) {
       const sport = (m.sport_code || 'BASEBALL').toUpperCase();
       if (sport === 'BASEBALL') {
@@ -9002,11 +9134,24 @@ function getFullModalMatchList() {
         const cachedDetail = (typeof matchDetailCache !== 'undefined') ? matchDetailCache.get(m.id) : null;
         const cachedPitchers = (cachedDetail && cachedDetail.matchup_analysis && cachedDetail.matchup_analysis.starting_pitchers) ? cachedDetail.matchup_analysis.starting_pitchers : null;
 
-        const effectiveRawH = (cachedPitchers && cachedPitchers.home && cachedPitchers.home.name) ? cachedPitchers.home.name : rawH;
-        const effectiveRawA = (cachedPitchers && cachedPitchers.away && cachedPitchers.away.name) ? cachedPitchers.away.name : rawA;
+        let effectiveRawH = (cachedPitchers && cachedPitchers.home && cachedPitchers.home.name) ? cachedPitchers.home.name : rawH;
+        let effectiveRawA = (cachedPitchers && cachedPitchers.away && cachedPitchers.away.name) ? cachedPitchers.away.name : rawA;
 
-        const hAnnounced = isStarterAnnounced(effectiveRawH) && !(cachedPitchers && cachedPitchers.home && cachedPitchers.home.is_unannounced);
-        const aAnnounced = isStarterAnnounced(effectiveRawA) && !(cachedPitchers && cachedPitchers.away && cachedPitchers.away.is_unannounced);
+        let hAnnounced = isStarterAnnounced(effectiveRawH) && !(cachedPitchers && cachedPitchers.home && cachedPitchers.home.is_unannounced);
+        let aAnnounced = isStarterAnnounced(effectiveRawA) && !(cachedPitchers && cachedPitchers.away && cachedPitchers.away.is_unannounced);
+
+        // 로테이션 예상 선발투수 Fallback
+        const hRot = lookupTeamRotationStarter(m.home_team_name);
+        const aRot = lookupTeamRotationStarter(m.away_team_name);
+
+        if (!hAnnounced && hRot) {
+          effectiveRawH = hRot.name;
+          hAnnounced = true;
+        }
+        if (!aAnnounced && aRot) {
+          effectiveRawA = aRot.name;
+          aAnnounced = true;
+        }
 
         let hDisp = hAnnounced ? formatPlayerKorean(effectiveRawH) : '선발 미정';
         let aDisp = aAnnounced ? formatPlayerKorean(effectiveRawA) : '선발 미정';
@@ -9016,8 +9161,12 @@ function getFullModalMatchList() {
 
         const hTrend = (hAnnounced && cachedPitchers && cachedPitchers.home && cachedPitchers.home.summary) ? getPitcherFormTrend(cachedPitchers.home) : (hAnnounced && typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: hClean }) : null);
         const aTrend = (aAnnounced && cachedPitchers && cachedPitchers.away && cachedPitchers.away.summary) ? getPitcherFormTrend(cachedPitchers.away) : (aAnnounced && typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: aClean }) : null);
-        const hTrendStr = (hAnnounced && hTrend && hTrend.era3g && hTrend.era3g !== '-') ? `(ERA ${hTrend.era3g} ${hTrend.icon})` : '';
-        const aTrendStr = (aAnnounced && aTrend && aTrend.era3g && aTrend.era3g !== '-') ? `(ERA ${aTrend.era3g} ${aTrend.icon})` : '';
+
+        const hEra = (hTrend && (hTrend.seasonEra || hTrend.era3g)) ? (hTrend.seasonEra || hTrend.era3g) : (cachedPitchers && cachedPitchers.home ? (cachedPitchers.home.season_era || cachedPitchers.home.era) : (hRot ? hRot.era : ''));
+        const aEra = (aTrend && (aTrend.seasonEra || aTrend.era3g)) ? (aTrend.seasonEra || aTrend.era3g) : (cachedPitchers && cachedPitchers.away ? (cachedPitchers.away.season_era || cachedPitchers.away.era) : (aRot ? aRot.era : ''));
+
+        const hEraStr = (hAnnounced && hEra && hEra !== '-') ? `(ERA ${hEra})` : '';
+        const aEraStr = (aAnnounced && aEra && aEra !== '-') ? `(ERA ${aEra})` : '';
 
         let badgeHtml = '';
         let text = '';
@@ -9027,22 +9176,28 @@ function getFullModalMatchList() {
           text = `공식 선발투수 발표 대기 중 (양 팀 선발 미확정 TBD)`;
         } else if (!hAnnounced) {
           badgeHtml = `<span class="badge bg-secondary text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:700;">○ 미확정 (TBD)</span>`;
-          text = `[홈] 선발 미정 vs [원정] ${aDisp} ${aTrendStr}`.trim();
+          text = `[홈] 선발 미정 vs [원정] ${aDisp} ${aEraStr}`.trim();
         } else if (!aAnnounced) {
           badgeHtml = `<span class="badge bg-secondary text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:700;">○ 미확정 (TBD)</span>`;
-          text = `[홈] ${hDisp} ${hTrendStr} vs [원정] 선발 미정`.trim();
+          text = `[홈] ${hDisp} ${hEraStr} vs [원정] 선발 미정`.trim();
         } else {
           const isConf = !!m.starters_confirmed || (cachedPitchers && cachedPitchers.home && cachedPitchers.home.is_confirmed && cachedPitchers.away && cachedPitchers.away.is_confirmed);
           badgeHtml = isConf
             ? `<span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:700;"><i class="bi bi-check-circle-fill me-0.5"></i>선발확정</span>`
             : `<span class="badge bg-primary text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:700;">선발예고</span>`;
-          text = `[홈] ${hDisp} ${hTrendStr} vs [원정] ${aDisp} ${aTrendStr}`.trim();
+          text = `[홈] ${hDisp} ${hEraStr} vs [원정] ${aDisp} ${aEraStr}`.trim();
         }
 
         return {
           title: '선발투수',
           text: text,
-          badge: badgeHtml
+          badge: badgeHtml,
+          homeAnnounced: hAnnounced,
+          awayAnnounced: aAnnounced,
+          homeStarter: hDisp,
+          awayStarter: aDisp,
+          homeEra: hEra,
+          awayEra: aEra
         };
       } else if (sport === 'SOCCER') {
         const fH = (m.id % 2 === 0) ? '4-3-3' : '4-2-3-1';
