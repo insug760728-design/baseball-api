@@ -1732,6 +1732,11 @@
 
       <!-- Simple Auth Section, PC/Mobile View Switcher -->
       <div id="navAuthContainer" class="d-flex align-items-center gap-1.5">
+        <!-- 🔴 상단 실시간 LIVE 중계 바로가기 버튼 -->
+        <button type="button" class="btn btn-sm btn-danger fw-bold px-2.5 py-1 text-white text-nowrap" id="btnTopLiveRelay" onclick="focusLiveRelayHub()" title="실시간 LIVE 다이아몬드 문자중계 센터 열기" style="border-radius: 6px; font-size: 0.78rem; background: #dc2626; border: 1px solid #b91c1c; box-shadow: 0 0 8px rgba(220, 38, 38, 0.4);">
+          <i class="bi bi-broadcast me-1"></i>🔴 LIVE 중계 <span class="badge bg-white text-danger ms-0.5 fw-bold" id="topLiveCountBadge">0</span>
+        </button>
+
         <!-- 💻 PC / 📱 핸드폰 버전 전환 버튼 -->
         <div class="btn-group btn-group-sm" role="group" id="viewModeToggleGroup" style="border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden;">
           <button type="button" class="btn btn btn-primary fw-bold px-2 py-1" id="btnModePC" onclick="setViewMode('pc')" title="PC 최적화 대화면 4분할 뷰">
@@ -1763,8 +1768,8 @@
         <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabToto" onclick="openTotoModal(currentTotoRound)">
           <i class="bi bi-card-checklist d-block mb-0.5 text-warning" style="font-size: 1.05rem;"></i>승무패
         </button>
-        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabCommunity" onclick="switchMobileTab('community')">
-          <i class="bi bi-chat-dots-fill d-block mb-0.5 text-success" style="font-size: 1.05rem;"></i>톡방
+        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabCommunity" onclick="switchMobileTab('live_relay')">
+          <i class="bi bi-broadcast d-block mb-0.5 text-danger" style="font-size: 1.05rem;"></i>LIVE중계
         </button>
       </div>
     </div>
@@ -1904,85 +1909,53 @@
           </div>
         </div>
 
-        <!-- 3. [우측 40%] 실시간 라이브 팬룸 & 유저 승부 투표 -->
+        <!-- 3. [우측 40%] 실시간 LIVE 텍스트 센터 (다이아몬드 베이스 불빛 + BSO 전광판 + 멀티 선택 라이브 중계) -->
         <div class="col-dash-right" id="rightColCommunity">
           <div class="dash-card-column">
             
-            <div class="dash-card-header">
-              <!-- Chat Header with Live WebSocket Status -->
+            <div class="dash-card-header pb-1.5">
+              <!-- Live Relay Header with Status and Match Count -->
               <div class="d-flex justify-content-between align-items-center mb-1.5 flex-nowrap">
-                <span class="fw-bold text-dark text-nowrap" style="font-size: 0.85rem;"><i class="bi bi-chat-square-dots-fill text-primary me-1"></i>실시간 팬룸</span>
+                <span class="fw-bold text-dark text-nowrap" style="font-size: 0.86rem;">
+                  <i class="bi bi-broadcast text-danger me-1"></i>실시간 LIVE 텍스트 센터
+                </span>
                 <div class="d-flex align-items-center gap-1">
-                  <span class="badge" style="background: #eff6ff; border: 1px solid #bfdbfe; font-size: 0.68rem; color: #1d4ed8; padding: 2px 5px;">
-                    <span style="width: 5px; height: 5px; background-color: #10b981; border-radius: 50%; display: inline-block; animation: pulseGlow 1.5s infinite;" class="me-0.5"></span>
-                    <span id="wsStatusBadge">연결</span>
+                  <span class="badge" style="background: #fef2f2; border: 1px solid #fecaca; font-size: 0.68rem; color: #dc2626; padding: 2px 6px;">
+                    <span style="width: 5px; height: 5px; background-color: #ef4444; border-radius: 50%; display: inline-block; animation: pulseGlow 1.2s infinite;" class="me-0.5"></span>
+                    <span id="wsStatusBadge">1초 초고속 연동</span>
                   </span>
                   <span class="badge bg-light border text-dark px-1.5 py-0.5" style="font-size: 0.68rem;">
-                    <i class="bi bi-people-fill text-info me-0.5"></i><b class="text-dark" id="wsClientCount">664</b>명
+                    LIVE <b class="text-danger" id="rightLiveCountBadge">0</b>경기
                   </span>
                 </div>
               </div>
 
-              <!-- Channel Tabs -->
-              <div class="d-flex gap-1 overflow-auto">
-                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 active flex-fill fw-bold" id="chatTabALL" onclick="switchCommunityChannel('ALL')" style="font-size: 0.70rem;">💬전체</button>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 flex-fill fw-bold" id="chatTabBASEBALL" onclick="switchCommunityChannel('BASEBALL')" style="font-size: 0.70rem;">⚾야구</button>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 flex-fill fw-bold" id="chatTabSOCCER" onclick="switchCommunityChannel('SOCCER')" style="font-size: 0.70rem;">⚽축구</button>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 flex-fill fw-bold" id="chatTabBASKETBALL" onclick="switchCommunityChannel('BASKETBALL')" style="font-size: 0.70rem;">🏀농구</button>
-                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 flex-fill fw-bold" id="chatTabPREDICTION" onclick="switchCommunityChannel('PREDICTION')" style="font-size: 0.70rem;">🔥AI픽</button>
+              <!-- Live Match Multi-Select Chips Bar -->
+              <div class="d-flex gap-1 overflow-x-auto py-0.5" id="liveRelayMatchChips" style="scrollbar-width: none;">
+                <button class="btn btn-sm btn-danger active py-0 px-2 fw-bold text-nowrap" id="chipLiveRelayALL" onclick="setLiveRelayFilter('ALL')" style="font-size: 0.70rem; border-radius: 4px;">
+                  ⚡ 전체 LIVE 모아보기
+                </button>
               </div>
             </div>
 
-            <!-- Real-time Messages Feed -->
-            <div class="dash-card-body p-2" id="communityMessagesList">
-              <div class="text-center text-muted py-5">실시간 커뮤니티 대화 피드를 불러오는 중...</div>
+            <!-- Real-time Live Relay Multi / Single Match Cards Body -->
+            <div class="dash-card-body p-2" id="rightColLiveRelayBody" style="overflow-y: auto;">
+              <div class="text-center text-muted py-5">
+                <div class="spinner-border spinner-border-sm text-danger mb-2" role="status"></div>
+                <div>실시간 라이브 데이터를 불러오는 중...</div>
+              </div>
             </div>
 
-            <!-- Message Input Form & Poll (Fixed to bottom of Right Column) -->
-            <div class="p-2 border-top" style="flex-shrink: 0; background: #ffffff; border-color: #e5e7eb !important;">
-              <form id="communityChatForm" onsubmit="handleSendCommunityMessage(event)" class="mb-2">
-                <div class="row g-1 mb-1">
-                  <div class="col-4">
-                    <input type="text" class="form-control form-control-sm bg-white text-dark border py-1" id="chatAuthorInput" placeholder="닉네임" maxlength="12" style="font-size: 0.75rem;">
-                  </div>
-                  <div class="col-8">
-                    <select class="form-select form-select-sm bg-white text-dark border py-1" id="chatSportTagSelect" style="font-size: 0.75rem;">
-                      <option value="일반" selected>🏷️ 일반 대화</option>
-                      <option value="KBO">⚾ KBO (한야)</option>
-                      <option value="MLB">⚾ MLB (메이저)</option>
-                      <option value="NPB">⚾ NPB (일야)</option>
-                      <option value="EPL">⚽ EPL (프리미어)</option>
-                      <option value="LALIGA">⚽ 라리가</option>
-                      <option value="NBA">🏀 NBA (미국농구)</option>
-                      <option value="KBL">🏀 KBL (한국농구)</option>
-                      <option value="ENGLAND_CUP">🏆 잉글랜드컵 (FA/카라바오)</option>
-                      <option value="PREDICTION">🔥 AI 픽 토론</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="input-group input-group-sm">
-                  <input type="text" class="form-control bg-white text-dark border" id="chatContentInput" placeholder="의견, 응원, 예측을 입력하세요..." maxlength="120" required autocomplete="off" style="font-size: 0.75rem;">
-                  <button class="btn btn-primary px-3 fw-bold" type="submit" style="font-size: 0.75rem;"><i class="bi bi-send-fill me-1"></i>전송</button>
-                </div>
-              </form>
-
-              <!-- 3-Way Prediction Poll Widget -->
-              <div class="p-2 rounded-2 border" style="background: #f8fafc; border-color: #e5e7eb !important;">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                  <span class="text-dark small fw-bold" style="font-size: 0.72rem;"><i class="bi bi-pie-chart-fill text-info me-1"></i>실시간 유저 승부 투표</span>
-                  <span class="text-dim" style="font-size: 0.65rem;">투표 즉시 반영</span>
-                </div>
-                <div class="progress" style="height: 8px; background-color: #e5e7eb; border-radius: 4px;">
-                  <div class="progress-bar bg-info" id="pollBarH" role="progressbar" style="width: 45%;" title="홈팀 승"></div>
-                  <div class="progress-bar bg-secondary" id="pollBarD" role="progressbar" style="width: 20%;" title="무승부"></div>
-                  <div class="progress-bar bg-warning" id="pollBarA" role="progressbar" style="width: 35%;" title="원정팀 승"></div>
-                </div>
-                <div class="d-flex justify-content-between mt-1 text-center" style="font-size: 0.68rem;">
-                  <button class="btn btn-xs btn-outline-info py-0 px-2" onclick="castCommunityVote('H')">홈승 <b id="pollVotesH">45%</b></button>
-                  <button class="btn btn-xs btn-outline-secondary py-0 px-2" onclick="castCommunityVote('D')">무승부 <b id="pollVotesD">20%</b></button>
-                  <button class="btn btn-xs btn-outline-warning py-0 px-2" onclick="castCommunityVote('A')">원정승 <b id="pollVotesA">35%</b></button>
-                </div>
+            <!-- Bottom Quick Filter & Auto-Sync Status Bar -->
+            <div class="p-2 border-top d-flex justify-content-between align-items-center" style="flex-shrink: 0; background: #f8fafc; border-color: #e5e7eb !important;">
+              <div class="d-flex align-items-center gap-1">
+                <button class="btn btn-xs btn-outline-secondary py-0.5 px-2 fw-bold" id="btnLiveFilterSportALL" onclick="setLiveRelaySport('ALL')" style="font-size: 0.68rem;">전체</button>
+                <button class="btn btn-xs btn-outline-secondary py-0.5 px-2 fw-bold" id="btnLiveFilterSportBASEBALL" onclick="setLiveRelaySport('BASEBALL')" style="font-size: 0.68rem;">⚾야구</button>
+                <button class="btn btn-xs btn-outline-secondary py-0.5 px-2 fw-bold" id="btnLiveFilterSportSOCCER" onclick="setLiveRelaySport('SOCCER')" style="font-size: 0.68rem;">⚽축구</button>
               </div>
+              <span class="text-muted" style="font-size: 0.68rem;">
+                <i class="bi bi-lightning-charge-fill me-0.5 text-warning"></i>1초 초고속 다이아몬드 연동
+              </span>
             </div>
 
           </div>
@@ -3347,6 +3320,7 @@
         updateScheduleTabCounts();
         renderMatchStrip('ALL');
         renderPredMatches();
+        renderRightColLiveRelay();
         initRealTimeSportsTicker();
 
         const list = getFilteredPredMatches();
@@ -9775,6 +9749,7 @@ function getFullModalMatchList() {
                   <button class="slim-action-btn odds-btn ${isAccordionOpen && activeAccordionType === 'odds' ? 'active' : ''}" id="oddsBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'odds')">📊 배당</button>
                   <button class="slim-action-btn history-btn ${isAccordionOpen && activeAccordionType === 'history' ? 'active' : ''}" id="histBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'history')">📋 전경기</button>
                   <button class="slim-action-btn detail-btn" onclick="event.stopPropagation(); selectPredMatch(${m.id}, true)">🔍 상세</button>
+                  <button class="slim-action-btn live-relay-btn" style="${isLive ? 'background:#dc2626; color:#ffffff; border-color:#b91c1c; font-weight:800;' : ''}" onclick="event.stopPropagation(); focusLiveRelayMatch(${m.id})">📡 중계</button>
                 </div>
                 <div class="slim-accordion-panel ${isAccordionOpen ? 'open' : ''}" id="slimPanel_${m.id}">
                   ${isAccordionOpen ? cachedAccordionHtml : '<div class="slim-accordion-loading">로딩 중...</div>'}
@@ -14147,6 +14122,7 @@ function getFullModalMatchList() {
       if (hasChanges || liveItems.length > 0) {
         renderMatchStrip('ALL');
         renderPredMatches();
+        renderRightColLiveRelay();
 
         // 선택된 경기 상세 화면 실시간 연동
         if (currentCenterMode === 'DETAIL' && selectedPredMatchId) {
@@ -14158,149 +14134,366 @@ function getFullModalMatchList() {
       }
     }
 
-    function switchCommunityChannel(ch) {
-      currentChatChannel = ch;
-      ['ALL', 'BASEBALL', 'SOCCER', 'BASKETBALL', 'PREDICTION'].forEach(k => {
-        const btn = document.getElementById('chatTab' + k);
-        if (btn) btn.classList.toggle('active', k === ch);
-      });
-      loadCommunityMessages();
+    // =============================================================
+    // 📡 [우측 패널] 실시간 LIVE 멀티 텍스트 중계 센터 (야구 다이아몬드 불빛 + BSO + 플레이 피드)
+    // =============================================================
+    let selectedLiveRelayMatchId = 'ALL';
+    let selectedLiveRelaySport = 'ALL';
+
+    function setLiveRelayFilter(mid) {
+      selectedLiveRelayMatchId = mid;
+      renderRightColLiveRelay();
     }
 
-    function renderCommunityFeed() {
-      const listEl = document.getElementById('communityMessagesList');
-      if (!listEl) return;
+    function setLiveRelaySport(sport) {
+      selectedLiveRelaySport = sport;
+      ['ALL', 'BASEBALL', 'SOCCER'].forEach(sp => {
+        const btn = document.getElementById('btnLiveFilterSport' + sp);
+        if (btn) {
+          btn.classList.toggle('btn-primary', sp === sport);
+          btn.classList.toggle('text-white', sp === sport);
+          btn.classList.toggle('btn-outline-secondary', sp !== sport);
+        }
+      });
+      renderRightColLiveRelay();
+    }
 
-      if (communityMessages.length === 0) {
-        listEl.innerHTML = '<div class="text-center text-muted py-5">등록된 대화가 없습니다. 첫 메시지를 남겨보세요!</div>';
+    function focusLiveRelayMatch(mid) {
+      selectedLiveRelayMatchId = mid;
+      if (typeof currentViewMode !== 'undefined' && currentViewMode === 'mobile') {
+        switchMobileTab('live_relay');
+      }
+      renderRightColLiveRelay();
+      const rightCol = document.getElementById('rightColCommunity');
+      if (rightCol) {
+        rightCol.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        rightCol.style.boxShadow = '0 0 14px rgba(220, 38, 38, 0.4)';
+        setTimeout(() => { rightCol.style.boxShadow = ''; }, 1800);
+      }
+    }
+
+    function focusLiveRelayHub() {
+      selectedLiveRelayMatchId = 'ALL';
+      if (typeof currentViewMode !== 'undefined' && currentViewMode === 'mobile') {
+        switchMobileTab('live_relay');
+      }
+      renderRightColLiveRelay();
+      const rightCol = document.getElementById('rightColCommunity');
+      if (rightCol) {
+        rightCol.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    function renderRightColLiveRelay() {
+      const container = document.getElementById('rightColLiveRelayBody');
+      const chipsBar = document.getElementById('liveRelayMatchChips');
+      const topBadge = document.getElementById('topLiveCountBadge');
+      const rightBadge = document.getElementById('rightLiveCountBadge');
+
+      const matches = allMatches || [];
+      const now = new Date();
+      const nowTs = now.getTime();
+
+      // Find all live matches
+      let liveList = matches.filter(m => {
+        if (m.status === 'LIVE') return true;
+        if (m.status === 'SCHEDULED' && m.match_date) {
+          try {
+            const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+            const diffMin = (nowTs - mTime) / (60 * 1000);
+            if (diffMin >= 0 && diffMin <= 210) return true;
+          } catch(e) {}
+        }
+        return false;
+      });
+
+      if (selectedLiveRelaySport !== 'ALL') {
+        liveList = liveList.filter(m => m.sport_code === selectedLiveRelaySport);
+      }
+
+      if (topBadge) topBadge.innerText = liveList.length;
+      if (rightBadge) rightBadge.innerText = liveList.length;
+
+      // Update chips bar
+      if (chipsBar) {
+        let chipsHtml = `
+          <button class="btn btn-sm ${selectedLiveRelayMatchId === 'ALL' ? 'btn-danger active text-white' : 'btn-outline-secondary'} py-0 px-2 fw-bold text-nowrap" id="chipLiveRelayALL" onclick="setLiveRelayFilter('ALL')" style="font-size: 0.70rem; border-radius: 4px;">
+            ⚡ 전체 LIVE (${liveList.length})
+          </button>
+        `;
+        liveList.forEach(m => {
+          const isSel = (String(selectedLiveRelayMatchId) === String(m.id));
+          const sportIcon = m.sport_code === 'BASEBALL' ? '⚾' : (m.sport_code === 'BASKETBALL' ? '🏀' : '⚽');
+          const hName = (m.home_team_name || '').slice(0, 4);
+          const aName = (m.away_team_name || '').slice(0, 4);
+          chipsHtml += `
+            <button class="btn btn-sm ${isSel ? 'btn-primary active text-white' : 'btn-outline-secondary'} py-0 px-2 fw-bold text-nowrap" onclick="setLiveRelayFilter(${m.id})" style="font-size: 0.70rem; border-radius: 4px;">
+              ${sportIcon} ${hName} vs ${aName}
+            </button>
+          `;
+        });
+        chipsBar.innerHTML = chipsHtml;
+      }
+
+      if (!container) return;
+
+      if (liveList.length === 0) {
+        const upcomingMatches = matches.filter(m => m.status === 'SCHEDULED').slice(0, 3);
+        let upcomingHtml = '';
+        upcomingMatches.forEach(um => {
+          const spIcon = um.sport_code === 'BASEBALL' ? '⚾' : (um.sport_code === 'BASKETBALL' ? '🏀' : '⚽');
+          upcomingHtml += `
+            <div class="p-2 mb-1.5 rounded-2 border d-flex justify-content-between align-items-center" style="background: #ffffff; border-color: #e5e7eb !important;">
+              <div class="d-flex align-items-center gap-1.5">
+                <span class="badge bg-secondary" style="font-size: 0.65rem;">${um.league_name || um.sport_code}</span>
+                <strong style="font-size: 0.78rem; color: #111827;">${um.home_team_name} vs ${um.away_team_name}</strong>
+              </div>
+              <span class="badge bg-light text-dark border" style="font-size: 0.68rem;">${(um.match_date || '').slice(11, 16)}</span>
+            </div>
+          `;
+        });
+
+        container.innerHTML = `
+          <div class="text-center py-4 px-2">
+            <div style="font-size: 2.2rem;" class="mb-2">☕</div>
+            <div class="fw-bold text-dark fs-6 mb-1">현재 진행 중인 실시간 LIVE 경기가 없습니다.</div>
+            <div class="text-muted small mb-3">경기 시작 5분 전부터 1초 초고속 다이아몬드 베이스 불빛과 실시간 문자중계가 자동으로 시작됩니다.</div>
+            ${upcomingMatches.length > 0 ? `
+              <div class="text-start mt-3">
+                <div class="small fw-bold text-secondary mb-1.5"><i class="bi bi-clock-history me-1 text-primary"></i>다음 예정 경기</div>
+                ${upcomingHtml}
+              </div>
+            ` : ''}
+          </div>
+        `;
         return;
       }
 
-      let html = '';
-      communityMessages.forEach(msg => {
-        let tagColor = 'bg-primary';
-        if (['EPL', 'LALIGA', 'KLEAGUE', 'JLEAGUE', 'SOCCER'].includes(msg.sport_tag)) tagColor = 'bg-success';
-        if (['NBA', 'BASKETBALL'].includes(msg.sport_tag)) tagColor = 'bg-warning text-dark';
-        if (msg.sport_tag === 'PREDICTION') tagColor = 'bg-danger';
-
-        html += `
-          <div class="p-2 mb-2 rounded-2 border" style="background: #f8fafc; border-color: #e5e7eb !important;">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <div class="d-flex align-items-center gap-1.5">
-                <span class="badge ${tagColor}" style="font-size: 0.68rem; font-weight: 700;">${msg.sport_tag || '일반'}</span>
-                <strong style="color: #111827; font-size: 0.82rem; font-weight: 700;">${msg.author}</strong>
-              </div>
-              <span class="text-muted" style="font-size: 0.70rem;">${displayKstTime(msg.created_at)}</span>
-            </div>
-            <div class="small" style="line-height: 1.5; color: #111827; font-weight: 500;">${msg.content}</div>
-          </div>
-        `;
-      });
-
-      listEl.innerHTML = html;
-      listEl.scrollTop = listEl.scrollHeight;
-    }
-
-    function appendMessageToFeed(msg) {
-      const listEl = document.getElementById('communityMessagesList');
-      if (!listEl) return;
-
-      let tagColor = 'bg-primary';
-      if (['EPL', 'LALIGA', 'KLEAGUE', 'JLEAGUE', 'SOCCER'].includes(msg.sport_tag)) tagColor = 'bg-success';
-      if (['NBA', 'BASKETBALL'].includes(msg.sport_tag)) tagColor = 'bg-warning text-dark';
-      if (msg.sport_tag === 'PREDICTION') tagColor = 'bg-danger';
-
-      const div = document.createElement('div');
-      div.className = 'p-2 mb-2 rounded-2 border';
-      div.style.background = '#f8fafc';
-      div.style.borderColor = '#e5e7eb';
-      div.setAttribute('data-chat-content', msg.content);
-      div.innerHTML = `
-        <div class="d-flex justify-content-between align-items-center mb-1">
-          <div class="d-flex align-items-center gap-1.5">
-            <span class="badge ${tagColor}" style="font-size: 0.68rem; font-weight: 700;">${msg.sport_tag || '일반'}</span>
-            <strong style="color: #111827; font-size: 0.82rem; font-weight: 700;">${msg.author}</strong>
-          </div>
-          <span class="text-muted" style="font-size: 0.70rem;">${displayKstTime(msg.created_at)}</span>
-        </div>
-        <div class="small" style="line-height: 1.5; color: #111827; font-weight: 500;">${msg.content}</div>
-      `;
-
-      listEl.appendChild(div);
-      listEl.scrollTop = listEl.scrollHeight;
-    }
-
-    async function handleSendCommunityMessage(e) {
-      e.preventDefault();
-      const contentEl = document.getElementById('chatContentInput');
-      const authorEl = document.getElementById('chatAuthorInput');
-      const tagEl = document.getElementById('chatSportTagSelect');
-
-      const content = contentEl.value.trim();
-      const author = authorEl.value.trim() || '스포츠팬';
-      const sportTag = tagEl.value;
-
-      if (!content) return;
-
-      const kstTime = (typeof getKstTimeFormatted === 'function') ? getKstTimeFormatted() : '';
-      // Immediately append for instantaneous responsive feedback
-      const localChatMsg = {
-        id: Date.now(),
-        author: author,
-        channel: currentChatChannel,
-        sport_tag: sportTag,
-        content: content,
-        created_at: kstTime,
-        likes: 0
-      };
-      appendMessageToFeed(localChatMsg);
-
-      // Send via WebSocket
-      if (liveSocket && liveSocket.readyState === WebSocket.OPEN) {
-        liveSocket.send(JSON.stringify({
-          type: 'CHAT',
-          author: author,
-          channel: currentChatChannel,
-          sport_tag: sportTag,
-          content: content,
-          created_at: kstTime
-        }));
-      } else {
-        // Fallback to REST API
-        try {
-          await fetch('/api/v1/community/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              author: author,
-              channel: currentChatChannel,
-              sport_tag: sportTag,
-              content: content
-            })
-          });
-          loadCommunityMessages();
-        } catch (err) {
-          console.error('Send error:', err);
-        }
+      let targetMatches = liveList;
+      if (selectedLiveRelayMatchId !== 'ALL') {
+        const single = liveList.find(m => String(m.id) === String(selectedLiveRelayMatchId)) || matches.find(m => String(m.id) === String(selectedLiveRelayMatchId));
+        if (single) targetMatches = [single];
       }
 
-      contentEl.value = '';
-    }
+      let cardsHtml = '';
+      targetMatches.forEach(m => {
+        const st = getLiveMatchState(m);
+        const isBaseball = (m.sport_code === 'BASEBALL');
+        const isSoccer = (m.sport_code === 'SOCCER');
 
-    function castCommunityVote(side) {
-      pollVotes[side]++;
-      const total = pollVotes.H + pollVotes.D + pollVotes.A;
-      const pctH = Math.round((pollVotes.H / total) * 100);
-      const pctD = Math.round((pollVotes.D / total) * 100);
-      const pctA = 100 - pctH - pctD;
+        if (isBaseball) {
+          const b1 = st.base1;
+          const b2 = st.base2;
+          const b3 = st.base3;
+          const baseStateText = (b1 && b2 && b3) ? '만루 🚨' :
+            (b1 && b2 ? '1·2루 득점권' :
+            (b1 && b3 ? '1·3루 득점권' :
+            (b2 && b3 ? '2·3루 득점권' :
+            (b3 ? '3루 득점권' :
+            (b2 ? '2루 득점권' :
+            (b1 ? '1루' : '주자 없음'))))));
 
-      document.getElementById('pollVotesH').innerText = `${pctH}% (${pollVotes.H}표)`;
-      document.getElementById('pollVotesD').innerText = `${pctD}% (${pollVotes.D}표)`;
-      document.getElementById('pollVotesA').innerText = `${pctA}% (${pollVotes.A}표)`;
+          cardsHtml += `
+            <div class="p-2 mb-2.5 rounded-2 border shadow-sm" style="background: #ffffff; border-color: #cbd5e1 !important;">
+              <!-- Header: League & Inning & Score -->
+              <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+                <div class="d-flex align-items-center gap-1.5">
+                  <span class="badge bg-danger fw-bold" style="font-size: 0.68rem;"><i class="bi bi-broadcast me-0.5"></i>LIVE</span>
+                  <span class="badge bg-dark fw-bold" style="font-size: 0.68rem;">${m.league_name || 'MLB'}</span>
+                  <span class="badge bg-danger text-white fw-bold" style="font-size: 0.72rem;">${st.inning_text || '9회말'}</span>
+                  <span class="text-danger fw-bold small" style="font-size: 0.72rem;">${st.outs}아웃 (${baseStateText})</span>
+                </div>
+                <button class="btn btn-xs btn-outline-primary py-0 px-1.5 fw-bold" onclick="selectPredMatch(${m.id})" style="font-size: 0.65rem;">
+                  📊 세이버 분석
+                </button>
+              </div>
 
-      document.getElementById('pollBarH').style.width = `${pctH}%`;
-      document.getElementById('pollBarD').style.width = `${pctD}%`;
-      document.getElementById('pollBarA').style.width = `${pctA}%`;
+              <!-- Match Score Banner -->
+              <div class="d-flex justify-content-between align-items-center px-2 py-1 mb-2 rounded" style="background: #0f172a; color: #ffffff;">
+                <div class="d-flex align-items-center gap-1.5">
+                  <strong style="font-size: 0.88rem; color: #ffffff;">${m.home_team_name}</strong>
+                  <span class="badge bg-primary fs-6 fw-bold px-2 py-0.5">${m.home_score ?? st.score_h}</span>
+                </div>
+                <span class="text-secondary fw-bold" style="font-size: 0.78rem;">VS</span>
+                <div class="d-flex align-items-center gap-1.5">
+                  <span class="badge bg-danger fs-6 fw-bold px-2 py-0.5">${m.away_score ?? st.score_a}</span>
+                  <strong style="font-size: 0.88rem; color: #ffffff;">${m.away_team_name}</strong>
+                </div>
+              </div>
+
+              <!-- Mini Baseball Diamond & BSO LED Display Grid -->
+              <div class="row g-1 mb-2">
+                <!-- Left: Diamond with illuminated base lights -->
+                <div class="col-5">
+                  <div class="p-1 rounded text-center" style="background: #0f172a; border: 1px solid #334155; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <svg width="105" height="90" viewBox="0 0 105 90" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
+                      <!-- Infield Dirt Diamond -->
+                      <polygon points="52,15 88,48 52,78 16,48" fill="#78350f" stroke="#a16207" stroke-width="1" />
+                      <!-- Infield Grass -->
+                      <polygon points="52,26 77,48 52,69 27,48" fill="#15803d" />
+                      
+                      <!-- Pitcher Mound -->
+                      <circle cx="52" cy="48" r="4" fill="#a16207" />
+
+                      <!-- 2루 (Top) -->
+                      <g transform="translate(52, 15)">
+                        <polygon points="0,-6 6,0 0,6 -6,0" 
+                                 fill="${b2 ? '#f59e0b' : '#334155'}" 
+                                 stroke="${b2 ? '#fef08a' : '#64748b'}" 
+                                 stroke-width="${b2 ? '2' : '1'}" />
+                        <text x="0" y="2.5" text-anchor="middle" font-size="6" font-weight="bold" fill="${b2 ? '#000000' : '#cbd5e1'}">2</text>
+                      </g>
+
+                      <!-- 3루 (Left) -->
+                      <g transform="translate(16, 48)">
+                        <polygon points="0,-6 6,0 0,6 -6,0" 
+                                 fill="${b3 ? '#f59e0b' : '#334155'}" 
+                                 stroke="${b3 ? '#fef08a' : '#64748b'}" 
+                                 stroke-width="${b3 ? '2' : '1'}" />
+                        <text x="0" y="2.5" text-anchor="middle" font-size="6" font-weight="bold" fill="${b3 ? '#000000' : '#cbd5e1'}">3</text>
+                      </g>
+
+                      <!-- 1루 (Right) -->
+                      <g transform="translate(88, 48)">
+                        <polygon points="0,-6 6,0 0,6 -6,0" 
+                                 fill="${b1 ? '#f59e0b' : '#334155'}" 
+                                 stroke="${b1 ? '#fef08a' : '#64748b'}" 
+                                 stroke-width="${b1 ? '2' : '1'}" />
+                        <text x="0" y="2.5" text-anchor="middle" font-size="6" font-weight="bold" fill="${b1 ? '#000000' : '#cbd5e1'}">1</text>
+                      </g>
+
+                      <!-- 홈 (Bottom) -->
+                      <g transform="translate(52, 78)">
+                        <polygon points="0,-3 4,-1 3,4 -3,4 -4,-1" fill="#ffffff" stroke="#94a3b8" stroke-width="1" />
+                      </g>
+                    </svg>
+                    <div class="mt-0.5 text-warning fw-bold" style="font-size: 0.65rem;">
+                      ${baseStateText}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right: BSO LED Counter & Matchup Info -->
+                <div class="col-7">
+                  <div class="p-1.5 rounded" style="background: #0f172a; border: 1px solid #334155; height: 100%;">
+                    <!-- BSO Display -->
+                    <div class="d-flex justify-content-between align-items-center mb-1 px-1 py-0.5 rounded" style="background: rgba(255,255,255,0.05); font-family: monospace; font-size: 0.72rem; font-weight: 800;">
+                      <div class="d-flex align-items-center gap-0.5">
+                        <span style="color: #4ade80;">B</span>
+                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${st.balls >= 1 ? '#4ade80' : '#334155'}; box-shadow:${st.balls >= 1 ? '0 0 4px #4ade80' : 'none'};"></span>
+                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${st.balls >= 2 ? '#4ade80' : '#334155'}; box-shadow:${st.balls >= 2 ? '0 0 4px #4ade80' : 'none'};"></span>
+                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${st.balls >= 3 ? '#4ade80' : '#334155'}; box-shadow:${st.balls >= 3 ? '0 0 4px #4ade80' : 'none'};"></span>
+                      </div>
+                      <div class="d-flex align-items-center gap-0.5">
+                        <span style="color: #facc15;">S</span>
+                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${st.strikes >= 1 ? '#facc15' : '#334155'}; box-shadow:${st.strikes >= 1 ? '0 0 4px #facc15' : 'none'};"></span>
+                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${st.strikes >= 2 ? '#facc15' : '#334155'}; box-shadow:${st.strikes >= 2 ? '0 0 4px #facc15' : 'none'};"></span>
+                      </div>
+                      <div class="d-flex align-items-center gap-0.5">
+                        <span style="color: #f87171;">O</span>
+                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${st.outs >= 1 ? '#f87171' : '#334155'}; box-shadow:${st.outs >= 1 ? '0 0 4px #f87171' : 'none'};"></span>
+                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${st.outs >= 2 ? '#f87171' : '#334155'}; box-shadow:${st.outs >= 2 ? '0 0 4px #f87171' : 'none'};"></span>
+                      </div>
+                    </div>
+
+                    <!-- Pitcher & Batter Info -->
+                    <div class="text-white" style="font-size: 0.68rem; line-height: 1.4;">
+                      <div class="d-flex justify-content-between">
+                        <span class="text-secondary"><i class="bi bi-person-fill text-warning me-0.5"></i>투수:</span>
+                        <strong class="text-white text-truncate" style="max-width: 90px;">${st.pitcher_name}</strong>
+                      </div>
+                      <div class="d-flex justify-content-between">
+                        <span class="text-secondary"><i class="bi bi-person-badge text-info me-0.5"></i>타자:</span>
+                        <strong class="text-white text-truncate" style="max-width: 90px;">${st.batter_name}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Real-time Play-by-Play Text Feed -->
+              <div class="p-1.5 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="fw-bold text-dark" style="font-size: 0.70rem;"><i class="bi bi-chat-left-text-fill text-danger me-1"></i>실시간 플레이 텍스트</span>
+                  <span class="badge bg-danger" style="font-size: 0.60rem;">1초 연동</span>
+                </div>
+                <div class="p-1.5 rounded bg-white border text-dark fw-bold" style="font-size: 0.74rem; line-height: 1.45; border-color: #cbd5e1 !important;">
+                  <span class="text-danger me-1">➔</span>${st.recent_play || '풀카운트 3-2 접전 중! 투구 대기'}
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (isSoccer) {
+          cardsHtml += `
+            <div class="p-2 mb-2.5 rounded-2 border shadow-sm" style="background: #ffffff; border-color: #cbd5e1 !important;">
+              <!-- Header: League & Minute & Score -->
+              <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+                <div class="d-flex align-items-center gap-1.5">
+                  <span class="badge bg-danger fw-bold" style="font-size: 0.68rem;"><i class="bi bi-broadcast me-0.5"></i>LIVE</span>
+                  <span class="badge bg-dark fw-bold" style="font-size: 0.68rem;">${m.league_name || 'SOCCER'}</span>
+                  <span class="badge bg-success text-white fw-bold" style="font-size: 0.72rem;">${st.match_minute || "78'"}</span>
+                </div>
+                <button class="btn btn-xs btn-outline-primary py-0 px-1.5 fw-bold" onclick="selectPredMatch(${m.id})" style="font-size: 0.65rem;">
+                  📊 경기 분석
+                </button>
+              </div>
+
+              <!-- Match Score Banner -->
+              <div class="d-flex justify-content-between align-items-center px-2 py-1.5 mb-2 rounded" style="background: #0f172a; color: #ffffff;">
+                <div class="d-flex align-items-center gap-1.5">
+                  <strong style="font-size: 0.88rem; color: #ffffff;">${m.home_team_name}</strong>
+                  <span class="badge bg-primary fs-6 fw-bold px-2 py-0.5">${m.home_score ?? st.score_h}</span>
+                </div>
+                <span class="text-secondary fw-bold" style="font-size: 0.78rem;">VS</span>
+                <div class="d-flex align-items-center gap-1.5">
+                  <span class="badge bg-danger fs-6 fw-bold px-2 py-0.5">${m.away_score ?? st.score_a}</span>
+                  <strong style="font-size: 0.88rem; color: #ffffff;">${m.away_team_name}</strong>
+                </div>
+              </div>
+
+              <!-- Real-time Event Feed -->
+              <div class="p-1.5 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="fw-bold text-dark" style="font-size: 0.70rem;"><i class="bi bi-chat-left-text-fill text-success me-1"></i>실시간 경기 상황</span>
+                  <span class="badge bg-success" style="font-size: 0.60rem;">LIVE</span>
+                </div>
+                <div class="p-1.5 rounded bg-white border text-dark fw-bold" style="font-size: 0.74rem; line-height: 1.45; border-color: #cbd5e1 !important;">
+                  <span class="text-success me-1">⚽</span>${st.recent_event || '페널티 에어리어 부근 치열한 공방전 진행 중!'}
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          cardsHtml += `
+            <div class="p-2 mb-2.5 rounded-2 border shadow-sm" style="background: #ffffff; border-color: #cbd5e1 !important;">
+              <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+                <div class="d-flex align-items-center gap-1.5">
+                  <span class="badge bg-danger fw-bold" style="font-size: 0.68rem;">LIVE</span>
+                  <span class="badge bg-dark fw-bold" style="font-size: 0.68rem;">${m.league_name || m.sport_code}</span>
+                  <span class="badge bg-warning text-dark fw-bold" style="font-size: 0.72rem;">${st.quarter || 'LIVE'}</span>
+                </div>
+                <button class="btn btn-xs btn-outline-primary py-0 px-1.5 fw-bold" onclick="selectPredMatch(${m.id})" style="font-size: 0.65rem;">
+                  📊 경기 분석
+                </button>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center px-2 py-1.5 mb-2 rounded" style="background: #0f172a; color: #ffffff;">
+                <strong style="font-size: 0.88rem; color: #ffffff;">${m.home_team_name}</strong>
+                <span class="badge bg-warning text-dark fs-6 fw-bold px-2 py-0.5">${m.home_score ?? st.score_h} : ${m.away_score ?? st.score_a}</span>
+                <strong style="font-size: 0.88rem; color: #ffffff;">${m.away_team_name}</strong>
+              </div>
+
+              <div class="p-1.5 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                <div class="p-1.5 rounded bg-white border text-dark fw-bold" style="font-size: 0.74rem; line-height: 1.45; border-color: #cbd5e1 !important;">
+                  <span class="text-warning me-1">🏀</span>${st.recent_event || '치열한 점수 공방전 진행 중'}
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      container.innerHTML = cardsHtml;
     }
 
 
