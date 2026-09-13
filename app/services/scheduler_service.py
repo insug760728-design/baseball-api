@@ -36,6 +36,8 @@ class SchedulerService:
     }
     _is_running_task: bool = False
     _live_loop_task: Optional[asyncio.Task] = None
+    _last_football_sync_ts: float = 0.0
+    _last_baseball_sync_ts: float = 0.0
 
     @classmethod
     def get_scheduler(cls) -> AsyncIOScheduler:
@@ -593,18 +595,31 @@ class SchedulerService:
                                 d_db.close()
                         sync_tasks.append(asyncio.to_thread(_sync_domestic))
 
-                    # (C) 유료 LiveApiSports 초고속 LIVE 전용 수집 (0.4초 소요)
+                    # (C) 유료 LiveApiSports 초고속 LIVE 전용 수집 (축구 30초 / 야구 10초 최적화 주기)
+                    import time
+                    now_epoch = time.time()
                     from app.services.live_api_sports_service import LiveApiSportsService
-                    if LiveApiSportsService.is_configured() and (soccer_active or has_live_or_active):
-                        def _sync_fast_live_api():
-                            try:
-                                fb_res = LiveApiSportsService.sync_live_football(live_only=True)
-                                bb_res = LiveApiSportsService.sync_live_baseball(live_only=True)
-                                return (fb_res.get('updated_db_matches', 0) or 0) + (bb_res.get('updated_db_matches', 0) or 0)
-                            except Exception as e:
-                                logger.warning(f"[Scheduler Live5Sec LiveApi] 경고: {e}")
-                                return 0
-                        sync_tasks.append(asyncio.to_thread(_sync_fast_live_api))
+                    if LiveApiSportsService.is_configured() and has_live_or_active:
+                        should_sync_fb = (soccer_active or has_live_or_active) and (now_epoch - cls._last_football_sync_ts >= 30.0)
+                        should_sync_bb = (mlb_active or has_live_or_active) and (now_epoch - cls._last_baseball_sync_ts >= 10.0)
+
+                        if should_sync_fb or should_sync_bb:
+                            def _sync_fast_live_api():
+                                total_up = 0
+                                try:
+                                    if should_sync_fb:
+                                        cls._last_football_sync_ts = time.time()
+                                        fb_res = LiveApiSportsService.sync_live_football(live_only=True)
+                                        total_up += (fb_res.get('updated_db_matches', 0) or 0)
+                                    if should_sync_bb:
+                                        cls._last_baseball_sync_ts = time.time()
+                                        bb_res = LiveApiSportsService.sync_live_baseball(live_only=True)
+                                        total_up += (bb_res.get('updated_db_matches', 0) or 0)
+                                    return total_up
+                                except Exception as e:
+                                    logger.warning(f"[Scheduler Live LiveApi] 경고: {e}")
+                                    return 0
+                            sync_tasks.append(asyncio.to_thread(_sync_fast_live_api))
 
                     # 🚀 병렬 실행으로 전체 수집 소요시간을 1초 미만으로 극대화
                     if sync_tasks:
@@ -674,16 +689,16 @@ class SchedulerService:
                         except Exception:
                             pass
 
-                    await asyncio.sleep(5)
+                    await asyncio.sleep(10)
                 else:
                     # 진행 중인 경기 없음: 10초 대기
                     await asyncio.sleep(10)
             except asyncio.CancelledError:
-                logger.info("[Scheduler Live5Sec] 5초 루프 종료됨")
+                logger.info("[Scheduler Live10Sec] 동적 루프 종료됨")
                 break
             except Exception as e:
-                logger.warning(f"[Scheduler Live5Sec] 루프 경고: {e}")
-                await asyncio.sleep(5)
+                logger.warning(f"[Scheduler Live10Sec] 루프 경고: {e}")
+                await asyncio.sleep(10)
 
 
 

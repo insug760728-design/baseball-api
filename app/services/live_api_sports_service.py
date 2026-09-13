@@ -1186,11 +1186,24 @@ class LiveApiSportsService:
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
 
+    _request_cache: Dict[str, Any] = {} # {cache_key: (timestamp, data)}
+
     @classmethod
-    def _make_request(cls, endpoint: str, sport: str = "football", timeout: int = 10) -> Optional[Dict[str, Any]]:
+    def _make_request(cls, endpoint: str, sport: str = "football", timeout: int = 10, ttl_seconds: Optional[int] = None) -> Optional[Dict[str, Any]]:
         key = cls.get_api_key()
         if not key:
             return None
+
+        # Determine TTL: 축구는 30초, 야구는 10초 기본 캐시
+        if ttl_seconds is None:
+            ttl_seconds = 30 if sport == "football" else 10
+
+        cache_key = f"{sport}:{endpoint}"
+        now_ts = time.time()
+        if cache_key in cls._request_cache:
+            cached_time, cached_data = cls._request_cache[cache_key]
+            if now_ts - cached_time < ttl_seconds:
+                return cached_data
 
         headers = {"User-Agent": "TOKEON-LiveSync/1.0"}
         if cls.is_rapidapi():
@@ -1213,6 +1226,8 @@ class LiveApiSportsService:
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
+                if data and "response" in data:
+                    cls._request_cache[cache_key] = (now_ts, data)
                 return data
         except Exception as e:
             logger.error(f"[LiveApiSports] Request failed for {url}: {e}")
