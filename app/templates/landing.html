@@ -604,6 +604,171 @@
       border: 2px solid #1d4ed8 !important;
     }
 
+    /* Option 1: 베트맨 오리지널 콤팩트 3단 바 전용 영구 고정 스타일 */
+    .slim-match-card {
+      position: relative;
+    }
+    .slim-card-sport-time {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #475569;
+    }
+    .betman-match-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin: 4px 0;
+    }
+    .betman-team-home {
+      flex: 1 1 35%;
+      min-width: 0;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #0f172a;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .betman-team-away {
+      flex: 1 1 35%;
+      min-width: 0;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #0f172a;
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .betman-score-val {
+      flex: 0 0 auto;
+      font-size: 1.05rem;
+      font-weight: 800;
+      min-width: 20px;
+      text-align: center;
+    }
+    .betman-score-val.home.live { color: #dc2626; }
+    .betman-score-val.away.live { color: #dc2626; }
+    .betman-score-val.finished { color: #1e293b; }
+    .betman-inning-badge {
+      flex: 0 0 auto;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+    .betman-inning-badge.live {
+      background: #fef2f2;
+      color: #dc2626;
+      border-color: #fecaca;
+    }
+    .betman-odds-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      flex: 0 0 auto;
+    }
+    .betman-box {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      background: #ffffff;
+      font-size: 0.68rem;
+      overflow: hidden;
+      line-height: 1.2;
+    }
+    .betman-lbl {
+      background: #f1f5f9;
+      color: #64748b;
+      padding: 2px 4px;
+      font-weight: 700;
+      font-size: 0.60rem;
+      border-right: 1px solid #e2e8f0;
+    }
+    .betman-val {
+      padding: 2px 5px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .slim-card-starter-bar {
+      font-size: 0.70rem;
+    }
+    .slim-card-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .slim-action-btn {
+      flex: 1;
+      background: #ffffff;
+      color: #334155;
+      border: 1px solid #d1d5db;
+      border-radius: 5px;
+      font-size: 0.70rem;
+      font-weight: 600;
+      padding: 3px 4px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+    .slim-action-btn:hover {
+      background: #f8fafc;
+      border-color: #94a3b8;
+    }
+    .slim-action-btn.active {
+      background: #1d4ed8 !important;
+      color: #ffffff !important;
+      border-color: #1d4ed8 !important;
+      font-weight: 700 !important;
+    }
+    .slim-action-btn.detail-btn {
+      background: #f8fafc;
+      color: #1e40af;
+      border-color: #bfdbfe;
+      font-weight: 700;
+    }
+    .slim-action-btn.detail-btn:hover {
+      background: #eff6ff;
+      border-color: #93c5fd;
+    }
+    .slim-accordion-panel {
+      display: none;
+      margin-top: 6px;
+      padding: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+    }
+    .slim-accordion-panel.open {
+      display: block;
+    }
+    .slim-odds-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.68rem;
+    }
+    .slim-odds-table th, .slim-odds-table td {
+      padding: 4px 6px;
+      border: 1px solid #e2e8f0;
+    }
+    .slim-odds-table .odds-val.win {
+      color: #1d4ed8;
+    }
+    .slim-odds-table .odds-val.lose {
+      color: #dc2626;
+    }
+    .slim-odds-table .odds-val.draw {
+      color: #475569;
+    }
+
     /* Button Controls (Date, Sport, Conf) */
     .sport-filter-btn, .sport-chip-btn {
       background: #ffffff !important;
