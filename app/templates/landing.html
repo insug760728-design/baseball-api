@@ -3056,17 +3056,14 @@
       if (archiveLoadingPromise) return archiveLoadingPromise;
       archiveLoadingPromise = (async () => {
         try {
-          // 🚀 롤링 윈도우 기반 연속 페칭 (어제 D-1 ~ 내일 D+2): 경기 데이터 페칭
-          const now = new Date();
-          const rollingStartStr = getKSTDateString(new Date(now.getTime() - 86400000));
-          const [upResp, finResp, allResp] = await Promise.all([
-            fetch(`/api/v1/matches?start_date=${rollingStartStr}&order=asc&limit=300`),
+          const [upResp, finResp, allResp] = await Promise.allSettled([
+            fetch('/api/v1/matches?limit=300&order=desc', { cache: 'no-store' }),
             fetch('/api/v1/matches?status=FINISHED&order=desc&limit=150'),
-            fetch('/api/v1/matches?limit=300&order=desc')
+            fetch('/api/v1/matches?order=asc&limit=300')
           ]);
-          const upMatches = upResp.ok ? await upResp.json() : [];
-          const finMatches = finResp.ok ? await finResp.json() : [];
-          const allDbMatches = allResp.ok ? await allResp.json() : [];
+          const upMatches = (upResp.status === 'fulfilled' && upResp.value.ok) ? await upResp.value.json() : [];
+          const finMatches = (finResp.status === 'fulfilled' && finResp.value.ok) ? await finResp.value.json() : [];
+          const allDbMatches = (allResp.status === 'fulfilled' && allResp.value.ok) ? await allResp.value.json() : [];
           const rawMatches = [...upMatches, ...finMatches, ...allDbMatches];
 
           const seenIds = new Set(allMatches.map(m => m.id));
@@ -3091,6 +3088,7 @@
 
           // Refresh active view
           if (added) {
+            updateScheduleTabCounts();
             renderMatchStrip('ALL');
             renderPredMatches();
           }
@@ -3109,16 +3107,29 @@
         const now = new Date();
         const d0Str = getKSTDateString(now);
         const rollingStartStr = getKSTDateString(new Date(now.getTime() - 86400000));
-        // Fast Phase 1: 롤링 윈도우 + 전체 최신 경기 즉시 로드
-        const [upResp, finResp, allResp] = await Promise.all([
-          fetch(`/api/v1/matches?start_date=${rollingStartStr}&order=asc&limit=150`),
-          fetch('/api/v1/matches?status=FINISHED&order=desc&limit=60'),
-          fetch('/api/v1/matches?limit=150&order=desc')
-        ]);
-        const upMatches = upResp.ok ? await upResp.json() : [];
-        const finMatches = finResp.ok ? await finResp.json() : [];
-        const allDbMatches = allResp.ok ? await allResp.json() : [];
-        let rawMatches = [...upMatches, ...finMatches, ...allDbMatches];
+        
+        // Fast Phase 1: 최신 전체 경기 목록 우선 고속 로드
+        let rawMatches = [];
+        try {
+          const resp = await fetch('/api/v1/matches?limit=300&order=desc', { cache: 'no-store' });
+          if (resp.ok) {
+            rawMatches = await resp.json();
+          }
+        } catch (err) {
+          console.warn('Initial matches fetch error:', err);
+        }
+
+        if (!rawMatches || rawMatches.length === 0) {
+          try {
+            const [r1, r2] = await Promise.allSettled([
+              fetch(`/api/v1/matches?start_date=${rollingStartStr}&order=asc&limit=150`),
+              fetch('/api/v1/matches?status=FINISHED&order=desc&limit=60')
+            ]);
+            const m1 = (r1.status === 'fulfilled' && r1.value.ok) ? await r1.value.json() : [];
+            const m2 = (r2.status === 'fulfilled' && r2.value.ok) ? await r2.value.json() : [];
+            rawMatches = [...m1, ...m2];
+          } catch(e) {}
+        }
 
         // Ensure absolute fixture-level uniqueness (id or sport + home + away + YYYY-MM-DD)
         const uniqueList = [];
@@ -3134,33 +3145,37 @@
             uniqueList.push(m);
           }
         }
-        allMatches = uniqueList;
+
+        if (uniqueList.length > 0) {
+          allMatches = uniqueList;
+        }
         window.matchesLoadedInitial = true;
         try {
-          localStorage.setItem('tokeon_matches_cache_v4', JSON.stringify(uniqueList));
+          if (uniqueList.length > 0) {
+            localStorage.setItem('tokeon_matches_cache_v4', JSON.stringify(uniqueList));
+          }
         } catch (e) {}
 
+        updateScheduleTabCounts();
         renderMatchStrip('ALL');
         renderPredMatches();
         initRealTimeSportsTicker();
 
-        if (!selectedPredMatchId) {
-          const list = getFilteredPredMatches();
-          if (list.length > 0) {
-            selectPredMatch(list[0].id);
-          }
+        const list = getFilteredPredMatches();
+        if (list.length > 0) {
+          selectPredMatch(list[0].id);
         }
 
-        // Fast Phase 2: Lazily load the full archive in the background after 2.5s without blocking initial UI
+        // Fast Phase 2: Lazily load full archive
         setTimeout(() => {
           loadFullMatchesArchive();
-        }, 2500);
+        }, 2000);
 
       } catch (e) {
         console.error('Match strip error:', e);
-        if (container && (!allMatches || allMatches.length === 0)) {
-          container.innerHTML = '<div class="text-muted p-3">실제 경기 스코어보드를 불러오는 중입니다.</div>';
-        }
+        window.matchesLoadedInitial = true;
+        updateScheduleTabCounts();
+        renderPredMatches();
       }
     }
 
@@ -8035,7 +8050,9 @@ function getFullModalMatchList() {
           if (Array.isArray(parsed) && parsed.length > 0) {
             allMatches = parsed;
             window.matchesLoadedInitial = true;
+            updateScheduleTabCounts();
             renderMatchStrip('ALL');
+            renderPredMatches();
           }
         }
       } catch (e) {}
@@ -8922,7 +8939,8 @@ function getFullModalMatchList() {
       };
     }
 
-        function renderPredMatches() {
+    function renderPredMatches() {
+      updateScheduleTabCounts();
       const container = document.getElementById('predMatchList');
       if (!container) return;
 
