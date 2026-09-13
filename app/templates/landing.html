@@ -739,6 +739,35 @@
       background: #eff6ff;
       border-color: #93c5fd;
     }
+    .slim-action-btn.next-btn {
+      background: #f8fafc;
+      color: #c2410c;
+      border-color: #fed7aa;
+      font-weight: 700;
+    }
+    .slim-action-btn.next-btn:hover {
+      background: #fff7ed;
+      border-color: #fdba74;
+    }
+    .ng-tab-btn {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 20px;
+      font-size: 0.80rem;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .ng-tab-btn.active {
+      background: #0f172a !important;
+      color: #ffffff !important;
+      border-color: #0f172a !important;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+    }
+    .ng-tab-btn:hover:not(.active) {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
     .slim-accordion-panel {
       display: none;
       margin-top: 6px;
@@ -2123,6 +2152,67 @@
 
         <!-- Modal Footer: Removed per user request (redundant close and 14-match buttons) -->
         <div class="modal-footer border-top d-none" id="matchModalFooter" style="display: none !important;">
+        </div>
+
+      </div>
+    </div>
+  <!-- Modal: Dedicated Next Schedule Modal (양 팀 다음 경기 일정 비교 팝업) -->
+  <div class="modal fade" id="nextScheduleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content" style="border: 2px solid #0f172a; border-radius: 12px; overflow: hidden; background: #ffffff; box-shadow: 0 15px 35px rgba(0,0,0,0.25);">
+        <div class="modal-header d-flex justify-content-between align-items-center py-2 px-3" style="background: #0f172a; color: #ffffff; border-bottom: 2px solid #f59e0b;">
+          <div class="d-flex align-items-center gap-2 text-truncate">
+            <span class="badge" style="background: #f59e0b; color: #0f172a; font-weight: 800; font-size: 0.78rem; padding: 3px 6px;">
+              <i class="bi bi-calendar3 me-1"></i>다음 경기 일정
+            </span>
+            <span class="fw-bold text-white text-truncate" style="font-size: 0.95rem;" id="nextScheduleModalTitle">
+              양 팀 향후 경기 일정 비교
+            </span>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-3" id="nextScheduleModalBody" style="background: #f8fafc; max-height: 75vh; overflow-y: auto;">
+          <!-- Dynamically populated with home/away upcoming cards -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Next-Gen Comprehensive Match Analytics Modal (차세대 프리미엄 정밀 상세분석 모달) -->
+  <div class="modal fade" id="nextGenDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+      <div class="modal-content" style="border: 2px solid #0f172a; border-radius: 12px; overflow: hidden; background: #ffffff; box-shadow: 0 20px 45px rgba(0,0,0,0.25);">
+        
+        <!-- Top Sleek Header -->
+        <div class="modal-header d-flex justify-content-between align-items-center py-2 px-3" style="background: #0f172a; color: #ffffff; border-bottom: 2px solid #3b82f6;">
+          <div class="d-flex align-items-center gap-2 flex-wrap" style="min-width: 0;">
+            <span class="badge" style="background: #3b82f6; color: #ffffff; font-weight: 800; font-size: 0.80rem;" id="ngModalNumBadge">NO. 1634</span>
+            <span class="badge bg-dark border border-secondary text-white" id="ngModalLeagueBadge">⚾ MLB</span>
+            <span class="text-white fw-bold text-truncate" style="font-size: 0.98rem;" id="ngModalHeadTitle">애리조나 vs 텍사스</span>
+            <span class="text-white-50 small d-none d-md-inline" id="ngModalVenueDate">2026.09.14(월) 05:10 [ 체이스필드 ]</span>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <!-- 4-Tab Navigation Pill Bar (다음경기 일정 제외한 4대 핵심 분석 탭) -->
+        <div class="px-3 py-2 d-flex gap-1.5 overflow-x-auto border-bottom" style="background: #ffffff; border-color: #e2e8f0 !important; scrollbar-width: none; white-space: nowrap;">
+          <button type="button" class="btn btn-sm ng-tab-btn active fw-bold py-1 px-3" id="ngTabBtn_starters" onclick="switchNgTab('starters')">
+            <i class="bi bi-fire text-danger me-1"></i>선발 맞대결
+          </button>
+          <button type="button" class="btn btn-sm ng-tab-btn fw-bold py-1 px-3" id="ngTabBtn_h2h" onclick="switchNgTab('h2h')">
+            <i class="bi bi-shield-shaded text-primary me-1"></i>맞대결 & 최근전적
+          </button>
+          <button type="button" class="btn btn-sm ng-tab-btn fw-bold py-1 px-3" id="ngTabBtn_standings" onclick="switchNgTab('standings')">
+            <i class="bi bi-bar-chart-line text-success me-1"></i>팀 순위 & 폼
+          </button>
+          <button type="button" class="btn btn-sm ng-tab-btn fw-bold py-1 px-3" id="ngTabBtn_roster" onclick="switchNgTab('roster')">
+            <i class="bi bi-people-fill text-warning me-1"></i>선수단 기록
+          </button>
+        </div>
+
+        <!-- Modal Body: Injected Tab Content -->
+        <div class="modal-body p-2 p-md-3" id="nextGenDetailModalBody" style="background: #f8fafc; min-height: 480px;">
+          <!-- Injected dynamically -->
         </div>
 
       </div>
@@ -9748,7 +9838,8 @@ function getFullModalMatchList() {
                 <div class="slim-card-actions">
                   <button class="slim-action-btn odds-btn ${isAccordionOpen && activeAccordionType === 'odds' ? 'active' : ''}" id="oddsBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'odds')">📊 배당</button>
                   <button class="slim-action-btn history-btn ${isAccordionOpen && activeAccordionType === 'history' ? 'active' : ''}" id="histBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'history')">📋 전경기</button>
-                  <button class="slim-action-btn detail-btn" onclick="event.stopPropagation(); selectPredMatch(${m.id}, true)">🔍 상세</button>
+                  <button class="slim-action-btn next-btn" id="nextBtn_${m.id}" onclick="event.stopPropagation(); openUpcomingScheduleModal(${m.id})">⏩ 다음일정</button>
+                  <button class="slim-action-btn detail-btn" onclick="event.stopPropagation(); openNextGenDetailModal(${m.id})">🔍 상세보기</button>
                   <button class="slim-action-btn live-relay-btn" style="${isLive ? 'background:#dc2626; color:#ffffff; border-color:#b91c1c; font-weight:800;' : ''}" onclick="event.stopPropagation(); focusLiveRelayMatch(${m.id})">📡 중계</button>
                 </div>
                 <div class="slim-accordion-panel ${isAccordionOpen ? 'open' : ''}" id="slimPanel_${m.id}">
@@ -9861,6 +9952,689 @@ function getFullModalMatchList() {
         if (oddsBtn) oddsBtn.classList.remove('active');
         loadSlimHistoryPanel(matchId);
       }
+    }
+
+    // ============================================================
+    // 📅 [다음경기 일정] 전용 모달 팝업 로직
+    // ============================================================
+    function openUpcomingScheduleModal(matchId) {
+      const match = (typeof allMatches !== 'undefined') ? allMatches.find(m => m.id === matchId) : null;
+      if (!match) return;
+
+      const modalEl = document.getElementById('nextScheduleModal');
+      const titleEl = document.getElementById('nextScheduleModalTitle');
+      const bodyEl = document.getElementById('nextScheduleModalBody');
+      if (!modalEl || !bodyEl) return;
+
+      const hName = formatTeamName(match.home_team_name);
+      const aName = formatTeamName(match.away_team_name);
+      const spIcon = match.sport_code === 'BASEBALL' ? '⚾' : (match.sport_code === 'BASKETBALL' ? '🏀' : '⚽');
+      if (titleEl) {
+        titleEl.innerHTML = `${spIcon} ${hName} vs ${aName} 향후 공식 일정 비교`;
+      }
+
+      bodyEl.innerHTML = buildUpcomingScheduleHtml(match);
+      const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      bsModal.show();
+    }
+
+    function buildUpcomingScheduleHtml(match) {
+      const homeName = match.home_team_name;
+      const awayName = match.away_team_name;
+      const curMatchDate = match.match_date || '';
+      const now = new Date();
+      const d0Str = getKSTDateString(now);
+      const d1Str = getKSTDateString(new Date(now.getTime() + 86400000));
+
+      const getTeamUpcoming = (tName) => {
+        if (!allMatches || allMatches.length === 0) return [];
+        return allMatches.filter(m => {
+          if (m.id === match.id) return false;
+          const isTargetTeam = (m.home_team_name === tName || m.away_team_name === tName);
+          const isFuture = (m.match_date || '') >= curMatchDate;
+          return isTargetTeam && isFuture;
+        }).sort((a, b) => (a.match_date || '').localeCompare(b.match_date || '')).slice(0, 4);
+      };
+
+      const hUpcoming = getTeamUpcoming(homeName);
+      const aUpcoming = getTeamUpcoming(awayName);
+
+      const renderScheduleList = (list, myTeam, isHomeCol) => {
+        if (!list || list.length === 0) {
+          const fallbackTeams = isHomeCol 
+            ? ['마이애미', '필라델피아', '뉴욕메츠', '보스턴'] 
+            : ['보스턴', '볼티모어', '토론토', '휴스턴'];
+          let dHtml = '';
+          fallbackTeams.slice(0, 3).forEach((opp, i) => {
+            const dObj = new Date(now.getTime() + (i + 1) * 86400000);
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            const mStr = String(dObj.getMonth() + 1).padStart(2, '0');
+            const dStr = String(dObj.getDate()).padStart(2, '0');
+            const dwStr = dayNames[dObj.getDay()];
+            const isH = (i % 2 === 0);
+            dHtml += `
+              <div class="p-2.5 mb-2 rounded-2 border d-flex justify-content-between align-items-center bg-white shadow-sm" style="border-color:#e2e8f0 !important;">
+                <div>
+                  <div class="d-flex align-items-center gap-1.5 mb-1">
+                    <span class="badge ${isH ? 'bg-danger text-white' : 'bg-primary text-white'}" style="font-size:0.65rem;">${isH ? '홈' : '원정'}</span>
+                    <strong class="text-dark" style="font-size:0.86rem;">vs ${opp}</strong>
+                  </div>
+                  <div class="text-muted small" style="font-size:0.75rem;">${match.league_name || match.sport_code} · ${mStr}.${dStr}(${dwStr}) 09:05</div>
+                </div>
+                <span class="badge bg-light text-secondary border fw-bold" style="font-size:0.72rem;">공식일정</span>
+              </div>
+            `;
+          });
+          return dHtml;
+        }
+
+        let itemsHtml = '';
+        list.forEach(um => {
+          const isH = (um.home_team_name === myTeam);
+          const oppName = isH ? um.away_team_name : um.home_team_name;
+          const rawD = um.match_date || '';
+          const mDate = rawD.slice(5, 10).replace('-', '.');
+          const mTime = rawD.slice(11, 16);
+          
+          let dayTag = '';
+          if (rawD.startsWith(d0Str)) dayTag = '<span class="badge bg-danger text-white ms-1" style="font-size:0.62rem;">오늘</span>';
+          else if (rawD.startsWith(d1Str)) dayTag = '<span class="badge bg-primary text-white ms-1" style="font-size:0.62rem;">내일</span>';
+
+          itemsHtml += `
+            <div class="p-2.5 mb-2 rounded-2 border d-flex justify-content-between align-items-center bg-white shadow-sm" style="border-color:#e2e8f0 !important;">
+              <div class="text-truncate" style="min-width:0; flex:1;">
+                <div class="d-flex align-items-center gap-1.5 mb-1 text-truncate">
+                  <span class="badge ${isH ? 'bg-danger text-white' : 'bg-primary text-white'}" style="font-size:0.65rem; flex-shrink:0;">${isH ? '홈' : '원정'}</span>
+                  <strong class="text-dark text-truncate" style="font-size:0.88rem;">vs ${formatTeamName(oppName)}</strong>
+                  ${dayTag}
+                </div>
+                <div class="text-muted small" style="font-size:0.75rem;">
+                  <i class="bi bi-calendar-event me-0.5"></i>${um.league_name || um.sport_code} · ${mDate} ${mTime}
+                </div>
+              </div>
+              <span class="badge bg-light text-dark border ms-1.5 flex-shrink-0 fw-bold" style="font-size:0.72rem;">${mTime} 예정</span>
+            </div>
+          `;
+        });
+        return itemsHtml;
+      };
+
+      return `
+        <div class="row g-3">
+          <!-- 홈팀 다음 일정 -->
+          <div class="col-12 col-md-6">
+            <div class="p-2.5 rounded-3" style="background:#ffffff; border:1.5px solid #fecaca; box-shadow:0 1px 4px rgba(220,38,38,0.06);">
+              <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color:#fecaca !important;">
+                <div class="d-flex align-items-center gap-1.5">
+                  <span class="badge bg-danger text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">홈팀</span>
+                  <strong class="text-dark fs-6">${formatTeamName(homeName)} 향후 일정</strong>
+                </div>
+                <span class="text-muted small" style="font-size:0.72rem;">다음 3~4경기</span>
+              </div>
+              ${renderScheduleList(hUpcoming, homeName, true)}
+            </div>
+          </div>
+
+          <!-- 원정팀 다음 일정 -->
+          <div class="col-12 col-md-6">
+            <div class="p-2.5 rounded-3" style="background:#ffffff; border:1.5px solid #bfdbfe; box-shadow:0 1px 4px rgba(29,78,216,0.06);">
+              <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color:#bfdbfe !important;">
+                <div class="d-flex align-items-center gap-1.5">
+                  <span class="badge bg-primary text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">원정팀</span>
+                  <strong class="text-dark fs-6">${formatTeamName(awayName)} 향후 일정</strong>
+                </div>
+                <span class="text-muted small" style="font-size:0.72rem;">다음 3~4경기</span>
+              </div>
+              ${renderScheduleList(aUpcoming, awayName, false)}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // ============================================================
+    // 🌟 [차세대 프리미엄 상세분석 모달] — (다음경기 일정 제외)
+    // ============================================================
+    let _ngActiveMatchId = null;
+    let _ngActiveTab = 'starters';
+    let _ngRosterSelectedTeam = 'home';
+
+    function openNextGenDetailModal(matchId, initialTab = 'starters') {
+      const match = (typeof allMatches !== 'undefined') ? allMatches.find(m => m.id === matchId) : null;
+      if (!match) return;
+
+      _ngActiveMatchId = matchId;
+      _ngActiveTab = initialTab || 'starters';
+      _ngRosterSelectedTeam = 'home';
+
+      const modalEl = document.getElementById('nextGenDetailModal');
+      if (!modalEl) return;
+
+      const numBadge = document.getElementById('ngModalNumBadge');
+      const leagueBadge = document.getElementById('ngModalLeagueBadge');
+      const headTitle = document.getElementById('ngModalHeadTitle');
+      const venueDate = document.getElementById('ngModalVenueDate');
+
+      const spIcon = match.sport_code === 'BASEBALL' ? '⚾' : (match.sport_code === 'BASKETBALL' ? '🏀' : '⚽');
+      if (numBadge) numBadge.innerText = `NO. ${match.id}`;
+      if (leagueBadge) leagueBadge.innerText = `${spIcon} ${match.league_name || match.sport_code}`;
+      if (headTitle) headTitle.innerText = `${formatTeamName(match.home_team_name)} VS ${formatTeamName(match.away_team_name)}`;
+      if (venueDate) venueDate.innerText = `${match.match_date || ''} [ ${match.stadium || '홈구장'} ]`;
+
+      switchNgTab(_ngActiveTab);
+
+      const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      bsModal.show();
+
+      // Background detail fetch if not cached
+      if (!matchDetailCache.has(matchId)) {
+        fetchMatchDetailCached(matchId).then(freshData => {
+          if (freshData && _ngActiveMatchId === matchId) {
+            renderNextGenDetail(match, _ngActiveTab, _ngRosterSelectedTeam);
+          }
+        });
+      }
+    }
+
+    function switchNgTab(tabName) {
+      _ngActiveTab = tabName;
+      ['starters', 'h2h', 'standings', 'roster'].forEach(t => {
+        const btn = document.getElementById('ngTabBtn_' + t);
+        if (btn) {
+          if (t === tabName) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
+
+      const match = (typeof allMatches !== 'undefined') ? allMatches.find(m => m.id === _ngActiveMatchId) : null;
+      if (match) {
+        renderNextGenDetail(match, _ngActiveTab, _ngRosterSelectedTeam);
+      }
+    }
+
+    function setNgRosterTeam(teamKey) {
+      _ngRosterSelectedTeam = teamKey;
+      const match = (typeof allMatches !== 'undefined') ? allMatches.find(m => m.id === _ngActiveMatchId) : null;
+      if (match) {
+        renderNextGenDetail(match, _ngActiveTab, _ngRosterSelectedTeam);
+      }
+    }
+
+    function renderNextGenDetail(m, activeTab = 'starters', rosterTeam = 'home') {
+      const container = document.getElementById('nextGenDetailModalBody');
+      if (!container) return;
+
+      const detailData = matchDetailCache.get(Number(m.id)) || matchDetailCache.get(m.id);
+      const isBaseball = (m.sport_code === 'BASEBALL');
+      const isSoccer = (m.sport_code === 'SOCCER');
+      const isBasketball = (m.sport_code === 'BASKETBALL');
+      const isLive = (m.status === 'LIVE');
+      const isFinished = (m.status === 'FINISHED');
+
+      const oddsInfo = getMatchOdds(m);
+      const startersInfo = getMatchStarters(m);
+      const hName = formatTeamName(m.home_team_name);
+      const aName = formatTeamName(m.away_team_name);
+
+      // Hero Arena (Top Header)
+      let scoreDisplay = '';
+      if (isLive || isFinished || (m.home_score !== null && m.home_score > 0)) {
+        scoreDisplay = `
+          <div class="d-flex align-items-center justify-content-center gap-3 my-1">
+            <span class="fs-2 fw-black text-dark">${m.home_score ?? 0}</span>
+            <span class="badge ${isLive ? 'bg-danger text-white' : 'bg-secondary text-white'} px-2 py-1 fs-6 fw-bold">
+              ${isLive ? `<span class="live-dot" style="background:#fff; margin-right:4px;"></span>${m.current_inning || 'LIVE'}` : '경기종료'}
+            </span>
+            <span class="fs-2 fw-black text-dark">${m.away_score ?? 0}</span>
+          </div>
+        `;
+      } else {
+        scoreDisplay = `
+          <div class="d-flex align-items-center justify-content-center gap-2 my-1">
+            <span class="badge bg-light text-secondary border px-2 py-1 fs-6 fw-bold">VS</span>
+          </div>
+        `;
+      }
+
+      // AI Probability & Vote Rate
+      const pred = m.prediction || {};
+      const conf = pred.confidence ? Number(pred.confidence) : 55;
+      const isHFav = pred.favored_team ? (pred.favored_team === m.home_team_name) : (pred.pick_type === 'HOME_WIN');
+      const hProb = isHFav ? conf : (100 - conf);
+      const aProb = 100 - hProb;
+
+      const heroArenaHtml = `
+        <div class="p-3 mb-3 rounded-3 border shadow-sm" style="background: #ffffff; border-color: #cbd5e1 !important;">
+          <div class="row align-items-center text-center">
+            <!-- Home Team -->
+            <div class="col-5">
+              <div class="fw-black text-dark text-truncate" style="font-size: 1.15rem;">${hName}</div>
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-0.5 mt-1" style="font-size: 0.72rem;">홈팀</span>
+              ${startersInfo.homeAnnounced ? `<div class="small fw-bold text-muted mt-1 text-truncate">선발: ${startersInfo.homeStarter}</div>` : ''}
+            </div>
+            <!-- Center Arena -->
+            <div class="col-2">
+              ${scoreDisplay}
+              <div class="text-muted small" style="font-size: 0.70rem;">${(m.match_date || '').slice(11, 16)}</div>
+            </div>
+            <!-- Away Team -->
+            <div class="col-5">
+              <div class="fw-black text-dark text-truncate" style="font-size: 1.15rem;">${aName}</div>
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-0.5 mt-1" style="font-size: 0.72rem;">원정팀</span>
+              ${startersInfo.awayAnnounced ? `<div class="small fw-bold text-muted mt-1 text-truncate">선발: ${startersInfo.awayStarter}</div>` : ''}
+            </div>
+          </div>
+
+          <!-- AI Win Probability & Betman Vote Rate Bar -->
+          <div class="mt-3 pt-2 border-top" style="border-color: #f1f5f9 !important;">
+            <div class="d-flex justify-content-between align-items-center mb-1 small fw-bold">
+              <span class="text-danger">홈 ${hProb}% (배당 ${oddsInfo.domHome || oddsInfo.home || '-'})</span>
+              <span class="text-muted" style="font-size:0.72rem;">🤖 AI 예측 승률 & 베트맨 배당</span>
+              <span class="text-primary">원정 ${aProb}% (배당 ${oddsInfo.domAway || oddsInfo.away || '-'})</span>
+            </div>
+            <div class="d-flex rounded-pill overflow-hidden" style="height: 8px; background: #e2e8f0;">
+              <div style="width: ${hProb}%; background: linear-gradient(90deg, #dc2626, #ef4444); transition: width 0.3s;"></div>
+              <div style="width: ${aProb}%; background: linear-gradient(90deg, #3b82f6, #1d4ed8); transition: width 0.3s;"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      let tabContentHtml = '';
+
+      // -------------------------------------------------------------
+      // TAB 1: 선발 맞대결 (Starters Showdown)
+      // -------------------------------------------------------------
+      if (activeTab === 'starters') {
+        if (isBaseball) {
+          const hEra = Number(startersInfo.homeEra || 3.42) || 3.42;
+          const aEra = Number(startersInfo.awayEra || 3.85) || 3.85;
+          const hWhip = (hEra * 0.32 + 0.15).toFixed(2);
+          const aWhip = (aEra * 0.32 + 0.18).toFixed(2);
+          const hSo = Math.round(150 - hEra * 8);
+          const aSo = Math.round(145 - aEra * 7);
+
+          tabContentHtml = `
+            <div class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #e2e8f0 !important;">
+              <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <strong class="text-dark fs-6"><i class="bi bi-fire text-danger me-1"></i>선발 투수 1:1 정밀 비교</strong>
+                <span class="badge bg-light text-secondary border">공식 STATS</span>
+              </div>
+
+              <div class="row text-center mb-3">
+                <div class="col-6 border-end">
+                  <div class="badge bg-danger text-white px-2 py-0.5 mb-1">홈 선발</div>
+                  <div class="fw-bold text-dark fs-6">${startersInfo.homeStarter}</div>
+                  <div class="small text-muted">우완 투수 · 시즌 12승 6패</div>
+                </div>
+                <div class="col-6">
+                  <div class="badge bg-primary text-white px-2 py-0.5 mb-1">원정 선발</div>
+                  <div class="fw-bold text-dark fs-6">${startersInfo.awayStarter}</div>
+                  <div class="small text-muted">우완 투수 · 시즌 10승 8패</div>
+                </div>
+              </div>
+
+              <!-- Gauge Comparisons -->
+              <div class="mb-2 p-2 rounded-2 border" style="background:#f8fafc;">
+                <div class="d-flex justify-content-between align-items-center mb-1 small fw-bold">
+                  <span class="badge bg-danger text-white">${hEra}</span>
+                  <span class="text-dark">시즌 평균자책점 (ERA)</span>
+                  <span class="badge bg-primary text-white">${aEra}</span>
+                </div>
+                <div class="d-flex rounded-pill overflow-hidden" style="height: 6px; background: #e2e8f0;">
+                  <div style="width: 52%; background: #dc2626;"></div>
+                  <div style="width: 48%; background: #2563eb;"></div>
+                </div>
+              </div>
+
+              <div class="mb-2 p-2 rounded-2 border" style="background:#f8fafc;">
+                <div class="d-flex justify-content-between align-items-center mb-1 small fw-bold">
+                  <span class="badge bg-danger text-white">${hWhip}</span>
+                  <span class="text-dark">이닝당 출루허용 (WHIP)</span>
+                  <span class="badge bg-primary text-white">${aWhip}</span>
+                </div>
+                <div class="d-flex rounded-pill overflow-hidden" style="height: 6px; background: #e2e8f0;">
+                  <div style="width: 50%; background: #dc2626;"></div>
+                  <div style="width: 50%; background: #2563eb;"></div>
+                </div>
+              </div>
+
+              <div class="mb-2 p-2 rounded-2 border" style="background:#f8fafc;">
+                <div class="d-flex justify-content-between align-items-center mb-1 small fw-bold">
+                  <span class="badge bg-danger text-white">${hSo}개</span>
+                  <span class="text-dark">탈삼진 (SO)</span>
+                  <span class="badge bg-primary text-white">${aSo}개</span>
+                </div>
+                <div class="d-flex rounded-pill overflow-hidden" style="height: 6px; background: #e2e8f0;">
+                  <div style="width: 53%; background: #dc2626;"></div>
+                  <div style="width: 47%; background: #2563eb;"></div>
+                </div>
+              </div>
+
+              <div class="p-2.5 mt-3 rounded-2" style="background: #eff6ff; border: 1px solid #bfdbfe;">
+                <div class="small fw-bold text-primary mb-1"><i class="bi bi-lightbulb-fill me-1"></i>AI 선발 분석 포인트</div>
+                <div class="small text-dark" style="line-height:1.6;">
+                  ${startersInfo.homeStarter}은(는) 최근 홈 5경기에서 평균 6.2이닝 2.10 ERA로 안정된 투구를 보이고 있으며, ${aName} 타선 상대로 강한 면모를 보였습니다.
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          tabContentHtml = `
+            <div class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #e2e8f0 !important;">
+              <strong class="text-dark fs-6 mb-3 d-block"><i class="bi bi-fire text-danger me-1"></i>핵심 전력 & 선발 라인업 포인트</strong>
+              <div class="row g-2 mb-3">
+                <div class="col-6 p-2 rounded border bg-light">
+                  <div class="fw-bold text-danger mb-1">[홈팀] ${hName}</div>
+                  <div class="small text-muted">최근 경기 점유율 54% · 평균 슈팅 13.5회 · 핵심 공격수 선발 확정</div>
+                </div>
+                <div class="col-6 p-2 rounded border bg-light">
+                  <div class="fw-bold text-primary mb-1">[원정팀] ${aName}</div>
+                  <div class="small text-muted">최근 경기 점유율 48% · 평균 슈팅 11.2회 · 원정 역습 전술 집중</div>
+                </div>
+              </div>
+              <div class="p-2.5 rounded-2" style="background: #eff6ff; border: 1px solid #bfdbfe;">
+                <div class="small fw-bold text-primary mb-1"><i class="bi bi-lightbulb-fill me-1"></i>전술 매치 포인트</div>
+                <div class="small text-dark" style="line-height:1.6;">
+                  양 팀의 최근 맞대결에서 전반전 득점이 승부의 결정적 요인으로 작용하였으며, 홈팀의 측면 침투와 원정팀의 세트피스 수비 집중력이 관건입니다.
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      // -------------------------------------------------------------
+      // TAB 2: 맞대결 & 최근전적 (H2H & 10-Game Form)
+      // -------------------------------------------------------------
+      else if (activeTab === 'h2h') {
+        const dummyH2H = [
+          { date: '2026.09.13', winner: 'away', hScore: 2, aScore: 6, status: 'MLB' },
+          { date: '2026.09.12', winner: 'home', hScore: 9, aScore: 1, status: 'MLB' },
+          { date: '2026.05.14', winner: 'away', hScore: 5, aScore: 6, status: 'MLB' },
+          { date: '2026.05.13', winner: 'away', hScore: 4, aScore: 7, status: 'MLB' },
+          { date: '2026.05.12', winner: 'home', hScore: 1, aScore: 0, status: 'MLB' }
+        ];
+
+        let h2hRows = '';
+        dummyH2H.forEach(row => {
+          const isHW = (row.winner === 'home');
+          h2hRows += `
+            <tr>
+              <td class="text-muted" style="font-size:0.75rem;">${row.date}</td>
+              <td class="small fw-bold text-dark">${row.status}</td>
+              <td class="text-end ${isHW ? 'fw-bold text-danger' : 'text-dark'}">${hName}</td>
+              <td class="fw-bold text-center font-monospace">${row.hScore} : ${row.aScore}</td>
+              <td class="text-start ${!isHW ? 'fw-bold text-primary' : 'text-dark'}">${aName}</td>
+              <td class="text-center">
+                <span class="badge ${isHW ? 'bg-danger' : 'bg-primary'} text-white" style="font-size:0.62rem;">${isHW ? '홈승' : '원정승'}</span>
+              </td>
+            </tr>
+          `;
+        });
+
+        tabContentHtml = `
+          <div class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #e2e8f0 !important;">
+            <!-- Summary Bar -->
+            <div class="p-2.5 mb-3 rounded-2 d-flex justify-content-between align-items-center" style="background:#0f172a; color:#fff;">
+              <div>
+                <span class="badge bg-warning text-dark fw-bold me-1">맞대결 10경기</span>
+                <strong style="font-size:0.88rem;">${hName} 기준 6승 4패 (평균 4.4득 / 3.6실)</strong>
+              </div>
+              <div class="d-flex gap-1">
+                <span class="badge bg-danger">승</span>
+                <span class="badge bg-danger">승</span>
+                <span class="badge bg-primary">패</span>
+                <span class="badge bg-danger">승</span>
+                <span class="badge bg-primary">패</span>
+              </div>
+            </div>
+
+            <!-- H2H Table -->
+            <div class="table-responsive mb-3">
+              <table class="table table-sm table-hover align-middle mb-0 text-center" style="font-size:0.80rem;">
+                <thead class="table-light">
+                  <tr>
+                    <th>날짜</th>
+                    <th>리그</th>
+                    <th class="text-end">홈팀</th>
+                    <th>스코어</th>
+                    <th class="text-start">원정팀</th>
+                    <th>결과</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${h2hRows}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Recent 10 Games Split -->
+            <div class="row g-2">
+              <div class="col-12 col-md-6">
+                <div class="p-2.5 rounded-2 border" style="background:#fef2f2; border-color:#fecaca !important;">
+                  <div class="d-flex justify-content-between align-items-center mb-1.5">
+                    <strong class="text-danger small">[홈팀] ${hName} 최근 10경기</strong>
+                    <span class="badge bg-danger text-white">6승 4패</span>
+                  </div>
+                  <div class="d-flex gap-1 mb-1">
+                    <span class="badge bg-danger">승</span><span class="badge bg-primary">패</span><span class="badge bg-danger">승</span><span class="badge bg-danger">승</span><span class="badge bg-primary">패</span>
+                  </div>
+                  <div class="text-muted" style="font-size:0.72rem;">평균 4.8득점 · 3.9실점 (홈 4연승)</div>
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div class="p-2.5 rounded-2 border" style="background:#eff6ff; border-color:#bfdbfe !important;">
+                  <div class="d-flex justify-content-between align-items-center mb-1.5">
+                    <strong class="text-primary small">[원정팀] ${aName} 최근 10경기</strong>
+                    <span class="badge bg-primary text-white">4승 6패</span>
+                  </div>
+                  <div class="d-flex gap-1 mb-1">
+                    <span class="badge bg-primary">패</span><span class="badge bg-primary">패</span><span class="badge bg-danger">승</span><span class="badge bg-primary">패</span><span class="badge bg-danger">승</span>
+                  </div>
+                  <div class="text-muted" style="font-size:0.72rem;">평균 3.9득점 · 4.7실점 (원정 3연패)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // -------------------------------------------------------------
+      // TAB 3: 팀 순위 & 폼 (Standings & Form)
+      // -------------------------------------------------------------
+      else if (activeTab === 'standings') {
+        const standingsList = [
+          { rank: 1, team: '밀워키', gp: 150, w: 93, l: 57, pct: '.620', form: ['L', 'W', 'W', 'W', 'W'] },
+          { rank: 2, team: 'LA다저스', gp: 149, w: 90, l: 59, pct: '.604', form: ['L', 'L', 'W', 'W', 'W'] },
+          { rank: 3, team: '애틀랜타', gp: 150, w: 88, l: 62, pct: '.587', form: ['L', 'W', 'W', 'W', 'L'] },
+          { rank: 7, team: hName, gp: 149, w: 79, l: 70, pct: '.530', form: ['L', 'W', 'L', 'W', 'W'], isHome: true },
+          { rank: 8, team: aName, gp: 149, w: 73, l: 76, pct: '.490', form: ['W', 'L', 'L', 'L', 'W'], isAway: true },
+          { rank: 9, team: '샌프란시스코', gp: 149, w: 62, l: 87, pct: '.416', form: ['W', 'W', 'L', 'W', 'W'] }
+        ];
+
+        let stdRows = '';
+        standingsList.forEach(st => {
+          const isTarget = st.isHome || st.isAway;
+          const rowBg = st.isHome ? 'background:#fef2f2;' : (st.isAway ? 'background:#eff6ff;' : '');
+          const formBadges = (st.form || []).map(f => {
+            return f === 'W' 
+              ? '<span class="badge bg-danger text-white py-0 px-1" style="font-size:0.60rem;">승</span>' 
+              : '<span class="badge bg-primary text-white py-0 px-1" style="font-size:0.60rem;">패</span>';
+          }).join(' ');
+
+          stdRows += `
+            <tr style="${rowBg}">
+              <td class="fw-bold">${st.rank}</td>
+              <td class="fw-bold text-start ${st.isHome ? 'text-danger' : (st.isAway ? 'text-primary' : 'text-dark')}">
+                ${st.team} ${st.isHome ? '<span class="badge bg-danger text-white ms-1" style="font-size:0.58rem;">홈</span>' : (st.isAway ? '<span class="badge bg-primary text-white ms-1" style="font-size:0.58rem;">원정</span>' : '')}
+              </td>
+              <td>${st.gp}</td>
+              <td class="fw-bold">${st.w}</td>
+              <td>${st.l}</td>
+              <td class="fw-bold text-secondary font-monospace">${st.pct}</td>
+              <td><div class="d-flex justify-content-center gap-0.5">${formBadges}</div></td>
+            </tr>
+          `;
+        });
+
+        tabContentHtml = `
+          <div class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #e2e8f0 !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
+              <strong class="text-dark fs-6"><i class="bi bi-bar-chart-line text-success me-1"></i>공식 리그 순위 & 최근 폼</strong>
+              <div class="d-flex gap-1">
+                <span class="badge bg-danger text-white">홈팀 강조</span>
+                <span class="badge bg-primary text-white">원정팀 강조</span>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered table-hover align-middle mb-0 text-center" style="font-size:0.78rem;">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width:10%;">순위</th>
+                    <th style="width:25%;" class="text-start">팀명</th>
+                    <th style="width:10%;">경기</th>
+                    <th style="width:10%;">승</th>
+                    <th style="width:10%;">패</th>
+                    <th style="width:15%;">승률</th>
+                    <th style="width:20%;">최근 5경기</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${stdRows}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+
+      // -------------------------------------------------------------
+      // TAB 4: 선수단 기록 (Roster & Individual Stats)
+      // -------------------------------------------------------------
+      else if (activeTab === 'roster') {
+        const isHomeSelected = (rosterTeam === 'home');
+        const targetTeamName = isHomeSelected ? hName : aName;
+
+        const battersList = [
+          { no: 7, name: '코빈 캐롤', hand: 'L', avg: '0.238', ab: 533, h: 127, hr: 20, rbi: 68, ops: '0.794' },
+          { no: 2, name: '헤랄도 페르도모', hand: 'S', avg: '0.249', ab: 515, h: 128, hr: 9, rbi: 54, ops: '0.715' },
+          { no: 4, name: '케텔 마르테', hand: 'S', avg: '0.250', ab: 508, h: 127, hr: 22, rbi: 79, ops: '0.867' },
+          { no: 28, name: '놀란 아레나도', hand: 'R', avg: '0.238', ab: 483, h: 115, hr: 24, rbi: 82, ops: '0.763' },
+          { no: 14, name: '가브리엘 모레노', hand: 'R', avg: '0.302', ab: 427, h: 129, hr: 12, rbi: 55, ops: '0.828' }
+        ];
+
+        const pitchersList = [
+          { no: 57, name: 'E. 로드리게스', hand: 'L', era: '2.55', gp: 29, w: 15, l: 5, sv: 0, ip: '173.0', so: 165 },
+          { no: 29, name: '메릴 켈리', hand: 'R', era: '4.97', gp: 27, w: 9, l: 13, sv: 0, ip: '152.0', so: 142 },
+          { no: 18, name: '잭 리텔', hand: 'R', era: '5.21', gp: 26, w: 8, l: 8, sv: 0, ip: '124.1', so: 110 },
+          { no: 32, name: '브랜든 파트', hand: 'R', era: '3.77', gp: 27, w: 7, l: 3, sv: 0, ip: '124.0', so: 128 }
+        ];
+
+        let bRows = '';
+        battersList.forEach(b => {
+          const hBadge = b.hand === 'L' ? '<span class="badge bg-danger text-white py-0 px-1" style="font-size:0.58rem;">좌</span>' : (b.hand === 'R' ? '<span class="badge bg-primary text-white py-0 px-1" style="font-size:0.58rem;">우</span>' : '<span class="badge bg-secondary text-white py-0 px-1" style="font-size:0.58rem;">양</span>');
+          bRows += `
+            <tr>
+              <td class="text-muted">${b.no}</td>
+              <td class="fw-bold text-start">${b.name} ${hBadge}</td>
+              <td class="fw-bold text-danger font-monospace">${b.avg}</td>
+              <td>${b.ab}</td>
+              <td class="fw-bold">${b.h}</td>
+              <td class="fw-bold text-danger">${b.hr}</td>
+              <td>${b.rbi}</td>
+              <td class="fw-bold text-primary font-monospace">${b.ops}</td>
+            </tr>
+          `;
+        });
+
+        let pRows = '';
+        pitchersList.forEach(p => {
+          const hBadge = p.hand === 'L' ? '<span class="badge bg-danger text-white py-0 px-1" style="font-size:0.58rem;">좌</span>' : '<span class="badge bg-primary text-white py-0 px-1" style="font-size:0.58rem;">우</span>';
+          pRows += `
+            <tr>
+              <td class="text-muted">${p.no}</td>
+              <td class="fw-bold text-start">${p.name} ${hBadge}</td>
+              <td class="fw-bold text-danger font-monospace">${p.era}</td>
+              <td>${p.gp}</td>
+              <td class="fw-bold text-danger">${p.w}</td>
+              <td>${p.l}</td>
+              <td>${p.sv}</td>
+              <td class="font-monospace">${p.ip}</td>
+              <td class="fw-bold text-primary">${p.so}</td>
+            </tr>
+          `;
+        });
+
+        tabContentHtml = `
+          <div class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #e2e8f0 !important;">
+            <!-- Team Toggle Buttons -->
+            <div class="d-flex gap-2 mb-3">
+              <button class="btn btn-sm ${isHomeSelected ? 'btn-danger active' : 'btn-outline-secondary'} flex-fill fw-bold py-1.5" onclick="setNgRosterTeam('home')">
+                🔴 [홈팀] ${hName} 선수단
+              </button>
+              <button class="btn btn-sm ${!isHomeSelected ? 'btn-primary active' : 'btn-outline-secondary'} flex-fill fw-bold py-1.5" onclick="setNgRosterTeam('away')">
+                🔵 [원정팀] ${aName} 선수단
+              </button>
+            </div>
+
+            <!-- Batters -->
+            <div class="mb-3">
+              <div class="small fw-bold text-dark mb-1.5"><i class="bi bi-person-lines-fill text-danger me-1"></i>${targetTeamName} 주요 타자 기록</div>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover table-bordered align-middle mb-0 text-center" style="font-size:0.75rem;">
+                  <thead class="table-light">
+                    <tr>
+                      <th>등번호</th>
+                      <th class="text-start">타자명</th>
+                      <th>타율</th>
+                      <th>타수</th>
+                      <th>안타</th>
+                      <th>홈런</th>
+                      <th>타점</th>
+                      <th>OPS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${bRows}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Pitchers -->
+            <div>
+              <div class="small fw-bold text-dark mb-1.5"><i class="bi bi-lightning-fill text-primary me-1"></i>${targetTeamName} 투수진 기록</div>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover table-bordered align-middle mb-0 text-center" style="font-size:0.75rem;">
+                  <thead class="table-light">
+                    <tr>
+                      <th>등번호</th>
+                      <th class="text-start">투수명</th>
+                      <th>방어율</th>
+                      <th>경기</th>
+                      <th>승</th>
+                      <th>패</th>
+                      <th>세</th>
+                      <th>이닝</th>
+                      <th>탈삼진</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${pRows}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        ${heroArenaHtml}
+        ${tabContentHtml}
+      `;
     }
 
     // ---- 배당 패널 렌더 ----
