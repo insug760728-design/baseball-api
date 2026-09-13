@@ -306,8 +306,9 @@ class MatchService:
         if status:
             query = query.filter(Match.status == status)
 
-        current_year = datetime.now().year
-        today_str = datetime.now().strftime("%Y-%m-%d")
+        now_kst = datetime.utcnow() + timedelta(hours=9)
+        current_year = now_kst.year
+        today_str = now_kst.strftime("%Y-%m-%d")
 
         if start_date:
             if start_date.upper() == "ALL":
@@ -315,15 +316,17 @@ class MatchService:
             else:
                 query = query.filter(Match.match_date >= f"{start_date} 00:00")
         else:
-            if status == "FINISHED" or (order and order.lower() == "desc"):
-                # 최근 종료 경기 또는 내림차순(최신순) 조회: 최근 14일 경기 위주로 고속 조회
-                past_14d = (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d 00:00")
-                query = query.filter(Match.match_date >= past_14d)
+            if status == "FINISHED":
+                past_30d = (now_kst - timedelta(days=30)).strftime("%Y-%m-%d 00:00")
+                query = query.filter(Match.match_date >= past_30d)
                 if not end_date:
                     query = query.filter(Match.match_date <= f"{today_str} 23:59")
-            else:
-                # 오름차순(기본 일정표/라이브 조회): 오늘 00:00부터 미래(오늘, 내일, 예정 및 라이브) 일정 반환
+            elif status == "SCHEDULED":
                 query = query.filter(Match.match_date >= f"{today_str} 00:00")
+            else:
+                # 기본 조회: 최근 7일 전부터 향후 7일 후까지 전체 경기 안전 조회 (자정/서버 시차 무관)
+                past_7d = (now_kst - timedelta(days=7)).strftime("%Y-%m-%d 00:00")
+                query = query.filter(Match.match_date >= past_7d)
 
         if end_date:
             query = query.filter(Match.match_date <= f"{end_date} 23:59")
