@@ -3263,6 +3263,7 @@
       return archiveLoadingPromise;
     }
 
+    let _liveMatchesRetryTimeout = null;
     async function loadLiveMatches() {
       const container = document.getElementById('stripContainer');
       try {
@@ -3297,7 +3298,7 @@
         const uniqueList = [];
         const seenIds = new Set();
         const seenKeys = new Set();
-        for (const m of rawMatches) {
+        for (const m of (rawMatches || [])) {
           if (m.id && seenIds.has(m.id)) continue;
           const dPart = (m.match_date || '').slice(0, 10);
           const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
@@ -3310,13 +3311,39 @@
 
         if (uniqueList.length > 0) {
           allMatches = uniqueList;
-        }
-        window.matchesLoadedInitial = true;
-        try {
-          if (uniqueList.length > 0) {
-            localStorage.setItem('tokeon_matches_cache_v4', JSON.stringify(uniqueList));
+          window.matchesLoadedInitial = true;
+          if (_liveMatchesRetryTimeout) {
+            clearTimeout(_liveMatchesRetryTimeout);
+            _liveMatchesRetryTimeout = null;
           }
-        } catch (e) {}
+          try {
+            localStorage.setItem('tokeon_matches_cache_v4', JSON.stringify(uniqueList));
+          } catch (e) {}
+        } else if (!allMatches || allMatches.length === 0) {
+          // Fallback to local storage if network request returned empty (e.g. during server deployment)
+          try {
+            const cached = localStorage.getItem('tokeon_matches_cache_v4');
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                allMatches = parsed;
+              }
+            }
+          } catch (e) {}
+          // Automatically retry in 2.5s if still empty
+          if (!allMatches || allMatches.length === 0) {
+            if (!_liveMatchesRetryTimeout) {
+              _liveMatchesRetryTimeout = setTimeout(() => {
+                _liveMatchesRetryTimeout = null;
+                loadLiveMatches();
+              }, 2500);
+            }
+          } else {
+            window.matchesLoadedInitial = true;
+          }
+        } else {
+          window.matchesLoadedInitial = true;
+        }
 
         updateScheduleTabCounts();
         renderMatchStrip('ALL');
@@ -3335,6 +3362,23 @@
 
       } catch (e) {
         console.error('Match strip error:', e);
+        if (!allMatches || allMatches.length === 0) {
+          try {
+            const cached = localStorage.getItem('tokeon_matches_cache_v4');
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                allMatches = parsed;
+              }
+            }
+          } catch (err) {}
+          if (!_liveMatchesRetryTimeout) {
+            _liveMatchesRetryTimeout = setTimeout(() => {
+              _liveMatchesRetryTimeout = null;
+              loadLiveMatches();
+            }, 2500);
+          }
+        }
         window.matchesLoadedInitial = true;
         updateScheduleTabCounts();
         renderPredMatches();
@@ -13975,9 +14019,14 @@ function getFullModalMatchList() {
         if (resp.ok) {
           communityMessages = await resp.json();
           renderCommunityFeed();
+        } else if (!communityMessages || communityMessages.length === 0) {
+          setTimeout(loadCommunityMessages, 3000);
         }
       } catch (e) {
         console.warn('Community load error:', e);
+        if (!communityMessages || communityMessages.length === 0) {
+          setTimeout(loadCommunityMessages, 3000);
+        }
       }
     }
 
@@ -13996,6 +14045,12 @@ function getFullModalMatchList() {
           if (badge) {
             badge.innerText = '실시간 웹소켓 연결됨';
             badge.parentElement.style.background = 'rgba(16, 185, 129, 0.2)';
+          }
+          if (!allMatches || allMatches.length === 0) {
+            loadLiveMatches();
+          }
+          if (!communityMessages || communityMessages.length === 0) {
+            loadCommunityMessages();
           }
         };
 
