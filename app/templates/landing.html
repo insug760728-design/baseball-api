@@ -14238,17 +14238,39 @@ function getFullModalMatchList() {
       if (!container) return;
 
       if (liveList.length === 0) {
-        const upcomingMatches = matches.filter(m => m.status === 'SCHEDULED').slice(0, 3);
+        const nowKstDateTime = getKSTDateTimeString(now);
+        const d0Str = getKSTDateString(now);
+        const d1Str = getKSTDateString(new Date(now.getTime() + 86400000));
+
+        // 현재 시간 이후의 실제 예정 경기만 시간순 오름차순으로 정렬
+        const upcomingMatches = matches
+          .filter(m => m.status === 'SCHEDULED' && (m.match_date || '') >= nowKstDateTime)
+          .sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''))
+          .slice(0, 4);
+
         let upcomingHtml = '';
         upcomingMatches.forEach(um => {
           const spIcon = um.sport_code === 'BASEBALL' ? '⚾' : (um.sport_code === 'BASKETBALL' ? '🏀' : '⚽');
+          const mDate = (um.match_date || '').slice(0, 10);
+          const mTime = (um.match_date || '').slice(11, 16);
+          let dateBadgeText = `${mDate.slice(5, 7)}/${mDate.slice(8, 10)} ${mTime}`;
+          let dateBadgeClass = 'bg-light text-dark border';
+
+          if (mDate === d0Str) {
+            dateBadgeText = `오늘 ${mTime}`;
+            dateBadgeClass = 'bg-primary text-white';
+          } else if (mDate === d1Str) {
+            dateBadgeText = `내일 ${mTime}`;
+            dateBadgeClass = 'bg-secondary text-white';
+          }
+
           upcomingHtml += `
             <div class="p-2 mb-1.5 rounded-2 border d-flex justify-content-between align-items-center" style="background: #ffffff; border-color: #e5e7eb !important;">
-              <div class="d-flex align-items-center gap-1.5">
-                <span class="badge bg-secondary" style="font-size: 0.65rem;">${um.league_name || um.sport_code}</span>
-                <strong style="font-size: 0.78rem; color: #111827;">${um.home_team_name} vs ${um.away_team_name}</strong>
+              <div class="d-flex align-items-center gap-1.5 text-truncate" style="min-width: 0; flex: 1;">
+                <span class="badge bg-dark" style="font-size: 0.65rem; flex-shrink: 0;">${spIcon} ${um.league_name || um.sport_code}</span>
+                <strong class="text-truncate" style="font-size: 0.78rem; color: #111827;">${um.home_team_name} vs ${um.away_team_name}</strong>
               </div>
-              <span class="badge bg-light text-dark border" style="font-size: 0.68rem;">${(um.match_date || '').slice(11, 16)}</span>
+              <span class="badge ${dateBadgeClass} ms-1.5 fw-bold" style="font-size: 0.68rem; flex-shrink: 0;">${dateBadgeText}</span>
             </div>
           `;
         });
