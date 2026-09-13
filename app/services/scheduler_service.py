@@ -607,16 +607,16 @@ class SchedulerService:
                             d_db.close()
                     sync_tasks.append(asyncio.to_thread(_sync_domestic))
 
-                # (C) 유료 LiveApiSports 스마트 동적 수집 (축구 LIVE 30초 / 야구 LIVE 10초 / 시작 직전 60초)
+                # (C) 유료 LiveApiSports 스마트 동적 수집 (축구 LIVE 30초 / 야구 1초 초고속 / 시작 직전 30초)
                 from app.services.live_api_sports_service import LiveApiSportsService
                 if LiveApiSportsService.is_configured():
-                    # 축구: LIVE 중이면 30초, 시작 직전이면 60초 주기
+                    # 축구: LIVE 중이면 30초, 시작 직전이면 60초 주기 (유료 쿼터 절약)
                     fb_interval = 30.0 if soccer_live else 60.0
                     should_sync_fb = (soccer_live or soccer_imminent) and (now_epoch - cls._last_football_sync_ts >= fb_interval)
 
-                    # 야구: LIVE 중이면 10초, 시작 직전이면 30초 주기
-                    bb_interval = 10.0 if mlb_live else 30.0
-                    should_sync_bb = (mlb_live or mlb_imminent) and (now_epoch - cls._last_baseball_sync_ts >= bb_interval)
+                    # 야구: LIVE 중이면 1.0초 초고속, 시작 직전이면 15초 주기 (MLB 공식 무제한 연동)
+                    bb_interval = 1.0 if (mlb_live or kbo_npb_live) else 15.0
+                    should_sync_bb = (mlb_live or mlb_imminent or kbo_npb_live or kbo_npb_imminent) and (now_epoch - cls._last_baseball_sync_ts >= bb_interval)
 
                     if should_sync_fb or should_sync_bb:
                         def _sync_smart_live_api():
@@ -704,15 +704,15 @@ class SchedulerService:
                     except Exception:
                         pass
 
-                # LIVE 진행 중이면 10초 대기, 시작 직전(Pre-Match) 상태면 30초 대기
-                sleep_sec = 10 if has_live else 30
+                # ⚡ 야구 LIVE 진행 중이면 1초 초고속 모드, 축구 LIVE면 10초, 시작 직전(Pre-Match) 상태면 15초 대기
+                sleep_sec = 1 if (mlb_live or kbo_npb_live) else (10 if soccer_live else 15)
                 await asyncio.sleep(sleep_sec)
             except asyncio.CancelledError:
-                logger.info("[Scheduler Live10Sec] 동적 루프 종료됨")
+                logger.info("[Scheduler LiveUltraFast] 1초 루프 종료됨")
                 break
             except Exception as e:
-                logger.warning(f"[Scheduler Live10Sec] 루프 경고: {e}")
-                await asyncio.sleep(10)
+                logger.warning(f"[Scheduler LiveUltraFast] 루프 경고: {e}")
+                await asyncio.sleep(1)
 
 
 
