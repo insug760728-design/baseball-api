@@ -14194,17 +14194,17 @@ function getFullModalMatchList() {
       const now = new Date();
       const nowTs = now.getTime();
 
-      // Find all live matches
+      // Find strictly in-progress LIVE matches only (진행 중인 LIVE 경기만 엄격 필터링, 종료 및 예정 경기 완전 제외)
       let liveList = matches.filter(m => {
-        if (m.status === 'LIVE') return true;
-        if (m.status === 'SCHEDULED' && m.match_date) {
+        if (m.status !== 'LIVE') return false;
+        if (m.match_date) {
           try {
             const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
             const diffMin = (nowTs - mTime) / (60 * 1000);
-            if (diffMin >= 0 && diffMin <= 210) return true;
+            if (diffMin > 240) return false; // 4시간 이상 경과된 경기는 종료 처리
           } catch(e) {}
         }
-        return false;
+        return true;
       });
 
       if (selectedLiveRelaySport !== 'ALL') {
