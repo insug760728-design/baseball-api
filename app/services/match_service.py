@@ -597,7 +597,7 @@ class MatchService:
         return match
 
     @staticmethod
-    def update_player_stat(db: Session, stat_id: int, points: Optional[int] = None, shots: Optional[int] = None, extra_stats: Optional[Dict[str, Any]] = None, override_reason: Optional[str] = None):
+    def update_player_stat(db: Session, stat_id: int, points: Optional[int] = None, assists: Optional[int] = None, shots: Optional[int] = None, minutes_played: Optional[int] = None, extra_stats: Optional[Dict[str, Any]] = None, override_reason: Optional[str] = None, **kwargs):
         stat = db.query(PlayerMatchStat).filter(PlayerMatchStat.id == stat_id).first()
         if not stat:
             return None
@@ -605,22 +605,28 @@ class MatchService:
         if not stat.is_override and not stat.original_backup:
             original_data = {
                 "points": stat.points,
+                "assists": stat.assists,
                 "shots": stat.shots,
+                "minutes_played": stat.minutes_played,
                 "extra_stats": stat.extra_stats
             }
             stat.original_backup = json.dumps(original_data, ensure_ascii=False)
 
         if points is not None:
             stat.points = points
+        if assists is not None:
+            stat.assists = assists
         if shots is not None:
             stat.shots = shots
+        if minutes_played is not None:
+            stat.minutes_played = minutes_played
         if extra_stats is not None:
             curr_extra = json.loads(stat.extra_stats or "{}")
             curr_extra.update(extra_stats)
             stat.extra_stats = json.dumps(curr_extra, ensure_ascii=False)
 
         stat.is_override = True
-        stat.override_reason = override_reason or "사용자 앱 전송용 야구 수치 수동 조정"
+        stat.override_reason = override_reason or "사용자 앱 전송용 수치 수동 조정"
 
         db.commit()
         db.refresh(stat)

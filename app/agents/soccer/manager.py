@@ -56,6 +56,33 @@ class SoccerAgentManager:
         return cls._agents
 
     @classmethod
+    def get_h2h(cls, league_code: str, home_team: str, away_team: str, limit: int = 15) -> List[Dict[str, Any]]:
+        agent = cls.get_agent(league_code)
+        if agent:
+            if hasattr(agent, "get_head_to_head"):
+                return agent.get_head_to_head(home_team, away_team, limit=limit)
+            elif hasattr(agent, "get_h2h"):
+                return agent.get_h2h(home_team, away_team, limit=limit)
+        return []
+
+    @classmethod
+    def get_team_stats(cls, league_code: str, team_name: str, last_n_games: int = 15) -> Dict[str, Any]:
+        agent = cls.get_agent(league_code)
+        if agent:
+            if hasattr(agent, "get_team_statistics"):
+                return agent.get_team_statistics(team_name, last_n_games=last_n_games)
+            elif hasattr(agent, "get_league_statistics"):
+                return agent.get_league_statistics()
+        return {"status": "success", "team_name": team_name, "league_code": league_code}
+
+    @classmethod
+    def get_recent_matches(cls, league_code: str, team_name: str, limit: int = 15) -> List[Dict[str, Any]]:
+        agent = cls.get_agent(league_code)
+        if agent and hasattr(agent, "get_recent_matches"):
+            return agent.get_recent_matches(team_name, limit=limit)
+        return []
+
+    @classmethod
     def get_system_health_report(cls) -> List[Dict[str, Any]]:
         """전 리그 에이전트 수집 현황 통합 리포트"""
         if not cls._agents:

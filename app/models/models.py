@@ -33,6 +33,40 @@ class Match(Base):
     @property
     def summary(self):
         return self.custom_notes
+
+    @summary.setter
+    def summary(self, value):
+        self.custom_notes = value
+
+    @property
+    def home_starter_name(self):
+        if self.details and hasattr(self.details, 'team_stats'):
+            try:
+                stats = json.loads(self.details.team_stats) if isinstance(self.details.team_stats, str) else self.details.team_stats
+                if isinstance(stats, dict):
+                    return stats.get("home_starter") or stats.get("home_starter_name")
+            except Exception:
+                pass
+        return None
+
+    @home_starter_name.setter
+    def home_starter_name(self, value):
+        pass
+
+    @property
+    def away_starter_name(self):
+        if self.details and hasattr(self.details, 'team_stats'):
+            try:
+                stats = json.loads(self.details.team_stats) if isinstance(self.details.team_stats, str) else self.details.team_stats
+                if isinstance(stats, dict):
+                    return stats.get("away_starter") or stats.get("away_starter_name")
+            except Exception:
+                pass
+        return None
+
+    @away_starter_name.setter
+    def away_starter_name(self, value):
+        pass
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
