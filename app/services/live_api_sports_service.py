@@ -1708,19 +1708,19 @@ class LiveApiSportsService:
                 clean = str(name).strip()
                 tokens = [clean]
                 
-                # Strip international gender suffixes like _남자, _여자
+                # 1. Strip gender / youth markers
                 if '_' in clean:
                     base_gender = clean.split('_')[0].strip()
                     if len(base_gender) >= 2: tokens.append(base_gender)
 
-                # Strip prefixes like V-, FC, SC, AC, RC, AS, RB, FK, BK, US, AJ, ADO, NEC, OGC, SS, AFC, 포르투나, 포르튀나, 아틀레틱, 스포팅
+                # 2. Strip standard club prefixes
                 clean_no_prefix = re.sub(r'^(V-|FC\s*|SC\s*|AC\s*|RC\s*|AS\s*|RB\s*|FK\s*|BK\s*|US\s*|AJ\s*|ADO\s*|NEC\s*|OGC\s*|SS\s*|AFC\s*|포르투나\s*|포르튀나\s*|아틀레틱\s*|스포팅\s*)', '', clean, flags=re.IGNORECASE).strip()
-                if clean_no_prefix and clean_no_prefix != clean and len(clean_no_prefix) >= 2:
+                if clean_no_prefix and len(clean_no_prefix) >= 2:
                     tokens.append(clean_no_prefix)
 
-                # Strip suffixes like SCO, AC, BC, FC, SC, 칼초, 시티, 타운, 원더러스, 유나이티드, etc.
-                clean_no_suffix = re.sub(r'(\s*(프로축구단|축구단|시청|2008|08FF|07|FC|SC|SCO|AC|BC|시티|타운|원더러스|유나이티드|유니언|레인저스|아르디자|트리니타|프론탈레|산프레체|그란포스|그램퍼스|벨마레|안틀러스|앤틀러스|레이솔|보르티스|블루윙즈|팀버즈|어스퀘이크스|레볼루션|다이나모|사운더스|화이트캡스|MYFC|MY|포트발|오슬로|칼초|이글스|알멜로))$', '', clean_no_prefix, flags=re.IGNORECASE).strip()
-                if clean_no_suffix and clean_no_suffix != clean and len(clean_no_suffix) >= 2:
+                # 3. Strip standard club suffixes
+                clean_no_suffix = re.sub(r'(\s*(프로축구단|축구단|시청|2008|08FF|07|FC|SC|SCO|AC|BC|HDFC|SKFC|1995|시티|타운|원더러스|유나이티드|유니언|레인저스|아르디자|트리니타|프론탈레|산프레체|그란포스|그램퍼스|벨마레|안틀러스|앤틀러스|레이솔|보르티스|블루윙즈|팀버즈|어스퀘이크스|레볼루션|다이나모|사운더스|화이트캡스|MYFC|MY|포트발|오슬로|칼초|이글스|알멜로|드래곤즈|아이파크|래피즈|홀리호크|에스펄스))$', '', clean_no_prefix, flags=re.IGNORECASE).strip()
+                if clean_no_suffix and len(clean_no_suffix) >= 2:
                     tokens.append(clean_no_suffix)
 
                 parts = clean.split()
@@ -1733,138 +1733,147 @@ class LiveApiSportsService:
                         p_c = p.strip()
                         if len(p_c) >= 2: tokens.append(p_c)
 
-                special_aliases = {
-                    "앙제SCO": ["앙제", "Angers", "SCO 앙제", "앙제 SCO"],
-                    "앙제": ["앙제SCO", "Angers", "SCO 앙제", "앙제 SCO"],
-                    "르아브르AC": ["르아브르", "르 아브르", "Le Havre"],
-                    "르아브르": ["르아브르AC", "르 아브르", "Le Havre"],
-                    "AJ오세르": ["오세르", "Auxerre"],
-                    "오세르": ["AJ오세르", "Auxerre"],
-                    "OGC니스": ["니스", "Nice", "OGC Nice"],
-                    "니스": ["OGC니스", "Nice", "OGC Nice"],
-                    "SS라치오": ["라치오", "Lazio", "SS Lazio"],
-                    "라치오": ["SS라치오", "Lazio", "SS Lazio"],
-                    "RC스트라스부르": ["스트라스부르", "Strasbourg"],
-                    "스트라스부르": ["RC스트라스부르", "Strasbourg"],
-                    "아탈란타BC": ["아탈란타", "Atalanta"],
-                    "아탈란타": ["아탈란타BC", "Atalanta"],
-                    "칼리아리 칼초": ["칼리아리", "Cagliari"],
-                    "칼리아리": ["칼리아리 칼초", "Cagliari"],
-                    "AFC아약스": ["아약스", "Ajax"],
-                    "아약스": ["AFC아약스", "Ajax"],
-                    "고어헤드": ["고어헤드 이글스", "고어헤드이글스", "Go Ahead Eagles"],
-                    "고어헤드이글스": ["고어헤드", "고어헤드 이글스", "Go Ahead Eagles"],
-                    "흐로닝언": ["FC흐로닝언", "FC 흐로닝언", "Groningen"],
-                    "FC흐로닝언": ["흐로닝언", "Groningen"],
-                    "포르투나 시타르트": ["시타르트", "포르튀나 시타르트", "Fortuna Sittard"],
-                    "포르튀나 시타르트": ["시타르트", "포르투나 시타르트", "Fortuna Sittard"],
-                    "시타르트": ["포르투나 시타르트", "포르튀나 시타르트", "Fortuna Sittard"],
-                    "에버턴": ["에버튼", "에버턴FC", "Everton"],
-                    "에버턴FC": ["에버턴", "에버튼", "Everton"],
-                    "빌바오": ["아틀레틱 빌바오", "아틀레틱 클루브", "Athletic Club", "Athletic Bilbao"],
-                    "아틀레틱 빌바오": ["빌바오", "Athletic Club", "Athletic Bilbao"],
-                    "엘체": ["엘체CF", "Elche"],
-                    "엘체CF": ["엘체", "Elche"],
-                    "베르더 브레멘": ["브레멘", "베르더브레멘", "Werder Bremen"],
-                    "베르더브레멘": ["브레멘", "베르더 브레멘", "Werder Bremen"],
-                    "쾰른": ["1. FC 쾰른", "FC 쾰른", "Koln", "FC Koln"],
-                    "PSG": ["파리생제르맹", "파리 생제르맹", "파리", "Paris Saint-Germain"],
-                    "파리생제르맹": ["PSG", "파리 생제르맹", "파리", "Paris Saint-Germain"],
-                    "모나코": ["AS모나코", "AS 모나코", "Monaco", "AS Monaco"],
-                    "AS모나코": ["모나코", "AS 모나코", "Monaco", "AS Monaco"],
-                    "V-나가사키": ["나가사키", "V바렌", "V파렌", "V-파렌 나가사키"],
-                    "V-파렌 나가사키": ["V-나가사키", "나가사키", "V바렌"],
-                    "오미야 아르디자": ["오미야"],
-                    "오미야": ["오미야 아르디자"],
-                    "테게바자로 미야자키": ["미야자키"],
-                    "미야자키": ["테게바자로 미야자키"],
-                    "후지에다 MY": ["후지에다", "후지에다MYFC", "후지에다 MYFC"],
-                    "후지에다MYFC": ["후지에다", "후지에다 MY"],
-                    "후지에다": ["후지에다 MY", "후지에다MYFC"],
-                    "수원 삼성블루윙즈": ["수원삼성", "수원"],
-                    "수원삼성": ["수원 삼성블루윙즈", "수원"],
-                    "김해FC 2008": ["김해", "김해시청"],
-                    "김해시청": ["김해", "김해FC 2008"],
-                    "파주 프런티어": ["파주"],
-                    "바이에른뮌헨": ["바이에른 뮌헨", "뮌헨"],
-                    "바이에른 뮌헨": ["바이에른뮌헨", "뮌헨"],
-                    "셀타비고": ["셀타 비고", "셀타", "RC셀타데비고"],
-                    "셀타 비고": ["셀타비고", "셀타", "RC셀타데비고"],
-                    "RC셀타데비고": ["셀타비고", "셀타 비고", "셀타"],
-                    "파더보른07": ["파더보른"],
-                    "파더보른": ["파더보른07"],
-                    "US사수올로": ["사수올로"],
-                    "사수올로": ["US사수올로"],
-                    "SC캄뷔르": ["캄뷔르"],
-                    "캄뷔르": ["SC캄뷔르"],
-                    "SC헤이렌베인": ["헤이렌베인"],
-                    "헤이렌베인": ["SC헤이렌베인"],
-                    "엑셀시오르 로테르담": ["엑셀시오르"],
-                    "엑셀시오르": ["엑셀시오르 로테르담"],
-                    "NEC네이메헌": ["네이메헌"],
-                    "네이메헌": ["NEC네이메헌"],
-                    "NY시티FC": ["뉴욕 시티", "뉴욕시티"],
-                    "뉴욕 시티": ["NY시티FC", "뉴욕시티"],
-                    "새너제이 어스퀘이크스": ["산호세", "산호세 어스퀘이크스", "새너제이"],
-                    "산호세 어스퀘이크스": ["새너제이", "새너제이 어스퀘이크스", "산호세"],
-                    "필라델피아 유니언": ["필라델피아"],
-                    "스포팅 캔자스시티": ["캔자스시티", "스포팅KC"],
-                    "웨스트브로미치 앨비언": ["웨스트브롬", "웨스트 브롬위치"],
-                    "웨스트브롬": ["웨스트브로미치 앨비언", "웨스트 브롬위치"],
-                    "퀸즈파크 레인저스": ["QPR", "퀸즈파크"],
-                    "QPR": ["퀸즈파크 레인저스", "퀸즈파크"],
-                    "C.팰리스": ["크리스탈 팰리스", "크리스탈팰리스"],
-                    "크리스탈 팰리스": ["C.팰리스"],
-                    "사우샘프턴 U21": ["사우샘프턴", "소튼"],
-                    "사우샘프턴": ["사우샘프턴 U21", "소튼"],
-                    "Southampton": ["사우샘프턴", "사우샘프턴 U21"],
-                    "나고야 그램퍼스": ["나고야"],
-                    "나고야": ["나고야 그램퍼스"]
-                }
-                for k, v in special_aliases.items():
-                    if k in clean or clean in k:
-                        tokens.extend(v)
-                        tokens.append(k)
+                # 4. Bidirectional Comprehensive Synonym Matrix
+                global_synonym_groups = [
+                    # KBO
+                    ["키움", "키움 히어로즈", "히어로즈", "Kiwoom", "Kiwoom Heroes"],
+                    ["NC", "NC 다이노스", "다이노스", "NC Dinos"],
+                    ["KIA", "KIA 타이거즈", "기아", "기아 타이거즈", "타이거즈", "KIA Tigers"],
+                    ["KT", "KT 위즈", "kt", "kt 위즈", "위즈", "KT Wiz"],
+                    ["LG", "LG 트윈스", "트윈스", "LG Twins"],
+                    ["삼성", "삼성 라이온즈", "라이온즈", "Samsung", "Samsung Lions"],
+                    ["롯데", "롯데 자이언츠", "자이언츠", "Lotte", "Lotte Giants"],
+                    ["한화", "한화 이글스", "이글스", "Hanwha", "Hanwha Eagles"],
+                    ["SSG", "SSG 랜더스", "랜더스", "SK", "SSG Landers"],
+                    ["두산", "두산 베어스", "베어스", "Doosan", "Doosan Bears"],
 
-                mlb_map = {
-                    "뉴욕양키스": ["New York Yankees", "Yankees", "NY Yankees", "뉴욕Y", "양키스"],
-                    "보스턴": ["Boston Red Sox", "Red Sox", "보스턴 레드삭스"],
-                    "LA다저스": ["Los Angeles Dodgers", "Dodgers", "LA 다저스", "다저스"],
-                    "샌디에이고": ["San Diego Padres", "Padres", "샌디에고", "파드리스"],
-                    "샌프란시스코": ["San Francisco Giants", "Giants", "자이언츠"],
-                    "토론토": ["Toronto Blue Jays", "Blue Jays", "블루제이스"],
-                    "볼티모어": ["Baltimore Orioles", "Orioles", "오리올스"],
-                    "탬파베이": ["Tampa Bay Rays", "Rays", "레이스"],
-                    "휴스턴": ["Houston Astros", "Astros", "애스트로스"],
-                    "텍사스": ["Texas Rangers", "Rangers", "레인저스"],
-                    "시애틀": ["Seattle Mariners", "Mariners", "매리너스"],
-                    "필라델피아": ["Philadelphia Phillies", "Phillies", "필리스"],
-                    "애틀랜타": ["Atlanta Braves", "Braves", "브레이브스"],
-                    "뉴욕메츠": ["New York Mets", "Mets", "메츠"],
-                    "시카고C": ["Chicago Cubs", "Cubs", "시카고 컵스", "컵스"],
-                    "피츠버그": ["Pittsburgh Pirates", "Pirates", "파이리츠"],
-                    "세인트루이스": ["St. Louis Cardinals", "Cardinals", "카디널스"],
-                    "밀워키": ["Milwaukee Brewers", "Brewers", "브루어스"],
-                    "애리조나": ["Arizona Diamondbacks", "D-backs", "다이아몬드백스"],
-                    "콜로라도": ["Colorado Rockies", "Rockies", "로키스"],
-                    "디트로이트": ["Detroit Tigers", "Tigers", "타이거스"],
-                    "클리블랜드": ["Cleveland Guardians", "Guardians", "가디언스"],
-                    "미네소타": ["Minnesota Twins", "Twins", "트윈스"],
-                    "캔자스시티": ["Kansas City Royals", "Royals", "로열스"],
-                    "시카고W": ["Chicago White Sox", "White Sox", "시카고 화이트삭스", "화이트삭스"],
-                    "LA에인절스": ["Los Angeles Angels", "Angels", "로스앤젤레스 에인절스", "에인절스"],
-                    "오클랜드": ["Oakland Athletics", "Athletics", "애슬레틱스"],
-                    "마이애미": ["Miami Marlins", "Marlins", "말린스"],
-                    "워싱턴": ["Washington Nationals", "Nationals", "내셔널스"],
-                    "신시내티": ["Cincinnati Reds", "Reds", "레즈"]
-                }
-                for k, v in mlb_map.items():
-                    if k in clean or clean in k:
-                        tokens.extend(v)
-                        tokens.append(k)
+                    # NPB
+                    ["요미우리", "요미우리 자이언츠", "Yomiuri", "Yomiuri Giants"],
+                    ["한신", "한신 타이거스", "Hanshin", "Hanshin Tigers"],
+                    ["주니치", "주니치 드래곤즈", "Chunichi", "Chunichi Dragons"],
+                    ["야쿠르트", "도쿄 야쿠르트", "도쿄 야쿠르트 스왈로스", "Yakult", "Yakult Swallows"],
+                    ["히로시마", "히로시마 도요 카프", "카프", "Hiroshima", "Hiroshima Carp"],
+                    ["요코하마", "요코하마 DeNA", "요코하마 DeNA 베이스타즈", "DeNA", "Yokohama", "Yokohama Baystars"],
+                    ["소프트뱅크", "후쿠오카 소프트뱅크", "후쿠오카 소프트뱅크 호크스", "Softbank", "Fukuoka Softbank"],
+                    ["오릭스", "오릭스 버펄로스", "Orix", "Orix Buffaloes"],
+                    ["지바롯데", "지바 롯데", "지바 롯데 마린스", "치바롯데", "Chiba Lotte", "Chiba Lotte Marines"],
+                    ["라쿠텐", "도호쿠 라쿠텐", "도호쿠 라쿠텐 골든이글스", "Rakuten", "Rakuten Eagles"],
+                    ["세이부", "사이타마 세이부 라이온즈", "Seibu", "Seibu Lions"],
+                    ["니혼햄", "닛폰햄", "홋카이도 닛폰햄", "홋카이도 닛폰햄 파이터즈", "Nippon-Ham", "Fighters"],
 
+                    # MLB
+                    ["뉴욕양키스", "양키스", "New York Yankees", "Yankees", "NY Yankees", "뉴욕Y"],
+                    ["보스턴", "보스턴 레드삭스", "Boston Red Sox", "Red Sox"],
+                    ["LA다저스", "LA 다저스", "다저스", "Los Angeles Dodgers", "Dodgers"],
+                    ["샌디에이고", "샌디에고", "파드리스", "San Diego Padres", "Padres"],
+                    ["샌프란시스코", "자이언츠", "San Francisco Giants", "Giants"],
+                    ["토론토", "블루제이스", "Toronto Blue Jays", "Blue Jays"],
+                    ["볼티모어", "오리올스", "Baltimore Orioles", "Orioles"],
+                    ["탬파베이", "레이스", "Tampa Bay Rays", "Rays"],
+                    ["휴스턴", "애스트로스", "Houston Astros", "Astros"],
+                    ["텍사스", "레인저스", "Texas Rangers", "Rangers"],
+                    ["시애틀", "매리너스", "Seattle Mariners", "Mariners"],
+                    ["필라델피아", "필리스", "Philadelphia Phillies", "Phillies"],
+                    ["애틀랜타", "브레이브스", "Atlanta Braves", "Braves"],
+                    ["뉴욕메츠", "메츠", "New York Mets", "Mets"],
+                    ["시카고C", "시카고 컵스", "컵스", "Chicago Cubs", "Cubs"],
+                    ["피츠버그", "파이리츠", "Pittsburgh Pirates", "Pirates"],
+                    ["세인트루이스", "카디널스", "St. Louis Cardinals", "Cardinals"],
+                    ["밀워키", "브루어스", "Milwaukee Brewers", "Brewers"],
+                    ["애리조나", "다이아몬드백스", "Arizona Diamondbacks", "D-backs"],
+                    ["콜로라도", "로키스", "Colorado Rockies", "Rockies"],
+                    ["디트로이트", "타이거스", "Detroit Tigers", "Tigers"],
+                    ["클리블랜드", "가디언스", "Cleveland Guardians", "Guardians"],
+                    ["미네소타", "트윈스", "Minnesota Twins", "Twins"],
+                    ["캔자스시티", "로열스", "Kansas City Royals", "Royals"],
+                    ["시카고W", "시카고 화이트삭스", "화이트삭스", "Chicago White Sox", "White Sox"],
+                    ["LA에인절스", "에인절스", "로스앤젤레스 에인절스", "Los Angeles Angels", "Angels"],
+                    ["오클랜드", "애슬레틱스", "Oakland Athletics", "Athletics"],
+                    ["마이애미", "말린스", "Miami Marlins", "Marlins"],
+                    ["워싱턴", "내셔널스", "Washington Nationals", "Nationals"],
+                    ["신시내티", "레즈", "Cincinnati Reds", "Reds"],
+
+                    # K League
+                    ["울산", "울산HD", "울산 HD", "울산 HDFC", "울산 현대", "Ulsan", "Ulsan Hyundai", "Ulsan HD"],
+                    ["전북", "전북현대", "전북 현대", "전북 현대모터스", "Jeonbuk", "Jeonbuk Motors"],
+                    ["포항", "포항스틸러스", "포항 스틸러스", "Pohang", "Pohang Steelers"],
+                    ["서울", "FC서울", "FC 서울", "Seoul", "FC Seoul"],
+                    ["제주", "제주유나이티드", "제주 유나이티드", "제주 SKFC", "Jeju", "Jeju United"],
+                    ["부천", "부천FC", "부천 FC", "부천FC 1995", "Bucheon", "Bucheon FC 1995"],
+                    ["대구", "대구FC", "대구 FC", "Daegu", "Daegu FC"],
+                    ["수원", "수원삼성", "수원 삼성", "수원 삼성블루윙즈", "수원블루윙즈", "Suwon", "Suwon Bluewings"],
+                    ["수원FC", "수원 FC", "Suwon FC"],
+                    ["성남", "성남FC", "성남 FC", "Seongnam", "Seongnam FC"],
+                    ["인천", "인천유나이티드", "인천 유나이티드", "Incheon", "Incheon United"],
+                    ["강원", "강원FC", "강원 FC", "Gangwon", "Gangwon FC"],
+                    ["광주", "광주FC", "광주 FC", "Gwangju", "Gwangju FC"],
+                    ["김천", "김천상무", "김천 상무", "김천상무 프로축구단", "Gimcheon", "Gimcheon Sangmu"],
+                    ["대전", "대전하나", "대전 하나시티즌", "Daejeon", "Daejeon Citizen"],
+                    ["안양", "FC안양", "FC 안양", "Anyang", "FC Anyang"],
+                    ["부산", "부산아이파크", "부산 아이파크", "Busan", "Busan IPark"],
+                    ["경남", "경남FC", "경남 FC", "Gyeongnam"],
+                    ["전남", "전남드래곤즈", "전남 드래곤즈", "Jeonnam"],
+                    ["김포", "김포FC", "김포 FC", "Gimpo"],
+                    ["청주", "충북청주", "Cheongju"],
+                    ["아산", "충남아산", "Asan"],
+                    ["천안", "천안시티", "천안 시티FC", "Cheonan"],
+                    ["안산", "안산그리너스", "Ansan"],
+                    ["이랜드", "서울이랜드", "서울 이랜드", "Seoul E-Land"],
+
+                    # J League
+                    ["가와사키", "가와사키 프론탈레", "Kawasaki", "Kawasaki Frontale"],
+                    ["미토", "미토 홀리호크", "Mito", "Mito Hollyhock"],
+                    ["시미즈", "시미즈 에스펄스", "Shimizu", "Shimizu S-Pulse"],
+                    ["후쿠오카", "아비스파 후쿠오카", "Avispa", "Avispa Fukuoka"],
+                    ["아키타", "블라우블리츠 아키타", "Blaublitz Akita"],
+                    ["도쿠시마", "도쿠시마 보르티스", "Tokushima Vortis"],
+                    ["요코하마FC", "Yokohama FC"],
+                    ["센다이", "베갈타 센다이", "Vegalta Sendai"],
+                    ["삿포로", "콘사도레 삿포로", "Consadole Sapporo"],
+                    ["니가타", "알비렉스 니가타", "Albirex Niigata"],
+                    ["야마가타", "몬테디오 야마가타", "Montedio Yamagata"],
+                    ["우라와", "우라와 레드", "우라와 레즈", "우라와 레드 다이아몬즈", "Urawa", "Urawa Reds"],
+                    ["오카야마", "파지아노 오카야마", "Fagiano Okayama"],
+                    ["도쿄베르디", "도쿄 베르디", "도쿄 베르디 1969", "Tokyo Verdy"],
+                    ["제프유나이티드", "제프 유나이티드", "제프 유나이티드 지바", "JEF United"],
+
+                    # European Football
+                    ["아스톤빌라", "아스톤 빌라", "Aston Villa", "빌라"],
+                    ["선덜랜드", "Sunderland"],
+                    ["헐시티", "Hull City", "헐"],
+                    ["브리스톨시티", "브리스톨 시티", "Bristol City"],
+                    ["스완지", "스완지시티", "스완지 시티", "Swansea City"],
+                    ["번리", "Burnley"],
+                    ["왓포드", "Watford"],
+                    ["스토크시티", "스토크 시티", "Stoke City"],
+                    ["프레스턴", "Preston"],
+                    ["링컨시티", "Lincoln City"],
+                    ["리즈", "리즈유나이티드", "리즈 유나이티드", "Leeds", "Leeds United"],
+                    ["코번트리", "Coventry City", "코번트리 시티"],
+                    ["함부르크", "Hamburger SV", "HSV"],
+                    ["레반테", "Levante"],
+                    ["말라가", "Malaga"],
+                    ["즈볼러", "PEC Zwolle", "PEC즈볼러"],
+                    ["르망", "르망FC", "Le Mans"],
+                    ["사수올로", "US사수올로", "US 사수올로", "Sassuolo"],
+                    ["오스틴", "오스틴FC", "오스틴 FC", "Austin", "Austin FC"],
+                    ["샬럿", "샬럿FC", "샬럿 FC", "Charlotte", "Charlotte FC"],
+                    ["몬레알", "CF몽레알", "CF 몬트리올", "CF Montreal", "Montreal"],
+                    ["LA갤럭시", "LA 갤럭시", "LA Galaxy"],
+                    ["산호세", "새너제이", "새너제이 어스퀘이크스", "산호세 어스퀘이크스", "San Jose Earthquakes"],
+                    ["콜로라도", "콜로라도 래피즈", "Colorado Rapids"],
+                    ["시애틀", "시애틀 사운더스FC", "시애틀 사운더스", "Seattle Sounders"],
+                    ["밴쿠버", "밴쿠버 화이트캡스FC", "밴쿠버 화이트캡스", "Vancouver Whitecaps"]
+                ]
+
+                # Check if clean matches any group item
+                for grp in global_synonym_groups:
+                    if any(item.lower() == clean.lower() or item in clean or clean in item for item in grp):
+                        tokens.extend(grp)
+
+                # Check TEAM_SYNONYMS
                 for k, v_list in TEAM_SYNONYMS.items():
-                    if k in clean or clean in k:
+                    if k.lower() in clean.lower() or clean.lower() in k.lower() or any(s.lower() in clean.lower() or clean.lower() in s.lower() for s in v_list):
                         tokens.extend(v_list)
                         tokens.append(k)
 
@@ -1872,8 +1881,8 @@ class LiveApiSportsService:
                 result = []
                 for t in tokens:
                     t_str = str(t).strip()
-                    if len(t_str) >= 2 and t_str not in seen:
-                        seen.add(t_str)
+                    if len(t_str) >= 2 and t_str.lower() not in seen:
+                        seen.add(t_str.lower())
                         result.append(t_str)
                 return result
 
