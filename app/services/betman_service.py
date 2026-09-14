@@ -402,8 +402,9 @@ class BetmanService:
             return rounds_map['toto'][gm_id].get('gmTs')
         if gm_id in rounds_map.get('proto', {}):
             return rounds_map['proto'][gm_id].get('gmTs')
-        if gm_id == 'G011': return 260052
-        if gm_id == 'G024': return 260068
+        if gm_id == 'G011': return 260053
+        if gm_id == 'G024': return 260070
+        if gm_id == 'G027': return 260001
         if gm_id == 'G101': return 260093
         return 260001
 

@@ -1428,6 +1428,10 @@
       border: 1px solid #ffffff;
       line-height: 1.1;
     }
+    .d-grid .betman-slip-btn {
+      width: 100% !important;
+      height: 42px !important;
+    }
     .toto-modal-row:hover {
       background-color: #f8fafc !important;
     }
@@ -8355,7 +8359,8 @@ function getFullModalMatchList() {
           selectPredMatch(initMatches[0].id);
         }
       }
-      loadBetmanToto('W1L', 260067);
+      loadBetmanToto('WDL', 260053);
+      loadBetmanToto('W1L', 260070);
 
       startLiveAutoSync(30);
       startBetman10MinSync();
@@ -11950,24 +11955,23 @@ function getFullModalMatchList() {
     // ------------------------------------------------------------------
     const TOTO_ROUNDS = {
       'WDL': [
-        { gmTs: 260049, roundNo: 49, label: '49회', fullLabel: '축구 승무패 49회차 (종료결과)', status: 'Finished', tag: '종료' },
-        { gmTs: 260050, roundNo: 50, label: '50회', fullLabel: '⚽ 축구 승무패 50회차 (종료결과 · 9.4억)', status: 'Finished', tag: '종료' },
-        { gmTs: 260051, roundNo: 51, label: '51회', fullLabel: '🔥 축구 승무패 51회차 (발매중 · 오늘 23:00 마감)', status: 'SaleProgress', tag: '🔥발매중' },
-        { gmTs: 260052, roundNo: 52, label: '52회', fullLabel: '축구 승무패 52회차 (9/10 발매 · 9/12 마감)', status: 'SaleBefore', tag: '예정' },
-        { gmTs: 260053, roundNo: 53, label: '53회', fullLabel: '축구 승무패 53회차 (발매예정)', status: 'SaleBefore', tag: '예정' }
+        { gmTs: 260051, roundNo: 51, label: '51회', fullLabel: '축구 승무패 51회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260052, roundNo: 52, label: '52회', fullLabel: '⚽ 축구 승무패 52회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260053, roundNo: 53, label: '53회', fullLabel: '🔥 축구 승무패 53회차 (발매중 · 5.5억 이월🔥)', status: 'SaleProgress', tag: '🔥발매중' },
+        { gmTs: 260054, roundNo: 54, label: '54회', fullLabel: '축구 승무패 54회차 (발매예정)', status: 'SaleBefore', tag: '예정' },
+        { gmTs: 260055, roundNo: 55, label: '55회', fullLabel: '축구 승무패 55회차 (발매예정)', status: 'SaleBefore', tag: '예정' }
       ],
       'W1L': [
-        { gmTs: 260064, roundNo: 64, label: '64회', fullLabel: '야구 승1패 64회차 (종료결과)', status: 'Finished', tag: '종료' },
-        { gmTs: 260065, roundNo: 65, label: '65회', fullLabel: '야구 승1패 65회차 (종료결과 · 3.9억)', status: 'Finished', tag: '종료' },
-        { gmTs: 260066, roundNo: 66, label: '66회', fullLabel: '야구 승1패 66회차 (종료결과 · 6.3억)', status: 'Finished', tag: '종료' },
-        { gmTs: 260067, roundNo: 67, label: '67회', fullLabel: '🔥 야구 승1패 67회차 (발매중 · 09.08 화)', status: 'SaleProgress', tag: '🔥발매중' },
-        { gmTs: 260068, roundNo: 68, label: '68회', fullLabel: '야구 승1패 68회차 (발매예정)', status: 'SaleBefore', tag: '예정' }
+        { gmTs: 260068, roundNo: 68, label: '68회', fullLabel: '야구 승1패 68회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260069, roundNo: 69, label: '69회', fullLabel: '야구 승1패 69회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260070, roundNo: 70, label: '70회', fullLabel: '🔥 야구 승1패 70회차 (발매중 · 4,591만 이월🔥)', status: 'SaleProgress', tag: '🔥발매중' },
+        { gmTs: 260071, roundNo: 71, label: '71회', fullLabel: '야구 승1패 71회차 (발매예정)', status: 'SaleBefore', tag: '예정' },
+        { gmTs: 260072, roundNo: 72, label: '72회', fullLabel: '야구 승1패 72회차 (발매예정)', status: 'SaleBefore', tag: '예정' }
       ],
       'W5L': [
-        { gmTs: 260025, roundNo: 25, label: '25회', fullLabel: '농구 승5패 25회차 (종료결과)', status: 'Finished', tag: '종료' },
-        { gmTs: 260026, roundNo: 26, label: '26회', fullLabel: '농구 승5패 26회차 (종료결과)', status: 'Finished', tag: '종료' },
         { gmTs: 260027, roundNo: 27, label: '27회', fullLabel: '🏀 농구 승5패 27회차 (종료결과 · 5,232만)', status: 'Finished', tag: '종료' },
-        { gmTs: 260028, roundNo: 28, label: '28회', fullLabel: '농구 승5패 28회차 (발매예정)', status: 'SaleBefore', tag: '예정' }
+        { gmTs: 260028, roundNo: 28, label: '28회', fullLabel: '농구 승5패 28회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260001, roundNo: 1, label: '01회', fullLabel: '🔥 농구 승5패 01회차 (발매중)', status: 'SaleProgress', tag: '🔥발매중' }
       ]
     };
 
@@ -12031,17 +12035,17 @@ function getFullModalMatchList() {
       }
       currentTotoRound = roundKey;
       let gmId = 'G011';
-      let defaultTs = 260051;
-      let sportTitle = '축구 승무패 51회차';
+      let defaultTs = 260053;
+      let sportTitle = '축구 승무패 53회차';
 
       if (roundKey === 'W1L') {
         gmId = 'G024';
-        defaultTs = 260067;
-        sportTitle = '야구 승1패 67회차';
+        defaultTs = 260070;
+        sportTitle = '야구 승1패 70회차';
       } else if (roundKey === 'W5L') {
         gmId = 'G027';
-        defaultTs = 260027;
-        sportTitle = '농구 승5패 27회차';
+        defaultTs = 260001;
+        sportTitle = '농구 승5패 01회차';
       }
 
       const targetTs = gmTs || (currentBetmanTs && (TOTO_ROUNDS[roundKey] || []).some(r => r.gmTs === currentBetmanTs) ? currentBetmanTs : defaultTs);
@@ -12144,6 +12148,35 @@ function getFullModalMatchList() {
           const res = await resp.json();
           if (res && res.games) {
             updateQuickTotoBadges(res.games);
+            // Dynamically register & activate live round if available
+            const gidMap = { 'G011': 'WDL', 'G024': 'W1L', 'G027': 'W5L' };
+            Object.entries(res.games).forEach(([gid, g]) => {
+              const rKey = gidMap[gid];
+              if (rKey && g.gmTs) {
+                if (TOTO_ROUNDS[rKey]) {
+                  const existing = TOTO_ROUNDS[rKey].find(x => x.gmTs === g.gmTs);
+                  if (existing) {
+                    existing.status = 'SaleProgress';
+                    existing.tag = '🔥발매중';
+                    if (g.first_prize_text) existing.fullLabel = `${g.title} (발매중 · ${g.first_prize_text})`;
+                  } else {
+                    TOTO_ROUNDS[rKey].push({
+                      gmTs: g.gmTs,
+                      roundNo: parseInt(g.round_no, 10),
+                      label: `${parseInt(g.round_no, 10)}회`,
+                      fullLabel: `${g.title} (발매중 · ${g.first_prize_text || ''})`,
+                      status: 'SaleProgress',
+                      tag: '🔥발매중'
+                    });
+                    TOTO_ROUNDS[rKey].sort((a, b) => a.gmTs - b.gmTs);
+                  }
+                }
+              }
+            });
+            if (currentTotoRound) {
+              renderTotoRoundScrollBar(currentTotoRound, currentBetmanTs);
+              renderTotoModalRoundScrollBar(currentTotoRound, currentBetmanTs);
+            }
           }
         }
       } catch (e) {
@@ -12175,7 +12208,7 @@ function getFullModalMatchList() {
       currentCenterMode = 'TOTO';
       updateCenterTabs();
 
-      const defaultTs = (roundKey === 'WDL') ? 260051 : ((roundKey === 'W1L') ? 260067 : 260027);
+      const defaultTs = (roundKey === 'WDL') ? 260053 : ((roundKey === 'W1L') ? 260070 : 260001);
       const targetTs = gmTs || (currentBetmanTs && (TOTO_ROUNDS[roundKey] || []).some(r => r.gmTs === currentBetmanTs) ? currentBetmanTs : defaultTs);
       currentBetmanTs = targetTs;
 
@@ -12514,6 +12547,7 @@ function getFullModalMatchList() {
       const drawDesc = (totoKey === 'W1L') ? '1점차' : ((totoKey === 'W5L') ? '5점이내' : '무승부');
 
       let rowsHtml = '';
+      let mobileCardsHtml = '';
       (toto.matches || []).forEach(m => {
         const markKey = `${totoKey}_${m.seq}`;
         const currentMarks = userTotoMarks[markKey] || [];
@@ -12543,6 +12577,61 @@ function getFullModalMatchList() {
 
         const probH = m.db_prob_home || (Math.round((Number(m.pW) || 45) * 1.05));
         const probA = m.db_prob_away || (100 - probH);
+
+        // Mobile Card View (< 768px): Full width, touch friendly, 0% cutoff
+        mobileCardsHtml += `
+          <div class="card mb-2 shadow-sm border ${hasPick ? 'border-primary' : 'border-slate-200'}" style="border-radius: 8px; overflow: hidden; background: #ffffff;">
+            <div class="card-header py-1.5 px-2.5 d-flex align-items-center justify-content-between" style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+              <div class="d-flex align-items-center gap-1.5">
+                <span class="badge" style="background: #0f172a; color: #ffffff; font-weight: 800; font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;">
+                  ${String(m.seq).padStart(2, '0')}
+                </span>
+                <span class="badge bg-light text-primary border fw-bold" style="border-color: #cbd5e1 !important; font-size: 0.68rem;">
+                  ${m.league}
+                </span>
+                <span class="text-muted" style="font-size: 0.70rem; font-family: monospace;">
+                  ${timeShort}
+                </span>
+              </div>
+              <div class="d-flex align-items-center gap-1.5">
+                ${resultBadge}
+                <button type="button" class="btn btn-xs fw-bold text-dark" onclick="openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="background: #ffffff; border: 1.5px solid #0f172a; border-radius: 4px; font-size: 0.68rem; padding: 2px 6px;" title="1:1 정밀 세이버 분석">
+                  지표↗
+                </button>
+              </div>
+            </div>
+            <div class="card-body p-2">
+              <div class="d-flex align-items-center justify-content-between mb-2" onclick="openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="cursor: pointer;">
+                <div class="d-flex align-items-center gap-1.5" style="max-width: 46%;">
+                  <span class="fw-bold text-dark text-truncate" style="font-size: 0.85rem;" title="${m.home}">${m.home}</span>
+                  <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.65rem; font-weight: 700; padding: 2px 4px;">${probH}%</span>
+                </div>
+                <div class="text-muted fw-bold" style="font-size: 0.70rem; opacity: 0.5;">VS</div>
+                <div class="d-flex align-items-center justify-content-end gap-1.5" style="max-width: 46%;">
+                  <span class="badge" style="background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8; font-size: 0.65rem; font-weight: 700; padding: 2px 4px;">${probA}%</span>
+                  <span class="fw-bold text-dark text-truncate text-end" style="font-size: 0.85rem;" title="${m.away}">${m.away}</span>
+                </div>
+              </div>
+              <div class="d-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 5px; width: 100%;">
+                <button type="button" class="betman-slip-btn ${isMarkW ? 'marked' : ''} ${isAiW ? 'ai-rec' : ''}" onclick="toggleTotoModalChoice('${totoKey}', ${m.seq}, 'W')" style="width: 100% !important; height: 42px !important;" title="홈팀 승 (투표율 ${m.pW}%)">
+                  <span class="b-label">승</span>
+                  <span class="b-pct">${m.pW}%</span>
+                  ${isAiW ? '<span class="ai-badge">AI</span>' : ''}
+                </button>
+                <button type="button" class="betman-slip-btn ${isMarkD ? 'marked' : ''} ${isAiD ? 'ai-rec' : ''}" onclick="toggleTotoModalChoice('${totoKey}', ${m.seq}, 'D')" style="width: 100% !important; height: 42px !important;" title="${drawDesc} (투표율 ${m.pD}%)">
+                  <span class="b-label">${drawLabel}</span>
+                  <span class="b-pct">${m.pD}%</span>
+                  ${isAiD ? '<span class="ai-badge">AI</span>' : ''}
+                </button>
+                <button type="button" class="betman-slip-btn ${isMarkL ? 'marked' : ''} ${isAiL ? 'ai-rec' : ''}" onclick="toggleTotoModalChoice('${totoKey}', ${m.seq}, 'L')" style="width: 100% !important; height: 42px !important;" title="원정팀 승 (투표율 ${m.pL}%)">
+                  <span class="b-label">패</span>
+                  <span class="b-pct">${m.pL}%</span>
+                  ${isAiL ? '<span class="ai-badge">AI</span>' : ''}
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
 
         rowsHtml += `
           <tr class="toto-modal-row ${hasPick ? 'row-has-pick' : ''}" onclick="openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
@@ -12617,7 +12706,12 @@ function getFullModalMatchList() {
       const calcHtml = buildTotoCalculatorHtml(totoKey, toto);
 
       modalBody.innerHTML = `
-        <div class="table-responsive">
+        <!-- 모바일 전용 반응형 카드 뷰 (화면 잘림 완전 해결) -->
+        <div class="d-md-none">
+          ${mobileCardsHtml}
+        </div>
+        <!-- 데스크톱 전용 테이블 뷰 -->
+        <div class="table-responsive d-none d-md-block">
           <table class="table table-hover align-middle mb-0" style="min-width: 720px;">
             <thead style="background: #0f172a; color: #f8fafc; font-size: 0.74rem;">
               <tr>
