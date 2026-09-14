@@ -10248,9 +10248,41 @@ function updateSlimPanel(matchId, type, contentHtml) {
       if (!a || !b) return false;
 
       const ALIASES = [
-        // KBO
+        // ⚾ MLB 메이저리그 30개 구단 약칭/공식명칭
+        ['시카고w', '시카고화이트삭스', '화이트삭스', '화삭', 'chicagowhitesox', 'whitesox', 'cws'],
+        ['시카고c', '시카고컵스', '컵스', 'chicagocubs', 'cubs', 'chc'],
+        ['뉴욕y', '뉴욕양키스', '양키스', 'newyorkyankees', 'yankees', 'nyy'],
+        ['뉴욕m', '뉴욕메츠', '메츠', 'newyorkmets', 'mets', 'nym'],
+        ['la다저스', '다저스', 'losangelesdodgers', 'ladodgers', 'dodgers', 'lad'],
+        ['la에인절스', '에인절스', 'losangelesangels', 'laangels', 'angels', 'laa'],
+        ['클리블랜드', '클리블랜드가디언스', '가디언스', 'clevelandguardians', 'guardians', 'cle'],
+        ['보스턴', '보스턴레드삭스', '레드삭스', 'bostonredsox', 'redsox', 'bos'],
+        ['볼티모어', '볼티모어오리올스', '오리올스', 'baltimoreorioles', 'orioles', 'bal'],
+        ['토론토', '토론토블루제이스', '블루제이스', 'torontobluejays', 'bluejays', 'tor'],
+        ['탬파베이', '탬파베이레이스', '레이스', 'tampabayrays', 'rays', 'tb'],
+        ['디트로이트', '디트로이트타이거스', '타이거스', 'detroittigers', 'tigers', 'det'],
+        ['미네소타', '미네소타트윈스', '트윈스', 'minnesotatwins', 'twins', 'min'],
+        ['캔자스시티', '캔자스시티로열스', '로열스', 'kansasroyals', 'kansascityroyals', 'royals', 'kc'],
+        ['휴스턴', '휴스턴애스트로스', '애스트로스', 'houstonastros', 'astros', 'hou'],
+        ['오클랜드', '오클랜드애슬레틱스', '애슬레틱스', '애슬레틱', 'oaklandathletics', 'athletics', 'oak'],
+        ['시애틀', '시애틀매리너스', '매리너스', 'seattlemariners', 'mariners', 'sea'],
+        ['텍사스', '텍사스레인저스', '레인저스', 'texasrangers', 'rangers', 'tex'],
+        ['애틀랜타', '애틀랜타브레이브스', '브레이브스', 'atlantabraves', 'braves', 'atl'],
+        ['마이애미', '마이애미말린스', '말린스', 'miamimarlins', 'marlins', 'mia'],
+        ['필라델피아', '필라델피아필리스', '필리스', 'philadelphiaphillies', 'phillies', 'phi'],
+        ['워싱턴', '워싱턴내셔널스', '내셔널스', 'washingtonnationals', 'nationals', 'wsh'],
+        ['신시내티', '신시내티레즈', '레즈', 'cincinnatireds', 'reds', 'cin'],
+        ['밀워키', '밀워키브루어스', '브루어스', 'milwaukeebrewers', 'brewers', 'mil'],
+        ['피츠버그', '피츠버그파이리츠', '파이리츠', 'pittsburghpirates', 'pirates', 'pit'],
+        ['세인트루이스', '세인트루이스카디널스', '카디널스', 'stlouiscardinals', 'cardinals', 'stl'],
+        ['애리조나', '애리조나다이아몬드백스', '다이아몬드백스', '디백스', 'arizonadiamondbacks', 'dbacks', 'ari'],
+        ['콜로라도', '콜로라도로키스', '로키스', 'coloradorockies', 'rockies', 'col'],
+        ['샌디에이고', '샌디에이고파드리스', '파드리스', 'sandiegopadres', 'padres', 'sd'],
+        ['샌프란시스코', '샌프란시스코자이언츠', '자이언츠', 'sanfranciscogiants', 'sfgiants', 'giants', 'sf'],
+
+        // ⚾ KBO 한국 프로야구 10개 구단
         ['kia', '기아', '기아타이거즈', 'kia타이거즈'],
-        ['ssg', 'ssg랜더스', '랜더스'],
+        ['ssg', 'ssg랜더스', '랜더스', 'sk'],
         ['nc', 'nc다이노스', '다이노스'],
         ['lg', 'lg트윈스', '트윈스'],
         ['kt', 'kt위즈', '위즈'],
@@ -10259,20 +10291,49 @@ function updateSlimPanel(matchId, type, contentHtml) {
         ['롯데', '롯데자이언츠', '자이언츠'],
         ['한화', '한화이글스', '이글스'],
         ['키움', '키움히어로즈', '히어로즈'],
-        // NPB
+
+        // ⚾ NPB 일본 프로야구 12개 구단
         ['한신', '한신타이거즈'],
         ['요미우리', '요미우리자이언츠'],
         ['요코하마', '요코하마dena', 'dena', '베이스타즈', '요코하마dena베이스타즈'],
         ['주니치', '주니치드래곤즈'],
         ['히로시마', '히로시마도요카프', '도요카프', '카프'],
-        ['야쿠르트', '야쿠르트스왈로즈'],
-        ['소프트뱅크', '소프트뱅크호크즈'],
-        ['닛폰햄', '니혼햄', '닛폰햄파이터즈'],
+        ['야쿠르트', '야쿠르트스왈로즈', '도쿄야쿠르트'],
+        ['소프트뱅크', '소프트뱅크호크즈', '후쿠오카소프트뱅크'],
+        ['닛폰햄', '니혼햄', '닛폰햄파이터즈', '홋카이도닛폰햄'],
         ['지바롯데', '지바롯데마린즈'],
-        ['라쿠텐', '라쿠텐골든이글스'],
-        ['오릭스', '오릭스버팔로스'],
-        ['세이부', '세이부라이온즈'],
-        // KBL
+        ['라쿠텐', '라쿠텐골든이글스', '도호쿠라쿠텐'],
+        ['오릭스', '오릭스버팔로스', '오릭스버펄로스'],
+        ['세이부', '세이부라이온즈', '사이타마세이부'],
+
+        // ⚽ 해외/국내 주요 축구 구단
+        ['맨유', '맨체스터유나이티드', '맨체스u', 'manchesterunited', 'manutd'],
+        ['맨시티', '맨체스터시티', '맨체스c', 'manchestercity', 'mancity'],
+        ['뉴캐슬', '뉴캐슬유나이티드', '뉴캐슬u', 'newcastleunited', 'newcastle'],
+        ['리즈', '리즈유나이티드', '리즈u', 'leedsunited', 'leeds'],
+        ['토트넘', '토트넘홋스퍼', 'tottenham', 'spurs'],
+        ['아스널', '아스날', 'arsenal'],
+        ['첼시', 'chelsea'],
+        ['리버풀', 'liverpool'],
+        ['아스톤빌라', '애스턴빌라', '빌라', 'astonvilla'],
+        ['울버햄튼', '울버햄프턴', 'wolves', 'wolverhampton'],
+        ['웨스트햄', '웨스트햄유나이티드', 'westham', 'westhamunited'],
+        ['노팅엄', '노팅엄포레스트', 'nottingham', 'nottinghamforest'],
+        ['브라이튼', '브라이턴', 'brighton'],
+        ['레알마드리드', '레알', 'realmadrid'],
+        ['바르셀로나', '바르샤', 'barcelona', 'barca'],
+        ['아틀레티코', 'at마드리드', '아틀레티코마드리드', 'atleticomadrid', 'atletico'],
+        ['비야레알', 'villarreal'],
+        ['레알소시에다드', '소시에다드', 'realsociedad'],
+        ['인터밀란', '인테르', '인테르밀라노', 'intermilan', 'inter'],
+        ['ac밀란', '밀란', 'acmilan'],
+        ['유벤투스', 'juventus', 'juve'],
+        ['바이에른뮌헨', '바이에른', '뮌헨', 'bayernmunich', 'bayern'],
+        ['도르트문트', 'bvb', 'dortmund', 'borussiadortmund'],
+        ['레버쿠젠', 'leverkusen', 'bayerleverkusen'],
+        ['psg', '파리생제르맹', '파리', 'parissaintgermain'],
+
+        // 🏀 KBL 농구
         ['서울sk', 'sk', 'sk나이츠'],
         ['안양정관장', '정관장', '정관장레드부스터스'],
         ['부산kcc', 'kcc', 'kcc이지스'],
@@ -10282,57 +10343,26 @@ function updateSlimPanel(matchId, type, contentHtml) {
         ['원주db', 'db', 'db프로미'],
         ['대구한국가스공사', '한국가스공사', '가스공사', '페가수스'],
         ['고양소노', '소노', '스카이거너스'],
-        ['서울삼성', '삼성썬더스'],
-        // KOVO
-        ['대한항공', '인천대한항공', '점보스'],
-        ['우리카드', '서울우리카드', '우리won'],
-        ['ok저축은행', 'ok금융그룹', '읏맨'],
-        ['현대캐피탈', '천안현대캐피탈', '스카이워커스'],
-        ['삼성화재', '대전삼성화재', '블루팡스'],
-        ['kb손해보험', '의정부kb손해보험', '스타즈'],
-        ['한국전력', '수원한국전력', '빅스톰'],
-        ['흥국생명', '인천흥국생명', '핑크스파이더스'],
-        ['현대건설', '수원현대건설', '힐스테이트'],
-        ['정관장배구', '대전정관장', '레드스파크스'],
-        ['ibk기업은행', '화성ibk기업은행', '알토스'],
-        ['한국도로공사', '김천한국도로공사', '하이패스'],
-        ['gs칼텍스', '서울gs칼텍스', 'kixx'],
-        ['페퍼저축은행', '광주페퍼저축은행', 'ai페퍼스'],
-        // SOCCER & GLOBAL
-        ['맨시티', '맨체스터시티', 'manchestercity', 'mancity'],
-        ['맨유', '맨체스터유나이티드', 'manchesterunited', 'manutd'],
-        ['토트넘', '토트넘홋스퍼', 'tottenham', 'tottenhamhotspur'],
-        ['아스널', '아스날', 'arsenal'],
-        ['아틀레티코', 'atleticomadrid', 'atletico', 'at마드리드', 'atm'],
-        ['레알마드리드', 'realmadrid'],
-        ['바르셀로나', 'barcelona', '바르샤'],
-        ['바이에른뮌헨', 'bayernmunich', '뮌헨', 'bayern'],
-        ['인터마이애미', 'intermiami', '마이애미cf'],
-        ['마이애미말린스', 'miamimarlins'],
-        ['마이애미히트', 'miamiheat'],
-        ['필라델피아유니온', 'philadelphiaunion'],
-        ['필라델피아필리스', 'philadelphiaphillies'],
-        ['필라델피아76ers', 'philadelphia76ers', '필라델피아세븐티식서스', '필라세븐티식서스'],
-        ['울산hd', '울산', '울산현대'],
-        ['전북현대', '전북', '전북모터스'],
-        ['포항스틸러스', '포항'],
-        ['fc서울', '서울fc', '서울'],
-        ['수원삼성', '수원삼성블루윙즈']
+        ['서울삼성', '삼성썬더스']
       ];
 
-      for (let i = 0; i < ALIASES.length; i++) {
-        const group = ALIASES[i];
-        if (group.includes(a) && group.includes(b)) return true;
+      for (const group of ALIASES) {
+        let hasA = false, hasB = false;
+        for (const item of group) {
+          const norm = normalizeTeamKey(item);
+          if (a === norm || a.includes(norm) || norm.includes(a)) hasA = true;
+          if (b === norm || b.includes(norm) || norm.includes(b)) hasB = true;
+        }
+        if (hasA && hasB) return true;
       }
 
-      const ambiguousTokens = ['la', 'fc', '시티', 'city', '유나이티드', 'united', '현대', '삼성', '상무', '주니어', '클럽', '스포츠'];
-      if (a.length >= 3 && b.length >= 3) {
-        if (!ambiguousTokens.includes(a) && !ambiguousTokens.includes(b)) {
-          if (a.includes(b) || b.includes(a)) return true;
-        }
+      if (a.length >= 2 && b.length >= 2) {
+        if (a === b || a.includes(b) || b.includes(a)) return true;
       }
+
       return false;
     }
+
 
     const LEAGUE_FALLBACK_POOLS = {
       KBO: ['KIA 타이거즈', '삼성 라이온즈', 'LG 트윈스', '두산 베어스', 'KT 위즈', 'SSG 랜더스', '롯데 자이언츠', '한화 이글스', 'NC 다이노스', '키움 히어로즈'],
@@ -10928,30 +10958,31 @@ function updateSlimPanel(matchId, type, contentHtml) {
         // High-Entropy Dynamic Recent Match List Generator (Array of recent games)
     function buildDynamicTeamRecentList(sport, teamName, isHomeTeam, match, count = 5) {
       const list = [];
-      const cleanTeam = (typeof formatTeamName === 'function') ? formatTeamName(teamName) : String(teamName).trim();
+      const curMatchId = match ? String(match.id) : '';
+      const sportCode = sport || (match ? match.sport_code : '');
 
-      // ONLY check allMatches for REAL FINISHED games for this team
       if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
         const realGames = allMatches.filter(m => {
           if (!m) return false;
-          if (m.id === match.id) return false;
+          if (String(m.id) === curMatchId) return false;
           if (m.status !== 'FINISHED') return false;
-          const mHome = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : m.home_team_name;
-          const mAway = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : m.away_team_name;
-          return (mHome === cleanTeam || mAway === cleanTeam || m.home_team_name === teamName || m.away_team_name === teamName);
+          if (sportCode && m.sport_code && m.sport_code !== sportCode) return false;
+          const isH = isSameTeamName(m.home_team_name, teamName, m.sport_code, sportCode);
+          const isA = isSameTeamName(m.away_team_name, teamName, m.sport_code, sportCode);
+          return isH || isA;
         }).sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
 
         for (let k = 0; k < Math.min(count, realGames.length); k++) {
           const g = realGames[k];
-          const isPastHome = (typeof formatTeamName === 'function' ? formatTeamName(g.home_team_name) : g.home_team_name) === cleanTeam;
-          const opp = (typeof formatTeamName === 'function') ? formatTeamName(isPastHome ? g.away_team_name : g.home_team_name) : (isPastHome ? g.away_team_name : g.home_team_name);
+          const isPastHome = isSameTeamName(g.home_team_name, teamName, g.sport_code, sportCode);
+          const opp = isPastHome ? g.away_team_name : g.home_team_name;
           const ts = Number(isPastHome ? g.home_score : g.away_score) || 0;
           const os = Number(isPastHome ? g.away_score : g.home_score) || 0;
           const res = ts > os ? 'W' : (ts < os ? 'L' : 'D');
           list.push({
             match_id: g.id,
             match_date: (g.match_date || '').slice(5, 10).replace('-', '.'),
-            opponent: opp,
+            opponent: (typeof formatTeamName === 'function') ? formatTeamName(opp) : opp,
             result: res,
             team_score: ts,
             opp_score: os,
@@ -10960,7 +10991,6 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
       }
 
-      // 100% REAL DATA: No fake/synthetic matches generated
       return list;
     }
 
@@ -12057,12 +12087,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
       let realH2HMatches = [];
       if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
         realH2HMatches = allMatches.filter(otherM => {
-          if (!otherM) return false;
-          if (otherM.id === m.id) return false;
+          if (!otherM || String(otherM.id) === String(m.id)) return false;
           if (otherM.status !== 'FINISHED') return false;
-          const oHome = (typeof formatTeamName === 'function') ? formatTeamName(otherM.home_team_name) : otherM.home_team_name;
-          const oAway = (typeof formatTeamName === 'function') ? formatTeamName(otherM.away_team_name) : otherM.away_team_name;
-          return ((oHome === hName && oAway === aName) || (oHome === aName && oAway === hName));
+          if (otherM.sport_code && m.sport_code && otherM.sport_code !== m.sport_code) return false;
+          const isDirect = (isSameTeamName(otherM.home_team_name, hName, otherM.sport_code, m.sport_code) && isSameTeamName(otherM.away_team_name, aName, otherM.sport_code, m.sport_code));
+          const isReverse = (isSameTeamName(otherM.home_team_name, aName, otherM.sport_code, m.sport_code) && isSameTeamName(otherM.away_team_name, hName, otherM.sport_code, m.sport_code));
+          return isDirect || isReverse;
         }).sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
       }
 
