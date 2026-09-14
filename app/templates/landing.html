@@ -4076,42 +4076,16 @@ function getFullModalMatchList() {
     function switchMobileModalTab(tabKey, matchId) {
       const tabs = ['summary', 'pitchers', 'h2h', 'saber', 'lineup'];
       
-      const container = document.getElementById(`modalCard_${matchId}`);
-      if (container) {
-        const btns = container.querySelectorAll('.mobile-tab-btn');
-        btns.forEach(b => {
-          if (b.getAttribute('data-tab') === tabKey) {
-            b.classList.add('active');
-            try {
-              b.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-            } catch (e) {}
-          } else {
-            b.classList.remove('active');
-          }
-        });
-      }
+      // All panes are always open in vertical scroll mode
+      tabs.forEach(t => {
+        const pane = document.getElementById(`mTab_${t}_${matchId}`);
+        if (pane) pane.style.display = 'block';
+      });
 
-      const modalBody = document.getElementById('matchModalBody');
-
-      if (tabKey === 'all') {
-        // 전체 스트림 모드: 모든 탭 콘텐츠 펼침
-        tabs.forEach(t => {
-          const pane = document.getElementById(`mTab_${t}_${matchId}`);
-          if (pane) pane.style.display = 'block';
-        });
-        if (modalBody) {
-          modalBody.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-      } else {
-        // 단일 탭 모드: 선택된 탭만 깔끔하게 단독 표시!
-        tabs.forEach(t => {
-          const pane = document.getElementById(`mTab_${t}_${matchId}`);
-          if (pane) {
-            pane.style.display = (t === tabKey) ? 'block' : 'none';
-          }
-        });
-        if (modalBody) {
-          modalBody.scrollTo({ top: 0, behavior: 'smooth' });
+      if (tabKey && tabKey !== 'all') {
+        const targetPane = document.getElementById(`mTab_${tabKey}_${matchId}`);
+        if (targetPane) {
+          targetPane.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }
     }
@@ -4424,27 +4398,7 @@ function getFullModalMatchList() {
       return `
         <div class="modal-match-card p-2 p-md-3 mb-3" id="modalCard_${m.id}">
           
-          <!-- App-Style Sticky Segmented Navigation Tab Bar (최상단 고정 네비게이션) -->
-          <div class="mobile-modal-tabs-strip d-flex gap-1.5 overflow-x-auto py-2 px-1 mb-2 sticky-top" id="modalTabsStrip_${m.id}">
-            <button type="button" class="mobile-tab-btn active" data-tab="all" onclick="switchMobileModalTab('all', '${m.id}')">
-              <i class="bi bi-collection me-1"></i>전체 (All)
-            </button>
-            <button type="button" class="mobile-tab-btn" data-tab="summary" onclick="switchMobileModalTab('summary', '${m.id}')">
-              <i class="bi bi-bar-chart-fill me-1"></i>요약·예측
-            </button>
-            <button type="button" class="mobile-tab-btn" data-tab="pitchers" onclick="switchMobileModalTab('pitchers', '${m.id}')">
-              <i class="bi bi-person-badge-fill me-1"></i>${isBaseball ? '선발·최근10G' : '최근10G'}
-            </button>
-            <button type="button" class="mobile-tab-btn" data-tab="h2h" onclick="switchMobileModalTab('h2h', '${m.id}')">
-              <i class="bi bi-arrow-left-right me-1"></i>상대전적
-            </button>
-            <button type="button" class="mobile-tab-btn" data-tab="saber" onclick="switchMobileModalTab('saber', '${m.id}')">
-              <i class="bi bi-graph-up me-1"></i>세이버·전력
-            </button>
-            <button type="button" class="mobile-tab-btn" data-tab="lineup" onclick="switchMobileModalTab('lineup', '${m.id}')">
-              <i class="bi bi-people-fill me-1"></i>라인업
-            </button>
-          </div>
+          <!-- [세로 스크롤 상세 뷰: 버튼식 탭 제거 및 전 섹션 통합 스크롤 적용] -->
 
           <!-- Card Header Bar -->
           <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom flex-wrap gap-1" style="border-color: #e5e7eb !important;">
@@ -4679,15 +4633,15 @@ function getFullModalMatchList() {
             <div id="mInGameStats_${m.id}"></div>
           </div>
 
-          <!-- Tab 2: Pitchers & Bullpen / Recent 10G -->
-          <div class="mobile-tab-pane" id="mTab_pitchers_${m.id}" style="${isSingleMatch ? 'display: block;' : 'display: none;'}">
+          <!-- Section 2: Pitchers & Bullpen / Recent 10G -->
+          <div class="mobile-tab-pane mt-3 pt-2 border-top" id="mTab_pitchers_${m.id}" style="display: block; border-color: #e5e7eb !important;">
             <div id="mSubPitchers_${m.id}">
               ${buildPitchersTabHtml(m, matchup)}
             </div>
           </div>
 
-          <!-- Tab 3: Head-to-Head -->
-          <div class="mobile-tab-pane" id="mTab_h2h_${m.id}" style="${isSingleMatch ? 'display: block;' : 'display: none;'}">
+          <!-- Section 3: Head-to-Head -->
+          <div class="mobile-tab-pane mt-3 pt-2 border-top" id="mTab_h2h_${m.id}" style="display: block; border-color: #e5e7eb !important;">
             <div id="mRecent2ScoresH2h_${m.id}" class="mb-3">
               ${buildRecent2MatchScoreboardHtml(m, matchup)}
             </div>
@@ -4696,15 +4650,15 @@ function getFullModalMatchList() {
             </div>
           </div>
 
-          <!-- Tab 4: Sabermetrics & Power -->
-          <div class="mobile-tab-pane" id="mTab_saber_${m.id}" style="${isSingleMatch ? 'display: block;' : 'display: none;'}">
+          <!-- Section 4: Sabermetrics & Power -->
+          <div class="mobile-tab-pane mt-3 pt-2 border-top" id="mTab_saber_${m.id}" style="display: block; border-color: #e5e7eb !important;">
             <div id="mSubSaber_${m.id}">
               ${buildSaberTabHtml(m, matchup, null)}
             </div>
           </div>
 
-          <!-- Tab 5: Lineup -->
-          <div class="mobile-tab-pane" id="mTab_lineup_${m.id}" style="${isSingleMatch ? 'display: block;' : 'display: none;'}">
+          <!-- Section 5: Lineup -->
+          <div class="mobile-tab-pane mt-3 pt-2 border-top" id="mTab_lineup_${m.id}" style="display: block; border-color: #e5e7eb !important;">
             <div id="mSubLineup_${m.id}">
               ${buildLineupTabHtml(m, null)}
             </div>

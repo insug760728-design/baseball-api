@@ -163,46 +163,8 @@ const DetailPanel = (() => {
     const activeTab = _currentTab || 'past_games';
 
     bodyContainer.innerHTML = `
-      <!-- Sub-Tab Navigation Bar ([전경기분석] / [상세보기]) -->
-      <div class="d-flex gap-1.5 mb-3 p-1.5 detail-sub-nav">
-        <button type="button" class="btn btn-sm detail-sub-tab ${activeTab === 'past_games' ? 'active' : ''}" data-tab="past_games" onclick="DetailPanel.switchTab('past_games')">
-          <i class="bi bi-clock-history text-danger me-1"></i>전경기분석 (직전경기/상대전적/최근경기)
-        </button>
-        <button type="button" class="btn btn-sm detail-sub-tab ${activeTab === 'overview' ? 'active' : ''}" data-tab="overview" onclick="DetailPanel.switchTab('overview')">
-          <i class="bi bi-window-stack text-primary me-1"></i>상세보기 (배당 & 스코어)
-        </button>
-        ${isBaseball ? `
-          <button type="button" class="btn btn-sm detail-sub-tab ${activeTab === 'pitchers' ? 'active' : ''}" data-tab="pitchers" onclick="DetailPanel.switchTab('pitchers')">
-            <i class="bi bi-person-badge-fill text-dark me-1"></i>선발투수 등판일지
-          </button>
-        ` : ''}
-        <button type="button" class="btn btn-sm detail-sub-tab ${activeTab === 'all' ? 'active' : ''}" data-tab="all" onclick="DetailPanel.switchTab('all')">
-          <i class="bi bi-grid-fill me-1"></i>전체보기
-        </button>
-      </div>
-
-      <!-- Tab 1: 전경기분석 (직전 1경기 핵심비교 + 상대전적 + 각 팀 최근 경기 상세 분석) -->
-      <div id="tabContent-past_games" class="detail-tab-pane" style="display: ${activeTab === 'past_games' ? 'block' : 'none'};">
-        ${lastMatchCompareHtml}
-        ${h2hHtml}
-        ${recentHtml}
-      </div>
-
-      <!-- Tab 2: 공식 배당 & 스코어보드 -->
-      <div id="tabContent-overview" class="detail-tab-pane" style="display: ${activeTab === 'overview' ? 'block' : 'none'};">
-        ${dualOddsHtml}
-        ${scoreboardHtml}
-      </div>
-
-      <!-- Tab 3: 선발투수 등판일지 (야구) -->
-      ${isBaseball ? `
-        <div id="tabContent-pitchers" class="detail-tab-pane" style="display: ${activeTab === 'pitchers' ? 'block' : 'none'};">
-          ${pitchersHtml}
-        </div>
-      ` : ''}
-
-      <!-- Tab 4: 전체 한눈에 보기 -->
-      <div id="tabContent-all" class="detail-tab-pane" style="display: ${activeTab === 'all' ? 'block' : 'none'};">
+      <!-- 전체 세로 스크롤 통합 상세 뷰 (버튼식 탭 전환 없이 한눈에 스크롤) -->
+      <div class="detail-scroll-flow">
         ${lastMatchCompareHtml}
         ${dualOddsHtml}
         ${scoreboardHtml}
