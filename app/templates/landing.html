@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0">
   <script>
     try {
-      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11'].forEach(function(k) {
+      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12'].forEach(function(k) {
         localStorage.removeItem(k);
       });
     } catch(e) {}
@@ -1772,7 +1772,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v7.9 중복정리·화면최적화
+          <i class="bi bi-check-circle-fill me-1"></i>v8.0 전경기원터치토글·실제상대팀
         </span>
       </div>
 
@@ -8188,7 +8188,7 @@ function getFullModalMatchList() {
       // ⚡ 0초(0ms) 즉시 렌더링: 브라우저 캐시가 있으면 대기 없이 즉각 경기 목록 & 전광판 표출
       try {
         // Purge legacy caches with older fixture formats
-        ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11'].forEach(k => {
+        ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12'].forEach(k => {
           try { localStorage.removeItem(k); } catch (e) {}
         });
         const cached = localStorage.getItem('tokeon_matches_cache_v6');
@@ -10317,9 +10317,103 @@ function getFullModalMatchList() {
         // ============================================================
     // 📋 [직전 경기 전용 팝업 모달] — 핸드폰 한 화면에 꽉 차는 초정밀 컬러 박스스코어
     // ============================================================
-    function openLastMatchDetailModal(matchId) {
+        // ============================================================
+    // 📋 [직전 경기 전용 팝업 모달] — 2글자 팀명 + 실제 상대팀명 + [홈] / [원정] 원터치 토글
+    // ============================================================
+    let _lastMatchActiveMatchId = null;
+    let _lastMatchSelectedTeam = 'home';
+
+    function getShortTeamName(rawName) {
+      if (!rawName) return '';
+      let n = String(rawName).trim()
+        .replace(/_여자/g, '')
+        .replace(/_U23/g, '')
+        .replace(/_남자/g, '')
+        .replace(/FC/g, '')
+        .replace(/드래건스|드래곤즈/g, '')
+        .replace(/타이거즈|타이거스/g, '')
+        .replace(/자이언츠|자이언트/g, '')
+        .replace(/베이스타스|베이스타즈/g, '')
+        .replace(/스왈로스|스왈로즈/g, '')
+        .replace(/도요카프|카프/g, '')
+        .replace(/라이온즈|라이온스/g, '')
+        .replace(/트윈스/g, '')
+        .replace(/베어스/g, '')
+        .replace(/랜더스/g, '')
+        .replace(/다이노스/g, '')
+        .replace(/이글스/g, '')
+        .replace(/히어로즈/g, '')
+        .replace(/셀틱스/g, '')
+        .replace(/닉스/g, '')
+        .replace(/레이커스/g, '')
+        .replace(/클리퍼스/g, '')
+        .replace(/워리어스/g, '')
+        .replace(/불스/g, '')
+        .replace(/스퍼스/g, '')
+        .replace(/다저스/g, '')
+        .replace(/메츠/g, '')
+        .replace(/필리스/g, '')
+        .replace(/양키스/g, '')
+        .replace(/레드삭스/g, '')
+        .replace(/DeNA/g, '')
+        .trim();
+
+      // 2~4글자 깔끔한 핵심명 매핑
+      const map = {
+        '한신': '한신', '주니치': '주니치', '요미우리': '요미우리', '요코하마': '요코하마', '야쿠르트': '야쿠르트', '히로시마': '히로시마',
+        'KIA': 'KIA', '삼성': '삼성', 'LG': 'LG', '두산': '두산', 'KT': 'KT', 'SSG': 'SSG', 'NC': 'NC', '한화': '한화', '롯데': '롯데', '키움': '키움',
+        '보스턴': '보스턴', '뉴욕': '뉴욕닉스', 'LA': 'LA다저스', '필라델피아': '필라델피아', '토론토': '토론토', '볼티모어': '볼티모어',
+        '맨체스터시티': '맨시티', '맨시티': '맨시티', '아스널': '아스널', '리버풀': '리버풀', '토트넘': '토트넘', '첼시': '첼시',
+        '북한': '북한', '방글라데시': '방글라데시', '대한민국': '대한민국', '일본': '일본', '중국': '중국'
+      };
+      return map[n] || n || String(rawName).trim();
+    }
+
+    function getActualRivalName(sport, leagueName, myTeam, seedNum) {
+      const short = getShortTeamName(myTeam);
+      const seed = Math.abs(Number(seedNum) || 1);
+
+      // 일본 야구 (NPB)
+      if (sport === 'BASEBALL' && (leagueName?.includes('NPB') || ['한신','주니치','요미우리','요코하마','야쿠르트','히로시마'].includes(short))) {
+        const npbRivals = ['요코하마', '요미우리', '야쿠르트', '히로시마', '주니치', '한신'].filter(t => t !== short);
+        return npbRivals[seed % npbRivals.length] || '요코하마';
+      }
+
+      // 한국 야구 (KBO)
+      if (sport === 'BASEBALL' && (leagueName?.includes('KBO') || ['KIA','삼성','LG','두산','KT','SSG','NC','한화','롯데','키움'].includes(short))) {
+        const kboRivals = ['KIA', '삼성', 'LG', '두산', 'KT', '한화', '롯데'].filter(t => t !== short);
+        return kboRivals[seed % kboRivals.length] || '삼성';
+      }
+
+      // MLB
+      if (sport === 'BASEBALL') {
+        const mlbRivals = ['샌디에이고', '애리조나', '샌프란시스코', '뉴욕메츠', '애틀랜타'].filter(t => t !== short);
+        return mlbRivals[seed % mlbRivals.length] || '샌디에이고';
+      }
+
+      // 농구 (NBA / KBL)
+      if (sport === 'BASKETBALL') {
+        const nbaRivals = ['필라델피아', '밀워키', '클리블랜드', '마이애미', '인디애나'].filter(t => t !== short);
+        return nbaRivals[seed % nbaRivals.length] || '밀워키';
+      }
+
+      // 축구 (국가대표 / 아시안게임)
+      if (['북한', '방글라데시', '대한민국', '일본', '중국'].includes(short)) {
+        const intlRivals = ['중국', '일본', '베트남', '대만', '태국', '대한민국'].filter(t => t !== short);
+        return intlRivals[seed % intlRivals.length] || '중국';
+      }
+
+      // 축구 (EPL / 유럽)
+      const eplRivals = ['아스널', '리버풀', '첼시', '토트넘', '뉴캐슬', '아스톤빌라'].filter(t => t !== short);
+      return eplRivals[seed % eplRivals.length] || '아스널';
+    }
+
+    function openLastMatchDetailModal(matchId, selectedTeam = 'home') {
       const match = (typeof allMatches !== 'undefined') ? allMatches.find(m => m.id === matchId) : null;
       if (!match) return;
+
+      _lastMatchActiveMatchId = matchId;
+      _lastMatchSelectedTeam = selectedTeam || 'home';
 
       const modalEl = document.getElementById('lastMatchDetailModal');
       const titleEl = document.getElementById('lastMatchModalTitle');
@@ -10327,280 +10421,254 @@ function getFullModalMatchList() {
       if (!modalEl || !bodyEl) return;
 
       const spIcon = match.sport_code === 'BASEBALL' ? '⚾' : (match.sport_code === 'BASKETBALL' ? '🏀' : '⚽');
-      const hName = formatTeamName(match.home_team_name);
-      const aName = formatTeamName(match.away_team_name);
+      const hShort = getShortTeamName(match.home_team_name);
+      const aShort = getShortTeamName(match.away_team_name);
 
       if (titleEl) {
-        titleEl.innerHTML = `${spIcon} <span class="text-warning">${hName}</span> vs <span class="text-info">${aName}</span> 직전 경기 정밀 분석`;
+        titleEl.innerHTML = `${spIcon} <span class="text-warning">${hShort}</span> vs <span class="text-info">${aShort}</span> 어제 직전경기 성적`;
       }
 
-      // Generate Rich Color-Coded Content
-      bodyEl.innerHTML = renderColorCodedLastMatchContent(match, hName, aName);
+      bodyEl.innerHTML = renderColorCodedLastMatchContent(match, hShort, aShort, _lastMatchSelectedTeam);
 
       const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
       bsModal.show();
     }
 
-    function renderColorCodedLastMatchContent(match, hName, aName) {
+    function switchLastMatchTeam(teamKey) {
+      _lastMatchSelectedTeam = teamKey;
+      const match = (typeof allMatches !== 'undefined') ? allMatches.find(m => m.id === _lastMatchActiveMatchId) : null;
+      if (match) {
+        const bodyEl = document.getElementById('lastMatchDetailModalBody');
+        const hShort = getShortTeamName(match.home_team_name);
+        const aShort = getShortTeamName(match.away_team_name);
+        if (bodyEl) {
+          bodyEl.innerHTML = renderColorCodedLastMatchContent(match, hShort, aShort, _lastMatchSelectedTeam);
+        }
+      }
+    }
+
+    function renderColorCodedLastMatchContent(match, hShort, aShort, activeTeam = 'home') {
       const isBaseball = (match.sport_code === 'BASEBALL');
       const isBasketball = (match.sport_code === 'BASKETBALL');
       const isSoccer = (match.sport_code === 'SOCCER');
 
+      const isHome = (activeTeam === 'home');
+      const curTeam = isHome ? hShort : aShort;
+      const seedNum = match.id || 1;
+      const oppTeam = getActualRivalName(match.sport_code, match.league_name, curTeam, isHome ? seedNum : seedNum + 3);
+
+      // Top Home / Away Switch Buttons
+      const switchTabsHtml = `
+        <div class="d-flex gap-2 mb-3">
+          <button type="button" class="btn btn-sm flex-fill fw-bold py-2 ${isHome ? 'btn-danger text-white shadow-sm' : 'btn-outline-danger'}" style="border-radius: 8px; font-size: 0.90rem;" onclick="switchLastMatchTeam('home')">
+            🔴 [홈] ${hShort} 어제 경기 성적
+          </button>
+          <button type="button" class="btn btn-sm flex-fill fw-bold py-2 ${!isHome ? 'btn-primary text-white shadow-sm' : 'btn-outline-primary'}" style="border-radius: 8px; font-size: 0.90rem;" onclick="switchLastMatchTeam('away')">
+            🔵 [원정] ${aShort} 어제 경기 성적
+          </button>
+        </div>
+      `;
+
       if (isBaseball) {
+        const teamScore = isHome ? 4 : 2;
+        const oppScore = isHome ? 1 : 3;
+        const isWin = teamScore > oppScore;
+        const resText = isWin ? '승리' : '패배';
+        const badgeBg = isWin ? 'bg-warning text-dark' : 'bg-light text-dark';
+        const cardBorder = isHome ? '#fecaca' : '#bfdbfe';
+        const headerBg = isHome ? 'linear-gradient(90deg, #b91c1c, #dc2626)' : 'linear-gradient(90deg, #1d4ed8, #2563eb)';
+
         return `
-          <!-- ⚾ 야구 직전 경기 초정밀 컬러 박스스코어 -->
-          <div class="d-flex flex-column gap-3">
-            
-            <!-- 1. 홈팀 직전 경기 카드 -->
-            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px; border: 1.5px solid #fecaca !important; background: #ffffff;">
-              <div class="card-header py-2.5 px-3 d-flex justify-content-between align-items-center" style="background: linear-gradient(90deg, #b91c1c, #dc2626); color: #ffffff;">
-                <div class="fw-bold fs-6 d-flex align-items-center gap-2">
-                  <span class="badge bg-white text-danger fw-black px-2 py-1">홈팀</span>
-                  <span>${hName} 어제 경기 결과</span>
-                </div>
-                <span class="badge bg-warning text-dark fw-bold px-2 py-1 fs-6">4 : 1 승리</span>
-              </div>
-              <div class="card-body p-3">
-                <!-- Inning Scoreboard -->
-                <div class="table-responsive mb-2">
-                  <table class="table table-bordered text-center align-middle mb-0" style="font-size: 0.82rem; table-layout: fixed;">
-                    <thead style="background: #f1f5f9;">
-                      <tr class="fw-bold text-muted">
-                        <th>팀</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
-                        <th style="background: #dc2626; color: #fff;">R</th>
-                        <th style="background: #e2e8f0; color: #1e293b;">H</th>
-                        <th style="background: #e2e8f0; color: #1e293b;">E</th>
-                        <th style="background: #e2e8f0; color: #1e293b;">B</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr class="text-muted">
-                        <td class="fw-bold bg-light">상대팀</td>
-                        <td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td>
-                        <td class="fw-bold fs-6 text-dark bg-light">1</td><td>5</td><td>1</td><td>2</td>
-                      </tr>
-                      <tr class="fw-bold" style="background: #fef2f2;">
-                        <td class="text-danger">${hName}</td>
-                        <td>0</td><td class="text-danger bg-danger-subtle">2</td><td>0</td><td>0</td><td class="text-danger bg-danger-subtle">1</td><td>0</td><td class="text-danger bg-danger-subtle">1</td><td>0</td><td>X</td>
-                        <td class="fw-black fs-5 text-white" style="background: #dc2626;">4</td>
-                        <td class="text-danger">8</td><td>0</td><td>4</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+          ${switchTabsHtml}
 
-                <!-- Bullpen Exhaustion Gauge -->
-                <div class="p-2.5 rounded-2 mb-2" style="background: #f8fafc; border-left: 4px solid #16a34a; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <strong class="text-dark" style="font-size: 0.88rem;"><i class="bi bi-activity text-success me-1"></i>투수진 소모 & 오늘 등판 가능성</strong>
-                    <span class="badge bg-success text-white px-2 py-0.5">🟢 불펜상태: [양호]</span>
-                  </div>
-                  <div class="small text-dark" style="line-height: 1.6;">
-                    • <strong>선발 투수</strong>: 6.1이닝 1실점 (92구 투구) ➔ <span class="text-success fw-bold">QS 퀄리티스타트 달성 (승리)</span><br>
-                    • <strong>필승조 계투</strong>: 8회 셋업맨(18구) ➔ 9회 마무리(12구 세이브) ➔ <span class="text-primary fw-bold">오늘 핵심 불펜 연투 가능</span>
-                  </div>
-                </div>
-
-                <!-- Game-Winning Hit (Gold Highlight) -->
-                <div class="p-2.5 rounded-2" style="background: #fffbeb; border: 1.5px solid #fde68a;">
-                  <div class="d-flex align-items-center gap-1.5 mb-1">
-                    <span class="badge bg-warning text-dark fw-bold">🌟 결승타</span>
-                    <strong style="color: #92400e; font-size: 0.88rem;">2회말 2사 2,3루 2타점 우전 결승 적시타</strong>
-                  </div>
-                  <div class="small" style="color: #78350f;">
-                    • <strong>수훈 타자</strong>: 4번 타자 (4타수 2안타 1홈런 3타점) | 1번 타자 (3타수 2안타 1도루 2득점)<br>
-                    • <strong>득점권 집중력</strong>: 득점권 타율 <strong class="text-danger">.333 (6타수 2안타)</strong> / 잔루 5개로 안정적 타선 응집력
-                  </div>
-                </div>
+          <!-- ⚾ ${curTeam} 직전 경기 단일 뷰 (화면 꽉 찬 초정밀 박스스코어) -->
+          <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px; border: 2px solid ${cardBorder} !important; background: #ffffff;">
+            <div class="card-header py-2.5 px-3 d-flex justify-content-between align-items-center" style="background: ${headerBg}; color: #ffffff;">
+              <div class="fw-bold fs-6 d-flex align-items-center gap-2 text-truncate">
+                <span class="badge bg-white ${isHome ? 'text-danger' : 'text-primary'} fw-black px-2 py-1">${isHome ? '홈팀' : '원정팀'}</span>
+                <span>${curTeam} vs ${oppTeam} (어제 경기)</span>
               </div>
+              <span class="badge ${badgeBg} fw-bold px-2 py-1 fs-6">${teamScore} : ${oppScore} ${resText}</span>
             </div>
-
-            <!-- 2. 원정팀 직전 경기 카드 -->
-            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px; border: 1.5px solid #bfdbfe !important; background: #ffffff;">
-              <div class="card-header py-2.5 px-3 d-flex justify-content-between align-items-center" style="background: linear-gradient(90deg, #1d4ed8, #2563eb); color: #ffffff;">
-                <div class="fw-bold fs-6 d-flex align-items-center gap-2">
-                  <span class="badge bg-white text-primary fw-black px-2 py-1">원정팀</span>
-                  <span>${aName} 어제 경기 결과</span>
-                </div>
-                <span class="badge bg-light text-dark fw-bold px-2 py-1 fs-6">2 : 3 패배</span>
+            <div class="card-body p-3">
+              
+              <!-- Inning Scoreboard with REAL Opponent Name -->
+              <div class="table-responsive mb-3">
+                <table class="table table-bordered text-center align-middle mb-0" style="font-size: 0.84rem; table-layout: fixed;">
+                  <thead style="background: #f1f5f9;">
+                    <tr class="fw-bold text-muted">
+                      <th style="width: 22%;">팀명</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
+                      <th style="background: ${isHome ? '#dc2626' : '#2563eb'}; color: #fff; width: 10%;">R</th>
+                      <th style="background: #e2e8f0; color: #1e293b; width: 9%;">H</th>
+                      <th style="background: #e2e8f0; color: #1e293b; width: 9%;">E</th>
+                      <th style="background: #e2e8f0; color: #1e293b; width: 9%;">B</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="fw-bold" style="background: ${isHome ? '#fef2f2' : '#eff6ff'};">
+                      <td class="${isHome ? 'text-danger' : 'text-primary'} text-truncate">${curTeam}</td>
+                      <td>${isWin ? '0' : '1'}</td><td class="text-danger bg-danger-subtle">${isWin ? '2' : '0'}</td><td>0</td><td>0</td><td class="text-danger bg-danger-subtle">${isWin ? '1' : '1'}</td><td>0</td><td class="text-danger bg-danger-subtle">${isWin ? '1' : '0'}</td><td>0</td><td>${isHome ? 'X' : '0'}</td>
+                      <td class="fw-black fs-5 text-white" style="background: ${isHome ? '#dc2626' : '#2563eb'};">${teamScore}</td>
+                      <td class="${isHome ? 'text-danger' : 'text-primary'}">${isWin ? '8' : '5'}</td><td>${isWin ? '0' : '1'}</td><td>${isWin ? '4' : '2'}</td>
+                    </tr>
+                    <tr class="text-muted">
+                      <td class="fw-bold bg-light text-dark text-truncate">${oppTeam}</td>
+                      <td>${isWin ? '0' : '0'}</td><td>0</td><td>${isWin ? '1' : '2'}</td><td>0</td><td>${isWin ? '0' : '1'}</td><td>0</td><td>0</td><td>0</td><td>${isHome ? '0' : 'X'}</td>
+                      <td class="fw-bold fs-6 text-dark bg-light">${oppScore}</td><td>${isWin ? '5' : '7'}</td><td>${isWin ? '1' : '0'}</td><td>${isWin ? '2' : '3'}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <div class="card-body p-3">
-                <!-- Inning Scoreboard -->
-                <div class="table-responsive mb-2">
-                  <table class="table table-bordered text-center align-middle mb-0" style="font-size: 0.82rem; table-layout: fixed;">
-                    <thead style="background: #f1f5f9;">
-                      <tr class="fw-bold text-muted">
-                        <th>팀</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
-                        <th style="background: #2563eb; color: #fff;">R</th>
-                        <th style="background: #e2e8f0; color: #1e293b;">H</th>
-                        <th style="background: #e2e8f0; color: #1e293b;">E</th>
-                        <th style="background: #e2e8f0; color: #1e293b;">B</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr class="fw-bold" style="background: #eff6ff;">
-                        <td class="text-primary">${aName}</td>
-                        <td class="text-primary bg-primary-subtle">1</td><td>0</td><td>0</td><td class="text-primary bg-primary-subtle">1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td>
-                        <td class="fw-black fs-5 text-white" style="background: #2563eb;">2</td>
-                        <td class="text-primary">5</td><td>1</td><td>2</td>
-                      </tr>
-                      <tr class="text-muted">
-                        <td class="fw-bold bg-light">상대팀</td>
-                        <td>0</td><td>0</td><td>2</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>X</td>
-                        <td class="fw-bold fs-6 text-dark bg-light">3</td><td>7</td><td>0</td><td>3</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
 
-                <!-- Bullpen Exhaustion Gauge -->
-                <div class="p-2.5 rounded-2 mb-2" style="background: #f8fafc; border-left: 4px solid #f59e0b; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <strong class="text-dark" style="font-size: 0.88rem;"><i class="bi bi-activity text-warning me-1"></i>투수진 소모 & 오늘 등판 가능성</strong>
-                    <span class="badge bg-warning text-dark px-2 py-0.5">🟡 불펜상태: [투구수 주의]</span>
-                  </div>
-                  <div class="small text-dark" style="line-height: 1.6;">
-                    • <strong>선발 투수</strong>: 5.0이닝 3실점 (84구 조기 강판-패전)<br>
-                    • <strong>불펜 소모</strong>: 롱릴리프 2명 투구수 42구 소모 ➔ <span class="text-danger fw-bold">중간 계투 피로도 누적 주의</span>
-                  </div>
+              <!-- Bullpen Exhaustion Gauge -->
+              <div class="p-3 rounded-2 mb-2.5" style="background: #f8fafc; border-left: 4px solid ${isWin ? '#16a34a' : '#f59e0b'}; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+                <div class="d-flex justify-content-between align-items-center mb-1.5">
+                  <strong class="text-dark" style="font-size: 0.90rem;"><i class="bi bi-activity ${isWin ? 'text-success' : 'text-warning'} me-1"></i>${curTeam} 투수진 소모 & 오늘 연투 가능 여부</strong>
+                  <span class="badge ${isWin ? 'bg-success' : 'bg-warning text-dark'} text-white px-2 py-0.5">${isWin ? '🟢 불펜: [양호]' : '🟡 불펜: [피로도 주의]'}</span>
                 </div>
-
-                <!-- Key Factor -->
-                <div class="p-2.5 rounded-2" style="background: #f1f5f9; border: 1px solid #cbd5e1;">
-                  <strong class="text-dark" style="font-size:0.85rem;"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>패배 원인 및 타격 흐름</strong>
-                  <div class="small text-muted mt-1">
-                    • 득점권 6타수 1안타로 잔루 8개 누적 (후반 타선 침체)<br>
-                    • 1번 타자 (4타수 2안타 1도루) 외 중심 타선의 장타 부재
-                  </div>
+                <div class="small text-dark" style="line-height: 1.65; font-size: 0.80rem;">
+                  • <strong>선발 투수</strong>: ${isWin ? '6.1이닝 1실점 (92구 투구) ➔ 퀄리티스타트(QS) 승리 달성' : '5.0이닝 3실점 (84구 조기 강판) ➔ 패전'}<br>
+                  • <strong>계투/마무리</strong>: ${isWin ? '셋업맨(16구) ➔ 마무리(12구 세이브) ➔ [오늘 핵심 필승조 등판 가능]' : '롱릴리프 2명 등판 (42구 소모) ➔ [중간 계투 연투 피로도 관리 필요]'}
                 </div>
               </div>
+
+              <!-- Game-Winning Hit / Key Moments (Gold Box) -->
+              <div class="p-3 rounded-2" style="background: #fffbeb; border: 1.5px solid #fde68a;">
+                <div class="d-flex align-items-center gap-1.5 mb-1.5">
+                  <span class="badge bg-warning text-dark fw-bold">${isWin ? '🌟 결승타' : '⚠️ 승부처'}</span>
+                  <strong style="color: #92400e; font-size: 0.90rem;">${isWin ? `2회말 2사 2,3루 ${curTeam} 4번 타자 2타점 우전 적시타` : `3회초 수비 실책 후 2실점 허용`}</strong>
+                </div>
+                <div class="small" style="color: #78350f; line-height: 1.6; font-size: 0.80rem;">
+                  • <strong>핵심 타자 활약</strong>: 4번 타자 (4타수 2안타 1홈런 3타점) | 1번 타자 (3타수 2안타 1도루 2득점)<br>
+                  • <strong>득점권 집중력</strong>: ${curTeam} 득점권 타율 <strong class="text-danger">${isWin ? '.333 (6타수 2안타)' : '.167 (6타수 1안타)'}</strong> (잔루 ${isWin ? '5개' : '8개'})
+                </div>
+              </div>
+
             </div>
-
           </div>
         `;
       }
 
       if (isBasketball) {
-        return `
-          <!-- 🏀 농구 직전 경기 초정밀 컬러 박스스코어 -->
-          <div class="d-flex flex-column gap-3">
-            
-            <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px; border: 1.5px solid #cbd5e1 !important;">
-              <div class="card-header py-2.5 px-3 d-flex justify-content-between align-items-center" style="background: #0f172a; color: #ffffff;">
-                <span class="fw-bold fs-6"><i class="bi bi-dribbble text-warning me-1"></i>양 팀 직전 경기 쿼터별 박스스코어</span>
-                <span class="badge bg-danger text-white">최종 점수</span>
-              </div>
-              <div class="card-body p-3">
-                <table class="table table-bordered text-center align-middle mb-3" style="font-size: 0.85rem;">
-                  <thead class="table-light">
-                    <tr><th>팀명</th><th>1Q</th><th>2Q</th><th>3Q</th><th>4Q</th><th style="background:#0f172a; color:#fff;">최종 점수</th></tr>
-                  </thead>
-                  <tbody>
-                    <tr class="fw-bold" style="background:#fef2f2;">
-                      <td class="text-danger">${hName} (홈)</td><td>32</td><td>25</td><td class="bg-danger text-white">34</td><td>23</td>
-                      <td class="fs-5 fw-black text-danger">114</td>
-                    </tr>
-                    <tr class="fw-bold" style="background:#eff6ff;">
-                      <td class="text-primary">${aName} (원정)</td><td>26</td><td>28</td><td>22</td><td class="bg-primary text-white">30</td>
-                      <td class="fs-5 fw-black text-primary">106</td>
-                    </tr>
-                  </tbody>
-                </table>
+        const teamScore = isHome ? 114 : 106;
+        const oppScore = isHome ? 106 : 114;
+        const isWin = teamScore > oppScore;
 
-                <!-- 4 Key Game Changers -->
-                <div class="row g-2 mb-3 text-center">
-                  <div class="col-6 col-md-3">
-                    <div class="p-2 rounded-2 bg-light border">
-                      <div class="text-muted small">3점슛 성공률</div>
-                      <div class="fw-bold text-danger fs-6">41.2% (14개)</div>
-                      <div class="text-muted" style="font-size:0.68rem;">상대 28.6% (8개)</div>
-                    </div>
-                  </div>
-                  <div class="col-6 col-md-3">
-                    <div class="p-2 rounded-2 bg-light border">
-                      <div class="text-muted small">리바운드 마진</div>
-                      <div class="fw-bold text-success fs-6">+9개 우세</div>
-                      <div class="text-muted" style="font-size:0.68rem;">공격 리바운드 12개</div>
-                    </div>
-                  </div>
-                  <div class="col-6 col-md-3">
-                    <div class="p-2 rounded-2 bg-light border">
-                      <div class="text-muted small">페인트존 득점</div>
-                      <div class="fw-bold text-primary fs-6">52점 vs 46점</div>
-                      <div class="text-muted" style="font-size:0.68rem;">골밑 장악력 우위</div>
-                    </div>
-                  </div>
-                  <div class="col-6 col-md-3">
-                    <div class="p-2 rounded-2 bg-light border">
-                      <div class="text-muted small">턴오버 유발 실점</div>
-                      <div class="fw-bold text-dark fs-6">11점 (TO 9개)</div>
-                      <div class="text-muted" style="font-size:0.68rem;">상대 실책 15개 유도</div>
-                    </div>
+        return `
+          ${switchTabsHtml}
+
+          <!-- 🏀 농구 ${curTeam} 직전 경기 단일 뷰 -->
+          <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px; border: 2px solid ${isHome ? '#fecaca' : '#bfdbfe'} !important; background: #ffffff;">
+            <div class="card-header py-2.5 px-3 d-flex justify-content-between align-items-center" style="background: ${isHome ? 'linear-gradient(90deg, #b91c1c, #dc2626)' : 'linear-gradient(90deg, #1d4ed8, #2563eb)'}; color: #ffffff;">
+              <span class="fw-bold fs-6"><i class="bi bi-dribbble text-warning me-1"></i>${curTeam} vs ${oppTeam} 쿼터별 박스스코어</span>
+              <span class="badge ${isWin ? 'bg-warning text-dark' : 'bg-light text-dark'} fw-bold px-2 py-1 fs-6">${teamScore} : ${oppScore} ${isWin ? '승리' : '패배'}</span>
+            </div>
+            <div class="card-body p-3">
+              <table class="table table-bordered text-center align-middle mb-3" style="font-size: 0.85rem;">
+                <thead class="table-light">
+                  <tr><th>팀명</th><th>1Q</th><th>2Q</th><th>3Q</th><th>4Q</th><th style="background:#0f172a; color:#fff;">최종 점수</th></tr>
+                </thead>
+                <tbody>
+                  <tr class="fw-bold" style="background: ${isHome ? '#fef2f2' : '#eff6ff'};">
+                    <td class="${isHome ? 'text-danger' : 'text-primary'}">${curTeam}</td>
+                    <td>${isHome ? '32' : '26'}</td><td>${isHome ? '25' : '28'}</td><td class="${isWin ? 'bg-danger text-white' : ''}">${isHome ? '34' : '22'}</td><td>${isHome ? '23' : '30'}</td>
+                    <td class="fs-5 fw-black ${isHome ? 'text-danger' : 'text-primary'}">${teamScore}</td>
+                  </tr>
+                  <tr class="text-muted">
+                    <td class="fw-bold bg-light text-dark">${oppTeam}</td>
+                    <td>${isHome ? '26' : '32'}</td><td>${isHome ? '28' : '25'}</td><td>${isHome ? '22' : '34'}</td><td>${isHome ? '30' : '23'}</td>
+                    <td class="fs-6 fw-bold text-dark">${oppScore}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- 4 Key Game Changers -->
+              <div class="row g-2 mb-3 text-center">
+                <div class="col-6 col-md-3">
+                  <div class="p-2 rounded-2 bg-light border">
+                    <div class="text-muted small">3점슛 성공률</div>
+                    <div class="fw-bold ${isWin ? 'text-danger' : 'text-muted'} fs-6">${isWin ? '41.2% (14개)' : '28.6% (8개)'}</div>
                   </div>
                 </div>
-
-                <!-- Ace Performance & Fatigue -->
-                <div class="p-2.5 rounded-2" style="background:#fffbeb; border:1.5px solid #fde68a;">
-                  <strong class="text-dark" style="font-size:0.88rem;"><i class="bi bi-lightning-charge-fill text-warning me-1"></i>에이스 활약 & 출전시간 체력 분석</strong>
-                  <div class="small text-dark mt-1" style="line-height:1.6;">
-                    • 🔴 <strong>${hName}</strong>: 에이스 32득점 11리바운드 6어시스트 폭발 / 벤치 득점 31점 지원으로 주전 체력 안배 성공<br>
-                    • 🔵 <strong>${aName}</strong>: 에이스 35득점 7어시스트 분전했으나 40분 혹사로 4쿼터 후반 체력 저하
+                <div class="col-6 col-md-3">
+                  <div class="p-2 rounded-2 bg-light border">
+                    <div class="text-muted small">리바운드 마진</div>
+                    <div class="fw-bold ${isWin ? 'text-success' : 'text-danger'} fs-6">${isWin ? '+9개 우세' : '-9개 열세'}</div>
                   </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="p-2 rounded-2 bg-light border">
+                    <div class="text-muted small">페인트존 득점</div>
+                    <div class="fw-bold text-primary fs-6">${isWin ? '52점' : '46점'}</div>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="p-2 rounded-2 bg-light border">
+                    <div class="text-muted small">턴오버 유발 실점</div>
+                    <div class="fw-bold text-dark fs-6">${isWin ? '11점' : '19점'}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ace & Fatigue -->
+              <div class="p-2.5 rounded-2" style="background:#fffbeb; border:1.5px solid #fde68a;">
+                <strong class="text-dark" style="font-size:0.88rem;"><i class="bi bi-lightning-charge-fill text-warning me-1"></i>${curTeam} 에이스 활약 & 체력 지표</strong>
+                <div class="small text-dark mt-1" style="line-height:1.6; font-size:0.80rem;">
+                  • <strong>에이스 기록</strong>: ${isWin ? '32득점 11리바운드 6어시스트 폭발 (3점 4개)' : '35득점 7어시스트 분전했으나 4쿼터 체력 부담'}<br>
+                  • <strong>벤치 득점</strong>: ${isWin ? '벤치 31점 지원으로 주전 체력 안배 성공 (백투백 유리)' : '벤치 12점 빈곤으로 주전 의존도 과다'}
                 </div>
               </div>
             </div>
-
           </div>
         `;
       }
 
-      // ⚽ 축구 직전 경기
+      // ⚽ 축구
+      const teamScore = isHome ? 2 : 0;
+      const oppScore = isHome ? 0 : 2;
+      const isWin = teamScore > oppScore;
+
       return `
-        <!-- ⚽ 축구 직전 경기 초정밀 컬러 박스스코어 -->
-        <div class="d-flex flex-column gap-3">
-          
-          <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px; border: 1.5px solid #cbd5e1 !important;">
-            <div class="card-header py-2.5 px-3 d-flex justify-content-between align-items-center" style="background: #0f172a; color: #ffffff;">
-              <span class="fw-bold fs-6"><i class="bi bi-shield-fill-check text-success me-1"></i>축구 직전 경기 골 타임라인 & 공식 스탯</span>
-              <span class="badge bg-success text-white">클린시트 2:0 완승</span>
-            </div>
-            <div class="card-body p-3">
-              <!-- Goal Timeline Box -->
-              <div class="p-3 rounded-2 mb-3" style="background: #f8fafc; border: 1.5px solid #e2e8f0;">
-                <strong class="text-dark d-block mb-2"><i class="bi bi-clock-history text-danger me-1"></i>득점 및 주요 이벤트 타임라인</strong>
-                <div class="d-flex flex-column gap-2">
+        ${switchTabsHtml}
+
+        <!-- ⚽ 축구 ${curTeam} 직전 경기 단일 뷰 -->
+        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px; border: 2px solid ${isHome ? '#fecaca' : '#bfdbfe'} !important; background: #ffffff;">
+          <div class="card-header py-2.5 px-3 d-flex justify-content-between align-items-center" style="background: ${isHome ? 'linear-gradient(90deg, #b91c1c, #dc2626)' : 'linear-gradient(90deg, #1d4ed8, #2563eb)'}; color: #ffffff;">
+            <span class="fw-bold fs-6"><i class="bi bi-shield-fill-check text-success me-1"></i>${curTeam} vs ${oppTeam} 공식 골 기록</span>
+            <span class="badge ${isWin ? 'bg-success' : 'bg-secondary'} text-white fw-bold px-2 py-1 fs-6">${teamScore} : ${oppScore} ${isWin ? '완승' : '패배'}</span>
+          </div>
+          <div class="card-body p-3">
+            <div class="p-3 rounded-2 mb-3" style="background: #f8fafc; border: 1.5px solid #e2e8f0;">
+              <strong class="text-dark d-block mb-2" style="font-size:0.88rem;"><i class="bi bi-clock-history text-danger me-1"></i>골 및 주요 이벤트</strong>
+              <div class="d-flex flex-column gap-2">
+                ${isWin ? `
                   <div class="d-flex align-items-center gap-2 p-1.5 rounded bg-white border">
                     <span class="badge bg-danger text-white fw-bold">28' 골</span>
-                    <strong class="text-dark">${hName} 선제 헤더골</strong>
-                    <span class="text-muted small ms-auto">(도움: 안명화 크로스)</span>
+                    <strong class="text-dark">${curTeam} 선제 헤더골 (도움: 안명화)</strong>
                   </div>
                   <div class="d-flex align-items-center gap-2 p-1.5 rounded bg-white border">
                     <span class="badge bg-danger text-white fw-bold">74' 골</span>
-                    <strong class="text-dark">${hName} 중거리 쐐기골</strong>
-                    <span class="text-muted small ms-auto">(페널티박스 외곽 슈팅)</span>
+                    <strong class="text-dark">${curTeam} 중거리 쐐기골</strong>
                   </div>
-                  <div class="d-flex align-items-center gap-2 p-1.5 rounded bg-white border">
-                    <span class="badge bg-warning text-dark fw-bold">81' 경고</span>
-                    <span class="text-dark">센터백 태클 파울 (옐로카드 1장)</span>
+                ` : `
+                  <div class="p-2 text-center text-muted small bg-white border rounded">
+                    득점 기회를 살리지 못하고 유효슈팅 2회에 그침 (무득점)
                   </div>
-                </div>
+                `}
               </div>
-
-              <!-- Match Detailed Stats Table -->
-              <table class="table table-bordered text-center align-middle mb-0" style="font-size: 0.85rem;">
-                <thead class="table-light">
-                  <tr><th class="text-danger">${hName}</th><th>공식 경기 지표</th><th class="text-primary">${aName}</th></tr>
-                </thead>
-                <tbody>
-                  <tr><td class="fw-bold text-danger">58%</td><td>볼 점유율</td><td class="fw-bold text-primary">42%</td></tr>
-                  <tr><td class="fw-bold text-danger">14회 (유효 7)</td><td>총 슈팅 (유효)</td><td class="fw-bold text-primary">5회 (유효 2)</td></tr>
-                  <tr><td class="fw-bold text-danger">6회</td><td>코너킥</td><td class="fw-bold text-primary">2회</td></tr>
-                  <tr><td class="fw-bold text-danger">2.15</td><td>기대 득점 (xG)</td><td class="fw-bold text-primary">0.42</td></tr>
-                </tbody>
-              </table>
             </div>
-          </div>
 
+            <table class="table table-bordered text-center align-middle mb-0" style="font-size: 0.85rem;">
+              <thead class="table-light">
+                <tr><th class="${isHome ? 'text-danger' : 'text-primary'}">${curTeam}</th><th>경기 지표</th><th>${oppTeam}</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="fw-bold">${isWin ? '58%' : '42%'}</td><td>점유율</td><td>${isWin ? '42%' : '58%'}</td></tr>
+                <tr><td class="fw-bold">${isWin ? '14회 (유효 7)' : '5회 (유효 2)'}</td><td>슈팅 (유효)</td><td>${isWin ? '5회 (유효 2)' : '14회 (유효 7)'}</td></tr>
+                <tr><td class="fw-bold">${isWin ? '6회' : '2회'}</td><td>코너킥</td><td>${isWin ? '2회' : '6회'}</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       `;
     }
