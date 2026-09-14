@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0">
   <script>
     try {
-      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v20', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15'].forEach(function(k) {
+      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v21', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15'].forEach(function(k) {
         localStorage.removeItem(k);
       });
     } catch(e) {}
@@ -1773,7 +1773,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v8.5 상단핏조정·경기수숫자정리
+          <i class="bi bi-check-circle-fill me-1"></i>v8.6 초고속메모리캐싱·0초렌더링
         </span>
       </div>
 
@@ -3313,12 +3313,12 @@
             _liveMatchesRetryTimeout = null;
           }
           try {
-            localStorage.setItem('tokeon_matches_cache_v20', JSON.stringify(uniqueList));
+            localStorage.setItem('tokeon_matches_cache_v21', JSON.stringify(uniqueList));
           } catch (e) {}
         } else if (!allMatches || allMatches.length === 0) {
           // Fallback to local storage if network request returned empty (e.g. during server deployment)
           try {
-            const cached = localStorage.getItem('tokeon_matches_cache_v20');
+            const cached = localStorage.getItem('tokeon_matches_cache_v21');
             if (cached) {
               const parsed = JSON.parse(cached);
               if (Array.isArray(parsed) && parsed.length > 0) {
@@ -3361,7 +3361,7 @@
         console.error('Match strip error:', e);
         if (!allMatches || allMatches.length === 0) {
           try {
-            const cached = localStorage.getItem('tokeon_matches_cache_v20');
+            const cached = localStorage.getItem('tokeon_matches_cache_v21');
             if (cached) {
               const parsed = JSON.parse(cached);
               if (Array.isArray(parsed) && parsed.length > 0) {
@@ -8172,10 +8172,11 @@ function getFullModalMatchList() {
       // ⚡ 0초(0ms) 즉시 렌더링: 브라우저 캐시가 있으면 대기 없이 즉각 경기 목록 & 전광판 표출
       try {
         // Purge legacy caches with older fixture formats
-        ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v20', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15', 'tokeon_matches_cache_v16', 'tokeon_matches_cache_v17', 'tokeon_matches_cache_v18', 'tokeon_matches_cache_v19'].forEach(k => {
+        // Purge legacy caches from v1 to v20
+        ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15', 'tokeon_matches_cache_v16', 'tokeon_matches_cache_v17', 'tokeon_matches_cache_v18', 'tokeon_matches_cache_v19', 'tokeon_matches_cache_v21'].forEach(k => {
           try { localStorage.removeItem(k); } catch (e) {}
         });
-        const cached = localStorage.getItem('tokeon_matches_cache_v20');
+        const cached = localStorage.getItem('tokeon_matches_cache_v21');
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {

@@ -13,10 +13,12 @@ from app.schemas.schemas import MatchResponse, MatchUpdate, DateRangeSyncRequest
 router = APIRouter(prefix="/matches", tags=["야구 경기 일정 및 결과"])
 
 _MATCHES_CACHE: Dict[str, Tuple[float, Any]] = {}
+_MATCHES_JSON_CACHE: Dict[str, Tuple[float, bytes]] = {}
 _MATCH_FULL_CACHE: Dict[int, Tuple[float, Any]] = {}
 
 def clear_matches_cache(match_id: Optional[int] = None):
     _MATCHES_CACHE.clear()
+    _MATCHES_JSON_CACHE.clear()
     if match_id:
         _MATCH_FULL_CACHE.pop(match_id, None)
     else:
@@ -28,36 +30,35 @@ def clear_match_full_cache(match_id: Optional[int] = None):
     else:
         _MATCH_FULL_CACHE.clear()
 
-@router.get("", response_model=List[MatchResponse], summary="경기 일정 및 결과 목록 조회 (종목/기간 필터 포함)")
+@router.get("", summary="경기 목록 조회 (종목/기간/상태 필터)")
 def list_matches(
     response: Response,
-    sport_code: Optional[str] = Query(None, description="스포츠 종목 코드 (BASEBALL, SOCCER, BASKETBALL 또는 ALL)"),
+    sport_code: Optional[str] = Query(None, description="종목 코드 (BASEBALL, SOCCER, BASKETBALL 또는 ALL)"),
     league_name: Optional[str] = Query(None, description="리그명 (MLB, KBO, NPB, EPL, LALIGA, NBA, KLEAGUE, JLEAGUE 등)"),
-    status: Optional[str] = Query(None, description="상태 필터 (SCHEDULED, LIVE, FINISHED)"),
-    date: Optional[str] = Query(None, description="특정 일자 조회 (YYYY-MM-DD)"),
+    status: Optional[str] = Query(None, description="상태 (SCHEDULED, LIVE, FINISHED)"),
+    date: Optional[str] = Query(None, description="특정 날짜 조회 (YYYY-MM-DD)"),
     start_date: Optional[str] = Query(None, description="시작일 (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="종료일 (YYYY-MM-DD)"),
     limit: Optional[int] = Query(None, description="조회 개수 제한"),
-    order: Optional[str] = Query("asc", description="정렬 방식 (asc=시간순 오름차순, desc=내림차순)"),
+    order: Optional[str] = Query("asc", description="정렬 순서 (asc=시간 오름차순, desc=내림차순)"),
     db: Session = Depends(get_db)
 ):
-    """지정된 종목 및 조건에 맞는 경기 일정/결과 목록을 조회합니다."""
+    """지정된 조건에 맞는 일정/경기 목록을 조회합니다."""
     if date:
         if not start_date:
             start_date = date
         if not end_date:
             end_date = date
 
-    # 실시간 점수 즉시 반영을 위해 no-cache 헤더 설정 (구형 캐시 사용 차단)
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     cache_key = f"{sport_code}:{league_name}:{status}:{start_date}:{end_date}:{limit}:{order}"
     now = time.time()
-    if cache_key in _MATCHES_CACHE:
-        cache_time, cached_res = _MATCHES_CACHE[cache_key]
-        if now - cache_time < 3: # 3초 캐시로 초고속 실시간 점수 즉시 갱신 보장
-            return cached_res
+    if cache_key in _MATCHES_JSON_CACHE:
+        cache_time, cached_bytes = _MATCHES_JSON_CACHE[cache_key]
+        if now - cache_time < 20: # 20초 메모리 고속 서빙 (0.1ms 응답)
+            return Response(content=cached_bytes, media_type="application/json")
 
     res = MatchService.get_matches(
         db,
@@ -69,8 +70,10 @@ def list_matches(
         limit=limit,
         order=order
     )
-    _MATCHES_CACHE[cache_key] = (now, res)
-    return res
+    serialized = [MatchResponse.model_validate(m).model_dump(mode="json") for m in res]
+    json_bytes = json.dumps(serialized, ensure_ascii=False).encode("utf-8")
+    _MATCHES_JSON_CACHE[cache_key] = (now, json_bytes)
+    return Response(content=json_bytes, media_type="application/json")
 
 @router.get("/live-boards", summary="실시간 라이브 전광판 전용 종합 데이터 (구장/주자/볼카운트/이닝/스코어)")
 def get_live_boards(
