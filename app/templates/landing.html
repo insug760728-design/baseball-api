@@ -103,7 +103,7 @@
         overscroll-behavior-x: none !important;
       }
       #mainAppWrapper {
-        padding-top: 96px !important;
+        padding-top: 52px !important;
       }
       .navbar-glass {
         position: fixed !important;
@@ -1746,7 +1746,7 @@
     }
 
     #mainAppWrapper {
-      padding-top: 0px !important;
+      padding-top: 52px !important;
       margin-top: 0px !important;
       background-color: #ffffff !important;
     }
@@ -1773,7 +1773,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v8.4 고속렌더링·초기로딩최적화
+          <i class="bi bi-check-circle-fill me-1"></i>v8.5 상단핏조정·경기수숫자정리
         </span>
       </div>
 
@@ -1816,16 +1816,16 @@
           <div class="dash-card-column">
             
             <div class="dash-card-header pb-1 pt-0">
-              <!-- 📌 1열: [경기목록] [지난경기] [승무15패] (깔끔한 3버튼 1열 꽉 찬 배치) -->
+              <!-- 📌 1열: [경기목록] [지난경기] [승무15패] (깔끔한 3버튼 1열 꽉 찬 배치 - 경기수 숫자 제거) -->
               <div class="d-flex align-items-center gap-1.5 mb-1.5" id="scheduleModeSwitchGroup">
-                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill" id="btnTabActiveMatches" onclick="filterPredDate('ACTIVE')" style="border-radius: 6px; font-size: 0.78rem; background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8;">
-                  <i class="bi bi-calendar-check me-1"></i>경기목록 <span class="badge bg-white text-primary ms-0.5 fw-bold" id="activeMatchesCountBadge" style="font-size:0.65rem;">1186</span>
+                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill" id="btnTabActiveMatches" onclick="filterPredDate('ACTIVE')" style="border-radius: 6px; font-size: 0.80rem; background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8;">
+                  <i class="bi bi-calendar-check me-1"></i>경기목록
                 </button>
-                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill" id="btnTabFinishedMatches" onclick="filterPredDate('FINISHED')" style="border-radius: 6px; font-size: 0.78rem; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;">
-                  <i class="bi bi-clock-history me-1 text-secondary"></i>지난경기 <span class="badge bg-secondary text-white ms-0.5 fw-bold" id="finishedMatchesCountBadge" style="font-size:0.65rem;">179</span>
+                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill" id="btnTabFinishedMatches" onclick="filterPredDate('FINISHED')" style="border-radius: 6px; font-size: 0.80rem; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;">
+                  <i class="bi bi-clock-history me-1 text-secondary"></i>지난경기
                 </button>
-                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill border" onclick="openTotoModal('WDL')" style="background: #ffffff; color: #111827; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem;" title="클릭 시 배트맨 14경기 승무패/승1패/승5패 전용 팝업 오픈">
-                  <i class="bi bi-trophy-fill text-warning me-1"></i>승무15패 <span class="badge bg-danger text-white ms-0.5" style="font-size:0.62rem;">14경기</span>
+                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill border" onclick="openTotoModal('WDL')" style="background: #ffffff; color: #111827; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.80rem;" title="클릭 시 배트맨 14경기 승무패/승1패/승5패 전용 팝업 오픈">
+                  <i class="bi bi-trophy-fill text-warning me-1"></i>승무15패
                 </button>
               </div>
 
