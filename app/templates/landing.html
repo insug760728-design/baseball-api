@@ -10357,117 +10357,40 @@ function updateSlimPanel(matchId, type, contentHtml) {
     function getUpcomingScheduleForTeam(match, myTeam) {
       if (!match || !myTeam) return [];
       const curMatchDateStr = (match.match_date || (typeof getKSTDateString === 'function' ? getKSTDateString(new Date()) : '2026-09-14')).slice(0, 10);
-      const isHomeTeam = isSameTeamName(match.home_team_name, myTeam, match.sport_code, match.sport_code);
-      const currentOpponent = isHomeTeam ? match.away_team_name : match.home_team_name;
+      const curMatchId = String(match.id);
 
       const result = [];
-      const usedOpponents = new Set();
-      if (currentOpponent) {
-        usedOpponents.add(currentOpponent.replace(/[\s\.\-_]/g, '').toLowerCase());
-      }
 
       // 1. Search real upcoming matches in allMatches with STRICT SPORT MATCHING
+      // NOTE: We do NOT deduplicate opponents so baseball 3-game series (3연전) are accurately preserved!
       if (typeof allMatches !== 'undefined' && Array.isArray(allMatches) && allMatches.length > 0) {
         const realUpcoming = allMatches.filter(m => {
-          if (m.id == match.id || String(m.id) === String(match.id)) return false;
+          if (!m || String(m.id) === curMatchId) return false;
           if (m.sport_code && match.sport_code && m.sport_code !== match.sport_code) return false;
           const isHome = isSameTeamName(m.home_team_name, myTeam, m.sport_code, match.sport_code);
           const isAway = isSameTeamName(m.away_team_name, myTeam, m.sport_code, match.sport_code);
           if (!isHome && !isAway) return false;
+          if (m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED') return false;
           const mDateStr = (m.match_date || '').slice(0, 10);
-          return mDateStr >= curMatchDateStr;
+          return mDateStr >= curMatchDateStr || m.status === 'SCHEDULED' || m.status === 'IN_PLAY';
         }).sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
 
-        realUpcoming.forEach(m => {
+        realUpcoming.slice(0, 5).forEach(m => {
           const isHome = isSameTeamName(m.home_team_name, myTeam, m.sport_code, match.sport_code);
           const opp = isHome ? m.away_team_name : m.home_team_name;
-          const cleanOpp = (opp || '').replace(/[\s\.\-_]/g, '').toLowerCase();
-          if (!usedOpponents.has(cleanOpp) && result.length < 4) {
-            usedOpponents.add(cleanOpp);
-            result.push({
-              opponent: opp,
-              isHome: isHome,
-              dateStr: m.match_date,
-              league: m.league_name || match.league_name || match.sport_code,
-              isReal: true
-            });
-          }
+          result.push({
+            id: m.id,
+            opponent: opp,
+            isHome: isHome,
+            dateStr: m.match_date,
+            league: m.league_name || match.league_name || match.sport_code,
+            status: m.status,
+            isReal: true
+          });
         });
       }
 
-      // 2. Dynamic league-specific generation if fewer than 4 matches
-      if (result.length < 4) {
-        const leagueTeams = getLeagueTeamsFromAllMatches(match.league_name, match.sport_code, myTeam);
-        const availableTeams = leagueTeams.filter(t => !isSameTeamName(t, myTeam, match.sport_code, match.sport_code) && !usedOpponents.has((t || '').replace(/[\s\.\-_]/g, '').toLowerCase()));
-
-        let hash = 0;
-        const seedStr = myTeam + '_' + (match.league_name || '') + '_' + (match.id || 0);
-        for (let i = 0; i < seedStr.length; i++) {
-          hash = ((hash << 5) - hash) + seedStr.charCodeAt(i);
-          hash |= 0;
-        }
-        hash = Math.abs(hash);
-
-        let lastDate = new Date(match.match_date ? match.match_date.replace(' ', 'T') : new Date());
-        if (isNaN(lastDate.getTime())) lastDate = new Date();
-
-        const isBaseball = match.sport_code === 'BASEBALL';
-        const isSoccer = match.sport_code === 'SOCCER';
-        const dayStep = isBaseball ? 1 : (isSoccer ? 3.5 : 2);
-
-        for (let step = 0; step < 8 && result.length < 4 && availableTeams.length > 0; step++) {
-          const stride = (hash + (step + 1) * 11 + (step * step) * 5) % availableTeams.length;
-          let opp = null;
-          for (let attempt = 0; attempt < availableTeams.length; attempt++) {
-            const cand = availableTeams[(stride + attempt) % availableTeams.length];
-            const cleanCand = (cand || '').replace(/[\s\.\-_]/g, '').toLowerCase();
-            if (cand && !usedOpponents.has(cleanCand)) {
-              opp = cand;
-              usedOpponents.add(cleanCand);
-              break;
-            }
-          }
-          if (!opp) break;
-
-          const nextDays = Math.round(dayStep * (result.length + 1));
-          const matchDateObj = new Date(lastDate.getTime() + nextDays * 86400000);
-          const dayOfWeek = matchDateObj.getDay();
-
-          let timeStr = '18:30';
-          if (isBaseball) {
-            if ((match.league_name || '').includes('MLB')) {
-              const mlbTimes = ['07:10', '08:10', '09:40', '11:10'];
-              timeStr = mlbTimes[(hash + result.length) % mlbTimes.length];
-            } else if ((match.league_name || '').includes('NPB')) {
-              timeStr = (dayOfWeek === 0 || dayOfWeek === 6) ? '14:00' : '18:00';
-            } else {
-              timeStr = (dayOfWeek === 0) ? '14:00' : (dayOfWeek === 6 ? '17:00' : '18:30');
-            }
-          } else if (isSoccer) {
-            const soccerTimes = ['19:00', '21:00', '23:30', '01:30'];
-            timeStr = soccerTimes[(hash + result.length) % soccerTimes.length];
-          } else {
-            timeStr = (dayOfWeek === 0 || dayOfWeek === 6) ? '14:00' : '19:00';
-          }
-
-          const yyyy = matchDateObj.getFullYear();
-          const mm = String(matchDateObj.getMonth() + 1).padStart(2, '0');
-          const dd = String(matchDateObj.getDate()).padStart(2, '0');
-          const formattedDate = `${yyyy}-${mm}-${dd} ${timeStr}`;
-
-          const isHome = ((hash + result.length) % 2 === 0);
-
-          result.push({
-            opponent: opp,
-            isHome: isHome,
-            dateStr: formattedDate,
-            league: match.league_name || match.sport_code,
-            isReal: false
-          });
-        }
-      }
-
-      return result.slice(0, 4);
+      return result;
     }
 
     function buildUpcomingScheduleHtml(match) {
@@ -10482,7 +10405,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
       const renderScheduleList = (list, myTeam) => {
         if (!list || list.length === 0) {
-          return '<div class="text-center text-muted py-3 small">예정된 일정이 없습니다.</div>';
+          return '<div class="text-center text-muted py-3 small bg-light rounded-2 border"><i class="bi bi-calendar-event me-1"></i>현재 등록된 다음 공식 일정이 없습니다.</div>';
         }
 
         const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
@@ -10507,12 +10430,11 @@ function updateSlimPanel(matchId, type, contentHtml) {
             dayTag = '<span class="badge bg-primary text-white ms-1" style="font-size:0.62rem;">내일</span>';
           }
 
-          const statusBadge = item.isReal 
-            ? `<span class="badge bg-light text-dark border ms-1.5 flex-shrink-0 fw-bold" style="font-size:0.72rem;">${mTime} 예정</span>`
-            : `<span class="badge bg-light text-secondary border ms-1.5 flex-shrink-0 fw-bold" style="font-size:0.72rem;">공식일정</span>`;
+          const hasValidId = item.id && String(item.id).trim().length > 0;
+          const clickAttr = hasValidId ? `onclick="if(typeof openMatchDetailModal===\'function\'){ openMatchDetailModal(\'${item.id}\'); }" style="cursor:pointer; border-color:#e2e8f0 !important;"` : 'style="border-color:#e2e8f0 !important;"';
 
           itemsHtml += `
-            <div class="p-2.5 mb-2 rounded-2 border d-flex justify-content-between align-items-center bg-white shadow-sm" style="border-color:#e2e8f0 !important;">
+            <div class="p-2.5 mb-2 rounded-2 border d-flex justify-content-between align-items-center bg-white shadow-sm hover-shadow" ${clickAttr}>
               <div class="text-truncate" style="min-width:0; flex:1;">
                 <div class="d-flex align-items-center gap-1.5 mb-1 text-truncate">
                   <span class="badge ${item.isHome ? 'bg-danger text-white' : 'bg-primary text-white'}" style="font-size:0.65rem; flex-shrink:0;">${item.isHome ? '홈' : '원정'}</span>
@@ -10523,7 +10445,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
                   <i class="bi bi-calendar-event me-0.5"></i>${item.league || ''} · ${mDatePart}${dwStr} ${mTime}
                 </div>
               </div>
-              ${statusBadge}
+              <span class="badge bg-light text-dark border ms-1.5 flex-shrink-0 fw-bold" style="font-size:0.72rem;">${mTime} 예정</span>
             </div>
           `;
         });
@@ -10540,7 +10462,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
                   <span class="badge bg-danger text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">홈팀</span>
                   <strong class="text-dark fs-6">${formatTeamName(homeName)} 향후 일정</strong>
                 </div>
-                <span class="text-muted small" style="font-size:0.72rem;">다음 3~4경기</span>
+                <span class="text-muted small" style="font-size:0.72rem;">다음 공식 일정</span>
               </div>
               ${renderScheduleList(hUpcoming, homeName)}
             </div>
@@ -10554,7 +10476,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
                   <span class="badge bg-primary text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">원정팀</span>
                   <strong class="text-dark fs-6">${formatTeamName(awayName)} 향후 일정</strong>
                 </div>
-                <span class="text-muted small" style="font-size:0.72rem;">다음 3~4경기</span>
+                <span class="text-muted small" style="font-size:0.72rem;">다음 공식 일정</span>
               </div>
               ${renderScheduleList(aUpcoming, awayName)}
             </div>
