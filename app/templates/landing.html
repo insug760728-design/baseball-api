@@ -13346,14 +13346,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const panelHtml = `
         <div class="p-1.5" style="background: #f8fafc;">
           ${compareTableHtml}
-          <div class="text-center mt-1">
-            <button class="btn btn-sm btn-outline-primary py-0.5 px-2.5 fw-bold" style="font-size:0.70rem;" onclick="event.stopPropagation(); openNextGenDetailModal(${match.id}, 'recent')">
-              🔍 전체 5~10경기 누적 히스토리 & 라인업 전체보기 →
-            </button>
-          </div>
         </div>
       `;
-
       updateSlimPanel(matchId, 'history', panelHtml);
     }
 
