@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0">
   <script>
     try {
-      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13'].forEach(function(k) {
+      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14'].forEach(function(k) {
         localStorage.removeItem(k);
       });
     } catch(e) {}
@@ -1772,7 +1772,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v8.1 콤팩트상단배치·하키제거
+          <i class="bi bi-check-circle-fill me-1"></i>v8.2 상세보기정상화·즉시열림
         </span>
       </div>
 
@@ -8177,7 +8177,7 @@ function getFullModalMatchList() {
       // ⚡ 0초(0ms) 즉시 렌더링: 브라우저 캐시가 있으면 대기 없이 즉각 경기 목록 & 전광판 표출
       try {
         // Purge legacy caches with older fixture formats
-        ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13'].forEach(k => {
+        ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14'].forEach(k => {
           try { localStorage.removeItem(k); } catch (e) {}
         });
         const cached = localStorage.getItem('tokeon_matches_cache_v6');
@@ -10663,16 +10663,65 @@ function getFullModalMatchList() {
     }
 
 
-    function openNextGenDetailModal(matchId, initialTab = 'roster') {
-      const match = (typeof allMatches !== 'undefined') ? allMatches.find(m => m.id === matchId) : null;
-      if (!match) return;
+        // Helper: Dynamic Team Recent Matches List Generator (Array of recent games)
+    function buildDynamicTeamRecentList(sport, teamName, isHomeTeam, match, count = 5) {
+      const list = [];
+      const short = (typeof getShortTeamName === 'function') ? getShortTeamName(teamName) : formatTeamName(teamName);
+      for (let i = 0; i < count; i++) {
+        const seed = (typeof getTeamHash === 'function' ? getTeamHash(teamName + '_' + (match.id || 1) + '_' + i) : (i + 1)) + i;
+        const opp = (typeof getActualRivalName === 'function') 
+          ? getActualRivalName(sport, match.league_name, short, seed + i) 
+          : ((typeof getRivalOpponent === 'function') ? getRivalOpponent(sport, match.league_name, teamName, '상대팀', seed) : '상대팀');
+        const isWin = (seed % 3 !== 0);
+        let teamScore = 0, oppScore = 0;
+        if (sport === 'BASEBALL') {
+          teamScore = isWin ? (4 + (seed % 3)) : (1 + (seed % 2));
+          oppScore = isWin ? (1 + (seed % 2)) : (4 + (seed % 3));
+        } else if (sport === 'BASKETBALL') {
+          teamScore = isWin ? (105 + (seed % 15)) : (92 + (seed % 10));
+          oppScore = isWin ? (95 + (seed % 10)) : (108 + (seed % 15));
+        } else {
+          teamScore = isWin ? (2 + (seed % 2)) : (0 + (seed % 2));
+          oppScore = isWin ? (0 + (seed % 2)) : (2 + (seed % 2));
+        }
+        list.push({
+          match_id: (match.id || 100) + i,
+          match_date: '09.' + (13 - i),
+          opponent: opp,
+          result: isWin ? 'W' : 'L',
+          team_score: teamScore,
+          opp_score: oppScore
+        });
+      }
+      return list;
+    }
 
-      _ngActiveMatchId = matchId;
+
+    function openNextGenDetailModal(matchId, initialTab = 'roster') {
+      let match = null;
+      if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
+        match = allMatches.find(m => m.id == matchId || String(m.id) === String(matchId));
+      }
+      if (!match && typeof _currentMatchesList !== 'undefined' && Array.isArray(_currentMatchesList)) {
+        match = _currentMatchesList.find(m => m.id == matchId || String(m.id) === String(matchId));
+      }
+      if (!match && typeof getMatchById === 'function') {
+        match = getMatchById(matchId);
+      }
+      if (!match) {
+        console.warn('openNextGenDetailModal: match not found for id', matchId);
+        return;
+      }
+
+      _ngActiveMatchId = match.id;
       _ngActiveTab = initialTab || 'roster';
       _ngRosterSelectedTeam = 'home';
 
       const modalEl = document.getElementById('nextGenDetailModal');
-      if (!modalEl) return;
+      if (!modalEl) {
+        console.error('nextGenDetailModal missing in DOM');
+        return;
+      }
 
       const numBadge = document.getElementById('ngModalNumBadge');
       const leagueBadge = document.getElementById('ngModalLeagueBadge');
@@ -10685,23 +10734,35 @@ function getFullModalMatchList() {
       if (headTitle) headTitle.innerText = `${formatTeamName(match.home_team_name)} VS ${formatTeamName(match.away_team_name)}`;
       if (venueDate) venueDate.innerText = `${match.match_date || ''} [ ${match.stadium || '홈구장'} ]`;
 
-      renderNextGenDetail(match, _ngActiveTab, _ngRosterSelectedTeam);
+      try {
+        renderNextGenDetail(match, _ngActiveTab, _ngRosterSelectedTeam);
+      } catch (e) {
+        console.error('renderNextGenDetail error:', e);
+      }
 
-      const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
-      bsModal.show();
+      try {
+        const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        bsModal.show();
+      } catch (e) {
+        console.error('bootstrap modal show error:', e);
+      }
 
       if (initialTab && initialTab !== 'roster') {
         setTimeout(() => scrollToNgSection(initialTab), 150);
       }
 
-      // Background detail fetch if not cached
-      if (!matchDetailCache.has(matchId)) {
-        fetchMatchDetailCached(matchId).then(freshData => {
-          if (freshData && _ngActiveMatchId === matchId) {
-            renderNextGenDetail(match, _ngActiveTab, _ngRosterSelectedTeam);
+      // Background detail fetch if available
+      try {
+        if (typeof matchDetailCache !== 'undefined' && typeof fetchMatchDetailCached === 'function') {
+          if (!matchDetailCache.has(match.id)) {
+            fetchMatchDetailCached(match.id).then(freshData => {
+              if (freshData && _ngActiveMatchId === match.id) {
+                renderNextGenDetail(match, _ngActiveTab, _ngRosterSelectedTeam);
+              }
+            }).catch(()=>{});
           }
-        });
-      }
+        }
+      } catch (e) {}
     }
 
     function scrollToNgSection(secName) {
@@ -11252,8 +11313,8 @@ function getFullModalMatchList() {
       // -------------------------------------------------------------
       // 4단계: 📈 최근 경기 결과 누적 아카이브 (클릭 시 세부 점수판 열림)
       // -------------------------------------------------------------
-      const homeHistory = buildDynamicTeamRecent(m.sport_code, hName, true, m);
-      const awayHistory = buildDynamicTeamRecent(m.sport_code, aName, false, m);
+      const homeHistory = buildDynamicTeamRecentList(m.sport_code, hName, true, m, 5);
+      const awayHistory = buildDynamicTeamRecentList(m.sport_code, aName, false, m, 5);
 
       const recentSectionHtml = `
         <div id="ngSection_recent" class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #e2e8f0 !important; scroll-margin-top: 55px;">
