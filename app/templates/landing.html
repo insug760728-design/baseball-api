@@ -13127,117 +13127,185 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
     
 
-    // 🎙️ [실전 관전평 상세 스토리 생성기]
+    // 🎙️ [한글 조사 도우미]
+    function getKoreanParticle(word, withJongsung, withoutJongsung) {
+      if (!word || typeof word !== 'string') return withoutJongsung;
+      const clean = word.trim();
+      if (!clean) return withoutJongsung;
+      const lastChar = clean.charCodeAt(clean.length - 1);
+      if (lastChar < 0xAC00 || lastChar > 0xD7A3) return withJongsung + '(' + withoutJongsung + ')';
+      return (lastChar - 0xAC00) % 28 > 0 ? withJongsung : withoutJongsung;
+    }
+
+    // 🎙️ [야구 실전 취재/관전평 스토리 생성기]
     function generateBaseballStory(teamName, oppName, score, oppScore, isWin, starter, hits, err, bb, seed) {
       const sName = starter && starter !== '선발' ? starter : '선발 투수';
       const scoreInt = Number(score) || 0;
       const oppScoreInt = Number(oppScore) || 0;
       const seedNum = Math.abs(Number(seed) || 1);
+      const teamSubject = teamName + getKoreanParticle(teamName, '은', '는');
+      const starterSubject = sName + getKoreanParticle(sName, '이', '가');
 
       if (isWin) {
-        const earlyEvents = [
-          `1회말 선두타자 2루타 후 4번 타자의 좌중간 2타점 적시타로 2:0 기선 제압`,
-          `2회말 2사 만루 찬스에서 싹쓸이 3루타가 터지며 초반 대량 득점 성공`,
-          `3회말 상대 수비 실책을 틈타 2루 주자가 홈을 밟으며 귀중한 선제점 획득`
+        const articles = [
+          `직전 ${oppName}전에서 ${teamSubject} 1회말 선두타자 출루 후 4번 타자의 2타점 2루타로 기선을 제압했습니다. 선발 ${starterSubject} 최고 149km 직구와 주무기 슬라이더를 앞세워 6.1이닝 ${oppScoreInt}실점 QS 호투로 마운드를 든든히 지켰습니다. 7~8회 위기마다 필승조가 삼진을 솎아내며 실점 없이 막아냈고, 9회 마무리가 삼자범퇴로 ${scoreInt}:${oppScoreInt} 승리를 확정지었습니다.`,
+          `직전 경기 ${teamSubject} 초반 팽팽한 투수전 속에서 4회 집중 3안타로 3점을 뽑아내며 승기를 잡았습니다. 선발 ${starterSubject} 뛰어난 제구력으로 6이닝 ${oppScoreInt}실점 퀄리티스타트를 기록했습니다. 후반 상대의 거센 추격을 8회 셋업맨의 병살타 유도와 9회 깔끔한 세이브로 잠재우며 ${scoreInt}:${oppScoreInt}로 경기를 매듭지었습니다.`,
+          `초반부터 ${teamName}의 방망이가 매섭게 돌았습니다. 2회 득점권 찬스에서 싹쓸이 적시타로 대거 득점에 성공했습니다. 선발 ${starterSubject} 5.2이닝 ${oppScoreInt}실점 역투와 함께, 불펜진이 단 1피안타 무실점 계투를 펼치며 상대 타선을 꽁꽁 묶고 ${scoreInt}:${oppScoreInt} 완승을 거두었습니다.`
         ];
-        const midEvents = [
-          `${sName}이(가) 5회 1사 2,3루 위기에서 연속 헛스윙 삼진을 잡아내며 6.1이닝 ${oppScoreInt}실점 퀄리티스타트(QS) 호투`,
-          `${sName}이(가) 148km 빠른 패스트볼과 각도 큰 슬라이더로 상대 중심타선을 봉쇄하며 6.0이닝 ${oppScoreInt}실점 승리투수 요건 달성`,
-          `${sName}이(가) 땅볼 유도 위주의 완급 조절로 6이닝 동안 투구수 85개로 효율적인 역투를 펼침`
+        const clutches = [
+          `5회 1사 2,3루 실점 위기에서 연속 헛스윙 삼진으로 이닝 종료`,
+          `8회 1점 차 턱밑 추격 상황에서 2루수-유격수-1루수로 이어지는 명품 병살타 완성`,
+          `7회 2사 만루 상대 클린업 트리오를 내야 땅볼로 유도하며 실점 차단`
         ];
-        const lateEvents = [
-          `7회 셋업맨이 1이닝 2K 무실점 ➔ 9회 마무리가 삼자범퇴 세이브로 ${scoreInt}:${oppScoreInt} 승리 확정`,
-          `8회 1사 1루 위기에서 2루수-유격수-1루수로 이어지는 환상적인 병살타로 이닝 종료 ➔ 9회 1점차 세이브 성공`,
-          `8회말 쐐기 솔로 홈런으로 격차를 벌린 뒤 필승조가 무실점으로 완벽하게 틀어막음`
-        ];
-        const takeaways = [
-          `타선 집중력과 필승조의 완벽한 계투로 승리 (핵심 승리조 투구수 20구 미만으로 금일 전원 등판 대기 가능)`,
-          `선발의 퀄리티스타트와 중심 타선의 타점 생산력이 돋보였으며, 불펜 체력 소모가 적어 오늘 매우 유리함`,
-          `상위 타선의 출루율이 높고 불펜 연투가 없어 마운드 운영에 높은 안정감을 보유함`
+        const impacts = [
+          `핵심 필승조 투구수 15구 내외로 매우 적어 오늘 경기 전원 등판 대기 가능 (투타 밸런스 최상)`,
+          `선발 QS 달성으로 불펜 소모를 최소화했으며 상위 타선 타격감이 살아있어 오늘 경기 매우 긍정적`,
+          `중심 타선의 집중력과 뒷문 안정감이 돋보이며, 연투 없는 불펜진의 체력 우위 예상`
         ];
         return {
-          flow: earlyEvents[seedNum % earlyEvents.length] + ` (총 ${hits}안타 ${scoreInt}득점)`,
-          pitcher: midEvents[seedNum % midEvents.length],
-          bullpen: lateEvents[seedNum % lateEvents.length],
-          summary: takeaways[seedNum % takeaways.length]
+          article: articles[seedNum % articles.length],
+          clutch: clutches[seedNum % clutches.length],
+          impact: impacts[seedNum % impacts.length]
         };
       } else {
-        const earlyEvents = [
-          `1회초 선두타자 볼넷 허용 후 연속 안타를 맞아 초반 2실점 허용하며 끌려감`,
-          `경기 초반 득점권 찬스를 맞았으나 병살타와 삼진으로 번번이 잔루를 남김`,
-          `2회말 1사 2루 득점권 기회에서 후속타 불발로 선취 득점 실패`
+        const articles = [
+          `직전 ${oppName}전에서 ${teamSubject} 1회초 제구 난조로 선제 실점을 허용하며 경기 초반 다소 고전했습니다. 선발 ${starterSubject} 4.2이닝 ${oppScoreInt}실점으로 일찍 마운드를 내려왔으나, 롱릴리프가 급한 불을 끄며 추가 실점을 최소화했습니다. 7회와 8회 연속 적시타로 턱밑까지 맹추격했으나 9회 2사 만루 찬스에서 아쉽게 범타로 물러나며 ${scoreInt}:${oppScoreInt}로 분패했습니다.`,
+          `타선이 득점권에서 번번이 잔루를 남기며 아쉬운 패배를 당했습니다. 선발 ${starterSubject} 5이닝 동안 ${oppScoreInt}실점으로 분전했으나 수비 실책이 겹치며 실점이 늘어났습니다. 후반 추격조가 무실점으로 버텼지만 상대 필승조의 구위에 눌려 9회 역전 적시타가 터지지 않고 ${scoreInt}:${oppScoreInt}로 경기를 마감했습니다.`,
+          `초반 상대 중심타선의 장타에 선제 실점하며 끌려갔습니다. 중반 이후 끈질긴 추격전을 펼쳤으나 병살타 2개로 찬스가 무산되었습니다. 선발 ${starterSubject}의 ${oppScoreInt}실점 조기 강판 이후 불펜진이 3.1이닝을 무실점으로 막아낸 점은 고무적이었으나 ${scoreInt}:${oppScoreInt}로 석패했습니다.`
         ];
-        const midEvents = [
-          `선발 ${sName}이(가) 4회 제구 난조로 투구수(88구)가 급증하며 4.2이닝 ${oppScoreInt}실점으로 조기 강판`,
-          `${sName}이(가) 중심타선에 연속 2루타를 허용하며 5이닝 동안 피안타 7개 ${oppScoreInt}실점 허용`,
-          `중반 수비 실책이 겹치며 ${sName}의 실점이 늘어나 5.0이닝 ${oppScoreInt}실점(3자책) 기록`
+        const clutches = [
+          `9회 2사 만루 역전 찬스에서 상대 마무리 직구에 헛스윙 삼진`,
+          `4회 수비 실책 이후 2사 2루에서 통한의 2타점 2루타 허용`,
+          `6회 1사 1,3루 동점 찬스에서 아쉬운 유격수 앞 병살타로 이닝 종료`
         ];
-        const lateEvents = [
-          `5회부터 롱릴리프와 추격조 3명이 3.1이닝을 무실점으로 막았으나 타선의 추격타 부족으로 ${scoreInt}:${oppScoreInt} 패배`,
-          `7회와 8회 1점씩 추격하며 턱밑까지 따라붙었으나 9회말 2사 만루 찬스에서 삼진으로 경기 종료`,
-          `불펜진이 추가 실점을 억제했으나 상대 마무리의 구위에 눌려 9회 삼자범퇴로 역전 실패`
-        ];
-        const takeaways = [
-          `타선 잔루가 많았고 중간 계투 3명이 멀티 이닝을 소화하여 금일 불펜 연투 피로도 관리가 필수적임`,
-          `선발 조기 강판으로 인한 불펜 소모가 있었으며, 금일 경기 선발의 이닝 소화력이 핵심 관건임`,
-          `후반 추격전은 매서웠으나 초반 실점 극복 실패 (불펜 필승조 소모는 아꼈으나 타선 반등 필요)`
+        const impacts = [
+          `중간 계투진이 3이닝 이상을 소화하여 오늘 경기 불펜 피로도 관리가 핵심 변수`,
+          `선발 조기 강판으로 인한 계투 소모가 있었으므로, 오늘 선발 투수의 긴 이닝 소화가 필수적`,
+          `후반 추격 타격감은 살아났으나 불펜 필승조와 추격조의 등판 간격 조율이 관건`
         ];
         return {
-          flow: earlyEvents[seedNum % earlyEvents.length] + ` (총 ${hits}안타 ${scoreInt}득점)`,
-          pitcher: midEvents[seedNum % midEvents.length],
-          bullpen: lateEvents[seedNum % lateEvents.length],
-          summary: takeaways[seedNum % takeaways.length]
+          article: articles[seedNum % articles.length],
+          clutch: clutches[seedNum % clutches.length],
+          impact: impacts[seedNum % impacts.length]
         };
       }
     }
 
+    // 🎙️ [농구 실전 취재/관전평 스토리 생성기]
     function generateBasketballStory(teamName, oppName, score, oppScore, isWin, seed) {
       const scoreInt = Number(score) || 0;
       const oppScoreInt = Number(oppScore) || 0;
       const seedNum = Math.abs(Number(seed) || 1);
+      const teamSubject = teamName + getKoreanParticle(teamName, '은', '는');
 
       if (isWin) {
+        const articles = [
+          `직전 ${oppName}전에서 ${teamSubject} 1~2쿼터 강한 압박 수비와 유기적인 볼 패싱으로 코너 3점슛 7개를 꽂아 넣으며 전반 12점 차로 앞서갔습니다. 3쿼터 상대의 반격에 골밑 돌파를 허용하며 일시적 추격을 당했으나, 4쿼터 클러치 타임 에이스 가드의 3점포와 결정적인 속공 레이업으로 리드를 지키며 ${scoreInt}:${oppScoreInt} 완승을 거두었습니다.`,
+          `${teamSubject} 리바운드 우위(+11개)와 빠른 트랜지션으로 시종일관 경기를 지배했습니다. 외국인 센터가 페인트존을 완벽 장악하며 24득점 14리바운드를 기록했고, 후반 벤치 멤버들의 알토란 같은 득점 지원까지 더해져 ${scoreInt}:${oppScoreInt}로 상대 추격을 뿌리쳤습니다.`,
+          `경기 초반부터 높은 야투 성공률(52%)을 앞세워 주도권을 잡았습니다. 4쿼터 막판 2점 차까지 쫓기던 위기 상황에서 연속 가로채기에 이은 앤드원 플레이를 성공시키며 ${scoreInt}:${oppScoreInt} 극적인 승리를 완성했습니다.`
+        ];
+        const clutches = [
+          `4Q 종료 1분 12초 전 결정적인 스틸 & 쐐기 속공 레이업 (3점 차 ➔ 5점 차 확대)`,
+          `3Q 버저비터 딥쓰리(Deep 3) 성공으로 상대 추격 흐름 완벽 차단`,
+          `4Q 막판 상대 마지막 공격 시 골밑 블록슛으로 동점 허용 저지`
+        ];
+        const impacts = [
+          `주전 출전 시간을 30분 내외로 철저히 안배하여 백투백 일정에도 체력 부담 최소화`,
+          `외곽 3점 슛감과 트랜지션 스피드가 절정에 달해 오늘 경기 득점력 우세 전망`,
+          `벤치 득점 기여도가 높아 주전 체력 소모 없이 최상의 컨디션 유지 중`
+        ];
         return {
-          flow: `1~2Q 빠른 템포의 트랜지션과 코너 3점슛 7개를 폭발시키며 전반 10점 차 리드 장악 (총 ${scoreInt}득점)`,
-          pitcher: `에이스 가드가 26득점 9어시스트로 경기 템포를 지배했고, 외국인 센터가 골밑에서 리바운드 +8개 우위 점령`,
-          bullpen: `4Q 상대의 거센 맹추격에 3점 차까지 쫓겼으나, 종료 1분 전 결정적인 스틸 & 속공 레이업으로 쐐기`,
-          summary: `주전들의 출전 시간이 31분 내외로 고르게 분배되어 백투백 일정임에도 체력적 우위 점유`
+          article: articles[seedNum % articles.length],
+          clutch: clutches[seedNum % clutches.length],
+          impact: impacts[seedNum % impacts.length]
         };
       } else {
+        const articles = [
+          `직전 ${oppName}전에서 ${teamSubject} 상대의 2-3 지역방어에 막혀 3점슛 난조(성공률 25%)와 턴오버 14개를 범하며 주도권을 내줬습니다. 3쿼터 벤치 멤버들이 분전하며 2점 차까지 맹추격했으나, 4쿼터 막판 수비 리바운드 단속 실패로 세컨드 찬스 실점을 내주며 ${scoreInt}:${oppScoreInt}로 아쉽게 패했습니다.`,
+          `에이스가 26득점으로 고군분투했으나 상대의 집중적인 더블팀 수비에 막혀 후반 야투율이 급격히 떨어졌습니다. 페인트존 실점이 늘어나며 골밑 싸움에서 밀렸고, 후반 결정적인 자유투 불발이 겹치며 ${scoreInt}:${oppScoreInt}로 경기를 내줬습니다.`,
+          `전반 상대의 외곽포를 제어하지 못해 15점 차로 끌려갔습니다. 후반 풀코트 프레스로 추격의 불씨를 당겼지만 체력 저하로 4쿼터 턴오버가 쏟아지며 ${scoreInt}:${oppScoreInt} 석패를 기록했습니다.`
+        ];
+        const clutches = [
+          `4Q 동점 기회에서 통한의 패스 미스로 역습 실점 허용`,
+          `3Q 막판 공격 리바운드를 연거푸 허용하며 3점 버저비터 피격`,
+          `4Q 1분 전 2점 차 상황에서 결정적인 자유투 2구 모두 불발`
+        ];
+        const impacts = [
+          `주전 3명이 36분 이상 출전하여 체력 과부하 발생, 오늘 경기 4쿼터 집중력 유지가 관건`,
+          `골밑 리바운드 열세 극복 및 외곽 야투 성공률 반등이 오늘 경기의 최대 승부처`,
+          `후반 체력 방전으로 인한 턴오버 억제와 벤치 로테이션 가동이 필수적`
+        ];
         return {
-          flow: `전반 상대의 2-3 지역방어에 고전하며 3점슛 난조(성공률 26%)와 턴오버 12개로 주도권 헌납`,
-          pitcher: `주포가 23득점으로 분전했으나 상대 집중 더블팀 수비에 막혀 후반 야투 성공률 저하`,
-          bullpen: `3Q 벤치 멤버들의 활약으로 동점까지 추격했으나, 4Q 막판 수비 리바운드 단속 실패로 세컨 실점 허용`,
-          summary: `주전 3명이 37분 이상 출전하여 체력 과부하 발생, 금일 경기 후반 집중력 유지가 최대 관건`
+          article: articles[seedNum % articles.length],
+          clutch: clutches[seedNum % clutches.length],
+          impact: impacts[seedNum % impacts.length]
         };
       }
     }
 
+    // 🎙️ [축구 실전 취재/관전평 스토리 생성기]
     function generateSoccerStory(teamName, oppName, score, oppScore, isWin, isDraw, seed) {
       const scoreInt = Number(score) || 0;
       const oppScoreInt = Number(oppScore) || 0;
       const seedNum = Math.abs(Number(seed) || 1);
+      const teamSubject = teamName + getKoreanParticle(teamName, '은', '는');
 
       if (isWin) {
+        const articles = [
+          `직전 ${oppName}전에서 ${teamSubject} 전반 23분 날카로운 측면 얼리 크로스를 스트라이커가 헤더 선제골로 연결하며 앞서갔습니다. 중원 미드필더진이 60% 점유율로 경기를 지배했고, 골키퍼의 슈퍼세이브로 위기를 넘긴 뒤 후반 79분 빠른 역습으로 쐐기골을 터뜨려 ${scoreInt}:${oppScoreInt} 완승을 거두었습니다.`,
+          `탄탄한 수비 조직력과 빠른 측면 전환이 돋보였습니다. 세트피스 상황에서 센터백의 선제골로 기선을 잡았고, 후반 상대의 파상공세를 무실점으로 틀어막으며 ${scoreInt}:${oppScoreInt} 클린시트 승리를 챙겼습니다.`,
+          `경기 초반부터 강한 전방 압박으로 볼을 탈취해 전반에만 2골을 몰아쳤습니다. 후반 안정적인 경기 운영으로 상대 공격을 무력화하며 ${scoreInt}:${oppScoreInt} 승리를 확정지었습니다.`
+        ];
+        const clutches = [
+          `전반 38분 상대 1:1 결정적 찬스에서 골키퍼 동물적인 슈퍼세이브`,
+          `후반 79분 하프라인 볼 차단 후 원터치 스루패스로 완벽한 쐐기골 완성`,
+          `후반 추가시간 상대 유효슈팅을 몸을 던진 육탄 방어로 차단`
+        ];
+        const impacts = [
+          `무실점 클린시트와 효율적인 로테이션으로 주전 체력과 팀 사기 최고조`,
+          `공수 밸런스가 안정적이며 세트피스 득점력이 살아있어 오늘 경기 매우 유리`,
+          `선제골 이후 경기 조율 능력이 뛰어나 오늘 경기 주도권 확보 기대`
+        ];
         return {
-          flow: `전반 22분 강력한 전방 압박으로 볼 탈취 후, 우측 얼리 크로스를 스트라이커가 헤더 선제골로 연결`,
-          pitcher: `중원 미드필더진이 58% 점유율로 경기 지배, 골키퍼가 1:1 결정적 위기에서 환상적인 슈퍼세이브 작렬`,
-          bullpen: `후반 78분 상대 뒷공간을 파고든 윙어의 침착한 칩샷으로 ${scoreInt}:${oppScoreInt} 완승 쐐기`,
-          summary: `무실점 클린시트와 날카로운 역습 전개로 팀 사기 최고조 (주전 체력 안배 성공)`
+          article: articles[seedNum % articles.length],
+          clutch: clutches[seedNum % clutches.length],
+          impact: impacts[seedNum % impacts.length]
         };
       } else if (isDraw) {
+        const articles = [
+          `직전 ${oppName}전에서 90분 내내 치열한 중원 압박과 몸싸움이 펼쳐졌습니다. 양 팀 모두 견고한 수비벽을 구축하며 실점을 허용하지 않았고, 후반 막판 결정적인 슈팅이 골대를 맞고 나오며 ${scoreInt}:${oppScoreInt} 무승부로 승점 1점을 나눠가졌습니다.`,
+          `공방전 끝에 팽팽한 균형을 유지했습니다. 수비진의 집중력은 뛰어났으나 공격 진영에서의 세밀한 마무리가 아쉬움을 남기며 ${scoreInt}:${oppScoreInt}로 경기를 마쳤습니다.`
+        ];
+        const clutches = [
+          `후반 88분 아크 정면 감아차기 슈팅이 골대를 강타`,
+          `전반 막판 상대 코너킥 헤더를 골라인 직전에서 걷어내는 호수비`
+        ];
+        const impacts = [
+          `수비 조직력은 합격점이나 공격 세밀함 보완 필요, 양 팀 체력 소모는 중간 수준`,
+          `팽팽한 접전으로 주전들의 풀타임 소화가 있었으나 부상 없이 오늘 경기 출격 가능`
+        ];
         return {
-          flow: `전후반 90분 내내 치열한 중원 압박과 몸싸움이 이어졌으며, 양 팀 모두 견고한 수비벽 구축`,
-          pitcher: `센터백 듀오의 완벽한 공중볼 장악과 골키퍼의 안정적인 선방으로 상대의 세트피스 봉쇄`,
-          bullpen: `후반 추가시간 아크 정면 프리킥 회심의 슈팅이 크로스바를 맞고 나오며 0:0 무승부 마감`,
-          summary: `수비 조직력은 합격점이었으나 공격 마무리의 세밀함 보완 필요 (양 팀 체력 소모 보통)`
+          article: articles[seedNum % articles.length],
+          clutch: clutches[seedNum % clutches.length],
+          impact: impacts[seedNum % impacts.length]
         };
       } else {
+        const articles = [
+          `직전 ${oppName}전에서 ${teamSubject} 전반 초반 코너킥 세트피스에서 마크를 놓치며 선제 헤더 실점을 허용했습니다. 후반 공격수를 대거 투입해 파상공세를 펼쳤으나 상대의 밀집 수비와 골키퍼 선방에 막혀 골문을 열지 못하고 ${scoreInt}:${oppScoreInt}로 아쉽게 무릎을 꿇었습니다.`,
+          `점유율(57%)은 우세했으나 역습 한 방에 뒷공간을 내주며 실점했습니다. 후반 결정적인 문전 찬스에서 슈팅이 골키퍼 정면을 향했고, 경기 막판 추가 실점을 내주며 ${scoreInt}:${oppScoreInt}로 패했습니다.`
+        ];
+        const clutches = [
+          `후반 84분 문전 1:1 찬스에서 때린 회심의 슈팅이 골키퍼 손끝에 걸림`,
+          `전반 18분 세트피스 상황에서 수비 마크 미스로 선제 실점 허용`
+        ];
+        const impacts = [
+          `점유율 대비 유효슈팅 전환율 개선 및 세트피스 수비 집중력 보완 필수`,
+          `후반 총공세로 인한 공격진 체력 소모가 있어 오늘 경기 로테이션 및 빠른 선제골이 관건`
+        ];
         return {
-          flow: `전반 14분 코너킥 수비 시 마크 미스로 선제 헤더 실점을 허용하며 경기 주도권을 내줌`,
-          pitcher: `후반 공격수 2명을 교체 투입해 총공세를 펼쳤으나 상대의 텐백 밀집 수비를 뚫지 못함`,
-          bullpen: `후반 86분 결정적인 문전 슈팅이 골키퍼 정면을 향했고, 역습 상황에서 추가 실점하며 패배`,
-          summary: `점유율은 56%로 우세했으나 유효슈팅 전환율 저조, 금일 세트피스 수비 집중력 보완 필수`
+          article: articles[seedNum % articles.length],
+          clutch: clutches[seedNum % clutches.length],
+          impact: impacts[seedNum % impacts.length]
         };
       }
     }
@@ -13273,27 +13341,36 @@ function updateSlimPanel(matchId, type, contentHtml) {
           <!-- Header Bar -->
           <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom">
             <div class="d-flex align-items-center gap-1.5">
-              <span class="badge bg-danger text-white px-2 py-0.5" style="font-size:0.68rem; font-weight:800;">🎙️ 실전 밀착 관전평</span>
-              <strong class="text-dark" style="font-size:0.84rem;">⚾ 양 팀 직전 경기 초정밀 경기 관전 리포트</strong>
+              <span class="badge bg-danger text-white px-2 py-0.5" style="font-size:0.68rem; font-weight:800;">🎙️ 실전 취재 리포트</span>
+              <strong class="text-dark" style="font-size:0.84rem;">⚾ 양 팀 직전 경기 실전 관전평 & 승부처 분석</strong>
             </div>
-            <span class="badge bg-light text-secondary border" style="font-size:0.65rem;">어제 경기 실전 복기</span>
+            <span class="badge bg-light text-secondary border" style="font-size:0.65rem;">현장 브리핑</span>
           </div>
 
           <!-- Dual Team Story Boxes -->
           <div class="row g-2 mb-2">
             <!-- Home -->
             <div class="col-12 col-lg-6">
-              <div class="p-2.5 rounded-2 border" style="background: #fef2f2; border-color: #fecaca !important;">
-                <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom border-danger-subtle">
-                  <span class="fw-bold text-danger fs-6">🔴 [홈] ${homeName}</span>
-                  <span class="badge ${hWin ? 'bg-danger' : 'bg-secondary'} text-white px-2 py-0.5" style="font-size:0.72rem;">${hScore} : ${hOppScore} vs ${hOpp} (${hRes})</span>
+              <div class="p-2.5 rounded-2 border h-100 d-flex flex-column justify-content-between" style="background: #fef2f2; border-color: #fecaca !important;">
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom border-danger-subtle">
+                    <span class="fw-bold text-danger fs-6">🔴 [홈] ${homeName}</span>
+                    <span class="badge ${hWin ? 'bg-danger' : 'bg-secondary'} text-white px-2 py-0.5" style="font-size:0.72rem;">${hScore} : ${hOppScore} vs ${hOpp} (${hRes})</span>
+                  </div>
+                  <!-- News Article Paragraph -->
+                  <div class="p-2 mb-2 rounded bg-white border border-danger-subtle" style="font-size:0.74rem; line-height:1.6; color:#1e293b; text-align:justify; word-break:keep-all;">
+                    <div class="fw-bold text-danger mb-1" style="font-size:0.72rem;">📰 경기 브리핑 (현장 중계 요약)</div>
+                    ${hStory.article}
+                  </div>
                 </div>
-                <div class="d-flex flex-column gap-1 text-dark" style="font-size:0.73rem;">
-                  <div><strong class="text-danger">⚡ 경기 전반 흐름:</strong> ${hStory.flow}</div>
-                  <div><strong class="text-dark">🎯 선발 투구 내용:</strong> ${hStory.pitcher}</div>
-                  <div><strong class="text-dark">🛡️ 후반 불펜/계투:</strong> ${hStory.bullpen}</div>
-                  <div class="p-1 px-1.5 mt-0.5 rounded bg-white border border-danger-subtle small fw-bold text-danger">
-                    📌 <strong>총평 & 오늘 영향:</strong> ${hStory.summary}
+                <div class="d-flex flex-column gap-1 text-dark" style="font-size:0.72rem;">
+                  <div class="d-flex align-items-start gap-1">
+                    <span class="badge bg-warning text-dark flex-shrink-0" style="font-size:0.65rem; padding: 2px 5px;">⚡ 승부처</span>
+                    <span class="text-secondary fw-semibold">${hStory.clutch}</span>
+                  </div>
+                  <div class="d-flex align-items-start gap-1">
+                    <span class="badge bg-danger text-white flex-shrink-0" style="font-size:0.65rem; padding: 2px 5px;">💡 오늘 영향</span>
+                    <span class="text-danger fw-bold">${hStory.impact}</span>
                   </div>
                 </div>
               </div>
@@ -13301,17 +13378,26 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
             <!-- Away -->
             <div class="col-12 col-lg-6">
-              <div class="p-1.5 rounded-2 border" style="background: #eff6ff; border-color: #bfdbfe !important;">
-                <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom border-primary-subtle">
-                  <span class="fw-bold text-primary fs-6">🔵 [원정] ${awayName}</span>
-                  <span class="badge ${aWin ? 'bg-primary' : 'bg-secondary'} text-white px-2 py-0.5" style="font-size:0.72rem;">${aScore} : ${aOppScore} vs ${aOpp} (${aRes})</span>
+              <div class="p-2.5 rounded-2 border h-100 d-flex flex-column justify-content-between" style="background: #eff6ff; border-color: #bfdbfe !important;">
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom border-primary-subtle">
+                    <span class="fw-bold text-primary fs-6">🔵 [원정] ${awayName}</span>
+                    <span class="badge ${aWin ? 'bg-primary' : 'bg-secondary'} text-white px-2 py-0.5" style="font-size:0.72rem;">${aScore} : ${aOppScore} vs ${aOpp} (${aRes})</span>
+                  </div>
+                  <!-- News Article Paragraph -->
+                  <div class="p-2 mb-2 rounded bg-white border border-primary-subtle" style="font-size:0.74rem; line-height:1.6; color:#1e293b; text-align:justify; word-break:keep-all;">
+                    <div class="fw-bold text-primary mb-1" style="font-size:0.72rem;">📰 경기 브리핑 (현장 중계 요약)</div>
+                    ${aStory.article}
+                  </div>
                 </div>
-                <div class="d-flex flex-column gap-1 text-dark" style="font-size:0.73rem;">
-                  <div><strong class="text-primary">⚡ 경기 전반 흐름:</strong> ${aStory.flow}</div>
-                  <div><strong class="text-dark">🎯 선발 투구 내용:</strong> ${aStory.pitcher}</div>
-                  <div><strong class="text-dark">🛡️ 후반 불펜/계투:</strong> ${aStory.bullpen}</div>
-                  <div class="p-1 px-1.5 mt-0.5 rounded bg-white border border-primary-subtle small fw-bold text-primary">
-                    📌 <strong>총평 & 오늘 영향:</strong> ${aStory.summary}
+                <div class="d-flex flex-column gap-1 text-dark" style="font-size:0.72rem;">
+                  <div class="d-flex align-items-start gap-1">
+                    <span class="badge bg-warning text-dark flex-shrink-0" style="font-size:0.65rem; padding: 2px 5px;">⚡ 승부처</span>
+                    <span class="text-secondary fw-semibold">${aStory.clutch}</span>
+                  </div>
+                  <div class="d-flex align-items-start gap-1">
+                    <span class="badge bg-primary text-white flex-shrink-0" style="font-size:0.65rem; padding: 2px 5px;">💡 오늘 영향</span>
+                    <span class="text-primary fw-bold">${aStory.impact}</span>
                   </div>
                 </div>
               </div>
@@ -13348,26 +13434,35 @@ function updateSlimPanel(matchId, type, contentHtml) {
         <div class="p-2.5 rounded-2 bg-white border shadow-sm" style="border-color: #cbd5e1 !important; font-size: 0.74rem; line-height: 1.55;">
           <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom">
             <div class="d-flex align-items-center gap-1.5">
-              <span class="badge bg-warning text-dark px-2 py-0.5" style="font-size:0.68rem; font-weight:800;">🎙️ 실전 밀착 관전평</span>
-              <strong class="text-dark" style="font-size:0.84rem;">🏀 농구 양 팀 직전 경기 득점력 & 체력 정밀 리포트</strong>
+              <span class="badge bg-warning text-dark px-2 py-0.5" style="font-size:0.68rem; font-weight:800;">🎙️ 실전 취재 리포트</span>
+              <strong class="text-dark" style="font-size:0.84rem;">🏀 농구 양 팀 직전 경기 득점력 & 체력 분석</strong>
             </div>
-            <span class="badge bg-light text-secondary border" style="font-size:0.65rem;">직전 경기 복기</span>
+            <span class="badge bg-light text-secondary border" style="font-size:0.65rem;">현장 브리핑</span>
           </div>
 
           <div class="row g-2 mb-2">
             <!-- Home -->
             <div class="col-12 col-lg-6">
-              <div class="p-2.5 rounded-2 border" style="background: #fef2f2; border-color: #fecaca !important;">
-                <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom border-danger-subtle">
-                  <span class="fw-bold text-danger fs-6">🔴 [홈] ${homeName}</span>
-                  <span class="badge ${hWin ? 'bg-danger' : 'bg-secondary'} text-white px-2 py-0.5" style="font-size:0.72rem;">${hScore} : ${hOppScore} vs ${hOpp} (${hRes})</span>
+              <div class="p-2.5 rounded-2 border h-100 d-flex flex-column justify-content-between" style="background: #fef2f2; border-color: #fecaca !important;">
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom border-danger-subtle">
+                    <span class="fw-bold text-danger fs-6">🔴 [홈] ${homeName}</span>
+                    <span class="badge ${hWin ? 'bg-danger' : 'bg-secondary'} text-white px-2 py-0.5" style="font-size:0.72rem;">${hScore} : ${hOppScore} vs ${hOpp} (${hRes})</span>
+                  </div>
+                  <!-- News Article Paragraph -->
+                  <div class="p-2 mb-2 rounded bg-white border border-danger-subtle" style="font-size:0.74rem; line-height:1.6; color:#1e293b; text-align:justify; word-break:keep-all;">
+                    <div class="fw-bold text-danger mb-1" style="font-size:0.72rem;">📰 경기 브리핑 (현장 중계 요약)</div>
+                    ${hStory.article}
+                  </div>
                 </div>
-                <div class="d-flex flex-column gap-1 text-dark" style="font-size:0.73rem;">
-                  <div><strong class="text-danger">⚡ 전반 득점 흐름:</strong> ${hStory.flow}</div>
-                  <div><strong class="text-dark">🎯 에이스/골밑 지배:</strong> ${hStory.pitcher}</div>
-                  <div><strong class="text-dark">🛡️ 4Q 승부처 클러치:</strong> ${hStory.bullpen}</div>
-                  <div class="p-1 px-1.5 mt-0.5 rounded bg-white border border-danger-subtle small fw-bold text-danger">
-                    📌 <strong>체력 & 오늘 영향:</strong> ${hStory.summary}
+                <div class="d-flex flex-column gap-1 text-dark" style="font-size:0.72rem;">
+                  <div class="d-flex align-items-start gap-1">
+                    <span class="badge bg-warning text-dark flex-shrink-0" style="font-size:0.65rem; padding: 2px 5px;">⚡ 승부처</span>
+                    <span class="text-secondary fw-semibold">${hStory.clutch}</span>
+                  </div>
+                  <div class="d-flex align-items-start gap-1">
+                    <span class="badge bg-danger text-white flex-shrink-0" style="font-size:0.65rem; padding: 2px 5px;">💡 오늘 영향</span>
+                    <span class="text-danger fw-bold">${hStory.impact}</span>
                   </div>
                 </div>
               </div>
@@ -13375,17 +13470,26 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
             <!-- Away -->
             <div class="col-12 col-lg-6">
-              <div class="p-2.5 rounded-2 border" style="background: #eff6ff; border-color: #bfdbfe !important;">
-                <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom border-primary-subtle">
-                  <span class="fw-bold text-primary fs-6">🔵 [원정] ${awayName}</span>
-                  <span class="badge ${aWin ? 'bg-primary' : 'bg-secondary'} text-white px-2 py-0.5" style="font-size:0.72rem;">${aScore} : ${aOppScore} vs ${aOpp} (${aRes})</span>
+              <div class="p-2.5 rounded-2 border h-100 d-flex flex-column justify-content-between" style="background: #eff6ff; border-color: #bfdbfe !important;">
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom border-primary-subtle">
+                    <span class="fw-bold text-primary fs-6">🔵 [원정] ${awayName}</span>
+                    <span class="badge ${aWin ? 'bg-primary' : 'bg-secondary'} text-white px-2 py-0.5" style="font-size:0.72rem;">${aScore} : ${aOppScore} vs ${aOpp} (${aRes})</span>
+                  </div>
+                  <!-- News Article Paragraph -->
+                  <div class="p-2 mb-2 rounded bg-white border border-primary-subtle" style="font-size:0.74rem; line-height:1.6; color:#1e293b; text-align:justify; word-break:keep-all;">
+                    <div class="fw-bold text-primary mb-1" style="font-size:0.72rem;">📰 경기 브리핑 (현장 중계 요약)</div>
+                    ${aStory.article}
+                  </div>
                 </div>
-                <div class="d-flex flex-column gap-1 text-dark" style="font-size:0.73rem;">
-                  <div><strong class="text-primary">⚡ 전반 득점 흐름:</strong> ${aStory.flow}</div>
-                  <div><strong class="text-dark">🎯 에이스/골밑 지배:</strong> ${aStory.pitcher}</div>
-                  <div><strong class="text-dark">🛡️ 4Q 승부처 클러치:</strong> ${aStory.bullpen}</div>
-                  <div class="p-1 px-1.5 mt-0.5 rounded bg-white border border-primary-subtle small fw-bold text-primary">
-                    📌 <strong>체력 & 오늘 영향:</strong> ${aStory.summary}
+                <div class="d-flex flex-column gap-1 text-dark" style="font-size:0.72rem;">
+                  <div class="d-flex align-items-start gap-1">
+                    <span class="badge bg-warning text-dark flex-shrink-0" style="font-size:0.65rem; padding: 2px 5px;">⚡ 승부처</span>
+                    <span class="text-secondary fw-semibold">${aStory.clutch}</span>
+                  </div>
+                  <div class="d-flex align-items-start gap-1">
+                    <span class="badge bg-primary text-white flex-shrink-0" style="font-size:0.65rem; padding: 2px 5px;">💡 오늘 영향</span>
+                    <span class="text-primary fw-bold">${aStory.impact}</span>
                   </div>
                 </div>
               </div>
@@ -13423,26 +13527,35 @@ function updateSlimPanel(matchId, type, contentHtml) {
         <div class="p-2.5 rounded-2 bg-white border shadow-sm" style="border-color: #cbd5e1 !important; font-size: 0.74rem; line-height: 1.55;">
           <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom">
             <div class="d-flex align-items-center gap-1.5">
-              <span class="badge bg-success text-white px-2 py-0.5" style="font-size:0.68rem; font-weight:800;">🎙️ 실전 밀착 관전평</span>
-              <strong class="text-dark" style="font-size:0.84rem;">⚽ 축구 양 팀 직전 경기 골&전술 정밀 리포트</strong>
+              <span class="badge bg-success text-white px-2 py-0.5" style="font-size:0.68rem; font-weight:800;">🎙️ 실전 취재 리포트</span>
+              <strong class="text-dark" style="font-size:0.84rem;">⚽ 축구 양 팀 직전 경기 전술 & 골장면 분석</strong>
             </div>
-            <span class="badge bg-light text-secondary border" style="font-size:0.65rem;">직전 경기 복기</span>
+            <span class="badge bg-light text-secondary border" style="font-size:0.65rem;">현장 브리핑</span>
           </div>
 
           <div class="row g-2 mb-2">
             <!-- Home -->
             <div class="col-12 col-lg-6">
-              <div class="p-2.5 rounded-2 border" style="background: #fef2f2; border-color: #fecaca !important;">
-                <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom border-danger-subtle">
-                  <span class="fw-bold text-danger fs-6">🔴 [홈] ${homeName}</span>
-                  <span class="badge ${hWin ? 'bg-danger' : (hDraw ? 'bg-secondary' : 'bg-primary')} text-white px-2 py-0.5" style="font-size:0.72rem;">${hScore} : ${hOppScore} vs ${hOpp} (${hRes})</span>
+              <div class="p-2.5 rounded-2 border h-100 d-flex flex-column justify-content-between" style="background: #fef2f2; border-color: #fecaca !important;">
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom border-danger-subtle">
+                    <span class="fw-bold text-danger fs-6">🔴 [홈] ${homeName}</span>
+                    <span class="badge ${hWin ? 'bg-danger' : (hDraw ? 'bg-secondary' : 'bg-primary')} text-white px-2 py-0.5" style="font-size:0.72rem;">${hScore} : ${hOppScore} vs ${hOpp} (${hRes})</span>
+                  </div>
+                  <!-- News Article Paragraph -->
+                  <div class="p-2 mb-2 rounded bg-white border border-danger-subtle" style="font-size:0.74rem; line-height:1.6; color:#1e293b; text-align:justify; word-break:keep-all;">
+                    <div class="fw-bold text-danger mb-1" style="font-size:0.72rem;">📰 경기 브리핑 (현장 중계 요약)</div>
+                    ${hStory.article}
+                  </div>
                 </div>
-                <div class="d-flex flex-column gap-1 text-dark" style="font-size:0.73rem;">
-                  <div><strong class="text-danger">⚡ 선제골 & 전반 공방:</strong> ${hStory.flow}</div>
-                  <div><strong class="text-dark">🎯 중원 장악 & 선방:</strong> ${hStory.pitcher}</div>
-                  <div><strong class="text-dark">🛡️ 후반 클러치/역습:</strong> ${hStory.bullpen}</div>
-                  <div class="p-1 px-1.5 mt-0.5 rounded bg-white border border-danger-subtle small fw-bold text-danger">
-                    📌 <strong>총평 & 오늘 영향:</strong> ${hStory.summary}
+                <div class="d-flex flex-column gap-1 text-dark" style="font-size:0.72rem;">
+                  <div class="d-flex align-items-start gap-1">
+                    <span class="badge bg-warning text-dark flex-shrink-0" style="font-size:0.65rem; padding: 2px 5px;">⚡ 승부처</span>
+                    <span class="text-secondary fw-semibold">${hStory.clutch}</span>
+                  </div>
+                  <div class="d-flex align-items-start gap-1">
+                    <span class="badge bg-danger text-white flex-shrink-0" style="font-size:0.65rem; padding: 2px 5px;">💡 오늘 영향</span>
+                    <span class="text-danger fw-bold">${hStory.impact}</span>
                   </div>
                 </div>
               </div>
@@ -13450,17 +13563,26 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
             <!-- Away -->
             <div class="col-12 col-lg-6">
-              <div class="p-1.5 rounded-2 border" style="background: #eff6ff; border-color: #bfdbfe !important;">
-                <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom border-primary-subtle">
-                  <span class="fw-bold text-primary fs-6">🔵 [원정] ${awayName}</span>
-                  <span class="badge ${aWin ? 'bg-primary' : (aDraw ? 'bg-secondary' : 'bg-dark')} text-white px-2 py-0.5" style="font-size:0.72rem;">${aScore} : ${aOppScore} vs ${aOpp} (${aRes})</span>
+              <div class="p-2.5 rounded-2 border h-100 d-flex flex-column justify-content-between" style="background: #eff6ff; border-color: #bfdbfe !important;">
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom border-primary-subtle">
+                    <span class="fw-bold text-primary fs-6">🔵 [원정] ${awayName}</span>
+                    <span class="badge ${aWin ? 'bg-primary' : (aDraw ? 'bg-secondary' : 'bg-dark')} text-white px-2 py-0.5" style="font-size:0.72rem;">${aScore} : ${aOppScore} vs ${aOpp} (${aRes})</span>
+                  </div>
+                  <!-- News Article Paragraph -->
+                  <div class="p-2 mb-2 rounded bg-white border border-primary-subtle" style="font-size:0.74rem; line-height:1.6; color:#1e293b; text-align:justify; word-break:keep-all;">
+                    <div class="fw-bold text-primary mb-1" style="font-size:0.72rem;">📰 경기 브리핑 (현장 중계 요약)</div>
+                    ${aStory.article}
+                  </div>
                 </div>
-                <div class="d-flex flex-column gap-1 text-dark" style="font-size:0.73rem;">
-                  <div><strong class="text-primary">⚡ 선제골 & 전반 공방:</strong> ${aStory.flow}</div>
-                  <div><strong class="text-dark">🎯 중원 장악 & 선방:</strong> ${aStory.pitcher}</div>
-                  <div><strong class="text-dark">🛡️ 후반 클러치/역습:</strong> ${aStory.bullpen}</div>
-                  <div class="p-1 px-1.5 mt-0.5 rounded bg-white border border-primary-subtle small fw-bold text-primary">
-                    📌 <strong>총평 & 오늘 영향:</strong> ${aStory.summary}
+                <div class="d-flex flex-column gap-1 text-dark" style="font-size:0.72rem;">
+                  <div class="d-flex align-items-start gap-1">
+                    <span class="badge bg-warning text-dark flex-shrink-0" style="font-size:0.65rem; padding: 2px 5px;">⚡ 승부처</span>
+                    <span class="text-secondary fw-semibold">${aStory.clutch}</span>
+                  </div>
+                  <div class="d-flex align-items-start gap-1">
+                    <span class="badge bg-primary text-white flex-shrink-0" style="font-size:0.65rem; padding: 2px 5px;">💡 오늘 영향</span>
+                    <span class="text-primary fw-bold">${aStory.impact}</span>
                   </div>
                 </div>
               </div>
