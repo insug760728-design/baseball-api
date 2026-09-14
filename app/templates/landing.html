@@ -11188,6 +11188,84 @@ function updateSlimPanel(matchId, type, contentHtml) {
       return list;
     }
 
+    // 📋 [직전 경기 초정밀 박스스코어 모달 열기]
+    function openLastMatchDetailModal(matchId, team = 'home') {
+      let match = null;
+      if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
+        match = allMatches.find(m => m.id == matchId || String(m.id) === String(matchId));
+      }
+      if (!match && typeof _currentMatchesList !== 'undefined' && Array.isArray(_currentMatchesList)) {
+        match = _currentMatchesList.find(m => m.id == matchId || String(m.id) === String(matchId));
+      }
+      if (!match && typeof getMatchById === 'function') {
+        match = getMatchById(matchId);
+      }
+
+      const modalEl = document.getElementById('lastMatchDetailModal');
+      const bodyEl = document.getElementById('lastMatchDetailModalBody');
+      const titleEl = document.getElementById('lastMatchModalTitle');
+
+      if (!modalEl || !bodyEl) return;
+
+      const renderAndShow = (m) => {
+        _lastMatchActiveMatchId = m.id;
+        _lastMatchSelectedTeam = team || 'home';
+        const hShort = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : (m.home_team_name || '홈팀');
+        const aShort = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : (m.away_team_name || '원정팀');
+        if (titleEl) {
+          titleEl.innerText = `${hShort} vs ${aShort} 직전 경기 초정밀 박스스코어 & 전력 분석`;
+        }
+        bodyEl.innerHTML = renderColorCodedLastMatchContent(m, hShort, aShort, _lastMatchSelectedTeam);
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+      };
+
+      if (match) {
+        renderAndShow(match);
+      } else {
+        fetch(`/api/v1/matches/${matchId}`)
+          .then(res => {
+            if (!res.ok) throw new Error('Match fetch failed');
+            return res.json();
+          })
+          .then(data => {
+            if (data && data.id) {
+              if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
+                allMatches.push(data);
+              }
+              renderAndShow(data);
+            }
+          })
+          .catch(err => {
+            console.warn('openLastMatchDetailModal fetch error:', err);
+          });
+      }
+    }
+
+    // 📋 [직전 경기 모달 홈/원정 토글]
+    function switchLastMatchTeam(teamKey) {
+      _lastMatchSelectedTeam = teamKey || 'home';
+      let match = null;
+      if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
+        match = allMatches.find(m => m.id == _lastMatchActiveMatchId || String(m.id) === String(_lastMatchActiveMatchId));
+      }
+      if (!match && typeof getMatchById === 'function') {
+        match = getMatchById(_lastMatchActiveMatchId);
+      }
+      if (!match) return;
+
+      const bodyEl = document.getElementById('lastMatchDetailModalBody');
+      if (!bodyEl) return;
+
+      const hShort = (typeof formatTeamName === 'function') ? formatTeamName(match.home_team_name) : (match.home_team_name || '홈팀');
+      const aShort = (typeof formatTeamName === 'function') ? formatTeamName(match.away_team_name) : (match.away_team_name || '원정팀');
+      bodyEl.innerHTML = renderColorCodedLastMatchContent(match, hShort, aShort, _lastMatchSelectedTeam);
+    }
+
+    // 글로벌 바인딩
+    window.openLastMatchDetailModal = openLastMatchDetailModal;
+    window.switchLastMatchTeam = switchLastMatchTeam;
+
     function openNextGenDetailModal(matchId, initialTab = 'roster') {
       let match = null;
       if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
@@ -11200,7 +11278,23 @@ function updateSlimPanel(matchId, type, contentHtml) {
         match = getMatchById(matchId);
       }
       if (!match) {
-        console.warn('openNextGenDetailModal: match not found for id', matchId);
+        // Fallback: fetch directly from backend API
+        fetch(`/api/v1/matches/${matchId}`)
+          .then(res => {
+            if (!res.ok) throw new Error('Match not found');
+            return res.json();
+          })
+          .then(data => {
+            if (data && data.id) {
+              if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
+                allMatches.push(data);
+              }
+              openNextGenDetailModal(data.id, initialTab);
+            }
+          })
+          .catch(err => {
+            console.warn('openNextGenDetailModal: match not found for id', matchId, err);
+          });
         return;
       }
 
@@ -11255,6 +11349,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
       } catch (e) {}
     }
+
+    // 글로벌 바인딩
+    window.openNextGenDetailModal = openNextGenDetailModal;
+    window.openMatchDetailModal = openNextGenDetailModal;
 
     function scrollToNgSection(secName) {
       _ngActiveTab = secName;
@@ -12065,6 +12163,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const startersInfo = getMatchStarters(m);
       const hName = formatTeamName(m.home_team_name);
       const aName = formatTeamName(m.away_team_name);
+      const matchup = m.matchup_analysis || (typeof matchDetailCache !== 'undefined' && matchDetailCache ? (matchDetailCache.get(Number(m.id))?.matchup_analysis || matchDetailCache.get(m.id)?.matchup_analysis) : null) || {};
 
       const pred = m.prediction || {};
       const conf = pred.confidence ? Number(pred.confidence) : 55;
