@@ -2424,6 +2424,13 @@
   <!-- Bootstrap Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+  <!-- 🚀 5대 전담 독립 스포츠 에이전트 (Modular Domain Agents) -->
+  <script src="/static/js/agents/match_list_agent.js"></script>
+  <script src="/static/js/agents/filter_agent.js"></script>
+  <script src="/static/js/agents/detail_modal_agent.js"></script>
+  <script src="/static/js/agents/live_polling_agent.js"></script>
+  <script src="/static/js/agents/toto_odds_agent.js"></script>
+
   <!-- Real News & Matches Script -->
   <script>
 // =============================================================
@@ -3376,6 +3383,12 @@
               // 공식 경기만 엄격 필터링 (가짜/합성 일정 배제)
               const cleanMatches = fastMatches.filter(m => m && !(m.official_id && m.official_id.startsWith('SCHED_')));
               allMatches = cleanMatches;
+              if (window.matchListAgent) {
+                window.matchListAgent.setMatches(cleanMatches);
+              }
+              if (window.livePollingAgent && !window.livePollingAgent._isPolling) {
+                window.livePollingAgent.start(15);
+              }
               checkScoreChangesAndNotify(allMatches);
               window.matchesLoadedInitial = true;
               updateScheduleTabCounts();
@@ -8437,6 +8450,14 @@ function getFullModalMatchList() {
     }
 
     function updateScheduleTabCounts() {
+      if (window.filterAgent) {
+        const counts = window.filterAgent.getTabCounts();
+        const bA = document.getElementById('activeMatchesCountBadge');
+        const bF = document.getElementById('finishedMatchesCountBadge');
+        if (bA) bA.innerText = String(counts.activeCount || 0);
+        if (bF) bF.innerText = String(counts.finishedCount || 0);
+        return;
+      }
       if (!allMatches || allMatches.length === 0) {
         const bA = document.getElementById('activeMatchesCountBadge');
         const bF = document.getElementById('finishedMatchesCountBadge');
@@ -8495,6 +8516,7 @@ function getFullModalMatchList() {
 
     async function filterPredDate(dKey) {
       currentPredDate = dKey;
+      if (window.filterAgent) window.filterAgent.setDateTab(dKey);
       const isPast = (dKey === 'FINISHED' || dKey === 'PAST');
       if (isPast && typeof loadFullMatchesArchive === 'function') {
         loadFullMatchesArchive();
@@ -8854,6 +8876,9 @@ function getFullModalMatchList() {
     }
 
     function getFilteredPredMatches() {
+      if (window.filterAgent) {
+        return window.filterAgent.getFilteredMatches();
+      }
       if (!allMatches || allMatches.length === 0) return [];
 
       const now = new Date();
