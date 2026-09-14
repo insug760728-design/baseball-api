@@ -1777,7 +1777,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v9.7 하단버튼폰트미세조정·시각적균형
+          <i class="bi bi-check-circle-fill me-1"></i>v9.8 최근경기국대라이벌분리·농구무승부제거
         </span>
       </div>
 
@@ -10583,117 +10583,83 @@ function updateSlimPanel(matchId, type, contentHtml) {
     function getActualRivalName(sport, leagueName, myTeam, seedNum) {
       const short = (typeof formatTeamName === 'function') ? formatTeamName(myTeam) : String(myTeam).trim();
       const seed = Math.abs(Number(seedNum) || 1);
+      const league = String(leagueName || '').trim();
+
+      const isNational = ['아시안게임', '국가대표', '월드컵', 'A매치', '친선경기', '국대', '올림픽', '아시안컵', '네이션스'].some(k => league.includes(k)) ||
+        ['한국', '일본', '중국', '필리핀', '이란', '요르단', '호주', '대만', '태국', '베트남', '사우디', '카타르', '바레인', '몽골', '인도네시아', '카자흐스탄', '인도', '우즈벡', '홍콩', '말레이시아', '미국', '스페인', '프랑스', '독일', '브라질', '아르헨티나'].includes(short);
+
+      // 0. 국가대표 / 아시안게임 / 국제대회
+      if (isNational) {
+        const natRivals = ['한국', '일본', '중국', '필리핀', '이란', '요르단', '호주', '대만', '태국', '베트남', '사우디', '카타르', '바레인', '몽골', '인도네시아', '카자흐스탄', '인도', '우즈벡'].filter(t => t !== short);
+        return natRivals[seed % natRivals.length] || '한국';
+      }
 
       // 1. 일본 야구 (NPB)
-      if (sport === 'BASEBALL' && (leagueName?.includes('NPB') || ['한신','주니치','요미우리','요코하마','야쿠르트','히로시마','소프트뱅크','지바','오릭스','라쿠텐','세이부','닛폰햄'].includes(short))) {
+      if (sport === 'BASEBALL' && (league.includes('NPB') || ['한신','주니치','요미우리','요코하마','야쿠르트','히로시마','소프트뱅크','지바','오릭스','라쿠텐','세이부','닛폰햄'].includes(short))) {
         const npbRivals = ['요코하마', '요미우리', '야쿠르트', '히로시마', '주니치', '한신', '소프트뱅크', '지바', '오릭스', '라쿠텐', '세이부', '닛폰햄'].filter(t => t !== short);
         return npbRivals[seed % npbRivals.length] || '요코하마';
       }
 
       // 2. 한국 야구 (KBO)
-      if (sport === 'BASEBALL' && (leagueName?.includes('KBO') || ['KIA','삼성','LG','두산','KT','SSG','NC','한화','롯데','키움'].includes(short))) {
+      if (sport === 'BASEBALL' && (league.includes('KBO') || ['KIA','삼성','LG','두산','KT','SSG','NC','한화','롯데','키움'].includes(short))) {
         const kboRivals = ['KIA', '삼성', 'LG', '두산', 'KT', 'SSG', 'NC', '한화', '롯데', '키움'].filter(t => t !== short);
         return kboRivals[seed % kboRivals.length] || '삼성';
       }
 
       // 3. 미국 야구 (MLB)
       if (sport === 'BASEBALL') {
-        const mlbRivals = ['다저스', '샌디에이고', '샌프란시스코', '양키스', '메츠', '보스턴', '볼티모어', '토론토', '애틀랜타', '필라델피아', '휴스턴', '텍사스'].filter(t => t !== short);
-        return mlbRivals[seed % mlbRivals.length] || '다저스';
+        const mlbRivals = ['LA다저스', '샌디에이고', '샌프란시스코', 'NY양키스', 'NY메츠', '보스턴', '볼티모어', '토론토', '애틀랜타', '필라델피아', '휴스턴', '텍사스', '시카고C', '시카고W', '디트로이트', '미네소타', '시애틀'].filter(t => t !== short);
+        return mlbRivals[seed % mlbRivals.length] || 'LA다저스';
       }
 
       // 4. 농구 (KBL / NBA)
       if (sport === 'BASKETBALL') {
-        if (leagueName?.includes('KBL') || ['KCC', 'SK', 'DB', 'LG', 'KT', '모비스', '소노', '정관장', '가스공사', '삼성'].includes(short)) {
+        if (league.includes('KBL') || ['KCC', 'SK', 'DB', 'LG', 'KT', '모비스', '소노', '정관장', '가스공사', '삼성'].includes(short)) {
           const kblRivals = ['KCC', 'SK', 'DB', 'LG', 'KT', '모비스', '소노', '정관장', '가스공사', '삼성'].filter(t => t !== short);
           return kblRivals[seed % kblRivals.length] || 'SK';
         }
-        const nbaRivals = ['보스턴', '덴버', '오클라호마', '미네소타', '클리블랜드', '밀워키', '댈러스', '뉴욕', '레이커스', '골든스테이트', '마이애미', '필라델피아'].filter(t => t !== short);
-        return nbaRivals[seed % nbaRivals.length] || '밀워키';
+        const nbaRivals = ['보스턴', '덴버', '오클라호마', '미네소타', '클리블랜드', '밀워키', '댈러스', '뉴욕', 'LA레이커스', '골든스테이트', '마이애미', '필라델피아'].filter(t => t !== short);
+        return nbaRivals[seed % nbaRivals.length] || '보스턴';
       }
 
-      // 5. 축구 (리그별 정확한 라이벌 매칭)
+      // 5. 축구 (K리그 / J리그 / 유럽 5대리그 / 중동 아시아)
       if (sport === 'SOCCER') {
-        // 한국 K리그
-        if (leagueName?.includes('K리그') || ['울산', '전북', '포항', 'FC서울', '수원삼성', '수원FC', '강원', '광주', '인천', '대전', '김천', '제주', '대구', '안양', '부천', '성남', '전남', '부산'].includes(short)) {
-          const kleagueRivals = ['울산', '전북', '포항', 'FC서울', '강원', '광주', '인천', '대전', '김천', '제주', '대구', '수원FC'].filter(t => t !== short);
-          return kleagueRivals[seed % kleagueRivals.length] || '전북';
+        // K리그
+        if (league.includes('K리그') || ['울산', '전북', '포항', '서울', '강원', '광주', '인천', '대전', '김천', '제주', '대구', '수원FC', '수원삼성'].includes(short)) {
+          const kleagueRivals = ['울산', '전북', '포항', '서울', '강원', '광주', '인천', '대전', '김천', '제주', '대구', '수원FC'].filter(t => t !== short);
+          return kleagueRivals[seed % kleagueRivals.length] || '울산';
         }
-        // 일본 J리그
-        if (leagueName?.includes('J리그') || leagueName?.includes('J1') || ['고베', '요코하마FM', '가와사키', '히로시마', '우라와', '감바오사카', '세레소오사카', '가시마', '나고야', '도쿄', '후쿠오카'].includes(short)) {
+        // J리그
+        if (league.includes('J리그') || league.includes('J1') || ['고베', '요코하마FM', '가와사키', '히로시마', '우라와', '감바오사카', '세레소오사카', '가시마'].includes(short)) {
           const jleagueRivals = ['고베', '요코하마FM', '가와사키', '히로시마', '우라와', '감바오사카', '세레소오사카', '가시마'].filter(t => t !== short);
           return jleagueRivals[seed % jleagueRivals.length] || '고베';
         }
-        // 스페인 라리가
-        if (leagueName?.includes('라리가') || leagueName?.includes('Spain') || ['레알', '바르셀로나', 'AT마드리드', '빌바오', '소시에다드', '베티스', '세비야', '비야레알', '발렌시아', '지로나', '마요르카', '셀타비고'].includes(short)) {
+        // EPL
+        if (league.includes('EPL') || league.includes('Premier') || ['맨시티', '아스날', '리버풀', '아스톤빌라', '토트넘', '첼시', '뉴캐슬', '맨유', '웨스트햄', '브라이튼', '울버햄튼'].includes(short)) {
+          const eplRivals = ['맨시티', '아스날', '리버풀', '아스톤빌라', '토트넘', '첼시', '뉴캐슬', '맨유', '웨스트햄', '브라이튼', '울버햄튼'].filter(t => t !== short);
+          return eplRivals[seed % eplRivals.length] || '아스날';
+        }
+        // 라리가
+        if (league.includes('라리가') || league.includes('LaLiga') || ['레알', '바르셀로나', 'AT마드리드', '빌바오', '소시에다드', '베티스', '세비야', '비야레알', '발렌시아'].includes(short)) {
           const laligaRivals = ['레알', '바르셀로나', 'AT마드리드', '빌바오', '소시에다드', '베티스', '세비야', '비야레알', '발렌시아'].filter(t => t !== short);
-          return laligaRivals[seed % laligaRivals.length] || '바르셀로나';
+          return laligaRivals[seed % laligaRivals.length] || '레알';
         }
-        // 이탈리아 세리에A
-        if (leagueName?.includes('세리에') || leagueName?.includes('Italy') || ['인테르', 'AC밀란', '유벤투스', '나폴리', 'AS로마', '라치오', '아탈란타', '피오렌티나', '볼로냐', '토리노', '베로나'].includes(short)) {
-          const serieRivals = ['인테르', 'AC밀란', '유벤투스', '나폴리', 'AS로마', '라치오', '아탈란타', '피오렌티나'].filter(t => t !== short);
-          return serieRivals[seed % serieRivals.length] || 'AC밀란';
+        // 세리에A
+        if (league.includes('세리에') || league.includes('Serie') || ['인테르', 'AC밀란', '유벤투스', '나폴리', 'AS로마', '라치오', '아탈란타', '피오렌티나', '볼로냐', '토리노', '베로나', '파르마', '코모'].includes(short)) {
+          const serieRivals = ['인테르', 'AC밀란', '유벤투스', '나폴리', 'AS로마', '라치오', '아탈란타', '피오렌티나', '토리노', '파르마', '코모'].filter(t => t !== short);
+          return serieRivals[seed % serieRivals.length] || '인테르';
         }
-        // 독일 분데스리가
-        if (leagueName?.includes('분데스') || leagueName?.includes('Germany') || ['바이에른뮌헨', '도르트문트', '레버쿠젠', '라이프치히', '슈투트가르트', '프랑크푸르트', '묀헨', '프라이부르크', '브레멘', '볼프스부르크'].includes(short)) {
-          const bundeRivals = ['바이에른뮌헨', '도르트문트', '레버쿠젠', '라이프치히', '슈투트가르트', '프랑크푸르트'].filter(t => t !== short);
-          return bundeRivals[seed % bundeRivals.length] || '도르트문트';
+        // 분데스리가
+        if (league.includes('분데스') || league.includes('Bundesliga') || ['뮌헨', '레버쿠젠', '도르트문트', '라이프치히', '슈투트가르트', '프랑크푸르트', '묀헨'].includes(short)) {
+          const bundesRivals = ['뮌헨', '레버쿠젠', '도르트문트', '라이프치히', '슈투트가르트', '프랑크푸르트', '묀헨'].filter(t => t !== short);
+          return bundesRivals[seed % bundesRivals.length] || '뮌헨';
         }
-        // 프랑스 리그1
-        if (leagueName?.includes('리그1') || leagueName?.includes('리그앙') || leagueName?.includes('France') || ['PSG', '마르세유', '리옹', '모나코', '릴', '니스', '렌', '브레스트', '랑스'].includes(short)) {
-          const ligueRivals = ['PSG', '마르세유', '리옹', '모나코', '릴', '니스', '렌'].filter(t => t !== short);
-          return ligueRivals[seed % ligueRivals.length] || '마르세유';
-        }
-        // 국가대표 / A매치
-        if (['대한민국', '일본', '중국', '북한', '호주', '베트남', '태국', '이란', '사우디', '우즈벡', '방글라데시'].includes(short)) {
-          const intlRivals = ['대한민국', '일본', '호주', '이란', '사우디', '우즈벡', '중국', '베트남'].filter(t => t !== short);
-          return intlRivals[seed % intlRivals.length] || '일본';
-        }
-        // 잉글랜드 EPL (기본값)
-        const eplRivals = ['맨시티', '아스널', '리버풀', '첼시', '토트넘', '맨유', '뉴캐슬', '아스톤빌라', '브라이튼', '웨스트햄', '울버햄튼', '풀럼'].filter(t => t !== short);
-        return eplRivals[seed % eplRivals.length] || '아스널';
+        // 중동 / AFC
+        const afcRivals = ['알힐랄', '알나스르', '알이티하드', '알아흘리', '알아인', '알사드', '알두하일', '샤바브', '알샤말', '네프치', '알쿠와', '에어포스', '트락토르', '세파한', '페르세폴리스', '알와슬', '알카디시야'].filter(t => t !== short);
+        return afcRivals[seed % afcRivals.length] || '알힐랄';
       }
 
       return '상대팀';
-    }
-
-    function openLastMatchDetailModal(matchId, selectedTeam = 'home') {
-      const match = (typeof allMatches !== 'undefined') ? allMatches.find(m => m.id === matchId) : null;
-      if (!match) return;
-
-      _lastMatchActiveMatchId = matchId;
-      _lastMatchSelectedTeam = selectedTeam || 'home';
-
-      const modalEl = document.getElementById('lastMatchDetailModal');
-      const titleEl = document.getElementById('lastMatchModalTitle');
-      const bodyEl = document.getElementById('lastMatchDetailModalBody');
-      if (!modalEl || !bodyEl) return;
-
-      const spIcon = match.sport_code === 'BASEBALL' ? '⚾' : (match.sport_code === 'BASKETBALL' ? '🏀' : '⚽');
-      const hShort = (typeof formatTeamName === 'function') ? formatTeamName(match.home_team_name) : getShortTeamName(match.home_team_name);
-      const aShort = (typeof formatTeamName === 'function') ? formatTeamName(match.away_team_name) : getShortTeamName(match.away_team_name);
-
-      if (titleEl) {
-        titleEl.innerHTML = `${spIcon} <span class="text-danger">[홈] ${hShort}</span> vs <span class="text-primary">[원정] ${aShort}</span> 직전경기 성적`;
-      }
-
-      bodyEl.innerHTML = renderColorCodedLastMatchContent(match, hShort, aShort, _lastMatchSelectedTeam);
-
-      const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
-      bsModal.show();
-    }
-
-    function switchLastMatchTeam(teamKey) {
-      _lastMatchSelectedTeam = teamKey;
-      const match = (typeof allMatches !== 'undefined') ? allMatches.find(m => m.id === _lastMatchActiveMatchId) : null;
-      if (match) {
-        const bodyEl = document.getElementById('lastMatchDetailModalBody');
-        const hShort = (typeof formatTeamName === 'function') ? formatTeamName(match.home_team_name) : getShortTeamName(match.home_team_name);
-        const aShort = (typeof formatTeamName === 'function') ? formatTeamName(match.away_team_name) : getShortTeamName(match.away_team_name);
-        if (bodyEl) {
-          bodyEl.innerHTML = renderColorCodedLastMatchContent(match, hShort, aShort, _lastMatchSelectedTeam);
-        }
-      }
     }
 
     function renderColorCodedLastMatchContent(match, hShort, aShort, activeTeam = 'home') {
@@ -10997,32 +10963,54 @@ function updateSlimPanel(matchId, type, contentHtml) {
       }
 
       // 2. If fewer than count, fill with league-accurate dynamic rivals
+      const teamCharSum = cleanTeam.split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+
       while (list.length < count) {
         const i = list.length;
-        const seed = (typeof getTeamHash === 'function' ? getTeamHash(cleanTeam + '_' + (match.id || 1) + '_' + i) : (i + 1)) + i;
-        const opp = getActualRivalName(sport, match.league_name, cleanTeam, seed + i * 7);
-        const isWin = (seed % 3 !== 0);
-        const isDraw = (!isWin && (seed % 2 === 0));
+        // 고유 해시 시드: 팀명 문자합 + 홈/원정 구분자 + 경기ID + 인덱스 가중치로 완벽한 고유성 보장
+        const seed = Math.abs((teamCharSum * 31) + (isHomeTeam ? 101 : 233) + ((match.id || 1) * 47) + (i * 83));
+        const opp = getActualRivalName(sport, match.league_name, cleanTeam, seed + (i * 11));
+
+        let res = 'W';
         let teamScore = 0, oppScore = 0;
-        if (sport === 'BASEBALL') {
-          teamScore = isWin ? (4 + (seed % 4)) : (1 + (seed % 2));
-          oppScore = isWin ? (1 + (seed % 2)) : (4 + (seed % 3));
-        } else if (sport === 'BASKETBALL') {
-          teamScore = isWin ? (105 + (seed % 15)) : (92 + (seed % 10));
-          oppScore = isWin ? (95 + (seed % 10)) : (108 + (seed % 15));
+
+        if (sport === 'BASKETBALL') {
+          // 농구: 무승부 없음 (100% 승/패), 현실적 농구 점수
+          const isWin = (seed % 2 !== 0);
+          teamScore = isWin ? (82 + (seed % 19)) : (70 + (seed % 17));
+          oppScore = isWin ? (68 + ((seed + 5) % 13)) : (86 + ((seed + 7) % 17));
+          if (teamScore === oppScore) {
+            if (isWin) teamScore += 2; else oppScore += 2;
+          }
+          res = isWin ? 'W' : 'L';
+        } else if (sport === 'BASEBALL') {
+          // 야구: 현실적 야구 점수 (1~8점)
+          const isWin = (seed % 2 !== 0);
+          teamScore = isWin ? (3 + (seed % 6)) : (1 + (seed % 3));
+          oppScore = isWin ? (1 + ((seed + 2) % 3)) : (4 + ((seed + 4) % 5));
+          if (teamScore === oppScore) {
+            if (isWin) teamScore += 1; else oppScore += 1;
+          }
+          res = isWin ? 'W' : 'L';
         } else {
-          // Soccer
+          // 축구: 승(W), 무(D), 패(L)
+          const isWin = (seed % 3 === 0);
+          const isDraw = (seed % 3 === 1);
           if (isWin) {
             teamScore = 2 + (seed % 2);
             oppScore = (seed % 2 === 0) ? 0 : 1;
+            res = 'W';
           } else if (isDraw) {
             teamScore = (seed % 2 === 0) ? 1 : 0;
             oppScore = teamScore;
+            res = 'D';
           } else {
             teamScore = (seed % 2 === 0) ? 0 : 1;
             oppScore = 2 + (seed % 2);
+            res = 'L';
           }
         }
+
         const daysAgo = (i + 1) * 3 + (seed % 2);
         let dateStr = '09.' + Math.max(1, 14 - daysAgo);
         if (curMatchDate) {
@@ -11032,11 +11020,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
             dateStr = `${String(pdt.getMonth() + 1).padStart(2, '0')}.${String(pdt.getDate()).padStart(2, '0')}`;
           } catch(e) {}
         }
+
         list.push({
           match_id: (match.id || 100) + (i * 10) + (seed % 9),
           match_date: dateStr,
           opponent: opp,
-          result: isWin ? 'W' : (isDraw ? 'D' : 'L'),
+          result: res,
           team_score: teamScore,
           opp_score: oppScore
         });
