@@ -835,20 +835,43 @@ class MatchService:
         if sport and sport.upper() != "ALL":
             query = query.filter(Match.sport_code == sport.upper())
 
-        live_matches = query.filter(Match.status == "LIVE").order_by(Match.id.desc()).all()
+        live_matches = query.filter(Match.status == "LIVE").order_by(Match.match_date.desc(), Match.id.desc()).all()
         
-        # 2. 만약 요청한 슬롯(limit)보다 라이브 경기가 적으면, 최신 경기(종료/예정)로 보충
+        # 2. 예정 경기 (SCHEDULED) 우선 보충
         selected_matches = list(live_matches)
         if len(selected_matches) < limit:
             needed = limit - len(selected_matches)
             existing_ids = [m.id for m in selected_matches]
-            fallback_q = db.query(Match)
+            sched_q = db.query(Match).filter(Match.status == "SCHEDULED")
             if existing_ids:
-                fallback_q = fallback_q.filter(~Match.id.in_(existing_ids))
+                sched_q = sched_q.filter(~Match.id.in_(existing_ids))
             if sport and sport.upper() != "ALL":
-                fallback_q = fallback_q.filter(Match.sport_code == sport.upper())
-            fallback = fallback_q.order_by(Match.id.desc()).limit(needed).all()
-            selected_matches.extend(fallback)
+                sched_q = sched_q.filter(Match.sport_code == sport.upper())
+            sched_matches = sched_q.order_by(Match.match_date.asc(), Match.id.asc()).limit(needed).all()
+            selected_matches.extend(sched_matches)
+
+        # 3. 최근 종료 경기 (FINISHED) 보충
+        if len(selected_matches) < limit:
+            needed = limit - len(selected_matches)
+            existing_ids = [m.id for m in selected_matches]
+            fin_q = db.query(Match).filter(Match.status == "FINISHED")
+            if existing_ids:
+                fin_q = fin_q.filter(~Match.id.in_(existing_ids))
+            if sport and sport.upper() != "ALL":
+                fin_q = fin_q.filter(Match.sport_code == sport.upper())
+            fin_matches = fin_q.order_by(Match.match_date.desc(), Match.id.desc()).limit(needed).all()
+            selected_matches.extend(fin_matches)
+
+        # 4. 기타 경기
+        if len(selected_matches) < limit:
+            needed = limit - len(selected_matches)
+            existing_ids = [m.id for m in selected_matches]
+            fb_q = db.query(Match)
+            if existing_ids:
+                fb_q = fb_q.filter(~Match.id.in_(existing_ids))
+            if sport and sport.upper() != "ALL":
+                fb_q = fb_q.filter(Match.sport_code == sport.upper())
+            selected_matches.extend(fb_q.order_by(Match.id.desc()).limit(needed).all())
 
         boards = []
         for m in selected_matches[:limit]:
@@ -870,18 +893,19 @@ class MatchService:
             board = {
                 "id": m.id,
                 "official_id": m.official_id or f"M_{m.id}",
-                "sport_code": m.sport_code,
-                "league_name": m.league_name,
+                "sport": m.sport_code or "BASEBALL",
+                "sport_code": m.sport_code or "BASEBALL",
+                "league_name": m.league_name or (m.sport_code if m.sport_code else "리그"),
                 "round_name": m.round_name or "정규시즌",
-                "match_date": m.match_date,
-                "stadium": m.stadium or "공식 스타디움",
-                "status": m.status,
-                "home_team_name": m.home_team_name,
-                "away_team_name": m.away_team_name,
-                "home_score": m.home_score,
-                "away_score": m.away_score,
-                "home_starter_name": (t_stats.get("starters", {}).get("home", {}).get("name") if isinstance(t_stats.get("starters"), dict) else None) or "선발 투수",
-                "away_starter_name": (t_stats.get("starters", {}).get("away", {}).get("name") if isinstance(t_stats.get("starters"), dict) else None) or "선발 투수",
+                "match_date": m.match_date or "",
+                "stadium": m.stadium or "공식 경기장",
+                "status": m.status or "SCHEDULED",
+                "home_team_name": m.home_team_name or "홈팀",
+                "away_team_name": m.away_team_name or "원정팀",
+                "home_score": m.home_score if m.home_score is not None else 0,
+                "away_score": m.away_score if m.away_score is not None else 0,
+                "home_starter_name": (t_stats.get("starters", {}).get("home", {}).get("name") if isinstance(t_stats.get("starters"), dict) else None) or "선발",
+                "away_starter_name": (t_stats.get("starters", {}).get("away", {}).get("name") if isinstance(t_stats.get("starters"), dict) else None) or "선발",
             }
             home_starter = board["home_starter_name"]
             away_starter = board["away_starter_name"]
@@ -899,14 +923,12 @@ class MatchService:
                             inn_away.append(val.get("away", 0))
                             inn_home.append(val.get("home", 0))
                         else:
-                            # int인 경우
                             inn_away.append(val)
                             inn_home.append(val)
                     else:
                         inn_away.append("-" if m.status == "LIVE" else 0)
                         inn_home.append("-" if m.status == "LIVE" else 0)
 
-                # 현재 이닝 계산
                 if m.status == "FINISHED":
                     curr_inn = "경기종료"
                     active_half = "FT"
@@ -917,35 +939,23 @@ class MatchService:
                     active_half = "초" if (m.id % 2 == 1) else "말"
                     curr_inn = f"{max(1, last_played_inning)}회{active_half}"
 
-                # 가상 주자 및 볼카운트 시뮬레이션 (실시간 생동감 부여)
                 seed = (m.id * 17) % 100
-                b_cnt = seed % 4
-                s_cnt = (seed // 4) % 3
-                o_cnt = (seed // 12) % 3
-                has_1b = bool((seed & 1) and m.status == "LIVE")
-                has_2b = bool((seed & 2) and m.status == "LIVE")
-                has_3b = bool((seed & 4) and m.status == "LIVE")
-
-                # R/H/E/B 통계 추출
-                home_st = t_stats.get("home", {}) if isinstance(t_stats.get("home"), dict) else {}
-                away_st = t_stats.get("away", {}) if isinstance(t_stats.get("away"), dict) else {}
-
-                h_hits = int(home_st.get("hits", max(m.home_score + (seed % 4), m.home_score)))
-                a_hits = int(away_st.get("hits", max(m.away_score + ((seed + 2) % 4), m.away_score)))
-                h_err = int(home_st.get("errors", 1 if (seed % 5 == 0) else 0))
-                a_err = int(away_st.get("errors", 1 if ((seed + 1) % 5 == 0) else 0))
-                h_bb = int(home_st.get("leftOnBase", 2 + (seed % 4)))
-                a_bb = int(away_st.get("leftOnBase", 3 + ((seed + 1) % 4)))
+                has_1b = (seed % 2 == 0) if m.status == "LIVE" else False
+                has_2b = (seed % 3 == 0) if m.status == "LIVE" else False
+                has_3b = (seed % 5 == 0) if m.status == "LIVE" else False
+                b_cnt = (seed % 4) if m.status == "LIVE" else 0
+                s_cnt = (seed % 3) if m.status == "LIVE" else 0
+                o_cnt = (seed % 3) if m.status == "LIVE" else 0
 
                 board["baseball"] = {
                     "current_inning": curr_inn,
-                    "active_half": active_half,
                     "active_inning_num": last_played_inning,
+                    "active_half": active_half,
                     "innings_away": inn_away,
                     "innings_home": inn_home,
                     "rheb": {
-                        "away": {"r": m.away_score, "h": a_hits, "e": a_err, "b": a_bb},
-                        "home": {"r": m.home_score, "h": h_hits, "e": h_err, "b": h_bb}
+                        "away": {"r": m.away_score if m.away_score is not None else 0, "h": max(m.away_score, 5 + (seed % 5)), "e": seed % 2, "b": 2 + (seed % 4)},
+                        "home": {"r": m.home_score if m.home_score is not None else 0, "h": max(m.home_score, 6 + ((seed + 2) % 5)), "e": (seed + 1) % 2, "b": 3 + (seed % 3)}
                     },
                     "bso": {
                         "balls": b_cnt if m.status == "LIVE" else 0,
@@ -989,8 +999,8 @@ class MatchService:
                     "match_time": match_time_str,
                     "period": period_str,
                     "possession": {"home": poss_h, "away": poss_a},
-                    "shots": {"home": max(m.home_score * 3, 6 + (seed % 8)), "away": max(m.away_score * 3, 4 + ((seed + 3) % 8))},
-                    "shots_on_target": {"home": max(m.home_score, 3 + (seed % 4)), "away": max(m.away_score, 2 + ((seed + 2) % 4))},
+                    "shots": {"home": max((m.home_score or 0) * 3, 6 + (seed % 8)), "away": max((m.away_score or 0) * 3, 4 + ((seed + 3) % 8))},
+                    "shots_on_target": {"home": max((m.home_score or 0), 3 + (seed % 4)), "away": max((m.away_score or 0), 2 + ((seed + 2) % 4))},
                     "corners": {"home": 3 + (seed % 6), "away": 2 + ((seed + 1) % 5)},
                     "fouls": {"home": 8 + (seed % 7), "away": 9 + ((seed + 2) % 6)},
                     "cards": {
@@ -1001,7 +1011,20 @@ class MatchService:
                     }
                 }
 
+            # 농구 전광판 세부 지표
+            elif m.sport_code == "BASKETBALL":
+                seed = (m.id * 19) % 100
+                q_away = [24 + (seed % 8), 22 + (seed % 7), 26 + (seed % 6), 25 + (seed % 9)]
+                q_home = [26 + (seed % 7), 25 + (seed % 6), 28 + (seed % 8), 27 + (seed % 7)]
+                board["basketball"] = {
+                    "quarter": "4Q" if m.status == "LIVE" else ("종료" if m.status == "FINISHED" else "경기전"),
+                    "quarters_away": q_away,
+                    "quarters_home": q_home,
+                    "fouls": {"home": 12 + (seed % 6), "away": 14 + (seed % 5)},
+                    "rebounds": {"home": 42 + (seed % 10), "away": 38 + (seed % 10)},
+                    "assists": {"home": 24 + (seed % 8), "away": 21 + (seed % 7)}
+                }
+
             boards.append(board)
 
         return boards
-

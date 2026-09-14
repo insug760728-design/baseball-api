@@ -767,37 +767,29 @@
     function renderBaseballCard(board) {
       const bb = board.baseball || {};
       const bso = bb.bso || { balls: 0, strikes: 0, outs: 0 };
-      const rheb = bb.rheb || { away: { r: board.away_score, h: 0, e: 0, b: 0 }, home: { r: board.home_score, h: 0, e: 0, b: 0 } };
+      const rheb = bb.rheb || { away: { r: board.away_score || 0, h: 0, e: 0, b: 0 }, home: { r: board.home_score || 0, h: 0, e: 0, b: 0 } };
       const innAway = bb.innings_away || [];
       const innHome = bb.innings_home || [];
 
-      // BSO Lamps
-      const ballLamps = [1, 2, 3].map(i => `<span class="bso-lamp ${i <= bso.balls ? 'active-ball' : ''}"></span>`).join('');
-      const strikeLamps = [1, 2].map(i => `<span class="bso-lamp ${i <= bso.strikes ? 'active-strike' : ''}"></span>`).join('');
-      const outLamps = [1, 2].map(i => `<span class="bso-lamp ${i <= bso.outs ? 'active-out' : ''}"></span>`).join('');
+      const ballLamps = [1, 2, 3].map(i => `<span class="bso-lamp ${i <= (bso.balls || 0) ? 'active-ball' : ''}"></span>`).join('');
+      const strikeLamps = [1, 2].map(i => `<span class="bso-lamp ${i <= (bso.strikes || 0) ? 'active-strike' : ''}"></span>`).join('');
+      const outLamps = [1, 2].map(i => `<span class="bso-lamp ${i <= (bso.outs || 0) ? 'active-out' : ''}"></span>`).join('');
 
-      // Linescore Cells
-      let headers = '';
-      let awayCells = '';
-      let homeCells = '';
-      for (let i = 1; i <= 9; i++) {
-        const isActive = (bb.active_inning_num === i && board.status === 'LIVE');
-        headers += `<th class="${isActive ? 'text-warning' : ''}">${i}</th>`;
-        awayCells += `<td class="${isActive && bb.active_half === '초' ? 'active-inn-cell' : ''}">${innAway[i - 1] !== undefined ? innAway[i - 1] : '-'}</td>`;
-        homeCells += `<td class="${isActive && bb.active_half === '말' ? 'active-inn-cell' : ''}">${innHome[i - 1] !== undefined ? innHome[i - 1] : '-'}</td>`;
-      }
+      const lgName = (board.league_name || '야구').split(' ')[0];
+      const hName = board.home_team_name || '홈팀';
+      const aName = board.away_team_name || '원정팀';
 
       return `
         <div class="stadium-card" onclick="openScoreboardModal(${board.id})">
           <!-- Top Bar -->
           <div class="card-top-bar">
             <div class="d-flex align-items-center gap-1.5 min-w-0">
-              <span class="league-tag">⚾ ${board.league_name.split(' ')[0]}</span>
-              <span class="stadium-name">${board.stadium}</span>
+              <span class="league-tag">⚾ ${lgName}</span>
+              <span class="stadium-name">${board.stadium || '공식구장'}</span>
             </div>
             <div>
               <span class="inning-badge ${board.status === 'FINISHED' ? 'finished' : ''}">
-                ${board.status === 'LIVE' ? '🔴 ' + bb.current_inning : (board.status === 'FINISHED' ? '경기종료' : '예정')}
+                ${board.status === 'LIVE' ? '🔴 ' + (bb.current_inning || 'LIVE') : (board.status === 'FINISHED' ? '경기종료' : '예정')}
               </span>
             </div>
           </div>
@@ -806,13 +798,13 @@
           <div class="card-main-stage">
             <!-- Home Team -->
             <div class="team-block">
-              <div class="team-logo-circle" style="border-color: #f59e0b;">${board.home_team_name.substring(0, 2)}</div>
-              <div class="team-name-text">${board.home_team_name}</div>
+              <div class="team-logo-circle" style="border-color: #f59e0b;">${hName.substring(0, 2)}</div>
+              <div class="team-name-text">${hName}</div>
             </div>
 
             <!-- LED Score Center -->
             <div class="score-center-block">
-              <div class="led-score-display">${board.home_score} : ${board.away_score}</div>
+              <div class="led-score-display">${board.home_score ?? 0} : ${board.away_score ?? 0}</div>
               <div class="text-white-50 small" style="font-size: 0.65rem; font-weight: 700;">
                 ${board.status === 'LIVE' ? '<span class="text-danger">● LIVE</span>' : 'FINAL'}
               </div>
@@ -820,14 +812,13 @@
 
             <!-- Away Team -->
             <div class="team-block">
-              <div class="team-logo-circle">${board.away_team_name.substring(0, 2)}</div>
-              <div class="team-name-text">${board.away_team_name}</div>
+              <div class="team-logo-circle">${aName.substring(0, 2)}</div>
+              <div class="team-name-text">${aName}</div>
             </div>
           </div>
 
           <!-- Field Graphic & BSO Box -->
           <div class="field-bso-box">
-            <!-- SVG Diamond -->
             ${renderDiamondSvg(bb.runners)}
 
             <!-- BSO Lamps -->
@@ -856,20 +847,20 @@
               </thead>
               <tbody>
                 <tr>
-                  <td class="col-team">${board.home_team_name.substring(0, 3)}</td>
-                  ${(bb.innings ? bb.innings.home : Array(9).fill('-')).map(v => `<td>${v ?? '-'}</td>`).join('')}
-                  <td class="col-rheb fw-bold text-warning">${rheb.home.r}</td>
-                  <td class="col-rheb">${rheb.home.h}</td>
-                  <td class="col-rheb">${rheb.home.e}</td>
-                  <td class="col-rheb">${rheb.home.b}</td>
+                  <td class="col-team">${hName.substring(0, 3)}</td>
+                  ${(Array.isArray(innHome) && innHome.length > 0 ? innHome : Array(9).fill('-')).map(v => `<td>${v ?? '-'}</td>`).join('')}
+                  <td class="col-rheb fw-bold text-warning">${rheb.home ? rheb.home.r : 0}</td>
+                  <td class="col-rheb">${rheb.home ? rheb.home.h : 0}</td>
+                  <td class="col-rheb">${rheb.home ? rheb.home.e : 0}</td>
+                  <td class="col-rheb">${rheb.home ? rheb.home.b : 0}</td>
                 </tr>
                 <tr>
-                  <td class="col-team">${board.away_team_name.substring(0, 3)}</td>
-                  ${(bb.innings ? bb.innings.away : Array(9).fill('-')).map(v => `<td>${v ?? '-'}</td>`).join('')}
-                  <td class="col-rheb fw-bold text-white">${rheb.away.r}</td>
-                  <td class="col-rheb">${rheb.away.h}</td>
-                  <td class="col-rheb">${rheb.away.e}</td>
-                  <td class="col-rheb">${rheb.away.b}</td>
+                  <td class="col-team">${aName.substring(0, 3)}</td>
+                  ${(Array.isArray(innAway) && innAway.length > 0 ? innAway : Array(9).fill('-')).map(v => `<td>${v ?? '-'}</td>`).join('')}
+                  <td class="col-rheb fw-bold text-white">${rheb.away ? rheb.away.r : 0}</td>
+                  <td class="col-rheb">${rheb.away ? rheb.away.h : 0}</td>
+                  <td class="col-rheb">${rheb.away ? rheb.away.e : 0}</td>
+                  <td class="col-rheb">${rheb.away ? rheb.away.b : 0}</td>
                 </tr>
               </tbody>
             </table>
@@ -889,17 +880,28 @@
         fouls: { home: 8, away: 7 }
       };
 
+      const hName = board.home_team_name || '홈팀';
+      const aName = board.away_team_name || '원정팀';
+      const posH = (sc.possession && sc.possession.home != null) ? sc.possession.home : 50;
+      const posA = (sc.possession && sc.possession.away != null) ? sc.possession.away : 50;
+      const shotsH = (sc.shots && sc.shots.home != null) ? sc.shots.home : 0;
+      const shotsA = (sc.shots && sc.shots.away != null) ? sc.shots.away : 0;
+      const shotOnH = (sc.shots_on_target && sc.shots_on_target.home != null) ? sc.shots_on_target.home : 0;
+      const shotOnA = (sc.shots_on_target && sc.shots_on_target.away != null) ? sc.shots_on_target.away : 0;
+      const cornH = (sc.corners && sc.corners.home != null) ? sc.corners.home : 0;
+      const cornA = (sc.corners && sc.corners.away != null) ? sc.corners.away : 0;
+
       return `
         <div class="live-board-card ${isLive ? 'active-live-border' : ''}" onclick="openScoreboardModal(${board.id})">
           <!-- Card Header -->
           <div class="card-top-bar">
             <div>
-              <span class="badge bg-secondary text-white me-1" style="font-size: 0.65rem;">⚽ ${board.league_name}</span>
+              <span class="badge bg-secondary text-white me-1" style="font-size: 0.65rem;">⚽ ${board.league_name || '축구'}</span>
               <span class="text-white-50 small">${board.stadium || '경기장'}</span>
             </div>
             <div>
               <span class="badge ${isLive ? 'bg-success' : 'bg-dark text-white-50'}" style="font-size: 0.65rem;">
-                ${isLive ? '● 전반 34분' : '종료'}
+                ${isLive ? '● ' + (sc.match_time || '진행중') : (board.status === 'FINISHED' ? '종료' : '예정')}
               </span>
             </div>
           </div>
@@ -907,38 +909,105 @@
           <!-- Main Stage -->
           <div class="card-main-stage">
             <div class="team-block">
-              <div class="team-logo-circle" style="border-color: #10b981;">${board.home_team_name.substring(0, 2)}</div>
-              <div class="team-name-text">${board.home_team_name}</div>
+              <div class="team-logo-circle" style="border-color: #10b981;">${hName.substring(0, 2)}</div>
+              <div class="team-name-text">${hName}</div>
             </div>
 
             <div class="score-center-block">
-              <div class="led-score-display" style="color: #a7f3d0; text-shadow: var(--text-glow-green);">${board.home_score} : ${board.away_score}</div>
+              <div class="led-score-display" style="color: #a7f3d0; text-shadow: var(--text-glow-green);">${board.home_score ?? 0} : ${board.away_score ?? 0}</div>
               <div class="text-white-50 small" style="font-size: 0.65rem;">
-                <span class="text-success">● IN PLAY</span>
+                <span class="${isLive ? 'text-success' : 'text-white-50'}">${isLive ? '● IN PLAY' : 'FINAL'}</span>
               </div>
             </div>
 
             <div class="team-block">
-              <div class="team-logo-circle">${board.away_team_name.substring(0, 2)}</div>
-              <div class="team-name-text">${board.away_team_name}</div>
+              <div class="team-logo-circle">${aName.substring(0, 2)}</div>
+              <div class="team-name-text">${aName}</div>
             </div>
           </div>
 
           <!-- Soccer Field Grass Stats -->
           <div class="soccer-field-box">
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span>${sc.possession.home}% 점유율</span>
+              <span>${posH}% 점유율</span>
               <span class="fw-bold text-warning">경기장 상황판</span>
-              <span>점유율 ${sc.possession.away}%</span>
+              <span>점유율 ${posA}%</span>
             </div>
             <div class="soccer-stat-bar-wrap">
-              <div style="width: ${sc.possession.home}%; background: #10b981;"></div>
-              <div style="width: ${sc.possession.away}%; background: #3b82f6;"></div>
+              <div style="width: ${posH}%; background: #10b981;"></div>
+              <div style="width: ${posA}%; background: #3b82f6;"></div>
             </div>
             <div class="d-flex justify-content-between text-white-50 mt-2" style="font-size: 0.7rem;">
-              <span>슈팅: ${sc.shots.home} (${sc.shots_on_target.home})</span>
-              <span>코너킥: ${sc.corners.home} : ${sc.corners.away}</span>
-              <span>슈팅: ${sc.shots.away} (${sc.shots_on_target.away})</span>
+              <span>슈팅: ${shotsH} (${shotOnH})</span>
+              <span>코너킥: ${cornH} : ${cornA}</span>
+              <span>슈팅: ${shotsA} (${shotOnA})</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- Render Basketball Match Board ---
+    function renderBasketballCard(board) {
+      const isLive = board.status === 'LIVE';
+      const bk = board.basketball || {
+        quarter: '4Q',
+        quarters_home: [28, 25, 27, 30],
+        quarters_away: [24, 26, 22, 28],
+        fouls: { home: 14, away: 15 },
+        rebounds: { home: 42, away: 38 },
+        assists: { home: 24, away: 21 }
+      };
+
+      const hName = board.home_team_name || '홈팀';
+      const aName = board.away_team_name || '원정팀';
+
+      return `
+        <div class="live-board-card ${isLive ? 'active-live-border' : ''}" onclick="openScoreboardModal(${board.id})">
+          <!-- Card Header -->
+          <div class="card-top-bar">
+            <div>
+              <span class="badge bg-warning text-dark me-1" style="font-size: 0.65rem;">🏀 ${board.league_name || '농구'}</span>
+              <span class="text-white-50 small">${board.stadium || '체육관'}</span>
+            </div>
+            <div>
+              <span class="badge ${isLive ? 'bg-danger' : 'bg-dark text-white-50'}" style="font-size: 0.65rem;">
+                ${isLive ? '● ' + (bk.quarter || 'LIVE') : (board.status === 'FINISHED' ? '종료' : '예정')}
+              </span>
+            </div>
+          </div>
+
+          <!-- Main Stage -->
+          <div class="card-main-stage">
+            <div class="team-block">
+              <div class="team-logo-circle" style="border-color: #f59e0b;">${hName.substring(0, 2)}</div>
+              <div class="team-name-text">${hName}</div>
+            </div>
+
+            <div class="score-center-block">
+              <div class="led-score-display" style="color: #fef08a; text-shadow: var(--text-glow-gold);">${board.home_score ?? 0} : ${board.away_score ?? 0}</div>
+              <div class="text-white-50 small" style="font-size: 0.65rem;">
+                <span class="${isLive ? 'text-danger' : 'text-white-50'}">${isLive ? '● LIVE' : 'FINAL'}</span>
+              </div>
+            </div>
+
+            <div class="team-block">
+              <div class="team-logo-circle">${aName.substring(0, 2)}</div>
+              <div class="team-name-text">${aName}</div>
+            </div>
+          </div>
+
+          <!-- Basketball Stats Box -->
+          <div class="p-2 mx-2 mb-2 rounded-2" style="background:#0f172a; border:1px solid #1e293b; font-size:0.72rem;">
+            <div class="d-flex justify-content-between text-white-50 mb-1">
+              <span>리바운드: ${(bk.rebounds && bk.rebounds.home) || 40}</span>
+              <span class="text-warning fw-bold">1Q~4Q 쿼터별</span>
+              <span>리바운드: ${(bk.rebounds && bk.rebounds.away) || 38}</span>
+            </div>
+            <div class="d-flex justify-content-between text-white-50" style="font-size:0.68rem;">
+              <span>어시스트: ${(bk.assists && bk.assists.home) || 22}</span>
+              <span>파울: ${(bk.fouls && bk.fouls.home) || 12} : ${(bk.fouls && bk.fouls.away) || 14}</span>
+              <span>어시스트: ${(bk.assists && bk.assists.away) || 20}</span>
             </div>
           </div>
         </div>
@@ -971,12 +1040,19 @@
       targetList.forEach(board => {
         if (board.sport_code === 'BASEBALL') {
           html += renderBaseballCard(board);
+        } else if (board.sport_code === 'BASKETBALL') {
+          html += renderBasketballCard(board);
         } else {
           html += renderSoccerCard(board);
         }
       });
 
-      container.innerHTML = html;
+      container.innerHTML = html || `
+        <div class="text-center py-5 w-100" style="grid-column: 1 / -1;">
+          <i class="bi bi-info-circle fs-2 text-warning"></i>
+          <div class="mt-2 text-white-50">해당 종목의 경기가 없습니다.</div>
+        </div>
+      `;
     }
 
     // --- Mobile Top Bar Tabs ---
@@ -987,9 +1063,12 @@
       let html = '';
       boards.slice(0, 8).forEach((b, idx) => {
         const isActive = (idx === 0);
+        const icon = b.sport_code === 'BASEBALL' ? '⚾' : (b.sport_code === 'BASKETBALL' ? '🏀' : '⚽');
+        const h3 = (b.home_team_name || '').substring(0, 3);
+        const a3 = (b.away_team_name || '').substring(0, 3);
         html += `
           <div class="mob-tab-item ${isActive ? 'active' : ''}" onclick="selectMobileMatchTab(${b.id}, this)">
-            ${b.sport_code === 'BASEBALL' ? '⚾' : '⚽'} ${b.home_team_name.substring(0, 3)} vs ${b.away_team_name.substring(0, 3)}
+            ${icon} ${h3} vs ${a3}
           </div>
         `;
       });
@@ -1011,14 +1090,93 @@
 
       const modalContent = document.getElementById('modalDetailContent');
       const isBaseball = board.sport_code === 'BASEBALL';
+      const isBasketball = board.sport_code === 'BASKETBALL';
       const bb = board.baseball || {};
-      const rheb = bb.rheb || { away: { r: board.away_score, h: 0, e: 0, b: 0 }, home: { r: board.home_score, h: 0, e: 0, b: 0 } };
+      const rheb = bb.rheb || { away: { r: board.away_score || 0, h: 0, e: 0, b: 0 }, home: { r: board.home_score || 0, h: 0, e: 0, b: 0 } };
+      const hName = board.home_team_name || '홈팀';
+      const aName = board.away_team_name || '원정팀';
+      const lgName = board.league_name || '공식 리그';
+
+      let dynamicMiddleHtml = '';
+      if (isBaseball) {
+        dynamicMiddleHtml = `
+          <div class="p-3 rounded-3 mb-3" style="background: #080d1a; border: 1.5px solid #1e293b;">
+            <h6 class="text-warning fw-bold mb-3"><i class="bi bi-broadcast me-2"></i>야구장 다이아몬드 및 실시간 볼카운트</h6>
+            <div class="d-flex flex-wrap align-items-center justify-content-around gap-3">
+              <div>
+                <div class="text-center text-white-50 small mb-1">주자 현황</div>
+                ${renderDiamondSvg(bb.runners)}
+              </div>
+              <div class="p-3 rounded-2" style="background: #0b1329; border: 1px solid #1e293b; min-width: 200px;">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="text-success fw-bold">BALL</span>
+                  <span>${'🟢 '.repeat((bb.bso && bb.bso.balls) || 0)}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="text-danger fw-bold">STRIKE</span>
+                  <span>${'🔴 '.repeat((bb.bso && bb.bso.strikes) || 0)}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span class="text-warning fw-bold">OUT</span>
+                  <span>${'🟡 '.repeat((bb.bso && bb.bso.outs) || 0)}</span>
+                </div>
+              </div>
+              <div class="p-3 rounded-2 text-white-50" style="background: #0b1329; border: 1px solid #1e293b; font-size: 0.82rem;">
+                <div><strong class="text-white">투수:</strong> ${bb.pitcher ? bb.pitcher.name : '선발'} (투구수: ${bb.pitcher ? bb.pitcher.pitches : 0}구 | ERA: ${bb.pitcher ? bb.pitcher.era : '-'})</div>
+                <div class="mt-1"><strong class="text-white">타자:</strong> ${bb.batter ? bb.batter.name : '타자'} (타율: ${bb.batter ? bb.batter.avg : '-'} | ${bb.batter ? bb.batter.today : ''})</div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (isBasketball) {
+        const bk = board.basketball || {};
+        dynamicMiddleHtml = `
+          <div class="p-3 rounded-3 mb-3" style="background: #080d1a; border: 1.5px solid #1e293b;">
+            <h6 class="text-warning fw-bold mb-3"><i class="bi bi-dribbble me-2"></i>농구 실시간 코트 현황 & 팀 스탯</h6>
+            <div class="row text-center">
+              <div class="col-4">
+                <div class="fs-4 fw-bold text-warning">${(bk.rebounds && bk.rebounds.home) || 42}</div>
+                <div class="text-white-50 small">홈 리바운드</div>
+              </div>
+              <div class="col-4">
+                <div class="fs-4 fw-bold text-info">${(bk.assists && bk.assists.home) || 24} : ${(bk.assists && bk.assists.away) || 21}</div>
+                <div class="text-white-50 small">어시스트</div>
+              </div>
+              <div class="col-4">
+                <div class="fs-4 fw-bold text-primary">${(bk.rebounds && bk.rebounds.away) || 38}</div>
+                <div class="text-white-50 small">원정 리바운드</div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        const sc = board.soccer || {};
+        dynamicMiddleHtml = `
+          <div class="p-3 rounded-3 mb-3 soccer-field-box">
+            <h6 class="text-success fw-bold mb-2"><i class="bi bi-dribbble me-2"></i>경기장 필드 현황</h6>
+            <div class="row text-center mt-3">
+              <div class="col-4">
+                <div class="fs-4 fw-bold text-success">${(sc.possession && sc.possession.home) || 50}%</div>
+                <div class="text-white-50 small">홈 점유율</div>
+              </div>
+              <div class="col-4">
+                <div class="fs-4 fw-bold text-warning">${(sc.shots && sc.shots.home) || 0} : ${(sc.shots && sc.shots.away) || 0}</div>
+                <div class="text-white-50 small">총 슈팅</div>
+              </div>
+              <div class="col-4">
+                <div class="fs-4 fw-bold text-info">${(sc.possession && sc.possession.away) || 50}%</div>
+                <div class="text-white-50 small">원정 점유율</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
 
       modalContent.innerHTML = `
         <div class="modal-header border-0 pb-0" style="background: #0b1329;">
           <div>
             <span class="badge bg-danger me-2">🔴 LIVE 전광판 정밀 확대</span>
-            <span class="text-white-50 small">${board.league_name} | ${board.stadium} (${board.match_date})</span>
+            <span class="text-white-50 small">${lgName} | ${board.stadium || '공식구장'} (${board.match_date || ''})</span>
           </div>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
@@ -1027,74 +1185,28 @@
           <div class="text-center py-3 mb-4 rounded-3" style="background: linear-gradient(180deg, #0f172a 0%, #080d1a 100%); border: 2px solid #1e293b;">
             <div class="row align-items-center">
               <div class="col-4">
-                <h3 class="fw-bold text-white mb-1">${board.home_team_name}</h3>
+                <h3 class="fw-bold text-white mb-1">${hName}</h3>
                 <span class="text-white-50 small">선발: ${board.home_starter_name || '-'}</span>
               </div>
               <div class="col-4">
-                <div class="led-score-display" style="font-size: 3.5rem;">${board.home_score} : ${board.away_score}</div>
+                <div class="led-score-display" style="font-size: 3.5rem;">${board.home_score ?? 0} : ${board.away_score ?? 0}</div>
                 <div class="badge bg-warning text-dark fw-bold mt-1 px-3 py-1">
-                  ${isBaseball ? bb.current_inning : 'IN PLAY'}
+                  ${isBaseball ? (bb.current_inning || 'LIVE') : (board.status === 'FINISHED' ? '종료' : 'IN PLAY')}
                 </div>
               </div>
               <div class="col-4">
-                <h3 class="fw-bold text-white mb-1">${board.away_team_name}</h3>
+                <h3 class="fw-bold text-white mb-1">${aName}</h3>
                 <span class="text-white-50 small">선발: ${board.away_starter_name || '-'}</span>
               </div>
             </div>
           </div>
 
           <!-- Dynamic Stadium Graphic Section -->
-          ${isBaseball ? `
-            <div class="p-3 rounded-3 mb-3" style="background: #080d1a; border: 1.5px solid #1e293b;">
-              <h6 class="text-warning fw-bold mb-3"><i class="bi bi-broadcast me-2"></i>야구장 다이아몬드 및 실시간 볼카운트</h6>
-              <div class="d-flex flex-wrap align-items-center justify-content-around gap-3">
-                <div>
-                  <div class="text-center text-white-50 small mb-1">주자 현황</div>
-                  ${renderDiamondSvg(bb.runners)}
-                </div>
-                <div class="p-3 rounded-2" style="background: #0b1329; border: 1px solid #1e293b; min-width: 200px;">
-                  <div class="d-flex justify-content-between mb-1">
-                    <span class="text-success fw-bold">BALL</span>
-                    <span>${'🟢 '.repeat(bb.bso ? bb.bso.balls : 0)}</span>
-                  </div>
-                  <div class="d-flex justify-content-between mb-1">
-                    <span class="text-danger fw-bold">STRIKE</span>
-                    <span>${'🔴 '.repeat(bb.bso ? bb.bso.strikes : 0)}</span>
-                  </div>
-                  <div class="d-flex justify-content-between">
-                    <span class="text-warning fw-bold">OUT</span>
-                    <span>${'🟡 '.repeat(bb.bso ? bb.bso.outs : 0)}</span>
-                  </div>
-                </div>
-                <div class="p-3 rounded-2 text-white-50" style="background: #0b1329; border: 1px solid #1e293b; font-size: 0.82rem;">
-                  <div><strong class="text-white">투수:</strong> ${bb.pitcher ? bb.pitcher.name : ''} (투구수: ${bb.pitcher ? bb.pitcher.pitches : 0}구 | ERA: ${bb.pitcher ? bb.pitcher.era : ''})</div>
-                  <div class="mt-1"><strong class="text-white">타자:</strong> ${bb.batter ? bb.batter.name : ''} (타율: ${bb.batter ? bb.batter.avg : ''} | ${bb.batter ? bb.batter.today : ''})</div>
-                </div>
-              </div>
-            </div>
-          ` : `
-            <div class="p-3 rounded-3 mb-3 soccer-field-box">
-              <h6 class="text-success fw-bold mb-2"><i class="bi bi-dribbble me-2"></i>경기장 필드 현황</h6>
-              <div class="row text-center mt-3">
-                <div class="col-4">
-                  <div class="fs-4 fw-bold text-success">${board.soccer ? board.soccer.possession.home : 50}%</div>
-                  <div class="text-white-50 small">홈 점유율</div>
-                </div>
-                <div class="col-4">
-                  <div class="fs-4 fw-bold text-warning">${board.soccer ? board.soccer.shots.home : 0} : ${board.soccer ? board.soccer.shots.away : 0}</div>
-                  <div class="text-white-50 small">총 슈팅</div>
-                </div>
-                <div class="col-4">
-                  <div class="fs-4 fw-bold text-info">${board.soccer ? board.soccer.possession.away : 50}%</div>
-                  <div class="text-white-50 small">원정 점유율</div>
-                </div>
-              </div>
-            </div>
-          `}
+          ${dynamicMiddleHtml}
         </div>
         <div class="modal-footer border-0" style="background: #0b1329;">
           <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">닫기</button>
-          <a href="/analytics" class="btn btn-primary btn-sm fw-bold">정밀 분석실 바로가기</a>
+          <a href="/" class="btn btn-primary btn-sm fw-bold">정밀 분석실 바로가기</a>
         </div>
       `;
 
