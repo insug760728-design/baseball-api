@@ -1773,7 +1773,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v9.4 실시간점수알림시스템·라이브스코어모바일최적화
+          <i class="bi bi-check-circle-fill me-1"></i>v9.5 알림전용토글모드·득점텍스트알림강화
         </span>
       </div>
 
@@ -16325,7 +16325,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
         renderRightColLiveRelay();
         renderLiveRelayModalBody();
-        showMiniToast(`🔔 [${hName} vs ${aName}] 실시간 득점/골 알림이 등록되었습니다!`);
+        showMiniToast(`🔔 [${hName} vs ${aName}] 실시간 득점/골 알림 등록 완료! 점수가 나면 텍스트 알림으로 즉시 안내해 드립니다.`);
       }
     }
 
@@ -16503,7 +16503,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const bellIconClass = isSubscribed ? 'bi-bell-fill' : 'bi-bell';
 
       return `
-        <tr class="totocan-live-row" onclick="openNextGenDetailModal(${m.id})" style="cursor: pointer; transition: background 0.15s; border-bottom: 1px solid #f1f5f9;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+        <tr class="totocan-live-row" style="transition: background 0.15s; border-bottom: 1px solid #f1f5f9;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
           <!-- Sport / Mini Diamond -->
           <td class="text-center py-1.5 px-0.5" style="vertical-align: middle;">
             ${sportIconHtml}
@@ -17130,7 +17130,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
         <!-- Footer -->
         <div class="modal-footer py-2 px-3 d-flex justify-content-between align-items-center" style="background: #f8fafc; border-top: 1px solid #e5e7eb;">
           <span class="text-muted small" style="font-size: 0.72rem;">
-            <i class="bi bi-info-circle me-1"></i>경기 클릭 시 초정밀 라인업·박스스코어·상대전적이 즉시 열립니다.
+            <i class="bi bi-bell-fill text-warning me-1"></i>우측 종(🔔)을 터치하면 득점/골 발생 시 실시간 알림 텍스트를 즉시 보내드립니다.
           </span>
           <button type="button" class="btn btn-xs btn-secondary fw-bold px-3 py-1" data-bs-dismiss="modal">닫기</button>
         </div>
