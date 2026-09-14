@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0">
   <script>
     try {
-      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v21', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15'].forEach(function(k) {
+      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_stable', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15'].forEach(function(k) {
         localStorage.removeItem(k);
       });
     } catch(e) {}
@@ -1773,7 +1773,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v8.7 고속안정화·0초로딩완전복구
+          <i class="bi bi-check-circle-fill me-1"></i>v8.8 2단계초고속로딩·0.2초순간표출
         </span>
       </div>
 
@@ -3260,6 +3260,39 @@
     }
 
     let _liveMatchesRetryTimeout = null;
+    let _bgArchiveFetchTimeout = null;
+
+    function mergeUniqueMatches(newList, existingList = []) {
+      const merged = [];
+      const seenIds = new Set();
+      const seenKeys = new Set();
+
+      for (const m of (newList || [])) {
+        if (!m) continue;
+        if (m.id && seenIds.has(m.id)) continue;
+        const dPart = (m.match_date || '').slice(0, 10);
+        const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
+        if (!seenKeys.has(key)) {
+          if (m.id) seenIds.add(m.id);
+          seenKeys.add(key);
+          merged.push(m);
+        }
+      }
+
+      for (const m of (existingList || [])) {
+        if (!m) continue;
+        if (m.id && seenIds.has(m.id)) continue;
+        const dPart = (m.match_date || '').slice(0, 10);
+        const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
+        if (!seenKeys.has(key)) {
+          if (m.id) seenIds.add(m.id);
+          seenKeys.add(key);
+          merged.push(m);
+        }
+      }
+      return merged;
+    }
+
     async function loadLiveMatches() {
       const container = document.getElementById('stripContainer');
       try {
@@ -3267,85 +3300,65 @@
         const d0Str = getKSTDateString(now);
         const rollingStartStr = getKSTDateString(new Date(now.getTime() - 86400000));
         
-        // Fast Phase 1: 최신 전체 경기 목록 우선 고속 로드
-        let rawMatches = [];
+        // ⚡ Phase 1 (초고속 0.2초): 실시간 및 오늘/내일 경기(150건) 우선 고속 로드 -> UI 즉시 표출
         try {
-          const resp = await fetch('/api/v1/matches?limit=4000&order=desc', { cache: 'no-store' });
-          if (resp.ok) {
-            rawMatches = await resp.json();
+          const fastResp = await fetch('/api/v1/matches?limit=150&order=asc', { cache: 'no-store' });
+          if (fastResp.ok) {
+            const fastMatches = await fastResp.json();
+            if (Array.isArray(fastMatches) && fastMatches.length > 0) {
+              allMatches = mergeUniqueMatches(fastMatches, allMatches);
+              window.matchesLoadedInitial = true;
+              updateScheduleTabCounts();
+              renderMatchStrip('ALL');
+              renderPredMatches();
+              renderRightColLiveRelay();
+              initRealTimeSportsTicker();
+              try {
+                localStorage.setItem('tokeon_matches_cache_stable', JSON.stringify(allMatches));
+              } catch(e) {}
+            }
           }
-        } catch (err) {
-          console.warn('Initial matches fetch error:', err);
+        } catch(e) {
+          console.warn('[Fast Phase 1] Error:', e);
         }
 
-        if (!rawMatches || rawMatches.length === 0) {
+        // ⚡ Phase 2 (백그라운드 비동기): 전체 과거/종료 경기 아카이브는 UI 방해 없이 1.5초 후 조용히 보강
+        if (_bgArchiveFetchTimeout) clearTimeout(_bgArchiveFetchTimeout);
+        _bgArchiveFetchTimeout = setTimeout(async () => {
           try {
-            const [r1, r2] = await Promise.allSettled([
-              fetch(`/api/v1/matches?start_date=${rollingStartStr}&order=asc&limit=4000`),
-              fetch('/api/v1/matches?status=FINISHED&order=desc&limit=2000')
-            ]);
-            const m1 = (r1.status === 'fulfilled' && r1.value.ok) ? await r1.value.json() : [];
-            const m2 = (r2.status === 'fulfilled' && r2.value.ok) ? await r2.value.json() : [];
-            rawMatches = [...m1, ...m2];
+            const resp = await fetch('/api/v1/matches?limit=4000&order=desc', { cache: 'no-store' });
+            if (resp.ok) {
+              const fullMatches = await resp.json();
+              if (Array.isArray(fullMatches) && fullMatches.length > 0) {
+                allMatches = mergeUniqueMatches(fullMatches, allMatches);
+                window.matchesLoadedInitial = true;
+                updateScheduleTabCounts();
+                renderMatchStrip('ALL');
+                renderPredMatches();
+                try {
+                  localStorage.setItem('tokeon_matches_cache_stable', JSON.stringify(allMatches));
+                } catch(e) {}
+              }
+            }
           } catch(e) {}
-        }
+        }, 1500);
 
-        // Ensure absolute fixture-level uniqueness (id or sport + home + away + YYYY-MM-DD)
-        const uniqueList = [];
-        const seenIds = new Set();
-        const seenKeys = new Set();
-        for (const m of (rawMatches || [])) {
-          if (m.id && seenIds.has(m.id)) continue;
-          const dPart = (m.match_date || '').slice(0, 10);
-          const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
-          if (!seenKeys.has(key)) {
-            if (m.id) seenIds.add(m.id);
-            seenKeys.add(key);
-            uniqueList.push(m);
-          }
-        }
-
-        if (uniqueList.length > 0) {
-          allMatches = uniqueList;
-          window.matchesLoadedInitial = true;
-          if (_liveMatchesRetryTimeout) {
-            clearTimeout(_liveMatchesRetryTimeout);
-            _liveMatchesRetryTimeout = null;
-          }
+        // Fallback: If still empty, load from localStorage
+        if (!allMatches || allMatches.length === 0) {
           try {
-            localStorage.setItem('tokeon_matches_cache_v21', JSON.stringify(uniqueList));
-          } catch (e) {}
-        } else if (!allMatches || allMatches.length === 0) {
-          // Fallback to local storage if network request returned empty (e.g. during server deployment)
-          try {
-            const cached = localStorage.getItem('tokeon_matches_cache_v21');
+            const cached = localStorage.getItem('tokeon_matches_cache_stable');
             if (cached) {
               const parsed = JSON.parse(cached);
               if (Array.isArray(parsed) && parsed.length > 0) {
                 allMatches = parsed;
+                window.matchesLoadedInitial = true;
+                updateScheduleTabCounts();
+                renderMatchStrip('ALL');
+                renderPredMatches();
               }
             }
           } catch (e) {}
-          // Automatically retry in 2.5s if still empty
-          if (!allMatches || allMatches.length === 0) {
-            if (!_liveMatchesRetryTimeout) {
-              _liveMatchesRetryTimeout = setTimeout(() => {
-                _liveMatchesRetryTimeout = null;
-                loadLiveMatches();
-              }, 2500);
-            }
-          } else {
-            window.matchesLoadedInitial = true;
-          }
-        } else {
-          window.matchesLoadedInitial = true;
         }
-
-        updateScheduleTabCounts();
-        renderMatchStrip('ALL');
-        renderPredMatches();
-        renderRightColLiveRelay();
-        initRealTimeSportsTicker();
 
         const list = getFilteredPredMatches();
         if (list.length > 0) {
@@ -3361,7 +3374,7 @@
         console.error('Match strip error:', e);
         if (!allMatches || allMatches.length === 0) {
           try {
-            const cached = localStorage.getItem('tokeon_matches_cache_v21');
+            const cached = localStorage.getItem('tokeon_matches_cache_stable');
             if (cached) {
               const parsed = JSON.parse(cached);
               if (Array.isArray(parsed) && parsed.length > 0) {
@@ -8171,12 +8184,11 @@ function getFullModalMatchList() {
     function initPredictionSection() {
       // ⚡ 0초(0ms) 즉시 렌더링: 브라우저 캐시가 있으면 대기 없이 즉각 경기 목록 & 전광판 표출
       try {
-        // Purge legacy caches with older fixture formats
-        // Purge legacy caches from v1 to v20
-        ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15', 'tokeon_matches_cache_v16', 'tokeon_matches_cache_v17', 'tokeon_matches_cache_v18', 'tokeon_matches_cache_v19', 'tokeon_matches_cache_v21'].forEach(k => {
-          try { localStorage.removeItem(k); } catch (e) {}
-        });
-        const cached = localStorage.getItem('tokeon_matches_cache_v21');
+        // Purge legacy numeric version caches once
+        for (let i = 1; i <= 30; i++) {
+          try { localStorage.removeItem('tokeon_matches_cache_v' + i); } catch (e) {}
+        }
+        const cached = localStorage.getItem('tokeon_matches_cache_stable');
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -8185,6 +8197,7 @@ function getFullModalMatchList() {
             updateScheduleTabCounts();
             renderMatchStrip('ALL');
             renderPredMatches();
+            console.log('[Cache] Instant 0ms load with ' + parsed.length + ' matches from local cache');
           }
         }
       } catch (e) {}
