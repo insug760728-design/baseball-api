@@ -105,13 +105,21 @@ class SchedulerService:
                 id="kbo_npb_live_sync_job",
                 replace_existing=True
             )
+            # 매일 06:00, 18:00 KST 전종목(KBO, NPB, MLB, 축구 등) 향후 14일치 공식 일정 자동 갱신
+            sched_mgr_trigger = CronTrigger(hour="6,18", minute=0)
+            scheduler.add_job(
+                cls.execute_schedule_manager_sync_job,
+                trigger=sched_mgr_trigger,
+                id="schedule_manager_daily_sync_job",
+                replace_existing=True
+            )
             scheduler.start()
 
             # ⚡ 5초 동적 초고속 실시간 수집 루프 백그라운드 태스크 기동
             if cls._live_loop_task is None or cls._live_loop_task.done():
                 cls._live_loop_task = asyncio.create_task(cls._run_live_5sec_dynamic_loop())
 
-            logger.info(f"[Scheduler] 매일 {cls._config['hour']:02d}:{cls._config['minute']:02d}, 1시간 전종목 동기화, 10분 주기 베트맨/선발투수, 1분 트래픽, 5초 동적 LIVE 초고속 수집 루프 시작 완료.")
+            logger.info(f"[Scheduler] 매일 {cls._config['hour']:02d}:{cls._config['minute']:02d}, 1시간 전종목 동기화, 매일 06/18시 일정에이전트 갱신, 10분 주기 베트맨/선발투수, 1분 트래픽, 5초 동적 LIVE 초고속 수집 루프 시작 완료.")
 
 
     @classmethod
@@ -209,6 +217,13 @@ class SchedulerService:
                 except Exception as ex:
                     summary[lid] = f"ERR: {str(ex)[:60]}"
 
+            # 일정 관리 전담 에이전트(ScheduleManagerAgent)를 통한 전종목 향후 14일치 공식 일정 자동 동기화
+            try:
+                sched_res = await cls.execute_schedule_manager_sync_job()
+                summary["SCHEDULE_MANAGER"] = sched_res.get("total_added", 0)
+            except Exception as ex:
+                summary["SCHEDULE_MANAGER"] = f"ERR: {str(ex)[:60]}"
+
             logger.info(f"[Startup Sync] 서버 시작 즉시 동기화 완료: {summary}")
             try:
                 from app.core.websocket_manager import manager
@@ -216,7 +231,7 @@ class SchedulerService:
                     "type": "STARTUP_SYNC_COMPLETE",
                     "timestamp": get_now_kst().isoformat(),
                     "summary": summary,
-                    "message": "서버 시작 시 전종목(챔스·유로파 포함) 자동 동기화 완료"
+                    "message": "서버 시작 시 전종목(챔스·유로파 및 향후 14일 일정 포함) 자동 동기화 완료"
                 })
             except Exception:
                 pass
@@ -225,6 +240,21 @@ class SchedulerService:
         finally:
             db.close()
             cls._is_running_task = False
+
+    @classmethod
+    async def execute_schedule_manager_sync_job(cls):
+        """매일 전종목(KBO, NPB, MLB, 축구 5대리그, K리그, J리그 등) 향후 14일치 공식 일정 자동 동기화 에이전트 작업"""
+        def _run_sync():
+            from app.agents.schedule_manager_agent import ScheduleManagerAgent
+            return ScheduleManagerAgent.sync_all_upcoming_schedules(days_ahead=14)
+        
+        try:
+            res = await asyncio.to_thread(_run_sync)
+            logger.info(f"[Scheduler ScheduleManager] 전종목 일정 자동 동기화 완료: {res.get('total_added')}건 추가 (상태: {res.get('status')})")
+            return res
+        except Exception as e:
+            logger.error(f"[Scheduler ScheduleManager] 일정 동기화 에러: {e}")
+            return {"status": "ERROR", "error": str(e)}
 
     @classmethod
     async def execute_daily_sync_job(cls):

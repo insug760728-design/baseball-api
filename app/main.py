@@ -409,6 +409,23 @@ def generate_trial_api_key(request: Request):
         "message": "API 키가 성공적으로 발급되었습니다. X-API-Key 헤더에 포함하여 호출하세요."
     }
 
+# ============================================================
+# 📅 [일정 관리 전담 에이전트 (ScheduleManagerAgent) API]
+# ============================================================
+@app.get("/api/schedule/status", summary="일정 관리 에이전트 가동 상태 및 향후 일정 현황 조회")
+@app.get("/api/v1/schedule/status")
+def get_schedule_agent_status():
+    from app.agents.schedule_manager_agent import ScheduleManagerAgent
+    status = ScheduleManagerAgent.get_schedule_status()
+    return JSONResponse(status_code=200, content=status)
+
+@app.post("/api/schedule/sync", summary="전종목 공식 향후 일정 즉시 동기화 실행 (ScheduleManagerAgent)")
+@app.post("/api/v1/schedule/sync")
+def sync_schedule_agent(days: int = 14):
+    from app.agents.schedule_manager_agent import ScheduleManagerAgent
+    res = ScheduleManagerAgent.sync_all_upcoming_schedules(days_ahead=days)
+    return JSONResponse(status_code=200, content=res)
+
 @app.exception_handler(404)
 async def not_found_exception_handler(request: Request, exc):
     if not request.url.path.startswith("/api/"):

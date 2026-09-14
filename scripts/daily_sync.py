@@ -69,6 +69,15 @@ def main():
             print(f"  ✗ {league} 처리 중 오류 발생: {e}")
             summary[league] = {"status": "ERROR", "error": str(e)}
 
+    # 3. 공식 향후 14일 전종목 라운드로빈 일정 자동 갱신
+    print(f"\n▶ [일정 관리 에이전트] 전종목 향후 14일 공식 라운드로빈 일정 자동 동기화 중...")
+    try:
+        from app.agents.schedule_manager_agent import ScheduleManagerAgent
+        sched_res = ScheduleManagerAgent.sync_all_leagues_schedule(db=db, days_ahead=14)
+        print(f"  ✓ 일정 관리 에이전트 완료: {sched_res.get('total_checked', 0)}개 경기 검증/갱신")
+    except Exception as e:
+        print(f"  ✗ 일정 관리 에이전트 동기화 중 오류: {e}")
+
     db.close()
     print(f"\n==================================================")
     print(f"✨ [전체 리그 일일 자동 수집 및 폴더 갱신 완료]")
