@@ -1859,17 +1859,17 @@
               </div>
 
               <!-- 🏆 배트맨 공식 14경기 승무패 / 승1패 / 승5패 전용 팝업 퀵 바 -->
-              <div class="d-flex align-items-center gap-1 mt-1.5 p-1 rounded-2" style="background: #0f172a; border: 1.5px solid #0f172a; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);">
-                <span class="badge bg-warning text-dark fw-bold px-1.5 py-1 text-nowrap flex-shrink-0" style="font-size: 0.68rem; letter-spacing: -0.3px;">
-                  <i class="bi bi-trophy-fill me-0.5"></i>14경기
+              <div class="d-flex align-items-center gap-1 mt-1.5 p-1 rounded-2" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 800; font-size: 0.68rem; padding: 4px 6px;">
+                  <i class="bi bi-trophy-fill me-0.5 text-warning"></i>14경기
                 </span>
-                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 px-1 text-white border-0 text-nowrap" onclick="openTotoModal('WDL')" style="background: #1e293b; border-radius: 4px; font-size: 0.73rem;" title="클릭 시 배트맨 공식 14경기 축구 승무패 마킹표 오픈">
+                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 px-1 border text-nowrap" onclick="openTotoModal('WDL')" style="background: #ffffff; color: #1e293b; border-color: #cbd5e1; border-radius: 4px; font-size: 0.73rem;" title="클릭 시 배트맨 공식 14경기 축구 승무패 마킹표 오픈">
                   ⚽ 승무패 <span class="badge bg-danger ms-0.5" id="quickBadgeTotoWDL" style="font-size:0.58rem;">53회</span>
                 </button>
-                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 px-1 text-white border-0 text-nowrap" onclick="openTotoModal('W1L')" style="background: #1e293b; border-radius: 4px; font-size: 0.73rem;" title="클릭 시 배트맨 공식 14경기 야구 승1패 마킹표 오픈">
+                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 px-1 border text-nowrap" onclick="openTotoModal('W1L')" style="background: #ffffff; color: #1e293b; border-color: #cbd5e1; border-radius: 4px; font-size: 0.73rem;" title="클릭 시 배트맨 공식 14경기 야구 승1패 마킹표 오픈">
                   ⚾ 승1패 <span class="badge bg-danger ms-0.5" id="quickBadgeTotoW1L" style="font-size:0.58rem;">70회</span>
                 </button>
-                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 px-1 text-white border-0 text-nowrap" onclick="openTotoModal('W5L')" style="background: #1e293b; border-radius: 4px; font-size: 0.73rem;" title="클릭 시 배트맨 공식 14경기 농구 승5패 마킹표 오픈">
+                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 px-1 border text-nowrap" onclick="openTotoModal('W5L')" style="background: #ffffff; color: #1e293b; border-color: #cbd5e1; border-radius: 4px; font-size: 0.73rem;" title="클릭 시 배트맨 공식 14경기 농구 승5패 마킹표 오픈">
                   🏀 승5패 <span class="badge bg-secondary ms-0.5" id="quickBadgeTotoW5L" style="font-size:0.58rem;">01회</span>
                 </button>
               </div>
@@ -2172,17 +2172,17 @@
   <!-- Modal: Dedicated Next Schedule Modal (양 팀 다음 경기 일정 비교 팝업) -->
   <div class="modal fade" id="nextScheduleModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content" style="border: 2px solid #0f172a; border-radius: 12px; overflow: hidden; background: #ffffff; box-shadow: 0 15px 35px rgba(0,0,0,0.25);">
-        <div class="modal-header d-flex justify-content-between align-items-center py-2 px-3" style="background: #0f172a; color: #ffffff; border-bottom: 2px solid #f59e0b;">
+      <div class="modal-content" style="border: 1px solid #cbd5e1; border-radius: 12px; overflow: hidden; background: #ffffff; box-shadow: 0 15px 35px rgba(0,0,0,0.12);">
+        <div class="modal-header d-flex justify-content-between align-items-center py-2 px-3" style="background: #ffffff; color: #1e293b; border-bottom: 1px solid #e2e8f0;">
           <div class="d-flex align-items-center gap-2 text-truncate">
-            <span class="badge" style="background: #f59e0b; color: #0f172a; font-weight: 800; font-size: 0.78rem; padding: 3px 6px;">
+            <span class="badge" style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 800; font-size: 0.78rem; padding: 3px 6px;">
               <i class="bi bi-calendar3 me-1"></i>다음 경기 일정
             </span>
-            <span class="fw-bold text-white text-truncate" style="font-size: 0.95rem;" id="nextScheduleModalTitle">
+            <span class="fw-bold text-dark text-truncate" style="font-size: 0.95rem;" id="nextScheduleModalTitle">
               양 팀 향후 경기 일정 비교
             </span>
           </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-3" id="nextScheduleModalBody" style="background: #f8fafc; max-height: 75vh; overflow-y: auto;">
           <!-- Dynamically populated with home/away upcoming cards -->
@@ -2194,17 +2194,17 @@
   <!-- Modal: Next-Gen Comprehensive Match Analytics Modal (차세대 프리미엄 정밀 상세분석 모달) -->
   <div class="modal fade" id="nextGenDetailModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
-      <div class="modal-content" style="border: 2px solid #0f172a; border-radius: 12px; overflow: hidden; background: #ffffff; box-shadow: 0 20px 45px rgba(0,0,0,0.25);">
+      <div class="modal-content" style="border: 1px solid #cbd5e1; border-radius: 12px; overflow: hidden; background: #ffffff; box-shadow: 0 20px 45px rgba(0,0,0,0.12);">
         
         <!-- Top Sleek Header -->
-        <div class="modal-header d-flex justify-content-between align-items-center py-2 px-3" style="background: #0f172a; color: #ffffff; border-bottom: 2px solid #3b82f6;">
+        <div class="modal-header d-flex justify-content-between align-items-center py-2 px-3" style="background: #ffffff; color: #1e293b; border-bottom: 1px solid #e2e8f0;">
           <div class="d-flex align-items-center gap-2 flex-wrap" style="min-width: 0;">
-            <span class="badge" style="background: #3b82f6; color: #ffffff; font-weight: 800; font-size: 0.80rem;" id="ngModalNumBadge">NO. 1634</span>
-            <span class="badge bg-dark border border-secondary text-white" id="ngModalLeagueBadge">⚾ MLB</span>
-            <span class="text-white fw-bold text-truncate" style="font-size: 0.98rem;" id="ngModalHeadTitle">애리조나 vs 텍사스</span>
-            <span class="text-white-50 small d-none d-md-inline" id="ngModalVenueDate">2026.09.14(월) 05:10 [ 체이스필드 ]</span>
+            <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 800; font-size: 0.80rem;" id="ngModalNumBadge">NO. 1634</span>
+            <span class="badge bg-light border text-dark" style="border-color: #cbd5e1 !important;" id="ngModalLeagueBadge">⚾ MLB</span>
+            <span class="text-dark fw-bold text-truncate" style="font-size: 0.98rem;" id="ngModalHeadTitle">애리조나 vs 텍사스</span>
+            <span class="text-muted small d-none d-md-inline" id="ngModalVenueDate">2026.09.14(월) 05:10 [ 체이스필드 ]</span>
           </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
         <!-- 4-Tab Navigation Pill Bar (다음경기 일정 제외한 4대 핵심 분석 탭) -->
@@ -2235,85 +2235,35 @@
   <!-- Modal: Betman Official Style 14-Match Dedicated Toto Popup Modal (PC & Mobile 모두 적용) -->
   <div class="modal fade" id="totoBetmanModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
-      <div class="modal-content" style="border: 2px solid #0f172a; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25); border-radius: 12px; overflow: hidden; background: #ffffff;">
+      <div class="modal-content" style="border: 1px solid #cbd5e1; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12); border-radius: 12px; overflow: hidden; background: #ffffff;">
         
-        <!-- Betman Signature Navy/Gold Header -->
-        <div class="modal-header d-flex justify-content-between align-items-center py-2 px-3" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-bottom: 2px solid #f59e0b; color: #ffffff;">
+        <!-- Clean Light Modal Header (No black background) -->
+        <div class="modal-header d-flex justify-content-between align-items-center py-2 px-3" style="background: #ffffff; border-bottom: 1px solid #e2e8f0; color: #1e293b;">
           <div class="d-flex align-items-center gap-2 flex-wrap" style="min-width: 0;">
-            <span class="badge" style="background: #f59e0b; color: #0f172a; font-weight: 900; font-size: 0.82rem; padding: 4px 8px; border-radius: 4px;">
+            <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 800; font-size: 0.82rem; padding: 4px 8px; border-radius: 4px;">
               <i class="bi bi-ticket-perforated-fill me-1"></i>BETMAN 공식 14경기
             </span>
-            <span class="fw-bold text-white text-truncate" style="font-size: 1.05rem;" id="totoModalHeadTitle">
-              ⚽ 축구 승무패 51회차 (14경기 배트맨 슬립)
+            <span class="fw-bold text-dark text-truncate" style="font-size: 1.05rem;" id="totoModalHeadTitle">
+              ⚽ 축구 승무패 53회차 (14경기 배트맨 슬립)
             </span>
             <span class="badge bg-danger text-white px-2 py-0.5" id="totoModalSaleBadge" style="font-size: 0.72rem; font-weight: 800;">🔥발매중</span>
-            <span class="text-white-50 small d-none d-sm-inline" id="totoModalPeriodText" style="font-size: 0.76rem;">마감: 09/08 23:00</span>
+            <span class="text-muted small d-none d-sm-inline" id="totoModalPeriodText" style="font-size: 0.76rem;">마감: 09/16 23:00</span>
           </div>
 
           <div class="d-flex align-items-center gap-2 flex-shrink-0">
-            <span class="badge d-none d-md-inline-block" style="background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid #f59e0b; font-size: 0.82rem; font-weight: 800;">
-              1등 예상: <strong id="totoModalPrizePool" style="font-family: monospace; font-size: 0.88rem; color: #fef08a;">939,525,000원</strong>
+            <span class="badge d-none d-md-inline-block" style="background: #fefce8; color: #854d0e; border: 1px solid #fef08a; font-size: 0.82rem; font-weight: 800;">
+              1등 예상: <strong id="totoModalPrizePool" style="font-family: monospace; font-size: 0.88rem; color: #b45309;">11억 1,120만 원</strong>
             </span>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
         </div>
 
-        <!-- ⚡ 배트맨 실시간 당첨금 & 발매 현황 전광판 (Real-time Live Prize & Dividend Board) -->
-        <div class="px-3 py-2" id="totoModalLivePrizeBoard" style="background: linear-gradient(135deg, #0b1329 0%, #1e293b 100%); border-bottom: 2px solid #f59e0b;">
-          <div class="row g-2 align-items-center">
-            <!-- 1등 예상 당첨금 카드 -->
-            <div class="col-12 col-md-4">
-              <div class="d-flex align-items-center gap-2.5 p-2 rounded-2" style="background: rgba(245, 158, 11, 0.12); border: 1.5px solid #f59e0b;">
-                <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0" style="width: 40px; height: 40px; background: linear-gradient(135deg, #f59e0b, #d97706); color: #ffffff; font-size: 1.15rem; box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);">
-                  🏆
-                </div>
-                <div class="flex-grow-1 min-w-0">
-                  <div class="d-flex align-items-center justify-content-between">
-                    <span class="text-warning small fw-bold" style="font-size: 0.72rem;">1등 예상 당첨금</span>
-                    <span class="badge bg-danger text-white px-1.5 py-0.5" id="totoLivePulsingBadge" style="font-size: 0.60rem; font-weight: 800;">LIVE 🟢</span>
-                  </div>
-                  <div class="fw-black text-truncate" id="totoLiveFirstPrizeText" style="color: #fef08a; font-size: 1.25rem; font-weight: 900; letter-spacing: -0.5px; text-shadow: 0 1px 4px rgba(0,0,0,0.6);">
-                    7,109만 원
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 총 발매금액 & 투표수 카드 -->
-            <div class="col-6 col-md-4">
-              <div class="p-2 rounded-2 h-100" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);">
-                <div class="d-flex align-items-center justify-content-between text-secondary" style="font-size: 0.72rem;">
-                  <span class="text-white-50"><i class="bi bi-cash-stack text-warning me-1"></i>총 발매금액</span>
-                  <span class="badge bg-secondary text-white" id="totoLiveSaleCountBadge" style="font-size: 0.62rem;">284,382표</span>
-                </div>
-                <div class="fw-bold text-white text-truncate mt-0.5" id="totoLiveSellAmtText" style="font-size: 1.02rem; font-family: monospace;">
-                  2억 8,438만 원
-                </div>
-              </div>
-            </div>
-
-            <!-- 이월금액 & 등수별 배분 요약 카드 -->
-            <div class="col-6 col-md-4">
-              <div class="p-2 rounded-2 h-100" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15);">
-                <div class="d-flex align-items-center justify-content-between text-secondary" style="font-size: 0.72rem;">
-                  <span class="text-white-50"><i class="bi bi-arrow-repeat text-info me-1"></i>이월 / 배분 비율</span>
-                  <span class="text-white-50 small" id="totoLiveSyncTimeText" style="font-size: 0.62rem;">실시간 집계</span>
-                </div>
-                <div class="d-flex align-items-center justify-content-between mt-0.5 text-truncate">
-                  <span class="fw-bold text-warning" id="totoLiveForwardText" style="font-size: 0.90rem;">이월 없음</span>
-                  <span class="text-white-50 small" style="font-size: 0.68rem;">(1등 25% · 2등 10% · 3등 5% · 4등 10%)</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sport Tabs & Horizontal Round Scroll Track & Tool Actions -->
+        <!-- Sport Tabs & Horizontal Round Scroll Track & Tool Actions (Clean Light Theme) -->
         <div class="px-3 py-2 border-bottom" style="background: #f8fafc; border-color: #e2e8f0 !important;">
           <!-- Top Row: Sport Tabs & Fast Actions -->
           <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
             <div class="d-flex gap-1">
-              <button class="btn btn-sm fw-bold px-2.5 py-1" id="totoModalTabWDL" onclick="switchTotoModalGame('WDL')" style="background: #0f172a; color: #f8fafc; border: 1.5px solid #0f172a; border-radius: 6px; font-size: 0.78rem;">
+              <button class="btn btn-sm fw-bold px-2.5 py-1" id="totoModalTabWDL" onclick="switchTotoModalGame('WDL')" style="background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8; border-radius: 6px; font-size: 0.78rem;">
                 ⚽ 축구 승무패
               </button>
               <button class="btn btn-sm fw-bold px-2.5 py-1" id="totoModalTabW1L" onclick="switchTotoModalGame('W1L')" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem;">
@@ -2328,11 +2278,8 @@
               <button class="btn btn-xs py-1 px-2 fw-bold text-primary" onclick="loadBetmanToto(currentTotoRound, currentBetmanTs, true)" title="베트맨 공식 최신 데이터 새로고침" style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:4px; font-size:0.72rem;">
                 <i class="bi bi-arrow-clockwise me-0.5"></i>최신화
               </button>
-              <button class="btn btn-xs py-1 px-2 fw-bold text-white" onclick="autoPickTotoAi(currentTotoRound)" style="background: linear-gradient(135deg, #0284c7, #06b6d4); border:none; border-radius:4px; font-size:0.72rem;" title="AI 최고 확률 14경기 단통 자동 마킹">
+              <button class="btn btn-xs py-1 px-2 fw-bold text-white" onclick="autoMarkTotoAi(currentTotoRound)" style="background: #1d4ed8; border:none; border-radius:4px; font-size:0.72rem;" title="AI 최고 확률 14경기 단통 자동 마킹">
                 <i class="bi bi-robot me-0.5"></i>AI 올픽
-              </button>
-              <button class="btn btn-xs py-1 px-2 fw-bold text-dark" onclick="randomPickToto(currentTotoRound)" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:4px; font-size:0.72rem;" title="랜덤 조합 자동 마킹">
-                <i class="bi bi-dice-5 me-0.5"></i>랜덤픽
               </button>
               <button class="btn btn-xs py-1 px-2 fw-bold text-danger" onclick="resetTotoMarks(currentTotoRound)" style="background:#fef2f2; border:1px solid #fca5a5; border-radius:4px; font-size:0.72rem;" title="마킹 초기화">
                 <i class="bi bi-trash me-0.5"></i>초기화
@@ -12381,9 +12328,9 @@ function getFullModalMatchList() {
         const btn = document.getElementById('totoModalTab' + k);
         if (btn) {
           if (k === currentTotoRound) {
-            btn.style.background = '#0f172a';
-            btn.style.color = '#f8fafc';
-            btn.style.border = '1.5px solid #0f172a';
+            btn.style.background = '#1d4ed8';
+            btn.style.color = '#ffffff';
+            btn.style.border = '1.5px solid #1d4ed8';
           } else {
             btn.style.background = '#ffffff';
             btn.style.color = '#475569';
@@ -12411,9 +12358,9 @@ function getFullModalMatchList() {
         const btn = document.getElementById('totoModalTab' + k);
         if (btn) {
           if (k === gameKey) {
-            btn.style.background = '#0f172a';
-            btn.style.color = '#f8fafc';
-            btn.style.border = '1.5px solid #0f172a';
+            btn.style.background = '#1d4ed8';
+            btn.style.color = '#ffffff';
+            btn.style.border = '1.5px solid #1d4ed8';
           } else {
             btn.style.background = '#ffffff';
             btn.style.color = '#475569';
@@ -12547,9 +12494,9 @@ function getFullModalMatchList() {
         const btn = document.getElementById('totoModalTab' + k);
         if (btn) {
           if (k === totoKey) {
-            btn.style.background = '#0f172a';
-            btn.style.color = '#f8fafc';
-            btn.style.border = '1.5px solid #0f172a';
+            btn.style.background = '#1d4ed8';
+            btn.style.color = '#ffffff';
+            btn.style.border = '1.5px solid #1d4ed8';
             btn.classList.add('active');
           } else {
             btn.style.background = '#ffffff';
@@ -12612,7 +12559,7 @@ function getFullModalMatchList() {
         mobileCardsHtml += `
           <div class="d-flex align-items-center justify-content-between py-1 px-2 mb-1 bg-white border rounded ${hasPick ? 'border-primary' : 'border-slate-200'}" style="font-size: 0.76rem;">
             <div class="d-flex align-items-center gap-1" style="min-width: 30px;">
-              <span class="badge" style="background: #0f172a; color: #fff; font-weight: 800; font-size: 0.68rem; padding: 2px 4px; border-radius: 3px;">
+              <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 800; font-size: 0.68rem; padding: 2px 4px; border-radius: 3px;">
                 ${String(m.seq).padStart(2, '0')}
               </span>
             </div>
@@ -12651,7 +12598,7 @@ function getFullModalMatchList() {
         rowsHtml += `
           <tr class="toto-modal-row ${hasPick ? 'row-has-pick' : ''}" onclick="openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
             <td class="text-center py-1 px-1" style="width: 48px;">
-              <span class="badge" style="background:#0f172a; color:#ffffff; font-weight:800; font-size:0.72rem; border-radius:4px; padding: 2px 5px;">
+              <span class="badge" style="background:#eff6ff; color:#1d4ed8; border: 1px solid #bfdbfe; font-weight:800; font-size:0.72rem; border-radius:4px; padding: 2px 5px;">
                 ${String(m.seq).padStart(2, '0')}
               </span>
             </td>
@@ -12698,7 +12645,7 @@ function getFullModalMatchList() {
               ${resultBadge}
             </td>
             <td class="py-1 px-1 text-center" style="width: 65px;">
-              <button type="button" class="btn btn-xs fw-bold text-dark" onclick="event.stopPropagation(); openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="background:#ffffff; border:1.5px solid #0f172a; border-radius:4px; font-size:0.68rem; padding: 2px 5px; white-space:nowrap;" title="클릭 시 [${m.home} vs ${m.away}] 1:1 세이버 분석실 팝업 열기">
+              <button type="button" class="btn btn-xs fw-bold text-dark" onclick="event.stopPropagation(); openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:4px; font-size:0.68rem; padding: 2px 5px; white-space:nowrap;" title="클릭 시 [${m.home} vs ${m.away}] 1:1 세이버 분석실 팝업 열기">
                 지표↗
               </button>
             </td>
@@ -12721,18 +12668,18 @@ function getFullModalMatchList() {
       const calcHtml = buildTotoCalculatorHtml(totoKey, toto);
 
       modalBody.innerHTML = `
-        <!-- 상단 실시간 상금 요약 & 원터치 마킹 제어 바 (원스크린 최적화) -->
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 p-2 mb-2 rounded" style="background: #0f172a; color: #ffffff;">
+        <!-- 상단 실시간 상금 요약 & 원터치 마킹 제어 바 (원스크린 최적화 & 클린 라이트 테마) -->
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 p-2 mb-2 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0; color: #1e293b;">
           <div class="d-flex align-items-center gap-2 flex-wrap" style="font-size: 0.80rem;">
-            <span class="badge bg-warning text-dark fw-bold">1등 ${toto.first_prize_text || '11.1억'}</span>
-            <span>이월: <b class="text-warning">${toto.forward_text || '5.5억'}</b></span>
-            <span class="text-slate-300">발매: <b class="text-white">${toto.total_sell_text || '3,134만'} (${toto.totalVotes || '31,342'}표)</b></span>
+            <span class="badge bg-danger text-white fw-bold">1등 ${toto.first_prize_text || '11.1억'}</span>
+            <span>이월: <b class="text-danger">${toto.forward_text || '5.5억'}</b></span>
+            <span class="text-secondary">발매: <b class="text-dark">${toto.total_sell_text || '3,134만'} (${toto.totalVotes || '31,342'}표)</b></span>
           </div>
           <div class="d-flex align-items-center gap-1.5">
-            <button type="button" class="btn btn-xs btn-primary fw-bold px-2 py-1" onclick="autoMarkTotoAi('${totoKey}')" style="font-size: 0.72rem; border-radius: 4px;">
+            <button type="button" class="btn btn-xs fw-bold px-2 py-1 text-white" onclick="autoMarkTotoAi('${totoKey}')" style="background: #1d4ed8; border: none; font-size: 0.72rem; border-radius: 4px;">
               <i class="bi bi-lightning-charge-fill me-1"></i>AI 1위픽 자동마킹
             </button>
-            <button type="button" class="btn btn-xs btn-outline-light fw-bold px-2 py-1" onclick="resetTotoMarks('${totoKey}')" style="font-size: 0.72rem; border-radius: 4px;">
+            <button type="button" class="btn btn-xs fw-bold px-2 py-1 text-dark" onclick="resetTotoMarks('${totoKey}')" style="background: #ffffff; border: 1px solid #cbd5e1; font-size: 0.72rem; border-radius: 4px;">
               <i class="bi bi-arrow-counterclockwise me-1"></i>초기화
             </button>
           </div>
@@ -12745,7 +12692,7 @@ function getFullModalMatchList() {
         <!-- 데스크톱 전용 테이블 뷰 -->
         <div class="table-responsive d-none d-md-block mb-2">
           <table class="table table-hover align-middle mb-0" style="min-width: 680px;">
-            <thead style="background: #0f172a; color: #f8fafc; font-size: 0.72rem;">
+            <thead style="background: #f1f5f9; color: #334155; border-bottom: 2px solid #cbd5e1; font-size: 0.72rem;">
               <tr>
                 <th class="text-center py-1.5" style="width: 48px;">번호</th>
                 <th class="text-center py-1.5" style="width: 100px;">대회 / 일시</th>
@@ -12995,13 +12942,13 @@ function getFullModalMatchList() {
 
           <div class="table-responsive mb-3">
             <table class="table table-bordered align-middle text-center mb-0" style="border-color: #e2e8f0; font-size: 0.84rem;">
-              <thead style="background: #0f172a; color: #f8fafc; font-size: 0.76rem;">
+              <thead style="background: #f1f5f9; color: #334155; border-bottom: 2px solid #cbd5e1; font-size: 0.76rem;">
                 <tr>
                   <th style="width: 70px;">등수</th>
                   <th>적중 조건</th>
                   <th>전국 적중 확률</th>
-                  <th style="color: #60a5fa;">🎯 예상 당첨 인원수</th>
-                  <th style="color: #fca5a5;">💰 1인당 예상 수령액</th>
+                  <th style="color: #1d4ed8;">🎯 예상 당첨 인원수</th>
+                  <th style="color: #dc2626;">💰 1인당 예상 수령액</th>
                 </tr>
               </thead>
               <tbody>
