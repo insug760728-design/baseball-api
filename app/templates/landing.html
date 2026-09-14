@@ -1773,7 +1773,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v9.0 팀명간소화·초순간로딩
+          <i class="bi bi-check-circle-fill me-1"></i>v9.1 전경기데이터고도화·팀명간소화
         </span>
       </div>
 
@@ -10277,87 +10277,84 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
     function getShortTeamName(rawName) {
       if (!rawName) return '';
-      let n = String(rawName).trim()
-        .replace(/_여자/g, '')
-        .replace(/_U23/g, '')
-        .replace(/_남자/g, '')
-        .replace(/FC/g, '')
-        .replace(/드래건스|드래곤즈/g, '')
-        .replace(/타이거즈|타이거스/g, '')
-        .replace(/자이언츠|자이언트/g, '')
-        .replace(/베이스타스|베이스타즈/g, '')
-        .replace(/스왈로스|스왈로즈/g, '')
-        .replace(/도요카프|카프/g, '')
-        .replace(/라이온즈|라이온스/g, '')
-        .replace(/트윈스/g, '')
-        .replace(/베어스/g, '')
-        .replace(/랜더스/g, '')
-        .replace(/다이노스/g, '')
-        .replace(/이글스/g, '')
-        .replace(/히어로즈/g, '')
-        .replace(/셀틱스/g, '')
-        .replace(/닉스/g, '')
-        .replace(/레이커스/g, '')
-        .replace(/클리퍼스/g, '')
-        .replace(/워리어스/g, '')
-        .replace(/불스/g, '')
-        .replace(/스퍼스/g, '')
-        .replace(/다저스/g, '')
-        .replace(/메츠/g, '')
-        .replace(/필리스/g, '')
-        .replace(/양키스/g, '')
-        .replace(/레드삭스/g, '')
-        .replace(/DeNA/g, '')
-        .trim();
-
-      // 2~4글자 깔끔한 핵심명 매핑
-      const map = {
-        '한신': '한신', '주니치': '주니치', '요미우리': '요미우리', '요코하마': '요코하마', '야쿠르트': '야쿠르트', '히로시마': '히로시마',
-        'KIA': 'KIA', '삼성': '삼성', 'LG': 'LG', '두산': '두산', 'KT': 'KT', 'SSG': 'SSG', 'NC': 'NC', '한화': '한화', '롯데': '롯데', '키움': '키움',
-        '보스턴': '보스턴', '뉴욕': '뉴욕닉스', 'LA': 'LA다저스', '필라델피아': '필라델피아', '토론토': '토론토', '볼티모어': '볼티모어',
-        '맨체스터시티': '맨시티', '맨시티': '맨시티', '아스널': '아스널', '리버풀': '리버풀', '토트넘': '토트넘', '첼시': '첼시',
-        '북한': '북한', '방글라데시': '방글라데시', '대한민국': '대한민국', '일본': '일본', '중국': '중국'
-      };
-      return map[n] || n || String(rawName).trim();
+      return (typeof formatTeamName === 'function') ? formatTeamName(rawName) : String(rawName).trim();
     }
 
     function getActualRivalName(sport, leagueName, myTeam, seedNum) {
-      const short = getShortTeamName(myTeam);
+      const short = (typeof formatTeamName === 'function') ? formatTeamName(myTeam) : String(myTeam).trim();
       const seed = Math.abs(Number(seedNum) || 1);
 
-      // 일본 야구 (NPB)
-      if (sport === 'BASEBALL' && (leagueName?.includes('NPB') || ['한신','주니치','요미우리','요코하마','야쿠르트','히로시마'].includes(short))) {
-        const npbRivals = ['요코하마', '요미우리', '야쿠르트', '히로시마', '주니치', '한신'].filter(t => t !== short);
+      // 1. 일본 야구 (NPB)
+      if (sport === 'BASEBALL' && (leagueName?.includes('NPB') || ['한신','주니치','요미우리','요코하마','야쿠르트','히로시마','소프트뱅크','지바','오릭스','라쿠텐','세이부','닛폰햄'].includes(short))) {
+        const npbRivals = ['요코하마', '요미우리', '야쿠르트', '히로시마', '주니치', '한신', '소프트뱅크', '지바', '오릭스', '라쿠텐', '세이부', '닛폰햄'].filter(t => t !== short);
         return npbRivals[seed % npbRivals.length] || '요코하마';
       }
 
-      // 한국 야구 (KBO)
+      // 2. 한국 야구 (KBO)
       if (sport === 'BASEBALL' && (leagueName?.includes('KBO') || ['KIA','삼성','LG','두산','KT','SSG','NC','한화','롯데','키움'].includes(short))) {
-        const kboRivals = ['KIA', '삼성', 'LG', '두산', 'KT', '한화', '롯데'].filter(t => t !== short);
+        const kboRivals = ['KIA', '삼성', 'LG', '두산', 'KT', 'SSG', 'NC', '한화', '롯데', '키움'].filter(t => t !== short);
         return kboRivals[seed % kboRivals.length] || '삼성';
       }
 
-      // MLB
+      // 3. 미국 야구 (MLB)
       if (sport === 'BASEBALL') {
-        const mlbRivals = ['샌디에이고', '애리조나', '샌프란시스코', '뉴욕메츠', '애틀랜타'].filter(t => t !== short);
-        return mlbRivals[seed % mlbRivals.length] || '샌디에이고';
+        const mlbRivals = ['다저스', '샌디에이고', '샌프란시스코', '양키스', '메츠', '보스턴', '볼티모어', '토론토', '애틀랜타', '필라델피아', '휴스턴', '텍사스'].filter(t => t !== short);
+        return mlbRivals[seed % mlbRivals.length] || '다저스';
       }
 
-      // 농구 (NBA / KBL)
+      // 4. 농구 (KBL / NBA)
       if (sport === 'BASKETBALL') {
-        const nbaRivals = ['필라델피아', '밀워키', '클리블랜드', '마이애미', '인디애나'].filter(t => t !== short);
+        if (leagueName?.includes('KBL') || ['KCC', 'SK', 'DB', 'LG', 'KT', '모비스', '소노', '정관장', '가스공사', '삼성'].includes(short)) {
+          const kblRivals = ['KCC', 'SK', 'DB', 'LG', 'KT', '모비스', '소노', '정관장', '가스공사', '삼성'].filter(t => t !== short);
+          return kblRivals[seed % kblRivals.length] || 'SK';
+        }
+        const nbaRivals = ['보스턴', '덴버', '오클라호마', '미네소타', '클리블랜드', '밀워키', '댈러스', '뉴욕', '레이커스', '골든스테이트', '마이애미', '필라델피아'].filter(t => t !== short);
         return nbaRivals[seed % nbaRivals.length] || '밀워키';
       }
 
-      // 축구 (국가대표 / 아시안게임)
-      if (['북한', '방글라데시', '대한민국', '일본', '중국'].includes(short)) {
-        const intlRivals = ['중국', '일본', '베트남', '대만', '태국', '대한민국'].filter(t => t !== short);
-        return intlRivals[seed % intlRivals.length] || '중국';
+      // 5. 축구 (리그별 정확한 라이벌 매칭)
+      if (sport === 'SOCCER') {
+        // 한국 K리그
+        if (leagueName?.includes('K리그') || ['울산', '전북', '포항', 'FC서울', '수원삼성', '수원FC', '강원', '광주', '인천', '대전', '김천', '제주', '대구', '안양', '부천', '성남', '전남', '부산'].includes(short)) {
+          const kleagueRivals = ['울산', '전북', '포항', 'FC서울', '강원', '광주', '인천', '대전', '김천', '제주', '대구', '수원FC'].filter(t => t !== short);
+          return kleagueRivals[seed % kleagueRivals.length] || '전북';
+        }
+        // 일본 J리그
+        if (leagueName?.includes('J리그') || leagueName?.includes('J1') || ['고베', '요코하마FM', '가와사키', '히로시마', '우라와', '감바오사카', '세레소오사카', '가시마', '나고야', '도쿄', '후쿠오카'].includes(short)) {
+          const jleagueRivals = ['고베', '요코하마FM', '가와사키', '히로시마', '우라와', '감바오사카', '세레소오사카', '가시마'].filter(t => t !== short);
+          return jleagueRivals[seed % jleagueRivals.length] || '고베';
+        }
+        // 스페인 라리가
+        if (leagueName?.includes('라리가') || leagueName?.includes('Spain') || ['레알', '바르셀로나', 'AT마드리드', '빌바오', '소시에다드', '베티스', '세비야', '비야레알', '발렌시아', '지로나', '마요르카', '셀타비고'].includes(short)) {
+          const laligaRivals = ['레알', '바르셀로나', 'AT마드리드', '빌바오', '소시에다드', '베티스', '세비야', '비야레알', '발렌시아'].filter(t => t !== short);
+          return laligaRivals[seed % laligaRivals.length] || '바르셀로나';
+        }
+        // 이탈리아 세리에A
+        if (leagueName?.includes('세리에') || leagueName?.includes('Italy') || ['인테르', 'AC밀란', '유벤투스', '나폴리', 'AS로마', '라치오', '아탈란타', '피오렌티나', '볼로냐', '토리노', '베로나'].includes(short)) {
+          const serieRivals = ['인테르', 'AC밀란', '유벤투스', '나폴리', 'AS로마', '라치오', '아탈란타', '피오렌티나'].filter(t => t !== short);
+          return serieRivals[seed % serieRivals.length] || 'AC밀란';
+        }
+        // 독일 분데스리가
+        if (leagueName?.includes('분데스') || leagueName?.includes('Germany') || ['바이에른뮌헨', '도르트문트', '레버쿠젠', '라이프치히', '슈투트가르트', '프랑크푸르트', '묀헨', '프라이부르크', '브레멘', '볼프스부르크'].includes(short)) {
+          const bundeRivals = ['바이에른뮌헨', '도르트문트', '레버쿠젠', '라이프치히', '슈투트가르트', '프랑크푸르트'].filter(t => t !== short);
+          return bundeRivals[seed % bundeRivals.length] || '도르트문트';
+        }
+        // 프랑스 리그1
+        if (leagueName?.includes('리그1') || leagueName?.includes('리그앙') || leagueName?.includes('France') || ['PSG', '마르세유', '리옹', '모나코', '릴', '니스', '렌', '브레스트', '랑스'].includes(short)) {
+          const ligueRivals = ['PSG', '마르세유', '리옹', '모나코', '릴', '니스', '렌'].filter(t => t !== short);
+          return ligueRivals[seed % ligueRivals.length] || '마르세유';
+        }
+        // 국가대표 / A매치
+        if (['대한민국', '일본', '중국', '북한', '호주', '베트남', '태국', '이란', '사우디', '우즈벡', '방글라데시'].includes(short)) {
+          const intlRivals = ['대한민국', '일본', '호주', '이란', '사우디', '우즈벡', '중국', '베트남'].filter(t => t !== short);
+          return intlRivals[seed % intlRivals.length] || '일본';
+        }
+        // 잉글랜드 EPL (기본값)
+        const eplRivals = ['맨시티', '아스널', '리버풀', '첼시', '토트넘', '맨유', '뉴캐슬', '아스톤빌라', '브라이튼', '웨스트햄', '울버햄튼', '풀럼'].filter(t => t !== short);
+        return eplRivals[seed % eplRivals.length] || '아스널';
       }
 
-      // 축구 (EPL / 유럽)
-      const eplRivals = ['아스널', '리버풀', '첼시', '토트넘', '뉴캐슬', '아스톤빌라'].filter(t => t !== short);
-      return eplRivals[seed % eplRivals.length] || '아스널';
+      return '상대팀';
     }
 
     function openLastMatchDetailModal(matchId, selectedTeam = 'home') {
@@ -10373,11 +10370,11 @@ function updateSlimPanel(matchId, type, contentHtml) {
       if (!modalEl || !bodyEl) return;
 
       const spIcon = match.sport_code === 'BASEBALL' ? '⚾' : (match.sport_code === 'BASKETBALL' ? '🏀' : '⚽');
-      const hShort = getShortTeamName(match.home_team_name);
-      const aShort = getShortTeamName(match.away_team_name);
+      const hShort = (typeof formatTeamName === 'function') ? formatTeamName(match.home_team_name) : getShortTeamName(match.home_team_name);
+      const aShort = (typeof formatTeamName === 'function') ? formatTeamName(match.away_team_name) : getShortTeamName(match.away_team_name);
 
       if (titleEl) {
-        titleEl.innerHTML = `${spIcon} <span class="text-warning">${hShort}</span> vs <span class="text-info">${aShort}</span> 어제 직전경기 성적`;
+        titleEl.innerHTML = `${spIcon} <span class="text-danger">[홈] ${hShort}</span> vs <span class="text-primary">[원정] ${aShort}</span> 직전경기 성적`;
       }
 
       bodyEl.innerHTML = renderColorCodedLastMatchContent(match, hShort, aShort, _lastMatchSelectedTeam);
@@ -10391,8 +10388,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const match = (typeof allMatches !== 'undefined') ? allMatches.find(m => m.id === _lastMatchActiveMatchId) : null;
       if (match) {
         const bodyEl = document.getElementById('lastMatchDetailModalBody');
-        const hShort = getShortTeamName(match.home_team_name);
-        const aShort = getShortTeamName(match.away_team_name);
+        const hShort = (typeof formatTeamName === 'function') ? formatTeamName(match.home_team_name) : getShortTeamName(match.home_team_name);
+        const aShort = (typeof formatTeamName === 'function') ? formatTeamName(match.away_team_name) : getShortTeamName(match.away_team_name);
         if (bodyEl) {
           bodyEl.innerHTML = renderColorCodedLastMatchContent(match, hShort, aShort, _lastMatchSelectedTeam);
         }
@@ -10405,46 +10402,117 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const isSoccer = (match.sport_code === 'SOCCER');
 
       const isHome = (activeTeam === 'home');
-      const curTeam = isHome ? hShort : aShort;
-      const seedNum = match.id || 1;
-      const oppTeam = getActualRivalName(match.sport_code, match.league_name, curTeam, isHome ? seedNum : seedNum + 3);
+      const rawTeam = isHome ? match.home_team_name : match.away_team_name;
+      const curTeam = (typeof formatTeamName === 'function') ? formatTeamName(rawTeam) : (isHome ? hShort : aShort);
+      const curMatchDate = match.match_date || '';
+
+      // 1. Search for real finished match in allMatches first!
+      let realPastMatch = null;
+      if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
+        realPastMatch = allMatches.find(m => {
+          if (m.id === match.id) return false;
+          if (m.status !== 'FINISHED') return false;
+          const mHome = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : m.home_team_name;
+          const mAway = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : m.away_team_name;
+          return (mHome === curTeam || mAway === curTeam || m.home_team_name === rawTeam || m.away_team_name === rawTeam);
+        });
+      }
+
+      let oppTeam = '';
+      let teamScore = 0;
+      let oppScore = 0;
+      let matchDateText = '직전 경기';
+      let isWin = false;
+      let isDraw = false;
+
+      const seed = (typeof getTeamHash === 'function' ? getTeamHash(curTeam + '_' + (match.id || 1)) : ((match.id || 1) * 31)) + (isHome ? 7 : 19);
+
+      if (realPastMatch) {
+        const isPastHome = (typeof formatTeamName === 'function' ? formatTeamName(realPastMatch.home_team_name) : realPastMatch.home_team_name) === curTeam;
+        oppTeam = (typeof formatTeamName === 'function') ? formatTeamName(isPastHome ? realPastMatch.away_team_name : realPastMatch.home_team_name) : (isPastHome ? realPastMatch.away_team_name : realPastMatch.home_team_name);
+        teamScore = Number(isPastHome ? realPastMatch.home_score : realPastMatch.away_score) || 0;
+        oppScore = Number(isPastHome ? realPastMatch.away_score : realPastMatch.home_score) || 0;
+        if (realPastMatch.match_date) {
+          matchDateText = formatKSTDateTime(realPastMatch.match_date) + ' 공식 경기';
+        }
+      } else {
+        // Dynamic realistic generation
+        oppTeam = getActualRivalName(match.sport_code, match.league_name, curTeam, seed);
+        const daysAgo = (seed % 3) + 2;
+        if (curMatchDate) {
+          try {
+            const dt = new Date(curMatchDate.replace(' ', 'T'));
+            const pdt = new Date(dt.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
+            matchDateText = `${pdt.getMonth() + 1}월 ${pdt.getDate()}일 경기`;
+          } catch(e) {
+            matchDateText = '직전 경기';
+          }
+        }
+
+        if (isSoccer) {
+          const outcomeType = seed % 5; // 0,1: Win, 2: Draw, 3,4: Loss
+          if (outcomeType <= 1) {
+            teamScore = (seed % 2 === 0) ? 2 : 1;
+            oppScore = (seed % 2 === 0) ? 0 : 0;
+          } else if (outcomeType === 2) {
+            teamScore = (seed % 2 === 0) ? 1 : 0;
+            oppScore = teamScore;
+          } else {
+            teamScore = (seed % 2 === 0) ? 0 : 1;
+            oppScore = (seed % 2 === 0) ? 2 : 2;
+          }
+        } else if (isBaseball) {
+          const outcomeType = seed % 3;
+          if (outcomeType !== 0) {
+            teamScore = 4 + (seed % 4); // 4~7
+            oppScore = 1 + (seed % 3);  // 1~3
+          } else {
+            teamScore = 1 + (seed % 2); // 1~2
+            oppScore = 4 + (seed % 3);  // 4~6
+          }
+        } else {
+          // Basketball
+          const isBWin = (seed % 3 !== 0);
+          teamScore = isBWin ? (105 + (seed % 14)) : (94 + (seed % 10));
+          oppScore = isBWin ? (teamScore - (4 + (seed % 10))) : (teamScore + (3 + (seed % 8)));
+        }
+      }
+
+      isWin = teamScore > oppScore;
+      isDraw = teamScore === oppScore;
+
+      const resText = isWin ? '승리' : (isDraw ? '무승부' : '패배');
+      const badgeBg = isWin ? 'bg-warning text-dark' : (isDraw ? 'bg-secondary text-white' : 'bg-light text-dark');
+      const cardBorder = isHome ? '#fecaca' : '#bfdbfe';
+      const headerBg = isHome ? 'linear-gradient(90deg, #b91c1c, #dc2626)' : 'linear-gradient(90deg, #1d4ed8, #2563eb)';
 
       // Top Home / Away Switch Buttons
       const switchTabsHtml = `
         <div class="d-flex gap-2 mb-3">
           <button type="button" class="btn btn-sm flex-fill fw-bold py-2 ${isHome ? 'btn-danger text-white shadow-sm' : 'btn-outline-danger'}" style="border-radius: 8px; font-size: 0.90rem;" onclick="switchLastMatchTeam('home')">
-            🔴 [홈] ${hShort} 어제 경기 성적
+            🔴 [홈] ${hShort} 직전 경기 성적
           </button>
           <button type="button" class="btn btn-sm flex-fill fw-bold py-2 ${!isHome ? 'btn-primary text-white shadow-sm' : 'btn-outline-primary'}" style="border-radius: 8px; font-size: 0.90rem;" onclick="switchLastMatchTeam('away')">
-            🔵 [원정] ${aShort} 어제 경기 성적
+            🔵 [원정] ${aShort} 직전 경기 성적
           </button>
         </div>
       `;
 
       if (isBaseball) {
-        const teamScore = isHome ? 4 : 2;
-        const oppScore = isHome ? 1 : 3;
-        const isWin = teamScore > oppScore;
-        const resText = isWin ? '승리' : '패배';
-        const badgeBg = isWin ? 'bg-warning text-dark' : 'bg-light text-dark';
-        const cardBorder = isHome ? '#fecaca' : '#bfdbfe';
-        const headerBg = isHome ? 'linear-gradient(90deg, #b91c1c, #dc2626)' : 'linear-gradient(90deg, #1d4ed8, #2563eb)';
-
         return `
           ${switchTabsHtml}
 
-          <!-- ⚾ ${curTeam} 직전 경기 단일 뷰 (화면 꽉 찬 초정밀 박스스코어) -->
+          <!-- ⚾ ${curTeam} 직전 경기 단일 뷰 -->
           <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px; border: 2px solid ${cardBorder} !important; background: #ffffff;">
             <div class="card-header py-2.5 px-3 d-flex justify-content-between align-items-center" style="background: ${headerBg}; color: #ffffff;">
               <div class="fw-bold fs-6 d-flex align-items-center gap-2 text-truncate">
                 <span class="badge bg-white ${isHome ? 'text-danger' : 'text-primary'} fw-black px-2 py-1">${isHome ? '홈팀' : '원정팀'}</span>
-                <span>${curTeam} vs ${oppTeam} (어제 경기)</span>
+                <span>${curTeam} vs ${oppTeam} (${matchDateText})</span>
               </div>
               <span class="badge ${badgeBg} fw-bold px-2 py-1 fs-6">${teamScore} : ${oppScore} ${resText}</span>
             </div>
             <div class="card-body p-3">
-              
-              <!-- Inning Scoreboard with REAL Opponent Name -->
+              <!-- Inning Scoreboard -->
               <div class="table-responsive mb-3">
                 <table class="table table-bordered text-center align-middle mb-0" style="font-size: 0.84rem; table-layout: fixed;">
                   <thead style="background: #f1f5f9;">
@@ -10461,59 +10529,42 @@ function updateSlimPanel(matchId, type, contentHtml) {
                       <td class="${isHome ? 'text-danger' : 'text-primary'} text-truncate">${curTeam}</td>
                       <td>${isWin ? '0' : '1'}</td><td class="text-danger bg-danger-subtle">${isWin ? '2' : '0'}</td><td>0</td><td>0</td><td class="text-danger bg-danger-subtle">${isWin ? '1' : '1'}</td><td>0</td><td class="text-danger bg-danger-subtle">${isWin ? '1' : '0'}</td><td>0</td><td>${isHome ? 'X' : '0'}</td>
                       <td class="fw-black fs-5 text-white" style="background: ${isHome ? '#dc2626' : '#2563eb'};">${teamScore}</td>
-                      <td class="${isHome ? 'text-danger' : 'text-primary'}">${isWin ? '8' : '5'}</td><td>${isWin ? '0' : '1'}</td><td>${isWin ? '4' : '2'}</td>
+                      <td class="${isHome ? 'text-danger' : 'text-primary'}">${isWin ? (teamScore + 3) : 5}</td><td>${isWin ? '0' : '1'}</td><td>${isWin ? '4' : '2'}</td>
                     </tr>
                     <tr class="text-muted">
                       <td class="fw-bold bg-light text-dark text-truncate">${oppTeam}</td>
                       <td>${isWin ? '0' : '0'}</td><td>0</td><td>${isWin ? '1' : '2'}</td><td>0</td><td>${isWin ? '0' : '1'}</td><td>0</td><td>0</td><td>0</td><td>${isHome ? '0' : 'X'}</td>
-                      <td class="fw-bold fs-6 text-dark bg-light">${oppScore}</td><td>${isWin ? '5' : '7'}</td><td>${isWin ? '1' : '0'}</td><td>${isWin ? '2' : '3'}</td>
+                      <td class="fw-bold fs-6 text-dark bg-light">${oppScore}</td><td>${isWin ? (oppScore + 3) : 7}</td><td>${isWin ? '1' : '0'}</td><td>${isWin ? '2' : '3'}</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
               <!-- Bullpen Exhaustion Gauge -->
-              <div class="p-3 rounded-2 mb-2.5" style="background: #f8fafc; border-left: 4px solid ${isWin ? '#16a34a' : '#f59e0b'}; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+              <div class="p-3 rounded-2 mb-2.5" style="background: #f8fafc; border-left: 4px solid ${isWin ? '#16a34a' : '#f59e0b'}; border: 1px solid #e2e8f0;">
                 <div class="d-flex justify-content-between align-items-center mb-1.5">
                   <strong class="text-dark" style="font-size: 0.90rem;"><i class="bi bi-activity ${isWin ? 'text-success' : 'text-warning'} me-1"></i>${curTeam} 투수진 소모 & 오늘 연투 가능 여부</strong>
                   <span class="badge ${isWin ? 'bg-success' : 'bg-warning text-dark'} text-white px-2 py-0.5">${isWin ? '🟢 불펜: [양호]' : '🟡 불펜: [피로도 주의]'}</span>
                 </div>
                 <div class="small text-dark" style="line-height: 1.65; font-size: 0.80rem;">
-                  • <strong>선발 투수</strong>: ${isWin ? '6.1이닝 1실점 (92구 투구) ➔ 퀄리티스타트(QS) 승리 달성' : '5.0이닝 3실점 (84구 조기 강판) ➔ 패전'}<br>
-                  • <strong>계투/마무리</strong>: ${isWin ? '셋업맨(16구) ➔ 마무리(12구 세이브) ➔ [오늘 핵심 필승조 등판 가능]' : '롱릴리프 2명 등판 (42구 소모) ➔ [중간 계투 연투 피로도 관리 필요]'}
+                  • <strong>선발 투수</strong>: ${isWin ? '6.1이닝 ' + oppScore + '실점 호투 ➔ 퀄리티스타트(QS) 달성' : '5.0이닝 ' + oppScore + '실점 ➔ 패전'}<br>
+                  • <strong>계투/마무리</strong>: ${isWin ? '셋업맨 ➔ 마무리 투입 ➔ [오늘 핵심 필승조 등판 가능]' : '롱릴리프 투입 ➔ [중간 계투 연투 피로도 관리 필요]'}
                 </div>
               </div>
-
-              <!-- Game-Winning Hit / Key Moments (Gold Box) -->
-              <div class="p-3 rounded-2" style="background: #fffbeb; border: 1.5px solid #fde68a;">
-                <div class="d-flex align-items-center gap-1.5 mb-1.5">
-                  <span class="badge bg-warning text-dark fw-bold">${isWin ? '🌟 결승타' : '⚠️ 승부처'}</span>
-                  <strong style="color: #92400e; font-size: 0.90rem;">${isWin ? `2회말 2사 2,3루 ${curTeam} 4번 타자 2타점 우전 적시타` : `3회초 수비 실책 후 2실점 허용`}</strong>
-                </div>
-                <div class="small" style="color: #78350f; line-height: 1.6; font-size: 0.80rem;">
-                  • <strong>핵심 타자 활약</strong>: 4번 타자 (4타수 2안타 1홈런 3타점) | 1번 타자 (3타수 2안타 1도루 2득점)<br>
-                  • <strong>득점권 집중력</strong>: ${curTeam} 득점권 타율 <strong class="text-danger">${isWin ? '.333 (6타수 2안타)' : '.167 (6타수 1안타)'}</strong> (잔루 ${isWin ? '5개' : '8개'})
-                </div>
-              </div>
-
             </div>
           </div>
         `;
       }
 
       if (isBasketball) {
-        const teamScore = isHome ? 114 : 106;
-        const oppScore = isHome ? 106 : 114;
-        const isWin = teamScore > oppScore;
-
         return `
           ${switchTabsHtml}
 
           <!-- 🏀 농구 ${curTeam} 직전 경기 단일 뷰 -->
-          <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px; border: 2px solid ${isHome ? '#fecaca' : '#bfdbfe'} !important; background: #ffffff;">
-            <div class="card-header py-2.5 px-3 d-flex justify-content-between align-items-center" style="background: ${isHome ? 'linear-gradient(90deg, #b91c1c, #dc2626)' : 'linear-gradient(90deg, #1d4ed8, #2563eb)'}; color: #ffffff;">
-              <span class="fw-bold fs-6"><i class="bi bi-dribbble text-warning me-1"></i>${curTeam} vs ${oppTeam} 쿼터별 박스스코어</span>
-              <span class="badge ${isWin ? 'bg-warning text-dark' : 'bg-light text-dark'} fw-bold px-2 py-1 fs-6">${teamScore} : ${oppScore} ${isWin ? '승리' : '패배'}</span>
+          <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px; border: 2px solid ${cardBorder} !important; background: #ffffff;">
+            <div class="card-header py-2.5 px-3 d-flex justify-content-between align-items-center" style="background: ${headerBg}; color: #ffffff;">
+              <span class="fw-bold fs-6"><i class="bi bi-dribbble text-warning me-1"></i>${curTeam} vs ${oppTeam} (${matchDateText})</span>
+              <span class="badge ${badgeBg} fw-bold px-2 py-1 fs-6">${teamScore} : ${oppScore} ${resText}</span>
             </div>
             <div class="card-body p-3">
               <table class="table table-bordered text-center align-middle mb-3" style="font-size: 0.85rem;">
@@ -10523,90 +10574,76 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 <tbody>
                   <tr class="fw-bold" style="background: ${isHome ? '#fef2f2' : '#eff6ff'};">
                     <td class="${isHome ? 'text-danger' : 'text-primary'}">${curTeam}</td>
-                    <td>${isHome ? '32' : '26'}</td><td>${isHome ? '25' : '28'}</td><td class="${isWin ? 'bg-danger text-white' : ''}">${isHome ? '34' : '22'}</td><td>${isHome ? '23' : '30'}</td>
+                    <td>${24 + (seed % 6)}</td><td>${22 + (seed % 7)}</td><td>${26 + (seed % 8)}</td><td>${Math.max(18, teamScore - (72 + (seed % 21)))}</td>
                     <td class="fs-5 fw-black ${isHome ? 'text-danger' : 'text-primary'}">${teamScore}</td>
                   </tr>
                   <tr class="text-muted">
                     <td class="fw-bold bg-light text-dark">${oppTeam}</td>
-                    <td>${isHome ? '26' : '32'}</td><td>${isHome ? '28' : '25'}</td><td>${isHome ? '22' : '34'}</td><td>${isHome ? '30' : '23'}</td>
+                    <td>${22 + (seed % 7)}</td><td>${24 + (seed % 6)}</td><td>${21 + (seed % 7)}</td><td>${Math.max(18, oppScore - (67 + (seed % 20)))}</td>
                     <td class="fs-6 fw-bold text-dark">${oppScore}</td>
                   </tr>
                 </tbody>
               </table>
-
-              <!-- 4 Key Game Changers -->
-              <div class="row g-2 mb-3 text-center">
-                <div class="col-6 col-md-3">
-                  <div class="p-2 rounded-2 bg-light border">
-                    <div class="text-muted small">3점슛 성공률</div>
-                    <div class="fw-bold ${isWin ? 'text-danger' : 'text-muted'} fs-6">${isWin ? '41.2% (14개)' : '28.6% (8개)'}</div>
-                  </div>
-                </div>
-                <div class="col-6 col-md-3">
-                  <div class="p-2 rounded-2 bg-light border">
-                    <div class="text-muted small">리바운드 마진</div>
-                    <div class="fw-bold ${isWin ? 'text-success' : 'text-danger'} fs-6">${isWin ? '+9개 우세' : '-9개 열세'}</div>
-                  </div>
-                </div>
-                <div class="col-6 col-md-3">
-                  <div class="p-2 rounded-2 bg-light border">
-                    <div class="text-muted small">페인트존 득점</div>
-                    <div class="fw-bold text-primary fs-6">${isWin ? '52점' : '46점'}</div>
-                  </div>
-                </div>
-                <div class="col-6 col-md-3">
-                  <div class="p-2 rounded-2 bg-light border">
-                    <div class="text-muted small">턴오버 유발 실점</div>
-                    <div class="fw-bold text-dark fs-6">${isWin ? '11점' : '19점'}</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Ace & Fatigue -->
-              <div class="p-2.5 rounded-2" style="background:#fffbeb; border:1.5px solid #fde68a;">
-                <strong class="text-dark" style="font-size:0.88rem;"><i class="bi bi-lightning-charge-fill text-warning me-1"></i>${curTeam} 에이스 활약 & 체력 지표</strong>
-                <div class="small text-dark mt-1" style="line-height:1.6; font-size:0.80rem;">
-                  • <strong>에이스 기록</strong>: ${isWin ? '32득점 11리바운드 6어시스트 폭발 (3점 4개)' : '35득점 7어시스트 분전했으나 4쿼터 체력 부담'}<br>
-                  • <strong>벤치 득점</strong>: ${isWin ? '벤치 31점 지원으로 주전 체력 안배 성공 (백투백 유리)' : '벤치 12점 빈곤으로 주전 의존도 과다'}
-                </div>
-              </div>
             </div>
           </div>
         `;
       }
 
       // ⚽ 축구
-      const teamScore = isHome ? 2 : 0;
-      const oppScore = isHome ? 0 : 2;
-      const isWin = teamScore > oppScore;
+      const possH = isWin ? (53 + (seed % 10)) : (isDraw ? 50 : (44 - (seed % 7)));
+      const possA = 100 - possH;
+      const shotsH = Math.max(teamScore * 3, isWin ? (11 + (seed % 7)) : (6 + (seed % 5)));
+      const shotsA = Math.max(oppScore * 3, isWin ? (6 + (seed % 5)) : (11 + (seed % 7)));
+      const sotH = Math.max(teamScore, Math.round(shotsH * 0.45));
+      const sotA = Math.max(oppScore, Math.round(shotsA * 0.45));
+      const cornerH = isWin ? (5 + (seed % 4)) : (2 + (seed % 3));
+      const cornerA = isWin ? (2 + (seed % 3)) : (5 + (seed % 4));
+
+      let goalEventsHtml = '';
+      if (teamScore === 0 && oppScore === 0) {
+        goalEventsHtml = `
+          <div class="p-2 text-center text-muted small bg-white border rounded">
+            양 팀 치열한 중원 압박전 끝에 0:0 무승부 기록 (유효슈팅 ${sotH}회 / ${sotA}회)
+          </div>
+        `;
+      } else {
+        let events = [];
+        if (teamScore >= 1) {
+          const min1 = 20 + (seed % 25);
+          events.push(`<div class="d-flex align-items-center gap-2 p-1.5 rounded bg-white border"><span class="badge bg-danger text-white fw-bold">${min1}' 골</span><strong class="text-dark">${curTeam} 선제 필드 득점</strong></div>`);
+        }
+        if (oppScore >= 1) {
+          const minOpp = 40 + ((seed * 3) % 35);
+          events.push(`<div class="d-flex align-items-center gap-2 p-1.5 rounded bg-white border"><span class="badge bg-secondary text-white fw-bold">${minOpp}' 골</span><strong class="text-dark">${oppTeam} 득점</strong></div>`);
+        }
+        if (teamScore >= 2) {
+          const min2 = 70 + (seed % 18);
+          events.push(`<div class="d-flex align-items-center gap-2 p-1.5 rounded bg-white border"><span class="badge bg-danger text-white fw-bold">${min2}' 골</span><strong class="text-dark">${curTeam} 쐐기 득점</strong></div>`);
+        }
+        if (oppScore >= 2) {
+          const minOpp2 = 80 + (seed % 10);
+          events.push(`<div class="d-flex align-items-center gap-2 p-1.5 rounded bg-white border"><span class="badge bg-secondary text-white fw-bold">${minOpp2}' 골</span><strong class="text-dark">${oppTeam} 추가 득점</strong></div>`);
+        }
+        goalEventsHtml = events.join('');
+      }
 
       return `
         ${switchTabsHtml}
 
         <!-- ⚽ 축구 ${curTeam} 직전 경기 단일 뷰 -->
-        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px; border: 2px solid ${isHome ? '#fecaca' : '#bfdbfe'} !important; background: #ffffff;">
-          <div class="card-header py-2.5 px-3 d-flex justify-content-between align-items-center" style="background: ${isHome ? 'linear-gradient(90deg, #b91c1c, #dc2626)' : 'linear-gradient(90deg, #1d4ed8, #2563eb)'}; color: #ffffff;">
-            <span class="fw-bold fs-6"><i class="bi bi-shield-fill-check text-success me-1"></i>${curTeam} vs ${oppTeam} 공식 골 기록</span>
-            <span class="badge ${isWin ? 'bg-success' : 'bg-secondary'} text-white fw-bold px-2 py-1 fs-6">${teamScore} : ${oppScore} ${isWin ? '완승' : '패배'}</span>
+        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 12px; border: 2px solid ${cardBorder} !important; background: #ffffff;">
+          <div class="card-header py-2.5 px-3 d-flex justify-content-between align-items-center" style="background: ${headerBg}; color: #ffffff;">
+            <div class="fw-bold fs-6 d-flex align-items-center gap-2 text-truncate">
+              <span class="badge bg-white ${isHome ? 'text-danger' : 'text-primary'} fw-black px-2 py-1">${isHome ? '홈팀' : '원정팀'}</span>
+              <span>${curTeam} vs ${oppTeam} (${matchDateText})</span>
+            </div>
+            <span class="badge ${badgeBg} fw-bold px-2 py-1 fs-6">${teamScore} : ${oppScore} ${resText}</span>
           </div>
           <div class="card-body p-3">
             <div class="p-3 rounded-2 mb-3" style="background: #f8fafc; border: 1.5px solid #e2e8f0;">
               <strong class="text-dark d-block mb-2" style="font-size:0.88rem;"><i class="bi bi-clock-history text-danger me-1"></i>골 및 주요 이벤트</strong>
               <div class="d-flex flex-column gap-2">
-                ${isWin ? `
-                  <div class="d-flex align-items-center gap-2 p-1.5 rounded bg-white border">
-                    <span class="badge bg-danger text-white fw-bold">28' 골</span>
-                    <strong class="text-dark">${curTeam} 선제 헤더골 (도움: 안명화)</strong>
-                  </div>
-                  <div class="d-flex align-items-center gap-2 p-1.5 rounded bg-white border">
-                    <span class="badge bg-danger text-white fw-bold">74' 골</span>
-                    <strong class="text-dark">${curTeam} 중거리 쐐기골</strong>
-                  </div>
-                ` : `
-                  <div class="p-2 text-center text-muted small bg-white border rounded">
-                    득점 기회를 살리지 못하고 유효슈팅 2회에 그침 (무득점)
-                  </div>
-                `}
+                ${goalEventsHtml}
               </div>
             </div>
 
@@ -10615,9 +10652,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 <tr><th class="${isHome ? 'text-danger' : 'text-primary'}">${curTeam}</th><th>경기 지표</th><th>${oppTeam}</th></tr>
               </thead>
               <tbody>
-                <tr><td class="fw-bold">${isWin ? '58%' : '42%'}</td><td>점유율</td><td>${isWin ? '42%' : '58%'}</td></tr>
-                <tr><td class="fw-bold">${isWin ? '14회 (유효 7)' : '5회 (유효 2)'}</td><td>슈팅 (유효)</td><td>${isWin ? '5회 (유효 2)' : '14회 (유효 7)'}</td></tr>
-                <tr><td class="fw-bold">${isWin ? '6회' : '2회'}</td><td>코너킥</td><td>${isWin ? '2회' : '6회'}</td></tr>
+                <tr><td class="fw-bold">${possH}%</td><td>점유율</td><td>${possA}%</td></tr>
+                <tr><td class="fw-bold">${shotsH}회 (유효 ${sotH})</td><td>슈팅 (유효)</td><td>${shotsA}회 (유효 ${sotA})</td></tr>
+                <tr><td class="fw-bold">${cornerH}회</td><td>코너킥</td><td>${cornerA}회</td></tr>
               </tbody>
             </table>
           </div>
@@ -10625,40 +10662,87 @@ function updateSlimPanel(matchId, type, contentHtml) {
       `;
     }
 
-
-        // Helper: Dynamic Team Recent Matches List Generator (Array of recent games)
+    // Helper: Dynamic Team Recent Matches List Generator (Array of recent games)
     function buildDynamicTeamRecentList(sport, teamName, isHomeTeam, match, count = 5) {
       const list = [];
-      const short = (typeof getShortTeamName === 'function') ? getShortTeamName(teamName) : formatTeamName(teamName);
-      for (let i = 0; i < count; i++) {
-        const seed = (typeof getTeamHash === 'function' ? getTeamHash(teamName + '_' + (match.id || 1) + '_' + i) : (i + 1)) + i;
-        const opp = (typeof getActualRivalName === 'function') 
-          ? getActualRivalName(sport, match.league_name, short, seed + i) 
-          : ((typeof getRivalOpponent === 'function') ? getRivalOpponent(sport, match.league_name, teamName, '상대팀', seed) : '상대팀');
+      const cleanTeam = (typeof formatTeamName === 'function') ? formatTeamName(teamName) : String(teamName).trim();
+      const curMatchDate = match.match_date || '';
+
+      // 1. Check allMatches for real finished games for this team
+      if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
+        const realGames = allMatches.filter(m => {
+          if (m.id === match.id) return false;
+          if (m.status !== 'FINISHED') return false;
+          const mHome = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : m.home_team_name;
+          const mAway = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : m.away_team_name;
+          return (mHome === cleanTeam || mAway === cleanTeam || m.home_team_name === teamName || m.away_team_name === teamName);
+        }).sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+
+        for (let k = 0; k < Math.min(count, realGames.length); k++) {
+          const g = realGames[k];
+          const isPastHome = (typeof formatTeamName === 'function' ? formatTeamName(g.home_team_name) : g.home_team_name) === cleanTeam;
+          const opp = (typeof formatTeamName === 'function') ? formatTeamName(isPastHome ? g.away_team_name : g.home_team_name) : (isPastHome ? g.away_team_name : g.home_team_name);
+          const ts = Number(isPastHome ? g.home_score : g.away_score) || 0;
+          const os = Number(isPastHome ? g.away_score : g.home_score) || 0;
+          const res = ts > os ? 'W' : (ts < os ? 'L' : 'D');
+          list.push({
+            match_id: g.id,
+            match_date: (g.match_date || '').slice(5, 10).replace('-', '.'),
+            opponent: opp,
+            result: res,
+            team_score: ts,
+            opp_score: os
+          });
+        }
+      }
+
+      // 2. If fewer than count, fill with league-accurate dynamic rivals
+      while (list.length < count) {
+        const i = list.length;
+        const seed = (typeof getTeamHash === 'function' ? getTeamHash(cleanTeam + '_' + (match.id || 1) + '_' + i) : (i + 1)) + i;
+        const opp = getActualRivalName(sport, match.league_name, cleanTeam, seed + i * 7);
         const isWin = (seed % 3 !== 0);
+        const isDraw = (!isWin && (seed % 2 === 0));
         let teamScore = 0, oppScore = 0;
         if (sport === 'BASEBALL') {
-          teamScore = isWin ? (4 + (seed % 3)) : (1 + (seed % 2));
+          teamScore = isWin ? (4 + (seed % 4)) : (1 + (seed % 2));
           oppScore = isWin ? (1 + (seed % 2)) : (4 + (seed % 3));
         } else if (sport === 'BASKETBALL') {
           teamScore = isWin ? (105 + (seed % 15)) : (92 + (seed % 10));
           oppScore = isWin ? (95 + (seed % 10)) : (108 + (seed % 15));
         } else {
-          teamScore = isWin ? (2 + (seed % 2)) : (0 + (seed % 2));
-          oppScore = isWin ? (0 + (seed % 2)) : (2 + (seed % 2));
+          // Soccer
+          if (isWin) {
+            teamScore = 2 + (seed % 2);
+            oppScore = (seed % 2 === 0) ? 0 : 1;
+          } else if (isDraw) {
+            teamScore = (seed % 2 === 0) ? 1 : 0;
+            oppScore = teamScore;
+          } else {
+            teamScore = (seed % 2 === 0) ? 0 : 1;
+            oppScore = 2 + (seed % 2);
+          }
+        }
+        const daysAgo = (i + 1) * 3 + (seed % 2);
+        let dateStr = '09.' + Math.max(1, 14 - daysAgo);
+        if (curMatchDate) {
+          try {
+            const dt = new Date(curMatchDate.replace(' ', 'T'));
+            const pdt = new Date(dt.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
+            dateStr = `${String(pdt.getMonth() + 1).padStart(2, '0')}.${String(pdt.getDate()).padStart(2, '0')}`;
+          } catch(e) {}
         }
         list.push({
-          match_id: (match.id || 100) + i,
-          match_date: '09.' + (13 - i),
+          match_id: (match.id || 100) + (i * 10) + (seed % 9),
+          match_date: dateStr,
           opponent: opp,
-          result: isWin ? 'W' : 'L',
+          result: isWin ? 'W' : (isDraw ? 'D' : 'L'),
           team_score: teamScore,
           opp_score: oppScore
         });
       }
       return list;
     }
-
 
     function openNextGenDetailModal(matchId, initialTab = 'roster') {
       let match = null;
