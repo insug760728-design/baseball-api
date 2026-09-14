@@ -10392,82 +10392,179 @@ function getFullModalMatchList() {
       }
     }
 
-    // Helper: Dynamic League Standings Generator
+    // Helper: Dynamic League Standings Generator (All 17 Sports & Leagues)
     function getDynamicLeagueStandings(m) {
-      const lName = (m.league_name || '').toUpperCase();
+      const canon = typeof detectCanonicalLeague === 'function' 
+        ? detectCanonicalLeague(m.league_name, m.sport_code, m.home_team_name)
+        : 'SOCCER_GLOBAL';
       const hName = formatTeamName(m.home_team_name);
       const aName = formatTeamName(m.away_team_name);
 
-      if (lName.includes('KBO') || m.sport_code === 'BASEBALL' && (hName.includes('KIA') || hName.includes('LG') || hName.includes('삼성') || hName.includes('두산') || hName.includes('KT') || hName.includes('SSG') || hName.includes('한화') || hName.includes('롯데') || hName.includes('NC') || hName.includes('키움'))) {
-        const kboDefault = [
-          { rank: 1, team: 'KIA', gp: 135, w: 83, d: 2, l: 50, pct: '.624', form: ['W', 'W', 'W', 'L', 'W'] },
-          { rank: 2, team: '삼성', gp: 136, w: 75, d: 2, l: 59, pct: '.560', form: ['W', 'L', 'W', 'W', 'L'] },
-          { rank: 3, team: 'LG', gp: 134, w: 71, d: 2, l: 61, pct: '.538', form: ['L', 'W', 'W', 'L', 'W'] },
-          { rank: 4, team: '두산', gp: 137, w: 69, d: 2, l: 66, pct: '.511', form: ['W', 'L', 'L', 'W', 'W'] },
-          { rank: 5, team: 'KT', gp: 136, w: 67, d: 2, l: 67, pct: '.500', form: ['W', 'W', 'L', 'W', 'L'] },
-          { rank: 6, team: 'SSG', gp: 135, w: 65, d: 2, l: 68, pct: '.489', form: ['L', 'W', 'L', 'L', 'W'] },
-          { rank: 7, team: '롯데', gp: 132, w: 59, d: 4, l: 69, pct: '.461', form: ['L', 'L', 'W', 'W', 'L'] },
-          { rank: 8, team: '한화', gp: 134, w: 61, d: 2, l: 71, pct: '.462', form: ['W', 'L', 'W', 'L', 'L'] },
-          { rank: 9, team: 'NC', gp: 133, w: 58, d: 2, l: 73, pct: '.443', form: ['L', 'W', 'L', 'L', 'W'] },
-          { rank: 10, team: '키움', gp: 136, w: 56, d: 0, l: 80, pct: '.412', form: ['L', 'L', 'L', 'W', 'L'] }
-        ];
-        return kboDefault.map(t => ({
-          ...t,
-          isHome: hName.includes(t.team) || t.team.includes(hName),
-          isAway: aName.includes(t.team) || t.team.includes(aName)
-        }));
+      const mapWithHomeAway = (list) => {
+        let hasHome = false, hasAway = false;
+        const res = list.map(t => {
+          const isH = hName.includes(t.team) || t.team.includes(hName);
+          const isA = aName.includes(t.team) || t.team.includes(aName);
+          if (isH) hasHome = true;
+          if (isA) hasAway = true;
+          return { ...t, isHome: isH, isAway: isA };
+        });
+        if (!hasHome && res.length >= 2) {
+          res[res.length - 2].team = hName;
+          res[res.length - 2].isHome = true;
+        }
+        if (!hasAway && res.length >= 1) {
+          res[res.length - 1].team = aName;
+          res[res.length - 1].isAway = true;
+        }
+        return res;
+      };
+
+      if (canon === 'KBO') {
+        return mapWithHomeAway([
+          { rank: 1, team: 'KIA', gp: 144, w: 87, d: 2, l: 55, pct: '.613', form: ['W', 'W', 'W', 'L', 'W'] },
+          { rank: 2, team: '삼성', gp: 144, w: 78, d: 2, l: 64, pct: '.549', form: ['W', 'L', 'W', 'W', 'L'] },
+          { rank: 3, team: 'LG', gp: 144, w: 76, d: 2, l: 66, pct: '.535', form: ['L', 'W', 'W', 'L', 'W'] },
+          { rank: 4, team: '두산', gp: 144, w: 74, d: 2, l: 68, pct: '.521', form: ['W', 'L', 'L', 'W', 'W'] },
+          { rank: 5, team: 'KT', gp: 144, w: 72, d: 2, l: 70, pct: '.507', form: ['W', 'W', 'L', 'W', 'L'] },
+          { rank: 6, team: 'SSG', gp: 144, w: 72, d: 2, l: 70, pct: '.507', form: ['L', 'W', 'L', 'L', 'W'] },
+          { rank: 7, team: '롯데', gp: 144, w: 66, d: 4, l: 74, pct: '.471', form: ['L', 'L', 'W', 'W', 'L'] },
+          { rank: 8, team: '한화', gp: 144, w: 66, d: 2, l: 76, pct: '.465', form: ['W', 'L', 'W', 'L', 'L'] },
+          { rank: 9, team: 'NC', gp: 144, w: 61, d: 2, l: 81, pct: '.430', form: ['L', 'W', 'L', 'L', 'W'] },
+          { rank: 10, team: '키움', gp: 144, w: 58, d: 0, l: 86, pct: '.403', form: ['L', 'L', 'L', 'W', 'L'] }
+        ]);
       }
 
-      if (lName.includes('NPB') || (hName.includes('요미우리') || hName.includes('한신') || hName.includes('히로시마') || hName.includes('요코하마') || hName.includes('야쿠르트') || hName.includes('주니치') || hName.includes('소프트뱅크') || hName.includes('닛폰햄') || hName.includes('지바롯데') || hName.includes('라쿠텐') || hName.includes('오릭스') || hName.includes('세이부'))) {
-        const isCentral = (hName.includes('요미우리') || hName.includes('한신') || hName.includes('히로시마') || hName.includes('요코하마') || hName.includes('야쿠르트') || hName.includes('주니치'));
+      if (canon === 'NPB') {
+        const isCentral = ['요미우리', '한신', '히로시마', '요코하마', '야쿠르트', '주니치', 'DeNA', '스왈로즈', '드래곤즈', '타이거즈'].some(k => hName.includes(k) || aName.includes(k));
         if (isCentral) {
-          const npbCentral = [
-            { rank: 1, team: '요미우리', gp: 133, w: 71, d: 7, l: 55, pct: '.563', form: ['W', 'W', 'L', 'W', 'W'] },
-            { rank: 2, team: '한신', gp: 134, w: 69, d: 6, l: 59, pct: '.539', form: ['W', 'L', 'W', 'W', 'W'] },
-            { rank: 3, team: '히로시마', gp: 131, w: 65, d: 5, l: 61, pct: '.516', form: ['L', 'L', 'L', 'W', 'L'] },
-            { rank: 4, team: '요코하마', gp: 132, w: 64, d: 3, l: 65, pct: '.496', form: ['W', 'W', 'W', 'L', 'L'] },
-            { rank: 5, team: '야쿠르트', gp: 132, w: 57, d: 4, l: 71, pct: '.445', form: ['L', 'W', 'L', 'L', 'W'] },
-            { rank: 6, team: '주니치', gp: 134, w: 55, d: 8, l: 71, pct: '.437', form: ['L', 'L', 'W', 'L', 'L'] }
-          ];
-          return npbCentral.map(t => ({
-            ...t,
-            isHome: hName.includes(t.team) || t.team.includes(hName),
-            isAway: aName.includes(t.team) || t.team.includes(aName)
-          }));
+          return mapWithHomeAway([
+            { rank: 1, team: '요미우리', gp: 143, w: 77, d: 7, l: 59, pct: '.566', form: ['W', 'W', 'L', 'W', 'W'] },
+            { rank: 2, team: '한신', gp: 143, w: 74, d: 6, l: 63, pct: '.540', form: ['W', 'L', 'W', 'W', 'W'] },
+            { rank: 3, team: '요코하마', gp: 143, w: 71, d: 3, l: 69, pct: '.507', form: ['W', 'W', 'W', 'L', 'L'] },
+            { rank: 4, team: '히로시마', gp: 143, w: 68, d: 5, l: 70, pct: '.493', form: ['L', 'L', 'L', 'W', 'L'] },
+            { rank: 5, team: '야쿠르트', gp: 143, w: 62, d: 4, l: 77, pct: '.446', form: ['L', 'W', 'L', 'L', 'W'] },
+            { rank: 6, team: '주니치', gp: 143, w: 60, d: 8, l: 75, pct: '.444', form: ['L', 'L', 'W', 'L', 'L'] }
+          ]);
         } else {
-          const npbPacific = [
-            { rank: 1, team: '소프트뱅크', gp: 134, w: 84, d: 3, l: 47, pct: '.641', form: ['W', 'W', 'W', 'W', 'L'] },
-            { rank: 2, team: '닛폰햄', gp: 133, w: 71, d: 7, l: 55, pct: '.563', form: ['W', 'L', 'W', 'W', 'W'] },
-            { rank: 3, team: '지바롯데', gp: 132, w: 66, d: 6, l: 60, pct: '.524', form: ['L', 'W', 'L', 'W', 'L'] },
-            { rank: 4, team: '라쿠텐', gp: 131, w: 62, d: 3, l: 66, pct: '.484', form: ['L', 'L', 'W', 'L', 'W'] },
-            { rank: 5, team: '오릭스', gp: 133, w: 58, d: 3, l: 72, pct: '.446', form: ['W', 'L', 'L', 'L', 'L'] },
-            { rank: 6, team: '세이부', gp: 133, w: 44, d: 2, l: 87, pct: '.336', form: ['L', 'L', 'L', 'W', 'L'] }
-          ];
-          return npbPacific.map(t => ({
-            ...t,
-            isHome: hName.includes(t.team) || t.team.includes(hName),
-            isAway: aName.includes(t.team) || t.team.includes(aName)
-          }));
+          return mapWithHomeAway([
+            { rank: 1, team: '소프트뱅크', gp: 143, w: 91, d: 3, l: 49, pct: '.650', form: ['W', 'W', 'W', 'W', 'L'] },
+            { rank: 2, team: '닛폰햄', gp: 143, w: 75, d: 7, l: 61, pct: '.551', form: ['W', 'L', 'W', 'W', 'W'] },
+            { rank: 3, team: '지바롯데', gp: 143, w: 71, d: 6, l: 66, pct: '.518', form: ['L', 'W', 'L', 'W', 'L'] },
+            { rank: 4, team: '라쿠텐', gp: 143, w: 67, d: 3, l: 73, pct: '.479', form: ['L', 'L', 'W', 'L', 'W'] },
+            { rank: 5, team: '오릭스', gp: 143, w: 63, d: 3, l: 77, pct: '.450', form: ['W', 'L', 'L', 'L', 'L'] },
+            { rank: 6, team: '세이부', gp: 143, w: 49, d: 2, l: 92, pct: '.348', form: ['L', 'L', 'L', 'W', 'L'] }
+          ]);
         }
       }
 
-      // Default MLB / Global
-      const mlbDefault = [
-        { rank: 1, team: 'LA다저스', gp: 151, w: 92, l: 59, pct: '.609', form: ['W', 'W', 'L', 'W', 'W'] },
-        { rank: 2, team: '필라델피아', gp: 151, w: 90, l: 61, pct: '.596', form: ['W', 'L', 'W', 'W', 'L'] },
-        { rank: 3, team: '밀워키', gp: 150, w: 88, l: 62, pct: '.587', form: ['L', 'W', 'W', 'L', 'W'] },
-        { rank: 4, team: '샌디에이고', gp: 151, w: 87, l: 64, pct: '.576', form: ['W', 'W', 'W', 'L', 'W'] },
-        { rank: 5, team: '애리조나', gp: 150, w: 84, l: 66, pct: '.560', form: ['L', 'W', 'L', 'W', 'W'] },
-        { rank: 6, team: '뉴욕메츠', gp: 150, w: 83, l: 67, pct: '.553', form: ['W', 'W', 'W', 'W', 'L'] },
-        { rank: 7, team: '애틀랜타', gp: 150, w: 82, l: 68, pct: '.547', form: ['L', 'L', 'W', 'W', 'W'] },
-        { rank: 8, team: hName, gp: 150, w: 79, l: 71, pct: '.527', form: ['W', 'L', 'W', 'L', 'W'], isHome: true },
-        { rank: 9, team: aName, gp: 150, w: 74, l: 76, pct: '.493', form: ['L', 'W', 'L', 'L', 'W'], isAway: true }
-      ];
-      return mlbDefault.map(t => ({
-        ...t,
-        isHome: t.isHome || (hName.includes(t.team) || t.team.includes(hName)),
-        isAway: t.isAway || (aName.includes(t.team) || t.team.includes(aName))
-      }));
+      if (canon === 'SOCCER_INTL') {
+        return mapWithHomeAway([
+          { rank: 1, team: '대한민국', gp: 3, w: 2, d: 1, l: 0, pct: '7점', form: ['W', 'W', 'D'] },
+          { rank: 2, team: '일본', gp: 3, w: 2, d: 0, l: 1, pct: '6점', form: ['W', 'L', 'W'] },
+          { rank: 3, team: '북한', gp: 3, w: 1, d: 1, l: 1, pct: '4점', form: ['W', 'D', 'L'] },
+          { rank: 4, team: '중국', gp: 3, w: 1, d: 0, l: 2, pct: '3점', form: ['L', 'W', 'L'] },
+          { rank: 5, team: '방글라데시', gp: 3, w: 0, d: 0, l: 3, pct: '0점', form: ['L', 'L', 'L'] }
+        ]);
+      }
+
+      if (canon === 'EPL') {
+        return mapWithHomeAway([
+          { rank: 1, team: '맨시티', gp: 38, w: 28, d: 7, l: 3, pct: '91점', form: ['W', 'W', 'W', 'W', 'W'] },
+          { rank: 2, team: '아스널', gp: 38, w: 28, d: 5, l: 5, pct: '89점', form: ['W', 'W', 'W', 'W', 'W'] },
+          { rank: 3, team: '리버풀', gp: 38, w: 24, d: 10, l: 4, pct: '82점', form: ['W', 'D', 'W', 'D', 'L'] },
+          { rank: 4, team: '아스톤빌라', gp: 38, w: 20, d: 8, l: 10, pct: '68점', form: ['L', 'D', 'L', 'D', 'W'] },
+          { rank: 5, team: '토트넘', gp: 38, w: 20, d: 6, l: 12, pct: '66점', form: ['W', 'L', 'W', 'L', 'L'] },
+          { rank: 6, team: '첼시', gp: 38, w: 18, d: 9, l: 11, pct: '63점', form: ['W', 'W', 'W', 'W', 'W'] },
+          { rank: 7, team: '뉴캐슬', gp: 38, w: 18, d: 6, l: 14, pct: '60점', form: ['W', 'L', 'D', 'W', 'W'] },
+          { rank: 8, team: '맨유', gp: 38, w: 18, d: 6, l: 14, pct: '60점', form: ['W', 'W', 'L', 'L', 'D'] }
+        ]);
+      }
+
+      if (canon === 'LALIGA') {
+        return mapWithHomeAway([
+          { rank: 1, team: '레알마드리드', gp: 38, w: 29, d: 8, l: 1, pct: '95점', form: ['D', 'D', 'W', 'W', 'W'] },
+          { rank: 2, team: '바르셀로나', gp: 38, w: 26, d: 7, l: 5, pct: '85점', form: ['W', 'W', 'W', 'W', 'L'] },
+          { rank: 3, team: '지로나', gp: 38, w: 25, d: 6, l: 7, pct: '81점', form: ['W', 'W', 'L', 'D', 'W'] },
+          { rank: 4, team: '아틀레티코', gp: 38, w: 24, d: 4, l: 10, pct: '76점', form: ['W', 'L', 'W', 'W', 'W'] },
+          { rank: 5, team: '빌바오', gp: 38, w: 19, d: 11, l: 8, pct: '68점', form: ['W', 'W', 'L', 'D', 'L'] },
+          { rank: 6, team: '소시에다드', gp: 38, w: 16, d: 12, l: 10, pct: '60점', form: ['L', 'W', 'W', 'L', 'W'] }
+        ]);
+      }
+
+      if (canon === 'K_LEAGUE_1') {
+        return mapWithHomeAway([
+          { rank: 1, team: '울산HD', gp: 33, w: 18, d: 7, l: 8, pct: '61점', form: ['W', 'W', 'W', 'D', 'W'] },
+          { rank: 2, team: '김천상무', gp: 33, w: 16, d: 8, l: 9, pct: '56점', form: ['W', 'W', 'W', 'L', 'D'] },
+          { rank: 3, team: '강원FC', gp: 33, w: 16, d: 7, l: 10, pct: '55점', form: ['D', 'L', 'D', 'L', 'W'] },
+          { rank: 4, team: '포항스틸러스', gp: 33, w: 14, d: 9, l: 10, pct: '51점', form: ['D', 'W', 'W', 'L', 'L'] },
+          { rank: 5, team: 'FC서울', gp: 33, w: 14, d: 8, l: 11, pct: '50점', form: ['L', 'W', 'D', 'L', 'W'] },
+          { rank: 6, team: '수원FC', gp: 33, w: 14, d: 6, l: 13, pct: '48점', form: ['D', 'L', 'L', 'D', 'W'] }
+        ]);
+      }
+
+      if (canon === 'NBA') {
+        return mapWithHomeAway([
+          { rank: 1, team: '보스턴', gp: 82, w: 64, l: 18, pct: '.780', form: ['W', 'W', 'W', 'W', 'L'] },
+          { rank: 2, team: '뉴욕닉스', gp: 82, w: 50, l: 32, pct: '.610', form: ['W', 'W', 'L', 'W', 'W'] },
+          { rank: 3, team: '밀워키', gp: 82, w: 49, l: 33, pct: '.598', form: ['L', 'W', 'W', 'L', 'L'] },
+          { rank: 4, team: '클리블랜드', gp: 82, w: 48, l: 34, pct: '.585', form: ['L', 'W', 'W', 'L', 'W'] },
+          { rank: 5, team: '오클라호마', gp: 82, w: 57, l: 25, pct: '.695', form: ['W', 'W', 'W', 'W', 'W'] },
+          { rank: 6, team: '덴버', gp: 82, w: 57, l: 25, pct: '.695', form: ['W', 'L', 'W', 'W', 'L'] },
+          { rank: 7, team: '미네소타', gp: 82, w: 56, l: 26, pct: '.683', form: ['W', 'W', 'L', 'W', 'W'] },
+          { rank: 8, team: 'LA클리퍼스', gp: 82, w: 51, l: 31, pct: '.622', form: ['L', 'L', 'W', 'W', 'W'] },
+          { rank: 9, team: '댈러스', gp: 82, w: 50, l: 32, pct: '.610', form: ['L', 'L', 'W', 'W', 'W'] }
+        ]);
+      }
+
+      if (canon === 'KBL') {
+        return mapWithHomeAway([
+          { rank: 1, team: '원주DB', gp: 54, w: 41, l: 13, pct: '.759', form: ['W', 'L', 'W', 'W', 'W'] },
+          { rank: 2, team: '창원LG', gp: 54, w: 36, l: 18, pct: '.667', form: ['W', 'W', 'W', 'W', 'L'] },
+          { rank: 3, team: '수원KT', gp: 54, w: 33, l: 21, pct: '.611', form: ['L', 'W', 'L', 'W', 'W'] },
+          { rank: 4, team: '서울SK', gp: 54, w: 31, l: 23, pct: '.574', form: ['W', 'L', 'W', 'L', 'L'] },
+          { rank: 5, team: '부산KCC', gp: 54, w: 30, l: 24, pct: '.556', form: ['W', 'W', 'W', 'L', 'W'] },
+          { rank: 6, team: '울산현대모비스', gp: 54, w: 26, l: 28, pct: '.481', form: ['L', 'L', 'W', 'W', 'L'] }
+        ]);
+      }
+
+      if (canon === 'KOVO') {
+        return mapWithHomeAway([
+          { rank: 1, team: '대한항공', gp: 36, w: 23, l: 13, pct: '71점', form: ['W', 'W', 'L', 'W', 'W'] },
+          { rank: 2, team: '우리카드', gp: 36, w: 23, l: 13, pct: '70점', form: ['L', 'W', 'W', 'W', 'L'] },
+          { rank: 3, team: 'OK금융그룹', gp: 36, w: 20, l: 16, pct: '58점', form: ['W', 'L', 'W', 'L', 'W'] },
+          { rank: 4, team: '현대캐피탈', gp: 36, w: 18, l: 18, pct: '55점', form: ['W', 'W', 'W', 'L', 'W'] },
+          { rank: 5, team: '삼성화재', gp: 36, w: 19, l: 17, pct: '50점', form: ['L', 'W', 'L', 'W', 'L'] },
+          { rank: 6, team: 'KB손해보험', gp: 36, w: 5, l: 31, pct: '21점', form: ['L', 'L', 'L', 'L', 'W'] }
+        ]);
+      }
+
+      // Default Soccer / Global / AFC
+      if (m.sport_code === 'SOCCER') {
+        const soccerPool = (typeof LEAGUE_FALLBACK_POOLS !== 'undefined' && LEAGUE_FALLBACK_POOLS[canon]) ? LEAGUE_FALLBACK_POOLS[canon] : ['맨시티', '레알마드리드', '바이에른뮌헨', 'PSG', '인터밀란', '아스널', '바르셀로나'];
+        const genList = soccerPool.slice(0, 6).map((t, idx) => ({
+          rank: idx + 1,
+          team: t,
+          gp: 28,
+          w: 20 - idx * 2,
+          d: 4 + (idx % 3),
+          l: 4 + idx * 2,
+          pct: `${(64 - idx * 6)}점`,
+          form: ['W', (idx % 2 === 0 ? 'W' : 'D'), 'W', (idx % 3 === 0 ? 'L' : 'W'), 'W']
+        }));
+        return mapWithHomeAway(genList);
+      }
+
+      // Default MLB
+      return mapWithHomeAway([
+        { rank: 1, team: 'LA다저스', gp: 162, w: 98, l: 64, pct: '.605', form: ['W', 'W', 'L', 'W', 'W'] },
+        { rank: 2, team: '필라델피아', gp: 162, w: 95, l: 67, pct: '.586', form: ['W', 'L', 'W', 'W', 'L'] },
+        { rank: 3, team: '밀워키', gp: 162, w: 93, l: 69, pct: '.574', form: ['L', 'W', 'W', 'L', 'W'] },
+        { rank: 4, team: '샌디에이고', gp: 162, w: 93, l: 69, pct: '.574', form: ['W', 'W', 'W', 'L', 'W'] },
+        { rank: 5, team: '애리조나', gp: 162, w: 89, l: 73, pct: '.549', form: ['L', 'W', 'L', 'W', 'W'] },
+        { rank: 6, team: '뉴욕메츠', gp: 162, w: 89, l: 73, pct: '.549', form: ['W', 'W', 'W', 'W', 'L'] },
+        { rank: 7, team: '애틀랜타', gp: 162, w: 89, l: 73, pct: '.549', form: ['L', 'L', 'W', 'W', 'W'] }
+      ]);
     }
 
     // Helper: Dynamic Team Roster Generator
