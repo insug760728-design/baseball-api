@@ -10933,6 +10933,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
     }
 
     // Helper: Dynamic Team Recent Matches List Generator (Array of recent games)
+        // High-Entropy Dynamic Recent Match List Generator (Array of recent games)
     function buildDynamicTeamRecentList(sport, teamName, isHomeTeam, match, count = 5) {
       const list = [];
       const cleanTeam = (typeof formatTeamName === 'function') ? formatTeamName(teamName) : String(teamName).trim();
@@ -10966,67 +10967,96 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
       }
 
-      // 2. If fewer than count, fill with league-accurate dynamic rivals
-      const teamCharSum = cleanTeam.split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+      // Helper for 32-bit FNV-1a Hash
+      function getFnv1a(str) {
+        let h = 2166136261;
+        for (let idx = 0; idx < str.length; idx++) {
+          h = ((h ^ str.charCodeAt(idx)) * 16777619) >>> 0;
+        }
+        return h;
+      }
+
+      // 2. If fewer than count, fill with sport-accurate diverse rivals, dates, scores & results
+      const baseSeed = getFnv1a(`${cleanTeam}_${match.id || 1}_${isHomeTeam ? 'HOMETEAM' : 'AWAYTEAM'}_${sport}_${match.league_name || ''}`);
+      let baseDt = new Date();
+      if (curMatchDate) {
+        try {
+          const parsed = new Date(curMatchDate.replace(' ', 'T'));
+          if (!isNaN(parsed.getTime())) baseDt = parsed;
+        } catch(e) {}
+      }
+
+      let cumDays = 0;
+      const usedOpponents = new Set([cleanTeam]);
 
       while (list.length < count) {
         const i = list.length;
-        // 고유 해시 시드: 팀명 문자합 + 홈/원정 구분자 + 경기ID + 인덱스 가중치로 완벽한 고유성 보장
-        const seed = Math.abs((teamCharSum * 31) + (isHomeTeam ? 101 : 233) + ((match.id || 1) * 47) + (i * 83));
-        const opp = getActualRivalName(sport, match.league_name, cleanTeam, seed + (i * 11));
+        const gameHash = (baseSeed + (i * 99991) + (getFnv1a(`game_${i}_${cleanTeam}`) * 31)) >>> 0;
+
+        // Interval based on sport schedule rhythm
+        let interval = 3;
+        if (sport === 'BASEBALL') {
+          interval = (gameHash % 4 !== 0) ? 1 : 2; // 1~2 days
+        } else if (sport === 'BASKETBALL') {
+          interval = 2 + (gameHash % 2); // 2~3 days
+        } else {
+          interval = 3 + (gameHash % 4); // 3, 4, 5, 6 days (realistic soccer cadence)
+        }
+
+        cumDays += interval;
+        const pastGameDt = new Date(baseDt.getTime() - (cumDays * 86400000));
+        const dateStr = `${String(pastGameDt.getMonth() + 1).padStart(2, '0')}.${String(pastGameDt.getDate()).padStart(2, '0')}`;
+
+        // Get unique opponent
+        let opp = '';
+        for (let attempt = 0; attempt < 8; attempt++) {
+          const candidate = getActualRivalName(sport, match.league_name, cleanTeam, (gameHash >>> 4) + (i * 17) + (attempt * 7));
+          if (candidate && candidate !== cleanTeam && !usedOpponents.has(candidate)) {
+            opp = candidate;
+            break;
+          }
+          if (candidate && candidate !== cleanTeam) opp = candidate;
+        }
+        if (!opp) opp = getActualRivalName(sport, match.league_name, cleanTeam, gameHash + i);
+        usedOpponents.add(opp);
 
         let res = 'W';
         let teamScore = 0, oppScore = 0;
 
         if (sport === 'BASKETBALL') {
-          // 농구: 무승부 없음 (100% 승/패), 현실적 농구 점수
-          const isWin = (seed % 2 !== 0);
-          teamScore = isWin ? (82 + (seed % 19)) : (70 + (seed % 17));
-          oppScore = isWin ? (68 + ((seed + 5) % 13)) : (86 + ((seed + 7) % 17));
-          if (teamScore === oppScore) {
-            if (isWin) teamScore += 2; else oppScore += 2;
-          }
+          // Basketball: No draws, realistic 70~105 pts
+          const isWin = (gameHash % 2 === 1);
+          teamScore = 78 + (gameHash % 26);
+          const margin = 3 + ((gameHash >>> 4) % 15);
+          oppScore = isWin ? (teamScore - margin) : (teamScore + margin);
           res = isWin ? 'W' : 'L';
         } else if (sport === 'BASEBALL') {
-          // 야구: 현실적 야구 점수 (1~8점)
-          const isWin = (seed % 2 !== 0);
-          teamScore = isWin ? (3 + (seed % 6)) : (1 + (seed % 3));
-          oppScore = isWin ? (1 + ((seed + 2) % 3)) : (4 + ((seed + 4) % 5));
-          if (teamScore === oppScore) {
-            if (isWin) teamScore += 1; else oppScore += 1;
-          }
+          // Baseball: No draws, realistic 1~9 runs
+          const isWin = (gameHash % 2 === 1);
+          teamScore = 2 + (gameHash % 7);
+          const margin = 1 + ((gameHash >>> 3) % 4);
+          oppScore = isWin ? Math.max(0, teamScore - margin) : (teamScore + margin);
           res = isWin ? 'W' : 'L';
         } else {
-          // 축구: 승(W), 무(D), 패(L)
-          const isWin = (seed % 3 === 0);
-          const isDraw = (seed % 3 === 1);
-          if (isWin) {
-            teamScore = 2 + (seed % 2);
-            oppScore = (seed % 2 === 0) ? 0 : 1;
+          // Soccer: realistic soccer scorelines (1:0, 2:1, 2:0, 0:1, 1:2, 1:1, 2:2, 3:1, etc.)
+          const outcome = gameHash % 3;
+          if (outcome === 0) { // Win
             res = 'W';
-          } else if (isDraw) {
-            teamScore = (seed % 2 === 0) ? 1 : 0;
-            oppScore = teamScore;
+            teamScore = 1 + (gameHash % 3);
+            oppScore = (gameHash >>> 4) % teamScore;
+          } else if (outcome === 1) { // Draw
             res = 'D';
-          } else {
-            teamScore = (seed % 2 === 0) ? 0 : 1;
-            oppScore = 2 + (seed % 2);
+            teamScore = (gameHash % 3);
+            oppScore = teamScore;
+          } else { // Loss
             res = 'L';
+            oppScore = 1 + (gameHash % 3);
+            teamScore = (gameHash >>> 4) % oppScore;
           }
-        }
-
-        const daysAgo = (i + 1) * 3 + (seed % 2);
-        let dateStr = '09.' + Math.max(1, 14 - daysAgo);
-        if (curMatchDate) {
-          try {
-            const dt = new Date(curMatchDate.replace(' ', 'T'));
-            const pdt = new Date(dt.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
-            dateStr = `${String(pdt.getMonth() + 1).padStart(2, '0')}.${String(pdt.getDate()).padStart(2, '0')}`;
-          } catch(e) {}
         }
 
         list.push({
-          match_id: (match.id || 100) + (i * 10) + (seed % 9),
+          match_id: (match.id || 100) + (i * 10) + (gameHash % 9),
           match_date: dateStr,
           opponent: opp,
           result: res,
@@ -11631,8 +11661,32 @@ function updateSlimPanel(matchId, type, contentHtml) {
       }
 
       // -------------------------------------------------------------
-      // 3단계: ⚔️ 상대 전적 (Head-to-Head)
+      // 3단계: ⚔️ 상대 전적 (Head-to-Head) - 동적 맞춤 집계
       // -------------------------------------------------------------
+      const h2hHash = ((hProb * 31) + (aProb * 17) + ((m.id || 1) * 41)) >>> 0;
+      const totalH2HGames = isBaseball ? 16 : (isBasketball ? 6 : (m.sport_code === 'SOCCER' ? 6 : 8));
+      const calcHWins = Math.max(1, Math.min(totalH2HGames - 1, Math.round((totalH2HGames * hProb) / 100)));
+      const calcDraws = (m.sport_code === 'SOCCER') ? (h2hHash % 3) : 0;
+      const calcAWins = Math.max(0, totalH2HGames - calcHWins - calcDraws);
+
+      let h2hRecentMeetings = '';
+      if (m.sport_code === 'BASEBALL') {
+        const s1H = 3 + (h2hHash % 4), s1A = (h2hHash % 3);
+        const s2H = (h2hHash % 3), s2A = 2 + ((h2hHash >>> 2) % 4);
+        const s3H = 4 + ((h2hHash >>> 3) % 4), s3A = 1 + ((h2hHash >>> 1) % 3);
+        h2hRecentMeetings = `<strong>${hName} ${s1H}:${s1A} 승</strong> · <strong>${aName} ${s2A}:${s2H} 승</strong> · <strong>${hName} ${s3H}:${s3A} 승</strong>`;
+      } else if (m.sport_code === 'BASKETBALL') {
+        const s1H = 88 + (h2hHash % 14), s1A = s1H - (3 + (h2hHash % 7));
+        const s2H = 82 + ((h2hHash >>> 2) % 10), s2A = s2H + (4 + ((h2hHash >>> 3) % 8));
+        const s3H = 95 + ((h2hHash >>> 4) % 12), s3A = s3H - (2 + ((h2hHash >>> 1) % 9));
+        h2hRecentMeetings = `<strong>${hName} ${s1H}:${s1A} 승</strong> · <strong>${aName} ${s2A}:${s2H} 승</strong> · <strong>${hName} ${s3H}:${s3A} 승</strong>`;
+      } else {
+        const s1H = 1 + (h2hHash % 2), s1A = (h2hHash % 2 === 0) ? 0 : 1;
+        const s2H = (h2hHash >>> 2) % 2, s2A = s2H;
+        const s3H = 0, s3A = 1 + ((h2hHash >>> 3) % 2);
+        h2hRecentMeetings = `<strong>${hName} ${s1H}:${s1A} ${s1H > s1A ? '승' : '무'}</strong> · <strong>${s2H}:${s2A} 무</strong> · <strong>${aName} ${s3A}:${s3H} 승</strong>`;
+      }
+
       const h2hSectionHtml = `
         <div id="ngSection_h2h" class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #e2e8f0 !important; scroll-margin-top: 55px;">
           <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
@@ -11640,12 +11694,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
             <span class="badge bg-light text-secondary border">상대전적</span>
           </div>
           <div class="d-flex justify-content-between align-items-center p-2.5 rounded-2 bg-light border mb-2">
-            <span class="fw-bold text-danger">${hName} 6승</span>
-            <span class="badge bg-dark text-white px-2 py-1">총 10경기 맞대결</span>
-            <span class="fw-bold text-primary">${aName} 4승</span>
+            <span class="fw-bold text-danger">${hName} ${calcHWins}승</span>
+            <span class="badge bg-dark text-white px-2 py-1">총 ${totalH2HGames}경기 맞대결${calcDraws > 0 ? ` (${calcDraws}무)` : ''}</span>
+            <span class="fw-bold text-primary">${aName} ${calcAWins}승</span>
           </div>
           <div class="text-muted small text-center">
-            최근 3번의 맞대결: <strong>${hName} 4:1 승</strong> | <strong>${hName} 2:2 무</strong> | <strong>${aName} 3:1 승</strong>
+            최근 맞대결 결과: ${h2hRecentMeetings}
           </div>
         </div>
       `;
