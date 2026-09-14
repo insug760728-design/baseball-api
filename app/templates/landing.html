@@ -1773,7 +1773,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v8.6 초고속메모리캐싱·0초렌더링
+          <i class="bi bi-check-circle-fill me-1"></i>v8.7 고속안정화·0초로딩완전복구
         </span>
       </div>
 
@@ -9220,6 +9220,29 @@ function getFullModalMatchList() {
       };
     }
 
+    // ============================================================
+    // 슬림 카드 아코디언 상태 관리
+    // ============================================================
+    
+    // ============================================================
+    // Global Safe Helper Functions & Stubs
+    // ============================================================
+    function getMatchById(id) {
+      if (typeof allMatches === 'undefined' || !Array.isArray(allMatches)) return null;
+      return allMatches.find(m => m.id == id) || null;
+    }
+    function renderCommunityFeed() {}
+    function appendMessageToFeed(msg) {}
+    function manualHourlyRefresh(silent = false) {
+      if (typeof silentLiveRefresh === 'function') silentLiveRefresh();
+    }
+    function showToastNotification(msg) {
+      console.log('[Toast]', msg);
+    }
+
+    const _slimAccordionState = {}; // { matchId: { type: 'odds'|'history', loaded: bool, html: string } }
+    const _historyClientCache = new Map();
+
     function buildPredMatchCardHtml(m, isSel, oddsInfo, now, d0Str, d1Str) {
       let sportIcon = '⚾';
       if (m.sport_code === 'SOCCER') sportIcon = '⚽';
@@ -9645,8 +9668,8 @@ function getFullModalMatchList() {
         return chunkHtml;
       }
 
-      const prevContainerScrollTop = container.scrollTop;
-      const prevWindowScrollY = window.pageYOffset || document.documentElement.scrollTop;
+      const prevContainerScrollTop = container ? (container.scrollTop || 0) : 0;
+      const prevWindowScrollY = (typeof window !== 'undefined' ? (window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0) || (document.body ? document.body.scrollTop : 0)) : 0) || 0;
 
       // Phase 1: Render first 40 matches immediately (sub-10ms)
       const firstChunkHtml = headerHtml + renderBatch(0, INITIAL_CHUNK_SIZE);
