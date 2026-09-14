@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0">
   <script>
     try {
-      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9'].forEach(function(k) {
+      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11'].forEach(function(k) {
         localStorage.removeItem(k);
       });
     } catch(e) {}
@@ -1772,7 +1772,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v7.7 전경기전용팝업·컬러강조
+          <i class="bi bi-check-circle-fill me-1"></i>v7.9 중복정리·화면최적화
         </span>
       </div>
 
@@ -1800,26 +1800,6 @@
       </div>
     </div>
   </nav>
-
-  <!-- 📱 핸드폰 모바일 전용 1-Tap 상단 탭 단축키 (고정 네비게이션 - 4대 핵심 탭) -->
-  <div id="mobileTabBar" class="d-none flex-column p-1" style="background: #ffffff; border-bottom: 2px solid #111827; z-index: 1045;">
-    <div class="dash-container">
-      <div class="d-flex justify-content-between align-items-center gap-1 w-100">
-        <button class="btn btn-sm mobile-tab-btn flex-fill active" id="mobTabSchedule" onclick="switchNavTab('ACTIVE')">
-          <i class="bi bi-calendar3 d-block mb-0.5" style="font-size: 1.05rem;"></i>경기목록
-        </button>
-        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabPast" onclick="switchNavTab('FINISHED')">
-          <i class="bi bi-clock-history d-block mb-0.5 text-secondary" style="font-size: 1.05rem;"></i>지난경기
-        </button>
-        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabToto" onclick="openTotoModal(currentTotoRound)">
-          <i class="bi bi-card-checklist d-block mb-0.5 text-warning" style="font-size: 1.05rem;"></i>승무패
-        </button>
-        <button class="btn btn-sm mobile-tab-btn flex-fill" id="mobTabCommunity" onclick="switchMobileTab('live_relay')">
-          <i class="bi bi-broadcast d-block mb-0.5 text-danger" style="font-size: 1.05rem;"></i>LIVE중계
-        </button>
-      </div>
-    </div>
-  </div>
 
   <div id="mainAppWrapper">
 
@@ -1856,20 +1836,7 @@
               </div>
 
               <!-- 🌐 주요 리그 퀵 필터 칩 바 (MLS, EPL, UCL, 라리가, MLB, KBO, NPB, NBA, KBL 등) -->
-              <div class="d-flex gap-1 overflow-x-auto py-1" id="predLeagueBar" style="scrollbar-width: none;">
-                <button class="btn btn-xs league-chip-btn active text-nowrap" id="predLeagueALL" onclick="filterPredLeague('ALL')">전체 리그</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueMLS" onclick="filterPredLeague('MLS')">🇺🇸 MLS</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueEPL" onclick="filterPredLeague('EPL')">🏴󠁧󠁢󠁥󠁮󠁧󠁿 EPL</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueUCL" onclick="filterPredLeague('UCL')">🇪🇺 UCL</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueCHAMPIONSHIP" onclick="filterPredLeague('CHAMPIONSHIP')">🏴󠁧󠁢󠁥󠁮󠁧󠁿 챔피언십</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueENGLAND_CUP" onclick="filterPredLeague('ENGLAND_CUP')">🏆 카라바오/FA</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueLALIGA" onclick="filterPredLeague('LALIGA')">🇪🇸 라리가</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueMLB" onclick="filterPredLeague('MLB')">⚾ MLB</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueKBO" onclick="filterPredLeague('KBO')">🇰🇷 KBO</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueNPB" onclick="filterPredLeague('NPB')">🇯🇵 NPB</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueNBA" onclick="filterPredLeague('NBA')">🏀 NBA</button>
-                <button class="btn btn-xs league-chip-btn text-nowrap" id="predLeagueKBL" onclick="filterPredLeague('KBL')">🇰🇷 KBL</button>
-              </div>
+              
 
               <!-- 🏆 배트맨 공식 14경기 승무패 / 승1패 / 승5패 전용 팝업 퀵 바 -->
               <div class="d-flex align-items-center gap-1 mt-1.5 p-1 rounded-2" style="background: #f8fafc; border: 1px solid #e2e8f0;">
@@ -8221,7 +8188,7 @@ function getFullModalMatchList() {
       // ⚡ 0초(0ms) 즉시 렌더링: 브라우저 캐시가 있으면 대기 없이 즉각 경기 목록 & 전광판 표출
       try {
         // Purge legacy caches with older fixture formats
-        ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9'].forEach(k => {
+        ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11'].forEach(k => {
           try { localStorage.removeItem(k); } catch (e) {}
         });
         const cached = localStorage.getItem('tokeon_matches_cache_v6');
