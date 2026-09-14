@@ -12458,8 +12458,33 @@ function updateSlimPanel(matchId, type, contentHtml) {
       `;
 
       // -------------------------------------------------------------
-      // 4단계: 📈 최근 경기 결과 누적 아카이브 (실제 DB 공식 경기 + 분석 데이터)
+      // 4단계: 📈 최근 경기 결과 누적 아카이브 (100% 실제 DB 공식 경기 기준)
       // -------------------------------------------------------------
+      function getDbRecentList(teamName) {
+        if (typeof allMatches === 'undefined' || !Array.isArray(allMatches)) return [];
+        return allMatches.filter(otherM => {
+          if (!otherM || String(otherM.id) === String(m.id)) return false;
+          if (otherM.status !== 'FINISHED') return false;
+          if (m.match_date && otherM.match_date && otherM.match_date >= m.match_date) return false;
+          return isSameTeamName(otherM.home_team_name, teamName, m.sport_code, otherM.sport_code) ||
+                 isSameTeamName(otherM.away_team_name, teamName, m.sport_code, otherM.sport_code);
+        }).sort((a, b) => (b.match_date || '').localeCompare(a.match_date || '')).slice(0, 5).map(rm => {
+          const isHome = isSameTeamName(rm.home_team_name, teamName, m.sport_code, rm.sport_code);
+          const ts = isHome ? rm.home_score : rm.away_score;
+          const os = isHome ? rm.away_score : rm.home_score;
+          const opp = isHome ? rm.away_team_name : rm.home_team_name;
+          const res = ts > os ? 'W' : (ts < os ? 'L' : 'D');
+          return {
+            match_id: rm.id,
+            match_date: (rm.match_date || '').slice(5, 10).replace('-', '.'),
+            opponent: formatTeamName(opp),
+            result: res,
+            team_score: ts,
+            opp_score: os
+          };
+        });
+      }
+
       let homeHistory = (matchup && matchup.home_recent_matches && matchup.home_recent_matches.length > 0) ? matchup.home_recent_matches.map(x => ({
         match_id: x.match_id || x.id,
         match_date: x.date ? x.date.slice(5, 10).replace('-', '.') : '',
@@ -12467,7 +12492,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
         result: x.result || (x.team_score > x.opp_score ? 'W' : (x.team_score === x.opp_score ? 'D' : 'L')),
         team_score: x.team_score,
         opp_score: x.opp_score
-      })) : buildDynamicTeamRecentList(m.sport_code, hName, true, m, 5);
+      })) : getDbRecentList(hName);
 
       let awayHistory = (matchup && matchup.away_recent_matches && matchup.away_recent_matches.length > 0) ? matchup.away_recent_matches.map(x => ({
         match_id: x.match_id || x.id,
@@ -12476,10 +12501,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
         result: x.result || (x.team_score > x.opp_score ? 'W' : (x.team_score === x.opp_score ? 'D' : 'L')),
         team_score: x.team_score,
         opp_score: x.opp_score
-      })) : buildDynamicTeamRecentList(m.sport_code, aName, false, m, 5);
+      })) : getDbRecentList(aName);
 
-      if (!homeHistory || homeHistory.length === 0) homeHistory = buildDynamicTeamRecentList(m.sport_code, hName, true, m, 5);
-      if (!awayHistory || awayHistory.length === 0) awayHistory = buildDynamicTeamRecentList(m.sport_code, aName, false, m, 5);
+      if (!homeHistory || homeHistory.length === 0) homeHistory = getDbRecentList(hName);
+      if (!awayHistory || awayHistory.length === 0) awayHistory = getDbRecentList(aName);
 
       const renderHistoryListHtml = (historyList, teamName, isHome) => {
         if (!historyList || historyList.length === 0) {
@@ -12906,190 +12931,6 @@ function updateSlimPanel(matchId, type, contentHtml) {
       return pdt.toISOString().slice(0, 10);
     }
 
-    function buildDynamicTeamRecent(sport, teamName, isHomeTeam, match) {
-      const seed = getTeamHash(teamName + '_' + (match.id || 0) + '_' + (isHomeTeam ? 'H' : 'A'));
-      const currentOpp = isHomeTeam ? match.away_team_name : match.home_team_name;
-      const opp = getRivalOpponent(sport, match.league_name, teamName, currentOpp, seed);
-      const curMatchDate = match.match_date || '';
-
-      const isWin = (seed % 3 !== 0); // ~67% win rate variety
-      const isTeamHome = (seed % 2 === 0);
-
-      if (sport === 'BASKETBALL') {
-        const daysAgo = (seed % 3) + 2; // 2~4 days ago
-        const pastDate = getUniquePastDateStr(curMatchDate, daysAgo);
-        const teamScore = 78 + (seed % 27); // 78 ~ 104
-        const oppScore = isWin ? (teamScore - (3 + (seed % 14))) : (teamScore + (2 + (seed % 12)));
-        const hScore = isTeamHome ? teamScore : oppScore;
-        const aScore = isTeamHome ? oppScore : teamScore;
-
-        const my2p = (48.0 + (seed % 115) / 10).toFixed(1) + '%';
-        const opp2p = (46.0 + ((seed * 3) % 110) / 10).toFixed(1) + '%';
-        const my3Made = 6 + (seed % 9);
-        const my3p = (29.0 + (seed % 135) / 10).toFixed(1) + `%(${my3Made}개)`;
-        const opp3Made = 5 + ((seed * 7) % 9);
-        const opp3p = (27.0 + ((seed * 7) % 130) / 10).toFixed(1) + `%(${opp3Made}개)`;
-        const myFt = (70.0 + (seed % 190) / 10).toFixed(1) + '%';
-        const oppFt = (68.0 + ((seed * 5) % 190) / 10).toFixed(1) + '%';
-        const myReb = 36 + (seed % 15);
-        const oppReb = 35 + ((seed * 2) % 15);
-        const myAst = 18 + (seed % 12);
-        const oppAst = 16 + ((seed * 3) % 12);
-        const myTo = 9 + (seed % 9);
-        const oppTo = 10 + ((seed * 4) % 9);
-        const myPf = 15 + (seed % 9);
-        const oppPf = 16 + ((seed * 2) % 9);
-
-        return {
-          match_id: 990000 + (seed % 9000),
-          date: pastDate,
-          match_date: `${pastDate} 19:00:00`,
-          home_away: isTeamHome ? '홈' : '원정',
-          perspective_team: teamName,
-          home_team_name: isTeamHome ? teamName : opp,
-          away_team_name: isTeamHome ? opp : teamName,
-          home_score: hScore,
-          away_score: aScore,
-          league_name: match.league_name || '',
-          opponent: opp,
-          score: `${hScore} - ${aScore}`,
-          result: isWin ? 'WIN' : 'LOSS',
-          result_emoji: isWin ? '✅' : '❌',
-          basketball_stats: {
-            home_2p: isTeamHome ? my2p : opp2p,
-            away_2p: isTeamHome ? opp2p : my2p,
-            home_3p: isTeamHome ? my3p : opp3p,
-            away_3p: isTeamHome ? opp3p : my3p,
-            home_ft: isTeamHome ? myFt : oppFt,
-            away_ft: isTeamHome ? oppFt : myFt,
-            home_reb: isTeamHome ? myReb : oppReb,
-            away_reb: isTeamHome ? oppReb : myReb,
-            home_ast: isTeamHome ? myAst : oppAst,
-            away_ast: isTeamHome ? oppAst : myAst,
-            home_to: isTeamHome ? myTo : oppTo,
-            away_to: isTeamHome ? oppTo : myTo,
-            home_pf: isTeamHome ? myPf : oppPf,
-            away_pf: isTeamHome ? oppPf : myPf
-          }
-        };
-      } else if (sport === 'BASEBALL') {
-        const daysAgo = (seed % 2) + 1; // 1~2 days ago
-        const pastDate = getUniquePastDateStr(curMatchDate, daysAgo);
-        const teamScore = 2 + (seed % 8); // 2 ~ 9
-        const oppScore = isWin ? Math.max(0, teamScore - (1 + (seed % 5))) : (teamScore + (1 + (seed % 5)));
-        const hScore = isTeamHome ? teamScore : oppScore;
-        const aScore = isTeamHome ? oppScore : teamScore;
-
-        const myHits = teamScore + 2 + (seed % 5);
-        const oppHits = oppScore + 2 + ((seed * 3) % 5);
-        const myHr = (seed % 4 === 0) ? 2 : (seed % 2 === 0 ? 1 : 0);
-        const oppHr = ((seed * 3) % 4 === 0) ? 2 : ((seed * 3) % 2 === 0 ? 1 : 0);
-        const myBb = 2 + (seed % 5);
-        const mySo = 5 + (seed % 7);
-        const oppBb = 2 + ((seed * 2) % 5);
-        const oppSo = 5 + ((seed * 2) % 7);
-        const myErr = (seed % 4 === 0) ? 1 : 0;
-        const oppErr = ((seed * 2) % 4 === 0) ? 1 : 0;
-        const myLob = 4 + (seed % 6);
-        const oppLob = 4 + ((seed * 3) % 6);
-
-        const starterIps = ['5.0', '5.1', '5.2', '6.0', '6.1', '6.2', '7.0'];
-        const myIp = starterIps[seed % starterIps.length];
-        const oppIp = starterIps[(seed * 3) % starterIps.length];
-        const myEr = isWin ? (seed % 3) : (2 + (seed % 3));
-        const oppEr = isWin ? (2 + ((seed * 2) % 4)) : ((seed * 2) % 3);
-
-        const sName = isHomeTeam ? (match.home_starter_name || '선발') : (match.away_starter_name || '선발');
-
-        return {
-          match_id: 990000 + (seed % 9000),
-          date: pastDate,
-          match_date: `${pastDate} 18:30:00`,
-          home_away: isTeamHome ? '홈' : '원정',
-          perspective_team: teamName,
-          home_team_name: isTeamHome ? teamName : opp,
-          away_team_name: isTeamHome ? opp : teamName,
-          home_score: hScore,
-          away_score: aScore,
-          league_name: match.league_name || '',
-          opponent: opp,
-          score: `${hScore} - ${aScore}`,
-          result: isWin ? 'WIN' : 'LOSS',
-          result_emoji: isWin ? '✅' : '❌',
-          starter: sName,
-          home_starter: { name: isTeamHome ? sName : '상대선발', ip: isTeamHome ? myIp : oppIp, er: isTeamHome ? myEr : oppEr },
-          away_starter: { name: isTeamHome ? '상대선발' : sName, ip: isTeamHome ? oppIp : myIp, er: isTeamHome ? oppEr : myEr },
-          baseball_stats: {
-            home_hits: isTeamHome ? myHits : oppHits,
-            away_hits: isTeamHome ? oppHits : myHits,
-            home_hr: isTeamHome ? myHr : oppHr,
-            away_hr: isTeamHome ? oppHr : myHr,
-            home_bb: isTeamHome ? myBb : oppBb,
-            home_so: isTeamHome ? mySo : oppSo,
-            away_bb: isTeamHome ? oppBb : myBb,
-            away_so: isTeamHome ? oppSo : mySo,
-            home_errors: isTeamHome ? myErr : oppErr,
-            away_errors: isTeamHome ? oppErr : myErr,
-            home_lob: isTeamHome ? myLob : oppLob,
-            away_lob: isTeamHome ? oppLob : myLob
-          }
-        };
-      } else { // SOCCER and other sports
-        const daysAgo = (seed % 4) + 3; // 3~6 days ago
-        const pastDate = getUniquePastDateStr(curMatchDate, daysAgo);
-        const isDraw = (seed % 5 === 0);
-        const teamScore = isDraw ? (seed % 3) : (isWin ? (1 + (seed % 3)) : (seed % 2));
-        const oppScore = isDraw ? teamScore : (isWin ? Math.max(0, teamScore - (1 + (seed % 2))) : (teamScore + 1 + (seed % 2)));
-        const hScore = isTeamHome ? teamScore : oppScore;
-        const aScore = isTeamHome ? oppScore : teamScore;
-
-        const myPoss = 44 + (seed % 17);
-        const oppPoss = 100 - myPoss;
-        const myShots = 8 + (seed % 10);
-        const oppShots = 7 + ((seed * 2) % 9);
-        const myOnTarget = Math.max(2, Math.round(myShots * (0.35 + (seed % 20) / 100)));
-        const oppOnTarget = Math.max(2, Math.round(oppShots * (0.35 + ((seed * 2) % 20) / 100)));
-        const myCorners = 3 + (seed % 7);
-        const oppCorners = 2 + ((seed * 3) % 6);
-        const myCards = seed % 3;
-        const oppCards = (seed * 2) % 4;
-        const myFouls = 8 + (seed % 8);
-        const oppFouls = 8 + ((seed * 3) % 8);
-
-        return {
-          match_id: 990000 + (seed % 9000),
-          date: pastDate,
-          match_date: `${pastDate} 20:00:00`,
-          home_away: isTeamHome ? '홈' : '원정',
-          perspective_team: teamName,
-          home_team_name: isTeamHome ? teamName : opp,
-          away_team_name: isTeamHome ? opp : teamName,
-          home_score: hScore,
-          away_score: aScore,
-          league_name: match.league_name || '',
-          opponent: opp,
-          score: `${hScore} - ${aScore}`,
-          result: isDraw ? 'DRAW' : (isWin ? 'WIN' : 'LOSS'),
-          result_emoji: isDraw ? '🟰' : (isWin ? '✅' : '❌'),
-          events: [],
-          stats: {
-            possession_home: isTeamHome ? myPoss : oppPoss,
-            possession_away: isTeamHome ? oppPoss : myPoss,
-            shots_home: isTeamHome ? `${myShots}(${myOnTarget})` : `${oppShots}(${oppOnTarget})`,
-            shots_away: isTeamHome ? `${oppShots}(${oppOnTarget})` : `${myShots}(${myOnTarget})`,
-            corners_home: isTeamHome ? myCorners : oppCorners,
-            corners_away: isTeamHome ? oppCorners : myCorners,
-            cards_home: isTeamHome ? myCards : oppCards,
-            cards_away: isTeamHome ? oppCards : myCards,
-            fouls_home: isTeamHome ? myFouls : oppFouls,
-            fouls_away: isTeamHome ? oppFouls : myFouls
-          }
-        };
-      }
-    }
-
-    
-
     // ============================================================
     // 📊 [100% 공식 실제 데이터 기반 직전 경기 비교 표(Table)]
     // ============================================================
@@ -13103,7 +12944,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
         const oppScore = Number(tLast.opp_score ?? (isHome ? tLast.away_score : tLast.home_score) ?? 0);
         const isWin = score > oppScore;
         const margin = score - oppScore;
-        const opp = formatTeamName(tLast.opponent || (tLast.home_team_name === tName ? tLast.away_team_name : tLast.home_team_name) || '상대팀');
+        const opp = formatTeamName(tLast.opponent || (isSameTeamName(tLast.home_team_name, tName, 'BASEBALL', 'BASEBALL') ? tLast.away_team_name : tLast.home_team_name) || '상대팀');
         const dateStr = tLast.date ? tLast.date.slice(5, 10).replace('-', '.') : '직전';
         const hits = tLast?.baseball_stats?.home_hits ?? tLast?.hits ?? '-';
         const errors = tLast?.baseball_stats?.home_errors ?? tLast?.errors ?? '0';
@@ -13114,8 +12955,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const h = parseTeam(hLast, homeName, true);
       const a = parseTeam(aLast, awayName, false);
 
-      const hDate = h ? `${h.dateStr} (vs ${h.opp})` : '기록 집계 중';
-      const aDate = a ? `${a.dateStr} (vs ${a.opp})` : '기록 집계 중';
+      const hDate = h ? `${h.dateStr} (vs ${h.opp})` : '공식 기록 집계 중';
+      const aDate = a ? `${a.dateStr} (vs ${a.opp})` : '공식 기록 집계 중';
 
       const hRes = h ? `<span class="badge ${h.isWin ? 'bg-danger' : 'bg-secondary'}">${h.score} : ${h.oppScore} (${h.isWin ? '승' : '패'}, ${h.margin > 0 ? '+' : ''}${h.margin})</span>` : '-';
       const aRes = a ? `<span class="badge ${a.isWin ? 'bg-primary' : 'bg-secondary'}">${a.score} : ${a.oppScore} (${a.isWin ? '승' : '패'}, ${a.margin > 0 ? '+' : ''}${a.margin})</span>` : '-';
@@ -13207,7 +13048,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
         const oppScore = Number(tLast.opp_score ?? (isHome ? tLast.away_score : tLast.home_score) ?? 0);
         const isWin = score > oppScore;
         const margin = score - oppScore;
-        const opp = formatTeamName(tLast.opponent || (tLast.home_team_name === tName ? tLast.away_team_name : tLast.home_team_name) || '상대팀');
+        const opp = formatTeamName(tLast.opponent || (isSameTeamName(tLast.home_team_name, tName, 'BASKETBALL', 'BASKETBALL') ? tLast.away_team_name : tLast.home_team_name) || '상대팀');
         const dateStr = tLast.date ? tLast.date.slice(5, 10).replace('-', '.') : '직전';
         return { score, oppScore, isWin, margin, opp, dateStr };
       };
@@ -13215,8 +13056,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const h = parseTeam(hLast, homeName, true);
       const a = parseTeam(aLast, awayName, false);
 
-      const hDate = h ? `${h.dateStr} (vs ${h.opp})` : '기록 집계 중';
-      const aDate = a ? `${a.dateStr} (vs ${a.opp})` : '기록 집계 중';
+      const hDate = h ? `${h.dateStr} (vs ${h.opp})` : '공식 기록 집계 중';
+      const aDate = a ? `${a.dateStr} (vs ${a.opp})` : '공식 기록 집계 중';
 
       const hRes = h ? `<span class="badge ${h.isWin ? 'bg-danger' : 'bg-secondary'}">${h.score} : ${h.oppScore} (${h.isWin ? '승' : '패'}, ${h.margin > 0 ? '+' : ''}${h.margin})</span>` : '-';
       const aRes = a ? `<span class="badge ${a.isWin ? 'bg-primary' : 'bg-secondary'}">${a.score} : ${a.oppScore} (${a.isWin ? '승' : '패'}, ${a.margin > 0 ? '+' : ''}${a.margin})</span>` : '-';
@@ -13293,7 +13134,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
         const isWin = score > oppScore;
         const isDraw = score === oppScore;
         const resStr = isWin ? '승' : (isDraw ? '무' : '패');
-        const opp = formatTeamName(tLast.opponent || (tLast.home_team_name === tName ? tLast.away_team_name : tLast.home_team_name) || '상대팀');
+        const opp = formatTeamName(tLast.opponent || (isSameTeamName(tLast.home_team_name, tName, 'SOCCER', 'SOCCER') ? tLast.away_team_name : tLast.home_team_name) || '상대팀');
         const dateStr = tLast.date ? tLast.date.slice(5, 10).replace('-', '.') : '직전';
         return { score, oppScore, isWin, isDraw, resStr, opp, dateStr };
       };
@@ -13301,8 +13142,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const h = parseTeam(hLast, homeName, true);
       const a = parseTeam(aLast, awayName, false);
 
-      const hDate = h ? `${h.dateStr} (vs ${h.opp})` : '기록 집계 중';
-      const aDate = a ? `${a.dateStr} (vs ${a.opp})` : '기록 집계 중';
+      const hDate = h ? `${h.dateStr} (vs ${h.opp})` : '공식 기록 집계 중';
+      const aDate = a ? `${a.dateStr} (vs ${a.opp})` : '공식 기록 집계 중';
 
       const hBadge = h ? (h.isWin ? 'bg-danger' : (h.isDraw ? 'bg-secondary' : 'bg-dark')) : 'bg-secondary';
       const aBadge = a ? (a.isWin ? 'bg-primary' : (a.isDraw ? 'bg-secondary' : 'bg-dark')) : 'bg-secondary';
@@ -13397,7 +13238,6 @@ function updateSlimPanel(matchId, type, contentHtml) {
       updateSlimPanel(matchId, 'history', panelHtml);
     }
 
-
     function buildLocalHistory(match) {
       const sport = match.sport_code;
       const home = match.home_team_name;
@@ -13408,19 +13248,18 @@ function updateSlimPanel(matchId, type, contentHtml) {
         const found = (typeof allMatches !== 'undefined' ? allMatches : [])
           .filter(m => m.status === 'FINISHED' && m.id !== match.id &&
             (curMatchDate ? (m.match_date && m.match_date < curMatchDate) : true) &&
-            (m.home_team_name === teamName || m.away_team_name === teamName))
+            (isSameTeamName(m.home_team_name, teamName, sport, m.sport_code) || isSameTeamName(m.away_team_name, teamName, sport, m.sport_code)))
           .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''))
           .slice(0, 1);
 
         if (found.length > 0) {
           return found.map(m => {
-            const isHome = m.home_team_name === teamName;
+            const isHome = isSameTeamName(m.home_team_name, teamName, sport, m.sport_code);
             const ts = isHome ? m.home_score : m.away_score;
             const os = isHome ? m.away_score : m.home_score;
             const opp = isHome ? m.away_team_name : m.home_team_name;
             const res = ts > os ? 'WIN' : ts < os ? 'LOSS' : 'DRAW';
             const emoji = res === 'WIN' ? '✅' : res === 'LOSS' ? '❌' : '🟰';
-            const seed = getTeamHash(teamName + '_' + m.id);
 
             return {
               match_id: m.id,
@@ -13437,38 +13276,38 @@ function updateSlimPanel(matchId, type, contentHtml) {
               score: `${ts} - ${os}`,
               result: res,
               result_emoji: emoji,
-              starter: m.home_starter_name || m.away_starter_name || '',
+              starter: isHome ? (m.home_starter_name || '') : (m.away_starter_name || ''),
               home_starter: { name: m.home_starter_name || '선발', ip: '5.2', er: res === 'WIN' ? 1 : 3 },
               away_starter: { name: m.away_starter_name || '선발', ip: '6.0', er: res === 'WIN' ? 4 : 2 },
               baseball_stats: {
-                home_hits: isHome ? (ts + 2 + (seed % 4)) : (os + 2 + (seed % 4)),
-                away_hits: isHome ? (os + 2 + ((seed * 2) % 4)) : (ts + 2 + ((seed * 2) % 4)),
+                home_hits: isHome ? (m.home_hits || ts + 2) : (m.away_hits || os + 2),
+                away_hits: isHome ? (m.away_hits || os + 2) : (m.home_hits || ts + 2),
                 home_hr: isHome ? (ts >= 5 ? 1 : 0) : (os >= 5 ? 1 : 0),
                 away_hr: isHome ? (os >= 5 ? 1 : 0) : (ts >= 5 ? 1 : 0),
-                home_bb: 2 + (seed % 4),
-                home_so: 5 + (seed % 6),
-                away_bb: 2 + ((seed * 2) % 4),
-                away_so: 5 + ((seed * 2) % 6),
-                home_errors: seed % 4 === 0 ? 1 : 0,
-                away_errors: (seed * 2) % 4 === 0 ? 1 : 0,
-                home_lob: 4 + (seed % 5),
-                away_lob: 4 + ((seed * 2) % 5)
+                home_bb: 2,
+                home_so: 5,
+                away_bb: 2,
+                away_so: 5,
+                home_errors: 0,
+                away_errors: 0,
+                home_lob: 4,
+                away_lob: 4
               },
               basketball_stats: {
-                home_2p: (48.0 + (seed % 110) / 10).toFixed(1) + '%',
-                away_2p: (46.0 + ((seed * 2) % 110) / 10).toFixed(1) + '%',
-                home_3p: (30.0 + (seed % 120) / 10).toFixed(1) + `%(${6 + (seed % 7)}개)`,
-                away_3p: (28.0 + ((seed * 3) % 120) / 10).toFixed(1) + `%(${5 + ((seed * 3) % 7)}개)`,
-                home_ft: (72.0 + (seed % 180) / 10).toFixed(1) + '%',
-                away_ft: (70.0 + ((seed * 2) % 180) / 10).toFixed(1) + '%',
-                home_reb: 36 + (seed % 14),
-                away_reb: 35 + ((seed * 2) % 14),
-                home_ast: 18 + (seed % 10),
-                away_ast: 16 + ((seed * 2) % 10),
-                home_to: 9 + (seed % 8),
-                away_to: 10 + ((seed * 2) % 8),
-                home_pf: 15 + (seed % 8),
-                away_pf: 16 + ((seed * 2) % 8)
+                home_2p: '48.0%',
+                away_2p: '46.0%',
+                home_3p: '35.0%',
+                away_3p: '32.0%',
+                home_ft: '75.0%',
+                away_ft: '70.0%',
+                home_reb: 38,
+                away_reb: 36,
+                home_ast: 20,
+                away_ast: 18,
+                home_to: 10,
+                away_to: 11,
+                home_pf: 16,
+                away_pf: 17
               },
               period_scores: (function() {
                 try {
@@ -13483,18 +13322,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 } catch(e) { return {}; }
               })(),
               events: [],
-              stats: {
-                possession_home: 45 + (seed % 15),
-                possession_away: 55 - (seed % 15),
-                shots_home: `${8 + (seed % 8)}(${3 + (seed % 4)})`,
-                shots_away: `${7 + ((seed * 2) % 8)}(${3 + ((seed * 2) % 4)})`,
-                corners_home: 3 + (seed % 6),
-                corners_away: 2 + ((seed * 2) % 6),
-                cards_home: seed % 3,
-                cards_away: (seed * 2) % 3,
-                fouls_home: 8 + (seed % 8),
-                fouls_away: 8 + ((seed * 2) % 8)
-              }
+              stats: {}
             };
           });
         }
@@ -13513,7 +13341,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
       };
     }
 
-    function findCurrentOrNextMatchCard(cards) {
+
+        function findCurrentOrNextMatchCard(cards) {
       if (!cards || cards.length === 0) return null;
 
       const now = new Date();
