@@ -580,26 +580,69 @@
       flex-shrink: 0 !important;
     }
 
-    /* Match Cards (Schedule & Pred List) */
+    /* Match Cards (Schedule & Pred List) - 각 경기 박스 선명한 색상 테두리 및 입체 구분 */
     .pred-card-compact {
       background: #ffffff;
-      border: 1px solid #e5e7eb;
-      border-radius: 7px;
-      padding: 7px 10px;
-      margin-bottom: 6px;
+      border: 1.5px solid #cbd5e1;
+      border-left: 5px solid #2563eb; /* 기본 블루 테두리 */
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all 0.18s ease;
       scroll-margin-top: 115px;
       box-sizing: border-box;
       max-width: 100%;
       overflow-x: hidden;
       touch-action: pan-y;
+      box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.05);
     }
+    
+    /* 종목별 고유 색상 테두리 구분 */
+    .pred-card-compact.card-sport-baseball,
+    .pred-card-compact[data-sport="BASEBALL"] {
+      border-color: #cbd5e1;
+      border-left: 5px solid #2563eb !important; /* 야구: 로열 블루 테두리 */
+    }
+    .pred-card-compact.card-sport-soccer,
+    .pred-card-compact[data-sport="SOCCER"] {
+      border-color: #cbd5e1;
+      border-left: 5px solid #16a34a !important; /* 축구: 에메랄드 그린 테두리 */
+    }
+    .pred-card-compact.card-sport-basketball,
+    .pred-card-compact[data-sport="BASKETBALL"] {
+      border-color: #cbd5e1;
+      border-left: 5px solid #ea580c !important; /* 농구: 비비드 오렌지 테두리 */
+    }
+    .pred-card-compact.card-sport-volleyball,
+    .pred-card-compact[data-sport="VOLLEYBALL"] {
+      border-color: #cbd5e1;
+      border-left: 5px solid #9333ea !important; /* 배구: 퍼플 테두리 */
+    }
+
+    /* 라이브 진행 중 경기 테두리 (레드 테두리 + 글로우) */
+    .pred-card-compact.card-status-live,
+    .pred-card-compact[data-match-status="LIVE"] {
+      border: 1.5px solid #f87171 !important;
+      border-left: 6px solid #dc2626 !important;
+      background: #fffcfc !important;
+      box-shadow: 0 0 10px rgba(220, 38, 38, 0.18) !important;
+    }
+
+    /* 종료 경기 테두리 (차분한 그레이) */
+    .pred-card-compact.card-status-finished,
+    .pred-card-compact[data-match-status="FINISHED"] {
+      border-color: #e2e8f0 !important;
+      border-left: 4.5px solid #94a3b8 !important;
+      background: #fdfdfd;
+    }
+
     @media (hover: hover) and (min-width: 769px) {
       .pred-card-compact:hover {
         background: #f8fafc;
-        border-color: #94a3b8;
-        transform: translateX(1.5px);
+        border-color: #64748b !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
       }
     }
     @media (max-width: 768px) {
@@ -609,9 +652,36 @@
         transform: none !important;
       }
     }
+    
+    /* 현재 선택된 활성 경기 카드 (진한 네이비/블루 하이라이트) */
     .pred-card-compact.active-match-card {
       background: #eff6ff !important;
-      border: 2px solid #1d4ed8 !important;
+      border: 2px solid #2563eb !important;
+      border-left: 6px solid #1d4ed8 !important;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22) !important;
+    }
+
+    /* 상단 실시간 경기 스트립 카드 스타일 */
+    .strip-card {
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-left: 4px solid #2563eb;
+      border-radius: 8px;
+      padding: 8px 12px;
+      min-width: 220px;
+      box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .strip-card:hover {
+      border-color: #64748b;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .strip-card.strip-live {
+      border-color: #f87171 !important;
+      border-left-color: #dc2626 !important;
+      background: #fffcfc !important;
     }
 
     /* Option 1: 베트맨 오리지널 콤팩트 3단 바 전용 영구 고정 스타일 */
@@ -903,12 +973,13 @@
     }
     .toto-grand-card {
       background: #ffffff;
-      border: 1px solid #e5e7eb;
-      border-left: 4px solid #1d4ed8;
-      border-radius: 7px;
-      padding: 7px 10px;
+      border: 1.5px solid #cbd5e1;
+      border-left: 5px solid #1d4ed8;
+      border-radius: 8px;
+      padding: 8px 10px;
       cursor: pointer;
       transition: all 0.15s ease;
+      box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.05);
     }
     .toto-grand-card:hover {
       background: #f8fafc;
@@ -3439,7 +3510,7 @@
           : (m.status === 'FINISHED' ? '<span class="badge bg-secondary">종료</span>' : '<span class="badge bg-primary">예정</span>');
 
         html += `
-          <div class="strip-card" onclick="openMatchModal(${m.id})">
+          <div class="strip-card ${isLive ? 'strip-live' : ''} strip-sport-${(m.sport_code || 'baseball').toLowerCase()}" onclick="openMatchModal(${m.id})">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="strip-league">${sportIcon} ${m.league_name || m.sport_code}</span>
               ${stBadge}
@@ -9630,8 +9701,12 @@ function getFullModalMatchList() {
       const activeAccordionType = mState ? mState.type : null;
       const cachedAccordionHtml = (mState && mState.html) || '<div class="slim-accordion-loading">⏳ 불러오는 중...</div>';
 
+      const sportCode = (m.sport_code || 'BASEBALL').toUpperCase();
+      const sportClass = `card-sport-${sportCode.toLowerCase()}`;
+      const statusClass = isLive ? 'card-status-live' : (isFinished ? 'card-status-finished' : 'card-status-scheduled');
+
       return `
-        <div class="slim-match-card pred-card-compact ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
+        <div class="slim-match-card pred-card-compact ${sportClass} ${statusClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
           <div class="d-flex justify-content-between align-items-center mb-1">
             <span class="slim-card-sport-time">${sportIcon} ${m.league_name || m.sport_code} · ${timeStr}${sweepBadge}</span>
             <div class="d-flex align-items-center gap-1.5" style="flex-shrink:0;">
