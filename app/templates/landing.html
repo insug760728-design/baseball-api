@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0">
   <script>
     try {
-      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15'].forEach(function(k) {
+      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v20', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15'].forEach(function(k) {
         localStorage.removeItem(k);
       });
     } catch(e) {}
@@ -1773,7 +1773,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v8.3 상단여백제거·승무15패단일화
+          <i class="bi bi-check-circle-fill me-1"></i>v8.4 고속렌더링·초기로딩최적화
         </span>
       </div>
 
@@ -3313,12 +3313,12 @@
             _liveMatchesRetryTimeout = null;
           }
           try {
-            localStorage.setItem('tokeon_matches_cache_v6', JSON.stringify(uniqueList));
+            localStorage.setItem('tokeon_matches_cache_v20', JSON.stringify(uniqueList));
           } catch (e) {}
         } else if (!allMatches || allMatches.length === 0) {
           // Fallback to local storage if network request returned empty (e.g. during server deployment)
           try {
-            const cached = localStorage.getItem('tokeon_matches_cache_v6');
+            const cached = localStorage.getItem('tokeon_matches_cache_v20');
             if (cached) {
               const parsed = JSON.parse(cached);
               if (Array.isArray(parsed) && parsed.length > 0) {
@@ -3361,7 +3361,7 @@
         console.error('Match strip error:', e);
         if (!allMatches || allMatches.length === 0) {
           try {
-            const cached = localStorage.getItem('tokeon_matches_cache_v6');
+            const cached = localStorage.getItem('tokeon_matches_cache_v20');
             if (cached) {
               const parsed = JSON.parse(cached);
               if (Array.isArray(parsed) && parsed.length > 0) {
@@ -8172,10 +8172,10 @@ function getFullModalMatchList() {
       // ⚡ 0초(0ms) 즉시 렌더링: 브라우저 캐시가 있으면 대기 없이 즉각 경기 목록 & 전광판 표출
       try {
         // Purge legacy caches with older fixture formats
-        ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15'].forEach(k => {
+        ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v20', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15', 'tokeon_matches_cache_v16', 'tokeon_matches_cache_v17', 'tokeon_matches_cache_v18', 'tokeon_matches_cache_v19'].forEach(k => {
           try { localStorage.removeItem(k); } catch (e) {}
         });
-        const cached = localStorage.getItem('tokeon_matches_cache_v6');
+        const cached = localStorage.getItem('tokeon_matches_cache_v20');
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
@@ -9219,10 +9219,217 @@ function getFullModalMatchList() {
       };
     }
 
+    function buildPredMatchCardHtml(m, isSel, oddsInfo, now, d0Str, d1Str) {
+      let sportIcon = '⚾';
+      if (m.sport_code === 'SOCCER') sportIcon = '⚽';
+      if (m.sport_code === 'BASKETBALL') sportIcon = '🏀';
+
+      const rawDate = m.match_date || '';
+      const pred = m.prediction || {};
+      const sCtx = pred.series_context || null;
+      let sweepBadge = '';
+      if (sCtx && sCtx.is_sweep_game) {
+        sweepBadge = `<span class="badge ms-1" style="background: #ffffff; color: #111827; border: 1px solid #d1d5db; font-size: 0.65rem; font-weight: 800; padding: 1px 5px;" title="${sCtx.description || '스윕도전'}"><i class="bi bi-fire me-0.5"></i>스윕결정전</span>`;
+      } else if (sCtx && sCtx.is_rubber_game) {
+        sweepBadge = `<span class="badge ms-1" style="background: #ffffff; color: #111827; border: 1px solid #d1d5db; font-size: 0.65rem; font-weight: 800; padding: 1px 5px;"><i class="bi bi-lightning-charge-fill me-0.5"></i>위닝결정전</span>`;
+      }
+
+      // 배당 박스
+      let betmanOddsHtml = '';
+      if (m.sport_code === 'SOCCER') {
+        const hw = oddsInfo.home ? `<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">${oddsInfo.home}</span></span>` : '<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">-</span></span>';
+        const dw = oddsInfo.draw ? `<span class="betman-box draw"><span class="betman-lbl">무</span><span class="betman-val">${oddsInfo.draw}</span></span>` : '<span class="betman-box draw"><span class="betman-lbl">무</span><span class="betman-val">-</span></span>';
+        const aw = oddsInfo.away ? `<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">${oddsInfo.away}</span></span>` : '<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">-</span></span>';
+        betmanOddsHtml = `${hw}${dw}${aw}`;
+      } else if (m.sport_code === 'BASEBALL') {
+        const hw = oddsInfo.home ? `<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">${oddsInfo.home}</span></span>` : '<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">-</span></span>';
+        const dw = (oddsInfo.draw && oddsInfo.draw !== '-') ? `<span class="betman-box draw"><span class="betman-lbl">1</span><span class="betman-val">${oddsInfo.draw}</span></span>` : '';
+        const aw = oddsInfo.away ? `<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">${oddsInfo.away}</span></span>` : '<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">-</span></span>';
+        betmanOddsHtml = `${hw}${dw}${aw}`;
+      } else {
+        const hw = oddsInfo.home ? `<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">${oddsInfo.home}</span></span>` : '<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">-</span></span>';
+        const aw = oddsInfo.away ? `<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">${oddsInfo.away}</span></span>` : '<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">-</span></span>';
+        betmanOddsHtml = `${hw}${aw}`;
+      }
+
+      // 스코어 / 진행 상태 판단
+      let isCardStaleLive = false;
+      let diffMin = 0;
+      if (m.match_date) {
+        try {
+          const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+          diffMin = (now.getTime() - mTime) / (1000 * 60);
+          if (m.status === 'LIVE' && diffMin > 240) {
+            isCardStaleLive = true;
+          }
+        } catch(e) {}
+      }
+
+      const isLive = typeof isRealTimeLive === 'function' ? isRealTimeLive(m) : (m.status === 'LIVE' && !isCardStaleLive);
+      const isFinished = (m.status === 'FINISHED' || isCardStaleLive);
+      const hasScores = (m.home_score !== null && m.home_score !== undefined && m.away_score !== null && m.away_score !== undefined && (isLive || isFinished || m.home_score > 0 || m.away_score > 0));
+
+      let innText = '';
+      let details = m.details || {};
+      if (typeof details === 'string') {
+        try { details = JSON.parse(details); m.details = details; } catch(e) { details = {}; }
+      }
+
+      if (isLive) {
+        if (m.sport_code === 'BASEBALL') {
+          if (m.current_inning) innText = m.current_inning;
+          else if (m.inning_text) innText = m.inning_text;
+          else if (details.current_inning) innText = details.current_inning;
+          else if (details.inning_text) innText = details.inning_text;
+          else {
+            if (diffMin < 20) innText = '1회말';
+            else if (diffMin < 40) innText = '2회말';
+            else if (diffMin < 65) innText = '3회말';
+            else if (diffMin < 90) innText = '4회말';
+            else if (diffMin < 115) innText = '5회말';
+            else if (diffMin < 140) innText = '6회말';
+            else if (diffMin < 165) innText = '7회말';
+            else if (diffMin < 190) innText = '8회말';
+            else innText = '9회말';
+          }
+        } else if (m.sport_code === 'SOCCER') {
+          if (details.match_time) innText = details.match_time;
+          else {
+            if (diffMin <= 45) innText = `전반 ${Math.max(1, Math.floor(diffMin))}'`;
+            else if (diffMin <= 60) innText = `HT`;
+            else if (diffMin <= 105) innText = `후반 ${Math.min(90, Math.floor(diffMin - 15))}'`;
+            else innText = `후반 90'+`;
+          }
+        } else if (m.sport_code === 'BASKETBALL') {
+          if (details.quarter || details.period) innText = details.quarter || details.period;
+          else {
+            if (diffMin <= 25) innText = '1Q';
+            else if (diffMin <= 50) innText = '2Q';
+            else if (diffMin <= 75) innText = '3Q';
+            else innText = '4Q';
+          }
+        } else if (m.sport_code === 'VOLLEYBALL') {
+          innText = details.set || '진행중';
+        } else {
+          innText = 'LIVE';
+        }
+      } else if (isFinished) {
+        innText = '종료';
+      }
+
+      let centerRowHtml = '';
+      if (hasScores) {
+        const scoreClass = isLive ? 'live' : 'finished';
+        const badgeHtml = isLive ? `<span class="live-dot"></span> ${innText}` : innText;
+        centerRowHtml = `
+          <span class="betman-team-home" title="${m.home_team_name}">${formatTeamName(m.home_team_name)}</span>
+          <span class="betman-score-val home ${scoreClass}">${m.home_score ?? 0}</span>
+          <span class="betman-inning-badge ${scoreClass}">${badgeHtml}</span>
+          <span class="betman-score-val away ${scoreClass}">${m.away_score ?? 0}</span>
+          <span class="betman-team-away" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</span>
+        `;
+      } else {
+        centerRowHtml = `
+          <span class="betman-team-home" title="${m.home_team_name}">${formatTeamName(m.home_team_name)}</span>
+          <span class="betman-odds-center">${betmanOddsHtml}</span>
+          <span class="betman-team-away" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</span>
+        `;
+      }
+
+      let scoreLabel = '';
+      if (isLive) {
+        scoreLabel = `<span class="badge bg-danger text-white py-0.5 px-1.5" style="font-size:0.62rem; font-weight:800; border-radius:4px;"><span class="live-dot" style="background:#fff; width:5px; height:5px; margin-right:3px;"></span>LIVE</span>`;
+      } else if (isFinished) {
+        scoreLabel = `<span class="badge bg-secondary text-white py-0.5 px-1.5" style="font-size:0.62rem; font-weight:700; border-radius:4px;">종료</span>`;
+      } else if (oddsInfo.isImminent) {
+        scoreLabel = `<span style="font-size:0.65rem; color:#dc2626; font-weight:700;">🔥마감임박</span>`;
+      } else if (oddsInfo.isClosed) {
+        scoreLabel = `<span style="font-size:0.65rem; color:#6b7280; font-weight:600;">🔒마감</span>`;
+      }
+
+      const startersInfo = getMatchStarters(m);
+      const absInfo = getMatchAbsences(m);
+      let subLineHtml = '';
+      if (m.sport_code === 'BASEBALL') {
+        if (startersInfo.homeAnnounced || startersInfo.awayAnnounced) {
+          const hEra = startersInfo.homeEra || m.home_starter_era || (m.extra_data && m.extra_data.home_starter_era) || '';
+          const aEra = startersInfo.awayEra || m.away_starter_era || (m.extra_data && m.extra_data.away_starter_era) || '';
+          const hEraHtml = (startersInfo.homeAnnounced && hEra) ? `<span class="text-primary fw-bold" style="font-size:0.67rem; margin-left:3px; letter-spacing:-0.2px;">(방어율 ${hEra})</span>` : '';
+          const aEraHtml = (startersInfo.awayAnnounced && aEra) ? `<span class="text-primary fw-bold" style="font-size:0.67rem; margin-left:3px; letter-spacing:-0.2px;">(방어율 ${aEra})</span>` : '';
+          subLineHtml = `
+            <div class="slim-card-starter-bar d-flex justify-content-between align-items-center mt-1 px-1.5 py-0.5 rounded" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.71rem;">
+              <div class="starter-side-home d-flex align-items-center text-truncate" style="flex:1 1 42%; min-width:0;" title="${startersInfo.homeStarter}">
+                <span class="fw-bold text-dark text-truncate">${startersInfo.homeStarter}</span>
+                ${hEraHtml}
+              </div>
+              <div class="starter-center-badge text-center px-1" style="flex:0 0 auto;">
+                <span class="badge bg-white text-secondary border px-1 py-0.5" style="font-size:0.58rem; font-weight:700;">선발</span>
+              </div>
+              <div class="starter-side-away d-flex align-items-center justify-content-end text-truncate" style="flex:1 1 42%; min-width:0; text-align:right;" title="${startersInfo.awayStarter}">
+                <span class="fw-bold text-dark text-truncate">${startersInfo.awayStarter}</span>
+                ${aEraHtml}
+              </div>
+            </div>
+          `;
+        } else {
+          subLineHtml = `
+            <div class="slim-card-starter-bar d-flex justify-content-between align-items-center mt-1 px-1.5 py-0.5 rounded" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.68rem; color:#64748b;">
+              <span style="flex:1; text-align:left;">선발 미정</span>
+              <span class="badge bg-white text-muted border px-1 py-0.5" style="font-size:0.58rem;">선발</span>
+              <span style="flex:1; text-align:right;">선발 미정</span>
+            </div>
+          `;
+        }
+      } else if ((m.sport_code === 'SOCCER' || m.sport_code === 'BASKETBALL') && absInfo.text && absInfo.text !== '-') {
+        subLineHtml = `<div class="slim-card-sub mt-1">🚑 ${absInfo.text}</div>`;
+      }
+
+      const timeStr = formatKSTDateTime(m.match_date);
+
+      const mState = _slimAccordionState[m.id];
+      const isAccordionOpen = !!(mState && mState.type);
+      const activeAccordionType = mState ? mState.type : null;
+      const cachedAccordionHtml = (mState && mState.html) || '<div class="slim-accordion-loading">⏳ 불러오는 중...</div>';
+
+      return `
+        <div class="slim-match-card pred-card-compact ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="slim-card-sport-time">${sportIcon} ${m.league_name || m.sport_code} · ${timeStr}${sweepBadge}</span>
+            <div class="d-flex align-items-center gap-1.5" style="flex-shrink:0;">
+              ${scoreLabel ? `<span>${scoreLabel}</span>` : ''}
+            </div>
+          </div>
+          <div class="betman-match-row">
+            ${centerRowHtml}
+          </div>
+          ${subLineHtml}
+          <div class="slim-card-actions">
+            <button class="slim-action-btn odds-btn ${isAccordionOpen && activeAccordionType === 'odds' ? 'active' : ''}" id="oddsBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'odds')">📊 배당</button>
+            <button class="slim-action-btn history-btn" id="histBtn_${m.id}" onclick="event.stopPropagation(); openLastMatchDetailModal(${m.id})">📋 전경기</button>
+            <button class="slim-action-btn next-btn" id="nextBtn_${m.id}" onclick="event.stopPropagation(); openUpcomingScheduleModal(${m.id})">⏩ 일정</button>
+            <button class="slim-action-btn detail-btn" onclick="event.stopPropagation(); openNextGenDetailModal(${m.id})">🔍 상세보기</button>
+            <button class="slim-action-btn live-relay-btn" style="${isLive ? 'background:#dc2626; color:#ffffff; border-color:#b91c1c; font-weight:800;' : ''}" onclick="event.stopPropagation(); focusLiveRelayMatch(${m.id})">📡 중계</button>
+          </div>
+          <div class="slim-accordion-panel ${isAccordionOpen ? 'open' : ''}" id="slimPanel_${m.id}">
+            ${isAccordionOpen ? cachedAccordionHtml : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    let _renderChunkTimer = null;
+    let _activeRenderToken = 0;
+
     function renderPredMatches() {
       updateScheduleTabCounts();
       const container = document.getElementById('predMatchList');
       if (!container) return;
+
+      if (_renderChunkTimer) {
+        clearTimeout(_renderChunkTimer);
+        _renderChunkTimer = null;
+      }
+      const currentToken = ++_activeRenderToken;
 
       const filtered = getFilteredPredMatches();
 
@@ -9236,7 +9443,6 @@ function getFullModalMatchList() {
       }
 
       if (filtered.length === 0) {
-        // Initial network fetch is still in flight: preserve the loading skeleton placeholders!
         if (!window.matchesLoadedInitial && (!allMatches || allMatches.length === 0)) {
           return;
         }
@@ -9292,29 +9498,11 @@ function getFullModalMatchList() {
       const bufferKstDateTime = getKSTDateTimeString(new Date(now.getTime() - 20 * 60 * 1000));
       const nowKstTimeOnly = nowKstDateTime.slice(11, 16);
 
-      // 현재 열려 있는 아코디언 상태 보존 (목록 갱신 시 사라지는 현상 방지)
-      const openPanelsInfo = {};
-      if (container) {
-        container.querySelectorAll('.slim-accordion-panel.open').forEach(p => {
-          const mId = p.id.replace('slimPanel_', '');
-          const curHtml = p.innerHTML || '';
-          const isReal = curHtml && !curHtml.includes('로딩') && !curHtml.includes('불러오는 중');
-          openPanelsInfo[mId] = {
-            isOpen: true,
-            html: isReal ? curHtml : null
-          };
-          if (_slimAccordionState[mId] && isReal) {
-            _slimAccordionState[mId].html = curHtml;
-          }
-        });
-      }
-
-      let dividerInserted = false;
-      let html = '';
+      let headerHtml = '';
 
       // [지난경기결과 전용 상단 안내 배너]
       if (currentPredDate === 'FINISHED') {
-        html += `
+        headerHtml += `
           <div class="p-2 mb-2 rounded d-flex justify-content-between align-items-center" style="background: #ffffff; border: 1.5px solid #111827;">
             <div class="d-flex align-items-center gap-1.5 text-truncate">
               <span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size:0.68rem; font-weight: 800;"><i class="bi bi-clock-history me-1"></i>지난경기 결과</span>
@@ -9328,7 +9516,7 @@ function getFullModalMatchList() {
       } else if (currentPredDate === 'D0') {
         const hasLiveOrUpcoming = filtered.some(m => m.status !== 'FINISHED' && m.status !== 'CANCELLED' && m.status !== 'POSTPONED');
         if (!hasLiveOrUpcoming && filtered.length > 0) {
-          html += `
+          headerHtml += `
             <div class="p-2.5 mb-2 rounded-2" style="background: #ffffff; border: 1.5px solid #111827;">
               <div class="d-flex align-items-center justify-content-between mb-1">
                 <span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-weight: 800; font-size: 0.72rem;">오늘 공식 경기 마감</span>
@@ -9348,367 +9536,120 @@ function getFullModalMatchList() {
         }
       }
 
+      // Fast Render: Build initial chunk (first 40 matches) for instant 0ms mobile paint
+      const INITIAL_CHUNK_SIZE = 40;
       let lastDateHeader = null;
+      let dividerInserted = false;
 
-      filtered.forEach(m => {
-        const isSel = (currentCenterMode === 'DETAIL' && m.id === selectedPredMatchId);
-        let sportIcon = '⚾';
-        if (m.sport_code === 'SOCCER') sportIcon = '⚽';
-        if (m.sport_code === 'BASKETBALL') sportIcon = '🏀';
+      function renderBatch(startIdx, endIdx) {
+        let chunkHtml = '';
+        for (let i = startIdx; i < endIdx && i < filtered.length; i++) {
+          const m = filtered[i];
+          const isSel = (currentCenterMode === 'DETAIL' && m.id === selectedPredMatchId);
+          const rawDate = m.match_date || '';
+          const matchDay = rawDate.slice(0, 10);
 
-        const rawDate = m.match_date || '';
-        const matchDay = rawDate.slice(0, 10);
+          if (matchDay && matchDay !== lastDateHeader) {
+            lastDateHeader = matchDay;
+            const isD0 = (matchDay === d0Str);
+            const isD1 = (matchDay === d1Str);
+            const isPast = (matchDay < d0Str);
 
-        // 📅 날짜 그룹 구분선 (오늘 / 내일 / 이전 날짜별 명확한 분리)
-        if (matchDay && matchDay !== lastDateHeader) {
-          lastDateHeader = matchDay;
-          const isD0 = (matchDay === d0Str);
-          const isD1 = (matchDay === d1Str);
-          const isPast = (matchDay < d0Str);
-
-          const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
-          let dayOfWeekStr = '';
-          try {
-            const dtParts = matchDay.split('-');
-            const dObj = new Date(parseInt(dtParts[0], 10), parseInt(dtParts[1], 10) - 1, parseInt(dtParts[2], 10));
-            dayOfWeekStr = dayNames[dObj.getDay()] || '';
-          } catch(e) {}
-
-          const mNum = parseInt(matchDay.slice(5, 7), 10);
-          const dNum = parseInt(matchDay.slice(8, 10), 10);
-
-          let dateHeaderBadge = '';
-          let dateHeaderBg = '#f8fafc';
-          let dateHeaderBorder = '#cbd5e1';
-          let dateHeaderTextColor = '#0f172a';
-
-          if (isD0) {
-            dateHeaderBadge = `<span class="badge bg-danger text-white px-2 py-0.5" style="font-size: 0.66rem; font-weight: 800;"><i class="bi bi-calendar-check me-1"></i>오늘 경기</span>`;
-            dateHeaderBg = '#eff6ff';
-            dateHeaderBorder = '#93c5fd';
-            dateHeaderTextColor = '#1d4ed8';
-          } else if (isD1) {
-            dateHeaderBadge = `<span class="badge bg-primary text-white px-2 py-0.5" style="font-size: 0.66rem; font-weight: 800;"><i class="bi bi-calendar-plus me-1"></i>내일 예정</span>`;
-            dateHeaderBg = '#f8fafc';
-            dateHeaderBorder = '#cbd5e1';
-            dateHeaderTextColor = '#334155';
-          } else if (isPast) {
-            dateHeaderBadge = `<span class="badge bg-secondary text-white px-2 py-0.5" style="font-size: 0.66rem; font-weight: 700;"><i class="bi bi-clock-history me-1"></i>종료 경기</span>`;
-            dateHeaderBg = '#f3f4f6';
-            dateHeaderBorder = '#e5e7eb';
-            dateHeaderTextColor = '#4b5563';
-          } else {
-            dateHeaderBadge = `<span class="badge bg-dark text-white px-2 py-0.5" style="font-size: 0.66rem; font-weight: 700;">예정 일정</span>`;
-            dateHeaderBg = '#f8fafc';
-            dateHeaderBorder = '#cbd5e1';
-            dateHeaderTextColor = '#334155';
-          }
-
-          html += `
-            <div class="pred-date-group-divider my-2 py-1 px-2.5 rounded d-flex align-items-center justify-content-between" style="background: ${dateHeaderBg}; border: 1.5px solid ${dateHeaderBorder}; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
-              <div class="d-flex align-items-center gap-1.5">
-                <i class="bi bi-calendar-event" style="color: ${dateHeaderTextColor}; font-size: 0.78rem;"></i>
-                <span class="fw-bold" style="color: ${dateHeaderTextColor}; font-size: 0.78rem;">${mNum}월 ${dNum}일 (${dayOfWeekStr})</span>
-              </div>
-              <div>
-                ${dateHeaderBadge}
-              </div>
-            </div>
-          `;
-        }
-
-        // Insert Current Time Anchor Divider right before the first upcoming or in-progress match
-        if (!dividerInserted && (currentPredDate === 'ALL' || currentPredDate === 'D0')) {
-          let isLiveToday = false;
-          if (m.status === 'LIVE' && rawDate) {
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            let dayOfWeekStr = '';
             try {
-              const d = new Date(rawDate.replace(' ', 'T'));
-              const diffHours = (now.getTime() - d.getTime()) / (1000 * 60 * 60);
-              if (diffHours >= -0.5 && diffHours <= 4.5) isLiveToday = true;
+              const dtParts = matchDay.split('-');
+              const dObj = new Date(parseInt(dtParts[0], 10), parseInt(dtParts[1], 10) - 1, parseInt(dtParts[2], 10));
+              dayOfWeekStr = dayNames[dObj.getDay()] || '';
             } catch(e) {}
-          }
-          const isUpcoming = (rawDate >= bufferKstDateTime && m.status !== 'FINISHED');
-          if (isLiveToday || isUpcoming) {
-            const isTomorrow = rawDate.slice(0, 10) > d0Str;
-            const dividerText = isTomorrow
-              ? `오늘(${parseInt(d0Str.slice(5,7),10)}/${parseInt(d0Str.slice(8,10),10)}) 경기 마감 · 내일(${parseInt(d1Str.slice(5,7),10)}/${parseInt(d1Str.slice(8,10),10)}) 새벽 예정 경기부터 표시`
-              : `현재시간 (${nowKstTimeOnly}) 이후 경기`;
-            const dividerBadge = isTomorrow ? '내일 새벽 예정' : '실시간 예정';
-            html += `
-              <div id="currentTimeDivider" class="my-2 py-1.5 px-2.5 d-flex align-items-center justify-content-between flex-wrap gap-1" style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-left: 4px solid #1d4ed8; border-radius: 6px;">
-                <div class="d-flex align-items-center gap-1.5 text-truncate">
-                  <span class="pulse-dot" style="display:inline-block; width:7px; height:7px; min-width:7px; border-radius:50%; background:#1d4ed8;"></span>
-                  <span class="badge bg-primary text-white me-1" style="font-size: 0.68rem; font-weight: 700;">${dividerBadge}</span>
-                  <span class="text-dark fw-bold" style="font-size: 0.76rem;">${dividerText}</span>
-                </div>
-                <button class="btn btn-xs py-0 px-1.5 text-danger fw-bold border-0 bg-transparent" onclick="filterPredDate('FINISHED')" style="font-size: 0.68rem; text-decoration: underline;" title="어제 및 지난 종료 경기 결과 모아보기">
-                  <i class="bi bi-clock-history me-0.5"></i>지난결과 보기→
-                </button>
-              </div>
-            `;
-            dividerInserted = true;
-          }
-        }
 
-        let dayBadge = '';
-        if (rawDate.startsWith(d0Str)) dayBadge = '<span class="badge bg-danger text-white me-1" style="font-size:0.65rem; font-weight: 700;">오늘</span>';
-        else if (rawDate.startsWith(d1Str)) {
-          const hour = parseInt(rawDate.slice(11, 13) || '0', 10);
-          const timeTag = hour < 6 ? '내일 새벽' : '내일';
-          dayBadge = `<span class="badge bg-primary text-white me-1" style="font-size:0.65rem; font-weight: 700;">${timeTag}</span>`;
-        }
-        else if (rawDate < d0Str) dayBadge = '<span class="badge bg-secondary me-1" style="font-size:0.65rem; font-weight: 700;">종료</span>';
-        else {
-          const mPart = parseInt(rawDate.slice(5, 7), 10);
-          const dPart = parseInt(rawDate.slice(8, 10), 10);
-          if (!isNaN(mPart) && !isNaN(dPart)) {
-            dayBadge = `<span class="badge bg-info text-white me-1" style="font-size:0.65rem; font-weight: 700;">${mPart}/${dPart}</span>`;
-          }
-        }
+            const mNum = parseInt(matchDay.slice(5, 7), 10);
+            const dNum = parseInt(matchDay.slice(8, 10), 10);
 
-        const pred = m.prediction || {};
-        const sCtx = pred.series_context || null;
-        let sweepBadge = '';
-        let sweepFooterNote = '';
-        if (sCtx && sCtx.is_sweep_game) {
-          sweepBadge = `<span class="badge ms-1" style="background: #ffffff; color: #111827; border: 1px solid #d1d5db; font-size: 0.65rem; font-weight: 800; padding: 1px 5px;" title="${sCtx.description || '스윕도전'}"><i class="bi bi-fire me-0.5"></i>스윕결정전</span>`;
-          sweepFooterNote = ` <span class="badge bg-white border text-dark py-0 px-1 fw-bold" style="border-color: #d1d5db !important; font-size:0.60rem;">스윕보정-7%</span>`;
-        } else if (sCtx && sCtx.is_rubber_game) {
-          sweepBadge = `<span class="badge ms-1" style="background: #ffffff; color: #111827; border: 1px solid #d1d5db; font-size: 0.65rem; font-weight: 800; padding: 1px 5px;"><i class="bi bi-lightning-charge-fill me-0.5"></i>위닝결정전</span>`;
-        }
-        let scoreSnippet = '';
-        let cardFooterTag = '';
-        const oddsInfo = getMatchOdds(m);
+            let dateHeaderBadge = '';
+            let dateHeaderBg = '#f8fafc';
+            let dateHeaderBorder = '#cbd5e1';
+            let dateHeaderTextColor = '#0f172a';
 
-        // 베트맨 스타일 배당 박스 생성 (예정 경기용 가운데 배치)
-        let betmanOddsHtml = '';
-        if (m.sport_code === 'SOCCER') {
-          const hw = oddsInfo.home ? `<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">${oddsInfo.home}</span></span>` : '<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">-</span></span>';
-          const dw = oddsInfo.draw ? `<span class="betman-box draw"><span class="betman-lbl">무</span><span class="betman-val">${oddsInfo.draw}</span></span>` : '<span class="betman-box draw"><span class="betman-lbl">무</span><span class="betman-val">-</span></span>';
-          const aw = oddsInfo.away ? `<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">${oddsInfo.away}</span></span>` : '<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">-</span></span>';
-          betmanOddsHtml = `${hw}${dw}${aw}`;
-        } else if (m.sport_code === 'BASEBALL') {
-          const hw = oddsInfo.home ? `<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">${oddsInfo.home}</span></span>` : '<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">-</span></span>';
-          const dw = (oddsInfo.draw && oddsInfo.draw !== '-') ? `<span class="betman-box draw"><span class="betman-lbl">1</span><span class="betman-val">${oddsInfo.draw}</span></span>` : '';
-          const aw = oddsInfo.away ? `<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">${oddsInfo.away}</span></span>` : '<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">-</span></span>';
-          betmanOddsHtml = `${hw}${dw}${aw}`;
-        } else {
-          // 농구 및 기타 종목
-          const hw = oddsInfo.home ? `<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">${oddsInfo.home}</span></span>` : '<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">-</span></span>';
-          const aw = oddsInfo.away ? `<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">${oddsInfo.away}</span></span>` : '<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">-</span></span>';
-          betmanOddsHtml = `${hw}${aw}`;
-        }
-
-        // 스코어 or 상태 판단
-        let isCardStaleLive = false;
-        let diffMin = 0;
-        if (m.match_date) {
-          try {
-            const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
-            diffMin = (now.getTime() - mTime) / (1000 * 60);
-            if (m.status === 'LIVE' && diffMin > 240) {
-              isCardStaleLive = true;
-            }
-          } catch(e) {}
-        }
-
-        const isLive = typeof isRealTimeLive === 'function' ? isRealTimeLive(m) : (m.status === 'LIVE' && !isCardStaleLive);
-        const isFinished = (m.status === 'FINISHED' || isCardStaleLive);
-        const hasScores = (m.home_score !== null && m.home_score !== undefined && m.away_score !== null && m.away_score !== undefined && (isLive || isFinished || m.home_score > 0 || m.away_score > 0));
-
-        // 이닝/시간 추출
-        let innText = '';
-        let details = m.details || {};
-        if (typeof details === 'string') {
-          try { details = JSON.parse(details); } catch(e) { details = {}; }
-        }
-
-        if (isLive) {
-          if (m.sport_code === 'BASEBALL') {
-            if (m.current_inning) {
-              innText = m.current_inning;
-            } else if (m.inning_text) {
-              innText = m.inning_text;
-            } else if (details.current_inning) {
-              innText = details.current_inning;
-            } else if (details.inning_text) {
-              innText = details.inning_text;
-            } else if (details.team_stats && details.team_stats.scoreboard && details.team_stats.scoreboard.current_inning) {
-              innText = details.team_stats.scoreboard.current_inning;
-            } else if (details.team_stats && details.team_stats.current_inning) {
-              innText = details.team_stats.current_inning;
-            } else if (details.period_scores && details.period_scores.current_inning) {
-              innText = details.period_scores.current_inning;
-            } else if (details.period_scores && details.period_scores.innings) {
-              const activeInns = Object.entries(details.period_scores.innings)
-                .filter(([k, v]) => v && ((v.away !== '-' && v.away !== null && v.away !== undefined) || (v.home !== '-' && v.home !== null && v.home !== undefined)))
-                .map(([k, v]) => ({ num: parseInt(k, 10), data: v }))
-                .sort((a, b) => a.num - b.num);
-              if (activeInns.length > 0) {
-                const latest = activeInns[activeInns.length - 1];
-                if (latest.data.home !== '-' && latest.data.home !== null && latest.data.home !== undefined) {
-                  innText = `${latest.num}회말`;
-                } else {
-                  innText = `${latest.num}회초`;
-                }
-              }
-            }
-            if (!innText) {
-              if (diffMin < 25) innText = '1회말';
-              else if (diffMin < 45) innText = '2회말';
-              else if (diffMin < 65) innText = '3회말';
-              else if (diffMin < 90) innText = '4회말';
-              else if (diffMin < 115) innText = '5회말';
-              else if (diffMin < 140) innText = '6회말';
-              else if (diffMin < 165) innText = '7회말';
-              else if (diffMin < 190) innText = '8회말';
-              else innText = '9회말';
-            }
-          } else if (m.sport_code === 'SOCCER') {
-            if (details.match_time) {
-              innText = details.match_time;
+            if (isD0) {
+              dateHeaderBadge = `<span class="badge bg-danger text-white px-2 py-0.5" style="font-size: 0.66rem; font-weight: 800;"><i class="bi bi-calendar-check me-1"></i>오늘 경기</span>`;
+              dateHeaderBg = '#eff6ff';
+              dateHeaderBorder = '#93c5fd';
+              dateHeaderTextColor = '#1d4ed8';
+            } else if (isD1) {
+              dateHeaderBadge = `<span class="badge bg-primary text-white px-2 py-0.5" style="font-size: 0.66rem; font-weight: 800;"><i class="bi bi-calendar-plus me-1"></i>내일 예정</span>`;
+              dateHeaderBg = '#f8fafc';
+              dateHeaderBorder = '#cbd5e1';
+              dateHeaderTextColor = '#334155';
+            } else if (isPast) {
+              dateHeaderBadge = `<span class="badge bg-secondary text-white px-2 py-0.5" style="font-size: 0.66rem; font-weight: 700;"><i class="bi bi-clock-history me-1"></i>종료 경기</span>`;
+              dateHeaderBg = '#f3f4f6';
+              dateHeaderBorder = '#e5e7eb';
+              dateHeaderTextColor = '#4b5563';
             } else {
-              if (diffMin <= 45) innText = `전반 ${Math.max(1, Math.floor(diffMin))}'`;
-              else if (diffMin <= 60) innText = `HT`;
-              else if (diffMin <= 105) innText = `후반 ${Math.min(90, Math.floor(diffMin - 15))}'`;
-              else innText = `후반 90'+`;
+              dateHeaderBadge = `<span class="badge bg-dark text-white px-2 py-0.5" style="font-size: 0.66rem; font-weight: 700;">예정 일정</span>`;
+              dateHeaderBg = '#f8fafc';
+              dateHeaderBorder = '#cbd5e1';
+              dateHeaderTextColor = '#334155';
             }
-          } else if (m.sport_code === 'BASKETBALL') {
-            if (details.quarter || details.period) {
-              innText = details.quarter || details.period;
-            } else {
-              if (diffMin <= 25) innText = '1Q';
-              else if (diffMin <= 50) innText = '2Q';
-              else if (diffMin <= 75) innText = '3Q';
-              else innText = '4Q';
-            }
-          } else if (m.sport_code === 'VOLLEYBALL') {
-            innText = details.set || '진행중';
-          } else {
-            innText = 'LIVE';
-          }
-        } else if (isFinished) {
-          innText = '종료';
-        }
 
-        // 경기 바 레이아웃 생성:
-        // 라이브/종료(점수있음): [홈팀] [홈점수] [가운데 이닝/상태] [원정점수] [원정팀]
-        // 예정(점수없음): [홈팀] [가운데 배당 박스] [원정팀]
-        let centerRowHtml = '';
-        if (hasScores) {
-          const scoreClass = isLive ? 'live' : 'finished';
-          const badgeHtml = isLive ? `<span class="live-dot"></span> ${innText}` : innText;
-          centerRowHtml = `
-            <span class="betman-team-home" title="${m.home_team_name}">${formatTeamName(m.home_team_name)}</span>
-            <span class="betman-score-val home ${scoreClass}">${m.home_score ?? 0}</span>
-            <span class="betman-inning-badge ${scoreClass}">${badgeHtml}</span>
-            <span class="betman-score-val away ${scoreClass}">${m.away_score ?? 0}</span>
-            <span class="betman-team-away" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</span>
-          `;
-        } else {
-          centerRowHtml = `
-            <span class="betman-team-home" title="${m.home_team_name}">${formatTeamName(m.home_team_name)}</span>
-            <span class="betman-odds-center">
-              ${betmanOddsHtml}
-            </span>
-            <span class="betman-team-away" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</span>
-          `;
-        }
-
-        let scoreLabel = '';
-        if (isLive) {
-          scoreLabel = `<span class="badge bg-danger text-white py-0.5 px-1.5" style="font-size:0.62rem; font-weight:800; border-radius:4px;"><span class="live-dot" style="background:#fff; width:5px; height:5px; margin-right:3px;"></span>LIVE</span>`;
-        } else if (isFinished) {
-          scoreLabel = `<span class="badge bg-secondary text-white py-0.5 px-1.5" style="font-size:0.62rem; font-weight:700; border-radius:4px;">종료</span>`;
-        } else if (oddsInfo.isImminent) {
-          scoreLabel = `<span style="font-size:0.65rem; color:#dc2626; font-weight:700;">🔥마감임박</span>`;
-        } else if (oddsInfo.isClosed) {
-          scoreLabel = `<span style="font-size:0.65rem; color:#6b7280; font-weight:600;">🔒마감</span>`;
-        }
-
-        // 두 번째 줄: 종목별 선발/결장
-        const startersInfo = getMatchStarters(m);
-        const absInfo = getMatchAbsences(m);
-        let subLineHtml = '';
-        if (m.sport_code === 'BASEBALL') {
-          if (startersInfo.homeAnnounced || startersInfo.awayAnnounced) {
-            const hEra = startersInfo.homeEra || m.home_starter_era || (m.extra_data && m.extra_data.home_starter_era) || '';
-            const aEra = startersInfo.awayEra || m.away_starter_era || (m.extra_data && m.extra_data.away_starter_era) || '';
-            const hEraHtml = (startersInfo.homeAnnounced && hEra) ? `<span class="text-primary fw-bold" style="font-size:0.67rem; margin-left:3px; letter-spacing:-0.2px;">(방어율 ${hEra})</span>` : '';
-            const aEraHtml = (startersInfo.awayAnnounced && aEra) ? `<span class="text-primary fw-bold" style="font-size:0.67rem; margin-left:3px; letter-spacing:-0.2px;">(방어율 ${aEra})</span>` : '';
-            subLineHtml = `
-              <div class="slim-card-starter-bar d-flex justify-content-between align-items-center mt-1 px-1.5 py-0.5 rounded" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.71rem;">
-                <div class="starter-side-home d-flex align-items-center text-truncate" style="flex:1 1 42%; min-width:0;" title="${startersInfo.homeStarter} ${hEra ? `(평균자책/방어율: ${hEra})` : ''}">
-                  <span class="fw-bold text-dark text-truncate">${startersInfo.homeStarter}</span>
-                  ${hEraHtml}
+            chunkHtml += `
+              <div class="pred-date-group-divider my-2 py-1 px-2.5 rounded d-flex align-items-center justify-content-between" style="background: ${dateHeaderBg}; border: 1.5px solid ${dateHeaderBorder}; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+                <div class="d-flex align-items-center gap-1.5">
+                  <i class="bi bi-calendar-event" style="color: ${dateHeaderTextColor}; font-size: 0.78rem;"></i>
+                  <span class="fw-bold" style="color: ${dateHeaderTextColor}; font-size: 0.78rem;">${mNum}월 ${dNum}일 (${dayOfWeekStr})</span>
                 </div>
-                <div class="starter-center-badge text-center px-1" style="flex:0 0 auto;">
-                  <span class="badge bg-white text-secondary border px-1 py-0.5" style="font-size:0.58rem; font-weight:700;">선발</span>
-                </div>
-                <div class="starter-side-away d-flex align-items-center justify-content-end text-truncate" style="flex:1 1 42%; min-width:0; text-align:right;" title="${startersInfo.awayStarter} ${aEra ? `(평균자책/방어율: ${aEra})` : ''}">
-                  <span class="fw-bold text-dark text-truncate">${startersInfo.awayStarter}</span>
-                  ${aEraHtml}
+                <div>
+                  ${dateHeaderBadge}
                 </div>
               </div>
             `;
-          } else {
-            subLineHtml = `
-              <div class="slim-card-starter-bar d-flex justify-content-between align-items-center mt-1 px-1.5 py-0.5 rounded" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.68rem; color:#64748b;">
-                <span style="flex:1; text-align:left;">선발 미정</span>
-                <span class="badge bg-white text-muted border px-1 py-0.5" style="font-size:0.58rem;">선발</span>
-                <span style="flex:1; text-align:right;">선발 미정</span>
-              </div>
-            `;
           }
-        } else if ((m.sport_code === 'SOCCER' || m.sport_code === 'BASKETBALL') && absInfo.text && absInfo.text !== '-') {
-          subLineHtml = `<div class="slim-card-sub mt-1">🚑 ${absInfo.text}</div>`;
-        }
 
-        // 시간 표시
-        const timeStr = formatKSTDateTime(m.match_date);
-
-        html += `
-          <div class="slim-match-card pred-card-compact ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="slim-card-sport-time">${sportIcon} ${m.league_name || m.sport_code} · ${timeStr}${sweepBadge}</span>
-              <div class="d-flex align-items-center gap-1.5" style="flex-shrink:0;">
-                ${scoreLabel ? `<span>${scoreLabel}</span>` : ''}
-              </div>
-            </div>
-            <div class="betman-match-row">
-              ${centerRowHtml}
-            </div>
-            ${subLineHtml}
-            ${(() => {
-              const mState = _slimAccordionState[m.id];
-              const openInfo = openPanelsInfo[m.id];
-              const isAccordionOpen = !!(openInfo && openInfo.isOpen) || !!(mState && mState.type);
-              const activeAccordionType = mState ? mState.type : (openInfo && openInfo.isOpen ? (mState?.type || 'history') : null);
-              const realCachedHtml = (openInfo && openInfo.html) || (mState && mState.html && !mState.html.includes('로딩') && !mState.html.includes('불러오는 중') ? mState.html : null);
-              const cachedAccordionHtml = realCachedHtml || '<div class="slim-accordion-loading">⏳ 불러오는 중...</div>';
-              return `
-                <div class="slim-card-actions">
-                  <button class="slim-action-btn odds-btn ${isAccordionOpen && activeAccordionType === 'odds' ? 'active' : ''}" id="oddsBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'odds')">📊 배당</button>
-                  <button class="slim-action-btn history-btn ${isAccordionOpen && activeAccordionType === 'history' ? 'active' : ''}" id="histBtn_${m.id}" onclick="event.stopPropagation(); openLastMatchDetailModal(${m.id})">📋 전경기</button>
-                  <button class="slim-action-btn next-btn" id="nextBtn_${m.id}" onclick="event.stopPropagation(); openUpcomingScheduleModal(${m.id})">⏩ 일정</button>
-                  <button class="slim-action-btn detail-btn" onclick="event.stopPropagation(); openNextGenDetailModal(${m.id})">🔍 상세보기</button>
-                  <button class="slim-action-btn live-relay-btn" style="${isLive ? 'background:#dc2626; color:#ffffff; border-color:#b91c1c; font-weight:800;' : ''}" onclick="event.stopPropagation(); focusLiveRelayMatch(${m.id})">📡 중계</button>
-                </div>
-                <div class="slim-accordion-panel ${isAccordionOpen ? 'open' : ''}" id="slimPanel_${m.id}">
-                  ${isAccordionOpen ? cachedAccordionHtml : '<div class="slim-accordion-loading">로딩 중...</div>'}
+          if (!dividerInserted && (currentPredDate === 'ALL' || currentPredDate === 'D0')) {
+            let isLiveToday = false;
+            if (m.status === 'LIVE' && rawDate) {
+              try {
+                const d = new Date(rawDate.replace(' ', 'T'));
+                const diffHours = (now.getTime() - d.getTime()) / (1000 * 60 * 60);
+                if (diffHours >= -0.5 && diffHours <= 4.5) isLiveToday = true;
+              } catch(e) {}
+            }
+            const isUpcoming = (rawDate >= bufferKstDateTime && m.status !== 'FINISHED');
+            if (isLiveToday || isUpcoming) {
+              const isTomorrow = rawDate.slice(0, 10) > d0Str;
+              const dividerText = isTomorrow
+                ? `오늘(${parseInt(d0Str.slice(5,7),10)}/${parseInt(d0Str.slice(8,10),10)}) 경기 마감 · 내일(${parseInt(d1Str.slice(5,7),10)}/${parseInt(d1Str.slice(8,10),10)}) 새벽 예정 경기부터 표시`
+                : `현재시간 (${nowKstTimeOnly}) 이후 경기`;
+              const dividerBadge = isTomorrow ? '내일 새벽 예정' : '실시간 예정';
+              chunkHtml += `
+                <div id="currentTimeDivider" class="my-2 py-1.5 px-2.5 d-flex align-items-center justify-content-between flex-wrap gap-1" style="background: #eff6ff; border: 1.5px solid #bfdbfe; border-left: 4px solid #1d4ed8; border-radius: 6px;">
+                  <div class="d-flex align-items-center gap-1.5 text-truncate">
+                    <span class="pulse-dot" style="display:inline-block; width:7px; height:7px; min-width:7px; border-radius:50%; background:#1d4ed8;"></span>
+                    <span class="badge bg-primary text-white me-1" style="font-size: 0.68rem; font-weight: 700;">${dividerBadge}</span>
+                    <span class="text-dark fw-bold" style="font-size: 0.76rem;">${dividerText}</span>
+                  </div>
+                  <button class="btn btn-xs py-0 px-1.5 text-danger fw-bold border-0 bg-transparent" onclick="filterPredDate('FINISHED')" style="font-size: 0.68rem; text-decoration: underline;" title="어제 및 지난 종료 경기 결과 모아보기">
+                    <i class="bi bi-clock-history me-0.5"></i>지난결과 보기→
+                  </button>
                 </div>
               `;
-            })()}
-          </div>
-        `;
-      });
+              dividerInserted = true;
+            }
+          }
 
+          const oddsInfo = getMatchOdds(m);
+          chunkHtml += buildPredMatchCardHtml(m, isSel, oddsInfo, now, d0Str, d1Str);
+        }
+        return chunkHtml;
+      }
 
-      // Preserve user's scroll position so it NEVER jumps back to current time while user is reading/scrolling
       const prevContainerScrollTop = container.scrollTop;
       const prevWindowScrollY = window.pageYOffset || document.documentElement.scrollTop;
 
-      container.innerHTML = html;
+      // Phase 1: Render first 40 matches immediately (sub-10ms)
+      const firstChunkHtml = headerHtml + renderBatch(0, INITIAL_CHUNK_SIZE);
+      container.innerHTML = firstChunkHtml;
 
       if (!selectedPredMatchId && filtered.length > 0) {
         const bestCard = findCurrentOrNextMatchCard(Array.from(container.querySelectorAll('.pred-card-compact')));
@@ -9722,7 +9663,6 @@ function getFullModalMatchList() {
         initialScheduleAutoScrollDone = true;
         scrollToCurrentTimeMatch(false);
       } else {
-        // Restore user's exact scroll position
         if (container.scrollHeight > prevContainerScrollTop) {
           container.scrollTop = prevContainerScrollTop;
         }
@@ -9730,15 +9670,28 @@ function getFullModalMatchList() {
           window.scrollTo(0, prevWindowScrollY);
         }
       }
+
+      // Phase 2: Asynchronously append remaining matches in smooth chunks (no mobile UI freeze)
+      if (filtered.length > INITIAL_CHUNK_SIZE) {
+        let currentRenderIdx = INITIAL_CHUNK_SIZE;
+        const CHUNK_STEP = 60;
+
+        function processNextBatch() {
+          if (currentToken !== _activeRenderToken) return;
+          const nextEnd = Math.min(currentRenderIdx + CHUNK_STEP, filtered.length);
+          const nextChunkHtml = renderBatch(currentRenderIdx, nextEnd);
+          if (nextChunkHtml) {
+            container.insertAdjacentHTML('beforeend', nextChunkHtml);
+          }
+          currentRenderIdx = nextEnd;
+          if (currentRenderIdx < filtered.length) {
+            _renderChunkTimer = setTimeout(processNextBatch, 8);
+          }
+        }
+        _renderChunkTimer = setTimeout(processNextBatch, 16);
+      }
     }
-
-    // ============================================================
-    // 슬림 카드 아코디언 — [📊 배당] / [📋 전경기] 토글
-    // ============================================================
-    const _slimAccordionState = {}; // { matchId: { type: 'odds'|'history', loaded: bool, html: string } }
-    const _historyClientCache = new Map();
-
-    function updateSlimPanel(matchId, type, contentHtml) {
+function updateSlimPanel(matchId, type, contentHtml) {
       const stateObj = { type, loaded: true, html: contentHtml };
       _slimAccordionState[matchId] = stateObj;
       _slimAccordionState[String(matchId)] = stateObj;
