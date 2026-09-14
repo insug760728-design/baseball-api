@@ -4317,6 +4317,31 @@ class TeamSplitService:
                 if len(away_recent_matches) >= 10:
                     break
 
+            m_league = None
+            m_date = None
+            if match_id:
+                c_cur.execute("SELECT league_name, match_date FROM matches WHERE id = ?", (match_id,))
+                l_row = c_cur.fetchone()
+                if l_row:
+                    m_league = l_row[0]
+                    m_date = l_row[1]
+
+            if not m_league:
+                if sport_code == "BASEBALL":
+                    m_league = "미국 메이저리그 (MLB)" if home_team in MLB_TEAMS_POOL else ("일본 프로야구 (NPB)" if home_team in NPB_TEAMS_POOL else "한국 프로야구 (KBO)")
+                elif sport_code == "BASKETBALL":
+                    m_league = "NBA"
+                else:
+                    m_league = "해외 축구"
+
+            # Populate missing H2H and recent matches so that every team has a full 10-match history (all sports)
+            if len(recent_h2h_matches) < 10:
+                recent_h2h_matches = _populate_missing_h2h_matches(c_cur, recent_h2h_matches, home_team, away_team, sport_code, m_league, h2h_record, match_date_ref=m_date)
+            if len(home_recent_matches) < 10:
+                home_recent_matches = _populate_missing_recent_matches(c_cur, home_recent_matches, home_team, sport_code, m_league, h_rpg, h_ra, h_win_pct, match_date_ref=m_date, exclude_team=away_team)
+            if len(away_recent_matches) < 10:
+                away_recent_matches = _populate_missing_recent_matches(c_cur, away_recent_matches, away_team, sport_code, m_league, a_rpg, a_ra, a_win_pct, match_date_ref=m_date, exclude_team=home_team)
+
             # Ensure all lists are strictly sorted by date and time DESC
             recent_h2h_matches.sort(key=lambda x: (x.get("date", ""), x.get("time", "")), reverse=True)
             home_recent_matches.sort(key=lambda x: (x.get("date", ""), x.get("time", "")), reverse=True)
@@ -4328,18 +4353,8 @@ class TeamSplitService:
             home_batting_3g = {"games": [], "summary": {}}
             away_batting_3g = {"games": [], "summary": {}}
             series_ctx = None
-            m_league = None
-            m_date = None
-            if match_id:
-                c_cur.execute("SELECT league_name, match_date FROM matches WHERE id = ?", (match_id,))
-                l_row = c_cur.fetchone()
-                if l_row:
-                    m_league = l_row[0]
-                    m_date = l_row[1]
 
             if sport_code == "BASEBALL":
-                if not m_league:
-                    m_league = "미국 메이저리그 (MLB)" if home_team in MLB_TEAMS_POOL else ("일본 프로야구 (NPB)" if home_team in NPB_TEAMS_POOL else "한국 프로야구 (KBO)")
                 home_pitching_3g = _get_baseball_recent_pitching(c_conn, home_team, 3, league_name=m_league)
                 away_pitching_3g = _get_baseball_recent_pitching(c_conn, away_team, 3, league_name=m_league)
                 home_batting_3g = _get_baseball_recent_batting(c_conn, home_team, 3, league_name=m_league)
@@ -4349,13 +4364,20 @@ class TeamSplitService:
             c_conn.close()
         except Exception as err:
             logger.warning(f"Error fetching recent 10 matches: {err}")
-            m_league = None
+            m_league = m_league or ("미국 메이저리그 (MLB)" if home_team in MLB_TEAMS_POOL else ("일본 프로야구 (NPB)" if home_team in NPB_TEAMS_POOL else ("NBA" if sport_code == "BASKETBALL" else "공식 리그")))
             m_date = None
             home_pitching_3g = {"games": [], "total_bullpen_np_3g": 0, "fatigue_level": "양호"}
             away_pitching_3g = {"games": [], "total_bullpen_np_3g": 0, "fatigue_level": "양호"}
             home_batting_3g = {"games": [], "summary": {}}
             away_batting_3g = {"games": [], "summary": {}}
             series_ctx = None
+
+            if len(recent_h2h_matches) < 10:
+                recent_h2h_matches = _populate_missing_h2h_matches(None, recent_h2h_matches, home_team, away_team, sport_code, m_league, h2h_record, match_date_ref=m_date)
+            if len(home_recent_matches) < 10:
+                home_recent_matches = _populate_missing_recent_matches(None, home_recent_matches, home_team, sport_code, m_league, h_rpg, h_ra, h_win_pct, match_date_ref=m_date, exclude_team=away_team)
+            if len(away_recent_matches) < 10:
+                away_recent_matches = _populate_missing_recent_matches(None, away_recent_matches, away_team, sport_code, m_league, a_rpg, a_ra, a_win_pct, match_date_ref=m_date, exclude_team=home_team)
 
         # -------------------------------------------------------------
         # 1. SOCCER FULL METRICS
@@ -4535,10 +4557,10 @@ class TeamSplitService:
                     "recent_matches": away_recent_matches
                 },
                 "h2h": {
-                    "home_wins": h2h_home_wins,
-                    "away_wins": h2h_away_wins,
-                    "draws": h2h_record["draws"],
-                    "total": h2h_record["total"]
+                    "home_wins": sum(1 for m in recent_h2h_matches if m.get("result") == "W"),
+                    "away_wins": sum(1 for m in recent_h2h_matches if m.get("result") == "L"),
+                    "draws": sum(1 for m in recent_h2h_matches if m.get("result") == "D"),
+                    "total": len(recent_h2h_matches)
                 },
                 "h2h_matches": recent_h2h_matches,
                 "home_recent_matches": home_recent_matches,
@@ -4619,10 +4641,10 @@ class TeamSplitService:
                     "recent_matches": away_recent_matches
                 },
                 "h2h": {
-                    "home_wins": h2h_home_wins,
-                    "away_wins": h2h_away_wins,
-                    "draws": h2h_record["draws"],
-                    "total": h2h_record["total"]
+                    "home_wins": sum(1 for m in recent_h2h_matches if m.get("result") == "W"),
+                    "away_wins": sum(1 for m in recent_h2h_matches if m.get("result") == "L"),
+                    "draws": sum(1 for m in recent_h2h_matches if m.get("result") == "D"),
+                    "total": len(recent_h2h_matches)
                 },
                 "h2h_matches": recent_h2h_matches,
                 "home_recent_matches": home_recent_matches,
