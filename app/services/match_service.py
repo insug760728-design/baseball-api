@@ -318,7 +318,12 @@ class MatchService:
 
         if start_date:
             if start_date.upper() == "ALL":
-                query = query.filter(Match.match_date >= f"{current_year}-01-01 00:00")
+                # 전체 활성 경기 풀: 모든 LIVE/SCHEDULED/POSTPONED 경기 및 최근 30일 이내 경기 포함
+                past_30d = (now_kst - timedelta(days=30)).strftime("%Y-%m-%d 00:00")
+                if not status:
+                    query = query.filter(or_(Match.status.in_(['LIVE', 'SCHEDULED', 'POSTPONED']), Match.match_date >= past_30d))
+                elif status == "FINISHED":
+                    query = query.filter(Match.status == "FINISHED", Match.match_date >= past_30d)
             else:
                 query = query.filter(Match.match_date >= f"{start_date} 00:00")
         else:
@@ -328,11 +333,11 @@ class MatchService:
                 if not end_date:
                     query = query.filter(Match.match_date <= f"{today_str} 23:59")
             elif status == "SCHEDULED":
-                query = query.filter(Match.match_date >= f"{today_str} 00:00")
+                pass  # 모든 등록된 예정 경기 온전히 표출
             else:
-                # 기본 조회: 최근 7일 전부터 향후 7일 후까지 전체 경기 안전 조회 (자정/서버 시차 무관)
-                past_7d = (now_kst - timedelta(days=7)).strftime("%Y-%m-%d 00:00")
-                query = query.filter(Match.match_date >= past_7d)
+                # 기본 조회: 모든 LIVE/SCHEDULED 및 최근 14일 경기 안전 조회
+                past_14d = (now_kst - timedelta(days=14)).strftime("%Y-%m-%d 00:00")
+                query = query.filter(or_(Match.status.in_(['LIVE', 'SCHEDULED', 'POSTPONED']), Match.match_date >= past_14d))
 
         if end_date:
             query = query.filter(Match.match_date <= f"{end_date} 23:59")

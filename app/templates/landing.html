@@ -3291,9 +3291,7 @@
       if (archiveLoadingPromise) return archiveLoadingPromise;
       archiveLoadingPromise = (async () => {
         try {
-          const now = new Date();
-          const rollingStartStr = getKSTDateString(new Date(now.getTime() - 86400000));
-          const resp = await fetch(`/api/v1/matches?start_date=${rollingStartStr}&limit=500&order=asc`, { cache: 'no-store' });
+          const resp = await fetch(`/api/v1/matches?start_date=ALL&limit=1000&order=asc`, { cache: 'no-store' });
           const rawMatches = resp.ok ? await resp.json() : [];
 
           const seenIds = new Set(allMatches.map(m => m.id));
@@ -3369,13 +3367,9 @@
     async function loadLiveMatches() {
       const container = document.getElementById('stripContainer');
       try {
-        const now = new Date();
-        const d0Str = getKSTDateString(now);
-        const rollingStartStr = getKSTDateString(new Date(now.getTime() - 86400000));
-        
-        // ⚡ Phase 1 (초고속 0.2초): 어제/오늘/내일 공식 실시간 경기 (300건) 고속 로드 -> UI 즉시 표출
+        // ⚡ Phase 1 (초고속 0.2초): 공식 실시간 및 예정 경기 전체 고속 로드 -> UI 즉시 표출
         try {
-          const fastResp = await fetch(`/api/v1/matches?start_date=${rollingStartStr}&limit=300&order=asc`, { cache: 'no-store' });
+          const fastResp = await fetch(`/api/v1/matches?start_date=ALL&limit=800&order=asc`, { cache: 'no-store' });
           if (fastResp.ok) {
             const fastMatches = await fastResp.json();
             if (Array.isArray(fastMatches) && fastMatches.length > 0) {
@@ -8365,9 +8359,7 @@ function getFullModalMatchList() {
 
     async function silentLiveRefresh() {
       try {
-        const d0Str = getKSTDateString(new Date());
-        const rollingStartStr = getKSTDateString(new Date(Date.now() - 86400000));
-        const resp = await fetch(`/api/v1/matches?start_date=${rollingStartStr}&order=asc&limit=250&_t=${Date.now()}`, { cache: 'no-store' });
+        const resp = await fetch(`/api/v1/matches?start_date=ALL&order=asc&limit=800&_t=${Date.now()}`, { cache: 'no-store' });
         if (!resp.ok) return;
         const rawMatches = await resp.json();
 
@@ -8487,7 +8479,7 @@ function getFullModalMatchList() {
 
       for (const m of baseList) {
         const isLive = isMatchTrulyLive(m);
-        const isFin = (m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED' || (m.status === 'LIVE' && !isLive) || (m.match_date && m.match_date < bufferKstDateTime && m.status !== 'LIVE'));
+        const isFin = (m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED' || (m.status === 'LIVE' && !isLive) || (m.match_date && m.match_date < bufferKstDateTime && m.status !== 'LIVE' && m.status !== 'SCHEDULED'));
         if (isFin) {
           finishedCount++;
         } else {
