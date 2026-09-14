@@ -1773,7 +1773,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v9.3 팀명성별제거·상세버튼간소화
+          <i class="bi bi-check-circle-fill me-1"></i>v9.4 실시간점수알림시스템·라이브스코어모바일최적화
         </span>
       </div>
 
@@ -3304,6 +3304,7 @@
             const fastMatches = await fastResp.json();
             if (Array.isArray(fastMatches) && fastMatches.length > 0) {
               allMatches = mergeUniqueMatches(fastMatches, allMatches);
+              checkScoreChangesAndNotify(allMatches);
               window.matchesLoadedInitial = true;
               updateScheduleTabCounts();
               renderMatchStrip('ALL');
@@ -8271,6 +8272,7 @@ function getFullModalMatchList() {
           }
         }
         allMatches = Array.from(existingMap.values());
+        checkScoreChangesAndNotify(allMatches);
 
         renderMatchStrip('ALL');
         renderPredMatches();
@@ -9878,14 +9880,14 @@ function updateSlimPanel(matchId, type, contentHtml) {
       '요미우리 자이언츠': '요미우리', '요미우리자이언츠': '요미우리',
       '한신 타이거스': '한신', '한신타이거스': '한신', '한신 타이거즈': '한신',
       '주니치 드래곤즈': '주니치', '주니치드래곤즈': '주니치', '주니치 드래건스': '주니치',
-      '도쿄 야쿠르트 스왈로스': '야쿠르트', '야쿠르트 스왈로스': '야쿠르트', '야쿠르트스왈로스': '야쿠르트',
+      '도쿄 야쿠르트 스왈로스': '야쿠르트', '야쿠르트 스왈로스': '야쿠르트', '야쿠르트스왈로스': '야쿠르트', '도쿄 야쿠르트': '야쿠르트', '야쿠르트': '야쿠르트',
       '요코하마 DeNA 베이스타즈': '요코하마', '요코하마 DeNA': '요코하마', 'DeNA 베이스타즈': '요코하마', '요코하마': '요코하마', 'DeNA': '요코하마',
-      '히로시마 도요 카프': '히로시마', '히로시마 도요카프': '히로시마', '히로시마 카프': '히로시마',
-      '후쿠오카 소프트뱅크 호크스': '소프트뱅크', '소프트뱅크 호크스': '소프트뱅크', '소프트뱅크호크스': '소프트뱅크',
+      '히로시마 도요 카프': '히로시마', '히로시마 도요카프': '히로시마', '히로시마 카프': '히로시마', '히로시마': '히로시마',
+      '후쿠오카 소프트뱅크 호크스': '소프트뱅크', '소프트뱅크 호크스': '소프트뱅크', '소프트뱅크호크스': '소프트뱅크', '소프트뱅크': '소프트뱅크',
       '지바 롯데 마린스': '지바', '지바롯데 마린스': '지바', '지바 롯데': '지바', '지바롯데': '지바', '치바 롯데 마린스': '지바', '치바 롯데': '지바', '치바롯데': '지바', '지바': '지바',
-      '도호쿠 라쿠텐 골든이글스': '라쿠텐', '라쿠텐 골든이글스': '라쿠텐', '라쿠텐 골든 이글스': '라쿠텐',
-      '오릭스 버펄로스': '오릭스', '오릭스 버팔로스': '오릭스', '오릭스버팔로스': '오릭스',
-      '사이타마 세이부 라이온즈': '세이부', '세이부 라이온즈': '세이부', '세이부라이온즈': '세이부',
+      '도호쿠 라쿠텐 골든이글스': '라쿠텐', '라쿠텐 골든이글스': '라쿠텐', '라쿠텐 골든 이글스': '라쿠텐', '라쿠텐': '라쿠텐',
+      '오릭스 버펄로스': '오릭스', '오릭스 버팔로스': '오릭스', '오릭스버팔로스': '오릭스', '오릭스': '오릭스',
+      '사이타마 세이부 라이온즈': '세이부', '세이부 라이온즈': '세이부', '세이부라이온즈': '세이부', '세이부': '세이부',
       '홋카이도 닛폰햄 파이터즈': '닛폰햄', '닛폰햄 파이터즈': '닛폰햄', '홋카이도 닛폰햄 파이터스': '닛폰햄', '닛폰햄 파이터스': '닛폰햄', '니혼햄': '닛폰햄', '닛폰햄': '닛폰햄',
       
       // MLB
@@ -9920,7 +9922,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
       '샌디에이고 파드리스': '샌디에이고',
       '샌프란시스코 자이언츠': '샌프란시스코',
 
-      // SOCCER
+      // SOCCER & ASIAN/MIDDLE-EAST/EUROPE
       '맨체스터 시티': '맨시티', '맨체스터시티': '맨시티', '맨체스터 C': '맨시티',
       '맨체스터 유나이티드': '맨유', '맨체스터유나이티드': '맨유', '맨체스터 U': '맨유',
       '토트넘 홋스퍼': '토트넘', '토트넘 핫스퍼': '토트넘', '토트넘홋스퍼': '토트넘',
@@ -9949,13 +9951,33 @@ function updateSlimPanel(matchId, type, contentHtml) {
       '라요 바예카노': '라요',
       'AC 밀란': 'AC밀란',
       '인테르나치오날레': '인테르', '인테르 밀란': '인테르',
-      'AS 로마': 'AS로마',
+      'AS 로마': 'AS로마', 'AS 로마 ': 'AS로마',
+      '코모 1907': '코모', '코모1907': '코모',
+      '파르마 칼초': '파르마', '파르마 1913': '파르마',
+      '토리노 FC': '토리노',
       '엘라스 베로나': '베로나',
       'ACF 피오렌티나': '피오렌티나', '피오렌티나': '피오렌티나',
       '바이에른 뮌헨': '뮌헨',
       '보루시아 도르트문트': '도르트문트',
       '보루시아 묀헨글라트바흐': '묀헨', '묀헨글라트바흐': '묀헨',
-      '파리 생제르맹': 'PSG', '파리 생제르망': 'PSG', '파리생제르맹': 'PSG'
+      '파리 생제르맹': 'PSG', '파리 생제르망': 'PSG', '파리생제르맹': 'PSG',
+      // Asian / Middle East
+      '알샤말SC': '알샤말', '알샤말 SC': '알샤말', '알 샤말': '알샤말', '알샤말': '알샤말',
+      'S알이티하드': '알이티하드', '알 이티하드': '알이티하드', '알이티하드': '알이티하드', '알이티하드 클럽': '알이티하드',
+      '샤바브 알아흘리': '알아흘리', '샤바브 알아흘리 두바이': '알아흘리', '샤바브알아흘리': '알아흘리',
+      '네프치 페르가나': '네프치', '네프치 바쿠': '네프치', '네프치페르가나': '네프치', '네프치': '네프치',
+      '에어포스 알쿠와': '알쿠와', '에어포스 알쿠와 알자위야': '알쿠와', '알 쿠와 알 자위야': '알쿠와', '알쿠와': '알쿠와',
+      '트락토르 사지': '트락토르', '트랙터 사지': '트락토르', '트락토르': '트락토르',
+      '알카디시야': '알카디시야', '알 카디시야': '알카디시야',
+      '알와슬': '알와슬', '알 와슬': '알와슬',
+      '알힐랄': '알힐랄', '알 힐랄': '알힐랄',
+      '알나스르': '알나스르', '알 나스르': '알나스르',
+      '알아인': '알아인', '알 아인': '알아인',
+      '알사드': '알사드', '알 사드': '알사드',
+      '알두하일': '알두하일', '알 두하일': '알두하일',
+      '광저우 FC': '광저우', '상하이 선화': '상하이선화', '상하이 포트': '상하이포트', '산둥 타이산': '산둥',
+      '요코하마 F. 마리노스': '요코하마FM', '가와사키 프론탈레': '가와사키', '우라와 레즈': '우라와', '비셀 고베': '고베', '산프레체 히로시마': '산프레체',
+      '울산 HD': '울산', '울산 현대': '울산', '전북 현대': '전북', '포항 스틸러스': '포항', 'FC 서울': '서울', '광주 FC': '광주', '인천 유나이티드': '인천', '제주 유나이티드': '제주', '강원 FC': '강원', '수원 FC': '수원FC', '수원 삼성': '수원삼성', '대전 하나': '대전', '김천 상무': '김천'
     };
 
     function formatTeamName(name) {
@@ -16208,6 +16230,217 @@ function updateSlimPanel(matchId, type, contentHtml) {
       `;
     }
 
+    // ------------------------------------------------------------------
+    // 🔔 [v9.4] 실시간 득점/골 알림 엔진 & 스마트 오디오/토스트/푸시 시스템
+    // ------------------------------------------------------------------
+    let _subscribedMatchAlerts = new Set();
+    try {
+      const savedAlerts = localStorage.getItem('tokeon_subscribed_alerts');
+      if (savedAlerts) {
+        _subscribedMatchAlerts = new Set(JSON.parse(savedAlerts));
+      }
+    } catch(e) {}
+
+    const _lastKnownMatchScores = new Map();
+
+    function playScoreAlertSound(sport = 'SOCCER') {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+
+        if (sport === 'SOCCER') {
+          // 경쾌한 골 축하 4단 화음
+          [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + i * 0.10);
+            gain.gain.setValueAtTime(0.25, now + i * 0.10);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.10 + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + i * 0.10);
+            osc.stop(now + i * 0.10 + 0.35);
+          });
+        } else if (sport === 'BASEBALL') {
+          // 명쾌한 타격/득점 2단 비프
+          [587.33, 880].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + i * 0.12);
+            gain.gain.setValueAtTime(0.3, now + i * 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + i * 0.12);
+            osc.stop(now + i * 0.12 + 0.4);
+          });
+        } else {
+          // 농구/배구 버저 비프
+          [659.25, 987.77].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(freq, now + i * 0.08);
+            gain.gain.setValueAtTime(0.15, now + i * 0.08);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.25);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + i * 0.08);
+            osc.stop(now + i * 0.08 + 0.25);
+          });
+        }
+      } catch (e) {
+        console.warn('[Audio Alert Error]', e);
+      }
+    }
+
+    function toggleMatchScoreAlert(matchId, ev) {
+      if (ev) {
+        ev.stopPropagation();
+        ev.preventDefault();
+      }
+      const mId = Number(matchId);
+      const match = (allMatches || []).find(m => m.id === mId);
+      const hName = match ? formatTeamName(match.home_team_name) : '선택 경기';
+      const aName = match ? formatTeamName(match.away_team_name) : '';
+
+      if (_subscribedMatchAlerts.has(mId)) {
+        _subscribedMatchAlerts.delete(mId);
+        try { localStorage.setItem('tokeon_subscribed_alerts', JSON.stringify(Array.from(_subscribedMatchAlerts))); } catch(e) {}
+        renderRightColLiveRelay();
+        renderLiveRelayModalBody();
+        showMiniToast(`🔕 [${hName} vs ${aName}] 득점 알림이 해제되었습니다.`);
+      } else {
+        _subscribedMatchAlerts.add(mId);
+        try { localStorage.setItem('tokeon_subscribed_alerts', JSON.stringify(Array.from(_subscribedMatchAlerts))); } catch(e) {}
+        playScoreAlertSound(match ? match.sport_code : 'SOCCER');
+
+        if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+          Notification.requestPermission();
+        }
+
+        renderRightColLiveRelay();
+        renderLiveRelayModalBody();
+        showMiniToast(`🔔 [${hName} vs ${aName}] 실시간 득점/골 알림이 등록되었습니다!`);
+      }
+    }
+
+    function showMiniToast(msg) {
+      let c = document.getElementById('miniToastNotice');
+      if (!c) {
+        c = document.createElement('div');
+        c.id = 'miniToastNotice';
+        c.style.cssText = 'position:fixed; bottom:75px; left:50%; transform:translateX(-50%); background:#0f172a; color:#f8fafc; font-size:0.75rem; font-weight:700; padding:8px 16px; border-radius:20px; box-shadow:0 6px 16px rgba(0,0,0,0.35); z-index:9999999; border:1.5px solid #38bdf8; pointer-events:none; transition:opacity 0.3s; text-align:center; max-width:90%;';
+        document.body.appendChild(c);
+      }
+      c.innerText = msg;
+      c.style.opacity = '1';
+      if (window._miniToastTimer) clearTimeout(window._miniToastTimer);
+      window._miniToastTimer = setTimeout(() => {
+        c.style.opacity = '0';
+      }, 2500);
+    }
+
+    function triggerScoreAlertToast(match, scoringTeam, oldH, oldA, newH, newA) {
+      const hName = formatTeamName(match.home_team_name);
+      const aName = formatTeamName(match.away_team_name);
+      const sport = match.sport_code || 'SOCCER';
+      const sportIcon = (sport === 'SOCCER') ? '⚽ GOAL!' : (sport === 'BASEBALL' ? '⚾ 득점 발생!' : '🏀 득점 발생!');
+
+      playScoreAlertSound(sport);
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([200, 100, 200, 100, 300]);
+      }
+
+      // Web Push Notification
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        try {
+          new Notification(`[${sportIcon}] ${hName} ${newH} : ${newA} ${aName}`, {
+            body: `실시간 득점 알림: ${scoringTeam} 득점 성공!`,
+            icon: '/static/favicon.ico'
+          });
+        } catch (e) {}
+      }
+
+      // Viewport Floating Alert Banner
+      let bannerContainer = document.getElementById('liveScoreAlertContainer');
+      if (!bannerContainer) {
+        bannerContainer = document.createElement('div');
+        bannerContainer.id = 'liveScoreAlertContainer';
+        bannerContainer.style.cssText = 'position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:999999; display:flex; flex-direction:column; gap:8px; width:92%; max-width:400px; pointer-events:none;';
+        document.body.appendChild(bannerContainer);
+      }
+
+      const toast = document.createElement('div');
+      toast.style.cssText = 'background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color:#ffffff; border:2px solid #ef4444; border-radius:12px; padding:10px 14px; box-shadow:0 10px 25px rgba(239,68,68,0.45); pointer-events:auto; animation:slideDownAlert 0.35s cubic-bezier(0.16, 1, 0.3, 1); cursor:pointer;';
+      toast.onclick = () => {
+        openNextGenDetailModal(match.id);
+        toast.remove();
+      };
+
+      toast.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span style="background:#ef4444; color:#fff; font-size:0.70rem; font-weight:800; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;">
+            🚨 ${sportIcon}
+          </span>
+          <span style="font-size:0.68rem; color:#facc15; font-weight:700;">${scoringTeam} 득점!</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-weight:700; font-size:0.90rem; color:#ffffff; max-width:40%; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${hName}</span>
+          <span style="font-family:monospace; font-size:1.15rem; font-weight:900; color:#facc15; background:rgba(0,0,0,0.4); padding:2px 10px; border-radius:6px; border:1px solid rgba(250,204,21,0.3);">
+            ${newH} : ${newA}
+          </span>
+          <span style="font-weight:700; font-size:0.90rem; color:#ffffff; max-width:40%; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; text-align:right;">${aName}</span>
+        </div>
+        <div style="font-size:0.64rem; color:#94a3b8; margin-top:4px; text-align:center;">
+          터치 시 실시간 문자중계 상세창으로 이동합니다 →
+        </div>
+      `;
+
+      bannerContainer.appendChild(toast);
+      setTimeout(() => {
+        toast.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-20px)';
+        setTimeout(() => toast.remove(), 400);
+      }, 6000);
+    }
+
+    function checkScoreChangesAndNotify(matchList) {
+      if (!matchList || !Array.isArray(matchList)) return;
+
+      matchList.forEach(m => {
+        if (!m || !m.id) return;
+        const isLive = (m.status === 'LIVE');
+        const hScore = Number(m.home_score ?? 0);
+        const aScore = Number(m.away_score ?? 0);
+
+        if (_lastKnownMatchScores.has(m.id)) {
+          const old = _lastKnownMatchScores.get(m.id);
+          const homeScored = (hScore > old.home);
+          const awayScored = (aScore > old.away);
+
+          if ((homeScored || awayScored) && (isLive || m.status === 'FINISHED')) {
+            const scoringSide = homeScored ? formatTeamName(m.home_team_name) : formatTeamName(m.away_team_name);
+            const isSubscribed = _subscribedMatchAlerts.has(Number(m.id));
+            if (isSubscribed) {
+              triggerScoreAlertToast(m, scoringSide, old.home, old.away, hScore, aScore);
+            }
+          }
+        }
+
+        _lastKnownMatchScores.set(m.id, {
+          home: hScore,
+          away: aScore,
+          status: m.status
+        });
+      });
+    }
+
     function buildTotoCanScoreboardRow(m, idx) {
       const isLive = (m.status === 'LIVE');
       const isFin = (m.status === 'FINISHED');
@@ -16231,16 +16464,16 @@ function updateSlimPanel(matchId, type, contentHtml) {
       if (m.sport_code === 'BASEBALL') {
         sportIconHtml = buildMiniDiamondSvg(st.base1, st.base2, st.base3, st.outs || 0);
       } else if (m.sport_code === 'SOCCER') {
-        sportIconHtml = `<span style="font-size:1.1rem; flex-shrink:0;">⚽</span>`;
+        sportIconHtml = `<span style="font-size:1.0rem;">⚽</span>`;
       } else if (m.sport_code === 'BASKETBALL') {
-        sportIconHtml = `<span style="font-size:1.1rem; flex-shrink:0;">🏀</span>`;
+        sportIconHtml = `<span style="font-size:1.0rem;">🏀</span>`;
       } else if (m.sport_code === 'VOLLEYBALL') {
-        sportIconHtml = `<span style="font-size:1.1rem; flex-shrink:0;">🏐</span>`;
+        sportIconHtml = `<span style="font-size:1.0rem;">🏐</span>`;
       } else {
-        sportIconHtml = `<span style="font-size:1.1rem; flex-shrink:0;">⚾</span>`;
+        sportIconHtml = `<span style="font-size:1.0rem;">⚾</span>`;
       }
 
-      // Inning / Time Badge (Pale yellow-gold rounded box)
+      // Inning / Time Badge
       let inningText = '';
       if (isLive) {
         if (m.sport_code === 'BASEBALL') inningText = st.inning_text || (m.current_inning || '진행중');
@@ -16253,7 +16486,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
         inningText = (m.match_date || '').slice(11, 16) || '예정';
       }
 
-      let inningBadgeStyle = 'background: #fef9c3; color: #854d0e; border: 1.5px solid #facc15;';
+      let inningBadgeStyle = 'background: #fef9c3; color: #854d0e; border: 1px solid #facc15;';
       if (isFin) {
         inningBadgeStyle = 'background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db;';
       } else if (!isLive) {
@@ -16263,54 +16496,51 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const hName = formatTeamName(m.home_team_name);
       const aName = formatTeamName(m.away_team_name);
 
-      const seqNo = m.id ? (m.id % 900 + 100) : (idx + 850);
+      const isSubscribed = _subscribedMatchAlerts.has(Number(m.id));
+      const bellBtnStyle = isSubscribed
+        ? 'color: #eab308; background: #fefce8; border: 1.5px solid #facc15; box-shadow: 0 0 6px rgba(234,179,8,0.4);'
+        : 'color: #94a3b8; background: transparent; border: 1px solid #e2e8f0;';
+      const bellIconClass = isSubscribed ? 'bi-bell-fill' : 'bi-bell';
 
       return `
         <tr class="totocan-live-row" onclick="openNextGenDetailModal(${m.id})" style="cursor: pointer; transition: background 0.15s; border-bottom: 1px solid #f1f5f9;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
-          <!-- No Badge -->
-          <td class="text-center py-2 px-1" style="width: 44px; vertical-align: middle;">
-            <span class="badge" style="background: #e2e8f0; color: #475569; font-size: 0.70rem; font-weight: 700; padding: 3px 5px; border-radius: 4px;">
-              ${seqNo}
-            </span>
-          </td>
-
-          <!-- Mini Diamond / Sport Icon -->
-          <td class="text-center py-2 px-1" style="width: 32px; vertical-align: middle;">
+          <!-- Sport / Mini Diamond -->
+          <td class="text-center py-1.5 px-0.5" style="vertical-align: middle;">
             ${sportIconHtml}
           </td>
 
           <!-- Home Team -->
-          <td class="text-end py-2 px-1.5" style="vertical-align: middle; max-width: 95px;" title="${hName}">
-            <span class="fw-bold text-dark text-truncate d-inline-block" style="font-size: 0.84rem; max-width: 90px; letter-spacing: -0.3px;">
+          <td class="text-end py-1.5 px-1" style="vertical-align: middle; overflow: hidden;" title="${hName}">
+            <span class="fw-bold text-dark text-truncate d-block" style="font-size: 0.82rem; letter-spacing: -0.4px;">
               ${hName}
             </span>
           </td>
 
           <!-- Score -->
-          <td class="text-center py-2 px-1" style="width: 60px; vertical-align: middle; white-space: nowrap;">
-            <span class="px-1.5 py-0.5 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.88rem; font-family: -apple-system, monospace; letter-spacing: 1px;">
-              ${hScoreHtml} <span style="color:#94a3b8; font-weight:400;">:</span> ${aScoreHtml}
+          <td class="text-center py-1.5 px-0.5" style="vertical-align: middle; white-space: nowrap;">
+            <span class="px-1 py-0.5 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.82rem; font-family: -apple-system, monospace; font-weight: 700;">
+              ${hScoreHtml} <span style="color:#94a3b8; font-weight:400; font-size:0.75rem;">:</span> ${aScoreHtml}
             </span>
           </td>
 
           <!-- Away Team -->
-          <td class="text-start py-2 px-1.5" style="vertical-align: middle; max-width: 95px;" title="${aName}">
-            <span class="fw-bold text-dark text-truncate d-inline-block" style="font-size: 0.84rem; max-width: 90px; letter-spacing: -0.3px;">
+          <td class="text-start py-1.5 px-1" style="vertical-align: middle; overflow: hidden;" title="${aName}">
+            <span class="fw-bold text-dark text-truncate d-block" style="font-size: 0.82rem; letter-spacing: -0.4px;">
               ${aName}
             </span>
           </td>
 
           <!-- Inning / Time Badge -->
-          <td class="text-center py-2 px-1" style="width: 72px; vertical-align: middle;">
-            <span class="badge py-1 px-1.5 d-inline-block" style="${inningBadgeStyle} font-size: 0.72rem; font-weight: 800; border-radius: 4px; min-width: 54px;">
+          <td class="text-center py-1.5 px-0.5" style="vertical-align: middle;">
+            <span class="badge py-0.5 px-1 d-inline-block text-truncate" style="${inningBadgeStyle} font-size: 0.68rem; font-weight: 800; border-radius: 4px; max-width: 48px;">
               ${inningText}
             </span>
           </td>
 
-          <!-- Action / Detail Bell Icon -->
-          <td class="text-center py-2 px-1" style="width: 34px; vertical-align: middle;">
-            <button type="button" class="btn btn-xs p-1 border-0 bg-transparent text-primary" onclick="event.stopPropagation(); openNextGenDetailModal(${m.id})" title="정밀 상세분석 열기">
-              <i class="bi bi-bell-fill" style="font-size: 0.85rem; color: #0284c7;"></i>
+          <!-- Real-Time Score Alert Bell Icon -->
+          <td class="text-center py-1.5 px-0.5" style="vertical-align: middle;">
+            <button type="button" class="btn btn-xs p-1" style="border-radius: 6px; ${bellBtnStyle} line-height: 1;" onclick="toggleMatchScoreAlert(${m.id}, event)" title="${isSubscribed ? '실시간 득점 알림 켜짐 (터치하여 해제)' : '실시간 득점 알림 켜기'}">
+              <i class="bi ${bellIconClass}" style="font-size: 0.84rem;"></i>
             </button>
           </td>
         </tr>
@@ -16337,17 +16567,24 @@ function updateSlimPanel(matchId, type, contentHtml) {
       });
 
       return `
-        <div class="table-responsive" style="background: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
-          <table class="table table-sm align-middle m-0" style="background: #ffffff; font-size: 0.82rem;">
+        <div class="table-responsive" style="background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0;">
+          <table class="table table-sm align-middle m-0" style="background: #ffffff; font-size: 0.80rem; width: 100%; table-layout: fixed;">
+            <colgroup>
+              <col style="width: 28px;">
+              <col style="width: 35%;">
+              <col style="width: 44px;">
+              <col style="width: 35%;">
+              <col style="width: 48px;">
+              <col style="width: 28px;">
+            </colgroup>
             <thead style="background: #f8fafc; border-bottom: 1.5px solid #e2e8f0;">
-              <tr style="color: #64748b; font-size: 0.72rem; font-weight: 700;">
-                <th class="text-center py-1.5 px-1" style="width: 44px;">번호</th>
-                <th class="text-center py-1.5 px-1" style="width: 32px;">종목</th>
-                <th class="text-end py-1.5 px-1.5" style="color: #dc2626;">Home</th>
-                <th class="text-center py-1.5 px-1" style="width: 60px;">스코어</th>
-                <th class="text-start py-1.5 px-1.5" style="color: #2563eb;">Away</th>
-                <th class="text-center py-1.5 px-1" style="width: 72px;">상태/이닝</th>
-                <th class="text-center py-1.5 px-1" style="width: 34px;">알림</th>
+              <tr style="color: #64748b; font-size: 0.70rem; font-weight: 700;">
+                <th class="text-center py-1 px-0.5">종목</th>
+                <th class="text-end py-1 px-1" style="color: #dc2626;">Home</th>
+                <th class="text-center py-1 px-0.5">스코어</th>
+                <th class="text-start py-1 px-1" style="color: #2563eb;">Away</th>
+                <th class="text-center py-1 px-0.5">상태</th>
+                <th class="text-center py-1 px-0.5" title="실시간 득점 알림">🔔</th>
               </tr>
             </thead>
             <tbody style="background: #ffffff;">
