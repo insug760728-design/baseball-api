@@ -9749,12 +9749,22 @@ function getFullModalMatchList() {
       const sportClass = `card-sport-${sportCode.toLowerCase()}`;
       const statusClass = isLive ? 'card-status-live' : (isFinished ? 'card-status-finished' : 'card-status-scheduled');
 
+      const isCardSubscribed = (typeof _subscribedMatchAlerts !== 'undefined' && _subscribedMatchAlerts.has(Number(m.id)));
+      const cardBellStyle = isCardSubscribed
+        ? 'color: #ca8a04; background: #fefce8; border: 1.2px solid #facc15; box-shadow: 0 0 5px rgba(234,179,8,0.35);'
+        : 'color: #94a3b8; background: #ffffff; border: 1px solid #e2e8f0;';
+      const cardBellIcon = isCardSubscribed ? 'bi-bell-fill' : 'bi-bell';
+
       return `
         <div class="slim-match-card pred-card-compact ${sportClass} ${statusClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
           <div class="d-flex justify-content-between align-items-center mb-1">
             <span class="slim-card-sport-time">${sportIcon} ${m.league_name || m.sport_code} · ${timeStr}${sweepBadge}</span>
             <div class="d-flex align-items-center gap-1.5" style="flex-shrink:0;">
               ${scoreLabel ? `<span>${scoreLabel}</span>` : ''}
+              <button type="button" class="btn btn-xs py-0 px-1.5 d-inline-flex align-items-center gap-0.5" style="border-radius:5px; ${cardBellStyle} height:20px; font-size:0.65rem; font-weight:700; line-height:1;" onclick="event.stopPropagation(); toggleMatchScoreAlert(${m.id}, event);" title="${isCardSubscribed ? '경기 알림 켜짐 (경기종료까지 실시간 알림 수신)' : '경기 알림 켜기 (경기종료까지 알림)'}">
+                <i class="bi ${cardBellIcon}"></i>
+                <span>${isCardSubscribed ? '알림ON' : '알림'}</span>
+              </button>
             </div>
           </div>
           <div class="betman-match-row">
@@ -12063,6 +12073,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const aProb = 100 - hProb;
       const pickTitle = isHFav ? `[홈] ${hName} 승리 유력` : `[원정] ${aName} 승리 유력`;
 
+      const isNgSubscribed = (typeof _subscribedMatchAlerts !== 'undefined' && _subscribedMatchAlerts.has(Number(m.id)));
+
       // 0. Top Hero Overview
       const heroBannerHtml = `
         <div id="ngSection_overview" class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #cbd5e1 !important;">
@@ -12081,6 +12093,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 <span class="fs-4 fw-black text-dark">${m.away_score ?? 0}</span>
               </div>
               <div class="text-muted small" style="font-size: 0.68rem;">${(m.match_date || '').slice(11, 16)}</div>
+              <button type="button" class="btn btn-xs py-0.5 px-2 mt-1 ${isNgSubscribed ? 'btn-warning text-dark' : 'btn-outline-secondary'} fw-bold d-inline-flex align-items-center gap-1" style="font-size:0.68rem; border-radius:6px; white-space:nowrap;" onclick="toggleMatchScoreAlert(${m.id}, event);" title="${isNgSubscribed ? '경기종료까지 실시간 알림 켜짐' : '경기종료까지 실시간 알림 받기'}">
+                <i class="bi ${isNgSubscribed ? 'bi-bell-fill' : 'bi-bell'}"></i>
+                <span>${isNgSubscribed ? '알림 켜짐' : '알림 받기'}</span>
+              </button>
             </div>
             <div class="col-5">
               <div class="fw-black text-dark text-truncate" style="font-size: 1.15rem;">${aName}</div>
@@ -16983,7 +16999,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
     }
 
     // ------------------------------------------------------------------
-    // 🔔 [v9.4] 실시간 득점/골 알림 엔진 & 스마트 오디오/토스트/푸시 시스템
+    // 🔔 [v11.3] 전 종목 실시간 경기 라이프사이클 알림 엔진 (경기시작 ~ 득점/골 ~ 경기종료)
     // ------------------------------------------------------------------
     let _subscribedMatchAlerts = new Set();
     try {
@@ -16993,7 +17009,41 @@ function updateSlimPanel(matchId, type, contentHtml) {
       }
     } catch(e) {}
 
+    // Cross-tab / Window real-time synchronization
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'tokeon_subscribed_alerts') {
+        try {
+          _subscribedMatchAlerts = new Set(JSON.parse(e.newValue || '[]'));
+          if (typeof renderPredMatches === 'function') renderPredMatches();
+          if (typeof renderRightColLiveRelay === 'function') renderRightColLiveRelay();
+          if (typeof renderLiveRelayModalBody === 'function') renderLiveRelayModalBody();
+        } catch(err) {}
+      }
+    });
+
     const _lastKnownMatchScores = new Map();
+    const _finishedAlertedMatches = new Set();
+
+    function playMatchStartAlertSound() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+        [523.25, 659.25, 783.99].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + i * 0.12);
+          gain.gain.setValueAtTime(0.28, now + i * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.12);
+          osc.stop(now + i * 0.12 + 0.35);
+        });
+      } catch (e) {}
+    }
 
     function playScoreAlertSound(sport = 'SOCCER') {
       try {
@@ -17009,7 +17059,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
             const gain = ctx.createGain();
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(freq, now + i * 0.10);
-            gain.gain.setValueAtTime(0.25, now + i * 0.10);
+            gain.gain.setValueAtTime(0.28, now + i * 0.10);
             gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.10 + 0.35);
             osc.connect(gain);
             gain.connect(ctx.destination);
@@ -17037,7 +17087,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
             const gain = ctx.createGain();
             osc.type = 'square';
             osc.frequency.setValueAtTime(freq, now + i * 0.08);
-            gain.gain.setValueAtTime(0.15, now + i * 0.08);
+            gain.gain.setValueAtTime(0.18, now + i * 0.08);
             gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.25);
             osc.connect(gain);
             gain.connect(ctx.destination);
@@ -17045,9 +17095,28 @@ function updateSlimPanel(matchId, type, contentHtml) {
             osc.stop(now + i * 0.08 + 0.25);
           });
         }
-      } catch (e) {
-        console.warn('[Audio Alert Error]', e);
-      }
+      } catch (e) {}
+    }
+
+    function playMatchFinishedAlertSound() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+        [392.00, 329.63, 261.63, 392.00].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.14);
+          gain.gain.setValueAtTime(0.25, now + i * 0.14);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.14 + 0.45);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.14);
+          osc.stop(now + i * 0.14 + 0.45);
+        });
+      } catch (e) {}
     }
 
     function toggleMatchScoreAlert(matchId, ev) {
@@ -17063,9 +17132,16 @@ function updateSlimPanel(matchId, type, contentHtml) {
       if (_subscribedMatchAlerts.has(mId)) {
         _subscribedMatchAlerts.delete(mId);
         try { localStorage.setItem('tokeon_subscribed_alerts', JSON.stringify(Array.from(_subscribedMatchAlerts))); } catch(e) {}
+        renderPredMatches();
         renderRightColLiveRelay();
         renderLiveRelayModalBody();
-        showMiniToast(`🔕 [${hName} vs ${aName}] 득점 알림이 해제되었습니다.`);
+        if (typeof renderNextGenDetail === 'function' && match) {
+          const ngModalEl = document.getElementById('nextGenDetailModal');
+          if (ngModalEl && ngModalEl.classList.contains('show')) {
+            renderNextGenDetail(match);
+          }
+        }
+        showMiniToast(`🔕 [${hName} vs ${aName}] 알림이 해제되었습니다.`);
       } else {
         _subscribedMatchAlerts.add(mId);
         try { localStorage.setItem('tokeon_subscribed_alerts', JSON.stringify(Array.from(_subscribedMatchAlerts))); } catch(e) {}
@@ -17075,9 +17151,20 @@ function updateSlimPanel(matchId, type, contentHtml) {
           Notification.requestPermission();
         }
 
+        renderPredMatches();
         renderRightColLiveRelay();
         renderLiveRelayModalBody();
-        showMiniToast(`🔔 [${hName} vs ${aName}] 실시간 득점/골 알림 등록 완료! 점수가 나면 텍스트 알림으로 즉시 안내해 드립니다.`);
+        if (typeof renderNextGenDetail === 'function' && match) {
+          const ngModalEl = document.getElementById('nextGenDetailModal');
+          if (ngModalEl && ngModalEl.classList.contains('show')) {
+            renderNextGenDetail(match);
+          }
+        }
+        showMiniToast(`🔔 [${hName} vs ${aName}] 알림 등록 완료! 경기 시작부터 득점/골, 최종 경기 종료까지 실시간 알림이 전송됩니다.`);
+
+        if (typeof silentLiveRefresh === 'function') {
+          silentLiveRefresh();
+        }
       }
     }
 
@@ -17097,23 +17184,63 @@ function updateSlimPanel(matchId, type, contentHtml) {
       }, 2500);
     }
 
-    function triggerScoreAlertToast(match, scoringTeam, oldH, oldA, newH, newA) {
+    function triggerMatchAlert(type, match, extra = {}) {
+      if (!match) return;
       const hName = formatTeamName(match.home_team_name);
       const aName = formatTeamName(match.away_team_name);
       const sport = match.sport_code || 'SOCCER';
-      const sportIcon = (sport === 'SOCCER') ? '⚽ GOAL!' : (sport === 'BASEBALL' ? '⚾ 득점 발생!' : '🏀 득점 발생!');
+      let sportIcon = (sport === 'SOCCER') ? '⚽ 축구' : (sport === 'BASEBALL' ? '⚾ 야구' : '🏀 농구');
 
-      playScoreAlertSound(sport);
+      let title = '';
+      let badgeLabel = '';
+      let subText = '';
+      let scoreText = `${match.home_score ?? 0} : ${match.away_score ?? 0}`;
+      let borderColor = '#ef4444';
+      let shadowColor = 'rgba(239, 68, 68, 0.45)';
+
+      if (type === 'START') {
+        playMatchStartAlertSound();
+        title = `🟢 [경기시작] ${hName} vs ${aName}`;
+        badgeLabel = `🟢 경기 시작!`;
+        subText = `경기가 지금 공식 시작되었습니다! 실시간 문자중계를 확인하세요.`;
+        borderColor = '#22c55e';
+        shadowColor = 'rgba(34, 197, 94, 0.45)';
+      } else if (type === 'FINISH') {
+        playMatchFinishedAlertSound();
+        const fH = extra.finalH !== undefined ? extra.finalH : (match.home_score ?? 0);
+        const fA = extra.finalA !== undefined ? extra.finalA : (match.away_score ?? 0);
+        scoreText = `${fH} : ${fA}`;
+        title = `🏁 [경기종료] ${hName} ${fH} : ${fA} ${aName}`;
+        badgeLabel = `🏁 경기 종료!`;
+        subText = `최종 경기가 종료되었습니다. 최종 결과: ${hName} ${fH} : ${fA} ${aName}`;
+        borderColor = '#6366f1';
+        shadowColor = 'rgba(99, 102, 241, 0.45)';
+      } else {
+        // SCORE
+        playScoreAlertSound(sport);
+        const scoringTeam = extra.scoringSide || '득점';
+        const newH = extra.newH !== undefined ? extra.newH : (match.home_score ?? 0);
+        const newA = extra.newA !== undefined ? extra.newA : (match.away_score ?? 0);
+        scoreText = `${newH} : ${newA}`;
+        const sIcon = (sport === 'SOCCER') ? '⚽ GOAL!' : (sport === 'BASEBALL' ? '⚾ 득점!' : '🏀 득점!');
+        title = `[${sIcon}] ${hName} ${newH} : ${newA} ${aName}`;
+        badgeLabel = `🚨 ${sIcon}`;
+        subText = `${scoringTeam} 득점 성공! 실시간 스코어: ${newH} : ${newA}`;
+        borderColor = '#ef4444';
+        shadowColor = 'rgba(239, 68, 68, 0.45)';
+      }
+
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         navigator.vibrate([200, 100, 200, 100, 300]);
       }
 
-      // Web Push Notification
+      // Web Push Browser Notification (works in background & across tabs)
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         try {
-          new Notification(`[${sportIcon}] ${hName} ${newH} : ${newA} ${aName}`, {
-            body: `실시간 득점 알림: ${scoringTeam} 득점 성공!`,
-            icon: '/static/favicon.ico'
+          new Notification(title, {
+            body: subText,
+            icon: '/static/favicon.ico',
+            tag: `match_${match.id}_${type}_${Date.now()}`
           });
         } catch (e) {}
       }
@@ -17123,33 +17250,33 @@ function updateSlimPanel(matchId, type, contentHtml) {
       if (!bannerContainer) {
         bannerContainer = document.createElement('div');
         bannerContainer.id = 'liveScoreAlertContainer';
-        bannerContainer.style.cssText = 'position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:999999; display:flex; flex-direction:column; gap:8px; width:92%; max-width:400px; pointer-events:none;';
+        bannerContainer.style.cssText = 'position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:999999; display:flex; flex-direction:column; gap:8px; width:92%; max-width:420px; pointer-events:none;';
         document.body.appendChild(bannerContainer);
       }
 
       const toast = document.createElement('div');
-      toast.style.cssText = 'background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color:#ffffff; border:2px solid #ef4444; border-radius:12px; padding:10px 14px; box-shadow:0 10px 25px rgba(239,68,68,0.45); pointer-events:auto; animation:slideDownAlert 0.35s cubic-bezier(0.16, 1, 0.3, 1); cursor:pointer;';
+      toast.style.cssText = `background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color:#ffffff; border:2px solid ${borderColor}; border-radius:12px; padding:12px 16px; box-shadow:0 10px 25px ${shadowColor}; pointer-events:auto; animation:slideDownAlert 0.35s cubic-bezier(0.16, 1, 0.3, 1); cursor:pointer;`;
       toast.onclick = () => {
         openNextGenDetailModal(match.id);
         toast.remove();
       };
 
       toast.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-          <span style="background:#ef4444; color:#fff; font-size:0.70rem; font-weight:800; padding:2px 7px; border-radius:4px; letter-spacing:0.5px;">
-            🚨 ${sportIcon}
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="background:${borderColor}; color:#fff; font-size:0.72rem; font-weight:800; padding:2px 8px; border-radius:4px; letter-spacing:0.5px;">
+            ${badgeLabel}
           </span>
-          <span style="font-size:0.68rem; color:#facc15; font-weight:700;">${scoringTeam} 득점!</span>
+          <span style="font-size:0.70rem; color:#facc15; font-weight:700;">${sportIcon}</span>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-weight:700; font-size:0.90rem; color:#ffffff; max-width:40%; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${hName}</span>
-          <span style="font-family:monospace; font-size:1.15rem; font-weight:900; color:#facc15; background:rgba(0,0,0,0.4); padding:2px 10px; border-radius:6px; border:1px solid rgba(250,204,21,0.3);">
-            ${newH} : ${newA}
+          <span style="font-weight:700; font-size:0.92rem; color:#ffffff; max-width:40%; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${hName}</span>
+          <span style="font-family:monospace; font-size:1.20rem; font-weight:900; color:#facc15; background:rgba(0,0,0,0.45); padding:2px 12px; border-radius:6px; border:1px solid rgba(250,204,21,0.3);">
+            ${scoreText}
           </span>
-          <span style="font-weight:700; font-size:0.90rem; color:#ffffff; max-width:40%; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; text-align:right;">${aName}</span>
+          <span style="font-weight:700; font-size:0.92rem; color:#ffffff; max-width:40%; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; text-align:right;">${aName}</span>
         </div>
-        <div style="font-size:0.64rem; color:#94a3b8; margin-top:4px; text-align:center;">
-          터치 시 실시간 문자중계 상세창으로 이동합니다 →
+        <div style="font-size:0.68rem; color:#94a3b8; margin-top:6px; text-align:center;">
+          ${subText} (터치 시 상세분석 이동 →)
         </div>
       `;
 
@@ -17159,38 +17286,69 @@ function updateSlimPanel(matchId, type, contentHtml) {
         toast.style.opacity = '0';
         toast.style.transform = 'translateY(-20px)';
         setTimeout(() => toast.remove(), 400);
-      }, 6000);
+      }, 6500);
     }
 
     function checkScoreChangesAndNotify(matchList) {
       if (!matchList || !Array.isArray(matchList)) return;
 
+      let hasActiveSubscribedLive = false;
+
       matchList.forEach(m => {
         if (!m || !m.id) return;
+        const mId = Number(m.id);
+        const isSubscribed = _subscribedMatchAlerts.has(mId);
         const isLive = (m.status === 'LIVE');
+        const isFin = (m.status === 'FINISHED');
         const hScore = Number(m.home_score ?? 0);
         const aScore = Number(m.away_score ?? 0);
 
-        if (_lastKnownMatchScores.has(m.id)) {
-          const old = _lastKnownMatchScores.get(m.id);
+        if (isSubscribed && isLive) {
+          hasActiveSubscribedLive = true;
+        }
+
+        if (_lastKnownMatchScores.has(mId)) {
+          const old = _lastKnownMatchScores.get(mId);
           const homeScored = (hScore > old.home);
           const awayScored = (aScore > old.away);
 
-          if ((homeScored || awayScored) && (isLive || m.status === 'FINISHED')) {
-            const scoringSide = homeScored ? formatTeamName(m.home_team_name) : formatTeamName(m.away_team_name);
-            const isSubscribed = _subscribedMatchAlerts.has(Number(m.id));
+          // 1. 경기 시작 감지 (SCHEDULED -> LIVE)
+          if (old.status !== 'LIVE' && isLive) {
             if (isSubscribed) {
-              triggerScoreAlertToast(m, scoringSide, old.home, old.away, hScore, aScore);
+              triggerMatchAlert('START', m, {});
+            }
+          }
+
+          // 2. 실시간 득점/골 감지
+          if ((homeScored || awayScored) && (isLive || isFin)) {
+            const scoringSide = homeScored ? formatTeamName(m.home_team_name) : formatTeamName(m.away_team_name);
+            if (isSubscribed) {
+              triggerMatchAlert('SCORE', m, { scoringSide, oldH: old.home, oldA: old.away, newH: hScore, newA: aScore });
+            }
+          }
+
+          // 3. 경기 종료 감지 (LIVE -> FINISHED)
+          if (old.status !== 'FINISHED' && isFin) {
+            if (isSubscribed && !_finishedAlertedMatches.has(mId)) {
+              _finishedAlertedMatches.add(mId);
+              triggerMatchAlert('FINISH', m, { finalH: hScore, finalA: aScore });
             }
           }
         }
 
-        _lastKnownMatchScores.set(m.id, {
+        _lastKnownMatchScores.set(mId, {
           home: hScore,
           away: aScore,
           status: m.status
         });
       });
+
+      // 알림 등록된 LIVE 경기가 있을 경우 5초 주기 초고속 백그라운드 동기화 가속
+      if (hasActiveSubscribedLive && syncIntervalSeconds !== 5) {
+        startLiveAutoSync(5);
+      } else if (!hasActiveSubscribedLive && syncIntervalSeconds === 5) {
+        startLiveAutoSync(15);
+      }
     }
 
     function buildTotoCanScoreboardRow(m, idx) {
