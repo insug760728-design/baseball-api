@@ -1773,7 +1773,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v9.5 알림전용토글모드·득점텍스트알림강화
+          <i class="bi bi-check-circle-fill me-1"></i>v9.6 축구명핵심압축·팀명간소화
         </span>
       </div>
 
@@ -10000,6 +10000,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
       clean = clean.trim();
 
+      // 2. 직접 매핑 사전 조회
       if (_SHORT_TEAM_NAMES_MAP[clean]) return _SHORT_TEAM_NAMES_MAP[clean];
 
       for (const [k, v] of Object.entries(_SHORT_TEAM_NAMES_MAP)) {
@@ -10008,10 +10009,23 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
       }
 
-      return clean
-        .replace(/^(FC\s*|SC\s*|AC\s*|AS\s*|RB\s*)/g, '')
-        .replace(/(\s*(프로축구단|축구단|자이언츠|타이거즈|라이온즈|베어스|이글스|다이노스|트윈스|히어로즈|파이리츠|브루어스|로키스|내셔널스|블루제이스|오리올스|레드삭스|가디언스|로열스|애스트로스|매리너스|레인저스|애슬레틱스|브레이브스|말린스|필리스|카디널스|다이아몬드백스|파드리스|유나이티드|원더러스|호크스|스왈로스|버펄로스|드래곤즈|드래건스|시티|타운|FC|스틸러스))$/g, '')
-        .trim() || clean;
+      // 3. 축구 및 스포츠 불필요 접두사/접미사 제거
+      clean = clean.replace(/^(FC\s*|SC\s*|AC\s*|AS\s*|RB\s*|CF\s*|CD\s*|SK\s*|FK\s*|SV\s*|US\s*|SS\s*|CA\s*|CS\s*|UD\s*|SD\s*|RC\s*|TSG\s*|VfB\s*|VfL\s*|FSV\s*|BSC\s*|1\.\s*|S\s*)/gi, '');
+      clean = clean.replace(/(\s*(프로축구단|축구단|자이언츠|타이거즈|라이온즈|베어스|이글스|다이노스|트윈스|히어로즈|파이리츠|브루어스|로키스|내셔널스|블루제이스|오리올스|레드삭스|가디언스|로열스|애스트로스|매리너스|레인저스|애슬레틱스|브레이브스|말린스|필리스|카디널스|다이아몬드백스|파드리스|유나이티드|원더러스|호크스|스왈로스|버펄로스|드래곤즈|드래건스|시티|타운|FC|SC|스틸러스|칼초|1907|1913|1899|페르가나|알자위야|이스파한|테헤란|두바이))$/gi, '');
+      clean = clean.trim();
+
+      // '알 와슬' -> '알와슬' 등 아랍권 '알' 접두사 공백 결합
+      clean = clean.replace(/^(알)\s+([가-힣a-zA-Z0-9]+)/g, '$1$2');
+
+      // 4. 긴 2단어 이상 축구명 앞글자 핵심 명칭 취득 (예: 네프치 페르가나 -> 네프치, 샤바브 알아흘리 -> 샤바브, 에스테그랄 테헤란 -> 에스테그랄)
+      if (clean.includes(' ')) {
+        const parts = clean.split(/\s+/);
+        if (parts[0] && parts[0].length >= 2 && !['LA', 'NY', 'AC', 'AS', 'FC', 'SC'].includes(parts[0].toUpperCase())) {
+          clean = parts[0];
+        }
+      }
+
+      return clean.trim() || clean;
     }
 
     function toggleSlimAccordion(matchId, type) {
