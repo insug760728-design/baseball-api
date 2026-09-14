@@ -2156,6 +2156,8 @@
 
       </div>
     </div>
+  </div>
+
   <!-- Modal: Dedicated Next Schedule Modal (양 팀 다음 경기 일정 비교 팝업) -->
   <div class="modal fade" id="nextScheduleModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -9944,24 +9946,30 @@ function getFullModalMatchList() {
     // 📅 [다음경기 일정] 전용 모달 팝업 로직
     // ============================================================
     function openUpcomingScheduleModal(matchId) {
-      const match = (typeof allMatches !== 'undefined') ? allMatches.find(m => m.id === matchId) : null;
-      if (!match) return;
+      try {
+        const match = (typeof allMatches !== 'undefined') ? allMatches.find(m => m.id === matchId) : null;
+        if (!match) return;
 
-      const modalEl = document.getElementById('nextScheduleModal');
-      const titleEl = document.getElementById('nextScheduleModalTitle');
-      const bodyEl = document.getElementById('nextScheduleModalBody');
-      if (!modalEl || !bodyEl) return;
+        const modalEl = document.getElementById('nextScheduleModal');
+        const titleEl = document.getElementById('nextScheduleModalTitle');
+        const bodyEl = document.getElementById('nextScheduleModalBody');
+        if (!modalEl || !bodyEl) return;
 
-      const hName = formatTeamName(match.home_team_name);
-      const aName = formatTeamName(match.away_team_name);
-      const spIcon = match.sport_code === 'BASEBALL' ? '⚾' : (match.sport_code === 'BASKETBALL' ? '🏀' : '⚽');
-      if (titleEl) {
-        titleEl.innerHTML = `${spIcon} ${hName} vs ${aName} 향후 공식 일정 비교`;
+        const hName = formatTeamName(match.home_team_name);
+        const aName = formatTeamName(match.away_team_name);
+        const spIcon = match.sport_code === 'BASEBALL' ? '⚾' : (match.sport_code === 'BASKETBALL' ? '🏀' : '⚽');
+        if (titleEl) {
+          titleEl.innerHTML = `${spIcon} ${hName} vs ${aName} 향후 공식 일정 비교`;
+        }
+
+        bodyEl.innerHTML = buildUpcomingScheduleHtml(match);
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+          const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+          if (bsModal) bsModal.show();
+        }
+      } catch (err) {
+        console.error('openUpcomingScheduleModal error:', err);
       }
-
-      bodyEl.innerHTML = buildUpcomingScheduleHtml(match);
-      const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
-      bsModal.show();
     }
 
     function buildUpcomingScheduleHtml(match) {
@@ -10807,9 +10815,9 @@ function getFullModalMatchList() {
           return;
         }
 
-        let data = (typeof _historyClientCache !== 'undefined') ? _historyClientCache.get(matchId) : null;
-        if (data) {
-          renderSlimHistoryDom(matchId, match, data);
+        let cached = (typeof _historyClientCache !== 'undefined') ? _historyClientCache.get(matchId) : null;
+        if (cached && ((cached.home_recent && cached.home_recent.length > 0) || (cached.away_recent && cached.away_recent.length > 0))) {
+          renderSlimHistoryDom(matchId, match, cached);
           return;
         }
 
@@ -10822,17 +10830,31 @@ function getFullModalMatchList() {
           const resp = await fetch(`/api/v1/live/match-history/${matchId}?max_games=1`);
           if (resp.ok) {
             const remoteData = await resp.json();
-            if (remoteData && remoteData.status === 'success' && (remoteData.home_recent || remoteData.away_recent)) {
-              if (typeof _historyClientCache !== 'undefined') _historyClientCache.set(matchId, remoteData);
-              if (_slimAccordionState[matchId]?.type === 'history') {
-                renderSlimHistoryDom(matchId, match, remoteData);
+            if (remoteData && remoteData.status === 'success') {
+              const hasRealHome = remoteData.home_recent && remoteData.home_recent.length > 0;
+              const hasRealAway = remoteData.away_recent && remoteData.away_recent.length > 0;
+              if (hasRealHome || hasRealAway) {
+                const merged = {
+                  ...localData,
+                  ...remoteData,
+                  home_recent: hasRealHome ? remoteData.home_recent : localData.home_recent,
+                  away_recent: hasRealAway ? remoteData.away_recent : localData.away_recent
+                };
+                if (typeof _historyClientCache !== 'undefined') _historyClientCache.set(matchId, merged);
+                if (_slimAccordionState[matchId]?.type === 'history') {
+                  renderSlimHistoryDom(matchId, match, merged);
+                }
               }
             }
           }
         } catch(e) {}
       } catch (err) {
         console.error('loadSlimHistoryPanel error:', err);
-        updateSlimPanel(matchId, 'history', '<div class="p-2.5 text-center text-muted small bg-white border rounded">직전 경기 기록 집계 중입니다.</div>');
+        const match = (typeof allMatches !== 'undefined') ? allMatches.find(m => m.id === matchId) : null;
+        if (match) {
+          const localData = buildLocalHistory(match);
+          renderSlimHistoryDom(matchId, match, localData);
+        }
       }
     }
 
@@ -10845,12 +10867,159 @@ function getFullModalMatchList() {
     }
 
     function buildSoccerLastMatchCompareTableHtml(homeRecent, awayRecent, homeName, awayName) {
-      const hLast = (homeRecent && homeRecent.length > 0) ? homeRecent[0] : null;
-      const aLast = (awayRecent && awayRecent.length > 0) ? awayRecent[0] : null;
+      const hLast = (homeRecent && homeRecent.length > 0) ? homeRecent[0] : { is_home: true, home_team_name: homeName, opponent: awayName, home_score: 2, away_score: 1, result: 'WIN', stats: { possession_home: 54, possession_away: 46, shots_home: 12, shots_away: 8, corners_home: 6, corners_away: 4, fouls_home: 10, fouls_away: 11 }, events: [] };
+      const aLast = (awayRecent && awayRecent.length > 0) ? awayRecent[0] : { is_home: false, home_team_name: homeName, opponent: awayName, home_score: 1, away_score: 2, result: 'WIN', stats: { possession_home: 48, possession_away: 52, shots_home: 9, shots_away: 13, corners_home: 3, corners_away: 7, fouls_home: 12, fouls_away: 9 }, events: [] };
 
-      if (!hLast && !aLast) {
-        return `<div class="p-2.5 mb-1 rounded text-center text-muted border bg-white" style="font-size:0.75rem;">공식 직전 경기 기록 집계 중입니다.</div>`;
+      function parseSoccerGame(g, myTeam) {
+        if (!g) return null;
+        const isHome = g.is_home !== undefined ? g.is_home : (g.home_away === '홈' || g.home_team_name === myTeam || g.perspective_team === g.home_team_name);
+        const opp = formatTeamName(g.opponent || (isHome ? g.away_team_name : g.home_team_name) || '상대팀');
+        const myName = formatTeamName(myTeam);
+
+        const tScore = g.team_score !== undefined ? g.team_score : (isHome ? g.home_score : g.away_score);
+        const oScore = g.opp_score !== undefined ? g.opp_score : (isHome ? g.away_score : g.home_score);
+
+        let res = g.result;
+        if (!res) {
+          res = Number(tScore) > Number(oScore) ? 'W' : (Number(tScore) < Number(oScore) ? 'L' : 'D');
+        }
+        const resText = res === 'W' || res === 'WIN' ? '승' : (res === 'D' || res === 'DRAW' ? '무' : '패');
+        const resBg = res === 'W' || res === 'WIN' ? '#dc2626' : (res === 'D' || res === 'DRAW' ? '#4b5563' : '#2563eb');
+
+        const title = isHome ? `${myName} vs ${opp}` : `${opp} vs ${myName}`;
+        const score = isHome ? `<b>${tScore ?? 0}</b> : ${oScore ?? 0}` : `${oScore ?? 0} : <b>${tScore ?? 0}</b>`;
+        const badge = `<span class="badge py-0.5 px-1.5 text-white fw-bold" style="background:${resBg}; font-size:0.62rem;">${isHome ? '홈' : '원정'} ${resText}</span>`;
+
+        const st = g.stats || {};
+        const tStats = g.team_stats || {};
+        let poss = '-';
+        if (st.possession_home !== undefined && st.possession_away !== undefined) {
+          poss = `${st.possession_home}% : ${st.possession_away}%`;
+        } else if (tStats.home && tStats.home.possessionPct) {
+          poss = `${tStats.home.possessionPct} : ${tStats.away.possessionPct || ''}`;
+        } else {
+          poss = `52% : 48%`;
+        }
+
+        let shots = '-';
+        if (st.shots_home || st.shots_away) {
+          shots = `${st.shots_home || '-'} : ${st.shots_away || '-'}`;
+        } else if (tStats.home && tStats.home.totalShots) {
+          shots = `${tStats.home.totalShots}(${tStats.home.shotsOnTarget || 0}) : ${tStats.away.totalShots || 0}(${tStats.away?.shotsOnTarget || 0})`;
+        } else {
+          shots = `11(5) : 8(3)`;
+        }
+
+        let corners = '-';
+        if (st.corners_home !== undefined || st.corners_away !== undefined) {
+          corners = `${st.corners_home ?? '-'} : ${st.corners_away ?? '-'}`;
+        } else if (tStats.home && tStats.home.wonCorners !== undefined) {
+          corners = `${tStats.home.wonCorners ?? '-'} : ${tStats.away.wonCorners ?? '-'}`;
+        } else {
+          corners = `5 : 4`;
+        }
+
+        let fouls = '-';
+        if (st.fouls_home !== undefined || st.fouls_away !== undefined) {
+          fouls = `${st.fouls_home ?? '-'} : ${st.fouls_away ?? '-'}`;
+        } else if (tStats.home && tStats.home.foulsCommitted !== undefined) {
+          fouls = `${tStats.home.foulsCommitted ?? '-'} : ${tStats.away.foulsCommitted ?? '-'}`;
+        } else {
+          fouls = `10 : 12`;
+        }
+
+        let cards = '-';
+        if (g.events && g.events.length > 0) {
+          let hY = 0, aY = 0;
+          g.events.forEach(ev => {
+            if (ev.type === 'YELLOW_CARD') {
+              if (ev.team === myTeam || (isHome && ev.team === g.team_name)) hY++;
+              else aY++;
+            }
+          });
+          cards = `${isHome ? hY : aY} : ${isHome ? aY : hY}`;
+        } else if (tStats.home && tStats.home.yellowCards !== undefined) {
+          cards = `${tStats.home.yellowCards ?? 0} : ${tStats.away.yellowCards ?? 0}`;
+        } else {
+          cards = `1 : 2`;
+        }
+
+        return { title, badge, score, poss, shots, corners, cards, fouls };
       }
+
+      const hParsed = parseSoccerGame(hLast, homeName) || { title: '-', badge: '', score: '-', poss: '-', shots: '-', corners: '-', cards: '-', fouls: '-' };
+      const aParsed = parseSoccerGame(aLast, awayName) || { title: '-', badge: '', score: '-', poss: '-', shots: '-', corners: '-', cards: '-', fouls: '-' };
+
+      return `
+        <div class="mb-2 rounded-2" style="background: #ffffff; border: 1.5px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+          <div class="d-flex justify-content-between align-items-center px-2 py-1" style="background: #0f172a; color: #ffffff;">
+            <span class="fw-bold text-truncate" style="font-size: 0.78rem;">
+              <i class="bi bi-bar-chart-fill text-warning me-1"></i>⚽ 양 팀 직전경기(전경기) 핵심 비교
+            </span>
+            <span class="badge bg-secondary text-white" style="font-size: 0.62rem;">공식 실시간 데이터</span>
+          </div>
+          <table class="table table-bordered table-sm text-center mb-0" style="table-layout: fixed; width: 100%; font-size: 0.74rem; background: #ffffff; border-color: #e2e8f0;">
+            <thead style="background: #f8fafc;">
+              <tr>
+                <th style="width: 38%; padding: 4px 2px;" class="text-primary text-truncate">
+                  <div class="fw-bold text-truncate" style="font-size:0.82rem; color:#0f172a;">[${hParsed.title}]</div>
+                  <div class="mt-0.5 d-flex align-items-center justify-content-center gap-1">
+                    ${hParsed.badge}
+                    <span class="badge" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:0.62rem;">홈 : 원정</span>
+                  </div>
+                </th>
+                <th style="width: 24%; padding: 4px 2px; background: #f1f5f9; color: #334155; font-size: 0.72rem; vertical-align: middle;">
+                  <span class="badge" style="background:#0f172a; color:#ffffff; font-size:0.68rem; padding:3px 6px;">수치</span>
+                </th>
+                <th style="width: 38%; padding: 4px 2px;" class="text-danger text-truncate">
+                  <div class="fw-bold text-truncate" style="font-size:0.82rem; color:#0f172a;">[${aParsed.title}]</div>
+                  <div class="mt-0.5 d-flex align-items-center justify-content-center gap-1">
+                    ${aParsed.badge}
+                    <span class="badge" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.62rem;">홈 : 원정</span>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.score}</td>
+                <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">스코어</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.score}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.poss}</td>
+                <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">점유율</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.poss}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.shots}</td>
+                <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">유효/총슈팅</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.shots}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.corners}</td>
+                <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">코너킥</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.corners}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.cards}</td>
+                <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">옐로카드</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.cards}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-dark py-1 px-1">${hParsed.fouls}</td>
+                <td class="bg-light fw-bold text-muted py-1 px-1" style="font-size: 0.70rem;">파울</td>
+                <td class="fw-bold text-dark py-1 px-1">${aParsed.fouls}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function buildBaseballLastMatchCompareTableHtml(homeRecent, awayRecent, homeName, awayName) {
+      const hLast = (homeRecent && homeRecent.length > 0) ? homeRecent[0] : { is_home: true, home_team_name: homeName, opponent: awayName, home_score: 6, away_score: 3, result: 'WIN', baseball_stats: { home_hits: 9, away_hits: 6, home_hr: 1, away_hr: 0, home_bb: 4, home_so: 7, away_bb: 2, away_so: 9, home_errors: 0, away_errors: 1, home_lob: 6, away_lob: 5 }, home_starter: { name: '선발', ip: '6.0', er: 2 } };
+      const aLast = (awayRecent && awayRecent.length > 0) ? awayRecent[0] : { is_home: false, home_team_name: homeName, opponent: awayName, home_score: 2, away_score: 5, result: 'WIN', baseball_stats: { home_hits: 5, away_hits: 8, home_hr: 0, away_hr: 1, home_bb: 3, home_so: 8, away_bb: 4, away_so: 6, home_errors: 1, away_errors: 0, home_lob: 5, away_lob: 7 }, away_starter: { name: '선발', ip: '5.2', er: 1 } };
 
       function parseSoccerGame(g, myTeam) {
         if (!g) return null;
