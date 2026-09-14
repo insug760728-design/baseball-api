@@ -3466,12 +3466,15 @@
       }
 
       // Priority 1: LIVE matches
-      const liveMatches = filtered.filter(m => m.status === 'LIVE');
-      // Priority 2: Upcoming matches from now onwards, strict chronological order ASC
-      const upcomingMatches = filtered.filter(m => (m.status === 'SCHEDULED') && (m.match_date || '') >= nowKstStr)
-        .sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
+      const liveMatches = filtered.filter(m => m.status === 'LIVE' || m.status === 'IN_PLAY' || (typeof isMatchTrulyLive === 'function' && isMatchTrulyLive(m)));
+      // Priority 2: Upcoming matches (SCHEDULED or today/future not finished)
+      const upcomingMatches = filtered.filter(m => {
+        if (m.status === 'LIVE' || m.status === 'IN_PLAY') return false;
+        if (m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED') return false;
+        return true;
+      }).sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       // Priority 3: Recently finished matches (most recent first)
-      const finishedMatches = filtered.filter(m => m.status === 'FINISHED')
+      const finishedMatches = filtered.filter(m => m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED')
         .sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
 
       // Ensure deduplication in display strip
@@ -8846,7 +8849,6 @@ function getFullModalMatchList() {
           if (m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED') return true;
           if (m.status === 'LIVE' && !isMatchTrulyLive(m)) return true;
           if (m.match_date && m.match_date < nowKstDateTime && m.status !== 'SCHEDULED') return true;
-          if (m.match_date && m.match_date < bufferKstDateTime && m.status !== 'LIVE') return true;
           return false;
         });
         if (list.length === 0 && allMatches && allMatches.length > 0) {
@@ -8856,13 +8858,20 @@ function getFullModalMatchList() {
           });
         }
         list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+      } else if (currentPredDate === 'D0') {
+        // 📅 [오늘 경기 (D0)]
+        list = list.filter(m => (m.match_date && m.match_date.startsWith(d0Str)));
+        list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
+      } else if (currentPredDate === 'D1') {
+        // 📅 [내일 경기 (D1)]
+        list = list.filter(m => (m.match_date && m.match_date.startsWith(d1Str)));
+        list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       } else {
-        // 📅 [경기목록 (진행/예정)]: LIVE 진행 중인 경기 + 앞으로 열릴 예정(SCHEDULED) 경기
+        // 📅 [경기목록 (진행/예정)]: LIVE 진행 중인 경기 + 오늘 및 향후 예정(SCHEDULED) 경기
         const liveMatches = list.filter(isMatchTrulyLive);
         const upcomingMatches = list.filter(m => {
           if (m.status === 'CANCELLED' || m.status === 'POSTPONED' || m.status === 'FINISHED') return false;
           if (isMatchTrulyLive(m)) return false;
-          if (m.match_date && m.match_date < bufferKstDateTime && m.status !== 'LIVE') return false;
           return true;
         });
 
@@ -8870,7 +8879,7 @@ function getFullModalMatchList() {
         upcomingMatches.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
 
         if (liveMatches.length === 0 && upcomingMatches.length === 0 && allMatches && allMatches.length > 0) {
-          // 예정 경기가 아직 수집 전이거나 날짜 전환 시점에도 전체 최신 경기 목록으로 즉시 노출
+          // 예정 경기가 아직 수집 전이거나 해당 종목 오늘 경기가 모두 끝난 경우에도 전체 최신 경기 목록으로 즉시 노출
           let fallbackList = [...allMatches];
           if (currentPredSport !== 'ALL') {
             fallbackList = fallbackList.filter(m => m.sport_code === currentPredSport);

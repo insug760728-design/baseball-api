@@ -165,14 +165,14 @@ class SchedulerService:
     async def execute_startup_sync(cls):
         """서버 시작 직후 어제~오늘+1일 전 종목(UCL/UEL 포함) 즉시 동기화.
         Render 슬립 후 재시작 시에도 최신 경기 데이터가 바로 반영되도록 보장."""
-        await asyncio.sleep(30)  # lifespan 초기화 및 웹 서버 안정화 대기
+        await asyncio.sleep(5)  # lifespan 초기화 및 웹 서버 안정화 대기
         if cls._is_running_task:
             logger.info("[Startup Sync] 다른 작업 진행 중 - 시작 동기화 건너뜀")
             return
 
         cls._is_running_task = True
         start_time = get_now_kst()
-        logger.info(f"[Startup Sync] 서버 시작 즉시 전종목 동기화 시작 (KST): {start_time.isoformat()}")
+        logger.info(f"[Startup Sync] 서버 시작 즉시 전종목 및 베트맨 프로토 동기화 시작 (KST): {start_time.isoformat()}")
 
         yesterday_str = (start_time - timedelta(days=1)).strftime("%Y-%m-%d")
         tomorrow_str = (start_time + timedelta(days=1)).strftime("%Y-%m-%d")
@@ -185,6 +185,17 @@ class SchedulerService:
         db = SessionLocal()
         summary = {}
         try:
+            # 1. 베트맨 프로토 발매 경기 및 최신 배당 즉시 동기화
+            try:
+                from app.services.betman_service import BetmanService
+                proto_res = await asyncio.to_thread(BetmanService.sync_betman_proto_matches, db=db)
+                summary["BETMAN_PROTO"] = proto_res
+                logger.info(f"[Startup Sync] 베트맨 프로토 동기화 완료: {proto_res}")
+            except Exception as be:
+                logger.warning(f"[Startup Sync] 베트맨 프로토 동기화 경고: {be}")
+                summary["BETMAN_PROTO"] = f"ERR: {str(be)[:60]}"
+
+            # 2. 공식 종목별 경기 일정 동기화
             for lid in sync_leagues:
                 try:
                     res = await asyncio.to_thread(
