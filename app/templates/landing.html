@@ -8785,12 +8785,6 @@ function getFullModalMatchList() {
           if (m.match_date && m.match_date < nowKstDateTime && m.status !== 'SCHEDULED') return true;
           return false;
         });
-        if (list.length === 0 && allMatches && allMatches.length > 0) {
-          list = allMatches.filter(m => {
-            const isPastMatch = (m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED' || (m.match_date && m.match_date < nowKstDateTime));
-            return isPastMatch && (currentPredSport === 'ALL' || m.sport_code === currentPredSport);
-          });
-        }
         list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
       } else if (currentPredDate === 'D0') {
         // 📅 [오늘 경기 (D0)]
@@ -8811,18 +8805,7 @@ function getFullModalMatchList() {
 
         liveMatches.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
         upcomingMatches.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
-
-        if (liveMatches.length === 0 && upcomingMatches.length === 0 && allMatches && allMatches.length > 0) {
-          // 예정 경기가 아직 수집 전이거나 해당 종목 오늘 경기가 모두 끝난 경우에도 전체 최신 경기 목록으로 즉시 노출
-          let fallbackList = [...allMatches];
-          if (currentPredSport !== 'ALL') {
-            fallbackList = fallbackList.filter(m => m.sport_code === currentPredSport);
-          }
-          fallbackList.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
-          list = fallbackList;
-        } else {
-          list = [...liveMatches, ...upcomingMatches];
-        }
+        list = [...liveMatches, ...upcomingMatches];
       }
 
       // 실시간 중복 제거
