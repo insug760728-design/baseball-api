@@ -40,10 +40,18 @@ class Match(Base):
 
     @property
     def home_starter_name(self):
+        if hasattr(self, '_home_starter_name'):
+            return self._home_starter_name
         if self.details and hasattr(self.details, 'team_stats'):
             try:
                 stats = json.loads(self.details.team_stats) if isinstance(self.details.team_stats, str) else self.details.team_stats
                 if isinstance(stats, dict):
+                    if "starters" in stats and isinstance(stats["starters"], dict):
+                        h_st = stats["starters"].get("home", {})
+                        if isinstance(h_st, dict) and h_st.get("name"):
+                            return h_st.get("name")
+                        elif isinstance(h_st, str):
+                            return h_st
                     return stats.get("home_starter") or stats.get("home_starter_name")
             except Exception:
                 pass
@@ -51,14 +59,22 @@ class Match(Base):
 
     @home_starter_name.setter
     def home_starter_name(self, value):
-        pass
+        self._home_starter_name = value
 
     @property
     def away_starter_name(self):
+        if hasattr(self, '_away_starter_name'):
+            return self._away_starter_name
         if self.details and hasattr(self.details, 'team_stats'):
             try:
                 stats = json.loads(self.details.team_stats) if isinstance(self.details.team_stats, str) else self.details.team_stats
                 if isinstance(stats, dict):
+                    if "starters" in stats and isinstance(stats["starters"], dict):
+                        a_st = stats["starters"].get("away", {})
+                        if isinstance(a_st, dict) and a_st.get("name"):
+                            return a_st.get("name")
+                        elif isinstance(a_st, str):
+                            return a_st
                     return stats.get("away_starter") or stats.get("away_starter_name")
             except Exception:
                 pass
@@ -66,7 +82,7 @@ class Match(Base):
 
     @away_starter_name.setter
     def away_starter_name(self, value):
-        pass
+        self._away_starter_name = value
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

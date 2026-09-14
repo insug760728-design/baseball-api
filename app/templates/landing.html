@@ -3892,6 +3892,15 @@ function getFullModalMatchList() {
         if (data) {
           matchDetailCache.set(numId, data);
           matchDetailCache.set(matchId, data);
+          try {
+            if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
+              const mObj = allMatches.find(x => Number(x.id) === numId);
+              if (mObj) {
+                if (data.home_starter_name && !mObj.home_starter_name) mObj.home_starter_name = data.home_starter_name;
+                if (data.away_starter_name && !mObj.away_starter_name) mObj.away_starter_name = data.away_starter_name;
+              }
+            }
+          } catch(e) {}
         }
         _matchDetailFetchPromises.delete(numId);
         return data;
@@ -9382,19 +9391,6 @@ function getFullModalMatchList() {
 
         let hAnnounced = isStarterAnnounced(effectiveRawH);
         let aAnnounced = isStarterAnnounced(effectiveRawA);
-
-        // 로테이션 예상 선발투수 Fallback
-        const hRot = lookupTeamRotationStarter(m.home_team_name);
-        const aRot = lookupTeamRotationStarter(m.away_team_name);
-
-        if (!hAnnounced && hRot) {
-          effectiveRawH = hRot.name;
-          hAnnounced = true;
-        }
-        if (!aAnnounced && aRot) {
-          effectiveRawA = aRot.name;
-          aAnnounced = true;
-        }
 
         let hDisp = hAnnounced ? formatPlayerKorean(effectiveRawH) : '선발 미정';
         let aDisp = aAnnounced ? formatPlayerKorean(effectiveRawA) : '선발 미정';

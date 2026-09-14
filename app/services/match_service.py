@@ -10,7 +10,7 @@ from app.scrapers.baseball_scraper import BaseballScraper
 from app.scrapers.soccer_scraper import SoccerScraper, SOCCER_LEAGUE_CODES
 from app.scrapers.basketball_scraper import BasketballScraper
 from app.core.sports_catalog import SPORTS_CATALOG
-from app.services.team_split_service import TeamSplitService, is_valid_starter_name
+from app.services.team_split_service import TeamSplitService, is_valid_starter_name, _resolve_match_starters
 from app.services.live_api_sports_service import lookup_pitcher_season_era
 from app.services.player_translation import translate_player_name, sanitize_player_name, sanitize_text
 from app.services.betman_service import BetmanService, teams_match, clean_name, get_canonical_team_key
@@ -429,18 +429,47 @@ class MatchService:
                 except Exception:
                     pass
 
-            # 선발 미확정 경기: 공식 발표된 선발이 없는 경우 더미 생성을 전면 차단하고 None (미정 TBD)으로 보존
+            # 야구 선발투수 정밀 매핑 (공식 매치업 및 프로필과 100% 동기화)
             if m.sport_code == "BASEBALL":
-                if not is_valid_starter_name(m.home_starter_name):
+                resolved_st = None
+                if not m.home_starter_name or not m.away_starter_name:
+                    try:
+                        raw_conn = db.connection().connection
+                        resolved_st = _resolve_match_starters(raw_conn, m.id, m.home_team_name, m.away_team_name, m.sport_code)
+                        if resolved_st:
+                            h_obj = resolved_st.get("home", {})
+                            a_obj = resolved_st.get("away", {})
+                            if not m.home_starter_name and h_obj.get("name") and h_obj["name"] != "선발 미정" and not h_obj.get("is_unannounced"):
+                                m.home_starter_name = h_obj["name"]
+                                h_confirmed = bool(h_obj.get("is_confirmed", False))
+                            if not m.away_starter_name and a_obj.get("name") and a_obj["name"] != "선발 미정" and not a_obj.get("is_unannounced"):
+                                m.away_starter_name = a_obj["name"]
+                                a_confirmed = bool(a_obj.get("is_confirmed", False))
+                    except Exception:
+                        pass
+
+                if not is_valid_starter_name(m.home_starter_name) or m.home_starter_name == "선발 미정":
                     m.home_starter_name = None
+                    m.home_starter_era = None
                     h_confirmed = False
                 else:
                     m.home_starter_era = lookup_pitcher_season_era(m.home_starter_name)
-                if not is_valid_starter_name(m.away_starter_name):
+                    if (not m.home_starter_era or m.home_starter_era == "-") and resolved_st:
+                        h_era_cand = resolved_st.get("home", {}).get("season_era")
+                        if h_era_cand and h_era_cand != "-":
+                            m.home_starter_era = str(h_era_cand)
+
+                if not is_valid_starter_name(m.away_starter_name) or m.away_starter_name == "선발 미정":
                     m.away_starter_name = None
+                    m.away_starter_era = None
                     a_confirmed = False
                 else:
                     m.away_starter_era = lookup_pitcher_season_era(m.away_starter_name)
+                    if (not m.away_starter_era or m.away_starter_era == "-") and resolved_st:
+                        a_era_cand = resolved_st.get("away", {}).get("season_era")
+                        if a_era_cand and a_era_cand != "-":
+                            m.away_starter_era = str(a_era_cand)
+
                 m.starters_confirmed = bool(m.home_starter_name and m.away_starter_name and h_confirmed and a_confirmed)
 
             if m.status != "LIVE":

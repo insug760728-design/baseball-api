@@ -983,6 +983,7 @@ KNOWN_PITCHER_SEASON_ERA: Dict[str, str] = {
     '포스터 그리핀': '2.80', '포스트에르 그리핀': '2.80', 'Foster Griffin': '2.80', 'Griffin': '2.80',
     '태너 바이비': '3.47', 'Tanner Bibee': '3.47', 'Bibee': '3.47',
     '개빈 윌리엄스': '4.86', 'Gavin Williams': '4.86', 'Williams': '4.86',
+    '션 뉴컴': '4.50', 'Sean Newcomb': '4.50', 'Newcomb': '4.50', '뉴컴': '4.50', '네우크옴브': '4.50',
     '셰인 비버': '2.80', 'Shane Bieber': '2.80', 'Bieber': '2.80',
     '프레디 페랄타': '3.68', 'Freddy Peralta': '3.68', 'Peralta': '3.68',
     '이안 시모어': '3.50', 'Ian Seymour': '3.50', 'Seymour': '3.50',

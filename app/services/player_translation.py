@@ -141,6 +141,8 @@ FULL_NAMES = {
     "Trevor Rogers": "트레버 로저스", "Tanner Gordon": "태너 고든", "Kyle Bradish": "카일 브래디시",
     "Jacob deGrom": "제이콥 디그롬", "Jacob DeGrom": "제이콥 디그롬", "Max Scherzer": "맥스 슈어저",
     "Luis Castillo": "루이스 카스티요", "Christian Javier": "크리스티안 하비에르", "Troy Melton": "트로이 멜튼",
+    "Sean Newcomb": "션 뉴컴", "Patrick Sandoval": "패트릭 산도발", "Jackson Kent": "잭슨 켄트",
+    "Griffin Jax": "그리핀 잭스", "Jack Perkins": "잭 퍼킨스",
 
     # Korean MLB
     "Jung Hoo Lee": "이정후", "Jung-Hoo Lee": "이정후", "Ha-Seong Kim": "김하성", "Ha-seong Kim": "김하성",
