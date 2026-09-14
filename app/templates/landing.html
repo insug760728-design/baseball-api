@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0">
   <script>
     try {
-      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14'].forEach(function(k) {
+      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15'].forEach(function(k) {
         localStorage.removeItem(k);
       });
     } catch(e) {}
@@ -1746,7 +1746,8 @@
     }
 
     #mainAppWrapper {
-      padding-top: 52px;
+      padding-top: 0px !important;
+      margin-top: 0px !important;
       background-color: #ffffff !important;
     }
   </style>
@@ -1772,7 +1773,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v8.2 상세보기정상화·즉시열림
+          <i class="bi bi-check-circle-fill me-1"></i>v8.3 상단여백제거·승무15패단일화
         </span>
       </div>
 
@@ -1815,22 +1816,16 @@
           <div class="dash-card-column">
             
             <div class="dash-card-header pb-1 pt-0">
-              <!-- 📌 1열: [경기목록] [지난경기] [승무패] [승1패] [승5패] (초소형 콤팩트 가로 배치) -->
-              <div class="d-flex align-items-center gap-1 mb-1.5" id="scheduleModeSwitchGroup">
-                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1 px-1.5" id="btnTabActiveMatches" onclick="filterPredDate('ACTIVE')" style="border-radius: 5px; font-size: 0.74rem; background: #1d4ed8; color: #ffffff; border: 1px solid #1d4ed8;">
-                  <i class="bi bi-calendar-check me-0.5"></i>경기목록 <span class="badge bg-white text-primary ms-0.5 fw-bold" id="activeMatchesCountBadge" style="font-size:0.62rem;">0</span>
+              <!-- 📌 1열: [경기목록] [지난경기] [승무15패] (깔끔한 3버튼 1열 꽉 찬 배치) -->
+              <div class="d-flex align-items-center gap-1.5 mb-1.5" id="scheduleModeSwitchGroup">
+                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill" id="btnTabActiveMatches" onclick="filterPredDate('ACTIVE')" style="border-radius: 6px; font-size: 0.78rem; background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8;">
+                  <i class="bi bi-calendar-check me-1"></i>경기목록 <span class="badge bg-white text-primary ms-0.5 fw-bold" id="activeMatchesCountBadge" style="font-size:0.65rem;">1186</span>
                 </button>
-                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1 px-1.5" id="btnTabFinishedMatches" onclick="filterPredDate('FINISHED')" style="border-radius: 5px; font-size: 0.74rem; background: #f8fafc; color: #475569; border: 1px solid #cbd5e1;">
-                  <i class="bi bi-clock-history me-0.5 text-secondary"></i>지난경기 <span class="badge bg-secondary text-white ms-0.5 fw-bold" id="finishedMatchesCountBadge" style="font-size:0.62rem;">0</span>
+                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill" id="btnTabFinishedMatches" onclick="filterPredDate('FINISHED')" style="border-radius: 6px; font-size: 0.78rem; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;">
+                  <i class="bi bi-clock-history me-1 text-secondary"></i>지난경기 <span class="badge bg-secondary text-white ms-0.5 fw-bold" id="finishedMatchesCountBadge" style="font-size:0.65rem;">179</span>
                 </button>
-                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 px-1 border text-nowrap" onclick="openTotoModal('WDL')" style="background: #ffffff; color: #1e293b; border-color: #cbd5e1; border-radius: 5px; font-size: 0.72rem;" title="14경기 축구 승무패">
-                  ⚽ 승무패 <span class="badge bg-danger ms-0.5" id="quickBadgeTotoWDL" style="font-size:0.56rem;">53회</span>
-                </button>
-                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 px-1 border text-nowrap" onclick="openTotoModal('W1L')" style="background: #ffffff; color: #1e293b; border-color: #cbd5e1; border-radius: 5px; font-size: 0.72rem;" title="14경기 야구 승1패">
-                  ⚾ 승1패 <span class="badge bg-danger ms-0.5" id="quickBadgeTotoW1L" style="font-size:0.56rem;">70회</span>
-                </button>
-                <button type="button" class="btn btn-xs fw-bold flex-fill py-1 px-1 border text-nowrap" onclick="openTotoModal('W5L')" style="background: #ffffff; color: #1e293b; border-color: #cbd5e1; border-radius: 5px; font-size: 0.72rem;" title="14경기 농구 승5패">
-                  🏀 승5패 <span class="badge bg-secondary ms-0.5" id="quickBadgeTotoW5L" style="font-size:0.56rem;">01회</span>
+                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill border" onclick="openTotoModal('WDL')" style="background: #ffffff; color: #111827; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem;" title="클릭 시 배트맨 14경기 승무패/승1패/승5패 전용 팝업 오픈">
+                  <i class="bi bi-trophy-fill text-warning me-1"></i>승무15패 <span class="badge bg-danger text-white ms-0.5" style="font-size:0.62rem;">14경기</span>
                 </button>
               </div>
 
@@ -8177,7 +8172,7 @@ function getFullModalMatchList() {
       // ⚡ 0초(0ms) 즉시 렌더링: 브라우저 캐시가 있으면 대기 없이 즉각 경기 목록 & 전광판 표출
       try {
         // Purge legacy caches with older fixture formats
-        ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14'].forEach(k => {
+        ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v6', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15'].forEach(k => {
           try { localStorage.removeItem(k); } catch (e) {}
         });
         const cached = localStorage.getItem('tokeon_matches_cache_v6');
