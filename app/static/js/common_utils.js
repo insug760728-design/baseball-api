@@ -212,26 +212,21 @@ const CommonUtils = (() => {
     }
     clean = clean.trim();
 
+    // 1차: 직접 정확 매핑
     if (_SHORT_TEAM_NAMES[clean]) return _SHORT_TEAM_NAMES[clean];
 
-    for (const [k, v] of Object.entries(_SHORT_TEAM_NAMES)) {
+    // 2차: 긴 단어 우선 부분 일치 매핑
+    const entries = Object.entries(_SHORT_TEAM_NAMES).sort((a, b) => b[0].length - a[0].length);
+    for (const [k, v] of entries) {
       if (clean === k || clean.startsWith(k) || (k.length >= 3 && clean.includes(k))) {
         return v;
       }
     }
 
+    // 3차: 접두사/접미사 정제 (임의 분할 chop 금지)
     clean = clean.replace(/^(FC\s*|SC\s*|AC\s*|AS\s*|RB\s*|CF\s*|CD\s*|SK\s*|FK\s*|SV\s*|US\s*|SS\s*|CA\s*|CS\s*|UD\s*|SD\s*|RC\s*|TSG\s*|VfB\s*|VfL\s*|FSV\s*|BSC\s*|1\.\s*|S\s*)/gi, '');
-    clean = clean.replace(/(\s*(프로축구단|축구단|자이언츠|타이거즈|라이온즈|베어스|이글스|다이노스|트윈스|히어로즈|파이리츠|브루어스|로키스|내셔널스|블루제이스|오리올스|레드삭스|가디언스|로열스|애스트로스|매리너스|레인저스|애슬레틱스|브레이브스|말린스|필리스|카디널스|다이아몬드백스|파드리스|유나이티드|원더러스|호크스|스왈로스|버펄로스|드래곤즈|드래건스|시티|타운|FC|SC|스틸러스|칼초|1907|1913|1899|페르가나|알자위야|이스파한|테헤란|두바이))$/gi, '');
-    clean = clean.trim();
-
+    clean = clean.replace(/(\s*(프로축구단|축구단|자이언츠|타이거즈|라이온즈|베어스|이글스|다이노스|트윈스|히어로즈|파이리츠|브루어스|로키스|내셔널스|블루제이스|오리올스|레드삭스|화이트삭스|가디언스|가디언즈|로열스|애스트로스|매리너스|레인저스|애슬레틱스|브레이브스|말린스|필리스|카디널스|다이아몬드백스|파드리스|유나이티드|원더러스|호크스|스왈로스|버펄로스|드래곤즈|드래건스|시티|타운|FC|SC|스틸러스|칼초|1907|1913|1899))$/gi, '');
     clean = clean.replace(/^(알)\s+([가-힣a-zA-Z0-9]+)/g, '$1$2');
-
-    if (clean.includes(' ')) {
-      const parts = clean.split(/\s+/);
-      if (parts[0] && parts[0].length >= 2 && !['LA', 'NY', 'AC', 'AS', 'FC', 'SC'].includes(parts[0].toUpperCase())) {
-        clean = parts[0];
-      }
-    }
 
     return clean.trim() || clean;
   }

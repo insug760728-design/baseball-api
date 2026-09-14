@@ -4634,8 +4634,8 @@ function getFullModalMatchList() {
 
       const titleEl = document.getElementById('matchModalRoundTitle');
       if (titleEl && currentModalMatchList && currentModalMatchList.length === 1 && (match.sport_code || '').toUpperCase() === 'BASEBALL') {
-        const hStName = (matchup && matchup.starting_pitchers && matchup.starting_pitchers.home && isStarterAnnounced(matchup.starting_pitchers.home.name) && !matchup.starting_pitchers.home.is_unannounced) ? matchup.starting_pitchers.home.name : (isStarterAnnounced(match.home_starter_name) ? match.home_starter_name : '');
-        const aStName = (matchup && matchup.starting_pitchers && matchup.starting_pitchers.away && isStarterAnnounced(matchup.starting_pitchers.away.name) && !matchup.starting_pitchers.away.is_unannounced) ? matchup.starting_pitchers.away.name : (isStarterAnnounced(match.away_starter_name) ? match.away_starter_name : '');
+        const hStName = isStarterAnnounced(match.home_starter_name) ? match.home_starter_name : ((matchup && matchup.starting_pitchers && matchup.starting_pitchers.home && isStarterAnnounced(matchup.starting_pitchers.home.name) && !matchup.starting_pitchers.home.is_unannounced) ? matchup.starting_pitchers.home.name : '');
+        const aStName = isStarterAnnounced(match.away_starter_name) ? match.away_starter_name : ((matchup && matchup.starting_pitchers && matchup.starting_pitchers.away && isStarterAnnounced(matchup.starting_pitchers.away.name) && !matchup.starting_pitchers.away.is_unannounced) ? matchup.starting_pitchers.away.name : '');
         
         const hDisp = hStName ? formatPlayerKorean(hStName) : '미정 (TBD)';
         const aDisp = aStName ? formatPlayerKorean(aStName) : '미정 (TBD)';
@@ -6707,25 +6707,31 @@ function getFullModalMatchList() {
           const aAnnounced = isStarterAnnounced(awayStarter);
           const hClean = hAnnounced ? homeStarter.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim() : '선발 미정';
           const aClean = aAnnounced ? awayStarter.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim() : '선발 미정';
+          const hOff = lookupOfficialPitcher(hClean);
+          const aOff = lookupOfficialPitcher(aClean);
           const hTrend = (hAnnounced && typeof getPitcherFormTrend === 'function') ? getPitcherFormTrend({ name: hClean }) : null;
           const aTrend = (aAnnounced && typeof getPitcherFormTrend === 'function') ? getPitcherFormTrend({ name: aClean }) : null;
+
+          const hSeasonEra = (hOff && hOff.era) ? String(hOff.era) : (hTrend ? hTrend.seasonEra : '3.75');
+          const aSeasonEra = (aOff && aOff.era) ? String(aOff.era) : (aTrend ? aTrend.seasonEra : '3.75');
 
           matchup.starting_pitchers = {
             home: hAnnounced ? {
               name: hClean,
-              throws: homeStarter.includes('(좌)') ? '좌완' : (homeStarter.includes('(언)') ? '언더' : '우완'),
+              throws: (hOff && hOff.style && hOff.style.includes('좌')) ? '좌완' : (homeStarter.includes('(좌)') ? '좌완' : (homeStarter.includes('(언)') ? '언더' : '우완')),
               is_confirmed: true,
               is_unannounced: false,
+              season_era: hSeasonEra,
               summary: {
                 avg_ip: hTrend ? hTrend.avgIp : '5.8이닝',
                 avg_np: '95',
                 total_np: 285,
-                era_3g: hTrend ? hTrend.era3g : '3.63',
-                season_era: hTrend ? hTrend.seasonEra : '3.75',
+                era_3g: hTrend ? hTrend.era3g : hSeasonEra,
+                season_era: hSeasonEra,
                 trend: hTrend ? hTrend.trend : 'STABLE',
                 trend_icon: hTrend ? hTrend.icon : '─',
                 trend_label: hTrend ? hTrend.label : '최근3G 유지 (안정)',
-                record: hTrend ? hTrend.record : '1승 1패',
+                record: (hOff && hOff.w != null && hOff.l != null) ? `${hOff.w}승 ${hOff.l}패` : (hTrend ? hTrend.record : '1승 1패'),
                 total_so: hTrend ? hTrend.so : 16,
                 total_bb: hTrend ? hTrend.bb : 5
               },
@@ -7568,7 +7574,7 @@ function getFullModalMatchList() {
 
           let hStarterName = (hStObj && hStObj.name && isStarterAnnounced(hStObj.name)) ? hStObj.name : '';
           if (!hStarterName) {
-            const mHome = (matchup.starting_pitchers && matchup.starting_pitchers.home && isStarterAnnounced(matchup.starting_pitchers.home.name)) ? matchup.starting_pitchers.home.name : (isStarterAnnounced(m.home_starter_name) ? m.home_starter_name : '');
+            const mHome = isStarterAnnounced(m.home_starter_name) ? m.home_starter_name : ((matchup.starting_pitchers && matchup.starting_pitchers.home && isStarterAnnounced(matchup.starting_pitchers.home.name)) ? matchup.starting_pitchers.home.name : '');
             hStarterName = (idx === 0) ? (mHome || '선발 미정 (TBD)') : (teamH + ' 선발');
           }
           const hStarterEr = (hStObj && hStObj.er !== undefined) ? Number(hStObj.er) : Math.min(aSc, (idx === 0 ? 2 : 3));
@@ -7582,7 +7588,7 @@ function getFullModalMatchList() {
 
           let aStarterName = (aStObj && aStObj.name && isStarterAnnounced(aStObj.name)) ? aStObj.name : '';
           if (!aStarterName) {
-            const mAway = (matchup.starting_pitchers && matchup.starting_pitchers.away && isStarterAnnounced(matchup.starting_pitchers.away.name)) ? matchup.starting_pitchers.away.name : (isStarterAnnounced(m.away_starter_name) ? m.away_starter_name : '');
+            const mAway = isStarterAnnounced(m.away_starter_name) ? m.away_starter_name : ((matchup.starting_pitchers && matchup.starting_pitchers.away && isStarterAnnounced(matchup.starting_pitchers.away.name)) ? matchup.starting_pitchers.away.name : '');
             aStarterName = (idx === 0) ? (mAway || '선발 미정 (TBD)') : (teamA + ' 선발');
           }
           const aStarterEr = (aStObj && aStObj.er !== undefined) ? Number(aStObj.er) : Math.min(hSc, (idx === 0 ? 3 : 2));
@@ -9299,11 +9305,12 @@ function getFullModalMatchList() {
         const cachedDetail = (typeof matchDetailCache !== 'undefined') ? matchDetailCache.get(m.id) : null;
         const cachedPitchers = (cachedDetail && cachedDetail.matchup_analysis && cachedDetail.matchup_analysis.starting_pitchers) ? cachedDetail.matchup_analysis.starting_pitchers : null;
 
-        let effectiveRawH = (cachedPitchers && cachedPitchers.home && cachedPitchers.home.name) ? cachedPitchers.home.name : rawH;
-        let effectiveRawA = (cachedPitchers && cachedPitchers.away && cachedPitchers.away.name) ? cachedPitchers.away.name : rawA;
+        // 경기에 이미 공식 공시된 선발이 있으면 절대 백그라운드 캐시로 덮어쓰지 않고 확고하게 유지
+        let effectiveRawH = isStarterAnnounced(rawH) ? rawH : ((cachedPitchers && cachedPitchers.home && cachedPitchers.home.name && isStarterAnnounced(cachedPitchers.home.name)) ? cachedPitchers.home.name : '');
+        let effectiveRawA = isStarterAnnounced(rawA) ? rawA : ((cachedPitchers && cachedPitchers.away && cachedPitchers.away.name && isStarterAnnounced(cachedPitchers.away.name)) ? cachedPitchers.away.name : '');
 
-        let hAnnounced = isStarterAnnounced(effectiveRawH) && !(cachedPitchers && cachedPitchers.home && cachedPitchers.home.is_unannounced);
-        let aAnnounced = isStarterAnnounced(effectiveRawA) && !(cachedPitchers && cachedPitchers.away && cachedPitchers.away.is_unannounced);
+        let hAnnounced = isStarterAnnounced(effectiveRawH);
+        let aAnnounced = isStarterAnnounced(effectiveRawA);
 
         // 로테이션 예상 선발투수 Fallback
         const hRot = lookupTeamRotationStarter(m.home_team_name);
@@ -9324,11 +9331,14 @@ function getFullModalMatchList() {
         const hClean = hAnnounced ? hDisp.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim() : '';
         const aClean = aAnnounced ? aDisp.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim() : '';
 
+        const hOfficial = lookupOfficialPitcher(effectiveRawH) || lookupOfficialPitcher(hClean);
+        const aOfficial = lookupOfficialPitcher(effectiveRawA) || lookupOfficialPitcher(aClean);
+
         const hTrend = (hAnnounced && cachedPitchers && cachedPitchers.home && cachedPitchers.home.summary) ? getPitcherFormTrend(cachedPitchers.home) : (hAnnounced && typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: hClean }) : null);
         const aTrend = (aAnnounced && cachedPitchers && cachedPitchers.away && cachedPitchers.away.summary) ? getPitcherFormTrend(cachedPitchers.away) : (aAnnounced && typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: aClean }) : null);
 
-        const hEra = (hTrend && (hTrend.seasonEra || hTrend.era3g)) ? (hTrend.seasonEra || hTrend.era3g) : (cachedPitchers && cachedPitchers.home ? (cachedPitchers.home.season_era || cachedPitchers.home.era) : (hRot ? hRot.era : ''));
-        const aEra = (aTrend && (aTrend.seasonEra || aTrend.era3g)) ? (aTrend.seasonEra || aTrend.era3g) : (cachedPitchers && cachedPitchers.away ? (cachedPitchers.away.season_era || cachedPitchers.away.era) : (aRot ? aRot.era : ''));
+        const hEra = (hOfficial && hOfficial.era != null) ? hOfficial.era : ((hTrend && (hTrend.seasonEra || hTrend.era3g)) ? (hTrend.seasonEra || hTrend.era3g) : (cachedPitchers && cachedPitchers.home ? (cachedPitchers.home.season_era || cachedPitchers.home.era) : (hRot ? hRot.era : '')));
+        const aEra = (aOfficial && aOfficial.era != null) ? aOfficial.era : ((aTrend && (aTrend.seasonEra || aTrend.era3g)) ? (aTrend.seasonEra || aTrend.era3g) : (cachedPitchers && cachedPitchers.away ? (cachedPitchers.away.season_era || cachedPitchers.away.era) : (aRot ? aRot.era : '')));
 
         const hEraStr = (hAnnounced && hEra && hEra !== '-') ? `(ERA ${hEra})` : '';
         const aEraStr = (aAnnounced && aEra && aEra !== '-') ? `(ERA ${aEra})` : '';
@@ -10078,10 +10088,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
       clean = clean.trim();
 
-      // 2. 직접 매핑 사전 조회
+      // 2. 직접 매핑 사전 조회 (1차: 정확 일치)
       if (_SHORT_TEAM_NAMES_MAP[clean]) return _SHORT_TEAM_NAMES_MAP[clean];
 
-      for (const [k, v] of Object.entries(_SHORT_TEAM_NAMES_MAP)) {
+      // 2차: 긴 키 우선 부분 일치 검색
+      const entries = Object.entries(_SHORT_TEAM_NAMES_MAP).sort((a, b) => b[0].length - a[0].length);
+      for (const [k, v] of entries) {
         if (clean === k || clean.startsWith(k) || (k.length >= 3 && clean.includes(k))) {
           return v;
         }
@@ -10089,19 +10101,11 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
       // 3. 축구 및 스포츠 불필요 접두사/접미사 제거
       clean = clean.replace(/^(FC\s*|SC\s*|AC\s*|AS\s*|RB\s*|CF\s*|CD\s*|SK\s*|FK\s*|SV\s*|US\s*|SS\s*|CA\s*|CS\s*|UD\s*|SD\s*|RC\s*|TSG\s*|VfB\s*|VfL\s*|FSV\s*|BSC\s*|1\.\s*|S\s*)/gi, '');
-      clean = clean.replace(/(\s*(프로축구단|축구단|자이언츠|타이거즈|라이온즈|베어스|이글스|다이노스|트윈스|히어로즈|파이리츠|브루어스|로키스|내셔널스|블루제이스|오리올스|레드삭스|가디언스|로열스|애스트로스|매리너스|레인저스|애슬레틱스|브레이브스|말린스|필리스|카디널스|다이아몬드백스|파드리스|유나이티드|원더러스|호크스|스왈로스|버펄로스|드래곤즈|드래건스|시티|타운|FC|SC|스틸러스|칼초|1907|1913|1899|페르가나|알자위야|이스파한|테헤란|두바이))$/gi, '');
+      clean = clean.replace(/(\s*(프로축구단|축구단|자이언츠|타이거즈|라이온즈|베어스|이글스|다이노스|트윈스|히어로즈|파이리츠|브루어스|로키스|내셔널스|블루제이스|오리올스|레드삭스|화이트삭스|가디언스|가디언즈|로열스|애스트로스|매리너스|레인저스|애슬레틱스|브레이브스|말린스|필리스|카디널스|다이아몬드백스|파드리스|유나이티드|원더러스|호크스|스왈로스|버펄로스|드래곤즈|드래건스|시티|타운|FC|SC|스틸러스|칼초|1907|1913|1899))$/gi, '');
       clean = clean.trim();
 
       // '알 와슬' -> '알와슬' 등 아랍권 '알' 접두사 공백 결합
       clean = clean.replace(/^(알)\s+([가-힣a-zA-Z0-9]+)/g, '$1$2');
-
-      // 4. 긴 2단어 이상 축구명 앞글자 핵심 명칭 취득 (예: 네프치 페르가나 -> 네프치, 샤바브 알아흘리 -> 샤바브, 에스테그랄 테헤란 -> 에스테그랄)
-      if (clean.includes(' ')) {
-        const parts = clean.split(/\s+/);
-        if (parts[0] && parts[0].length >= 2 && !['LA', 'NY', 'AC', 'AS', 'FC', 'SC'].includes(parts[0].toUpperCase())) {
-          clean = parts[0];
-        }
-      }
 
       return clean.trim() || clean;
     }

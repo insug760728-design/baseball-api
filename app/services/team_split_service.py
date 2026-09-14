@@ -1453,6 +1453,103 @@ def is_valid_starter_name(name: Optional[str]) -> bool:
     return True
 
 OFFICIAL_PITCHER_SEASON_PROFILES = {
+    # Cleveland Guardians
+    "개빈 윌리엄스": {
+        "name": "개빈 윌리엄스",
+        "name_raw": "Gavin Williams",
+        "jersey": 32,
+        "throws": "우완",
+        "wins": 3,
+        "losses": 10,
+        "games": 16,
+        "season_era": "4.86",
+        "season_whip": "1.37",
+        "season_ip": "76.0",
+        "season_so": 79,
+        "season_bb": 32,
+        "recent_starts": [
+            {"date": "09.08(일)", "venue": "원", "opponent": "다저스", "ip": "0.2", "bf": 8, "h": 2, "hr": 1, "bb": 3, "so": 2, "er": 5, "era": "67.50", "result": "패"},
+            {"date": "09.02(월)", "venue": "원", "opponent": "캔자스시티", "ip": "7.0", "bf": 23, "h": 1, "hr": 0, "bb": 2, "so": 6, "er": 1, "era": "1.29", "result": "-"},
+            {"date": "08.28(수)", "venue": "홈", "opponent": "캔자스시티", "ip": "5.0", "bf": 20, "h": 3, "hr": 1, "bb": 2, "so": 6, "er": 2, "era": "3.60", "result": "패"}
+        ]
+    },
+    "태너 바이비": {
+        "name": "태너 바이비",
+        "name_raw": "Tanner Bibee",
+        "jersey": 28,
+        "throws": "우완",
+        "wins": 12,
+        "losses": 8,
+        "games": 31,
+        "season_era": "3.47",
+        "season_whip": "1.12",
+        "season_ip": "173.2",
+        "season_so": 187,
+        "season_bb": 44,
+        "recent_starts": [
+            {"date": "09.09(월)", "venue": "원", "opponent": "다저스", "ip": "5.0", "bf": 21, "h": 4, "hr": 1, "bb": 3, "so": 4, "er": 2, "era": "3.60", "result": "승"},
+            {"date": "09.03(화)", "venue": "원", "opponent": "캔자스시티", "ip": "6.0", "bf": 23, "h": 2, "hr": 0, "bb": 1, "so": 6, "er": 1, "era": "1.50", "result": "승"},
+            {"date": "08.29(목)", "venue": "홈", "opponent": "캔자스시티", "ip": "5.0", "bf": 24, "h": 8, "hr": 2, "bb": 1, "so": 6, "er": 5, "era": "9.00", "result": "-"}
+        ]
+    },
+    # Chicago White Sox
+    "션 뉴컴": {
+        "name": "션 뉴컴",
+        "name_raw": "Sean Newcomb",
+        "jersey": 15,
+        "throws": "좌완",
+        "wins": 1,
+        "losses": 0,
+        "games": 7,
+        "season_era": "4.50",
+        "season_whip": "1.42",
+        "season_ip": "12.0",
+        "season_so": 13,
+        "season_bb": 7,
+        "recent_starts": [
+            {"date": "09.08(일)", "venue": "홈", "opponent": "디트로이트", "ip": "2.0", "bf": 8, "h": 1, "hr": 0, "bb": 1, "so": 2, "er": 0, "era": "0.00", "result": "-"},
+            {"date": "09.04(수)", "venue": "원", "opponent": "시애틀", "ip": "1.1", "bf": 6, "h": 1, "hr": 0, "bb": 1, "so": 2, "er": 1, "era": "6.75", "result": "-"},
+            {"date": "08.31(토)", "venue": "원", "opponent": "텍사스", "ip": "1.0", "bf": 4, "h": 1, "hr": 0, "bb": 0, "so": 1, "er": 0, "era": "0.00", "result": "승"}
+        ]
+    },
+    "션 네우크옴브": {
+        "name": "션 뉴컴",
+        "name_raw": "Sean Newcomb",
+        "jersey": 15,
+        "throws": "좌완",
+        "wins": 1,
+        "losses": 0,
+        "games": 7,
+        "season_era": "4.50",
+        "season_whip": "1.42",
+        "season_ip": "12.0",
+        "season_so": 13,
+        "season_bb": 7,
+        "recent_starts": [
+            {"date": "09.08(일)", "venue": "홈", "opponent": "디트로이트", "ip": "2.0", "bf": 8, "h": 1, "hr": 0, "bb": 1, "so": 2, "er": 0, "era": "0.00", "result": "-"},
+            {"date": "09.04(수)", "venue": "원", "opponent": "시애틀", "ip": "1.1", "bf": 6, "h": 1, "hr": 0, "bb": 1, "so": 2, "er": 1, "era": "6.75", "result": "-"},
+            {"date": "08.31(토)", "venue": "원", "opponent": "텍사스", "ip": "1.0", "bf": 4, "h": 1, "hr": 0, "bb": 0, "so": 1, "er": 0, "era": "0.00", "result": "승"}
+        ]
+    },
+    "가렛 크로셰": {
+        "name": "가렛 크로셰",
+        "name_raw": "Garrett Crochet",
+        "jersey": 45,
+        "throws": "좌완",
+        "wins": 6,
+        "losses": 12,
+        "games": 32,
+        "season_era": "3.58",
+        "season_whip": "1.07",
+        "season_ip": "146.0",
+        "season_so": 209,
+        "season_bb": 33,
+        "recent_starts": [
+            {"date": "09.09(월)", "venue": "홈", "opponent": "보스턴", "ip": "2.0", "bf": 8, "h": 1, "hr": 1, "bb": 0, "so": 4, "er": 1, "era": "4.50", "result": "-"},
+            {"date": "09.04(수)", "venue": "원", "opponent": "볼티모어", "ip": "3.1", "bf": 15, "h": 3, "hr": 0, "bb": 1, "so": 5, "er": 2, "era": "5.40", "result": "-"},
+            {"date": "08.30(금)", "venue": "홈", "opponent": "메츠", "ip": "3.1", "bf": 15, "h": 3, "hr": 1, "bb": 2, "so": 8, "er": 1, "era": "2.70", "result": "-"}
+        ]
+    },
     # Hiroshima Carp
     "모리시타": {
         "name": "모리시타 마사토",
