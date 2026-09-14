@@ -1773,7 +1773,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v9.1 전경기데이터고도화·팀명간소화
+          <i class="bi bi-check-circle-fill me-1"></i>v9.2 실시간시간대포커스·라이브중계보정
         </span>
       </div>
 
@@ -3216,7 +3216,9 @@
       if (archiveLoadingPromise) return archiveLoadingPromise;
       archiveLoadingPromise = (async () => {
         try {
-          const resp = await fetch('/api/v1/matches?limit=500&order=desc', { cache: 'no-store' });
+          const now = new Date();
+          const rollingStartStr = getKSTDateString(new Date(now.getTime() - 86400000));
+          const resp = await fetch(`/api/v1/matches?start_date=${rollingStartStr}&limit=500&order=asc`, { cache: 'no-store' });
           const rawMatches = resp.ok ? await resp.json() : [];
 
           const seenIds = new Set(allMatches.map(m => m.id));
@@ -3295,9 +3297,9 @@
         const d0Str = getKSTDateString(now);
         const rollingStartStr = getKSTDateString(new Date(now.getTime() - 86400000));
         
-        // ⚡ Phase 1 (초고속 0.2초): 실시간 및 오늘/내일 경기(150건) 우선 고속 로드 -> UI 즉시 표출
+        // ⚡ Phase 1 (초고속 0.2초): 어제/오늘/내일 활성 및 실시간 경기 (300건) 고속 로드 -> UI 즉시 표출
         try {
-          const fastResp = await fetch('/api/v1/matches?limit=150&order=asc', { cache: 'no-store' });
+          const fastResp = await fetch(`/api/v1/matches?start_date=${rollingStartStr}&limit=300&order=asc`, { cache: 'no-store' });
           if (fastResp.ok) {
             const fastMatches = await fastResp.json();
             if (Array.isArray(fastMatches) && fastMatches.length > 0) {
@@ -3338,7 +3340,10 @@
 
         const list = getFilteredPredMatches();
         if (list.length > 0) {
-          selectPredMatch(list[0].id);
+          const bestId = getInitialBestMatchId(list);
+          if (bestId && (!selectedPredMatchId || !allMatches.some(m => m.id === selectedPredMatchId))) {
+            selectPredMatch(bestId, false);
+          }
         }
 
         // Fast Phase 2: Lazily load full archive
@@ -8192,7 +8197,10 @@ function getFullModalMatchList() {
         currentCenterMode = 'DETAIL';
         const initMatches = getFilteredPredMatches();
         if (initMatches.length > 0) {
-          selectPredMatch(initMatches[0].id);
+          const bestMatchId = getInitialBestMatchId(initMatches);
+          if (bestMatchId) {
+            selectPredMatch(bestMatchId, false);
+          }
         }
       }
       // loadBetmanToto deferred until Toto tab or modal is opened
@@ -8200,13 +8208,11 @@ function getFullModalMatchList() {
       startLiveAutoSync(30);
       startBetman10MinSync();
 
-      // Auto-scroll match list to current time match ONCE on initial page load
-      setTimeout(() => {
-        if (!initialScheduleAutoScrollDone) {
-          scrollToCurrentTimeMatch(false);
-          initialScheduleAutoScrollDone = true;
-        }
-      }, 500);
+      // Auto-scroll match list to current time match IMMEDIATELY (0ms) on initial page load
+      if (!initialScheduleAutoScrollDone) {
+        scrollToCurrentTimeMatch(false);
+        initialScheduleAutoScrollDone = true;
+      }
     }
 
     // 30초 실시간 자동 업데이트 타이머
@@ -8253,7 +8259,7 @@ function getFullModalMatchList() {
       try {
         const d0Str = getKSTDateString(new Date());
         const rollingStartStr = getKSTDateString(new Date(Date.now() - 86400000));
-        const resp = await fetch(`/api/v1/matches?start_date=${rollingStartStr}&order=asc&limit=150&_t=${Date.now()}`, { cache: 'no-store' });
+        const resp = await fetch(`/api/v1/matches?start_date=${rollingStartStr}&order=asc&limit=250&_t=${Date.now()}`, { cache: 'no-store' });
         if (!resp.ok) return;
         const rawMatches = await resp.json();
 
@@ -8268,6 +8274,7 @@ function getFullModalMatchList() {
 
         renderMatchStrip('ALL');
         renderPredMatches();
+        renderRightColLiveRelay();
         if (currentCenterMode === 'DETAIL' && selectedPredMatchId) {
           const currentTarget = allMatches.find(m => m.id === selectedPredMatchId);
           if (currentTarget) {
@@ -8616,6 +8623,133 @@ function getFullModalMatchList() {
       const a = (m.away_team_name || '').trim().toLowerCase();
       const sp = (m.sport_code || '').trim().toUpperCase();
       return `${sp}_${d}_${h}_${a}`;
+    }
+
+    
+    // ------------------------------------------------------------------
+    // ⚡ [v9.2] 실시간 현재시간대 최적 경기 및 라이브 중계 정렬 헬퍼
+    // ------------------------------------------------------------------
+    function getInitialBestMatchId(matchesList) {
+      if (!matchesList || matchesList.length === 0) return null;
+      const now = new Date();
+      const nowTs = now.getTime();
+      const bufferTimeStr = getKSTDateTimeString(new Date(nowTs - 20 * 60 * 1000));
+
+      // 1. 실제 LIVE 진행 중인 경기 우선
+      let bestLive = null;
+      let minLiveDiff = Infinity;
+      for (const m of matchesList) {
+        if (m.status === 'LIVE' && m.match_date) {
+          try {
+            const d = new Date(m.match_date.replace(' ', 'T'));
+            const diffHours = (nowTs - d.getTime()) / (1000 * 60 * 60);
+            if (diffHours >= -0.5 && diffHours <= 4.5) {
+              const absDiff = Math.abs(diffHours);
+              if (absDiff < minLiveDiff) {
+                minLiveDiff = absDiff;
+                bestLive = m;
+              }
+            }
+          } catch(e) {}
+        }
+      }
+      if (bestLive) return bestLive.id;
+
+      // 2. 현재 시간 버퍼(-20분) 이후 첫 번째 예정/진행 경기
+      for (const m of matchesList) {
+        const mDate = m.match_date || '';
+        if (mDate && mDate >= bufferTimeStr && m.status !== 'FINISHED' && m.status !== 'CANCELLED' && m.status !== 'POSTPONED') {
+          return m.id;
+        }
+      }
+
+      // 3. 현재 시간 이후의 모든 예정 경기
+      for (const m of matchesList) {
+        const mDate = m.match_date || '';
+        if (mDate && mDate >= bufferTimeStr) {
+          return m.id;
+        }
+      }
+
+      // 4. Fallback: 현재 시각과 가장 가까운 경기
+      let fallback = matchesList[0];
+      let minDiff = Infinity;
+      for (const m of matchesList) {
+        if (m.match_date) {
+          try {
+            const d = new Date(m.match_date.replace(' ', 'T'));
+            const diff = Math.abs(nowTs - d.getTime());
+            if (diff < minDiff) {
+              minDiff = diff;
+              fallback = m;
+            }
+          } catch(e) {}
+        }
+      }
+      return fallback ? fallback.id : matchesList[0].id;
+    }
+
+    function getLiveRelayDisplayMatches(matches, sportFilter = 'ALL') {
+      if (!matches || matches.length === 0) return [];
+      const now = new Date();
+      const nowTs = now.getTime();
+      const bufferTimeStr = getKSTDateTimeString(new Date(nowTs - 20 * 60 * 1000));
+
+      let list = matches;
+      if (sportFilter && sportFilter !== 'ALL') {
+        list = list.filter(m => (m.sport_code || '').toUpperCase() === sportFilter);
+      }
+
+      // 1. 실제 LIVE 진행 중인 경기 (최대 4시간 이내 시작)
+      const liveMatches = list.filter(m => {
+        if (m.status !== 'LIVE') return false;
+        if (m.match_date) {
+          try {
+            const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+            if ((nowTs - mTime) / (60 * 1000) > 240) return false;
+          } catch(e) {}
+        }
+        return true;
+      });
+
+      // 2. 현재시간 및 오늘/내일 예정 경기 (시간 오름차순: 빠른 예정순)
+      const upcomingMatches = list.filter(m => {
+        if (m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED') return false;
+        if (m.status === 'LIVE') return false;
+        if ((m.match_date || '') >= bufferTimeStr) return true;
+        return false;
+      });
+      upcomingMatches.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
+
+      // 3. 가장 최근에 종료된 경기 (시간 내림차순: 최근 종료순)
+      const recentFinishedMatches = list.filter(m => {
+        if (m.status === 'FINISHED' || (m.match_date && m.match_date < bufferTimeStr && m.status !== 'SCHEDULED')) return true;
+        return false;
+      });
+      recentFinishedMatches.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+
+      // 실시간 LIVE 경기 우선 배치 -> 부족할 경우 현재시간대 및 곧 시작할 예정 경기 -> 최근 종료 경기 순으로 보강
+      let combined = [...liveMatches];
+
+      if (combined.length < 15) {
+        for (const m of upcomingMatches) {
+          if (combined.length >= 15) break;
+          if (!combined.some(x => x.id === m.id)) {
+            combined.push(m);
+          }
+        }
+      }
+
+      if (combined.length < 15) {
+        for (const m of recentFinishedMatches) {
+          if (combined.length >= 15) break;
+          if (!combined.some(x => x.id === m.id)) {
+            combined.push(m);
+          }
+        }
+      }
+
+      return combined;
     }
 
     function getFilteredPredMatches() {
@@ -15069,7 +15203,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
           targetMatch = filtered.find(m => m.id === selectedPredMatchId);
         }
         if (!targetMatch && filtered.length > 0) {
-          targetMatch = filtered[0];
+          const bestId = getInitialBestMatchId(filtered);
+          targetMatch = filtered.find(m => m.id === bestId) || filtered[0];
         }
       }
 
@@ -16122,32 +16257,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
       if (!container) return;
 
       const matches = allMatches || [];
-      const nowTs = Date.now();
-
-      let liveList = matches.filter(m => {
-        if (m.status !== 'LIVE') return false;
-        if (m.match_date) {
-          try {
-            const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
-            if ((nowTs - mTime) / (60 * 1000) > 240) return false;
-          } catch(e) {}
-        }
-        return true;
-      });
-
-      if (liveList.length === 0) {
-        // Fallback: show active scheduled & recent matches if no match currently LIVE
-        liveList = matches.slice(0, 15);
-      }
-
-      if (selectedLiveRelaySport !== 'ALL') {
-        liveList = liveList.filter(m => m.sport_code === selectedLiveRelaySport);
-      }
+      const displayList = getLiveRelayDisplayMatches(matches, selectedLiveRelaySport);
 
       const countBadge = document.getElementById('liveRelayModalCountBadge');
-      if (countBadge) countBadge.innerText = `${liveList.length}경기`;
+      if (countBadge) countBadge.innerText = `${displayList.length}경기`;
 
-      container.innerHTML = buildTotoCanScoreboardTable(liveList);
+      container.innerHTML = buildTotoCanScoreboardTable(displayList);
     }
 
     function renderRightColLiveRelay() {
@@ -16158,7 +16273,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const matches = allMatches || [];
       const nowTs = Date.now();
 
-      let liveList = matches.filter(m => {
+      const liveCount = matches.filter(m => {
         if (m.status !== 'LIVE') return false;
         if (m.match_date) {
           try {
@@ -16167,20 +16282,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
           } catch(e) {}
         }
         return true;
-      });
+      }).length;
 
-      if (topBadge) topBadge.innerText = liveList.length;
-      if (rightBadge) rightBadge.innerText = liveList.length;
+      if (topBadge) topBadge.innerText = liveCount;
+      if (rightBadge) rightBadge.innerText = liveCount;
 
-      let displayList = liveList;
-      if (displayList.length === 0) {
-        // Fallback: show recent / upcoming matches
-        displayList = matches.slice(0, 15);
-      }
-
-      if (selectedLiveRelaySport !== 'ALL') {
-        displayList = displayList.filter(m => m.sport_code === selectedLiveRelaySport);
-      }
+      const displayList = getLiveRelayDisplayMatches(matches, selectedLiveRelaySport);
 
       if (container) {
         container.innerHTML = buildTotoCanScoreboardTable(displayList);
