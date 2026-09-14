@@ -196,7 +196,22 @@ const CommonUtils = (() => {
 
   function formatTeamName(name) {
     if (!name) return '';
-    const clean = String(name).trim();
+    let clean = String(name).trim();
+
+    // 성별 표기 완전 제거
+    clean = clean.replace(/[\(\[\{]\s*(남|여|남자|여자|남자부|여자부|남대부|여대부|남고부|여고부|U-?[0-9]+\s*(남|여)?)\s*[\)\]\}]/g, '');
+    clean = clean.replace(/(\s+|_|-|\/)(남자|여자|남자부|여자부)(\s+|_|-|\/|$)/g, ' ');
+    clean = clean.replace(/^(남자|여자|남자부|여자부)\s+/g, '');
+    clean = clean.replace(/\s+(남자|여자|남자부|여자부)$/g, '');
+    clean = clean.replace(/\s+(남|여)$/g, '');
+
+    if (clean.length >= 4 && (clean.endsWith('남자') || clean.endsWith('여자'))) {
+      clean = clean.slice(0, -2);
+    } else if (clean.length >= 3 && (clean.endsWith('남') || clean.endsWith('여')) && !clean.endsWith('닛폰햄') && !clean.endsWith('토트넘') && !clean.endsWith('풀럼') && !clean.endsWith('베트남') && !clean.endsWith('미얀마')) {
+      clean = clean.slice(0, -1);
+    }
+    clean = clean.trim();
+
     if (_SHORT_TEAM_NAMES[clean]) return _SHORT_TEAM_NAMES[clean];
 
     for (const [k, v] of Object.entries(_SHORT_TEAM_NAMES)) {

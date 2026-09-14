@@ -1773,7 +1773,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v9.2 실시간시간대포커스·라이브중계보정
+          <i class="bi bi-check-circle-fill me-1"></i>v9.3 팀명성별제거·상세버튼간소화
         </span>
       </div>
 
@@ -9556,7 +9556,7 @@ function getFullModalMatchList() {
             <button class="slim-action-btn odds-btn ${isAccordionOpen && activeAccordionType === 'odds' ? 'active' : ''}" id="oddsBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'odds')">📊 배당</button>
             <button class="slim-action-btn history-btn" id="histBtn_${m.id}" onclick="event.stopPropagation(); openLastMatchDetailModal(${m.id})">📋 전경기</button>
             <button class="slim-action-btn next-btn" id="nextBtn_${m.id}" onclick="event.stopPropagation(); openUpcomingScheduleModal(${m.id})">⏩ 일정</button>
-            <button class="slim-action-btn detail-btn" onclick="event.stopPropagation(); openNextGenDetailModal(${m.id})">🔍 상세보기</button>
+            <button class="slim-action-btn detail-btn" onclick="event.stopPropagation(); openNextGenDetailModal(${m.id})">🔍 상세</button>
             <button class="slim-action-btn live-relay-btn" style="${isLive ? 'background:#dc2626; color:#ffffff; border-color:#b91c1c; font-weight:800;' : ''}" onclick="event.stopPropagation(); focusLiveRelayMatch(${m.id})">📡 중계</button>
           </div>
           <div class="slim-accordion-panel ${isAccordionOpen ? 'open' : ''}" id="slimPanel_${m.id}">
@@ -9861,9 +9861,135 @@ function updateSlimPanel(matchId, type, contentHtml) {
       }
     }
 
+        const _SHORT_TEAM_NAMES_MAP = {
+      // KBO
+      'KIA 타이거즈': 'KIA', '기아 타이거즈': 'KIA', '기아': 'KIA',
+      '삼성 라이온즈': '삼성',
+      'LG 트윈스': 'LG',
+      '두산 베어스': '두산',
+      'KT 위즈': 'KT',
+      'SSG 랜더스': 'SSG', '에스에스지': 'SSG',
+      '롯데 자이언츠': '롯데',
+      '한화 이글스': '한화',
+      'NC 다이노스': 'NC',
+      '키움 히어로즈': '키움',
+      
+      // NPB
+      '요미우리 자이언츠': '요미우리', '요미우리자이언츠': '요미우리',
+      '한신 타이거스': '한신', '한신타이거스': '한신', '한신 타이거즈': '한신',
+      '주니치 드래곤즈': '주니치', '주니치드래곤즈': '주니치', '주니치 드래건스': '주니치',
+      '도쿄 야쿠르트 스왈로스': '야쿠르트', '야쿠르트 스왈로스': '야쿠르트', '야쿠르트스왈로스': '야쿠르트',
+      '요코하마 DeNA 베이스타즈': '요코하마', '요코하마 DeNA': '요코하마', 'DeNA 베이스타즈': '요코하마', '요코하마': '요코하마', 'DeNA': '요코하마',
+      '히로시마 도요 카프': '히로시마', '히로시마 도요카프': '히로시마', '히로시마 카프': '히로시마',
+      '후쿠오카 소프트뱅크 호크스': '소프트뱅크', '소프트뱅크 호크스': '소프트뱅크', '소프트뱅크호크스': '소프트뱅크',
+      '지바 롯데 마린스': '지바', '지바롯데 마린스': '지바', '지바 롯데': '지바', '지바롯데': '지바', '치바 롯데 마린스': '지바', '치바 롯데': '지바', '치바롯데': '지바', '지바': '지바',
+      '도호쿠 라쿠텐 골든이글스': '라쿠텐', '라쿠텐 골든이글스': '라쿠텐', '라쿠텐 골든 이글스': '라쿠텐',
+      '오릭스 버펄로스': '오릭스', '오릭스 버팔로스': '오릭스', '오릭스버팔로스': '오릭스',
+      '사이타마 세이부 라이온즈': '세이부', '세이부 라이온즈': '세이부', '세이부라이온즈': '세이부',
+      '홋카이도 닛폰햄 파이터즈': '닛폰햄', '닛폰햄 파이터즈': '닛폰햄', '홋카이도 닛폰햄 파이터스': '닛폰햄', '닛폰햄 파이터스': '닛폰햄', '니혼햄': '닛폰햄', '닛폰햄': '닛폰햄',
+      
+      // MLB
+      '시카고 컵스': '시카고C', '시카고C': '시카고C',
+      '시카고 화이트삭스': '시카고W', '시카고W': '시카고W',
+      '피츠버그 파이리츠': '피츠버그',
+      '디트로이트 타이거스': '디트로이트',
+      '콜로라도 로키스': '콜로라도',
+      '워싱턴 내셔널스': '워싱턴',
+      'LA 에인절스': 'LA에인절스', '로스앤젤레스 에인절스': 'LA에인절스',
+      'LA 다저스': 'LA다저스', '로스앤젤레스 다저스': 'LA다저스',
+      '뉴욕 양키스': 'NY양키스',
+      '뉴욕 메츠': 'NY메츠',
+      '토론토 블루제이스': '토론토',
+      '볼티모어 오리올스': '볼티모어',
+      '보스턴 레드삭스': '보스턴',
+      '탬파베이 레이스': '탬파베이',
+      '클리블랜드 가디언스': '클리블랜드',
+      '캔자스시티 로열스': '캔자스시티',
+      '미네소타 트윈스': '미네소타',
+      '휴스턴 애스트로스': '휴스턴',
+      '시애틀 매리너스': '시애틀',
+      '텍사스 레인저스': '텍사스',
+      '오클랜드 애슬레틱스': '오클랜드',
+      '애틀랜타 브레이브스': '애틀랜타',
+      '마이애미 말린스': '마이애미',
+      '필라델피아 필리스': '필라델피아',
+      '밀워키 브루어스': '밀워키',
+      '세인트루이스 카디널스': '세인트루이스',
+      '신시내티 레즈': '신시내티',
+      '애리조나 다이아몬드백스': '애리조나',
+      '샌디에이고 파드리스': '샌디에이고',
+      '샌프란시스코 자이언츠': '샌프란시스코',
+
+      // SOCCER
+      '맨체스터 시티': '맨시티', '맨체스터시티': '맨시티', '맨체스터 C': '맨시티',
+      '맨체스터 유나이티드': '맨유', '맨체스터유나이티드': '맨유', '맨체스터 U': '맨유',
+      '토트넘 홋스퍼': '토트넘', '토트넘 핫스퍼': '토트넘', '토트넘홋스퍼': '토트넘',
+      '뉴캐슬 유나이티드': '뉴캐슬',
+      '웨스트햄 유나이티드': '웨스트햄',
+      '브라이튼 앤 호브 알비온': '브라이튼', '브라이튼 앤 호브': '브라이튼',
+      '울버햄튼 원더러스': '울버햄튼',
+      '크리스탈 팰리스': 'C.팰리스',
+      '노팅엄 포레스트': '노팅엄',
+      '아스톤 빌라': '아스톤빌라',
+      '레스터 시티': '레스터',
+      '입스위치 타운': '입스위치',
+      '리즈 유나이티드': '리즈',
+      '셰필드 유나이티드': '셰필드',
+      '웨스트 브롬위치': '웨스트브롬', '웨스트 브롬': '웨스트브롬',
+      '블랙번 로버스': '블랙번',
+      '스완지 시티': '스완지',
+      '볼턴 원더러스': '볼턴',
+      '카디프 시티': '카디프',
+      '레알 마드리드': '레알',
+      '아틀레티코 마드리드': 'AT마드리드',
+      '아틀레틱 빌바오': '빌바오', '아틀레틱 클루브': '빌바오',
+      '레알 소시에다드': '소시에다드',
+      '레알 베티스': '베티스',
+      '셀타 비고': '셀타비고',
+      '라요 바예카노': '라요',
+      'AC 밀란': 'AC밀란',
+      '인테르나치오날레': '인테르', '인테르 밀란': '인테르',
+      'AS 로마': 'AS로마',
+      '엘라스 베로나': '베로나',
+      'ACF 피오렌티나': '피오렌티나', '피오렌티나': '피오렌티나',
+      '바이에른 뮌헨': '뮌헨',
+      '보루시아 도르트문트': '도르트문트',
+      '보루시아 묀헨글라트바흐': '묀헨', '묀헨글라트바흐': '묀헨',
+      '파리 생제르맹': 'PSG', '파리 생제르망': 'PSG', '파리생제르맹': 'PSG'
+    };
+
     function formatTeamName(name) {
       if (!name) return '';
-      return String(name).trim();
+      let clean = String(name).trim();
+
+      // 1. 성별 표기 완전 제거: (남), (여), (남자), (여자), [남], [여], 남자, 여자, 남자부, 여자부 등
+      clean = clean.replace(/[\(\[\{]\s*(남|여|남자|여자|남자부|여자부|남대부|여대부|남고부|여고부|U-?[0-9]+\s*(남|여)?)\s*[\)\]\}]/g, '');
+      clean = clean.replace(/(\s+|_|-|\/)(남자|여자|남자부|여자부)(\s+|_|-|\/|$)/g, ' ');
+      clean = clean.replace(/^(남자|여자|남자부|여자부)\s+/g, '');
+      clean = clean.replace(/\s+(남자|여자|남자부|여자부)$/g, '');
+      clean = clean.replace(/\s+(남|여)$/g, '');
+
+      // 단어 끝에 붙은 '남자', '여자' 제거 (예: 중국남자 -> 중국, 필리핀여자 -> 필리핀)
+      if (clean.length >= 4 && (clean.endsWith('남자') || clean.endsWith('여자'))) {
+        clean = clean.slice(0, -2);
+      } else if (clean.length >= 3 && (clean.endsWith('남') || clean.endsWith('여')) && !clean.endsWith('닛폰햄') && !clean.endsWith('토트넘') && !clean.endsWith('풀럼') && !clean.endsWith('베트남') && !clean.endsWith('미얀마')) {
+        clean = clean.slice(0, -1);
+      }
+
+      clean = clean.trim();
+
+      if (_SHORT_TEAM_NAMES_MAP[clean]) return _SHORT_TEAM_NAMES_MAP[clean];
+
+      for (const [k, v] of Object.entries(_SHORT_TEAM_NAMES_MAP)) {
+        if (clean === k || clean.startsWith(k) || (k.length >= 3 && clean.includes(k))) {
+          return v;
+        }
+      }
+
+      return clean
+        .replace(/^(FC\s*|SC\s*|AC\s*|AS\s*|RB\s*)/g, '')
+        .replace(/(\s*(프로축구단|축구단|자이언츠|타이거즈|라이온즈|베어스|이글스|다이노스|트윈스|히어로즈|파이리츠|브루어스|로키스|내셔널스|블루제이스|오리올스|레드삭스|가디언스|로열스|애스트로스|매리너스|레인저스|애슬레틱스|브레이브스|말린스|필리스|카디널스|다이아몬드백스|파드리스|유나이티드|원더러스|호크스|스왈로스|버펄로스|드래곤즈|드래건스|시티|타운|FC|스틸러스))$/g, '')
+        .trim() || clean;
     }
 
     function toggleSlimAccordion(matchId, type) {
