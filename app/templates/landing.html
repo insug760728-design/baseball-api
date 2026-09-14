@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0">
   <script>
     try {
-      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_stable', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15'].forEach(function(k) {
+      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15'].forEach(function(k) {
         localStorage.removeItem(k);
       });
     } catch(e) {}
@@ -1773,7 +1773,7 @@
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
         <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v8.9 토토캔스타일초깔끔텍스트중계
+          <i class="bi bi-check-circle-fill me-1"></i>v9.0 팀명간소화·초순간로딩
         </span>
       </div>
 
@@ -3216,15 +3216,8 @@
       if (archiveLoadingPromise) return archiveLoadingPromise;
       archiveLoadingPromise = (async () => {
         try {
-          const [upResp, finResp, allResp] = await Promise.allSettled([
-            fetch('/api/v1/matches?limit=4000&order=desc', { cache: 'no-store' }),
-            fetch('/api/v1/matches?status=FINISHED&order=desc&limit=2000'),
-            fetch('/api/v1/matches?order=asc&limit=4000')
-          ]);
-          const upMatches = (upResp.status === 'fulfilled' && upResp.value.ok) ? await upResp.value.json() : [];
-          const finMatches = (finResp.status === 'fulfilled' && finResp.value.ok) ? await finResp.value.json() : [];
-          const allDbMatches = (allResp.status === 'fulfilled' && allResp.value.ok) ? await allResp.value.json() : [];
-          const rawMatches = [...upMatches, ...finMatches, ...allDbMatches];
+          const resp = await fetch('/api/v1/matches?limit=500&order=desc', { cache: 'no-store' });
+          const rawMatches = resp.ok ? await resp.json() : [];
 
           const seenIds = new Set(allMatches.map(m => m.id));
           const seenKeys = new Set(allMatches.map(m => {
@@ -3324,26 +3317,7 @@
           console.warn('[Fast Phase 1] Error:', e);
         }
 
-        // ⚡ Phase 2 (백그라운드 비동기): 전체 과거/종료 경기 아카이브는 UI 방해 없이 1.5초 후 조용히 보강
-        if (_bgArchiveFetchTimeout) clearTimeout(_bgArchiveFetchTimeout);
-        _bgArchiveFetchTimeout = setTimeout(async () => {
-          try {
-            const resp = await fetch('/api/v1/matches?limit=4000&order=desc', { cache: 'no-store' });
-            if (resp.ok) {
-              const fullMatches = await resp.json();
-              if (Array.isArray(fullMatches) && fullMatches.length > 0) {
-                allMatches = mergeUniqueMatches(fullMatches, allMatches);
-                window.matchesLoadedInitial = true;
-                updateScheduleTabCounts();
-                renderMatchStrip('ALL');
-                renderPredMatches();
-                try {
-                  localStorage.setItem('tokeon_matches_cache_stable', JSON.stringify(allMatches));
-                } catch(e) {}
-              }
-            }
-          } catch(e) {}
-        }, 1500);
+        // Phase 2 archive deferred to user navigation
 
         // Fallback: If still empty, load from localStorage
         if (!allMatches || allMatches.length === 0) {
@@ -3458,11 +3432,11 @@
               ${stBadge}
             </div>
             <div class="d-flex justify-content-between align-items-center my-1">
-              <span class="strip-team text-truncate me-2" style="max-width: 140px; color: #111827; font-weight: 700;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #d1d5db; font-size:0.65rem; padding: 1px 4px;">홈</span>${m.home_team_name}</span>
+              <span class="strip-team text-truncate me-2" style="max-width: 140px; color: #111827; font-weight: 700;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #d1d5db; font-size:0.65rem; padding: 1px 4px;">홈</span>${formatTeamName(m.home_team_name)}</span>
               <span class="strip-score" style="color: #111827 !important; font-weight: 800; font-size: 1.25rem;">${m.home_score}</span>
             </div>
             <div class="d-flex justify-content-between align-items-center my-1">
-              <span class="strip-team text-truncate me-2" style="max-width: 140px; color: #111827; font-weight: 700;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #d1d5db; font-size:0.65rem; padding: 1px 4px;">원정</span>${m.away_team_name}</span>
+              <span class="strip-team text-truncate me-2" style="max-width: 140px; color: #111827; font-weight: 700;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #d1d5db; font-size:0.65rem; padding: 1px 4px;">원정</span>${formatTeamName(m.away_team_name)}</span>
               <span class="strip-score" style="color: #111827 !important; font-weight: 800; font-size: 1.25rem;">${m.away_score}</span>
             </div>
             <div class="text-dim mt-2 pt-1 border-top d-flex justify-content-between align-items-center" style="border-color: var(--border-color) !important; font-size: 0.75rem;">
@@ -4411,7 +4385,7 @@ function getFullModalMatchList() {
             <div class="d-flex justify-content-around align-items-center">
               <div class="text-center" style="width: 42%; min-width: 0;">
                 <div class="fw-bold text-truncate" style="font-size: 1.05rem; color: #111827; font-weight: 800;">
-                  <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}
+                  <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${formatTeamName(m.home_team_name)}
                 </div>
                 <div class="mt-1.5">
                   <span class="badge rounded-pill" style="font-size: 0.85rem; font-weight: 800; ${isDraw ? 'color: #4b5563; background: #f3f4f6; border: 1.5px solid #d1d5db;' : (homeProb >= awayProb ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626;' : 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb;')} padding: 4px 12px;">
@@ -4425,7 +4399,7 @@ function getFullModalMatchList() {
               </div>
               <div class="text-center" style="width: 42%; min-width: 0;">
                 <div class="fw-bold text-truncate" style="font-size: 1.05rem; color: #111827; font-weight: 800;">
-                  <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}
+                  <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${formatTeamName(m.away_team_name)}
                 </div>
                 <div class="mt-1.5">
                   <span class="badge rounded-pill" style="font-size: 0.85rem; font-weight: 800; ${isDraw ? 'color: #4b5563; background: #f3f4f6; border: 1.5px solid #d1d5db;' : (awayProb > homeProb ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626;' : 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb;')} padding: 4px 12px;">
@@ -5002,12 +4976,12 @@ function getFullModalMatchList() {
                 </thead>
                 <tbody style="background: #ffffff;">
                   <tr>
-                    <td class="fw-bold text-start ps-2" style="color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}</td>
+                    <td class="fw-bold text-start ps-2" style="color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${formatTeamName(m.home_team_name)}</td>
                     <td style="color: #111827;">${hQ1}</td><td style="color: #111827;">${hQ2}</td><td style="color: #111827;">${hQ3}</td><td style="color: #111827;">${hQ4}</td><td style="color: #111827;">${hOT}</td>
                     <td class="fw-bold" style="color: #111827; font-weight: 800;">${m.home_score}</td>
                   </tr>
                   <tr>
-                    <td class="fw-bold text-start ps-2" style="color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}</td>
+                    <td class="fw-bold text-start ps-2" style="color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${formatTeamName(m.away_team_name)}</td>
                     <td style="color: #111827;">${aQ1}</td><td style="color: #111827;">${aQ2}</td><td style="color: #111827;">${aQ3}</td><td style="color: #111827;">${aQ4}</td><td style="color: #111827;">${aOT}</td>
                     <td class="fw-bold" style="color: #111827; font-weight: 800;">${m.away_score}</td>
                   </tr>
@@ -5030,12 +5004,12 @@ function getFullModalMatchList() {
                 </thead>
                 <tbody style="background: #ffffff;">
                   <tr>
-                    <td class="fw-bold text-start ps-2" style="color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}</td>
+                    <td class="fw-bold text-start ps-2" style="color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${formatTeamName(m.home_team_name)}</td>
                     <td style="color: #111827;">${hP['1H'] ?? hP['1h'] ?? '-'}</td><td style="color: #111827;">${hP['2H'] ?? hP['2h'] ?? '-'}</td><td style="color: #111827;">${hP.et ?? '-'}</td><td style="color: #111827;">${hP.pk ?? '-'}</td>
                     <td class="fw-bold" style="color: #111827; font-weight: 800;">${m.home_score}</td>
                   </tr>
                   <tr>
-                    <td class="fw-bold text-start ps-2" style="color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}</td>
+                    <td class="fw-bold text-start ps-2" style="color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${formatTeamName(m.away_team_name)}</td>
                     <td style="color: #111827;">${aP['1H'] ?? aP['1h'] ?? '-'}</td><td style="color: #111827;">${aP['2H'] ?? aP['2h'] ?? '-'}</td><td style="color: #111827;">${aP.et ?? '-'}</td><td style="color: #111827;">${aP.pk ?? '-'}</td>
                     <td class="fw-bold" style="color: #111827; font-weight: 800;">${m.away_score}</td>
                   </tr>
@@ -5061,14 +5035,14 @@ function getFullModalMatchList() {
                 </thead>
                 <tbody style="background: #ffffff;">
                   <tr>
-                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 120px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}</td>
+                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 120px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${formatTeamName(m.home_team_name)}</td>
                     ${[1,2,3,4,5,6,7,8,9].map(i => `<td style="color: #111827;">${inn[i] ? inn[i].home : '-'}</td>`).join('')}
                     <td class="fw-bold" style="color: #111827; font-weight: 800; font-size: 0.92rem;">${m.home_score}</td>
                     <td class="fw-bold" style="color: #111827;">${hHitsVal}</td>
                     <td style="color: #4b5563;">${hErr}</td>
                   </tr>
                   <tr>
-                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 120px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}</td>
+                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 120px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${formatTeamName(m.away_team_name)}</td>
                     ${[1,2,3,4,5,6,7,8,9].map(i => `<td style="color: #111827;">${inn[i] ? inn[i].away : '-'}</td>`).join('')}
                     <td class="fw-bold" style="color: #111827; font-weight: 800; font-size: 0.92rem;">${m.away_score}</td>
                     <td class="fw-bold" style="color: #111827;">${aHitsVal}</td>
@@ -8221,8 +8195,7 @@ function getFullModalMatchList() {
           selectPredMatch(initMatches[0].id);
         }
       }
-      loadBetmanToto('WDL', 260053);
-      loadBetmanToto('W1L', 260070);
+      // loadBetmanToto deferred until Toto tab or modal is opened
 
       startLiveAutoSync(30);
       startBetman10MinSync();
@@ -8415,6 +8388,9 @@ function getFullModalMatchList() {
     async function filterPredDate(dKey) {
       currentPredDate = dKey;
       const isPast = (dKey === 'FINISHED' || dKey === 'PAST');
+      if (isPast && typeof loadFullMatchesArchive === 'function') {
+        loadFullMatchesArchive();
+      }
 
       // 1. 좌측 탭 버튼 스타일 업데이트
       const btnTabActive = document.getElementById('btnTabActiveMatches');
@@ -13763,12 +13739,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 </thead>
                 <tbody style="background: #ffffff;">
                   <tr>
-                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 140px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}</td>
+                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 140px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${formatTeamName(m.home_team_name)}</td>
                     <td style="color: #111827;">${hQ1}</td><td style="color: #111827;">${hQ2}</td><td style="color: #111827;">${hQ3}</td><td style="color: #111827;">${hQ4}</td><td style="color: #111827;">${hOT}</td>
                     <td class="fw-bold" style="color: #111827; font-size: 1.0rem; font-weight: 800;">${m.home_score}</td>
                   </tr>
                   <tr>
-                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 140px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}</td>
+                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 140px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${formatTeamName(m.away_team_name)}</td>
                     <td style="color: #111827;">${aQ1}</td><td style="color: #111827;">${aQ2}</td><td style="color: #111827;">${aQ3}</td><td style="color: #111827;">${aQ4}</td><td style="color: #111827;">${aOT}</td>
                     <td class="fw-bold" style="color: #111827; font-size: 1.0rem; font-weight: 800;">${m.away_score}</td>
                   </tr>
@@ -13791,12 +13767,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 </thead>
                 <tbody style="background: #ffffff;">
                   <tr>
-                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 140px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}</td>
+                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 140px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${formatTeamName(m.home_team_name)}</td>
                     <td style="color: #111827;">${hP['1H'] ?? hP['1h'] ?? '-'}</td><td style="color: #111827;">${hP['2H'] ?? hP['2h'] ?? '-'}</td><td style="color: #111827;">${hP.et ?? '-'}</td><td style="color: #111827;">${hP.pk ?? '-'}</td>
                     <td class="fw-bold" style="color: #111827; font-size: 1.0rem; font-weight: 800;">${m.home_score}</td>
                   </tr>
                   <tr>
-                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 140px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}</td>
+                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 140px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${formatTeamName(m.away_team_name)}</td>
                     <td style="color: #111827;">${aP['1H'] ?? aP['1h'] ?? '-'}</td><td style="color: #111827;">${aP['2H'] ?? aP['2h'] ?? '-'}</td><td style="color: #111827;">${aP.et ?? '-'}</td><td style="color: #111827;">${aP.pk ?? '-'}</td>
                     <td class="fw-bold" style="color: #111827; font-size: 1.0rem; font-weight: 800;">${m.away_score}</td>
                   </tr>
@@ -13823,14 +13799,14 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 </thead>
                 <tbody style="background: #ffffff;">
                   <tr>
-                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 130px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}</td>
+                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 130px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${formatTeamName(m.home_team_name)}</td>
                     ${[1,2,3,4,5,6,7,8,9].map(i => `<td style="color: #111827;">${inn[i] ? inn[i].home : '-'}</td>`).join('')}
                     <td class="fw-bold" style="color: #111827; font-size: 1.0rem; font-weight: 800;">${m.home_score}</td>
                     <td class="fw-bold" style="color: #111827;">${hHits}</td>
                     <td style="color: #4b5563;">${hErr}</td>
                   </tr>
                   <tr>
-                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 130px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${m.away_team_name}</td>
+                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 130px; color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${formatTeamName(m.away_team_name)}</td>
                     ${[1,2,3,4,5,6,7,8,9].map(i => `<td style="color: #111827;">${inn[i] ? inn[i].away : '-'}</td>`).join('')}
                     <td class="fw-bold" style="color: #111827; font-size: 1.0rem; font-weight: 800;">${m.away_score}</td>
                     <td class="fw-bold" style="color: #111827;">${aHits}</td>
@@ -14977,9 +14953,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
           <div class="p-3 rounded-3 my-2" style="background: #0f172a; color: #ffffff;">
             <div class="text-white-50 small mb-1">최종 공식 스코어 결과</div>
             <div class="d-flex justify-content-center align-items-center gap-3">
-              <span class="fw-bold fs-5 text-truncate" style="max-width: 35%;">${m.home_team_name}</span>
+              <span class="fw-bold fs-5 text-truncate" style="max-width: 35%;">${formatTeamName(m.home_team_name)}</span>
               <span class="fw-bold fs-2 font-monospace ${scoreH > scoreA ? 'text-warning' : 'text-white'}">${scoreH} : ${scoreA}</span>
-              <span class="fw-bold fs-5 text-truncate" style="max-width: 35%;">${m.away_team_name}</span>
+              <span class="fw-bold fs-5 text-truncate" style="max-width: 35%;">${formatTeamName(m.away_team_name)}</span>
             </div>
             <div class="text-warning small mt-1 fw-bold">
               ${winner === '무승부' ? '치열한 접전 끝 무승부 마감' : `승리팀: ${winner}`}
@@ -15939,8 +15915,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
         inningBadgeStyle = 'background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;';
       }
 
-      const hName = (m.home_team_name || '').trim();
-      const aName = (m.away_team_name || '').trim();
+      const hName = formatTeamName(m.home_team_name);
+      const aName = formatTeamName(m.away_team_name);
 
       const seqNo = m.id ? (m.id % 900 + 100) : (idx + 850);
 
@@ -16282,14 +16258,16 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
     document.addEventListener('DOMContentLoaded', async () => {
       initAuthUser();
-      initCommunityAndWebSocket();
-      initPredictionSection();
       initViewMode();
+      initPredictionSection(); // 0ms Instant Cache Render
       initRealTimeSportsTicker();
       loadLiveMatches().catch(err => console.error('Matches load error:', err));
       startLiveUsersFluctuation();
       start4MinAiChatTimer();
-      initTotoLiveSync();
+      // Defer community chat messages & live WebSocket by 2.5s for zero-latency initial UI paint
+      setTimeout(() => {
+        initCommunityAndWebSocket();
+      }, 2500);
     });
 
   </script>
