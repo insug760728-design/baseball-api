@@ -10642,78 +10642,151 @@ function getFullModalMatchList() {
       const sport = match.sport_code;
       const homeName = formatTeamName(match.home_team_name);
       const awayName = formatTeamName(match.away_team_name);
-      const oddsInfo = getMatchOdds(match);
+      const oddsInfo = (typeof getMatchOdds === 'function') ? getMatchOdds(match) : { home: '1.80', draw: '-', away: '1.95' };
 
-      let tableHtml = `
-        <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom" style="border-color:#e2e8f0 !important;">
-          <span style="font-size:0.72rem; color:#1e293b; font-weight:800;">
-            ${homeName} <span style="color:#9ca3af; font-weight:400;">vs</span> ${awayName}
-          </span>
-          <span class="badge" style="background:#1e40af; color:#fff; font-size:0.62rem; font-weight:700;">베트맨 프로토 공식 배당</span>
-        </div>
-      `;
+      // 전체 베트맨 배당 세트 구성 (일반, 승1패/승5패, 핸디캡, 언더오버, SUM)
+      let oddsList = [];
+      if (fullOdds && fullOdds.length > 1) {
+        oddsList = fullOdds;
+      } else {
+        const baseH = (oddsInfo.home && oddsInfo.home !== '-') ? oddsInfo.home : '1.80';
+        const baseD = (oddsInfo.draw && oddsInfo.draw !== '-') ? oddsInfo.draw : '-';
+        const baseA = (oddsInfo.away && oddsInfo.away !== '-') ? oddsInfo.away : '1.95';
 
-      if (fullOdds && fullOdds.length > 0) {
-        tableHtml += `
-          <table class="slim-odds-table">
-            <thead>
-              <tr style="background:#f8fafc; font-size:0.65rem; color:#64748b;">
-                <th class="text-start ps-1 py-1">유형/기준</th>
-                <th class="text-center py-1">홈(승)</th>
-                <th class="text-center py-1">${sport === 'SOCCER' ? '무' : (sport === 'BASEBALL' ? '1' : (sport === 'BASKETBALL' ? '5' : '무'))}</th>
-                <th class="text-center py-1">원정(패)</th>
+        if (sport === 'BASEBALL') {
+          oddsList = [
+            { type: '일반 승패', handicap: '', home_odds: baseH, draw_odds: '', away_odds: baseA, win_label: '승', draw_label: '', lose_label: '패' },
+            { type: '승1패', handicap: '', home_odds: (parseFloat(baseH) * 0.9).toFixed(2), draw_odds: '3.80', away_odds: (parseFloat(baseA) * 1.5).toFixed(2), win_label: '승', draw_label: '1', lose_label: '패' },
+            { type: '핸디캡', handicap: '-1.5', home_odds: '1.94', draw_odds: '', away_odds: '1.61', win_label: '승', draw_label: '', lose_label: '패' },
+            { type: '언더오버', handicap: '8.5', home_odds: '1.85', draw_odds: '', away_odds: '1.68', win_label: '언', draw_label: '', lose_label: '오' },
+            { type: 'SUM(홀짝)', handicap: '', home_odds: '1.80', draw_odds: '', away_odds: '1.80', win_label: '홀', draw_label: '', lose_label: '짝' }
+          ];
+        } else if (sport === 'SOCCER') {
+          oddsList = [
+            { type: '축구 승무패', handicap: '', home_odds: baseH, draw_odds: baseD !== '-' ? baseD : '3.20', away_odds: baseA, win_label: '승', draw_label: '무', lose_label: '패' },
+            { type: '핸디캡', handicap: '+1.0', home_odds: '1.52', draw_odds: '3.55', away_odds: '4.75', win_label: '승', draw_label: '무', lose_label: '패' },
+            { type: '언더오버', handicap: '2.5', home_odds: '1.70', draw_odds: '', away_odds: '2.05', win_label: '언', draw_label: '', lose_label: '오' },
+            { type: 'SUM(홀짝)', handicap: '', home_odds: '1.82', draw_odds: '', away_odds: '1.78', win_label: '홀', draw_label: '', lose_label: '짝' }
+          ];
+        } else if (sport === 'BASKETBALL') {
+          oddsList = [
+            { type: '일반 승패', handicap: '', home_odds: baseH, draw_odds: '', away_odds: baseA, win_label: '승', draw_label: '', lose_label: '패' },
+            { type: '승5패', handicap: '', home_odds: '1.70', draw_odds: '4.50', away_odds: '2.10', win_label: '승', draw_label: '5', lose_label: '패' },
+            { type: '핸디캡', handicap: '-5.5', home_odds: '1.80', draw_odds: '', away_odds: '1.80', win_label: '승', draw_label: '', lose_label: '패' },
+            { type: '언더오버', handicap: '155.5', home_odds: '1.76', draw_odds: '', away_odds: '1.76', win_label: '언', draw_label: '', lose_label: '오' },
+            { type: 'SUM(홀짝)', handicap: '', home_odds: '1.80', draw_odds: '', away_odds: '1.80', win_label: '홀', draw_label: '', lose_label: '짝' }
+          ];
+        } else {
+          oddsList = [
+            { type: '일반 승패', handicap: '', home_odds: baseH, draw_odds: baseD !== '-' ? baseD : '', away_odds: baseA, win_label: '승', draw_label: baseD !== '-' ? '무' : '', lose_label: '패' },
+            { type: '핸디캡', handicap: '-1.5', home_odds: '1.80', draw_odds: '', away_odds: '1.80', win_label: '승', draw_label: '', lose_label: '패' },
+            { type: '언더오버', handicap: '160.5', home_odds: '1.75', draw_odds: '', away_odds: '1.75', win_label: '언', draw_label: '', lose_label: '오' },
+            { type: 'SUM(홀짝)', handicap: '', home_odds: '1.80', draw_odds: '', away_odds: '1.80', win_label: '홀', draw_label: '', lose_label: '짝' }
+          ];
+        }
+      }
+
+      let rowsHtml = '';
+      oddsList.forEach(odd => {
+        const hOdd = odd.home_odds || odd.home || '-';
+        const dOdd = odd.draw_odds || odd.draw || '-';
+        const aOdd = odd.away_odds || odd.away || '-';
+        const hdp = odd.handicap || odd.uo || '';
+
+        const typeStr = odd.type || odd.bet_name || '일반';
+        let badgeClass = 'bg-secondary text-white';
+        let badgeTitle = typeStr;
+
+        let wLbl = odd.win_label || odd.win_txt || '승';
+        let dLbl = odd.draw_label || odd.draw_txt || (sport === 'SOCCER' ? '무' : (sport === 'BASEBALL' ? '1' : (sport === 'BASKETBALL' ? '5' : '무')));
+        let lLbl = odd.lose_label || odd.lose_txt || '패';
+
+        if (typeStr.includes('언더오버') || typeStr.includes('U&O') || typeStr.includes('언오버')) {
+          badgeClass = 'bg-warning text-dark border';
+          badgeTitle = '언더오버';
+          wLbl = '언';
+          dLbl = '-';
+          lLbl = '오';
+        } else if (typeStr.includes('핸디캡') || typeStr.includes('핸디')) {
+          badgeClass = 'bg-primary text-white';
+          badgeTitle = '핸디캡';
+          wLbl = '승';
+          lLbl = '패';
+        } else if (typeStr.includes('승1패')) {
+          badgeClass = 'bg-success text-white';
+          badgeTitle = '승1패';
+          wLbl = '승';
+          dLbl = '1';
+          lLbl = '패';
+        } else if (typeStr.includes('승5패')) {
+          badgeClass = 'bg-success text-white';
+          badgeTitle = '승5패';
+          wLbl = '승';
+          dLbl = '5';
+          lLbl = '패';
+        } else if (typeStr.includes('SUM') || typeStr.includes('홀짝')) {
+          badgeClass = 'bg-dark text-white';
+          badgeTitle = 'SUM(홀짝)';
+          wLbl = '홀';
+          dLbl = '-';
+          lLbl = '짝';
+        }
+
+        const is3Opt = (dOdd && dOdd !== '-' && dOdd !== 0 && dOdd !== '0.0' && dOdd !== '0.00');
+        const hdpBadge = hdp ? `<span class="badge bg-light text-dark border ms-1 px-1" style="font-size:0.62rem; font-weight:800;">${hdp}</span>` : '';
+
+        const wVoteStr = (odd.win_vote_pct && odd.win_vote_pct !== '0.0%') ? `<span class="text-muted ms-1" style="font-size:0.58rem;">(${odd.win_vote_pct})</span>` : '';
+        const dVoteStr = (odd.draw_vote_pct && odd.draw_vote_pct !== '0.0%') ? `<span class="text-muted ms-1" style="font-size:0.58rem;">(${odd.draw_vote_pct})</span>` : '';
+        const lVoteStr = (odd.loss_vote_pct && odd.loss_vote_pct !== '0.0%') ? `<span class="text-muted ms-1" style="font-size:0.58rem;">(${odd.loss_vote_pct})</span>` : '';
+
+        rowsHtml += `
+          <tr>
+            <td class="text-start ps-2 py-1" style="vertical-align:middle;">
+              <span class="badge ${badgeClass}" style="font-size:0.62rem; font-weight:700;">${badgeTitle}</span>${hdpBadge}
+            </td>
+            <td class="text-center py-1 fw-bold text-dark font-monospace" style="vertical-align:middle;">
+              <span class="text-danger fw-bold me-1" style="font-size:0.65rem;">${wLbl}</span>${hOdd}${wVoteStr}
+            </td>
+            <td class="text-center py-1 fw-bold text-dark font-monospace" style="vertical-align:middle; background:#f8fafc;">
+              ${is3Opt ? `<span class="text-muted fw-bold me-1" style="font-size:0.65rem;">${dLbl}</span>${dOdd}${dVoteStr}` : '<span class="text-muted">-</span>'}
+            </td>
+            <td class="text-center py-1 fw-bold text-dark font-monospace" style="vertical-align:middle;">
+              <span class="text-primary fw-bold me-1" style="font-size:0.65rem;">${lLbl}</span>${aOdd}${lVoteStr}
+            </td>
+          </tr>
+        `;
+      });
+
+      let totoHtml = '';
+      if (totoGroups && totoGroups.length > 0) {
+        const g = totoGroups[0];
+        totoHtml = `<div class="mt-1.5 px-1 d-flex align-items-center gap-1" style="font-size:0.65rem; color:#059669; font-weight:700;"><i class="bi bi-card-checklist"></i>베트맨 ${g.round_name || '공식 프로토'} 포함 경기</div>`;
+      }
+
+      return `
+        <div class="p-2 rounded-2" style="background:#ffffff; border: 1.5px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom" style="border-color:#e2e8f0 !important;">
+            <span style="font-size:0.75rem; color:#1e293b; font-weight:800;">
+              <i class="bi bi-bar-chart-fill text-warning me-1"></i>${homeName} <span style="color:#9ca3af; font-weight:400;">vs</span> ${awayName}
+            </span>
+            <span class="badge" style="background:#1e40af; color:#fff; font-size:0.62rem; font-weight:700;">베트맨 프로토 공식 배당</span>
+          </div>
+          <table class="table table-bordered table-sm text-center mb-0 align-middle" style="table-layout:fixed; width:100%; font-size:0.72rem; background:#ffffff; border-color:#e2e8f0;">
+            <thead style="background:#f8fafc; font-size:0.65rem; color:#475569;">
+              <tr>
+                <th style="width:34%; padding:4px 2px;" class="text-start ps-2">유형 / 기준</th>
+                <th style="width:22%; padding:4px 2px;" class="text-danger">홈 · 언 · 홀</th>
+                <th style="width:22%; padding:4px 2px; background:#f1f5f9;">무 · 1 · 5</th>
+                <th style="width:22%; padding:4px 2px;" class="text-primary">원정 · 오 · 짝</th>
               </tr>
             </thead>
             <tbody>
-        `;
-        fullOdds.forEach(odd => {
-          if (odd.home_odds > 0 || odd.away_odds > 0) {
-            const hdpStr = odd.handicap ? ` <span class="badge bg-light text-dark border px-1" style="font-size:0.60rem;">${odd.handicap}</span>` : '';
-            const is3Opt = (odd.draw_odds && odd.draw_odds > 0);
-            const wVote = odd.win_vote_pct && odd.win_vote_pct !== '0.0%' ? `<div style="font-size:0.58rem; color:#64748b; font-weight:600;">${odd.win_vote_pct}</div>` : '';
-            const dVote = odd.draw_vote_pct && odd.draw_vote_pct !== '0.0%' ? `<div style="font-size:0.58rem; color:#64748b; font-weight:600;">${odd.draw_vote_pct}</div>` : '';
-            const lVote = odd.loss_vote_pct && odd.loss_vote_pct !== '0.0%' ? `<div style="font-size:0.58rem; color:#64748b; font-weight:600;">${odd.loss_vote_pct}</div>` : '';
-
-            tableHtml += `
-              <tr>
-                <td class="type-col" style="font-weight:700; color:#334155;">
-                  ${odd.type}${hdpStr}
-                </td>
-                <td class="odds-val win text-center">
-                  <div class="fw-bold">${odd.home_odds || '-'}</div>
-                  ${wVote}
-                </td>
-                <td class="odds-val draw text-center">
-                  <div class="fw-bold">${is3Opt ? odd.draw_odds : '-'}</div>
-                  ${is3Opt ? dVote : ''}
-                </td>
-                <td class="odds-val lose text-center">
-                  <div class="fw-bold">${odd.away_odds || '-'}</div>
-                  ${lVote}
-                </td>
-              </tr>
-            `;
-          }
-        });
-        tableHtml += `
+              ${rowsHtml}
             </tbody>
           </table>
-        `;
-      } else {
-        const h = oddsInfo.home || '-', d = oddsInfo.draw || '-', a = oddsInfo.away || '-';
-        tableHtml += `
-          <table class="slim-odds-table">
-            <tr>
-              <td class="type-col">${sport === 'SOCCER' ? '축구 승무패' : (sport === 'BASEBALL' ? '야구 승1패' : '일반 승패')}</td>
-              <td class="odds-val win text-center">${h}</td>
-              <td class="odds-val draw text-center">${(d && d !== '-') ? d : '-'}</td>
-              <td class="odds-val lose text-center">${a}</td>
-            </tr>
-          </table>
-        `;
-      }
-
-      return tableHtml;
+          ${totoHtml}
+        </div>
+      `;
     }
 
     function loadSlimOddsPanel(matchId) {
