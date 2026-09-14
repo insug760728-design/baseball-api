@@ -1942,6 +1942,13 @@
         <div class="col-dash-right" id="rightColCommunity">
           <div class="dash-card-column">
             
+            <!-- Mobile Return Helper Button (모바일 모드에서만 표시) -->
+            <div class="p-1 pb-0 d-none" id="mobileReturnToScheduleBtn2">
+              <button class="btn btn-sm w-100 fw-bold py-1.5" onclick="switchMobileTab('schedule')" style="background: #eff6ff; border: 1px solid #1d4ed8; color: #1d4ed8; border-radius: 6px; font-size: 0.82rem;">
+                <i class="bi bi-chevron-left me-1"></i>← 전체 경기 일정 목록으로 돌아가기
+              </button>
+            </div>
+
             <div class="dash-card-header pb-1.5">
               <!-- Live Relay Header with Status and Match Count -->
               <div class="d-flex justify-content-between align-items-center mb-1.5 flex-nowrap">
@@ -13951,10 +13958,20 @@ function getFullModalMatchList() {
       isMultiPlayMode = false;
       updateMultiPlayBtnState();
       selectedPredMatchId = matchId;
+      selectedLiveRelayMatchId = matchId;
       const target = (typeof allMatches !== 'undefined' && allMatches) ? allMatches.find(m => m.id === matchId) : null;
-      switchCenterViewMode('RELAY');
-      if (target) {
-        renderLiveRelayCenter(target);
+      if (typeof currentViewMode !== 'undefined' && currentViewMode === 'mobile') {
+        switchMobileTab('community');
+      } else {
+        switchCenterViewMode('RELAY');
+        if (target) {
+          renderLiveRelayCenter(target);
+        }
+      }
+      renderRightColLiveRelay();
+      const rightCol = document.getElementById('rightColCommunity');
+      if (rightCol) {
+        rightCol.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
 
@@ -15624,12 +15641,14 @@ function getFullModalMatchList() {
 
     function switchMobileTab(tabKey) {
       if (tabKey === 'center') tabKey = 'toto';
-      if (tabKey === 'news') tabKey = 'community';
+      if (tabKey === 'news' || tabKey === 'live_relay' || tabKey === 'relay') tabKey = 'community';
       currentMobileTab = tabKey;
       const p1 = document.getElementById('leftColSchedule');
       const p2 = document.getElementById('centerColMain');
       const p3 = document.getElementById('rightColCommunity');
       const retBtn = document.getElementById('mobileReturnToScheduleBtn');
+
+      const retBtn2 = document.getElementById('mobileReturnToScheduleBtn2');
 
       const panels = {
         schedule: p1,
@@ -15693,13 +15712,15 @@ function getFullModalMatchList() {
         if (target) {
           renderPredDetail(target);
         }
-        if (retBtn) {
-          retBtn.classList.remove('d-none');
-        }
+        if (retBtn) retBtn.classList.remove('d-none');
+        if (retBtn2) retBtn2.classList.add('d-none');
+      } else if (tabKey === 'community') {
+        renderRightColLiveRelay();
+        if (retBtn) retBtn.classList.add('d-none');
+        if (retBtn2) retBtn2.classList.remove('d-none');
       } else {
-        if (retBtn) {
-          retBtn.classList.add('d-none');
-        }
+        if (retBtn) retBtn.classList.add('d-none');
+        if (retBtn2) retBtn2.classList.add('d-none');
       }
 
       // Smooth scroll to top of content on mobile when switching to tabs other than schedule
