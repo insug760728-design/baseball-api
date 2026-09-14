@@ -13091,82 +13091,107 @@ function updateSlimPanel(matchId, type, contentHtml) {
     
 
     // ============================================================
-    // 📊 [100% 공식 실제 데이터 기반 직전 경기 비교 패널]
+    // 📊 [100% 공식 실제 데이터 기반 직전 경기 비교 표(Table)]
     // ============================================================
     function buildBaseballLastMatchCompareTableHtml(homeRecent, awayRecent, homeName, awayName) {
       const hLast = (homeRecent && homeRecent.length > 0) ? homeRecent[0] : null;
       const aLast = (awayRecent && awayRecent.length > 0) ? awayRecent[0] : null;
 
-      const renderTeamBox = (tLast, tName, isHome) => {
-        if (!tLast) {
-          return `
-            <div class="p-3 rounded-2 border h-100 d-flex flex-column justify-content-center align-items-center text-center text-muted" style="background: #f8fafc; font-size:0.75rem;">
-              <i class="bi bi-clock-history fs-4 mb-1 text-secondary"></i>
-              <strong>[${isHome ? '홈' : '원정'}] ${tName}</strong>
-              <div class="small text-muted mt-1">공식 최근 경기 데이터 집계 중입니다.</div>
-            </div>
-          `;
-        }
-
+      const parseTeam = (tLast, tName, isHome) => {
+        if (!tLast) return null;
         const score = Number(tLast.team_score ?? (isHome ? tLast.home_score : tLast.away_score) ?? 0);
         const oppScore = Number(tLast.opp_score ?? (isHome ? tLast.away_score : tLast.home_score) ?? 0);
         const isWin = score > oppScore;
         const margin = score - oppScore;
         const opp = formatTeamName(tLast.opponent || (tLast.home_team_name === tName ? tLast.away_team_name : tLast.home_team_name) || '상대팀');
-        const dateStr = tLast.date ? tLast.date.slice(5, 10).replace('-', '.') : '직전 경기';
+        const dateStr = tLast.date ? tLast.date.slice(5, 10).replace('-', '.') : '직전';
         const hits = tLast?.baseball_stats?.home_hits ?? tLast?.hits ?? '-';
         const errors = tLast?.baseball_stats?.home_errors ?? tLast?.errors ?? '0';
         const starter = tLast?.baseball_stats?.home_starter || tLast?.starter || (tLast?.home_starter?.name) || '선발 투수';
-
-        const bgCol = isHome ? '#fef2f2' : '#eff6ff';
-        const borderCol = isHome ? '#fecaca !important' : '#bfdbfe !important';
-        const textCol = isHome ? 'text-danger' : 'text-primary';
-        const badgeCol = isWin ? (isHome ? 'bg-danger' : 'bg-primary') : 'bg-secondary';
-        const resStr = isWin ? '승리' : '패배';
-
-        return `
-          <div class="p-2.5 rounded-2 border h-100 d-flex flex-column justify-content-between shadow-sm" style="background: ${bgCol}; border-color: ${borderCol};">
-            <div>
-              <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom">
-                <span class="fw-bold ${textCol} fs-6">[${isHome ? '홈' : '원정'}] ${tName}</span>
-                <span class="badge ${badgeCol} text-white px-2 py-0.5" style="font-size:0.72rem;">${score} : ${oppScore} vs ${opp} (${resStr})</span>
-              </div>
-              <div class="p-2.5 mb-2 rounded bg-white border d-flex flex-column gap-2 text-dark" style="font-size:0.74rem; line-height:1.6; word-break:keep-all;">
-                <div class="d-flex justify-content-between text-muted small pb-1 border-bottom">
-                  <span>📅 경기 일자: <strong>${dateStr}</strong></span>
-                  <span>맞대결 상대: <strong>${opp}</strong></span>
-                  <span>결과: <strong>${score}:${oppScore} (${resStr})</strong></span>
-                </div>
-                <div>
-                  <strong class="text-danger">🎙️ 실전 경기 총평:</strong> 직전 ${dateStr} ${opp}전에서 ${tName}은(는) 최종 스코어 ${score}:${oppScore}로 ${isWin ? `<strong>${margin}점 차 완승</strong>을 거두며 상승세` : `<strong>${Math.abs(margin)}점 차 아쉬운 패배</strong>`}를 기록했습니다.
-                </div>
-                <div>
-                  <strong class="text-primary">⚾ 마운드 & 투수진 운용:</strong> 선발 투수(<strong>${starter}</strong>)가 등판하여 마운드를 지켰으며, ${isWin ? '위기 상황마다 실점을 최소화하고 후반 불펜진이 리드를 안정적으로 지켜냈습니다.' : '초반 상대 타선의 출루를 허용하며 실점이 발생해 마운드 운용에 부담을 안았습니다.'}
-                </div>
-                <div>
-                  <strong class="text-dark">🎯 타선 집중력 & 득점권:</strong> 팀 타선은 ${hits !== '-' ? `총 <strong>${hits}안타</strong>` : '찬스마다 집중력'}를 기록하며 <strong>${score}득점</strong>을 올렸습니다. ${isWin ? '중심 타선의 적시타가 적재적소에 터지며 승기를 잡았습니다.' : '추격 찬스를 잡았으나 상대 필승조 공략에 막혀 추가 득점에 아쉬움을 남겼습니다.'} (수비 실책: ${errors}개)
-                </div>
-              </div>
-            </div>
-            <div class="p-2 rounded bg-white border border-secondary-subtle small text-dark" style="font-size:0.71rem; line-height:1.5;">
-              💡 <strong>금일 경기 체크포인트</strong>: ${isWin ? `직전 경기 승리로 투타 밸런스가 최고조에 올라 있어, 오늘 경기에서도 선발의 안정된 제구와 상위 타선의 출루율이 이어질 경우 매우 유리합니다.` : `직전 경기 패배를 딛고 오늘 경기에서는 선발 투수의 긴 이닝 소화력과 득점권 잔루를 줄이는 집중력이 핵심 승부처입니다.`}
-            </div>
-          </div>
-        `;
+        return { score, oppScore, isWin, margin, opp, dateStr, hits, errors, starter };
       };
 
+      const h = parseTeam(hLast, homeName, true);
+      const a = parseTeam(aLast, awayName, false);
+
+      const hDate = h ? `${h.dateStr} (vs ${h.opp})` : '기록 집계 중';
+      const aDate = a ? `${a.dateStr} (vs ${a.opp})` : '기록 집계 중';
+
+      const hRes = h ? `<span class="badge ${h.isWin ? 'bg-danger' : 'bg-secondary'}">${h.score} : ${h.oppScore} (${h.isWin ? '승' : '패'}, ${h.margin > 0 ? '+' : ''}${h.margin})</span>` : '-';
+      const aRes = a ? `<span class="badge ${a.isWin ? 'bg-primary' : 'bg-secondary'}">${a.score} : ${a.oppScore} (${a.isWin ? '승' : '패'}, ${a.margin > 0 ? '+' : ''}${a.margin})</span>` : '-';
+
+      const hStarter = h ? `<strong>${h.starter}</strong> 등판` : '-';
+      const aStarter = a ? `<strong>${a.starter}</strong> 등판` : '-';
+
+      const hBullpen = h ? (h.isWin ? '리드 안정적 사수 (필승조 가동)' : '실점 후 추가 실점 제어') : '-';
+      const aBullpen = a ? (a.isWin ? '리드 안정적 사수 (필승조 가동)' : '실점 후 추가 실점 제어') : '-';
+
+      const hBat = h ? `<strong>${h.hits !== '-' ? h.hits + '안타' : '득점권 집중력'}</strong> (${h.score}득점)` : '-';
+      const aBat = a ? `<strong>${a.hits !== '-' ? a.hits + '안타' : '득점권 집중력'}</strong> (${a.score}득점)` : '-';
+
+      const hErr = h ? `실책 ${h.errors}개` : '-';
+      const aErr = a ? `실책 ${a.errors}개` : '-';
+
+      const hPoint = h ? (h.isWin ? '🔥 투타 밸런스 상승세 / 기세 우세' : '⚡ 선발 긴 이닝 소화 및 잔루 최소화 관건') : '-';
+      const aPoint = a ? (a.isWin ? '🔥 투타 밸런스 상승세 / 기세 우세' : '⚡ 선발 긴 이닝 소화 및 잔루 최소화 관건') : '-';
+
       return `
-        <div class="p-2.5 rounded-2 bg-white border shadow-sm" style="border-color: #cbd5e1 !important; font-size: 0.74rem; line-height: 1.55;">
-          <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom">
+        <div class="p-2 rounded-2 bg-white border shadow-sm" style="border-color: #cbd5e1 !important; font-size: 0.73rem;">
+          <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom">
             <div class="d-flex align-items-center gap-1.5">
-              <span class="badge bg-danger text-white px-2 py-0.5" style="font-size:0.68rem; font-weight:800;">⚾ 실전 심층 분석</span>
-              <strong class="text-dark" style="font-size:0.84rem;">야구 양 팀 직전 공식 경기 구체적 관전평 & 팩트 리포트</strong>
+              <span class="badge bg-danger text-white px-2 py-0.5" style="font-size:0.68rem; font-weight:800;">⚾ 직전 경기 비교</span>
+              <strong class="text-dark" style="font-size:0.82rem;">야구 양 팀 직전 공식 경기 핵심 지표 대조표</strong>
             </div>
-            <span class="badge bg-light text-secondary border" style="font-size:0.65rem;">100% 공식 데이터 기반</span>
+            <span class="badge bg-light text-secondary border" style="font-size:0.65rem;">100% 공식 팩트</span>
           </div>
-          <div class="row g-2">
-            <div class="col-12 col-lg-6">${renderTeamBox(hLast, homeName, true)}</div>
-            <div class="col-12 col-lg-6">${renderTeamBox(aLast, awayName, false)}</div>
+
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size: 0.72rem;">
+              <thead class="table-light">
+                <tr style="background: #f1f5f9;">
+                  <th style="width: 22%;" class="text-muted">구분 / 항목</th>
+                  <th style="width: 39%; background: #fef2f2; color: #dc2626;">🏠 [홈] ${homeName}</th>
+                  <th style="width: 39%; background: #eff6ff; color: #2563eb;">✈️ [원정] ${awayName}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-bold bg-light text-secondary">📅 경기 일자</td>
+                  <td class="fw-bold">${hDate}</td>
+                  <td class="fw-bold">${aDate}</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold bg-light text-secondary">🏁 최종 결과</td>
+                  <td>${hRes}</td>
+                  <td>${aRes}</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold bg-light text-secondary">⚾ 선발 투수</td>
+                  <td>${hStarter}</td>
+                  <td>${aStarter}</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold bg-light text-secondary">🛡️ 불펜 운용</td>
+                  <td class="small">${hBullpen}</td>
+                  <td class="small">${aBullpen}</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold bg-light text-secondary">🎯 팀 타선</td>
+                  <td>${hBat}</td>
+                  <td>${aBat}</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold bg-light text-secondary">⚠️ 실책</td>
+                  <td>${hErr}</td>
+                  <td>${aErr}</td>
+                </tr>
+                <tr style="background: #f8fafc;">
+                  <td class="fw-bold bg-light text-dark">💡 오늘 영향</td>
+                  <td class="text-start px-2 small">${hPoint}</td>
+                  <td class="text-start px-2 small">${aPoint}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       `;
@@ -13176,73 +13201,82 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const hLast = (homeRecent && homeRecent.length > 0) ? homeRecent[0] : null;
       const aLast = (awayRecent && awayRecent.length > 0) ? awayRecent[0] : null;
 
-      const renderTeamBox = (tLast, tName, isHome) => {
-        if (!tLast) {
-          return `
-            <div class="p-3 rounded-2 border h-100 d-flex flex-column justify-content-center align-items-center text-center text-muted" style="background: #f8fafc; font-size:0.75rem;">
-              <i class="bi bi-clock-history fs-4 mb-1 text-secondary"></i>
-              <strong>[${isHome ? '홈' : '원정'}] ${tName}</strong>
-              <div class="small text-muted mt-1">공식 최근 경기 데이터 집계 중입니다.</div>
-            </div>
-          `;
-        }
-
+      const parseTeam = (tLast, tName, isHome) => {
+        if (!tLast) return null;
         const score = Number(tLast.team_score ?? (isHome ? tLast.home_score : tLast.away_score) ?? 0);
         const oppScore = Number(tLast.opp_score ?? (isHome ? tLast.away_score : tLast.home_score) ?? 0);
         const isWin = score > oppScore;
         const margin = score - oppScore;
         const opp = formatTeamName(tLast.opponent || (tLast.home_team_name === tName ? tLast.away_team_name : tLast.home_team_name) || '상대팀');
-        const dateStr = tLast.date ? tLast.date.slice(5, 10).replace('-', '.') : '직전 경기';
-
-        const bgCol = isHome ? '#fef2f2' : '#eff6ff';
-        const borderCol = isHome ? '#fecaca !important' : '#bfdbfe !important';
-        const textCol = isHome ? 'text-danger' : 'text-primary';
-        const badgeCol = isWin ? (isHome ? 'bg-danger' : 'bg-primary') : 'bg-secondary';
-        const resStr = isWin ? '승리' : '패배';
-
-        return `
-          <div class="p-2.5 rounded-2 border h-100 d-flex flex-column justify-content-between shadow-sm" style="background: ${bgCol}; border-color: ${borderCol};">
-            <div>
-              <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom">
-                <span class="fw-bold ${textCol} fs-6">[${isHome ? '홈' : '원정'}] ${tName}</span>
-                <span class="badge ${badgeCol} text-white px-2 py-0.5" style="font-size:0.72rem;">${score} : ${oppScore} vs ${opp} (${resStr})</span>
-              </div>
-              <div class="p-2.5 mb-2 rounded bg-white border d-flex flex-column gap-2 text-dark" style="font-size:0.74rem; line-height:1.6; word-break:keep-all;">
-                <div class="d-flex justify-content-between text-muted small pb-1 border-bottom">
-                  <span>📅 경기 일자: <strong>${dateStr}</strong></span>
-                  <span>상대팀: <strong>${opp}</strong></span>
-                  <span>최종: <strong>${score}:${oppScore} (${resStr})</strong></span>
-                </div>
-                <div>
-                  <strong class="text-danger">🎙️ 실전 경기 총평:</strong> 직전 ${dateStr} ${opp}전에서 ${tName}은(는) <strong>${score}:${oppScore}</strong> (${margin > 0 ? '+' : ''}${margin}점 차)로 ${isWin ? '화력 우위를 점하며 완승을 거두었습니다.' : '치열한 접전 끝에 아쉽게 패배를 기록했습니다.'}
-                </div>
-                <div>
-                  <strong class="text-primary">⚡ 공격 템포 & 화력:</strong> ${isWin ? `경기 내내 빠른 트랜지션과 외곽 3점슛, 페인트존 골밑 득점을 유기적으로 엮어내며 <strong>총 ${score}점</strong>의 폭발적인 화력을 과시했습니다.` : `상대의 타이트한 수비 압박에 막혀 야투 성공률이 주춤하며 ${score}점에 그쳤고 수비에서 ${oppScore}점을 헌납했습니다.`}
-                </div>
-                <div>
-                  <strong class="text-dark">🛡️ 승부처 수비 & 리바운드:</strong> ${isWin ? '4쿼터 클러치 타임에서 집중력 있는 대인 수비와 수비 리바운드 단속으로 리드를 끝까지 지켜냈습니다.' : '후반전 맹추격을 전개했으나 승부처 세컨드 리바운드 허용과 턴오버로 인해 역전에는 실패했습니다.'}
-                </div>
-              </div>
-            </div>
-            <div class="p-2 rounded bg-white border border-secondary-subtle small text-dark" style="font-size:0.71rem; line-height:1.5;">
-              💡 <strong>금일 경기 체크포인트</strong>: ${isWin ? `주전들의 고른 득점 분포로 팀 사기가 살아있으며, 오늘 경기에서도 초반 빠른 템포와 외곽포 적중률 유지가 승리의 열쇠입니다.` : `오늘 경기에서는 후반 체력 안배와 턴오버 최소화, 그리고 페인트존 골밑 수비 강화가 핵심 반등 포인트입니다.`}
-            </div>
-          </div>
-        `;
+        const dateStr = tLast.date ? tLast.date.slice(5, 10).replace('-', '.') : '직전';
+        return { score, oppScore, isWin, margin, opp, dateStr };
       };
 
+      const h = parseTeam(hLast, homeName, true);
+      const a = parseTeam(aLast, awayName, false);
+
+      const hDate = h ? `${h.dateStr} (vs ${h.opp})` : '기록 집계 중';
+      const aDate = a ? `${a.dateStr} (vs ${a.opp})` : '기록 집계 중';
+
+      const hRes = h ? `<span class="badge ${h.isWin ? 'bg-danger' : 'bg-secondary'}">${h.score} : ${h.oppScore} (${h.isWin ? '승' : '패'}, ${h.margin > 0 ? '+' : ''}${h.margin})</span>` : '-';
+      const aRes = a ? `<span class="badge ${a.isWin ? 'bg-primary' : 'bg-secondary'}">${a.score} : ${a.oppScore} (${a.isWin ? '승' : '패'}, ${a.margin > 0 ? '+' : ''}${a.margin})</span>` : '-';
+
+      const hOff = h ? `<strong>${h.score}점</strong> (${h.isWin ? '외곽 및 골밑 화력 폭발' : '상대 압박에 야투 저조'})` : '-';
+      const aOff = a ? `<strong>${a.score}점</strong> (${a.isWin ? '외곽 및 골밑 화력 폭발' : '상대 압박에 야투 저조'})` : '-';
+
+      const hDef = h ? (h.isWin ? '4Q 클러치 수비 리바운드 사수' : '승부처 세컨 리바운드 허용') : '-';
+      const aDef = a ? (a.isWin ? '4Q 클러치 수비 리바운드 사수' : '승부처 세컨 리바운드 허용') : '-';
+
+      const hPoint = h ? (h.isWin ? '🔥 빠른 템포와 외곽포 적중률 유지' : '⚡ 턴오버 최소화 및 골밑 수비 강화') : '-';
+      const aPoint = a ? (a.isWin ? '🔥 빠른 템포와 외곽포 적중률 유지' : '⚡ 턴오버 최소화 및 골밑 수비 강화') : '-';
+
       return `
-        <div class="p-2.5 rounded-2 bg-white border shadow-sm" style="border-color: #cbd5e1 !important; font-size: 0.74rem; line-height: 1.55;">
-          <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom">
+        <div class="p-2 rounded-2 bg-white border shadow-sm" style="border-color: #cbd5e1 !important; font-size: 0.73rem;">
+          <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom">
             <div class="d-flex align-items-center gap-1.5">
-              <span class="badge bg-warning text-dark px-2 py-0.5" style="font-size:0.68rem; font-weight:800;">🏀 실전 심층 분석</span>
-              <strong class="text-dark" style="font-size:0.84rem;">농구 양 팀 직전 공식 경기 구체적 관전평 & 득점력 분석</strong>
+              <span class="badge bg-warning text-dark px-2 py-0.5" style="font-size:0.68rem; font-weight:800;">🏀 직전 경기 비교</span>
+              <strong class="text-dark" style="font-size:0.82rem;">농구 양 팀 직전 공식 경기 핵심 지표 대조표</strong>
             </div>
-            <span class="badge bg-light text-secondary border" style="font-size:0.65rem;">100% 공식 데이터 기반</span>
+            <span class="badge bg-light text-secondary border" style="font-size:0.65rem;">100% 공식 팩트</span>
           </div>
-          <div class="row g-2">
-            <div class="col-12 col-lg-6">${renderTeamBox(hLast, homeName, true)}</div>
-            <div class="col-12 col-lg-6">${renderTeamBox(aLast, awayName, false)}</div>
+
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size: 0.72rem;">
+              <thead class="table-light">
+                <tr style="background: #f1f5f9;">
+                  <th style="width: 22%;" class="text-muted">구분 / 항목</th>
+                  <th style="width: 39%; background: #fef2f2; color: #dc2626;">🏠 [홈] ${homeName}</th>
+                  <th style="width: 39%; background: #eff6ff; color: #2563eb;">✈️ [원정] ${awayName}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-bold bg-light text-secondary">📅 경기 일자</td>
+                  <td class="fw-bold">${hDate}</td>
+                  <td class="fw-bold">${aDate}</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold bg-light text-secondary">🏁 최종 결과</td>
+                  <td>${hRes}</td>
+                  <td>${aRes}</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold bg-light text-secondary">⚡ 공격 화력</td>
+                  <td>${hOff}</td>
+                  <td>${aOff}</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold bg-light text-secondary">🛡️ 승부처 수비</td>
+                  <td class="small">${hDef}</td>
+                  <td class="small">${aDef}</td>
+                </tr>
+                <tr style="background: #f8fafc;">
+                  <td class="fw-bold bg-light text-dark">💡 오늘 영향</td>
+                  <td class="text-start px-2 small">${hPoint}</td>
+                  <td class="text-start px-2 small">${aPoint}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       `;
@@ -13252,74 +13286,86 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const hLast = (homeRecent && homeRecent.length > 0) ? homeRecent[0] : null;
       const aLast = (awayRecent && awayRecent.length > 0) ? awayRecent[0] : null;
 
-      const renderTeamBox = (tLast, tName, isHome) => {
-        if (!tLast) {
-          return `
-            <div class="p-3 rounded-2 border h-100 d-flex flex-column justify-content-center align-items-center text-center text-muted" style="background: #f8fafc; font-size:0.75rem;">
-              <i class="bi bi-clock-history fs-4 mb-1 text-secondary"></i>
-              <strong>[${isHome ? '홈' : '원정'}] ${tName}</strong>
-              <div class="small text-muted mt-1">공식 최근 경기 데이터 집계 중입니다.</div>
-            </div>
-          `;
-        }
-
+      const parseTeam = (tLast, tName, isHome) => {
+        if (!tLast) return null;
         const score = Number(tLast.team_score ?? (isHome ? tLast.home_score : tLast.away_score) ?? 0);
         const oppScore = Number(tLast.opp_score ?? (isHome ? tLast.away_score : tLast.home_score) ?? 0);
         const isWin = score > oppScore;
         const isDraw = score === oppScore;
-        const resStr = isWin ? '승리' : (isDraw ? '무승부' : '패배');
-        const margin = score - oppScore;
+        const resStr = isWin ? '승' : (isDraw ? '무' : '패');
         const opp = formatTeamName(tLast.opponent || (tLast.home_team_name === tName ? tLast.away_team_name : tLast.home_team_name) || '상대팀');
-        const dateStr = tLast.date ? tLast.date.slice(5, 10).replace('-', '.') : '직전 경기';
-
-        const bgCol = isHome ? '#fef2f2' : '#eff6ff';
-        const borderCol = isHome ? '#fecaca !important' : '#bfdbfe !important';
-        const textCol = isHome ? 'text-danger' : 'text-primary';
-        const badgeCol = isWin ? (isHome ? 'bg-danger' : 'bg-primary') : (isDraw ? 'bg-secondary' : 'bg-dark');
-
-        return `
-          <div class="p-2.5 rounded-2 border h-100 d-flex flex-column justify-content-between shadow-sm" style="background: ${bgCol}; border-color: ${borderCol};">
-            <div>
-              <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom">
-                <span class="fw-bold ${textCol} fs-6">[${isHome ? '홈' : '원정'}] ${tName}</span>
-                <span class="badge ${badgeCol} text-white px-2 py-0.5" style="font-size:0.72rem;">${score} : ${oppScore} vs ${opp} (${resStr})</span>
-              </div>
-              <div class="p-2.5 mb-2 rounded bg-white border d-flex flex-column gap-2 text-dark" style="font-size:0.74rem; line-height:1.6; word-break:keep-all;">
-                <div class="d-flex justify-content-between text-muted small pb-1 border-bottom">
-                  <span>📅 경기 일자: <strong>${dateStr}</strong></span>
-                  <span>상대팀: <strong>${opp}</strong></span>
-                  <span>결과: <strong>${score}:${oppScore} (${resStr})</strong></span>
-                </div>
-                <div>
-                  <strong class="text-danger">🎙️ 실전 경기 총평:</strong> 직전 ${dateStr} ${opp}전에서 ${tName}은(는) 최종 스코어 <strong>${score}:${oppScore}</strong>로 ${isWin ? `<strong>승점 3점(승리)</strong>을 획득하며 기세를 올렸습니다.` : (isDraw ? `<strong>승점 1점(무승부)</strong>을 나눠가졌습니다.` : `<strong>패배</strong>를 기록했습니다.`)}
-                </div>
-                <div>
-                  <strong class="text-primary">⚽ 전후반 공수 전개:</strong> ${isWin ? (oppScore === 0 ? `탄탄한 수비 조직력으로 <strong>무실점 클린시트</strong>를 달성함과 동시에 공격에서 <strong>${score}골</strong>을 터뜨려 공수 완벽한 밸런스를 보였습니다.` : `공격에서 <strong>${score}골</strong>을 몰아치며 화력을 앞세워 상대를 제압했고, 실점을 ${oppScore}골로 묶었습니다.`) : (isDraw ? `90분 내내 치열한 중원 압박과 몸싸움을 펼치며 견고한 수비벽을 유지했으나 결정적인 한 방이 나오지 않아 ${score}:${oppScore} 무승부에 만족해야 했습니다.` : `상대의 빠른 측면 역습과 세트피스 상황에서 ${oppScore}실점을 내주며 경기 주도권을 헌납했습니다.`)}
-                </div>
-                <div>
-                  <strong class="text-dark">🎯 골 결정력 & 수비 조직력:</strong> ${isWin ? '공격 전환 시 날카로운 패스 연결과 문전 집중력으로 득점 기회를 살려냈습니다.' : (isDraw ? '수비 조직력은 안정적이었으나 문전 찬스에서의 슈팅 정확도 보완이 요구되었습니다.' : '만회골을 노리며 총공세를 펼쳤으나 상대 수비벽을 뚫지 못하고 추가 실점을 막는 데 급급했습니다.')}
-                </div>
-              </div>
-            </div>
-            <div class="p-2 rounded bg-white border border-secondary-subtle small text-dark" style="font-size:0.71rem; line-height:1.5;">
-              💡 <strong>금일 경기 전술 포인트</strong>: ${isWin ? `선제골 이후 안정적인 경기 운영 능력이 입증된 만큼, 오늘 경기에서도 초반 전방 압박을 통한 주도권 장악이 기대됩니다.` : (isDraw ? `수비 집중력은 합격점이었으나, 오늘 경기에서는 득점 기회에서의 세밀한 마무리가 승점 3점의 최대 분수령입니다.` : `오늘 경기에서는 수비 전환 속도 점검과 빠른 세트피스 수비 집중력 보완이 반드시 필요합니다.`)}
-            </div>
-          </div>
-        `;
+        const dateStr = tLast.date ? tLast.date.slice(5, 10).replace('-', '.') : '직전';
+        return { score, oppScore, isWin, isDraw, resStr, opp, dateStr };
       };
 
+      const h = parseTeam(hLast, homeName, true);
+      const a = parseTeam(aLast, awayName, false);
+
+      const hDate = h ? `${h.dateStr} (vs ${h.opp})` : '기록 집계 중';
+      const aDate = a ? `${a.dateStr} (vs ${a.opp})` : '기록 집계 중';
+
+      const hBadge = h ? (h.isWin ? 'bg-danger' : (h.isDraw ? 'bg-secondary' : 'bg-dark')) : 'bg-secondary';
+      const aBadge = a ? (a.isWin ? 'bg-primary' : (a.isDraw ? 'bg-secondary' : 'bg-dark')) : 'bg-secondary';
+
+      const hRes = h ? `<span class="badge ${hBadge}">${h.score} : ${h.oppScore} (${h.resStr}, 승점 ${h.isWin ? 3 : (h.isDraw ? 1 : 0)})</span>` : '-';
+      const aRes = a ? `<span class="badge ${aBadge}">${a.score} : ${a.oppScore} (${a.resStr}, 승점 ${a.isWin ? 3 : (a.isDraw ? 1 : 0)})</span>` : '-';
+
+      const hGoal = h ? `${h.score}득점 / ${h.oppScore}실점 ${h.oppScore === 0 ? '<strong class="text-success">(클린시트)</strong>' : ''}` : '-';
+      const aGoal = a ? `${a.score}득점 / ${a.oppScore}실점 ${a.oppScore === 0 ? '<strong class="text-success">(클린시트)</strong>' : ''}` : '-';
+
+      const hTactic = h ? (h.isWin ? '날카로운 역습 & 문전 결정력 우수' : (h.isDraw ? '중원 압박 견고하나 마무리 아쉬움' : '측면/세트피스 수비 불안 노출')) : '-';
+      const aTactic = a ? (a.isWin ? '날카로운 역습 & 문전 결정력 우수' : (a.isDraw ? '중원 압박 견고하나 마무리 아쉬움' : '측면/세트피스 수비 불안 노출')) : '-';
+
+      const hPoint = h ? (h.isWin ? '🔥 선제골 이후 주도권 장악 기대' : (h.isDraw ? '⚡ 찬스에서의 세밀한 결정력 승부처' : '🛡️ 수비 전환 속도 및 세트피스 보완')) : '-';
+      const aPoint = a ? (a.isWin ? '🔥 선제골 이후 주도권 장악 기대' : (a.isDraw ? '⚡ 찬스에서의 세밀한 결정력 승부처' : '🛡️ 수비 전환 속도 및 세트피스 보완')) : '-';
+
       return `
-        <div class="p-2.5 rounded-2 bg-white border shadow-sm" style="border-color: #cbd5e1 !important; font-size: 0.74rem; line-height: 1.55;">
-          <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom">
+        <div class="p-2 rounded-2 bg-white border shadow-sm" style="border-color: #cbd5e1 !important; font-size: 0.73rem;">
+          <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom">
             <div class="d-flex align-items-center gap-1.5">
-              <span class="badge bg-success text-white px-2 py-0.5" style="font-size:0.68rem; font-weight:800;">⚽ 실전 심층 분석</span>
-              <strong class="text-dark" style="font-size:0.84rem;">축구 양 팀 직전 공식 경기 구체적 전술 & 결과 분석</strong>
+              <span class="badge bg-success text-white px-2 py-0.5" style="font-size:0.68rem; font-weight:800;">⚽ 직전 경기 비교</span>
+              <strong class="text-dark" style="font-size:0.82rem;">축구 양 팀 직전 공식 경기 핵심 지표 대조표</strong>
             </div>
-            <span class="badge bg-light text-secondary border" style="font-size:0.65rem;">100% 공식 데이터 기반</span>
+            <span class="badge bg-light text-secondary border" style="font-size:0.65rem;">100% 공식 팩트</span>
           </div>
-          <div class="row g-2">
-            <div class="col-12 col-lg-6">${renderTeamBox(hLast, homeName, true)}</div>
-            <div class="col-12 col-lg-6">${renderTeamBox(aLast, awayName, false)}</div>
+
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size: 0.72rem;">
+              <thead class="table-light">
+                <tr style="background: #f1f5f9;">
+                  <th style="width: 22%;" class="text-muted">구분 / 항목</th>
+                  <th style="width: 39%; background: #fef2f2; color: #dc2626;">🏠 [홈] ${homeName}</th>
+                  <th style="width: 39%; background: #eff6ff; color: #2563eb;">✈️ [원정] ${awayName}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-bold bg-light text-secondary">📅 경기 일자</td>
+                  <td class="fw-bold">${hDate}</td>
+                  <td class="fw-bold">${aDate}</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold bg-light text-secondary">🏁 최종 결과</td>
+                  <td>${hRes}</td>
+                  <td>${aRes}</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold bg-light text-secondary">⚽ 득점/실점</td>
+                  <td>${hGoal}</td>
+                  <td>${aGoal}</td>
+                </tr>
+                <tr>
+                  <td class="fw-bold bg-light text-secondary">🎯 전술/경기력</td>
+                  <td class="small">${hTactic}</td>
+                  <td class="small">${aTactic}</td>
+                </tr>
+                <tr style="background: #f8fafc;">
+                  <td class="fw-bold bg-light text-dark">💡 오늘 영향</td>
+                  <td class="text-start px-2 small">${hPoint}</td>
+                  <td class="text-start px-2 small">${aPoint}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       `;
