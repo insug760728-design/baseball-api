@@ -318,7 +318,7 @@ class ScheduleManagerAgent:
     @classmethod
     def sync_all_upcoming_schedules(cls, db: Optional[Session] = None, days_ahead: int = 45) -> Dict[str, Any]:
         """
-        향후 `days_ahead` 일간의 모든 리그 일정을 동기화/갱신하여 3,000+ 경기 규모로 확장
+        공식 경기 일정 무결성 검증 및 동기화 (가짜/합성 일정 생성 원천 차단)
         """
         should_close_db = False
         if db is None:
@@ -328,155 +328,36 @@ class ScheduleManagerAgent:
         try:
             now_kst = get_now_kst()
             today_str = now_kst.strftime("%Y-%m-%d")
-            logger.info(f"[ScheduleManagerAgent] 전종목 향후 {days_ahead}일간 대규모 공식 일정 동기화 시작 (기준: {today_str})")
+            logger.info(f"[ScheduleManagerAgent] 공식 일정 동기화 및 무결성 검증 시작 (기준: {today_str})")
 
-            total_added = 0
-            total_checked = 0
+            # 1. 혹시 남아있을 수 있는 가짜/합성 일정(SCHED_%) 일괄 정리/제거
+            deleted_synthetic = db.query(Match).filter(Match.official_id.like("SCHED_%")).delete(synchronize_session=False)
+            if deleted_synthetic > 0:
+                db.commit()
+                logger.info(f"[ScheduleManagerAgent] 가짜/합성 일정 {deleted_synthetic}건 안전하게 삭제 정리 완료.")
+
+            # 2. 공식 DB 내 경기 통계 집계
+            official_matches = db.query(Match).all()
             league_stats = {}
-
-            # 1. 기존 DB에 등록된 공식 경기 리스트 조회 (중복 방지 셋 구성)
-            existing_matches = db.query(Match.home_team_name, Match.away_team_name, Match.match_date).all()
-            existing_key_set = set()
-            for em in existing_matches:
-                if em[0] and em[1] and em[2]:
-                    d_str = str(em[2])[:10]
-                    h_clean = em[0].replace(" ", "").lower()
-                    a_clean = em[1].replace(" ", "").lower()
-                    existing_key_set.add(f"{d_str}_{h_clean}_{a_clean}")
-
-            # 2. 각 리그별 롤링 캘린더 생성 및 동기화
-            for l_key, l_def in cls.LEAGUE_DEFINITIONS.items():
-                league_name = l_def["league_name"]
-                sport_code = l_def["sport_code"]
-                teams = l_def["teams"]
-                stadiums = l_def.get("stadiums", {})
-                times_def = l_def.get("times", {})
-
-                l_added = 0
-                n_teams = len(teams)
-
-                for day_offset in range(1, days_ahead + 1):
-                    target_date = now_kst + timedelta(days=day_offset)
-                    target_date_str = target_date.strftime("%Y-%m-%d")
-                    day_of_week = target_date.weekday()
-
-                    # 월요일 야구 휴식일 규칙 (KBO / NPB)
-                    if sport_code == "BASEBALL" and l_key in ["KBO", "NPB"] and day_of_week == 0:
-                        continue
-
-                    # 축구 주말/주중 경기일 규칙
-                    if sport_code == "SOCCER" and day_of_week not in [1, 2, 5, 6]:
-                        continue
-
-                    # 농구/배구 2일 간격 경기 규칙
-                    if sport_code in ["BASKETBALL", "VOLLEYBALL"] and day_offset % 2 != 0:
-                        continue
-
-                    # True Round-Robin Circle Method
-                    n = len(teams)
-                    if n % 2 != 0:
-                        team_list = list(teams) + [None]
-                        n_even = n + 1
-                    else:
-                        team_list = list(teams)
-                        n_even = n
-
-                    # Fixed first team, rotate the rest by day_offset
-                    rotated = [team_list[0]] + [team_list[1:][(i - day_offset) % (n_even - 1)] for i in range(n_even - 1)]
-
-                    pairings = []
-                    for i in range(n_even // 2):
-                        t1 = rotated[i]
-                        t2 = rotated[n_even - 1 - i]
-                        if t1 is not None and t2 is not None:
-                            if (day_offset + i) % 2 == 0:
-                                pairings.append((t1, t2))
-                            else:
-                                pairings.append((t2, t1))
-
-                    for p, (h_team, a_team) in enumerate(pairings):
-                        h_clean = h_team.replace(" ", "").lower()
-                        a_clean = a_team.replace(" ", "").lower()
-                        match_key = f"{target_date_str}_{h_clean}_{a_clean}"
-
-                        total_checked += 1
-                        if match_key in existing_key_set:
-                            continue
-
-                        # 경기 시간 결정
-                        if sport_code == "BASEBALL":
-                            if l_key == "MLB":
-                                mlb_t_list = times_def.get("default_morning", ["08:10"])
-                                time_str = mlb_t_list[(day_offset * 7 + p) % len(mlb_t_list)]
-                            elif l_key == "NPB":
-                                time_str = times_def.get("saturday", "14:00") if day_of_week in [5, 6] else times_def.get("weekday", "18:00")
-                            else: # KBO
-                                if day_of_week == 6:
-                                    time_str = times_def.get("sunday", "14:00")
-                                elif day_of_week == 5:
-                                    time_str = times_def.get("saturday", "17:00")
-                                else:
-                                    time_str = times_def.get("weekday", "18:30")
-                        elif sport_code == "SOCCER":
-                            if l_key == "MLS":
-                                mls_t_list = times_def.get("default_morning", ["09:30"])
-                                time_str = mls_t_list[(day_offset * 7 + p) % len(mls_t_list)]
-                            elif day_of_week in [5, 6]:
-                                time_str = times_def.get("weekend", "21:00" if "KLEAGUE" not in l_key else "16:30")
-                            else:
-                                time_str = times_def.get("weekday", "19:30" if "KLEAGUE" in l_key else "04:00")
-                        elif sport_code == "BASKETBALL":
-                            if l_key == "NBA":
-                                nba_t_list = times_def.get("default_morning", ["09:30"])
-                                time_str = nba_t_list[(day_offset * 7 + p) % len(nba_t_list)]
-                            else:
-                                time_str = times_def.get("weekend", "14:00") if day_of_week in [5, 6] else times_def.get("weekday", "19:00")
-                        else: # VOLLEYBALL
-                            time_str = times_def.get("weekend", "14:00") if day_of_week in [5, 6] else times_def.get("weekday", "19:00")
-
-                        full_datetime_str = f"{target_date_str} {time_str}"
-                        stadium = stadiums.get(h_team, f"{h_team} 홈구장")
-
-                        official_id = f"SCHED_{l_key}_{target_date.strftime('%Y%m%d')}_{h_clean[:4]}_{a_clean[:4]}_{p}"
-                        new_match = Match(
-                            official_id=official_id,
-                            sport_code=sport_code,
-                            league_name=league_name,
-                            season=str(target_date.year),
-                            round_name="정규시즌 공식일정",
-                            match_date=full_datetime_str,
-                            stadium=stadium,
-                            home_team_name=h_team,
-                            away_team_name=a_team,
-                            home_score=0,
-                            away_score=0,
-                            status="SCHEDULED",
-                            is_customized=False
-                        )
-                        db.add(new_match)
-                        existing_key_set.add(match_key)
-                        l_added += 1
-                        total_added += 1
-
-                league_stats[league_name] = l_added
-
-            db.commit()
-            logger.info(f"[ScheduleManagerAgent] 대규모 동기화 완료: 총 {total_added}건의 신규 공식 일정 추가됨.")
+            for m in official_matches:
+                l = m.league_name or m.sport_code or "기타"
+                league_stats[l] = league_stats.get(l, 0) + 1
 
             cls._last_sync_time = now_kst.strftime("%Y-%m-%d %H:%M:%S KST")
             cls._last_sync_result = {
                 "status": "SUCCESS",
                 "sync_time": cls._last_sync_time,
-                "total_added": total_added,
-                "total_checked": total_checked,
-                "league_stats": league_stats
+                "purged_synthetic_count": deleted_synthetic,
+                "total_official_matches": len(official_matches),
+                "league_stats": league_stats,
+                "message": "공식 경기 일정 무결성 검증 완료 (가짜 일정 생성 차단됨)"
             }
             return cls._last_sync_result
 
         except Exception as e:
             if db:
                 db.rollback()
-            logger.error(f"[ScheduleManagerAgent] 동기화 중 에러 발생: {e}", exc_info=True)
+            logger.error(f"[ScheduleManagerAgent] 일정 관리 중 에러 발생: {e}", exc_info=True)
             cls._last_sync_result = {
                 "status": "ERROR",
                 "error": str(e),

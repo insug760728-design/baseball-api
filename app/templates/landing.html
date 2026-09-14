@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0">
   <script>
     try {
-      ['tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15'].forEach(function(k) {
+      ['tokeon_matches_cache_v99', 'tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15', 'tokeon_matches_cache_v98'].forEach(function(k) {
         localStorage.removeItem(k);
       });
     } catch(e) {}
@@ -3270,6 +3270,7 @@
 
       for (const m of (newList || [])) {
         if (!m) continue;
+        if (m.official_id && m.official_id.startsWith('SCHED_')) continue;
         if (m.id && seenIds.has(m.id)) continue;
         const dPart = (m.match_date || '').slice(0, 10);
         const key = `${m.sport_code}_${(m.home_team_name || '').trim()}_${(m.away_team_name || '').trim()}_${dPart}`;
@@ -3301,13 +3302,15 @@
         const d0Str = getKSTDateString(now);
         const rollingStartStr = getKSTDateString(new Date(now.getTime() - 86400000));
         
-        // ⚡ Phase 1 (초고속 0.2초): 어제/오늘/내일 활성 및 실시간 경기 (300건) 고속 로드 -> UI 즉시 표출
+        // ⚡ Phase 1 (초고속 0.2초): 어제/오늘/내일 공식 실시간 경기 (300건) 고속 로드 -> UI 즉시 표출
         try {
           const fastResp = await fetch(`/api/v1/matches?start_date=${rollingStartStr}&limit=300&order=asc`, { cache: 'no-store' });
           if (fastResp.ok) {
             const fastMatches = await fastResp.json();
             if (Array.isArray(fastMatches) && fastMatches.length > 0) {
-              allMatches = mergeUniqueMatches(fastMatches, allMatches);
+              // 공식 경기만 엄격 필터링 (가짜/합성 일정 배제)
+              const cleanMatches = fastMatches.filter(m => m && !(m.official_id && m.official_id.startsWith('SCHED_')));
+              allMatches = cleanMatches;
               checkScoreChangesAndNotify(allMatches);
               window.matchesLoadedInitial = true;
               updateScheduleTabCounts();
@@ -3316,7 +3319,7 @@
               renderRightColLiveRelay();
               initRealTimeSportsTicker();
               try {
-                localStorage.setItem('tokeon_matches_cache_stable', JSON.stringify(allMatches));
+                localStorage.setItem('tokeon_matches_cache_v99', JSON.stringify(allMatches));
               } catch(e) {}
             }
           }
@@ -3329,7 +3332,7 @@
         // Fallback: If still empty, load from localStorage
         if (!allMatches || allMatches.length === 0) {
           try {
-            const cached = localStorage.getItem('tokeon_matches_cache_stable');
+            const cached = localStorage.getItem('tokeon_matches_cache_v99');
             if (cached) {
               const parsed = JSON.parse(cached);
               if (Array.isArray(parsed) && parsed.length > 0) {
@@ -3360,7 +3363,7 @@
         console.error('Match strip error:', e);
         if (!allMatches || allMatches.length === 0) {
           try {
-            const cached = localStorage.getItem('tokeon_matches_cache_stable');
+            const cached = localStorage.getItem('tokeon_matches_cache_v99');
             if (cached) {
               const parsed = JSON.parse(cached);
               if (Array.isArray(parsed) && parsed.length > 0) {
@@ -8171,10 +8174,11 @@ function getFullModalMatchList() {
       // ⚡ 0초(0ms) 즉시 렌더링: 브라우저 캐시가 있으면 대기 없이 즉각 경기 목록 & 전광판 표출
       try {
         // Purge legacy numeric version caches once
-        for (let i = 1; i <= 30; i++) {
+        try { localStorage.removeItem('tokeon_matches_cache_stable'); } catch(e) {}
+        for (let i = 1; i <= 98; i++) {
           try { localStorage.removeItem('tokeon_matches_cache_v' + i); } catch (e) {}
         }
-        const cached = localStorage.getItem('tokeon_matches_cache_stable');
+        const cached = localStorage.getItem('tokeon_matches_cache_v99');
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Array.isArray(parsed) && parsed.length > 0) {
