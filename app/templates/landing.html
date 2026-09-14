@@ -1939,28 +1939,28 @@
         </div>
 
         <!-- 3. [우측 40%] 실시간 LIVE 텍스트 센터 (다이아몬드 베이스 불빛 + BSO 전광판 + 멀티 선택 라이브 중계) -->
-        <div class="col-dash-right" id="rightColCommunity">
-          <div class="dash-card-column">
+        <div class="col-dash-right" id="rightColCommunity" style="background: #0b1120; border-radius: 10px;">
+          <div class="dash-card-column" style="background: #0b1120; border: 1.5px solid #1e293b; border-radius: 10px; color: #f8fafc;">
             
             <!-- Mobile Return Helper Button (모바일 모드에서만 표시) -->
             <div class="p-1 pb-0 d-none" id="mobileReturnToScheduleBtn2">
-              <button class="btn btn-sm w-100 fw-bold py-1.5" onclick="switchMobileTab('schedule')" style="background: #eff6ff; border: 1px solid #1d4ed8; color: #1d4ed8; border-radius: 6px; font-size: 0.82rem;">
+              <button class="btn btn-sm w-100 fw-bold py-1.5" onclick="switchMobileTab('schedule')" style="background: #1e293b; border: 1px solid #3b82f6; color: #60a5fa; border-radius: 6px; font-size: 0.82rem;">
                 <i class="bi bi-chevron-left me-1"></i>← 전체 경기 일정 목록으로 돌아가기
               </button>
             </div>
 
-            <div class="dash-card-header pb-1.5">
+            <div class="dash-card-header pb-1.5" style="background: #0f172a; border-bottom: 1.5px solid #1e293b; border-top-left-radius: 8px; border-top-right-radius: 8px;">
               <!-- Live Relay Header with Status and Match Count -->
               <div class="d-flex justify-content-between align-items-center mb-1.5 flex-nowrap">
-                <span class="fw-bold text-dark text-nowrap" style="font-size: 0.86rem;">
-                  <i class="bi bi-broadcast text-danger me-1"></i>실시간 LIVE 텍스트 센터
+                <span class="fw-bold text-white text-nowrap" style="font-size: 0.88rem;">
+                  <i class="bi bi-broadcast text-danger me-1"></i>실시간 LIVE 중계 센터
                 </span>
                 <div class="d-flex align-items-center gap-1">
-                  <span class="badge" style="background: #fef2f2; border: 1px solid #fecaca; font-size: 0.68rem; color: #dc2626; padding: 2px 6px;">
+                  <span class="badge" style="background: rgba(220, 38, 38, 0.15); border: 1px solid #ef4444; font-size: 0.68rem; color: #f87171; padding: 2px 6px;">
                     <span style="width: 5px; height: 5px; background-color: #ef4444; border-radius: 50%; display: inline-block; animation: pulseGlow 1.2s infinite;" class="me-0.5"></span>
                     <span id="wsStatusBadge">1초 초고속 연동</span>
                   </span>
-                  <span class="badge bg-light border text-dark px-1.5 py-0.5" style="font-size: 0.68rem;">
+                  <span class="badge bg-dark border border-secondary text-light px-1.5 py-0.5" style="font-size: 0.68rem;">
                     LIVE <b class="text-danger" id="rightLiveCountBadge">0</b>경기
                   </span>
                 </div>
@@ -1968,28 +1968,28 @@
 
               <!-- Live Match Multi-Select Chips Bar -->
               <div class="d-flex gap-1 overflow-x-auto py-0.5" id="liveRelayMatchChips" style="scrollbar-width: none;">
-                <button class="btn btn-sm btn-danger active py-0 px-2 fw-bold text-nowrap" id="chipLiveRelayALL" onclick="setLiveRelayFilter('ALL')" style="font-size: 0.70rem; border-radius: 4px;">
+                <button class="btn btn-sm btn-danger active py-0 px-2 fw-bold text-nowrap" id="chipLiveRelayALL" onclick="setLiveRelayFilter('ALL')" style="font-size: 0.70rem; border-radius: 4px; background: #dc2626; border: 1px solid #ef4444;">
                   ⚡ 전체 LIVE 모아보기
                 </button>
               </div>
             </div>
 
             <!-- Real-time Live Relay Multi / Single Match Cards Body -->
-            <div class="dash-card-body p-2" id="rightColLiveRelayBody" style="overflow-y: auto;">
+            <div class="dash-card-body p-2" id="rightColLiveRelayBody" style="overflow-y: auto; background: #0b1120;">
               <div class="text-center text-muted py-5">
                 <div class="spinner-border spinner-border-sm text-danger mb-2" role="status"></div>
-                <div>실시간 라이브 데이터를 불러오는 중...</div>
+                <div class="text-light">실시간 라이브 데이터를 불러오는 중...</div>
               </div>
             </div>
 
             <!-- Bottom Quick Filter & Auto-Sync Status Bar -->
-            <div class="p-2 border-top d-flex justify-content-between align-items-center" style="flex-shrink: 0; background: #f8fafc; border-color: #e5e7eb !important;">
+            <div class="p-2 border-top d-flex justify-content-between align-items-center" style="flex-shrink: 0; background: #0f172a; border-color: #1e293b !important; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
               <div class="d-flex align-items-center gap-1">
-                <button class="btn btn-xs btn-outline-secondary py-0.5 px-2 fw-bold" id="btnLiveFilterSportALL" onclick="setLiveRelaySport('ALL')" style="font-size: 0.68rem;">전체</button>
-                <button class="btn btn-xs btn-outline-secondary py-0.5 px-2 fw-bold" id="btnLiveFilterSportBASEBALL" onclick="setLiveRelaySport('BASEBALL')" style="font-size: 0.68rem;">⚾야구</button>
-                <button class="btn btn-xs btn-outline-secondary py-0.5 px-2 fw-bold" id="btnLiveFilterSportSOCCER" onclick="setLiveRelaySport('SOCCER')" style="font-size: 0.68rem;">⚽축구</button>
+                <button class="btn btn-xs btn-outline-light py-0.5 px-2 fw-bold" id="btnLiveFilterSportALL" onclick="setLiveRelaySport('ALL')" style="font-size: 0.68rem;">전체</button>
+                <button class="btn btn-xs btn-outline-light py-0.5 px-2 fw-bold" id="btnLiveFilterSportBASEBALL" onclick="setLiveRelaySport('BASEBALL')" style="font-size: 0.68rem;">⚾야구</button>
+                <button class="btn btn-xs btn-outline-light py-0.5 px-2 fw-bold" id="btnLiveFilterSportSOCCER" onclick="setLiveRelaySport('SOCCER')" style="font-size: 0.68rem;">⚽축구</button>
               </div>
-              <span class="text-muted" style="font-size: 0.68rem;">
+              <span class="text-light" style="font-size: 0.68rem;">
                 <i class="bi bi-lightning-charge-fill me-0.5 text-warning"></i>1초 초고속 다이아몬드 연동
               </span>
             </div>
@@ -14464,14 +14464,14 @@ function getFullModalMatchList() {
       container.innerHTML = `
         <div class="live-relay-wrapper">
           <!-- 1. Top Match Score Card -->
-          <div class="p-2.5 rounded-3 mb-2" style="background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
-            <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom" style="border-color: #f1f5f9 !important;">
-              <span class="badge bg-light text-dark border fw-bold" style="font-size: 0.72rem;">
+          <div class="p-2.5 rounded-3 mb-2 shadow-lg" style="background: #1e293b; border: 1.5px solid #334155; color: #f8fafc;">
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5" style="border-bottom: 1px solid #334155;">
+              <span class="badge bg-dark text-light border border-secondary fw-bold" style="font-size: 0.72rem;">
                 ${targetMatch.league_name || sport} · ${targetMatch.match_date ? targetMatch.match_date.slice(5, 16) : ''}
               </span>
               <div class="d-flex align-items-center gap-1.5">
                 ${statusBadge}
-                <button class="btn btn-sm btn-outline-secondary py-0 px-1.5 fw-bold" onclick="openMatchModal(${targetMatch.id})" style="font-size: 0.70rem; border-radius: 4px;" title="상세 모달 팝업으로 보기">
+                <button class="btn btn-sm btn-outline-light py-0 px-1.5 fw-bold" onclick="openMatchModal(${targetMatch.id})" style="font-size: 0.70rem; border-radius: 4px;" title="상세 모달 팝업으로 보기">
                   <i class="bi bi-arrows-fullscreen me-0.5"></i>확대
                 </button>
               </div>
@@ -14480,19 +14480,19 @@ function getFullModalMatchList() {
             <!-- Teams & Big Scoreboard -->
             <div class="row align-items-center text-center g-1 py-1">
               <div class="col-5">
-                <div class="fw-bold text-truncate" style="font-size: 1.05rem; color: #0f172a;">
-                  <span class="badge me-1" style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; font-size:0.68rem; padding:2px 4px;">홈</span>${targetMatch.home_team_name}
+                <div class="fw-bold text-truncate" style="font-size: 1.05rem; color: #ffffff;">
+                  <span class="badge me-1" style="background:#0f172a; color:#60a5fa; border:1px solid #3b82f6; font-size:0.68rem; padding:2px 4px;">홈</span>${targetMatch.home_team_name}
                 </div>
               </div>
               <div class="col-2">
                 ${(targetMatch.status === 'SCHEDULED' && !isLiveDemoMode)
-                  ? `<span class="badge bg-light text-primary border fw-bold px-2 py-1" style="font-size: 0.85rem;">VS</span>`
-                  : `<div class="fw-bold text-danger fs-4" style="letter-spacing: 1px; font-family: 'Segoe UI', system-ui, sans-serif;">${scoreH} <span class="text-muted fs-6">:</span> ${scoreA}</div>`
+                  ? `<span class="badge bg-dark text-warning border border-warning fw-bold px-2 py-1" style="font-size: 0.85rem;">VS</span>`
+                  : `<div class="fw-bold text-danger fs-3" style="letter-spacing: 1px; font-family: 'Segoe UI', system-ui, sans-serif;">${scoreH} <span class="text-light fs-5">:</span> ${scoreA}</div>`
                 }
               </div>
               <div class="col-5">
-                <div class="fw-bold text-truncate" style="font-size: 1.05rem; color: #0f172a;">
-                  ${targetMatch.away_team_name}<span class="badge ms-1" style="background:#f1f5f9; color:#0f172a; border:1px solid #cbd5e1; font-size:0.68rem; padding:2px 4px;">원정</span>
+                <div class="fw-bold text-truncate" style="font-size: 1.05rem; color: #ffffff;">
+                  ${targetMatch.away_team_name}<span class="badge ms-1" style="background:#0f172a; color:#f87171; border:1px solid #ef4444; font-size:0.68rem; padding:2px 4px;">원정</span>
                 </div>
               </div>
             </div>
@@ -14502,11 +14502,11 @@ function getFullModalMatchList() {
           ${widgetHtml}
 
           <!-- 3. Bottom Action & Analysis Quick-link -->
-          <div class="p-2 rounded-2 mt-2 d-flex justify-content-between align-items-center" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-            <span class="small text-secondary fw-bold" style="font-size: 0.74rem;">
-              <i class="bi bi-info-circle me-1 text-primary"></i>선수별 상세 기록과 세이버메트릭스 분석이 필요하신가요?
+          <div class="p-2 rounded-2 mt-2 d-flex justify-content-between align-items-center" style="background: #0f172a; border: 1px solid #334155;">
+            <span class="small text-light fw-bold" style="font-size: 0.74rem;">
+              <i class="bi bi-info-circle me-1 text-info"></i>선수별 상세 기록과 세이버메트릭스 분석이 필요하신가요?
             </span>
-            <button class="btn btn-sm btn-outline-dark py-1 px-2.5 fw-bold" onclick="switchCenterViewMode('SABER')" style="font-size: 0.74rem; border-radius: 6px;">
+            <button class="btn btn-sm btn-outline-info py-1 px-2.5 fw-bold" onclick="switchCenterViewMode('SABER')" style="font-size: 0.74rem; border-radius: 6px;">
               📊 1:1 세이버 분석실 보기 →
             </button>
           </div>
@@ -15286,20 +15286,42 @@ function getFullModalMatchList() {
       if (topBadge) topBadge.innerText = liveList.length;
       if (rightBadge) rightBadge.innerText = liveList.length;
 
+      // Determine target matches to display
+      let targetMatches = [];
+      if (selectedLiveRelayMatchId && selectedLiveRelayMatchId !== 'ALL') {
+        const found = matches.find(m => String(m.id) === String(selectedLiveRelayMatchId));
+        if (found) {
+          targetMatches = [found];
+        }
+      }
+
+      if (targetMatches.length === 0) {
+        if (liveList.length > 0) {
+          targetMatches = liveList;
+        } else {
+          let pool = matches;
+          if (selectedLiveRelaySport !== 'ALL') {
+            pool = pool.filter(m => m.sport_code === selectedLiveRelaySport);
+          }
+          targetMatches = pool.slice(0, 3);
+        }
+      }
+
       // Update chips bar
       if (chipsBar) {
         let chipsHtml = `
-          <button class="btn btn-sm ${selectedLiveRelayMatchId === 'ALL' ? 'btn-danger active text-white' : 'btn-outline-secondary'} py-0 px-2 fw-bold text-nowrap" id="chipLiveRelayALL" onclick="setLiveRelayFilter('ALL')" style="font-size: 0.70rem; border-radius: 4px;">
+          <button class="btn btn-sm ${selectedLiveRelayMatchId === 'ALL' ? 'btn-danger active text-white' : 'btn-outline-light text-light'} py-0.5 px-2 fw-bold text-nowrap" id="chipLiveRelayALL" onclick="setLiveRelayFilter('ALL')" style="font-size: 0.70rem; border-radius: 4px; background: ${selectedLiveRelayMatchId === 'ALL' ? '#dc2626' : '#1e293b'}; border: 1px solid ${selectedLiveRelayMatchId === 'ALL' ? '#ef4444' : '#334155'};">
             ⚡ 전체 LIVE (${liveList.length})
           </button>
         `;
-        liveList.forEach(m => {
+        const displayPool = liveList.length > 0 ? liveList : matches.slice(0, 8);
+        displayPool.forEach(m => {
           const isSel = (String(selectedLiveRelayMatchId) === String(m.id));
           const sportIcon = m.sport_code === 'BASEBALL' ? '⚾' : (m.sport_code === 'BASKETBALL' ? '🏀' : '⚽');
           const hName = (m.home_team_name || '').slice(0, 4);
           const aName = (m.away_team_name || '').slice(0, 4);
           chipsHtml += `
-            <button class="btn btn-sm ${isSel ? 'btn-primary active text-white' : 'btn-outline-secondary'} py-0 px-2 fw-bold text-nowrap" onclick="setLiveRelayFilter(${m.id})" style="font-size: 0.70rem; border-radius: 4px;">
+            <button class="btn btn-sm ${isSel ? 'btn-primary active text-white' : 'btn-outline-light text-light'} py-0.5 px-2 fw-bold text-nowrap" onclick="setLiveRelayFilter(${m.id})" style="font-size: 0.70rem; border-radius: 4px; background: ${isSel ? '#2563eb' : '#1e293b'}; border: 1px solid ${isSel ? '#3b82f6' : '#334155'};">
               ${sportIcon} ${hName} vs ${aName}
             </button>
           `;
@@ -15309,64 +15331,15 @@ function getFullModalMatchList() {
 
       if (!container) return;
 
-      if (liveList.length === 0) {
-        const nowKstDateTime = getKSTDateTimeString(now);
-        const d0Str = getKSTDateString(now);
-        const d1Str = getKSTDateString(new Date(now.getTime() + 86400000));
-
-        // 현재 시간 이후의 실제 예정 경기만 시간순 오름차순으로 정렬
-        const upcomingMatches = matches
-          .filter(m => m.status === 'SCHEDULED' && (m.match_date || '') >= nowKstDateTime)
-          .sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''))
-          .slice(0, 4);
-
-        let upcomingHtml = '';
-        upcomingMatches.forEach(um => {
-          const spIcon = um.sport_code === 'BASEBALL' ? '⚾' : (um.sport_code === 'BASKETBALL' ? '🏀' : '⚽');
-          const mDate = (um.match_date || '').slice(0, 10);
-          const mTime = (um.match_date || '').slice(11, 16);
-          let dateBadgeText = `${mDate.slice(5, 7)}/${mDate.slice(8, 10)} ${mTime}`;
-          let dateBadgeClass = 'bg-light text-dark border';
-
-          if (mDate === d0Str) {
-            dateBadgeText = `오늘 ${mTime}`;
-            dateBadgeClass = 'bg-primary text-white';
-          } else if (mDate === d1Str) {
-            dateBadgeText = `내일 ${mTime}`;
-            dateBadgeClass = 'bg-secondary text-white';
-          }
-
-          upcomingHtml += `
-            <div class="p-2 mb-1.5 rounded-2 border d-flex justify-content-between align-items-center" style="background: #ffffff; border-color: #e5e7eb !important;">
-              <div class="d-flex align-items-center gap-1.5 text-truncate" style="min-width: 0; flex: 1;">
-                <span class="badge bg-dark" style="font-size: 0.65rem; flex-shrink: 0;">${spIcon} ${um.league_name || um.sport_code}</span>
-                <strong class="text-truncate" style="font-size: 0.78rem; color: #111827;">${um.home_team_name} vs ${um.away_team_name}</strong>
-              </div>
-              <span class="badge ${dateBadgeClass} ms-1.5 fw-bold" style="font-size: 0.68rem; flex-shrink: 0;">${dateBadgeText}</span>
-            </div>
-          `;
-        });
-
+      if (targetMatches.length === 0) {
         container.innerHTML = `
-          <div class="text-center py-4 px-2">
-            <div style="font-size: 2.2rem;" class="mb-2">☕</div>
-            <div class="fw-bold text-dark fs-6 mb-1">현재 진행 중인 실시간 LIVE 경기가 없습니다.</div>
-            <div class="text-muted small mb-3">경기 시작 5분 전부터 1초 초고속 다이아몬드 베이스 불빛과 실시간 문자중계가 자동으로 시작됩니다.</div>
-            ${upcomingMatches.length > 0 ? `
-              <div class="text-start mt-3">
-                <div class="small fw-bold text-secondary mb-1.5"><i class="bi bi-clock-history me-1 text-primary"></i>다음 예정 경기</div>
-                ${upcomingHtml}
-              </div>
-            ` : ''}
+          <div class="text-center py-5 px-3" style="background: #0b1120; color: #94a3b8;">
+            <div style="font-size: 2.2rem;" class="mb-2">📡</div>
+            <div class="fw-bold text-white fs-6 mb-1">등록된 경기 중계 데이터가 없습니다.</div>
+            <div class="small">좌측 경기 목록에서 경기를 선택해 주세요.</div>
           </div>
         `;
         return;
-      }
-
-      let targetMatches = liveList;
-      if (selectedLiveRelayMatchId !== 'ALL') {
-        const single = liveList.find(m => String(m.id) === String(selectedLiveRelayMatchId)) || matches.find(m => String(m.id) === String(selectedLiveRelayMatchId));
-        if (single) targetMatches = [single];
       }
 
       let cardsHtml = '';
@@ -15374,6 +15347,14 @@ function getFullModalMatchList() {
         const st = getLiveMatchState(m);
         const isBaseball = (m.sport_code === 'BASEBALL');
         const isSoccer = (m.sport_code === 'SOCCER');
+        const isLive = (m.status === 'LIVE');
+        const isSched = (m.status === 'SCHEDULED');
+        const isFin = (m.status === 'FINISHED');
+        const statusBadge = isLive 
+          ? `<span class="badge bg-danger text-white fw-bold py-0.5 px-1.5" style="font-size: 0.68rem; animation: pulseGlow 1.2s infinite;"><i class="bi bi-broadcast me-0.5"></i>LIVE</span>`
+          : (isFin 
+              ? `<span class="badge bg-secondary text-white fw-bold py-0.5 px-1.5" style="font-size: 0.68rem;">종료</span>` 
+              : `<span class="badge bg-primary text-white fw-bold py-0.5 px-1.5" style="font-size: 0.68rem;">예정 (${(m.match_date || '').slice(11, 16)})</span>`);
 
         if (isBaseball) {
           const b1 = st.base1;
@@ -15388,39 +15369,41 @@ function getFullModalMatchList() {
             (b1 ? '1루' : '주자 없음'))))));
 
           cardsHtml += `
-            <div class="p-2 mb-2.5 rounded-2 border shadow-sm" style="background: #ffffff; border-color: #cbd5e1 !important;">
+            <div class="p-2.5 mb-3 rounded-3 shadow-lg" style="background: #1e293b; border: 1.5px solid #334155; color: #f8fafc;">
               <!-- Header: League & Inning & Score -->
-              <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+              <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5" style="border-bottom: 1px solid #334155;">
                 <div class="d-flex align-items-center gap-1.5">
-                  <span class="badge bg-danger fw-bold" style="font-size: 0.68rem;"><i class="bi bi-broadcast me-0.5"></i>LIVE</span>
-                  <span class="badge bg-dark fw-bold" style="font-size: 0.68rem;">${m.league_name || 'MLB'}</span>
-                  <span class="badge bg-danger text-white fw-bold" style="font-size: 0.72rem;">${st.inning_text || '9회말'}</span>
-                  <span class="text-danger fw-bold small" style="font-size: 0.72rem;">${st.outs}아웃 (${baseStateText})</span>
+                  ${statusBadge}
+                  <span class="badge bg-dark fw-bold border border-secondary" style="font-size: 0.68rem;">${m.league_name || 'MLB'}</span>
+                  <span class="badge bg-danger text-white fw-bold" style="font-size: 0.72rem;">${st.inning_text || (isLive ? '9회말' : '경기 대기')}</span>
+                  <span class="text-warning fw-bold small" style="font-size: 0.72rem;">${st.outs}아웃 (${baseStateText})</span>
                 </div>
-                <button class="btn btn-xs btn-outline-primary py-0 px-1.5 fw-bold" onclick="selectPredMatch(${m.id})" style="font-size: 0.65rem;">
+                <button class="btn btn-xs btn-outline-info py-0 px-2 fw-bold" onclick="selectPredMatch(${m.id})" style="font-size: 0.68rem; border-radius: 4px;">
                   📊 세이버 분석
                 </button>
               </div>
 
               <!-- Match Score Banner -->
-              <div class="d-flex justify-content-between align-items-center px-2 py-1 mb-2 rounded" style="background: #0f172a; color: #ffffff;">
-                <div class="d-flex align-items-center gap-1.5">
-                  <strong style="font-size: 0.88rem; color: #ffffff;">${m.home_team_name}</strong>
-                  <span class="badge bg-primary fs-6 fw-bold px-2 py-0.5">${m.home_score ?? st.score_h}</span>
+              <div class="d-flex justify-content-between align-items-center px-3 py-2 mb-2.5 rounded-2" style="background: #0f172a; border: 1px solid #334155; color: #ffffff;">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-secondary" style="font-size: 0.62rem;">홈</span>
+                  <strong style="font-size: 0.95rem; color: #ffffff;">${m.home_team_name}</strong>
+                  <span class="badge bg-primary fs-5 fw-bold px-2 py-0.5">${m.home_score ?? st.score_h}</span>
                 </div>
-                <span class="text-secondary fw-bold" style="font-size: 0.78rem;">VS</span>
-                <div class="d-flex align-items-center gap-1.5">
-                  <span class="badge bg-danger fs-6 fw-bold px-2 py-0.5">${m.away_score ?? st.score_a}</span>
-                  <strong style="font-size: 0.88rem; color: #ffffff;">${m.away_team_name}</strong>
+                <span class="text-secondary fw-bold fs-6">VS</span>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-danger fs-5 fw-bold px-2 py-0.5">${m.away_score ?? st.score_a}</span>
+                  <strong style="font-size: 0.95rem; color: #ffffff;">${m.away_team_name}</strong>
+                  <span class="badge bg-secondary" style="font-size: 0.62rem;">원정</span>
                 </div>
               </div>
 
               <!-- Mini Baseball Diamond & BSO LED Display Grid -->
-              <div class="row g-1 mb-2">
+              <div class="row g-2 mb-2">
                 <!-- Left: Diamond with illuminated base lights -->
                 <div class="col-5">
                   <div class="p-1 rounded text-center" style="background: #0f172a; border: 1px solid #334155; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                    <svg width="105" height="90" viewBox="0 0 105 90" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
+                    <svg width="115" height="95" viewBox="0 0 105 90" style="filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));">
                       <!-- Infield Dirt Diamond -->
                       <polygon points="52,15 88,48 52,78 16,48" fill="#78350f" stroke="#a16207" stroke-width="1" />
                       <!-- Infield Grass -->
@@ -15461,7 +15444,7 @@ function getFullModalMatchList() {
                         <polygon points="0,-3 4,-1 3,4 -3,4 -4,-1" fill="#ffffff" stroke="#94a3b8" stroke-width="1" />
                       </g>
                     </svg>
-                    <div class="mt-0.5 text-warning fw-bold" style="font-size: 0.65rem;">
+                    <div class="mt-1 text-warning fw-bold" style="font-size: 0.68rem;">
                       ${baseStateText}
                     </div>
                   </div>
@@ -15469,36 +15452,36 @@ function getFullModalMatchList() {
 
                 <!-- Right: BSO LED Counter & Matchup Info -->
                 <div class="col-7">
-                  <div class="p-1.5 rounded" style="background: #0f172a; border: 1px solid #334155; height: 100%;">
+                  <div class="p-2 rounded" style="background: #0f172a; border: 1px solid #334155; height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
                     <!-- BSO Display -->
-                    <div class="d-flex justify-content-between align-items-center mb-1 px-1 py-0.5 rounded" style="background: rgba(255,255,255,0.05); font-family: monospace; font-size: 0.72rem; font-weight: 800;">
-                      <div class="d-flex align-items-center gap-0.5">
+                    <div class="d-flex justify-content-between align-items-center mb-1.5 px-2 py-1 rounded" style="background: rgba(255,255,255,0.06); font-family: monospace; font-size: 0.76rem; font-weight: 800;">
+                      <div class="d-flex align-items-center gap-1">
                         <span style="color: #4ade80;">B</span>
-                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${st.balls >= 1 ? '#4ade80' : '#334155'}; box-shadow:${st.balls >= 1 ? '0 0 4px #4ade80' : 'none'};"></span>
-                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${st.balls >= 2 ? '#4ade80' : '#334155'}; box-shadow:${st.balls >= 2 ? '0 0 4px #4ade80' : 'none'};"></span>
-                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${st.balls >= 3 ? '#4ade80' : '#334155'}; box-shadow:${st.balls >= 3 ? '0 0 4px #4ade80' : 'none'};"></span>
+                        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${st.balls >= 1 ? '#4ade80' : '#334155'}; box-shadow:${st.balls >= 1 ? '0 0 5px #4ade80' : 'none'};"></span>
+                        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${st.balls >= 2 ? '#4ade80' : '#334155'}; box-shadow:${st.balls >= 2 ? '0 0 5px #4ade80' : 'none'};"></span>
+                        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${st.balls >= 3 ? '#4ade80' : '#334155'}; box-shadow:${st.balls >= 3 ? '0 0 5px #4ade80' : 'none'};"></span>
                       </div>
-                      <div class="d-flex align-items-center gap-0.5">
+                      <div class="d-flex align-items-center gap-1">
                         <span style="color: #facc15;">S</span>
-                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${st.strikes >= 1 ? '#facc15' : '#334155'}; box-shadow:${st.strikes >= 1 ? '0 0 4px #facc15' : 'none'};"></span>
-                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${st.strikes >= 2 ? '#facc15' : '#334155'}; box-shadow:${st.strikes >= 2 ? '0 0 4px #facc15' : 'none'};"></span>
+                        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${st.strikes >= 1 ? '#facc15' : '#334155'}; box-shadow:${st.strikes >= 1 ? '0 0 5px #facc15' : 'none'};"></span>
+                        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${st.strikes >= 2 ? '#facc15' : '#334155'}; box-shadow:${st.strikes >= 2 ? '0 0 5px #facc15' : 'none'};"></span>
                       </div>
-                      <div class="d-flex align-items-center gap-0.5">
+                      <div class="d-flex align-items-center gap-1">
                         <span style="color: #f87171;">O</span>
-                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${st.outs >= 1 ? '#f87171' : '#334155'}; box-shadow:${st.outs >= 1 ? '0 0 4px #f87171' : 'none'};"></span>
-                        <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:${st.outs >= 2 ? '#f87171' : '#334155'}; box-shadow:${st.outs >= 2 ? '0 0 4px #f87171' : 'none'};"></span>
+                        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${st.outs >= 1 ? '#f87171' : '#334155'}; box-shadow:${st.outs >= 1 ? '0 0 5px #f87171' : 'none'};"></span>
+                        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${st.outs >= 2 ? '#f87171' : '#334155'}; box-shadow:${st.outs >= 2 ? '0 0 5px #f87171' : 'none'};"></span>
                       </div>
                     </div>
 
                     <!-- Pitcher & Batter Info -->
-                    <div class="text-white" style="font-size: 0.68rem; line-height: 1.4;">
+                    <div class="text-white" style="font-size: 0.70rem; line-height: 1.5;">
                       <div class="d-flex justify-content-between">
                         <span class="text-secondary"><i class="bi bi-person-fill text-warning me-0.5"></i>투수:</span>
-                        <strong class="text-white text-truncate" style="max-width: 90px;">${st.pitcher_name}</strong>
+                        <strong class="text-white text-truncate" style="max-width: 100px;">${st.pitcher_name}</strong>
                       </div>
                       <div class="d-flex justify-content-between">
                         <span class="text-secondary"><i class="bi bi-person-badge text-info me-0.5"></i>타자:</span>
-                        <strong class="text-white text-truncate" style="max-width: 90px;">${st.batter_name}</strong>
+                        <strong class="text-white text-truncate" style="max-width: 100px;">${st.batter_name}</strong>
                       </div>
                     </div>
                   </div>
@@ -15506,52 +15489,52 @@ function getFullModalMatchList() {
               </div>
 
               <!-- Real-time Play-by-Play Text Feed -->
-              <div class="p-1.5 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+              <div class="p-2 rounded-2" style="background: #0f172a; border: 1px solid #334155;">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                  <span class="fw-bold text-dark" style="font-size: 0.70rem;"><i class="bi bi-chat-left-text-fill text-danger me-1"></i>실시간 플레이 텍스트</span>
-                  <span class="badge bg-danger" style="font-size: 0.60rem;">1초 연동</span>
+                  <span class="fw-bold text-light" style="font-size: 0.72rem;"><i class="bi bi-chat-left-text-fill text-danger me-1"></i>실시간 플레이 텍스트</span>
+                  <span class="badge bg-danger" style="font-size: 0.60rem;">1초 실시간 연동</span>
                 </div>
-                <div class="p-1.5 rounded bg-white border text-dark fw-bold" style="font-size: 0.74rem; line-height: 1.45; border-color: #cbd5e1 !important;">
-                  <span class="text-danger me-1">➔</span>${st.recent_play || '풀카운트 3-2 접전 중! 투구 대기'}
+                <div class="p-2 rounded text-white fw-bold" style="font-size: 0.76rem; line-height: 1.45; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);">
+                  <span class="text-warning me-1">➔</span>${st.recent_play || '풀카운트 3-2 접전 중! 투구 대기'}
                 </div>
               </div>
             </div>
           `;
         } else if (isSoccer) {
           cardsHtml += `
-            <div class="p-2 mb-2.5 rounded-2 border shadow-sm" style="background: #ffffff; border-color: #cbd5e1 !important;">
-              <!-- Header: League & Minute & Score -->
-              <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+            <div class="p-2.5 mb-3 rounded-3 shadow-lg" style="background: #1e293b; border: 1.5px solid #334155; color: #f8fafc;">
+              <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5" style="border-bottom: 1px solid #334155;">
                 <div class="d-flex align-items-center gap-1.5">
-                  <span class="badge bg-danger fw-bold" style="font-size: 0.68rem;"><i class="bi bi-broadcast me-0.5"></i>LIVE</span>
-                  <span class="badge bg-dark fw-bold" style="font-size: 0.68rem;">${m.league_name || 'SOCCER'}</span>
-                  <span class="badge bg-success text-white fw-bold" style="font-size: 0.72rem;">${st.match_minute || "78'"}</span>
+                  ${statusBadge}
+                  <span class="badge bg-dark fw-bold border border-secondary" style="font-size: 0.68rem;">${m.league_name || 'SOCCER'}</span>
+                  <span class="badge bg-success text-white fw-bold" style="font-size: 0.72rem;">${st.match_minute || (isLive ? "78'" : "대기")}</span>
                 </div>
-                <button class="btn btn-xs btn-outline-primary py-0 px-1.5 fw-bold" onclick="selectPredMatch(${m.id})" style="font-size: 0.65rem;">
+                <button class="btn btn-xs btn-outline-info py-0 px-2 fw-bold" onclick="selectPredMatch(${m.id})" style="font-size: 0.68rem; border-radius: 4px;">
                   📊 경기 분석
                 </button>
               </div>
 
-              <!-- Match Score Banner -->
-              <div class="d-flex justify-content-between align-items-center px-2 py-1.5 mb-2 rounded" style="background: #0f172a; color: #ffffff;">
-                <div class="d-flex align-items-center gap-1.5">
-                  <strong style="font-size: 0.88rem; color: #ffffff;">${m.home_team_name}</strong>
-                  <span class="badge bg-primary fs-6 fw-bold px-2 py-0.5">${m.home_score ?? st.score_h}</span>
+              <div class="d-flex justify-content-between align-items-center px-3 py-2 mb-2.5 rounded-2" style="background: #0f172a; border: 1px solid #334155; color: #ffffff;">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-secondary" style="font-size: 0.62rem;">홈</span>
+                  <strong style="font-size: 0.95rem; color: #ffffff;">${m.home_team_name}</strong>
+                  <span class="badge bg-primary fs-5 fw-bold px-2 py-0.5">${m.home_score ?? st.score_h}</span>
                 </div>
-                <span class="text-secondary fw-bold" style="font-size: 0.78rem;">VS</span>
-                <div class="d-flex align-items-center gap-1.5">
-                  <span class="badge bg-danger fs-6 fw-bold px-2 py-0.5">${m.away_score ?? st.score_a}</span>
-                  <strong style="font-size: 0.88rem; color: #ffffff;">${m.away_team_name}</strong>
+                <span class="text-secondary fw-bold fs-6">VS</span>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-danger fs-5 fw-bold px-2 py-0.5">${m.away_score ?? st.score_a}</span>
+                  <strong style="font-size: 0.95rem; color: #ffffff;">${m.away_team_name}</strong>
+                  <span class="badge bg-secondary" style="font-size: 0.62rem;">원정</span>
                 </div>
               </div>
 
               <!-- Real-time Event Feed -->
-              <div class="p-1.5 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+              <div class="p-2 rounded-2" style="background: #0f172a; border: 1px solid #334155;">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                  <span class="fw-bold text-dark" style="font-size: 0.70rem;"><i class="bi bi-chat-left-text-fill text-success me-1"></i>실시간 경기 상황</span>
+                  <span class="fw-bold text-light" style="font-size: 0.72rem;"><i class="bi bi-chat-left-text-fill text-success me-1"></i>실시간 경기 상황</span>
                   <span class="badge bg-success" style="font-size: 0.60rem;">LIVE</span>
                 </div>
-                <div class="p-1.5 rounded bg-white border text-dark fw-bold" style="font-size: 0.74rem; line-height: 1.45; border-color: #cbd5e1 !important;">
+                <div class="p-2 rounded text-white fw-bold" style="font-size: 0.76rem; line-height: 1.45; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);">
                   <span class="text-success me-1">⚽</span>${st.recent_event || '페널티 에어리어 부근 치열한 공방전 진행 중!'}
                 </div>
               </div>
@@ -15559,26 +15542,26 @@ function getFullModalMatchList() {
           `;
         } else {
           cardsHtml += `
-            <div class="p-2 mb-2.5 rounded-2 border shadow-sm" style="background: #ffffff; border-color: #cbd5e1 !important;">
-              <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+            <div class="p-2.5 mb-3 rounded-3 shadow-lg" style="background: #1e293b; border: 1.5px solid #334155; color: #f8fafc;">
+              <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5" style="border-bottom: 1px solid #334155;">
                 <div class="d-flex align-items-center gap-1.5">
-                  <span class="badge bg-danger fw-bold" style="font-size: 0.68rem;">LIVE</span>
-                  <span class="badge bg-dark fw-bold" style="font-size: 0.68rem;">${m.league_name || m.sport_code}</span>
-                  <span class="badge bg-warning text-dark fw-bold" style="font-size: 0.72rem;">${st.quarter || 'LIVE'}</span>
+                  ${statusBadge}
+                  <span class="badge bg-dark fw-bold border border-secondary" style="font-size: 0.68rem;">${m.league_name || m.sport_code}</span>
+                  <span class="badge bg-warning text-dark fw-bold" style="font-size: 0.72rem;">${st.quarter || 'Q3'}</span>
                 </div>
-                <button class="btn btn-xs btn-outline-primary py-0 px-1.5 fw-bold" onclick="selectPredMatch(${m.id})" style="font-size: 0.65rem;">
+                <button class="btn btn-xs btn-outline-info py-0 px-2 fw-bold" onclick="selectPredMatch(${m.id})" style="font-size: 0.68rem; border-radius: 4px;">
                   📊 경기 분석
                 </button>
               </div>
 
-              <div class="d-flex justify-content-between align-items-center px-2 py-1.5 mb-2 rounded" style="background: #0f172a; color: #ffffff;">
-                <strong style="font-size: 0.88rem; color: #ffffff;">${m.home_team_name}</strong>
-                <span class="badge bg-warning text-dark fs-6 fw-bold px-2 py-0.5">${m.home_score ?? st.score_h} : ${m.away_score ?? st.score_a}</span>
-                <strong style="font-size: 0.88rem; color: #ffffff;">${m.away_team_name}</strong>
+              <div class="d-flex justify-content-between align-items-center px-3 py-2 mb-2.5 rounded-2" style="background: #0f172a; border: 1px solid #334155; color: #ffffff;">
+                <strong style="font-size: 0.95rem; color: #ffffff;">${m.home_team_name}</strong>
+                <span class="badge bg-warning text-dark fs-5 fw-bold px-2.5 py-0.5">${m.home_score ?? st.score_h} : ${m.away_score ?? st.score_a}</span>
+                <strong style="font-size: 0.95rem; color: #ffffff;">${m.away_team_name}</strong>
               </div>
 
-              <div class="p-1.5 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                <div class="p-1.5 rounded bg-white border text-dark fw-bold" style="font-size: 0.74rem; line-height: 1.45; border-color: #cbd5e1 !important;">
+              <div class="p-2 rounded-2" style="background: #0f172a; border: 1px solid #334155;">
+                <div class="p-2 rounded text-white fw-bold" style="font-size: 0.76rem; line-height: 1.45; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);">
                   <span class="text-warning me-1">🏀</span>${st.recent_event || '치열한 점수 공방전 진행 중'}
                 </div>
               </div>
