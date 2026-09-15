@@ -9952,14 +9952,14 @@ function getFullModalMatchList() {
           aScoreHtml = `<span style="font-weight:900; color:#dc2626;">${aScore}</span>`;
         }
 
-        // Baseball Specific Live Stage: Home run, Hit, 3-Out, 4-Ball
+        // Baseball Specific Live Stage: Live Scoreboard & Stadium Diamond Board
         let liveBroadcastStageHtml = '';
         if (m.sport_code === 'BASEBALL') {
           const outDots = (st.outs >= 2) ? '🔴🔴' : (st.outs === 1 ? '🔴⚪' : '⚪⚪');
           
-          const eventSeed = ((m.id || 1) * 7 + Math.floor(diffMin / 2)) % 4;
           let eventBannerHtml = '';
-          if (eventSeed === 0) {
+          const activeEv = (typeof window._activeLivePlayEvents !== 'undefined' && window._activeLivePlayEvents) ? window._activeLivePlayEvents[m.id] : null;
+          if (activeEv && activeEv.type === 'HOMERUN') {
             // 💥 홈런 (HOMERUN) - 1·2·3루 ↔ 중계 '2번 왕복' 후 '홈런!' 멘트 폭발 ➡️ 약 5초 후 자동 꺼짐(소멸)
             eventBannerHtml = `
               <div class="live-baseball-track-container live-track-dismiss-homerun p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #451a03 0%, #78350f 50%, #451a03 100%); border:1.5px solid #f59e0b; box-shadow:0 3px 8px rgba(180,83,9,0.35); position:relative; overflow:hidden;">
@@ -9996,7 +9996,7 @@ function getFullModalMatchList() {
                 </div>
               </div>
             `;
-          } else if (eventSeed === 1) {
+          } else if (activeEv && activeEv.type === 'HIT') {
             // ⚾ 안타 (HIT) - 1·2·3루 ➡️ 중계 '1번만 이동' 후 '안타!' 멘트 점등 ➡️ 약 3.5초 후 자동 꺼짐(소멸)
             eventBannerHtml = `
               <div class="live-baseball-track-container live-track-dismiss-hit p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #064e3b 0%, #047857 50%, #064e3b 100%); border:1.5px solid #34d399; box-shadow:0 3px 8px rgba(4,120,87,0.35); position:relative; overflow:hidden;">
@@ -10029,50 +10029,6 @@ function getFullModalMatchList() {
                       </svg>
                     </div>
                     <span style="font-size:0.85rem; margin-left:-1px; filter:drop-shadow(0 0 4px #34d399);">✨</span>
-                  </div>
-                </div>
-              </div>
-            `;
-          } else if (eventSeed === 2) {
-            // 🚫 쓰리아웃 / 공수교대 (3 OUT) ➡️ 약 3.2초 후 자동 꺼짐(소멸)
-            eventBannerHtml = `
-              <div class="d-flex align-items-center justify-content-between px-2 py-1.5 rounded mb-1.5 live-track-dismiss-general" style="background: linear-gradient(90deg, #881337 0%, #be123c 50%, #881337 100%); color:#ffffff; overflow:hidden; box-shadow:0 2px 6px rgba(190,18,60,0.3); border:1.5px solid #f43f5e;">
-                <div class="d-flex align-items-center gap-1.5">
-                  <span class="badge bg-danger text-white fw-bold live-anim-3out-flash" style="font-size:0.64rem;"><i class="bi bi-x-circle-fill me-0.5"></i>3 OUT</span>
-                  <span class="fw-bold" style="font-size:0.75rem; letter-spacing:-0.2px; color:#fecdd3;">🚫 삼진 아웃! 잔루 이닝 종료 · 공수교대</span>
-                </div>
-                <div class="d-flex align-items-center gap-1 fw-bold" style="font-size:0.72rem; color:#facc15;">
-                  <span>🔴🔴🔴</span>
-                  <button type="button" class="btn-close btn-close-white ms-1" style="font-size:0.50rem; opacity:0.8;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>
-                </div>
-              </div>
-            `;
-          } else {
-            // 🚶‍♂️ 포볼 / 사사구 (FOUR-BALL / BB) ➡️ 약 3.2초 후 자동 꺼짐(소멸)
-            eventBannerHtml = `
-              <div class="live-baseball-track-container live-track-dismiss-general p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); border:1.5px solid #60a5fa; box-shadow:0 3px 8px rgba(37,99,235,0.3); position:relative; overflow:hidden;">
-                <!-- Caption Bar -->
-                <div class="d-flex justify-content-between align-items-center mb-1 text-white" style="font-size:0.72rem;">
-                  <div class="d-flex align-items-center gap-1.5">
-                    <span class="badge bg-primary text-white fw-bold px-1.5 py-0.5" style="font-size:0.64rem;">4 BALL</span>
-                    <span class="fw-bold" style="color:#93c5fd; font-size:0.75rem; letter-spacing:-0.2px;">🚶‍♂️ 볼넷 출루! 풀카운트 승부 끝 1루 진루!</span>
-                  </div>
-                  <div class="d-flex align-items-center gap-1">
-                    <span class="badge bg-primary text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">1루 출루</span>
-                    <button type="button" class="btn-close btn-close-white" style="font-size:0.50rem; opacity:0.8;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>
-                  </div>
-                </div>
-                <!-- Motion Track (1·2·3루 ➡️ 1루 진루) -->
-                <div class="live-baseball-motion-rail">
-                  <div class="d-flex align-items-center gap-0.5" style="position:absolute; left:6px; top:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#93c5fd; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
-                    <span>⚾ 타석</span>
-                  </div>
-                  <div class="d-flex align-items-center gap-0.5" style="position:absolute; right:6px; top:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#93c5fd; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
-                    <span>🟡 1루 베이스</span>
-                  </div>
-                  <!-- 주자 이동 -->
-                  <div class="live-anim-walk-one-trip">
-                    <span style="font-size:1.05rem; filter:drop-shadow(0 0 3px #60a5fa);">🚶‍♂️💨</span>
                   </div>
                 </div>
               </div>
@@ -16551,22 +16507,23 @@ function updateSlimPanel(matchId, type, contentHtml) {
     document.addEventListener('DOMContentLoaded', async () => {
       initAuthUser();
       initViewMode();
-      initPredictionSection(); // 0ms Instant Cache Render
+      initPredictionSection(); // 0ms Instant Server Data Render
       initRealTimeSportsTicker();
-      loadLiveMatches().catch(err => console.error('Matches load error:', err));
       startLiveUsersFluctuation();
       start4MinAiChatTimer();
-      // Guard against stuck loading skeleton on mobile networks
-      setTimeout(() => {
-        if (!window.matchesLoadedInitial || !allMatches || allMatches.length === 0) {
-          window.matchesLoadedInitial = true;
-          renderPredMatches();
-        }
-      }, 700);
-      // Defer community chat messages & live WebSocket by 2.5s for zero-latency initial UI paint
+      // If server data was already injected, render immediately and defer background delta sync by 3.5s
+      if (allMatches && allMatches.length > 0) {
+        window.matchesLoadedInitial = true;
+        renderPredMatches();
+        setTimeout(() => {
+          loadLiveMatches().catch(err => console.error('Matches background load error:', err));
+        }, 3500);
+      } else {
+        loadLiveMatches().catch(err => console.error('Matches load error:', err));
+      }
       setTimeout(() => {
         initCommunityAndWebSocket();
-      }, 2500);
+      }, 3000);
     });
 
   </script>
