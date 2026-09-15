@@ -8,7 +8,7 @@ class LivePollingAgent {
   constructor() {
     this._intervalId = null;
     this._isPolling = false;
-    this.intervalSeconds = 15;
+    this.intervalSeconds = 5;
     this._lastSyncTime = null;
     this._listeners = new Set();
   }
@@ -30,7 +30,7 @@ class LivePollingAgent {
     });
   }
 
-  start(intervalSeconds = 15) {
+  start(intervalSeconds = 5) {
     this.intervalSeconds = intervalSeconds;
     if (this._intervalId) clearInterval(this._intervalId);
 
