@@ -9766,8 +9766,8 @@ function getFullModalMatchList() {
         const hTrend = (hAnnounced && cachedPitchers && cachedPitchers.home && cachedPitchers.home.summary) ? getPitcherFormTrend(cachedPitchers.home) : (hAnnounced && typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: hClean }) : null);
         const aTrend = (aAnnounced && cachedPitchers && cachedPitchers.away && cachedPitchers.away.summary) ? getPitcherFormTrend(cachedPitchers.away) : (aAnnounced && typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: aClean }) : null);
 
-        const hEra = (hOfficial && hOfficial.era != null) ? hOfficial.era : ((hTrend && (hTrend.seasonEra || hTrend.era3g)) ? (hTrend.seasonEra || hTrend.era3g) : (cachedPitchers && cachedPitchers.home ? (cachedPitchers.home.season_era || cachedPitchers.home.era) : (hRot ? hRot.era : '')));
-        const aEra = (aOfficial && aOfficial.era != null) ? aOfficial.era : ((aTrend && (aTrend.seasonEra || aTrend.era3g)) ? (aTrend.seasonEra || aTrend.era3g) : (cachedPitchers && cachedPitchers.away ? (cachedPitchers.away.season_era || cachedPitchers.away.era) : (aRot ? aRot.era : '')));
+        const hEra = (hOfficial && hOfficial.era != null) ? hOfficial.era : ((hTrend && (hTrend.seasonEra || hTrend.era3g)) ? (hTrend.seasonEra || hTrend.era3g) : (cachedPitchers && cachedPitchers.home ? (cachedPitchers.home.season_era || cachedPitchers.home.era) : ''));
+        const aEra = (aOfficial && aOfficial.era != null) ? aOfficial.era : ((aTrend && (aTrend.seasonEra || aTrend.era3g)) ? (aTrend.seasonEra || aTrend.era3g) : (cachedPitchers && cachedPitchers.away ? (cachedPitchers.away.season_era || cachedPitchers.away.era) : ''));
 
         const hEraStr = (hAnnounced && hEra && hEra !== '-') ? `(ERA ${hEra})` : '';
         const aEraStr = (aAnnounced && aEra && aEra !== '-') ? `(ERA ${aEra})` : '';
@@ -16395,6 +16395,14 @@ function updateSlimPanel(matchId, type, contentHtml) {
       if (container) {
         container.innerHTML = buildTotoCanScoreboardTable(displayList);
       }
+    }
+
+    let currentLiveUsersCount = 664;
+    let liveUsersInterval = null;
+
+    function syncLiveUserCounts() {
+      const el = document.getElementById('topLiveUsersCount');
+      if (el) el.innerText = currentLiveUsersCount;
     }
 
     function startLiveUsersFluctuation() {
