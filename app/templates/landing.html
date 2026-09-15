@@ -15237,13 +15237,32 @@ function updateSlimPanel(matchId, type, contentHtml) {
       }
     }
 
+    function getLiveMatchState(m) {
+      if (!m) return {};
+      let ts = {};
+      if (m.details && m.details.team_stats) {
+        try {
+          ts = typeof m.details.team_stats === 'string' ? JSON.parse(m.details.team_stats) : m.details.team_stats;
+        } catch(e) {}
+      }
+      return {
+        base1: !!(ts.base1 || (ts.scoreboard && ts.scoreboard.base1)),
+        base2: !!(ts.base2 || (ts.scoreboard && ts.scoreboard.base2)),
+        base3: !!(ts.base3 || (ts.scoreboard && ts.scoreboard.base3)),
+        outs: Number(ts.outs || (ts.scoreboard && ts.scoreboard.outs) || 0),
+        inning_text: ts.current_inning || m.current_inning || '진행중',
+        match_time: ts.match_time || '전반',
+        quarter: ts.quarter || '진행중'
+      };
+    }
+
     function buildTotoCanScoreboardRow(m, idx) {
-      const isLive = (m.status === 'LIVE');
+      const isLive = (m.status === 'LIVE' || m.status === 'IN_PLAY' || m.status === '1H' || m.status === '2H' || m.status === 'HT');
       const isFin = (m.status === 'FINISHED');
       const st = getLiveMatchState(m);
 
-      const hScore = Number(m.home_score ?? (isLive ? st.score_h : 0));
-      const aScore = Number(m.away_score ?? (isLive ? st.score_a : 0));
+      const hScore = Number(m.home_score ?? 0);
+      const aScore = Number(m.away_score ?? 0);
       const hasScore = (m.home_score !== null && m.home_score !== undefined) || isLive || isFin;
 
       // Leading score highlighted in bold red (#dc2626)
@@ -15433,14 +15452,24 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const nowTs = Date.now();
 
       const liveCount = matches.filter(m => {
-        if (m.status !== 'LIVE') return false;
-        if (m.match_date) {
+        if (!m) return false;
+        if (m.status === 'LIVE' || m.status === 'IN_PLAY' || m.status === '1H' || m.status === '2H' || m.status === 'HT') {
+          if (m.match_date) {
+            try {
+              const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+              if ((nowTs - mTime) / (60 * 1000) > 240) return false;
+            } catch(e) {}
+          }
+          return true;
+        }
+        if (m.status === 'SCHEDULED' && m.match_date) {
           try {
             const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
-            if ((nowTs - mTime) / (60 * 1000) > 240) return false;
+            const diffMin = (nowTs - mTime) / (60 * 1000);
+            if (diffMin >= 0 && diffMin <= 210) return true;
           } catch(e) {}
         }
-        return true;
+        return false;
       }).length;
 
       if (topBadge) topBadge.innerText = liveCount;
