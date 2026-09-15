@@ -516,40 +516,147 @@
       transition: all 0.25s ease-in-out;
     }
 
-    @keyframes homerunFlyAnim {
-      0% { transform: translateX(-10px) translateY(4px) scale(0.85); opacity: 0.8; }
-      40% { transform: translateX(110px) translateY(-12px) scale(1.35) rotate(180deg); opacity: 1; filter: drop-shadow(0 0 6px #f59e0b); }
-      80% { transform: translateX(230px) translateY(0px) scale(1.1) rotate(360deg); opacity: 1; }
-      90% { transform: translateX(230px) translateY(0px) scale(1.2); }
-      100% { transform: translateX(-10px) translateY(4px) scale(0.85); opacity: 0.8; }
+    /* 진한 야구공 스타일 (선명한 외곽선 + 붉은 실밥 + 골드 글로우) */
+    .vivid-baseball-ball {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #0f172a;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.9), 0 3px 6px rgba(0,0,0,0.4);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
     }
 
-    @keyframes hitBounceAnim {
-      0% { transform: translateX(0px) translateY(0px) scale(0.9); }
-      25% { transform: translateX(45px) translateY(-10px) scale(1.15); }
-      50% { transform: translateX(90px) translateY(0px) scale(0.9); }
-      75% { transform: translateX(135px) translateY(-7px) scale(1.05); }
-      100% { transform: translateX(165px) translateY(0px) scale(1); }
+    /* 💥 홈런: 1루2루3루 ↔ 중계 '왕복 2번' 비행 애니메이션 */
+    @keyframes homerunTwoTripsBallAnim {
+      0% {
+        left: 0%;
+        transform: translateY(0px) rotate(0deg) scale(0.95);
+        filter: drop-shadow(0 0 4px #f59e0b);
+      }
+      12.5% {
+        transform: translateY(-8px) rotate(180deg) scale(1.35);
+      }
+      25% {
+        left: calc(100% - 28px);
+        transform: translateY(0px) rotate(360deg) scale(1.1);
+        filter: drop-shadow(0 0 8px #ef4444);
+      }
+      37.5% {
+        transform: translateY(-8px) rotate(540deg) scale(1.35);
+      }
+      50% {
+        left: 0%;
+        transform: translateY(0px) rotate(720deg) scale(0.95);
+        filter: drop-shadow(0 0 4px #f59e0b);
+      }
+      62.5% {
+        transform: translateY(-8px) rotate(900deg) scale(1.35);
+      }
+      75% {
+        left: calc(100% - 28px);
+        transform: translateY(0px) rotate(1080deg) scale(1.1);
+        filter: drop-shadow(0 0 8px #ef4444);
+      }
+      87.5% {
+        transform: translateY(-8px) rotate(1260deg) scale(1.35);
+      }
+      100% {
+        left: 0%;
+        transform: translateY(0px) rotate(1440deg) scale(0.95);
+        filter: drop-shadow(0 0 4px #f59e0b);
+      }
     }
 
-    @keyframes runnerWalkAnim {
-      0% { transform: translateX(0px); }
-      100% { transform: translateX(130px); }
+    /* 홈런 멘트: 2번 왕복 후/완료 시 강렬한 팝업 멘트 */
+    @keyframes homerunTextBurstAnim {
+      0%, 75% {
+        opacity: 0.88;
+        transform: scale(0.96);
+      }
+      80%, 100% {
+        opacity: 1;
+        transform: scale(1.08);
+        filter: drop-shadow(0 0 8px #fde047);
+      }
     }
 
+    /* ⚾ 안타: 1루2루3루 ➡️ 중계 '1번만 이동' 후 '안타!' 멘트 점등 */
+    @keyframes hitOneTripBallAnim {
+      0% {
+        left: 0%;
+        transform: translateY(0px) rotate(0deg) scale(0.9);
+      }
+      20% {
+        transform: translateY(-8px) rotate(120deg) scale(1.25);
+      }
+      40% {
+        left: calc(50% - 14px);
+        transform: translateY(0px) rotate(240deg) scale(0.95);
+      }
+      60% {
+        transform: translateY(-6px) rotate(320deg) scale(1.15);
+      }
+      75% {
+        left: calc(100% - 28px);
+        transform: translateY(0px) rotate(360deg) scale(1.05);
+        filter: drop-shadow(0 0 8px #22c55e);
+      }
+      90% {
+        left: calc(100% - 28px);
+        transform: translateY(0px) scale(1.05);
+      }
+      100% {
+        left: 0%;
+        transform: translateY(0px) scale(0.9);
+      }
+    }
+
+    /* 안타 멘트: 1번 이동 후 멘트 점등 */
+    @keyframes hitTextBurstAnim {
+      0%, 65% {
+        opacity: 0.85;
+        transform: scale(0.96);
+      }
+      75%, 100% {
+        opacity: 1;
+        transform: scale(1.06);
+        filter: drop-shadow(0 0 8px #86efac);
+      }
+    }
+
+    /* 🚶‍♂️ 포볼: 1루 베이스 진루 */
+    @keyframes walkOneTripRunnerAnim {
+      0% { left: 0%; }
+      75% { left: calc(100% - 28px); }
+      90% { left: calc(100% - 28px); }
+      100% { left: 0%; }
+    }
+
+    /* 🚫 쓰리아웃 점멸 */
     @keyframes outFlashAnim {
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.6; transform: scale(1.08); filter: drop-shadow(0 0 4px #ef4444); }
     }
 
-    .live-anim-homerun-ball {
-      animation: homerunFlyAnim 3.5s infinite ease-in-out;
+    .live-anim-homerun-two-trips {
+      animation: homerunTwoTripsBallAnim 4.6s infinite ease-in-out;
     }
-    .live-anim-hit-ball {
-      animation: hitBounceAnim 2.2s infinite ease-in-out;
+    .live-anim-homerun-text-burst {
+      animation: homerunTextBurstAnim 4.6s infinite ease-in-out;
     }
-    .live-anim-walk-runner {
-      animation: runnerWalkAnim 3.0s infinite linear;
+    .live-anim-hit-one-trip {
+      animation: hitOneTripBallAnim 3.2s infinite ease-in-out;
+    }
+    .live-anim-hit-text-burst {
+      animation: hitTextBurstAnim 3.2s infinite ease-in-out;
+    }
+    .live-anim-walk-one-trip {
+      animation: walkOneTripRunnerAnim 3.2s infinite linear;
     }
     .live-anim-3out-flash {
       animation: outFlashAnim 1.2s infinite ease-in-out;
@@ -9720,38 +9827,80 @@ function getFullModalMatchList() {
           const eventSeed = ((m.id || 1) * 7 + Math.floor(diffMin / 2)) % 4;
           let eventBannerHtml = '';
           if (eventSeed === 0) {
-            // 💥 홈런 (HOMERUN)
+            // 💥 홈런 (HOMERUN) - 1·2·3루 ↔ 중계 '2번 왕복' 후 '홈런!' 멘트 폭발
             eventBannerHtml = `
-              <div class="d-flex align-items-center justify-content-between px-2 py-1 rounded mb-1.5" style="background: linear-gradient(90deg, #78350f 0%, #b45309 50%, #78350f 100%); color:#ffffff; overflow:hidden; position:relative; box-shadow:0 2px 6px rgba(180,83,9,0.3);">
-                <div class="d-flex align-items-center gap-1" style="z-index:2; flex-shrink:0;">
-                  <span class="badge bg-warning text-dark fw-bold" style="font-size:0.62rem; animation: pulseGlow 1s infinite;"><i class="bi bi-fire me-0.5"></i>HOMERUN</span>
-                  <span class="fw-bold" style="font-size:0.72rem; letter-spacing:-0.3px; color:#fef08a;">담장 넘어가는 홈런포!</span>
+              <div class="live-baseball-track-container p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #451a03 0%, #78350f 50%, #451a03 100%); border:1.5px solid #f59e0b; box-shadow:0 3px 8px rgba(180,83,9,0.35); position:relative; overflow:hidden;">
+                <!-- Caption Bar -->
+                <div class="d-flex justify-content-between align-items-center mb-1 text-white" style="font-size:0.72rem;">
+                  <div class="d-flex align-items-center gap-1.5 live-anim-homerun-text-burst">
+                    <span class="badge bg-warning text-dark fw-bold px-1.5 py-0.5" style="font-size:0.64rem;"><i class="bi bi-fire me-0.5"></i>HOMERUN</span>
+                    <span class="fw-bold" style="color:#fef08a; font-size:0.75rem; letter-spacing:-0.2px;">💥 쾅! 홈런!! 백스크린 넘기는 초대형 아치!</span>
+                  </div>
+                  <span class="badge bg-danger text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">왕복 2회</span>
                 </div>
-                <div style="position:relative; width:120px; height:18px; z-index:1; overflow:visible; text-align:right;">
-                  <span class="live-anim-homerun-ball" style="display:inline-block; font-size:0.95rem;">⚾🔥</span>
+                <!-- Motion Track (1·2·3루 ↔ 📡중계) -->
+                <div class="position-relative" style="height:28px; background:rgba(0,0,0,0.35); border-radius:6px; border:1px dashed rgba(253,224,71,0.5); display:flex; align-items:center; padding:0 4px; overflow:hidden;">
+                  <div class="d-flex align-items-center gap-0.5" style="position:absolute; left:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#facc15; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
+                    <span>⚾ 1·2·3루</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-0.5" style="position:absolute; right:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#f87171; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
+                    <span>📡 중계석</span>
+                  </div>
+                  <!-- 진한 야구공 (왕복 2번 비행) -->
+                  <div class="live-anim-homerun-two-trips position-absolute" style="top:2px; z-index:10; display:flex; align-items:center;">
+                    <div class="vivid-baseball-ball">
+                      <svg width="18" height="18" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" fill="#ffffff" />
+                        <path d="M 5,7 Q 11,12 5,17" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="2,1.2" stroke-linecap="round" />
+                        <path d="M 19,7 Q 13,12 19,17" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="2,1.2" stroke-linecap="round" />
+                      </svg>
+                    </div>
+                    <span style="font-size:0.95rem; margin-left:-2px; filter:drop-shadow(0 0 4px #ef4444);">🔥</span>
+                  </div>
                 </div>
               </div>
             `;
           } else if (eventSeed === 1) {
-            // ⚾ 안타 (HIT)
+            // ⚾ 안타 (HIT) - 1·2·3루 ➡️ 중계 '1번만 이동' 후 '안타!' 멘트 점등
             eventBannerHtml = `
-              <div class="d-flex align-items-center justify-content-between px-2 py-1 rounded mb-1.5" style="background: linear-gradient(90deg, #14532d 0%, #15803d 50%, #14532d 100%); color:#ffffff; overflow:hidden; position:relative; box-shadow:0 2px 6px rgba(21,128,61,0.3);">
-                <div class="d-flex align-items-center gap-1" style="z-index:2; flex-shrink:0;">
-                  <span class="badge bg-success text-white fw-bold" style="font-size:0.62rem;"><i class="bi bi-lightning-fill me-0.5"></i>HIT!</span>
-                  <span class="fw-bold" style="font-size:0.72rem; letter-spacing:-0.3px; color:#bbf7d0;">외야 가르는 깨끗한 안타!</span>
+              <div class="live-baseball-track-container p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #064e3b 0%, #047857 50%, #064e3b 100%); border:1.5px solid #34d399; box-shadow:0 3px 8px rgba(4,120,87,0.35); position:relative; overflow:hidden;">
+                <!-- Caption Bar -->
+                <div class="d-flex justify-content-between align-items-center mb-1 text-white" style="font-size:0.72rem;">
+                  <div class="d-flex align-items-center gap-1.5 live-anim-hit-text-burst">
+                    <span class="badge bg-success text-white fw-bold px-1.5 py-0.5" style="font-size:0.64rem;"><i class="bi bi-lightning-fill me-0.5"></i>HIT!</span>
+                    <span class="fw-bold" style="color:#a7f3d0; font-size:0.75rem; letter-spacing:-0.2px;">⚾ 탕! 안타!! 좌중간을 가르는 1타점 적시타!</span>
+                  </div>
+                  <span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">1회 전진</span>
                 </div>
-                <div style="position:relative; width:110px; height:18px; z-index:1; overflow:visible; text-align:right;">
-                  <span class="live-anim-hit-ball" style="display:inline-block; font-size:0.90rem;">⚾✨</span>
+                <!-- Motion Track (1·2·3루 ➡️ 📡중계) -->
+                <div class="position-relative" style="height:28px; background:rgba(0,0,0,0.35); border-radius:6px; border:1px dashed rgba(52,211,153,0.5); display:flex; align-items:center; padding:0 4px; overflow:hidden;">
+                  <div class="d-flex align-items-center gap-0.5" style="position:absolute; left:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#6ee7b7; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
+                    <span>⚾ 1·2·3루</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-0.5" style="position:absolute; right:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#6ee7b7; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
+                    <span>📡 중계석</span>
+                  </div>
+                  <!-- 진한 야구공 (1번만 전진 이동) -->
+                  <div class="live-anim-hit-one-trip position-absolute" style="top:2px; z-index:10; display:flex; align-items:center;">
+                    <div class="vivid-baseball-ball">
+                      <svg width="18" height="18" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" fill="#ffffff" />
+                        <path d="M 5,7 Q 11,12 5,17" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="2,1.2" stroke-linecap="round" />
+                        <path d="M 19,7 Q 13,12 19,17" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="2,1.2" stroke-linecap="round" />
+                      </svg>
+                    </div>
+                    <span style="font-size:0.85rem; margin-left:-1px; filter:drop-shadow(0 0 4px #34d399);">✨</span>
+                  </div>
                 </div>
               </div>
             `;
           } else if (eventSeed === 2) {
             // 🚫 쓰리아웃 / 공수교대 (3 OUT)
             eventBannerHtml = `
-              <div class="d-flex align-items-center justify-content-between px-2 py-1 rounded mb-1.5" style="background: linear-gradient(90deg, #881337 0%, #be123c 50%, #881337 100%); color:#ffffff; overflow:hidden; box-shadow:0 2px 6px rgba(190,18,60,0.3);">
-                <div class="d-flex align-items-center gap-1">
-                  <span class="badge bg-danger text-white fw-bold live-anim-3out-flash" style="font-size:0.62rem;"><i class="bi bi-x-circle-fill me-0.5"></i>3 OUT</span>
-                  <span class="fw-bold" style="font-size:0.72rem; letter-spacing:-0.3px; color:#fecdd3;">이닝 종료 · 공수교대</span>
+              <div class="d-flex align-items-center justify-content-between px-2 py-1.5 rounded mb-1.5" style="background: linear-gradient(90deg, #881337 0%, #be123c 50%, #881337 100%); color:#ffffff; overflow:hidden; box-shadow:0 2px 6px rgba(190,18,60,0.3); border:1.5px solid #f43f5e;">
+                <div class="d-flex align-items-center gap-1.5">
+                  <span class="badge bg-danger text-white fw-bold live-anim-3out-flash" style="font-size:0.64rem;"><i class="bi bi-x-circle-fill me-0.5"></i>3 OUT</span>
+                  <span class="fw-bold" style="font-size:0.75rem; letter-spacing:-0.2px; color:#fecdd3;">🚫 삼진 아웃! 잔루 이닝 종료 · 공수교대</span>
                 </div>
                 <div class="d-flex align-items-center gap-1 fw-bold" style="font-size:0.72rem; color:#facc15;">
                   <span>🔴🔴🔴</span>
@@ -9761,13 +9910,27 @@ function getFullModalMatchList() {
           } else {
             // 🚶‍♂️ 포볼 / 사사구 (FOUR-BALL / BB)
             eventBannerHtml = `
-              <div class="d-flex align-items-center justify-content-between px-2 py-1 rounded mb-1.5" style="background: linear-gradient(90deg, #1e293b 0%, #334155 50%, #1e293b 100%); color:#ffffff; overflow:hidden; box-shadow:0 2px 6px rgba(51,65,85,0.3);">
-                <div class="d-flex align-items-center gap-1" style="z-index:2; flex-shrink:0;">
-                  <span class="badge bg-primary text-white fw-bold" style="font-size:0.62rem;">4 BALL</span>
-                  <span class="fw-bold" style="font-size:0.72rem; letter-spacing:-0.3px; color:#93c5fd;">볼넷으로 1루 출루!</span>
+              <div class="live-baseball-track-container p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); border:1.5px solid #60a5fa; box-shadow:0 3px 8px rgba(37,99,235,0.3); position:relative; overflow:hidden;">
+                <!-- Caption Bar -->
+                <div class="d-flex justify-content-between align-items-center mb-1 text-white" style="font-size:0.72rem;">
+                  <div class="d-flex align-items-center gap-1.5">
+                    <span class="badge bg-primary text-white fw-bold px-1.5 py-0.5" style="font-size:0.64rem;">4 BALL</span>
+                    <span class="fw-bold" style="color:#93c5fd; font-size:0.75rem; letter-spacing:-0.2px;">🚶‍♂️ 볼넷 출루! 풀카운트 승부 끝 1루 진루!</span>
+                  </div>
+                  <span class="badge bg-primary text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">1루 출루</span>
                 </div>
-                <div style="position:relative; width:100px; height:18px; z-index:1; overflow:hidden; text-align:right;">
-                  <span class="live-anim-walk-runner" style="display:inline-block; font-size:0.85rem;">🚶‍♂️💨</span>
+                <!-- Motion Track (1·2·3루 ➡️ 1루 진루) -->
+                <div class="position-relative" style="height:28px; background:rgba(0,0,0,0.35); border-radius:6px; border:1px dashed rgba(96,165,250,0.5); display:flex; align-items:center; padding:0 4px; overflow:hidden;">
+                  <div class="d-flex align-items-center gap-0.5" style="position:absolute; left:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#93c5fd; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
+                    <span>⚾ 타석</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-0.5" style="position:absolute; right:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#93c5fd; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
+                    <span>🟡 1루 베이스</span>
+                  </div>
+                  <!-- 주자 이동 -->
+                  <div class="live-anim-walk-one-trip position-absolute" style="top:2px; z-index:10; display:flex; align-items:center;">
+                    <span style="font-size:1.05rem; filter:drop-shadow(0 0 3px #60a5fa);">🚶‍♂️💨</span>
+                  </div>
                 </div>
               </div>
             `;
