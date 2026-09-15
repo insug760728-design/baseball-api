@@ -3386,9 +3386,6 @@
               if (window.matchListAgent) {
                 window.matchListAgent.setMatches(cleanMatches);
               }
-              if (window.livePollingAgent && !window.livePollingAgent._isPolling) {
-                window.livePollingAgent.start(15);
-              }
               checkScoreChangesAndNotify(allMatches);
               window.matchesLoadedInitial = true;
               updateScheduleTabCounts();
@@ -8450,14 +8447,6 @@ function getFullModalMatchList() {
     }
 
     function updateScheduleTabCounts() {
-      if (window.filterAgent) {
-        const counts = window.filterAgent.getTabCounts();
-        const bA = document.getElementById('activeMatchesCountBadge');
-        const bF = document.getElementById('finishedMatchesCountBadge');
-        if (bA) bA.innerText = String(counts.activeCount || 0);
-        if (bF) bF.innerText = String(counts.finishedCount || 0);
-        return;
-      }
       if (!allMatches || allMatches.length === 0) {
         const bA = document.getElementById('activeMatchesCountBadge');
         const bF = document.getElementById('finishedMatchesCountBadge');
@@ -8876,9 +8865,6 @@ function getFullModalMatchList() {
     }
 
     function getFilteredPredMatches() {
-      if (window.filterAgent) {
-        return window.filterAgent.getFilteredMatches();
-      }
       if (!allMatches || allMatches.length === 0) return [];
 
       const now = new Date();

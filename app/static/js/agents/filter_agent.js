@@ -93,19 +93,16 @@ class FilterAgent {
    */
   _setupMidnightTimer() {
     const now = new Date();
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const kst = new Date(utc + (9 * 3600000));
-    
-    // 다음 KST 자정까지 남은 밀리초 계산
-    const nextMidnight = new Date(kst);
-    nextMidnight.setHours(24, 0, 1, 0);
-    const msUntilMidnight = nextMidnight.getTime() - kst.getTime();
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5, 0);
+    const msUntilMidnight = Math.max(60000, tomorrow.getTime() - now.getTime());
 
     setTimeout(() => {
-      console.log('[FilterAgent] Midnight KST reached. Auto refreshing date tabs...');
-      this._notify();
-      this._setupMidnightTimer(); // 다음 날 자정 타이머 재설정
-    }, Math.max(1000, msUntilMidnight));
+      try {
+        console.log('[FilterAgent] Midnight reached. Auto refreshing date tabs...');
+        this._notify();
+      } catch (e) {}
+      this._setupMidnightTimer();
+    }, msUntilMidnight);
   }
 
   /**
