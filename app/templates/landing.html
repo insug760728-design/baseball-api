@@ -739,14 +739,142 @@
       }
     }
 
+    /* ⚽ 축구 골: 상하 지그재그로 전체를 가로지르는 화려한 축구공 궤적 */
+    @keyframes soccerGoalZigzagBallAnim {
+      0% {
+        left: 4px;
+        top: 50%;
+        transform: translateY(-50%) rotate(0deg) scale(0.95);
+        filter: drop-shadow(0 0 6px rgba(255,255,255,0.9));
+      }
+      15% {
+        left: calc(20% - 10px);
+        top: 10%;
+        transform: translateY(0%) rotate(240deg) scale(1.35);
+        filter: drop-shadow(0 0 12px #38bdf8);
+      }
+      30% {
+        left: calc(38% - 14px);
+        top: 80%;
+        transform: translateY(-100%) rotate(480deg) scale(1.15);
+        filter: drop-shadow(0 0 14px #22c55e);
+      }
+      45% {
+        left: calc(56% - 14px);
+        top: 10%;
+        transform: translateY(0%) rotate(720deg) scale(1.4);
+        filter: drop-shadow(0 0 16px #f59e0b);
+      }
+      60% {
+        left: calc(72% - 14px);
+        top: 80%;
+        transform: translateY(-100%) rotate(960deg) scale(1.2);
+        filter: drop-shadow(0 0 18px #ef4444);
+      }
+      75% {
+        left: calc(85% - 14px);
+        top: 20%;
+        transform: translateY(0%) rotate(1200deg) scale(1.45);
+        filter: drop-shadow(0 0 20px #f43f5e);
+      }
+      90% {
+        left: calc(100% - 36px);
+        top: 50%;
+        transform: translateY(-50%) rotate(1440deg) scale(1.6);
+        filter: drop-shadow(0 0 24px #eab308);
+      }
+      95% {
+        left: calc(100% - 36px);
+        top: 50%;
+        transform: translateY(-50%) rotate(1480deg) scale(1.8);
+        filter: drop-shadow(0 0 28px #fbbf24);
+      }
+      100% {
+        left: calc(100% - 36px);
+        top: 50%;
+        transform: translateY(-50%) rotate(1500deg) scale(1.5);
+        filter: drop-shadow(0 0 22px #eab308);
+      }
+    }
+
+    /* 골 텍스트 버스트 애니메이션 */
+    @keyframes soccerGoalTextBurstAnim {
+      0%, 70% {
+        opacity: 0.9;
+        transform: scale(0.96);
+      }
+      80%, 100% {
+        opacity: 1;
+        transform: scale(1.08);
+        filter: drop-shadow(0 0 10px #fde047);
+      }
+    }
+
+    /* 축구 골 배너 자동 소멸 */
+    @keyframes eventTrackAutoDismissGoal {
+      0% {
+        opacity: 0;
+        max-height: 0;
+        margin-bottom: 0;
+        transform: scale(0.96);
+      }
+      6% {
+        opacity: 1;
+        max-height: 140px;
+        margin-bottom: 6px;
+        transform: scale(1);
+      }
+      88% {
+        opacity: 1;
+        max-height: 140px;
+        margin-bottom: 6px;
+        transform: scale(1);
+      }
+      98%, 100% {
+        opacity: 0;
+        max-height: 0;
+        margin-bottom: 0;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        border: none !important;
+        overflow: hidden !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+    }
+
     .live-track-dismiss-homerun {
       animation: eventTrackAutoDismissHomerun 5.2s ease-in-out forwards !important;
     }
     .live-track-dismiss-hit {
       animation: eventTrackAutoDismissHit 3.8s ease-in-out forwards !important;
     }
+    .live-track-dismiss-goal {
+      animation: eventTrackAutoDismissGoal 5.2s ease-in-out forwards !important;
+    }
     .live-track-dismiss-general {
       animation: eventTrackAutoDismissGeneral 3.4s ease-in-out forwards !important;
+    }
+
+    .live-anim-soccer-goal-zigzag {
+      position: absolute !important;
+      left: 4px !important;
+      top: 50% !important;
+      width: auto !important;
+      height: 28px !important;
+      z-index: 15 !important;
+      pointer-events: none !important;
+      animation: soccerGoalZigzagBallAnim 4.8s 1 cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+    }
+    .live-anim-goal-text-burst {
+      animation: soccerGoalTextBurstAnim 4.8s 1 ease-in-out forwards !important;
+    }
+    .vivid-soccer-ball {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
     }
 
     .live-anim-homerun-two-trips {
@@ -9884,6 +10012,33 @@ function getFullModalMatchList() {
       console.log('[Toast]', msg);
     }
 
+    function dismissLiveEventTrack(btn) {
+      if (!btn) return;
+      const track = btn.closest('.live-baseball-track-container') || btn.closest('.live-soccer-track-container') || btn.closest('.live-track-container');
+      if (track) {
+        track.style.transition = 'all 0.3s ease';
+        track.style.opacity = '0';
+        track.style.maxHeight = '0';
+        track.style.marginBottom = '0';
+        track.style.padding = '0';
+        setTimeout(() => track.remove(), 300);
+      }
+    }
+    window.dismissLiveEventTrack = dismissLiveEventTrack;
+
+    // ⚽ 축구 골 애니메이션 트리거 & 자동 소멸 (화려한 상하 지그재그 비행)
+    window.triggerSoccerGoalEvent = function(matchId, scoringTeam) {
+      if (!window._activeLivePlayEvents) window._activeLivePlayEvents = {};
+      window._activeLivePlayEvents[matchId] = { type: 'GOAL', scorer: scoringTeam || '골', time: Date.now() };
+      if (typeof renderPredMatches === 'function') renderPredMatches();
+      setTimeout(() => {
+        if (window._activeLivePlayEvents && window._activeLivePlayEvents[matchId]) {
+          delete window._activeLivePlayEvents[matchId];
+          if (typeof renderPredMatches === 'function') renderPredMatches();
+        }
+      }, 5400);
+    };
+
     const _slimAccordionState = {}; // { matchId: { type: 'odds'|'history', loaded: bool, html: string } }
     const _historyClientCache = new Map();
 
@@ -10088,13 +10243,93 @@ function getFullModalMatchList() {
               </div>
             </div>
           `;
+        } else if (m.sport_code === 'SOCCER') {
+          // ⚽ [축구 LIVE] 골 발생 시 상하 지그재그 축구공 궤적 애니메이션 + 고대비 전광판
+          let eventBannerHtml = '';
+          const activeEv = (typeof window._activeLivePlayEvents !== 'undefined' && window._activeLivePlayEvents) ? window._activeLivePlayEvents[m.id] : null;
+          if (activeEv && (activeEv.type === 'GOAL' || activeEv.type === 'SCORE')) {
+            const scorerText = activeEv.scorer ? `[${activeEv.scorer}] 득점!` : '원더골 작렬!';
+            eventBannerHtml = `
+              <div class="live-soccer-track-container live-track-dismiss-goal p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #064e3b 0%, #1e1b4b 50%, #064e3b 100%); border:1.8px solid #22c55e; box-shadow:0 4px 14px rgba(34,197,94,0.4); position:relative; overflow:hidden;">
+                <!-- Caption Bar -->
+                <div class="d-flex justify-content-between align-items-center mb-1 text-white" style="font-size:0.72rem;">
+                  <div class="d-flex align-items-center gap-1.5 live-anim-goal-text-burst">
+                    <span class="badge bg-danger text-white fw-bold px-1.5 py-0.5" style="font-size:0.66rem; animation:pulse 1s infinite;"><i class="bi bi-fire me-0.5"></i>GOAL!!</span>
+                    <span class="fw-bold" style="color:#fef08a; font-size:0.75rem; letter-spacing:-0.2px;">⚽ 골!! ${scorerText} 골망 흔드는 환상적인 득점!</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-1">
+                    <span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">상하지그재그</span>
+                    <button type="button" class="btn-close btn-close-white" style="font-size:0.50rem; opacity:0.8;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>
+                  </div>
+                </div>
+                <!-- Motion Track (상하 지그재그로 전체를 가로지르는 레일) -->
+                <div class="live-soccer-motion-rail" style="position:relative; height:38px; background:rgba(0,0,0,0.45); border-radius:6px; border:1px dashed rgba(74,222,128,0.5); overflow:hidden;">
+                  <div class="d-flex align-items-center gap-0.5" style="position:absolute; left:6px; top:50%; transform:translateY(-50%); z-index:2; pointer-events:none; font-size:0.60rem; font-weight:800; color:#4ade80; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
+                    <span>⚡ 킥오프</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-0.5" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#facc15; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
+                    <span>🥅 골인! (GOAL)</span>
+                  </div>
+                  <!-- 상하 지그재그로 전체를 가로지르는 화려한 축구공 -->
+                  <div class="live-anim-soccer-goal-zigzag">
+                    <div class="vivid-soccer-ball">
+                      <svg width="20" height="20" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" fill="#ffffff" stroke="#0f172a" stroke-width="1.5" />
+                        <polygon points="12,8 15,10.2 13.8,13.8 10.2,13.8 9,10.2" fill="#0f172a" />
+                        <line x1="12" y1="2" x2="12" y2="8" stroke="#0f172a" stroke-width="1.2" />
+                        <line x1="21" y1="9" x2="15" y2="10.2" stroke="#0f172a" stroke-width="1.2" />
+                        <line x1="18" y1="20" x2="13.8" y2="13.8" stroke="#0f172a" stroke-width="1.2" />
+                        <line x1="6" y1="20" x2="10.2" y2="13.8" stroke="#0f172a" stroke-width="1.2" />
+                        <line x1="3" y1="9" x2="9" y2="10.2" stroke="#0f172a" stroke-width="1.2" />
+                      </svg>
+                    </div>
+                    <span style="font-size:1.0rem; margin-left:-2px; filter:drop-shadow(0 0 6px #f59e0b);">🔥</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
+          liveBroadcastStageHtml = `
+            <div class="live-soccer-stage-wrapper position-relative mb-1.5" style="border-radius:8px; overflow:hidden;">
+              <!-- 1. 골 발생 시 나타났다가 비행 완료 후 자동 꺼지는 중계 애니메이션 오버레이 -->
+              ${eventBannerHtml}
+
+              <!-- 2. 기본 실시간 축구 스코어보드 & 진행 현황판 -->
+              <div class="live-default-scoreboard p-2 rounded" style="background:#ffffff; border:1.4px solid #cbd5e1; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                <!-- Big Team Score Row -->
+                <div class="d-flex align-items-center justify-content-between mb-1.5">
+                  <div class="fw-bold text-dark text-truncate text-end" style="flex:1 1 38%; font-size:0.92rem;" title="${m.home_team_name}">${hName}</div>
+                  <div class="px-2 text-center" style="flex:0 0 auto;">
+                    <span class="px-3 py-1 rounded-2 fw-bold d-inline-flex align-items-center gap-1.5" style="background:#0f172a; border:1.5px solid #334155; color:#ffffff; font-size:1.20rem; font-family:'Roboto Mono', monospace; letter-spacing:1px; box-shadow:0 2px 6px rgba(0,0,0,0.35);">
+                      ${hScoreHtml} <span style="color:#94a3b8; font-weight:300; font-size:1.0rem;">:</span> ${aScoreHtml}
+                    </span>
+                  </div>
+                  <div class="fw-bold text-dark text-truncate text-start" style="flex:1 1 38%; font-size:0.92rem;" title="${m.away_team_name}">${aName}</div>
+                </div>
+
+                <!-- Match Time & Live Progress Track -->
+                <div class="d-flex justify-content-between align-items-center pt-1 border-top" style="border-color:#f1f5f9 !important;">
+                  <div class="d-flex align-items-center gap-1.5 text-muted" style="font-size:0.72rem;">
+                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-1.5 py-0.5 fw-bold"><i class="bi bi-stopwatch me-0.5"></i>${st.match_time || '전반 진행중'}</span>
+                    <span class="text-secondary fw-semibold">${st.possession ? `점유율 ${st.possession}` : '실시간 공방전'}</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-1">
+                    <button type="button" class="btn btn-xs px-1.5 py-0.5 fw-bold text-success border border-success border-opacity-30 bg-white" style="font-size:0.62rem; border-radius:4px;" onclick="event.stopPropagation(); triggerSoccerGoalEvent(${m.id}, '${hScore >= aScore ? hName : aName}')" title="골 세리머니 애니메이션 테스트">
+                      ⚽ 골 세리머니
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
         } else {
-          // Soccer / Other live broadcast
+          // Basketball / Other live broadcast
           liveBroadcastStageHtml = `
             <div class="soccer-live-tracker p-2 rounded mb-1.5" style="background:#ffffff; border:1px solid #e2e8f0; font-size:0.72rem;">
               <div class="d-flex justify-content-between align-items-center text-muted mb-1">
                 <span>실시간 진행</span>
-                <span class="fw-bold text-danger">${m.sport_code === 'SOCCER' ? (st.match_time || '전반') : (st.quarter || '진행중')}</span>
+                <span class="fw-bold text-danger">${st.quarter || '진행중'}</span>
               </div>
               <div class="progress" style="height:6px;">
                 <div class="progress-bar bg-danger progress-bar-striped progress-bar-animated" style="width: 65%;"></div>
@@ -15724,6 +15959,11 @@ function updateSlimPanel(matchId, type, contentHtml) {
           // 2. 실시간 득점/골 감지
           if ((homeScored || awayScored) && (isLive || isFin)) {
             const scoringSide = homeScored ? formatTeamName(m.home_team_name) : formatTeamName(m.away_team_name);
+            if (m.sport_code === 'SOCCER') {
+              if (typeof triggerSoccerGoalEvent === 'function') {
+                triggerSoccerGoalEvent(mId, scoringSide);
+              }
+            }
             if (isSubscribed) {
               triggerMatchAlert('SCORE', m, { scoringSide, oldH: old.home, oldA: old.away, newH: hScore, newA: aScore });
             }
