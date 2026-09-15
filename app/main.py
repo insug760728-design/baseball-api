@@ -192,13 +192,61 @@ static_dir = os.path.join(current_dir, "static")
 if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-_PORTAL_HTML_CACHE = {"path": "", "content": "", "mtime": 0, "etag": ""}
+_PORTAL_HTML_CACHE = {}
+_SERVER_MATCHES_CACHE = {"json_str": "[]", "updated_at": 0}
+
+def get_server_initial_matches_json() -> str:
+    import json
+    now = time.time()
+    if now - _SERVER_MATCHES_CACHE["updated_at"] < 3.0 and _SERVER_MATCHES_CACHE["json_str"] != "[]":
+        return _SERVER_MATCHES_CACHE["json_str"]
+    db = None
+    try:
+        db = SessionLocal()
+        matches = MatchService.get_matches(db, limit=400, order='asc')
+        match_dicts = []
+        for m in matches:
+            d = {c.name: getattr(m, c.name) for c in m.__table__.columns}
+            for k, v in d.items():
+                if hasattr(v, 'isoformat'):
+                    d[k] = v.isoformat()
+            match_dicts.append(d)
+        json_str = json.dumps(match_dicts, ensure_ascii=False)
+        _SERVER_MATCHES_CACHE["json_str"] = json_str
+        _SERVER_MATCHES_CACHE["updated_at"] = now
+        return json_str
+    except Exception as e:
+        print(f"[WARN] Failed to serialize server initial matches: {e}")
+        return _SERVER_MATCHES_CACHE.get("json_str", "[]")
+    finally:
+        if db is not None:
+            try:
+                db.close()
+            except Exception:
+                pass
 
 def get_portal_html(target_path: str):
     if not os.path.exists(target_path):
         return "", ""
-    with open(target_path, "r", encoding="utf-8") as f:
-        content = f.read()
+    
+    mtime = os.path.getmtime(target_path)
+    if target_path not in _PORTAL_HTML_CACHE or _PORTAL_HTML_CACHE[target_path].get("mtime") != mtime:
+        with open(target_path, "r", encoding="utf-8") as f:
+            raw_content = f.read()
+        _PORTAL_HTML_CACHE[target_path] = {"raw_content": raw_content, "mtime": mtime}
+    else:
+        raw_content = _PORTAL_HTML_CACHE[target_path]["raw_content"]
+
+    # Pre-inject SERVER_INITIAL_MATCHES into <head> for zero-latency initial screen
+    initial_matches_json = get_server_initial_matches_json()
+    injection_script = f"<script id=\"serverInitialData\">window.SERVER_INITIAL_MATCHES = {initial_matches_json};</script>"
+    if "</head>" in raw_content:
+        content = raw_content.replace("</head>", f"{injection_script}\n</head>", 1)
+    elif "<body" in raw_content:
+        content = raw_content.replace("<body", f"{injection_script}\n<body", 1)
+    else:
+        content = f"{injection_script}\n{raw_content}"
+
     import hashlib
     etag = f'"{hashlib.md5(content.encode("utf-8")).hexdigest()}"'
     return content, etag

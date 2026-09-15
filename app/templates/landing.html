@@ -5,14 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <script>
-    try {
-      ['tokeon_matches_cache_v99', 'tokeon_matches_cache_v1', 'tokeon_matches_cache_v2', 'tokeon_matches_cache_v3', 'tokeon_matches_cache_v4', 'tokeon_matches_cache_v5', 'tokeon_matches_cache_v7', 'tokeon_matches_cache_v8', 'tokeon_matches_cache_v9', 'tokeon_matches_cache_v10', 'tokeon_matches_cache_v11', 'tokeon_matches_cache_v12', 'tokeon_matches_cache_v13', 'tokeon_matches_cache_v14', 'tokeon_matches_cache_v15', 'tokeon_matches_cache_v98'].forEach(function(k) {
-        localStorage.removeItem(k);
-      });
-    } catch(e) {}
-  </script>
   <title>TOKEON ANALYTICS (tokeon.co.kr) — 스포츠 정밀 분석 & AI 승부예측 포털</title>
   <!-- Bootstrap 5.3 & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -3441,7 +3433,12 @@
 
     let realNewsList = [];
     let currentFilter = 'ALL';
-    let allMatches = [];
+    let allMatches = (typeof window !== 'undefined' && window.SERVER_INITIAL_MATCHES && Array.isArray(window.SERVER_INITIAL_MATCHES) && window.SERVER_INITIAL_MATCHES.length > 0)
+      ? window.SERVER_INITIAL_MATCHES
+      : [];
+    if (allMatches.length > 0) {
+      window.matchesLoadedInitial = true;
+    }
     let communityMessages = [];
     let currentChatChannel = 'ALL';
     let liveSocket = null;
@@ -8560,26 +8557,28 @@ function getFullModalMatchList() {
     let initialScheduleAutoScrollDone = false;
 
     function initPredictionSection() {
-      // ⚡ 0초(0ms) 즉시 렌더링: 브라우저 캐시가 있으면 대기 없이 즉각 경기 목록 & 전광판 표출
-      try {
-        // Purge legacy numeric version caches once
-        try { localStorage.removeItem('tokeon_matches_cache_stable'); } catch(e) {}
-        for (let i = 1; i <= 98; i++) {
-          try { localStorage.removeItem('tokeon_matches_cache_v' + i); } catch (e) {}
-        }
-        const cached = localStorage.getItem('tokeon_matches_cache_v99');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            allMatches = parsed;
-            window.matchesLoadedInitial = true;
-            updateScheduleTabCounts();
-            renderMatchStrip('ALL');
-            renderPredMatches();
-            console.log('[Cache] Instant 0ms load with ' + parsed.length + ' matches from local cache');
+      // ⚡ 0초(0ms) 즉시 렌더링: 서버 인젝션 또는 브라우저 캐시로 대기 없이 즉각 경기 목록 & 전광판 표출
+      if (typeof window !== 'undefined' && window.SERVER_INITIAL_MATCHES && Array.isArray(window.SERVER_INITIAL_MATCHES) && window.SERVER_INITIAL_MATCHES.length > 0) {
+        allMatches = window.SERVER_INITIAL_MATCHES;
+        window.matchesLoadedInitial = true;
+        updateScheduleTabCounts();
+        renderMatchStrip('ALL');
+        renderPredMatches();
+      } else if (!allMatches || allMatches.length === 0) {
+        try {
+          const cached = localStorage.getItem('tokeon_matches_cache_v99');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              allMatches = parsed;
+              window.matchesLoadedInitial = true;
+              updateScheduleTabCounts();
+              renderMatchStrip('ALL');
+              renderPredMatches();
+            }
           }
-        }
-      } catch (e) {}
+        } catch (e) {}
+      }
 
       const now = new Date();
       const d0Str = getKSTDateString(now);
