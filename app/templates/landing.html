@@ -9944,12 +9944,14 @@ function getFullModalMatchList() {
         const hScore = Number(m.home_score ?? 0);
         const aScore = Number(m.away_score ?? 0);
 
-        let hScoreHtml = `<span style="font-weight:700; color:#1e293b;">${hScore}</span>`;
-        let aScoreHtml = `<span style="font-weight:700; color:#1e293b;">${aScore}</span>`;
+        let hScoreHtml = `<span style="font-weight:900; color:#ffffff;">${hScore}</span>`;
+        let aScoreHtml = `<span style="font-weight:900; color:#ffffff;">${aScore}</span>`;
         if (hScore > aScore) {
-          hScoreHtml = `<span style="font-weight:900; color:#dc2626;">${hScore}</span>`;
+          hScoreHtml = `<span style="font-weight:900; color:#f87171; text-shadow:0 0 6px rgba(239,68,68,0.6);">${hScore}</span>`;
+          aScoreHtml = `<span style="font-weight:700; color:#cbd5e1;">${aScore}</span>`;
         } else if (aScore > hScore) {
-          aScoreHtml = `<span style="font-weight:900; color:#dc2626;">${aScore}</span>`;
+          hScoreHtml = `<span style="font-weight:700; color:#cbd5e1;">${hScore}</span>`;
+          aScoreHtml = `<span style="font-weight:900; color:#f87171; text-shadow:0 0 6px rgba(239,68,68,0.6);">${aScore}</span>`;
         }
 
         // Baseball Specific Live Stage: Live Scoreboard & Stadium Diamond Board
@@ -10046,8 +10048,8 @@ function getFullModalMatchList() {
                 <div class="d-flex align-items-center justify-content-between mb-1.5">
                   <div class="fw-bold text-dark text-truncate text-end" style="flex:1 1 38%; font-size:0.92rem;" title="${m.home_team_name}">${hName}</div>
                   <div class="px-2 text-center" style="flex:0 0 auto;">
-                    <span class="px-2.5 py-0.5 rounded fw-bold" style="background:#0f172a; color:#ffffff; font-size:1.15rem; font-family:monospace; letter-spacing:1px; box-shadow:0 2px 4px rgba(0,0,0,0.2);">
-                      ${hScoreHtml} <span style="color:#64748b; font-weight:300;">:</span> ${aScoreHtml}
+                    <span class="px-3 py-1 rounded-2 fw-bold d-inline-flex align-items-center gap-1.5" style="background:#0f172a; border:1.5px solid #334155; color:#ffffff; font-size:1.20rem; font-family:'Roboto Mono', monospace; letter-spacing:1px; box-shadow:0 2px 6px rgba(0,0,0,0.35);">
+                      ${hScoreHtml} <span style="color:#94a3b8; font-weight:300; font-size:1.0rem;">:</span> ${aScoreHtml}
                     </span>
                   </div>
                   <div class="fw-bold text-dark text-truncate text-start" style="flex:1 1 38%; font-size:0.92rem;" title="${m.away_team_name}">${aName}</div>
