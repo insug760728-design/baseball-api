@@ -8301,6 +8301,7 @@ function getFullModalMatchList() {
 
       if (allMatches && allMatches.length > 0) {
         renderPredMatches();
+        renderRightColLiveRelay();
         currentCenterMode = 'DETAIL';
         const initMatches = getFilteredPredMatches();
         if (initMatches.length > 0) {
@@ -8309,6 +8310,8 @@ function getFullModalMatchList() {
             selectPredMatch(bestMatchId, false);
           }
         }
+      } else {
+        renderRightColLiveRelay();
       }
       // loadBetmanToto deferred until Toto tab or modal is opened
 
@@ -8802,56 +8805,65 @@ function getFullModalMatchList() {
       if (!matches || matches.length === 0) return [];
       const now = new Date();
       const nowTs = now.getTime();
-      const bufferTimeStr = getKSTDateTimeString(new Date(nowTs - 20 * 60 * 1000));
+      const nowKstStr = getKSTDateTimeString(now);
 
       let list = matches;
       if (sportFilter && sportFilter !== 'ALL') {
         list = list.filter(m => (m.sport_code || '').toUpperCase() === sportFilter);
       }
 
-      // 1. 실제 LIVE 진행 중인 경기 (최대 4시간 이내 시작)
+      // 1. 실제 LIVE 진행 중인 경기 (상태가 LIVE이거나 경기 시작시간 도래 후 3.5시간 이내)
       const liveMatches = list.filter(m => {
-        if (m.status !== 'LIVE') return false;
-        if (m.match_date) {
+        if (m.status === 'LIVE' || m.status === 'IN_PLAY' || m.status === '1H' || m.status === '2H' || m.status === 'HT') {
+          if (m.match_date) {
+            try {
+              const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+              if ((nowTs - mTime) / (60 * 1000) > 240) return false;
+            } catch(e) {}
+          }
+          return true;
+        }
+        if (m.status === 'SCHEDULED' && m.match_date) {
           try {
             const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
-            if ((nowTs - mTime) / (60 * 1000) > 240) return false;
+            const diffMin = (nowTs - mTime) / (60 * 1000);
+            if (diffMin >= 0 && diffMin <= 210) return true;
           } catch(e) {}
         }
-        return true;
+        return false;
       });
 
-      // 2. 현재시간 및 오늘/내일 예정 경기 (시간 오름차순: 빠른 예정순)
+      // 2. 오늘/내일 예정 경기 (시간 오름차순: 빠른 예정순)
       const upcomingMatches = list.filter(m => {
         if (m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED') return false;
-        if (m.status === 'LIVE') return false;
-        if ((m.match_date || '') >= bufferTimeStr) return true;
+        if (liveMatches.some(x => x.id === m.id)) return false;
+        if ((m.match_date || '') >= nowKstStr) return true;
         return false;
       });
       upcomingMatches.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
 
       // 3. 가장 최근에 종료된 경기 (시간 내림차순: 최근 종료순)
       const recentFinishedMatches = list.filter(m => {
-        if (m.status === 'FINISHED' || (m.match_date && m.match_date < bufferTimeStr && m.status !== 'SCHEDULED')) return true;
-        return false;
+        if (liveMatches.some(x => x.id === m.id) || upcomingMatches.some(x => x.id === m.id)) return false;
+        return true;
       });
       recentFinishedMatches.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
 
       // 실시간 LIVE 경기 우선 배치 -> 부족할 경우 현재시간대 및 곧 시작할 예정 경기 -> 최근 종료 경기 순으로 보강
       let combined = [...liveMatches];
 
-      if (combined.length < 15) {
+      if (combined.length < 20) {
         for (const m of upcomingMatches) {
-          if (combined.length >= 15) break;
+          if (combined.length >= 20) break;
           if (!combined.some(x => x.id === m.id)) {
             combined.push(m);
           }
         }
       }
 
-      if (combined.length < 15) {
+      if (combined.length < 20) {
         for (const m of recentFinishedMatches) {
-          if (combined.length >= 15) break;
+          if (combined.length >= 20) break;
           if (!combined.some(x => x.id === m.id)) {
             combined.push(m);
           }
@@ -8873,14 +8885,23 @@ function getFullModalMatchList() {
       const pastCutoffKstDateTime = getKSTDateTimeString(new Date(now.getTime() - 3.5 * 60 * 60 * 1000));
 
       const isMatchTrulyLive = (m) => {
-        if (m.status !== 'LIVE') return false;
-        if (m.match_date) {
+        if (m.status === 'LIVE' || m.status === 'IN_PLAY' || m.status === '1H' || m.status === '2H' || m.status === 'HT') {
+          if (m.match_date) {
+            try {
+              const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+              if ((nowTs - mTime) / (1000 * 60 * 60) > 4) return false;
+            } catch(e) {}
+          }
+          return true;
+        }
+        if (m.status === 'SCHEDULED' && m.match_date) {
           try {
             const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
-            if ((nowTs - mTime) / (1000 * 60 * 60) > 4) return false;
+            const diffMin = (nowTs - mTime) / (60 * 1000);
+            if (diffMin >= 0 && diffMin <= 210) return true;
           } catch(e) {}
         }
-        return true;
+        return false;
       };
 
       let list = [...allMatches];

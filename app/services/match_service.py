@@ -229,10 +229,25 @@ class MatchService:
 
     @classmethod
     def cleanup_stale_live_matches(cls, db: Session):
-        """경기 시작 시간으로부터 3.5시간 이상 경과한 과거 SCHEDULED/LIVE 상태 경기를 FINISHED로 자동 자가 치유(Self-Healing)"""
+        """경기 시작 시간 도래 시 SCHEDULED -> LIVE 자동 전환 및 3.5시간 경과 시 FINISHED 자동 전환 (Self-Healing)"""
         try:
             now_kst = datetime.utcnow() + timedelta(hours=9)
+            now_str = now_kst.strftime("%Y-%m-%d %H:%M")
             cutoff = (now_kst - timedelta(hours=3, minutes=30)).strftime("%Y-%m-%d %H:%M")
+
+            # 1. 시작 시간이 도래한 경기: SCHEDULED -> LIVE 자동 전환
+            live_candidates = db.query(Match).filter(
+                Match.status.in_(['SCHEDULED', 'NS']),
+                Match.match_date <= now_str,
+                Match.match_date >= cutoff
+            ).all()
+            if live_candidates:
+                for m in live_candidates:
+                    m.status = 'LIVE'
+                db.commit()
+                logger.info(f"Auto-transitioned {len(live_candidates)} started matches to LIVE")
+
+            # 2. 시작 후 3.5시간 이상 경과한 경기: LIVE/SCHEDULED -> FINISHED 자동 전환
             stale_matches = db.query(Match).filter(
                 Match.status.in_(['LIVE', 'IN_PLAY', '1H', '2H', 'HT', 'SCHEDULED', 'NS']),
                 Match.match_date < cutoff
@@ -241,9 +256,9 @@ class MatchService:
                 for m in stale_matches:
                     m.status = 'FINISHED'
                 db.commit()
-                logger.info(f"Auto-healed {len(stale_matches)} past SCHEDULED/LIVE matches to FINISHED")
+                logger.info(f"Auto-healed {len(stale_matches)} past matches to FINISHED")
         except Exception as e:
-            logger.warning(f"Error cleaning up stale matches: {e}")
+            logger.warning(f"Error managing match lifecycle statuses: {e}")
             db.rollback()
 
     @classmethod
