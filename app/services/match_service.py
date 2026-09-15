@@ -234,6 +234,7 @@ class MatchService:
             now_kst = datetime.utcnow() + timedelta(hours=9)
             now_str = now_kst.strftime("%Y-%m-%d %H:%M")
             cutoff = (now_kst - timedelta(hours=3, minutes=30)).strftime("%Y-%m-%d %H:%M")
+            past_1d_cutoff = (now_kst - timedelta(days=1)).strftime("%Y-%m-%d 00:00")
 
             # 1. 시작 시간이 도래한 경기: SCHEDULED -> LIVE 자동 전환
             live_candidates = db.query(Match).filter(
@@ -245,7 +246,6 @@ class MatchService:
                 for m in live_candidates:
                     m.status = 'LIVE'
                 db.commit()
-                logger.info(f"Auto-transitioned {len(live_candidates)} started matches to LIVE")
 
             # 2. 시작 후 3.5시간 이상 경과한 경기: LIVE/SCHEDULED -> FINISHED 자동 전환
             stale_matches = db.query(Match).filter(
@@ -256,7 +256,16 @@ class MatchService:
                 for m in stale_matches:
                     m.status = 'FINISHED'
                 db.commit()
-                logger.info(f"Auto-healed {len(stale_matches)} past matches to FINISHED")
+
+            # 3. 1일 이상 지난 POSTPONED/CANCELLED 경기 상태 정리
+            stale_postponed = db.query(Match).filter(
+                Match.status.in_(['POSTPONED', 'CANCELLED', 'SUSPENDED']),
+                Match.match_date < past_1d_cutoff
+            ).all()
+            if stale_postponed:
+                for m in stale_postponed:
+                    m.status = 'CANCELLED'
+                db.commit()
         except Exception as e:
             logger.warning(f"Error managing match lifecycle statuses: {e}")
             db.rollback()
@@ -332,29 +341,41 @@ class MatchService:
         now_kst = datetime.utcnow() + timedelta(hours=9)
         current_year = now_kst.year
         today_str = now_kst.strftime("%Y-%m-%d")
+        yesterday_str = (now_kst - timedelta(days=1)).strftime("%Y-%m-%d")
 
         if start_date:
             if start_date.upper() == "ALL":
-                # 전체 활성 경기 풀: 모든 LIVE/SCHEDULED/POSTPONED 경기 및 최근 30일 이내 경기 포함
-                past_30d = (now_kst - timedelta(days=30)).strftime("%Y-%m-%d 00:00")
+                # 전체 활성 경기 풀: 모든 LIVE 경기 + 모든 미래 SCHEDULED 경기 + 최근 3일 이내 경기
+                past_3d = (now_kst - timedelta(days=3)).strftime("%Y-%m-%d 00:00")
                 if not status:
-                    query = query.filter(or_(Match.status.in_(['LIVE', 'SCHEDULED', 'POSTPONED']), Match.match_date >= past_30d))
+                    query = query.filter(
+                        or_(
+                            Match.status == 'LIVE',
+                            Match.status == 'SCHEDULED',
+                            Match.match_date >= past_3d
+                        )
+                    )
                 elif status == "FINISHED":
-                    query = query.filter(Match.status == "FINISHED", Match.match_date >= past_30d)
+                    query = query.filter(Match.status == "FINISHED", Match.match_date >= past_3d)
             else:
                 query = query.filter(Match.match_date >= f"{start_date} 00:00")
         else:
             if status == "FINISHED":
-                past_30d = (now_kst - timedelta(days=30)).strftime("%Y-%m-%d 00:00")
-                query = query.filter(Match.match_date >= past_30d)
+                past_7d = (now_kst - timedelta(days=7)).strftime("%Y-%m-%d 00:00")
+                query = query.filter(Match.status == "FINISHED", Match.match_date >= past_7d)
                 if not end_date:
                     query = query.filter(Match.match_date <= f"{today_str} 23:59")
             elif status == "SCHEDULED":
                 pass  # 모든 등록된 예정 경기 온전히 표출
             else:
-                # 기본 조회: 모든 LIVE/SCHEDULED 및 최근 14일 경기 안전 조회
-                past_14d = (now_kst - timedelta(days=14)).strftime("%Y-%m-%d 00:00")
-                query = query.filter(or_(Match.status.in_(['LIVE', 'SCHEDULED', 'POSTPONED']), Match.match_date >= past_14d))
+                # 기본 조회: 현재 LIVE 경기 + 모든 미래 SCHEDULED 경기 + 어제/오늘 경기
+                query = query.filter(
+                    or_(
+                        Match.status == 'LIVE',
+                        Match.status == 'SCHEDULED',
+                        Match.match_date >= f"{yesterday_str} 00:00"
+                    )
+                )
 
         if end_date:
             query = query.filter(Match.match_date <= f"{end_date} 23:59")
@@ -364,7 +385,7 @@ class MatchService:
         else:
             q = query.order_by(Match.match_date.asc(), Match.id.asc())
 
-        target_limit = limit if (limit and limit > 0) else 150
+        target_limit = limit if (limit and limit > 0) else 400
         matches = q.limit(target_limit).all()
         
         # High-Speed O(N) Deduplicate matches by canonical fixture key (sport, home, away, date)
