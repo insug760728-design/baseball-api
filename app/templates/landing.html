@@ -10146,7 +10146,7 @@ function getFullModalMatchList() {
         }
 
         return `
-          <div class="slim-match-card card-status-live ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
+          <div class="slim-match-card pred-card-compact card-status-live ${sportClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
             <!-- Top Live Header -->
             <div class="d-flex justify-content-between align-items-center mb-1.5">
               <div class="d-flex align-items-center gap-1.5">
@@ -13966,11 +13966,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
         activeCard.classList.add('active-match-card');
       }
 
-      // 🚀 모바일 성능 최적화: 모바일 화면에서는 중앙 상세 패널(#predDetailPanel)이 숨겨져 있으므로 렌더링을 건너뛰어 CPU/통신 절약
       const isMobileView = (window.innerWidth <= 768 || currentViewMode === 'mobile');
-      if (!isMobileView) {
-        renderPredDetail(target);
-      }
+      renderPredDetail(target);
 
       if (userClicked) {
         if (typeof isMultiPlayMode !== 'undefined' && isMultiPlayMode) {
@@ -13979,8 +13976,6 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
         if (isMobileView) {
           openMatchModal(matchId);
-        } else {
-          renderPredDetail(target);
         }
       }
     }
