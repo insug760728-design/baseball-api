@@ -3689,8 +3689,6 @@
           console.warn('[Fast Phase 1] Error:', e);
         }
 
-        // Phase 2 archive deferred to user navigation
-
         // Fallback: If still empty, load from localStorage
         if (!allMatches || allMatches.length === 0) {
           try {
@@ -3740,6 +3738,7 @@
             }, 2500);
           }
         }
+      } finally {
         window.matchesLoadedInitial = true;
         updateScheduleTabCounts();
         renderPredMatches();
@@ -10324,6 +10323,12 @@ function getFullModalMatchList() {
 
       if (filtered.length === 0) {
         if (!window.matchesLoadedInitial && (!allMatches || allMatches.length === 0)) {
+          setTimeout(() => {
+            if (!window.matchesLoadedInitial) {
+              window.matchesLoadedInitial = true;
+              renderPredMatches();
+            }
+          }, 500);
           return;
         }
 
@@ -16466,10 +16471,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
     function initViewMode() {
       const isMobileScreen = window.innerWidth <= 768;
       const savedMode = localStorage.getItem('tokeon_view_mode');
-      if (isMobileScreen) {
-        setViewMode(savedMode === 'pc' ? 'pc' : 'mobile', false);
-      } else {
-        setViewMode(savedMode || 'pc', false);
+      const targetMode = isMobileScreen ? (savedMode === 'pc' ? 'pc' : 'mobile') : (savedMode || 'pc');
+      setViewMode(targetMode, false);
+      if (targetMode === 'mobile') {
+        switchMobileTab('schedule');
       }
     }
 
@@ -16529,25 +16534,15 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const p3 = document.getElementById('rightColCommunity');
 
       if (mode === 'mobile') {
-        if (btnPC) {
-          btnPC.className = 'btn btn-outline-secondary fw-bold px-2 py-1';
-        }
-        if (btnMobile) {
-          btnMobile.className = 'btn btn-primary fw-bold px-2 py-1';
-        }
-        if (p1) { p1.style.display = 'block'; p1.style.width = '100%'; p1.style.flex = '0 0 100%'; }
-        if (p2) { p2.style.display = 'block'; p2.style.width = '100%'; p2.style.flex = '0 0 100%'; }
-        if (p3) { p3.style.display = 'block'; p3.style.width = '100%'; p3.style.flex = '0 0 100%'; }
+        if (btnPC) btnPC.className = 'btn btn-outline-secondary fw-bold px-2 py-1';
+        if (btnMobile) btnMobile.className = 'btn btn-primary fw-bold px-2 py-1';
+        switchMobileTab(currentMobileTab || 'schedule');
       } else {
-        if (btnPC) {
-          btnPC.className = 'btn btn-primary fw-bold px-2 py-1';
-        }
-        if (btnMobile) {
-          btnMobile.className = 'btn btn-outline-secondary fw-bold px-2 py-1';
-        }
-        if (p1) { p1.style.display = ''; p1.style.width = ''; p1.style.flex = ''; }
-        if (p2) { p2.style.display = ''; p2.style.width = ''; p2.style.flex = ''; }
-        if (p3) { p3.style.display = ''; p3.style.width = ''; p3.style.flex = ''; }
+        if (btnPC) btnPC.className = 'btn btn-primary fw-bold px-2 py-1';
+        if (btnMobile) btnMobile.className = 'btn btn-outline-secondary fw-bold px-2 py-1';
+        if (p1) { p1.style.display = ''; p1.style.width = ''; p1.style.flex = ''; p1.style.maxWidth = ''; }
+        if (p2) { p2.style.display = ''; p2.style.width = ''; p2.style.flex = ''; p2.style.maxWidth = ''; }
+        if (p3) { p3.style.display = ''; p3.style.width = ''; p3.style.flex = ''; p3.style.maxWidth = ''; }
       }
     }
 
@@ -16559,6 +16554,13 @@ function updateSlimPanel(matchId, type, contentHtml) {
       loadLiveMatches().catch(err => console.error('Matches load error:', err));
       startLiveUsersFluctuation();
       start4MinAiChatTimer();
+      // Guard against stuck loading skeleton on mobile networks
+      setTimeout(() => {
+        if (!window.matchesLoadedInitial || !allMatches || allMatches.length === 0) {
+          window.matchesLoadedInitial = true;
+          renderPredMatches();
+        }
+      }, 700);
       // Defer community chat messages & live WebSocket by 2.5s for zero-latency initial UI paint
       setTimeout(() => {
         initCommunityAndWebSocket();
