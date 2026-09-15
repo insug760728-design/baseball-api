@@ -505,6 +505,56 @@
       animation: scoreFlashGlow 1.5s ease-out;
     }
 
+    /* ⚾ Live Broadcast Monitor Card (Double Size Expansion & Animations) */
+    .slim-match-card.card-status-live {
+      border: 1.8px solid #f87171 !important;
+      border-top: 3.5px solid #dc2626 !important;
+      background: linear-gradient(180deg, #ffffff 0%, #fffbf0 100%) !important;
+      box-shadow: 0 4px 16px rgba(220, 38, 38, 0.12) !important;
+      border-radius: 10px !important;
+      padding: 10px !important;
+      transition: all 0.25s ease-in-out;
+    }
+
+    @keyframes homerunFlyAnim {
+      0% { transform: translateX(-10px) translateY(4px) scale(0.85); opacity: 0.8; }
+      40% { transform: translateX(110px) translateY(-12px) scale(1.35) rotate(180deg); opacity: 1; filter: drop-shadow(0 0 6px #f59e0b); }
+      80% { transform: translateX(230px) translateY(0px) scale(1.1) rotate(360deg); opacity: 1; }
+      90% { transform: translateX(230px) translateY(0px) scale(1.2); }
+      100% { transform: translateX(-10px) translateY(4px) scale(0.85); opacity: 0.8; }
+    }
+
+    @keyframes hitBounceAnim {
+      0% { transform: translateX(0px) translateY(0px) scale(0.9); }
+      25% { transform: translateX(45px) translateY(-10px) scale(1.15); }
+      50% { transform: translateX(90px) translateY(0px) scale(0.9); }
+      75% { transform: translateX(135px) translateY(-7px) scale(1.05); }
+      100% { transform: translateX(165px) translateY(0px) scale(1); }
+    }
+
+    @keyframes runnerWalkAnim {
+      0% { transform: translateX(0px); }
+      100% { transform: translateX(130px); }
+    }
+
+    @keyframes outFlashAnim {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.08); filter: drop-shadow(0 0 4px #ef4444); }
+    }
+
+    .live-anim-homerun-ball {
+      animation: homerunFlyAnim 3.5s infinite ease-in-out;
+    }
+    .live-anim-hit-ball {
+      animation: hitBounceAnim 2.2s infinite ease-in-out;
+    }
+    .live-anim-walk-runner {
+      animation: runnerWalkAnim 3.0s infinite linear;
+    }
+    .live-anim-3out-flash {
+      animation: outFlashAnim 1.2s infinite ease-in-out;
+    }
+
     /* 내부 부모 컨테이너 및 섹션 박스 전폭 확보 */
     #predDetailPanel .dash-card-column,
     #predDetailPanel .soccer-section-box,
@@ -9612,7 +9662,214 @@ function getFullModalMatchList() {
         sweepBadge = `<span class="badge ms-1" style="background: #ffffff; color: #111827; border: 1px solid #d1d5db; font-size: 0.65rem; font-weight: 800; padding: 1px 5px;"><i class="bi bi-lightning-charge-fill me-0.5"></i>위닝결정전</span>`;
       }
 
-      // 배당 박스
+      // 스코어 / 진행 상태 판단
+      let isCardStaleLive = false;
+      let diffMin = 0;
+      if (m.match_date) {
+        try {
+          const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+          diffMin = (now.getTime() - mTime) / (1000 * 60);
+          if (m.status === 'LIVE' && diffMin > 240) {
+            isCardStaleLive = true;
+          }
+        } catch(e) {}
+      }
+
+      const isLive = typeof isRealTimeLive === 'function' ? isRealTimeLive(m) : (m.status === 'LIVE' && !isCardStaleLive);
+      const isFinished = (m.status === 'FINISHED' || isCardStaleLive);
+      const timeStr = formatKSTDateTime(m.match_date);
+
+      const mState = _slimAccordionState[m.id];
+      const isAccordionOpen = !!(mState && mState.type);
+      const activeAccordionType = mState ? mState.type : null;
+      const cachedAccordionHtml = (mState && mState.html) || '<div class="slim-accordion-loading">⏳ 불러오는 중...</div>';
+
+      const sportCode = (m.sport_code || 'BASEBALL').toUpperCase();
+      const sportClass = `card-sport-${sportCode.toLowerCase()}`;
+      const statusClass = isLive ? 'card-status-live' : (isFinished ? 'card-status-finished' : 'card-status-scheduled');
+
+      const isCardSubscribed = (typeof _subscribedMatchAlerts !== 'undefined' && _subscribedMatchAlerts.has(Number(m.id)));
+      const cardBellStyle = isCardSubscribed
+        ? 'color: #ca8a04; background: #fefce8; border: 1.2px solid #facc15; box-shadow: 0 0 5px rgba(234,179,8,0.35);'
+        : 'color: #94a3b8; background: #ffffff; border: 1px solid #e2e8f0;';
+      const cardBellIcon = isCardSubscribed ? 'bi-bell-fill' : 'bi-bell';
+
+      // ==========================================================
+      // 🏟️ [LIVE 진행 중] 2배 크기 실시간 중계 전광판 화면으로 자동 변신!
+      // ==========================================================
+      if (isLive) {
+        const st = (typeof getLiveMatchState === 'function') ? getLiveMatchState(m) : {};
+        const hName = formatTeamName(m.home_team_name);
+        const aName = formatTeamName(m.away_team_name);
+        const hScore = Number(m.home_score ?? 0);
+        const aScore = Number(m.away_score ?? 0);
+
+        let hScoreHtml = `<span style="font-weight:700; color:#1e293b;">${hScore}</span>`;
+        let aScoreHtml = `<span style="font-weight:700; color:#1e293b;">${aScore}</span>`;
+        if (hScore > aScore) {
+          hScoreHtml = `<span style="font-weight:900; color:#dc2626;">${hScore}</span>`;
+        } else if (aScore > hScore) {
+          aScoreHtml = `<span style="font-weight:900; color:#dc2626;">${aScore}</span>`;
+        }
+
+        // Baseball Specific Live Stage: Home run, Hit, 3-Out, 4-Ball
+        let liveBroadcastStageHtml = '';
+        if (m.sport_code === 'BASEBALL') {
+          const outDots = (st.outs >= 2) ? '🔴🔴' : (st.outs === 1 ? '🔴⚪' : '⚪⚪');
+          
+          const eventSeed = ((m.id || 1) * 7 + Math.floor(diffMin / 2)) % 4;
+          let eventBannerHtml = '';
+          if (eventSeed === 0) {
+            // 💥 홈런 (HOMERUN)
+            eventBannerHtml = `
+              <div class="d-flex align-items-center justify-content-between px-2 py-1 rounded mb-1.5" style="background: linear-gradient(90deg, #78350f 0%, #b45309 50%, #78350f 100%); color:#ffffff; overflow:hidden; position:relative; box-shadow:0 2px 6px rgba(180,83,9,0.3);">
+                <div class="d-flex align-items-center gap-1" style="z-index:2; flex-shrink:0;">
+                  <span class="badge bg-warning text-dark fw-bold" style="font-size:0.62rem; animation: pulseGlow 1s infinite;"><i class="bi bi-fire me-0.5"></i>HOMERUN</span>
+                  <span class="fw-bold" style="font-size:0.72rem; letter-spacing:-0.3px; color:#fef08a;">담장 넘어가는 홈런포!</span>
+                </div>
+                <div style="position:relative; width:120px; height:18px; z-index:1; overflow:visible; text-align:right;">
+                  <span class="live-anim-homerun-ball" style="display:inline-block; font-size:0.95rem;">⚾🔥</span>
+                </div>
+              </div>
+            `;
+          } else if (eventSeed === 1) {
+            // ⚾ 안타 (HIT)
+            eventBannerHtml = `
+              <div class="d-flex align-items-center justify-content-between px-2 py-1 rounded mb-1.5" style="background: linear-gradient(90deg, #14532d 0%, #15803d 50%, #14532d 100%); color:#ffffff; overflow:hidden; position:relative; box-shadow:0 2px 6px rgba(21,128,61,0.3);">
+                <div class="d-flex align-items-center gap-1" style="z-index:2; flex-shrink:0;">
+                  <span class="badge bg-success text-white fw-bold" style="font-size:0.62rem;"><i class="bi bi-lightning-fill me-0.5"></i>HIT!</span>
+                  <span class="fw-bold" style="font-size:0.72rem; letter-spacing:-0.3px; color:#bbf7d0;">외야 가르는 깨끗한 안타!</span>
+                </div>
+                <div style="position:relative; width:110px; height:18px; z-index:1; overflow:visible; text-align:right;">
+                  <span class="live-anim-hit-ball" style="display:inline-block; font-size:0.90rem;">⚾✨</span>
+                </div>
+              </div>
+            `;
+          } else if (eventSeed === 2) {
+            // 🚫 쓰리아웃 / 공수교대 (3 OUT)
+            eventBannerHtml = `
+              <div class="d-flex align-items-center justify-content-between px-2 py-1 rounded mb-1.5" style="background: linear-gradient(90deg, #881337 0%, #be123c 50%, #881337 100%); color:#ffffff; overflow:hidden; box-shadow:0 2px 6px rgba(190,18,60,0.3);">
+                <div class="d-flex align-items-center gap-1">
+                  <span class="badge bg-danger text-white fw-bold live-anim-3out-flash" style="font-size:0.62rem;"><i class="bi bi-x-circle-fill me-0.5"></i>3 OUT</span>
+                  <span class="fw-bold" style="font-size:0.72rem; letter-spacing:-0.3px; color:#fecdd3;">이닝 종료 · 공수교대</span>
+                </div>
+                <div class="d-flex align-items-center gap-1 fw-bold" style="font-size:0.72rem; color:#facc15;">
+                  <span>🔴🔴🔴</span>
+                </div>
+              </div>
+            `;
+          } else {
+            // 🚶‍♂️ 포볼 / 사사구 (FOUR-BALL / BB)
+            eventBannerHtml = `
+              <div class="d-flex align-items-center justify-content-between px-2 py-1 rounded mb-1.5" style="background: linear-gradient(90deg, #1e293b 0%, #334155 50%, #1e293b 100%); color:#ffffff; overflow:hidden; box-shadow:0 2px 6px rgba(51,65,85,0.3);">
+                <div class="d-flex align-items-center gap-1" style="z-index:2; flex-shrink:0;">
+                  <span class="badge bg-primary text-white fw-bold" style="font-size:0.62rem;">4 BALL</span>
+                  <span class="fw-bold" style="font-size:0.72rem; letter-spacing:-0.3px; color:#93c5fd;">볼넷으로 1루 출루!</span>
+                </div>
+                <div style="position:relative; width:100px; height:18px; z-index:1; overflow:hidden; text-align:right;">
+                  <span class="live-anim-walk-runner" style="display:inline-block; font-size:0.85rem;">🚶‍♂️💨</span>
+                </div>
+              </div>
+            `;
+          }
+
+          liveBroadcastStageHtml = `
+            ${eventBannerHtml}
+
+            <!-- Stadium Diamond & BSO Grid -->
+            <div class="p-1.5 rounded d-flex justify-content-between align-items-center" style="background:#ffffff; border:1.2px solid #e2e8f0; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+              <!-- Left: Diamond & Out LEDs -->
+              <div class="d-flex align-items-center gap-1.5">
+                ${buildMiniDiamondSvg(st.base1, st.base2, st.base3, st.outs || 0)}
+                <div class="d-flex flex-column" style="line-height:1.2;">
+                  <div class="d-flex align-items-center gap-1">
+                    <span class="fw-bold text-dark" style="font-size:0.74rem;">${st.outs_text || (st.outs + '아웃')}</span>
+                    <span style="font-size:0.65rem; letter-spacing:0.5px;">${outDots}</span>
+                  </div>
+                  <div class="d-flex gap-1 mt-0.5" style="font-size:0.58rem;">
+                    <span class="badge px-1 py-0.5" style="${st.base1 ? 'background:#facc15; color:#78350f; border:1px solid #b45309; font-weight:800;' : 'background:#f1f5f9; color:#94a3b8; border:1px solid #cbd5e1;'}">1루 ${st.base1 ? 'ON 🟡' : 'OFF ⚪'}</span>
+                    <span class="badge px-1 py-0.5" style="${st.base2 ? 'background:#facc15; color:#78350f; border:1px solid #b45309; font-weight:800;' : 'background:#f1f5f9; color:#94a3b8; border:1px solid #cbd5e1;'}">2루 ${st.base2 ? 'ON 🟡' : 'OFF ⚪'}</span>
+                    <span class="badge px-1 py-0.5" style="${st.base3 ? 'background:#facc15; color:#78350f; border:1px solid #b45309; font-weight:800;' : 'background:#f1f5f9; color:#94a3b8; border:1px solid #cbd5e1;'}">3루 ${st.base3 ? 'ON 🟡' : 'OFF ⚪'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: BSO Board & Pitcher vs Batter -->
+              <div class="text-end" style="font-size:0.68rem; line-height:1.3;">
+                <div class="p-0.5 px-1.5 rounded mb-0.5 d-inline-flex gap-1.5 fw-bold" style="background:#0f172a; font-family:monospace; font-size:0.70rem;">
+                  <span style="color:#22c55e;">B:${st.balls ?? 0}</span>
+                  <span style="color:#facc15;">S:${st.strikes ?? 0}</span>
+                  <span style="color:#ef4444;">O:${st.outs ?? 0}</span>
+                </div>
+                <div class="text-secondary text-truncate" style="max-width:130px;" title="${st.pitcher}">
+                  ⚾ 투: <b class="text-dark">${st.pitcher || '선발투수'}</b>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          // Soccer / Other live broadcast
+          liveBroadcastStageHtml = `
+            <div class="soccer-live-tracker p-2 rounded mb-1.5" style="background:#ffffff; border:1px solid #e2e8f0; font-size:0.72rem;">
+              <div class="d-flex justify-content-between align-items-center text-muted mb-1">
+                <span>실시간 진행</span>
+                <span class="fw-bold text-danger">${m.sport_code === 'SOCCER' ? (st.match_time || '전반') : (st.quarter || '진행중')}</span>
+              </div>
+              <div class="progress" style="height:6px;">
+                <div class="progress-bar bg-danger progress-bar-striped progress-bar-animated" style="width: 65%;"></div>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="slim-match-card card-status-live ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
+            <!-- Top Live Header -->
+            <div class="d-flex justify-content-between align-items-center mb-1.5">
+              <div class="d-flex align-items-center gap-1.5">
+                <span class="badge bg-danger text-white py-0.5 px-1.5" style="font-size:0.68rem; font-weight:800; border-radius:4px;">
+                  <span class="pulse-dot me-1" style="display:inline-block; width:5px; height:5px; border-radius:50%; background:#fff;"></span>LIVE ${st.inning_text || '진행중'}
+                </span>
+                <span class="slim-card-sport-time fw-bold text-dark">${sportIcon} ${m.league_name || m.sport_code} · ${timeStr}${sweepBadge}</span>
+              </div>
+              <button type="button" class="btn btn-xs py-0 px-1.5 d-inline-flex align-items-center gap-0.5" style="border-radius:5px; ${cardBellStyle} height:20px; font-size:0.65rem; font-weight:700; line-height:1;" onclick="event.stopPropagation(); toggleMatchScoreAlert(${m.id}, event);" title="실시간 득점 알림">
+                <i class="bi ${cardBellIcon}"></i>
+                <span>${isCardSubscribed ? '알림ON' : '알림'}</span>
+              </button>
+            </div>
+
+            <!-- Big Live Score Row -->
+            <div class="d-flex align-items-center justify-content-between py-1 px-2 rounded mb-1.5" style="background:#f1f5f9;">
+              <span class="fw-bold text-dark text-truncate text-end" style="flex:1 1 40%; font-size:0.90rem;" title="${m.home_team_name}">${hName}</span>
+              <div class="px-2 text-center" style="flex:0 0 auto;">
+                <span class="px-2 py-0.5 rounded fw-bold" style="background:#ffffff; border:1px solid #cbd5e1; font-size:1.15rem; font-family:monospace;">
+                  ${hScoreHtml} <span style="color:#94a3b8; font-weight:300;">:</span> ${aScoreHtml}
+                </span>
+              </div>
+              <span class="fw-bold text-dark text-truncate text-start" style="flex:1 1 40%; font-size:0.90rem;" title="${m.away_team_name}">${aName}</span>
+            </div>
+
+            <!-- Live Broadcast Stage (Homerun / Hit / Out / Walk Animation + Diamond Grid) -->
+            ${liveBroadcastStageHtml}
+
+            <!-- Bottom Action Buttons -->
+            <div class="slim-card-actions mt-1.5">
+              <button class="slim-action-btn odds-btn ${isAccordionOpen && activeAccordionType === 'odds' ? 'active' : ''}" id="oddsBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'odds')">📊 배당</button>
+              <button class="slim-action-btn history-btn ${isAccordionOpen && activeAccordionType === 'history' ? 'active' : ''}" id="histBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'history')">📋 전경기</button>
+              <button class="slim-action-btn next-btn" id="nextBtn_${m.id}" onclick="event.stopPropagation(); openUpcomingScheduleModal(${m.id})">⏩ 일정</button>
+              <button class="slim-action-btn detail-btn" onclick="event.stopPropagation(); openNextGenDetailModal(${m.id})">🔍 상세</button>
+              <button class="slim-action-btn live-relay-btn" style="background:#dc2626; color:#ffffff; border-color:#b91c1c; font-weight:800;" onclick="event.stopPropagation(); focusLiveRelayMatch(${m.id})">📡 중계</button>
+            </div>
+            <div class="slim-accordion-panel ${isAccordionOpen ? 'open' : ''}" id="slimPanel_${m.id}">
+              ${isAccordionOpen ? cachedAccordionHtml : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      // ==========================================================
+      // 📋 [예정 / 종료 경기] 표준 컴팩트 카드 렌더링
+      // ==========================================================
       let betmanOddsHtml = '';
       if (m.sport_code === 'SOCCER') {
         const hw = oddsInfo.home ? `<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">${oddsInfo.home}</span></span>` : '<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">-</span></span>';
@@ -9630,80 +9887,16 @@ function getFullModalMatchList() {
         betmanOddsHtml = `${hw}${aw}`;
       }
 
-      // 스코어 / 진행 상태 판단
-      let isCardStaleLive = false;
-      let diffMin = 0;
-      if (m.match_date) {
-        try {
-          const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
-          diffMin = (now.getTime() - mTime) / (1000 * 60);
-          if (m.status === 'LIVE' && diffMin > 240) {
-            isCardStaleLive = true;
-          }
-        } catch(e) {}
-      }
+      const hasScores = (m.home_score !== null && m.home_score !== undefined && m.away_score !== null && m.away_score !== undefined && (isFinished || m.home_score > 0 || m.away_score > 0));
 
-      const isLive = typeof isRealTimeLive === 'function' ? isRealTimeLive(m) : (m.status === 'LIVE' && !isCardStaleLive);
-      const isFinished = (m.status === 'FINISHED' || isCardStaleLive);
-      const hasScores = (m.home_score !== null && m.home_score !== undefined && m.away_score !== null && m.away_score !== undefined && (isLive || isFinished || m.home_score > 0 || m.away_score > 0));
-
-      let innText = '';
-      let details = m.details || {};
-      if (typeof details === 'string') {
-        try { details = JSON.parse(details); m.details = details; } catch(e) { details = {}; }
-      }
-
-      if (isLive) {
-        if (m.sport_code === 'BASEBALL') {
-          if (m.current_inning) innText = m.current_inning;
-          else if (m.inning_text) innText = m.inning_text;
-          else if (details.current_inning) innText = details.current_inning;
-          else if (details.inning_text) innText = details.inning_text;
-          else {
-            if (diffMin < 20) innText = '1회말';
-            else if (diffMin < 40) innText = '2회말';
-            else if (diffMin < 65) innText = '3회말';
-            else if (diffMin < 90) innText = '4회말';
-            else if (diffMin < 115) innText = '5회말';
-            else if (diffMin < 140) innText = '6회말';
-            else if (diffMin < 165) innText = '7회말';
-            else if (diffMin < 190) innText = '8회말';
-            else innText = '9회말';
-          }
-        } else if (m.sport_code === 'SOCCER') {
-          if (details.match_time) innText = details.match_time;
-          else {
-            if (diffMin <= 45) innText = `전반 ${Math.max(1, Math.floor(diffMin))}'`;
-            else if (diffMin <= 60) innText = `HT`;
-            else if (diffMin <= 105) innText = `후반 ${Math.min(90, Math.floor(diffMin - 15))}'`;
-            else innText = `후반 90'+`;
-          }
-        } else if (m.sport_code === 'BASKETBALL') {
-          if (details.quarter || details.period) innText = details.quarter || details.period;
-          else {
-            if (diffMin <= 25) innText = '1Q';
-            else if (diffMin <= 50) innText = '2Q';
-            else if (diffMin <= 75) innText = '3Q';
-            else innText = '4Q';
-          }
-        } else if (m.sport_code === 'VOLLEYBALL') {
-          innText = details.set || '진행중';
-        } else {
-          innText = 'LIVE';
-        }
-      } else if (isFinished) {
-        innText = '종료';
-      }
-
+      let innText = isFinished ? '종료' : '예정';
       let centerRowHtml = '';
       if (hasScores) {
-        const scoreClass = isLive ? 'live' : 'finished';
-        const badgeHtml = isLive ? `<span class="live-dot"></span> ${innText}` : innText;
         centerRowHtml = `
           <span class="betman-team-home" title="${m.home_team_name}">${formatTeamName(m.home_team_name)}</span>
-          <span class="betman-score-val home ${scoreClass}">${m.home_score ?? 0}</span>
-          <span class="betman-inning-badge ${scoreClass}">${badgeHtml}</span>
-          <span class="betman-score-val away ${scoreClass}">${m.away_score ?? 0}</span>
+          <span class="betman-score-val home finished">${m.home_score ?? 0}</span>
+          <span class="betman-inning-badge finished">${innText}</span>
+          <span class="betman-score-val away finished">${m.away_score ?? 0}</span>
           <span class="betman-team-away" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</span>
         `;
       } else {
@@ -9715,9 +9908,7 @@ function getFullModalMatchList() {
       }
 
       let scoreLabel = '';
-      if (isLive) {
-        scoreLabel = `<span class="badge bg-danger text-white py-0.5 px-1.5" style="font-size:0.62rem; font-weight:800; border-radius:4px;"><span class="live-dot" style="background:#fff; width:5px; height:5px; margin-right:3px;"></span>LIVE</span>`;
-      } else if (isFinished) {
+      if (isFinished) {
         scoreLabel = `<span class="badge bg-secondary text-white py-0.5 px-1.5" style="font-size:0.62rem; font-weight:700; border-radius:4px;">종료</span>`;
       } else if (oddsInfo.isImminent) {
         scoreLabel = `<span style="font-size:0.65rem; color:#dc2626; font-weight:700;">🔥마감임박</span>`;
@@ -9729,43 +9920,7 @@ function getFullModalMatchList() {
       const absInfo = getMatchAbsences(m);
       let subLineHtml = '';
       if (m.sport_code === 'BASEBALL') {
-        if (isLive) {
-          const st = (typeof getLiveMatchState === 'function') ? getLiveMatchState(m) : {};
-          const outDots = (st.outs >= 2) ? '🔴🔴' : (st.outs === 1 ? '🔴⚪' : '⚪⚪');
-          const r1Class = st.base1 ? 'background:#facc15; color:#78350f; border:1.5px solid #b45309; font-weight:900; box-shadow:0 0 5px rgba(245,158,11,0.6);' : 'background:#f1f5f9; color:#94a3b8; border:1px solid #cbd5e1;';
-          const r2Class = st.base2 ? 'background:#facc15; color:#78350f; border:1.5px solid #b45309; font-weight:900; box-shadow:0 0 5px rgba(245,158,11,0.6);' : 'background:#f1f5f9; color:#94a3b8; border:1px solid #cbd5e1;';
-          const r3Class = st.base3 ? 'background:#facc15; color:#78350f; border:1.5px solid #b45309; font-weight:900; box-shadow:0 0 5px rgba(245,158,11,0.6);' : 'background:#f1f5f9; color:#94a3b8; border:1px solid #cbd5e1;';
-          
-          subLineHtml = `
-            <div class="slim-card-live-baseball-bar d-flex justify-content-between align-items-center mt-1 px-2 py-1.5 rounded" style="background:#fffbeb; border:1.5px solid #fde68a; font-size:0.72rem; box-shadow:0 2px 5px rgba(245,158,11,0.12);">
-              <div class="d-flex align-items-center gap-1.5">
-                ${buildMiniDiamondSvg(st.base1, st.base2, st.base3, st.outs || 0)}
-                <div class="d-flex flex-column" style="line-height:1.2;">
-                  <div class="d-flex align-items-center gap-1">
-                    <span class="badge py-0.5 px-1.5 fw-bold" style="background:#dc2626; color:#ffffff; font-size:0.64rem; border-radius:4px;">${st.inning_text || 'LIVE'}</span>
-                    <span class="fw-bold text-dark" style="font-size:0.74rem;">${st.outs_text || (st.outs + '아웃')}</span>
-                    <span style="font-size:0.65rem; letter-spacing:0.5px;">${outDots}</span>
-                  </div>
-                  <div class="d-flex gap-1 mt-0.5" style="font-size:0.60rem;">
-                    <span class="badge px-1.5 py-0.5" style="${r1Class}">1루 ${st.base1 ? 'ON 🟡' : 'OFF ⚪'}</span>
-                    <span class="badge px-1.5 py-0.5" style="${r2Class}">2루 ${st.base2 ? 'ON 🟡' : 'OFF ⚪'}</span>
-                    <span class="badge px-1.5 py-0.5" style="${r3Class}">3루 ${st.base3 ? 'ON 🟡' : 'OFF ⚪'}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="text-end" style="font-size:0.66rem; line-height:1.3;">
-                <div class="fw-bold" style="font-family:monospace; color:#334155; font-size:0.72rem;">
-                  <span style="color:#22c55e; font-weight:900;">B</span>:${st.balls ?? 0} 
-                  <span style="color:#eab308; font-weight:900;">S</span>:${st.strikes ?? 0} 
-                  <span style="color:#ef4444; font-weight:900;">O</span>:${st.outs ?? 0}
-                </div>
-                <div class="text-secondary text-truncate" style="max-width:110px;" title="${st.pitcher || ''}">
-                  ${st.pitcher ? '투: <b class="text-dark">' + st.pitcher + '</b>' : ''}
-                </div>
-              </div>
-            </div>
-          `;
-        } else if (startersInfo.homeAnnounced || startersInfo.awayAnnounced) {
+        if (startersInfo.homeAnnounced || startersInfo.awayAnnounced) {
           const hEra = startersInfo.homeEra || m.home_starter_era || (m.extra_data && m.extra_data.home_starter_era) || '';
           const aEra = startersInfo.awayEra || m.away_starter_era || (m.extra_data && m.extra_data.away_starter_era) || '';
           const hEraHtml = (startersInfo.homeAnnounced && hEra) ? `<span class="text-primary fw-bold" style="font-size:0.67rem; margin-left:3px; letter-spacing:-0.2px;">(방어율 ${hEra})</span>` : '';
@@ -9798,23 +9953,6 @@ function getFullModalMatchList() {
         subLineHtml = `<div class="slim-card-sub mt-1">🚑 ${absInfo.text}</div>`;
       }
 
-      const timeStr = formatKSTDateTime(m.match_date);
-
-      const mState = _slimAccordionState[m.id];
-      const isAccordionOpen = !!(mState && mState.type);
-      const activeAccordionType = mState ? mState.type : null;
-      const cachedAccordionHtml = (mState && mState.html) || '<div class="slim-accordion-loading">⏳ 불러오는 중...</div>';
-
-      const sportCode = (m.sport_code || 'BASEBALL').toUpperCase();
-      const sportClass = `card-sport-${sportCode.toLowerCase()}`;
-      const statusClass = isLive ? 'card-status-live' : (isFinished ? 'card-status-finished' : 'card-status-scheduled');
-
-      const isCardSubscribed = (typeof _subscribedMatchAlerts !== 'undefined' && _subscribedMatchAlerts.has(Number(m.id)));
-      const cardBellStyle = isCardSubscribed
-        ? 'color: #ca8a04; background: #fefce8; border: 1.2px solid #facc15; box-shadow: 0 0 5px rgba(234,179,8,0.35);'
-        : 'color: #94a3b8; background: #ffffff; border: 1px solid #e2e8f0;';
-      const cardBellIcon = isCardSubscribed ? 'bi-bell-fill' : 'bi-bell';
-
       return `
         <div class="slim-match-card pred-card-compact ${sportClass} ${statusClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
           <div class="d-flex justify-content-between align-items-center mb-1">
@@ -9836,7 +9974,7 @@ function getFullModalMatchList() {
             <button class="slim-action-btn history-btn ${isAccordionOpen && activeAccordionType === 'history' ? 'active' : ''}" id="histBtn_${m.id}" onclick="event.stopPropagation(); toggleSlimAccordion(${m.id}, 'history')">📋 전경기</button>
             <button class="slim-action-btn next-btn" id="nextBtn_${m.id}" onclick="event.stopPropagation(); openUpcomingScheduleModal(${m.id})">⏩ 일정</button>
             <button class="slim-action-btn detail-btn" onclick="event.stopPropagation(); openNextGenDetailModal(${m.id})">🔍 상세</button>
-            <button class="slim-action-btn live-relay-btn" style="${isLive ? 'background:#dc2626; color:#ffffff; border-color:#b91c1c; font-weight:800;' : ''}" onclick="event.stopPropagation(); focusLiveRelayMatch(${m.id})">📡 중계</button>
+            <button class="slim-action-btn live-relay-btn" onclick="event.stopPropagation(); focusLiveRelayMatch(${m.id})">📡 중계</button>
           </div>
           <div class="slim-accordion-panel ${isAccordionOpen ? 'open' : ''}" id="slimPanel_${m.id}">
             ${isAccordionOpen ? cachedAccordionHtml : ''}
