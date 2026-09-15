@@ -4867,7 +4867,7 @@ function getFullModalMatchList() {
                 </div>
               </div>
               <div class="text-center px-1" style="width: 16%; flex-shrink: 0;">
-                <div class="fs-4 fw-bold text-dark" style="font-weight: 900 !important; color: #111827 !important; line-height: 1.1;">${m.home_score} : ${m.away_score}</div>
+                <div class="fs-4 fw-bold text-dark" style="font-weight: 900 !important; color: #111827 !important; line-height: 1.1;">${m.home_score ?? (m.scoreboard && m.scoreboard.home_score) ?? (m.team_stats && m.team_stats.home_score) ?? 0} : ${m.away_score ?? (m.scoreboard && m.scoreboard.away_score) ?? (m.team_stats && m.team_stats.away_score) ?? 0}</div>
                 <div class="text-muted fw-bold" style="font-size: 0.70rem;">VS</div>
               </div>
               <div class="text-center" style="width: 42%; min-width: 0;">
@@ -10039,6 +10039,29 @@ function getFullModalMatchList() {
       }, 5400);
     };
 
+    // ⚡ 전역 실시간 라이브 경기 판단 헬퍼 (공수교대/팀체인지/시간대 완벽 대응)
+    function isRealTimeLive(m) {
+      if (!m) return false;
+      if (m.status === 'LIVE' || m.status === 'IN_PLAY' || m.status === '1H' || m.status === '2H' || m.status === 'HT') {
+        if (m.match_date) {
+          try {
+            const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+            if ((Date.now() - mTime) / (1000 * 60 * 60) > 4.5) return false;
+          } catch(e) {}
+        }
+        return true;
+      }
+      if (m.status === 'SCHEDULED' && m.match_date) {
+        try {
+          const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+          const diffMin = (Date.now() - mTime) / (60 * 1000);
+          if (diffMin >= 0 && diffMin <= 210) return true;
+        } catch(e) {}
+      }
+      return false;
+    }
+    window.isRealTimeLive = isRealTimeLive;
+
     const _slimAccordionState = {}; // { matchId: { type: 'odds'|'history', loaded: bool, html: string } }
     const _historyClientCache = new Map();
 
@@ -10064,13 +10087,13 @@ function getFullModalMatchList() {
         try {
           const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
           diffMin = (now.getTime() - mTime) / (1000 * 60);
-          if (m.status === 'LIVE' && diffMin > 240) {
+          if (m.status === 'LIVE' && diffMin > 270) {
             isCardStaleLive = true;
           }
         } catch(e) {}
       }
 
-      const isLive = typeof isRealTimeLive === 'function' ? isRealTimeLive(m) : (m.status === 'LIVE' && !isCardStaleLive);
+      const isLive = isRealTimeLive(m) && !isCardStaleLive;
       const isFinished = (m.status === 'FINISHED' || isCardStaleLive);
       const timeStr = formatKSTDateTime(m.match_date);
 
@@ -10096,8 +10119,8 @@ function getFullModalMatchList() {
         const st = (typeof getLiveMatchState === 'function') ? getLiveMatchState(m) : {};
         const hName = formatTeamName(m.home_team_name);
         const aName = formatTeamName(m.away_team_name);
-        const hScore = Number(m.home_score ?? 0);
-        const aScore = Number(m.away_score ?? 0);
+        const hScore = Number(m.home_score ?? (m.scoreboard && m.scoreboard.home_score) ?? (m.team_stats && m.team_stats.home_score) ?? 0);
+        const aScore = Number(m.away_score ?? (m.scoreboard && m.scoreboard.away_score) ?? (m.team_stats && m.team_stats.away_score) ?? 0);
 
         let hScoreHtml = `<span style="font-weight:900; color:#ffffff;">${hScore}</span>`;
         let aScoreHtml = `<span style="font-weight:900; color:#ffffff;">${aScore}</span>`;
@@ -10392,16 +10415,18 @@ function getFullModalMatchList() {
         betmanOddsHtml = `${hw}${aw}`;
       }
 
-      const hasScores = (m.home_score !== null && m.home_score !== undefined && m.away_score !== null && m.away_score !== undefined && (isFinished || m.home_score > 0 || m.away_score > 0));
+      const hScoreVal = m.home_score ?? (m.scoreboard && m.scoreboard.home_score) ?? (m.team_stats && m.team_stats.home_score) ?? null;
+      const aScoreVal = m.away_score ?? (m.scoreboard && m.scoreboard.away_score) ?? (m.team_stats && m.team_stats.away_score) ?? null;
+      const hasScores = (hScoreVal !== null && aScoreVal !== null && (isFinished || isLive || hScoreVal > 0 || aScoreVal > 0 || m.status === 'LIVE' || m.status === 'IN_PLAY'));
 
-      let innText = isFinished ? '종료' : '예정';
+      let innText = isFinished ? '종료' : (isLive ? '진행중' : '예정');
       let centerRowHtml = '';
       if (hasScores) {
         centerRowHtml = `
           <span class="betman-team-home" title="${m.home_team_name}">${formatTeamName(m.home_team_name)}</span>
-          <span class="betman-score-val home finished">${m.home_score ?? 0}</span>
-          <span class="betman-inning-badge finished">${innText}</span>
-          <span class="betman-score-val away finished">${m.away_score ?? 0}</span>
+          <span class="betman-score-val home finished">${hScoreVal ?? 0}</span>
+          <span class="betman-inning-badge ${isFinished ? 'finished' : (isLive ? 'bg-danger text-white' : '')}">${innText}</span>
+          <span class="betman-score-val away finished">${aScoreVal ?? 0}</span>
           <span class="betman-team-away" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</span>
         `;
       } else {
@@ -15482,11 +15507,14 @@ function updateSlimPanel(matchId, type, contentHtml) {
         if (!item || !item.id) continue;
         const target = map.get(item.id);
         if (target) {
-          if (target.home_score !== item.home_score || target.away_score !== item.away_score || target.status !== item.status) {
+          const itemHScore = (item.home_score !== undefined && item.home_score !== null) ? item.home_score : ((item.scoreboard && item.scoreboard.home_score !== undefined && item.scoreboard.home_score !== null) ? item.scoreboard.home_score : null);
+          const itemAScore = (item.away_score !== undefined && item.away_score !== null) ? item.away_score : ((item.scoreboard && item.scoreboard.away_score !== undefined && item.scoreboard.away_score !== null) ? item.scoreboard.away_score : null);
+
+          if ((itemHScore !== null && target.home_score !== itemHScore) || (itemAScore !== null && target.away_score !== itemAScore) || (item.status && target.status !== item.status)) {
             hasChanges = true;
           }
-          target.home_score = item.home_score;
-          target.away_score = item.away_score;
+          if (itemHScore !== null) target.home_score = itemHScore;
+          if (itemAScore !== null) target.away_score = itemAScore;
           target.status = item.status || target.status;
           if (item.current_inning) {
             target.current_inning = item.current_inning;
@@ -15494,6 +15522,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
           if (item.outs !== undefined && item.outs !== null) target.outs = item.outs;
           if (item.balls !== undefined && item.balls !== null) target.balls = item.balls;
           if (item.strikes !== undefined && item.strikes !== null) target.strikes = item.strikes;
+          if (item.details) target.details = item.details;
+          if (item.scoreboard) target.scoreboard = item.scoreboard;
         }
       }
 
@@ -16006,7 +16036,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
       }
       const sb = ts.scoreboard || (m.details && m.details.scoreboard) || {};
 
-      const isLive = (m.status === 'LIVE' || m.status === 'IN_PLAY' || m.status === '1H' || m.status === '2H' || m.status === 'HT');
+      const isLive = isRealTimeLive(m);
       let diffMin = 0;
       if (m.match_date) {
         try {
@@ -16024,15 +16054,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
       let inning_text = ts.current_inning || sb.current_inning || m.current_inning || '';
       if (!inning_text && m.sport_code === 'BASEBALL' && isLive) {
-        if (diffMin < 20) inning_text = '1회말 ▾';
-        else if (diffMin < 40) inning_text = '2회말 ▾';
-        else if (diffMin < 65) inning_text = '3회말 ▾';
-        else if (diffMin < 90) inning_text = '4회말 ▾';
-        else if (diffMin < 115) inning_text = '5회말 ▾';
-        else if (diffMin < 140) inning_text = '6회말 ▾';
-        else if (diffMin < 165) inning_text = '7회말 ▾';
-        else if (diffMin < 190) inning_text = '8회말 ▾';
-        else inning_text = '9회말 ▾';
+        const halfInningIdx = Math.floor(diffMin / 10);
+        const innNum = Math.min(9, Math.floor(halfInningIdx / 2) + 1);
+        const isTop = (halfInningIdx % 2 === 0);
+        inning_text = `${innNum}회${isTop ? '초 ▴' : '말 ▾'}`;
       }
       if (!inning_text) inning_text = isLive ? '진행중' : (m.status === 'FINISHED' ? '종료' : '예정');
 
@@ -16095,8 +16120,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
     }
 
     function buildLinescoreRowsHtml(m, st) {
-      const hScore = Number(m.home_score ?? 0);
-      const aScore = Number(m.away_score ?? 0);
+      const hScore = Number(m.home_score ?? (m.scoreboard && m.scoreboard.home_score) ?? (m.team_stats && m.team_stats.home_score) ?? 0);
+      const aScore = Number(m.away_score ?? (m.scoreboard && m.scoreboard.away_score) ?? (m.team_stats && m.team_stats.away_score) ?? 0);
       const hName = formatTeamName(m.home_team_name);
       const aName = formatTeamName(m.away_team_name);
 
@@ -16114,6 +16139,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
       if (innMatch) {
         curInningNum = Math.min(9, Math.max(1, parseInt(innMatch[1])));
       }
+      const isBottom = (st.inning_text || '').includes('말');
 
       if (linescore && linescore.home && linescore.away) {
         for (let i = 0; i < 9; i++) {
@@ -16135,7 +16161,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
             remH -= hVal;
           } else if (inn === curInningNum) {
             awayInnings[i] = remA;
-            homeInnings[i] = st.inning_text.includes('말') ? remH : '-';
+            homeInnings[i] = isBottom ? remH : '-';
           } else {
             awayInnings[i] = '-';
             homeInnings[i] = '-';
@@ -16184,12 +16210,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
     function buildLiveFocusShowcaseHtml(m) {
       if (!m) return '';
-      const isLive = (m.status === 'LIVE' || m.status === 'IN_PLAY' || m.status === '1H' || m.status === '2H' || m.status === 'HT');
+      const isLive = isRealTimeLive(m);
       const isFin = (m.status === 'FINISHED');
       const st = getLiveMatchState(m);
 
-      const hScore = Number(m.home_score ?? 0);
-      const aScore = Number(m.away_score ?? 0);
+      const hScore = Number(m.home_score ?? (m.scoreboard && m.scoreboard.home_score) ?? (m.team_stats && m.team_stats.home_score) ?? 0);
+      const aScore = Number(m.away_score ?? (m.scoreboard && m.scoreboard.away_score) ?? (m.team_stats && m.team_stats.away_score) ?? 0);
       const hName = formatTeamName(m.home_team_name);
       const aName = formatTeamName(m.away_team_name);
 
