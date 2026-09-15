@@ -542,7 +542,7 @@
       box-sizing: border-box !important;
     }
 
-    /* 💥 홈런: 1루2루3루 ↔ 중계 '왕복 2번' 비행 애니메이션 */
+    /* 💥 홈런: 1루2루3루 ↔ 중계 '왕복 2번' 비행 애니메이션 (1회 재생 후 완료) */
     @keyframes homerunTwoTripsBallAnim {
       0% {
         left: 4px;
@@ -596,7 +596,7 @@
       }
     }
 
-    /* ⚾ 안타: 1루2루3루 ➡️ 중계 '1번만 이동' 후 '안타!' 멘트 점등 */
+    /* ⚾ 안타: 1루2루3루 ➡️ 중계 '1번만 이동' 후 '안타!' 멘트 점등 (1회 재생 후 완료) */
     @keyframes hitOneTripBallAnim {
       0% {
         left: 4px;
@@ -622,8 +622,8 @@
         transform: translateY(0px) scale(1.05);
       }
       100% {
-        left: 4px;
-        transform: translateY(0px) scale(0.9);
+        left: calc(100% - 36px);
+        transform: translateY(0px) scale(1.05);
       }
     }
 
@@ -644,14 +644,117 @@
     @keyframes walkOneTripRunnerAnim {
       0% { left: 4px; }
       75% { left: calc(100% - 36px); }
-      90% { left: calc(100% - 36px); }
-      100% { left: 4px; }
+      90%, 100% { left: calc(100% - 36px); }
     }
 
     /* 🚫 쓰리아웃 점멸 */
     @keyframes outFlashAnim {
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.6; transform: scale(1.08); filter: drop-shadow(0 0 4px #ef4444); }
+    }
+
+    /* ⏱️ 이벤트 배너 자동 소멸(바로 꺼짐) 애니메이션 */
+    @keyframes eventTrackAutoDismissHomerun {
+      0% {
+        opacity: 0;
+        max-height: 0;
+        margin-bottom: 0;
+        transform: scale(0.96);
+      }
+      6% {
+        opacity: 1;
+        max-height: 120px;
+        margin-bottom: 6px;
+        transform: scale(1);
+      }
+      88% {
+        opacity: 1;
+        max-height: 120px;
+        margin-bottom: 6px;
+        transform: scale(1);
+      }
+      98%, 100% {
+        opacity: 0;
+        max-height: 0;
+        margin-bottom: 0;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        border: none !important;
+        overflow: hidden !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+    }
+
+    @keyframes eventTrackAutoDismissHit {
+      0% {
+        opacity: 0;
+        max-height: 0;
+        margin-bottom: 0;
+        transform: scale(0.96);
+      }
+      8% {
+        opacity: 1;
+        max-height: 120px;
+        margin-bottom: 6px;
+        transform: scale(1);
+      }
+      84% {
+        opacity: 1;
+        max-height: 120px;
+        margin-bottom: 6px;
+        transform: scale(1);
+      }
+      98%, 100% {
+        opacity: 0;
+        max-height: 0;
+        margin-bottom: 0;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        border: none !important;
+        overflow: hidden !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+    }
+
+    @keyframes eventTrackAutoDismissGeneral {
+      0% {
+        opacity: 0;
+        max-height: 0;
+        margin-bottom: 0;
+      }
+      10% {
+        opacity: 1;
+        max-height: 120px;
+        margin-bottom: 6px;
+      }
+      80% {
+        opacity: 1;
+        max-height: 120px;
+        margin-bottom: 6px;
+      }
+      98%, 100% {
+        opacity: 0;
+        max-height: 0;
+        margin-bottom: 0;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        border: none !important;
+        overflow: hidden !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+    }
+
+    .live-track-dismiss-homerun {
+      animation: eventTrackAutoDismissHomerun 5.2s ease-in-out forwards !important;
+    }
+    .live-track-dismiss-hit {
+      animation: eventTrackAutoDismissHit 3.8s ease-in-out forwards !important;
+    }
+    .live-track-dismiss-general {
+      animation: eventTrackAutoDismissGeneral 3.4s ease-in-out forwards !important;
     }
 
     .live-anim-homerun-two-trips {
@@ -662,10 +765,10 @@
       height: 24px !important;
       z-index: 15 !important;
       pointer-events: none !important;
-      animation: homerunTwoTripsBallAnim 4.8s infinite ease-in-out !important;
+      animation: homerunTwoTripsBallAnim 4.8s 1 ease-in-out forwards !important;
     }
     .live-anim-homerun-text-burst {
-      animation: homerunTextBurstAnim 4.8s infinite ease-in-out !important;
+      animation: homerunTextBurstAnim 4.8s 1 ease-in-out forwards !important;
     }
     .live-anim-hit-one-trip {
       position: absolute !important;
@@ -675,10 +778,10 @@
       height: 24px !important;
       z-index: 15 !important;
       pointer-events: none !important;
-      animation: hitOneTripBallAnim 3.2s infinite ease-in-out !important;
+      animation: hitOneTripBallAnim 3.2s 1 ease-in-out forwards !important;
     }
     .live-anim-hit-text-burst {
-      animation: hitTextBurstAnim 3.2s infinite ease-in-out !important;
+      animation: hitTextBurstAnim 3.2s 1 ease-in-out forwards !important;
     }
     .live-anim-walk-one-trip {
       position: absolute !important;
@@ -688,7 +791,7 @@
       height: 24px !important;
       z-index: 15 !important;
       pointer-events: none !important;
-      animation: walkOneTripRunnerAnim 3.2s infinite linear !important;
+      animation: walkOneTripRunnerAnim 3.0s 1 linear forwards !important;
     }
     .live-anim-3out-flash {
       animation: outFlashAnim 1.2s infinite ease-in-out !important;
@@ -9859,16 +9962,19 @@ function getFullModalMatchList() {
           const eventSeed = ((m.id || 1) * 7 + Math.floor(diffMin / 2)) % 4;
           let eventBannerHtml = '';
           if (eventSeed === 0) {
-            // 💥 홈런 (HOMERUN) - 1·2·3루 ↔ 중계 '2번 왕복' 후 '홈런!' 멘트 폭발
+            // 💥 홈런 (HOMERUN) - 1·2·3루 ↔ 중계 '2번 왕복' 후 '홈런!' 멘트 폭발 ➡️ 약 5초 후 자동 꺼짐(소멸)
             eventBannerHtml = `
-              <div class="live-baseball-track-container p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #451a03 0%, #78350f 50%, #451a03 100%); border:1.5px solid #f59e0b; box-shadow:0 3px 8px rgba(180,83,9,0.35); position:relative; overflow:hidden;">
+              <div class="live-baseball-track-container live-track-dismiss-homerun p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #451a03 0%, #78350f 50%, #451a03 100%); border:1.5px solid #f59e0b; box-shadow:0 3px 8px rgba(180,83,9,0.35); position:relative; overflow:hidden;">
                 <!-- Caption Bar -->
                 <div class="d-flex justify-content-between align-items-center mb-1 text-white" style="font-size:0.72rem;">
                   <div class="d-flex align-items-center gap-1.5 live-anim-homerun-text-burst">
                     <span class="badge bg-warning text-dark fw-bold px-1.5 py-0.5" style="font-size:0.64rem;"><i class="bi bi-fire me-0.5"></i>HOMERUN</span>
                     <span class="fw-bold" style="color:#fef08a; font-size:0.75rem; letter-spacing:-0.2px;">💥 쾅! 홈런!! 백스크린 넘기는 초대형 아치!</span>
                   </div>
-                  <span class="badge bg-danger text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">왕복 2회</span>
+                  <div class="d-flex align-items-center gap-1">
+                    <span class="badge bg-danger text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">왕복 2회</span>
+                    <button type="button" class="btn-close btn-close-white" style="font-size:0.50rem; opacity:0.8;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>
+                  </div>
                 </div>
                 <!-- Motion Track (1·2·3루 ↔ 📡중계) -->
                 <div class="live-baseball-motion-rail">
@@ -9893,16 +9999,19 @@ function getFullModalMatchList() {
               </div>
             `;
           } else if (eventSeed === 1) {
-            // ⚾ 안타 (HIT) - 1·2·3루 ➡️ 중계 '1번만 이동' 후 '안타!' 멘트 점등
+            // ⚾ 안타 (HIT) - 1·2·3루 ➡️ 중계 '1번만 이동' 후 '안타!' 멘트 점등 ➡️ 약 3.5초 후 자동 꺼짐(소멸)
             eventBannerHtml = `
-              <div class="live-baseball-track-container p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #064e3b 0%, #047857 50%, #064e3b 100%); border:1.5px solid #34d399; box-shadow:0 3px 8px rgba(4,120,87,0.35); position:relative; overflow:hidden;">
+              <div class="live-baseball-track-container live-track-dismiss-hit p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #064e3b 0%, #047857 50%, #064e3b 100%); border:1.5px solid #34d399; box-shadow:0 3px 8px rgba(4,120,87,0.35); position:relative; overflow:hidden;">
                 <!-- Caption Bar -->
                 <div class="d-flex justify-content-between align-items-center mb-1 text-white" style="font-size:0.72rem;">
                   <div class="d-flex align-items-center gap-1.5 live-anim-hit-text-burst">
                     <span class="badge bg-success text-white fw-bold px-1.5 py-0.5" style="font-size:0.64rem;"><i class="bi bi-lightning-fill me-0.5"></i>HIT!</span>
                     <span class="fw-bold" style="color:#a7f3d0; font-size:0.75rem; letter-spacing:-0.2px;">⚾ 탕! 안타!! 좌중간을 가르는 1타점 적시타!</span>
                   </div>
-                  <span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">1회 전진</span>
+                  <div class="d-flex align-items-center gap-1">
+                    <span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">1회 전진</span>
+                    <button type="button" class="btn-close btn-close-white" style="font-size:0.50rem; opacity:0.8;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>
+                  </div>
                 </div>
                 <!-- Motion Track (1·2·3루 ➡️ 📡중계) -->
                 <div class="live-baseball-motion-rail">
@@ -9927,29 +10036,33 @@ function getFullModalMatchList() {
               </div>
             `;
           } else if (eventSeed === 2) {
-            // 🚫 쓰리아웃 / 공수교대 (3 OUT)
+            // 🚫 쓰리아웃 / 공수교대 (3 OUT) ➡️ 약 3.2초 후 자동 꺼짐(소멸)
             eventBannerHtml = `
-              <div class="d-flex align-items-center justify-content-between px-2 py-1.5 rounded mb-1.5" style="background: linear-gradient(90deg, #881337 0%, #be123c 50%, #881337 100%); color:#ffffff; overflow:hidden; box-shadow:0 2px 6px rgba(190,18,60,0.3); border:1.5px solid #f43f5e;">
+              <div class="d-flex align-items-center justify-content-between px-2 py-1.5 rounded mb-1.5 live-track-dismiss-general" style="background: linear-gradient(90deg, #881337 0%, #be123c 50%, #881337 100%); color:#ffffff; overflow:hidden; box-shadow:0 2px 6px rgba(190,18,60,0.3); border:1.5px solid #f43f5e;">
                 <div class="d-flex align-items-center gap-1.5">
                   <span class="badge bg-danger text-white fw-bold live-anim-3out-flash" style="font-size:0.64rem;"><i class="bi bi-x-circle-fill me-0.5"></i>3 OUT</span>
                   <span class="fw-bold" style="font-size:0.75rem; letter-spacing:-0.2px; color:#fecdd3;">🚫 삼진 아웃! 잔루 이닝 종료 · 공수교대</span>
                 </div>
                 <div class="d-flex align-items-center gap-1 fw-bold" style="font-size:0.72rem; color:#facc15;">
                   <span>🔴🔴🔴</span>
+                  <button type="button" class="btn-close btn-close-white ms-1" style="font-size:0.50rem; opacity:0.8;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>
                 </div>
               </div>
             `;
           } else {
-            // 🚶‍♂️ 포볼 / 사사구 (FOUR-BALL / BB)
+            // 🚶‍♂️ 포볼 / 사사구 (FOUR-BALL / BB) ➡️ 약 3.2초 후 자동 꺼짐(소멸)
             eventBannerHtml = `
-              <div class="live-baseball-track-container p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); border:1.5px solid #60a5fa; box-shadow:0 3px 8px rgba(37,99,235,0.3); position:relative; overflow:hidden;">
+              <div class="live-baseball-track-container live-track-dismiss-general p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); border:1.5px solid #60a5fa; box-shadow:0 3px 8px rgba(37,99,235,0.3); position:relative; overflow:hidden;">
                 <!-- Caption Bar -->
                 <div class="d-flex justify-content-between align-items-center mb-1 text-white" style="font-size:0.72rem;">
                   <div class="d-flex align-items-center gap-1.5">
                     <span class="badge bg-primary text-white fw-bold px-1.5 py-0.5" style="font-size:0.64rem;">4 BALL</span>
                     <span class="fw-bold" style="color:#93c5fd; font-size:0.75rem; letter-spacing:-0.2px;">🚶‍♂️ 볼넷 출루! 풀카운트 승부 끝 1루 진루!</span>
                   </div>
-                  <span class="badge bg-primary text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">1루 출루</span>
+                  <div class="d-flex align-items-center gap-1">
+                    <span class="badge bg-primary text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">1루 출루</span>
+                    <button type="button" class="btn-close btn-close-white" style="font-size:0.50rem; opacity:0.8;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>
+                  </div>
                 </div>
                 <!-- Motion Track (1·2·3루 ➡️ 1루 진루) -->
                 <div class="live-baseball-motion-rail">
@@ -15034,6 +15147,21 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
       }
     }
+
+    window.dismissLiveEventTrack = function(btn) {
+      if (!btn) return;
+      const container = btn.closest('.live-baseball-track-container') || btn.closest('.live-track-dismiss-general');
+      if (container) {
+        container.style.transition = 'all 0.25s ease-out';
+        container.style.opacity = '0';
+        container.style.maxHeight = '0';
+        container.style.marginBottom = '0';
+        container.style.paddingTop = '0';
+        container.style.paddingBottom = '0';
+        container.style.border = 'none';
+        setTimeout(() => { container.style.display = 'none'; }, 260);
+      }
+    };
 
     function initCommunityAndWebSocket() {
       loadCommunityMessages();
