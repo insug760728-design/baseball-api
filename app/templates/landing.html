@@ -8454,6 +8454,7 @@ function getFullModalMatchList() {
       const nowTs = now.getTime();
       const nowKstDateTime = getKSTDateTimeString(now);
       const bufferKstDateTime = getKSTDateTimeString(new Date(now.getTime() - 20 * 60 * 1000));
+      const pastCutoffKstDateTime = getKSTDateTimeString(new Date(now.getTime() - 3.5 * 60 * 60 * 1000));
 
       const isMatchTrulyLive = (m) => {
         if (m.status !== 'LIVE') return false;
@@ -8484,7 +8485,8 @@ function getFullModalMatchList() {
 
       for (const m of baseList) {
         const isLive = isMatchTrulyLive(m);
-        const isFin = (m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED' || (m.status === 'LIVE' && !isLive) || (m.match_date && m.match_date < bufferKstDateTime && m.status !== 'LIVE' && m.status !== 'SCHEDULED'));
+        const isPastByTime = (m.match_date && m.match_date < pastCutoffKstDateTime);
+        const isFin = (m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED' || (m.status === 'LIVE' && !isLive) || isPastByTime);
         if (isFin) {
           finishedCount++;
         } else {
@@ -8868,6 +8870,7 @@ function getFullModalMatchList() {
       const d1Str = getKSTDateString(new Date(now.getTime() + 86400000));
       const nowKstDateTime = getKSTDateTimeString(now);
       const bufferKstDateTime = getKSTDateTimeString(new Date(now.getTime() - 20 * 60 * 1000));
+      const pastCutoffKstDateTime = getKSTDateTimeString(new Date(now.getTime() - 3.5 * 60 * 60 * 1000));
 
       const isMatchTrulyLive = (m) => {
         if (m.status !== 'LIVE') return false;
@@ -8935,11 +8938,11 @@ function getFullModalMatchList() {
       }
 
       if (currentPredDate === 'FINISHED' || currentPredDate === 'PAST') {
-        // 🕒 [지난경기]: 발매 마감, 종료(FINISHED), 취소/연기 경기만 모아서 최신순 정렬!
+        // 🕒 [지난경기]: 발매 마감, 종료(FINISHED), 취소/연기 경기 또는 3.5시간 이상 경과 경기!
         list = list.filter(m => {
           if (m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED') return true;
           if (m.status === 'LIVE' && !isMatchTrulyLive(m)) return true;
-          if (m.match_date && m.match_date < nowKstDateTime && m.status !== 'SCHEDULED') return true;
+          if (m.match_date && m.match_date < pastCutoffKstDateTime) return true;
           return false;
         });
         list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
@@ -8957,6 +8960,8 @@ function getFullModalMatchList() {
         const upcomingMatches = list.filter(m => {
           if (m.status === 'CANCELLED' || m.status === 'POSTPONED' || m.status === 'FINISHED') return false;
           if (isMatchTrulyLive(m)) return false;
+          // 🛡️ 시간 가드: 3.5시간 이상 지난 과거 경기는 진행/예정 목록 진입 불가 (자동 지난경기로 롤오버)
+          if (m.match_date && m.match_date < pastCutoffKstDateTime) return false;
           return true;
         });
 

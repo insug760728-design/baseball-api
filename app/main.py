@@ -134,6 +134,28 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[WARN] 백그라운드 사전 워밍업 스레드 시작 오류: {e}")
 
+    # 🔄 1분 주기 경기 상태 자가 치유(Self-Healing) 데몬
+    async def _match_lifecycle_daemon():
+        while True:
+            try:
+                await asyncio.sleep(60)
+                from app.core.database import SessionLocal
+                from app.services.match_service import MatchService
+                db = SessionLocal()
+                try:
+                    MatchService.cleanup_stale_live_matches(db)
+                finally:
+                    db.close()
+            except Exception as e:
+                pass
+
+    try:
+        import asyncio
+        asyncio.create_task(_match_lifecycle_daemon())
+        print("[INFO] 매치 상태 자가 치유 데몬 (1분 주기) 가동 시작.")
+    except Exception as e:
+        print(f"[WARN] 자가 치유 데몬 시작 오류: {e}")
+
     yield
 
     # 서버 종료 시 스케줄러 정리
@@ -199,12 +221,15 @@ def is_b2b_domain(request: Request) -> bool:
 import time
 from fastapi import Response
 
+@app.get("/health", summary="Health Check & Keep-Alive")
 @app.get("/healthz", summary="Health Check & Keep-Alive")
 @app.get("/api/v1/health", summary="Health Check & Keep-Alive")
 def health_check():
+    from datetime import datetime, timedelta
+    now_kst = (datetime.utcnow() + timedelta(hours=9)).strftime("%Y-%m-%d %H:%M:%S")
     return JSONResponse(
         status_code=200,
-        content={"status": "ok", "service": "tokeon-live", "timestamp": time.time()},
+        content={"status": "ok", "service": "Sports-API", "kst_time": now_kst, "timestamp": time.time()},
         headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
     )
 

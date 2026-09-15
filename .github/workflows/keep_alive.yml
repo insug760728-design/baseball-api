@@ -1,0 +1,22 @@
+name: 24/7 Keep-Alive Heartbeat
+
+on:
+  schedule:
+    # 5분마다 자동 실행
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping-server:
+    name: Ping Healthcheck Endpoint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Server
+        run: |
+          SERVER_URL="${{ secrets.SERVER_URL }}"
+          if [ -z "$SERVER_URL" ]; then
+            SERVER_URL="https://baseball-api.onrender.com"
+          fi
+          echo "Pinging health endpoint at: $SERVER_URL/health"
+          curl -s -f -m 30 "$SERVER_URL/health" || echo "Ping completed."
+          curl -s -f -m 30 "$SERVER_URL/api/v1/matches?limit=1" || echo "Matches ping completed."

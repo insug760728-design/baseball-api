@@ -229,25 +229,27 @@ class MatchService:
 
     @classmethod
     def cleanup_stale_live_matches(cls, db: Session):
-        """경기 시작 시간으로부터 4시간 이상 경과한 LIVE 상태 경기를 FINISHED로 자동 정리"""
+        """경기 시작 시간으로부터 3.5시간 이상 경과한 과거 SCHEDULED/LIVE 상태 경기를 FINISHED로 자동 자가 치유(Self-Healing)"""
         try:
-            now = datetime.now()
-            cutoff = (now - timedelta(hours=4)).strftime("%Y-%m-%d %H:%M")
+            now_kst = datetime.utcnow() + timedelta(hours=9)
+            cutoff = (now_kst - timedelta(hours=3, minutes=30)).strftime("%Y-%m-%d %H:%M")
             stale_matches = db.query(Match).filter(
-                Match.status.in_(['LIVE', 'IN_PLAY', '1H', '2H', 'HT']),
+                Match.status.in_(['LIVE', 'IN_PLAY', '1H', '2H', 'HT', 'SCHEDULED', 'NS']),
                 Match.match_date < cutoff
             ).all()
             if stale_matches:
                 for m in stale_matches:
                     m.status = 'FINISHED'
                 db.commit()
-                logger.info(f"Auto-cleaned {len(stale_matches)} stale LIVE matches to FINISHED")
+                logger.info(f"Auto-healed {len(stale_matches)} past SCHEDULED/LIVE matches to FINISHED")
         except Exception as e:
-            logger.warning(f"Error cleaning up stale live matches: {e}")
+            logger.warning(f"Error cleaning up stale matches: {e}")
             db.rollback()
 
     @classmethod
     def get_matches(cls, db: Session, sport_code: Optional[str] = None, league_name: Optional[str] = None, status: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None, limit: Optional[int] = None, order: Optional[str] = "asc"):
+        # 🛡️ 쿼리 즉시 자가 치유(Query-Time Self-Healing): 과거 경기가 예정/라이브로 조회되는 것을 원천 차단
+        cls.cleanup_stale_live_matches(db)
         query = db.query(Match).options(joinedload(Match.details))
 
         # 리그명에 따라 sport_code 자동 감지
