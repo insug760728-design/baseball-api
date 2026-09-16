@@ -107,6 +107,12 @@ class MatchResponse(MatchBase):
     outs: Optional[int] = None
     balls: Optional[int] = None
     strikes: Optional[int] = None
+    base1: Optional[bool] = False
+    base2: Optional[bool] = False
+    base3: Optional[bool] = False
+    base_1: Optional[bool] = False
+    base_2: Optional[bool] = False
+    base_3: Optional[bool] = False
     all_odds: Optional[List[Dict[str, Any]]] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

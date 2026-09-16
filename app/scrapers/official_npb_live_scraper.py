@@ -253,6 +253,104 @@ class NpbOfficialScraper:
             except UnicodeDecodeError:
                 return content.decode('euc-jp', errors='ignore')
 
+    def scrape_live_scoreboard(self, game_id: str) -> Optional[Dict[str, Any]]:
+        """Yahoo Japan NPB 텍스트 속보 페이지에서 실시간 주자/아웃/볼카운트/투타 정보 정밀 추출"""
+        url = f"https://baseball.yahoo.co.jp/npb/game/{game_id}/text"
+        try:
+            html = self._fetch_html(url)
+            if not html:
+                return None
+            sp = BeautifulSoup(html, 'html.parser')
+            
+            b1, b2, b3 = False, False, False
+            outs = 0
+            balls = 0
+            strikes = 0
+            pitcher = ''
+            batter = ''
+            inn_text = ''
+            h_score = None
+            a_score = None
+
+            # 1. 상단 스코어바에서 현 경기 항목 파싱
+            for item in sp.find_all('li', class_=re.compile(r'bb-scoreList__item')):
+                a_tag = item.find('a')
+                href = a_tag.get('href', '') if a_tag else ''
+                is_curr = (game_id in href) or (not a_tag and 'bb-scoreList__item--live' in item.get('class', []))
+                if is_curr:
+                    txt = item.get_text(separator=' ', strip=True)
+                    m_s = re.search(r'(\d+)\s*-\s*(\d+)', txt)
+                    if m_s:
+                        h_score = clean_int(m_s.group(1))
+                        a_score = clean_int(m_s.group(2))
+                    m_inn = re.search(r'(\d+回[表裏])', txt)
+                    if m_inn:
+                        inn_text = m_inn.group(1).replace('回表', '회초').replace('回裏', '회말')
+                    m_pit = re.search(r'\(投\)\s*([^\s\d]+)', txt)
+                    if m_pit:
+                        pitcher = translate_npb_player_name(m_pit.group(1).strip())
+                    m_bat = re.search(r'\(打\)\s*([^\s\d]+)', txt)
+                    if m_bat:
+                        batter = translate_npb_player_name(m_bat.group(1).strip())
+                    break
+
+            # 2. 최신 타석 플레이(bb-liveText)에서 주자 및 아웃카운트 추출
+            sections = sp.find_all('section', class_='bb-liveText')
+            if sections:
+                if not inn_text:
+                    head = sections[0].find('h1', class_='bb-liveText__inning')
+                    if head:
+                        inn_text = head.get_text(strip=True).replace('回表', '회초').replace('回裏', '회말')
+                items = sections[0].find_all('li', class_='bb-liveText__item')
+                if items:
+                    latest_txt = items[0].get_text(separator=' ', strip=True)
+                    if '一二三塁' in latest_txt or '満塁' in latest_txt:
+                        b1, b2, b3 = True, True, True
+                    elif '一二塁' in latest_txt:
+                        b1, b2 = True, True
+                    elif '二三塁' in latest_txt:
+                        b2, b3 = True, True
+                    elif '一三塁' in latest_txt:
+                        b1, b3 = True, True
+                    elif '一塁' in latest_txt:
+                        b1 = True
+                    elif '二塁' in latest_txt:
+                        b2 = True
+                    elif '三塁' in latest_txt:
+                        b3 = True
+
+                    if '3アウト' in latest_txt or '三死' in latest_txt:
+                        outs = 3
+                    elif '2アウト' in latest_txt or '二死' in latest_txt:
+                        outs = 2
+                    elif '1アウト' in latest_txt or '一死' in latest_txt:
+                        outs = 1
+                    elif '無死' in latest_txt or '0アウト' in latest_txt:
+                        outs = 0
+
+                    p_el = items[0].find('a', class_='bb-liveText__player')
+                    if p_el and not batter:
+                        batter = translate_npb_player_name(p_el.get_text(strip=True))
+
+            return {
+                "current_inning": inn_text or "진행중",
+                "outs": outs,
+                "balls": balls,
+                "strikes": strikes,
+                "base1": b1,
+                "base2": b2,
+                "base3": b3,
+                "runner_1b": b1,
+                "runner_2b": b2,
+                "runner_3b": b3,
+                "home_score": h_score,
+                "away_score": a_score,
+                "pitcher": pitcher,
+                "batter": batter
+            }
+        except Exception as e:
+            return None
+
     def _scrape_yahoo_schedule(self, target_date: str) -> List[Dict[str, Any]]:
         yahoo_url = f"https://baseball.yahoo.co.jp/npb/schedule/?date={target_date}"
         games = []
@@ -316,9 +414,20 @@ class NpbOfficialScraper:
                     clean_ap = re.sub(r'\(予\)|\(예상\)|\(投\)|\(打\)|予告|先発|：|:', '', away_p_el.get_text(strip=True)).strip()
                     p_a = translate_npb_player_name(clean_ap)
 
+                sb = None
+                if status == "LIVE" and game_id_m:
+                    sb = self.scrape_live_scoreboard(game_id_m.group(1))
+                    if sb:
+                        if sb.get("home_score") is not None:
+                            h_score = sb["home_score"]
+                        if sb.get("away_score") is not None:
+                            a_score = sb["away_score"]
+                        if sb.get("current_inning"):
+                            inn_ko = sb["current_inning"]
+
                 match_dt = f"{target_date} {start_time}"
 
-                games.append({
+                g_entry = {
                     "sport_code": "BASEBALL",
                     "league_name": "일본 프로야구 (NPB)",
                     "official_id": f"NPB_{game_id}",
@@ -333,7 +442,10 @@ class NpbOfficialScraper:
                     "probable_pitcher_home": p_h,
                     "probable_pitcher_away": p_a,
                     "league_id": "NPB"
-                })
+                }
+                if sb:
+                    g_entry["scoreboard"] = sb
+                games.append(g_entry)
         except Exception as e:
             print(f"[NPB Scraper] Yahoo schedule error for {target_date}: {e}")
         return games

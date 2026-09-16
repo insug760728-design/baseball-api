@@ -750,9 +750,9 @@ class SchedulerService:
                                             outs_val = sb.get("outs")
                                             balls_val = sb.get("balls")
                                             strikes_val = sb.get("strikes")
-                                            b1_val = bool(sb.get("runner_on_1b") or sb.get("first_base") or sb.get("base_1"))
-                                            b2_val = bool(sb.get("runner_on_2b") or sb.get("second_base") or sb.get("base_2"))
-                                            b3_val = bool(sb.get("runner_on_3b") or sb.get("third_base") or sb.get("base_3"))
+                                            b1_val = bool(sb.get("base1") or sb.get("runner_1b") or sb.get("runner_on_1b") or sb.get("first_base") or sb.get("first") or sb.get("base_1"))
+                                            b2_val = bool(sb.get("base2") or sb.get("runner_2b") or sb.get("runner_on_2b") or sb.get("second_base") or sb.get("second") or sb.get("base_2"))
+                                            b3_val = bool(sb.get("base3") or sb.get("runner_3b") or sb.get("runner_on_3b") or sb.get("third_base") or sb.get("third") or sb.get("base_3"))
                                     except Exception:
                                         pass
                             items.append({
@@ -769,6 +769,9 @@ class SchedulerService:
                                 "outs": outs_val,
                                 "balls": balls_val,
                                 "strikes": strikes_val,
+                                "base1": b1_val,
+                                "base2": b2_val,
+                                "base3": b3_val,
                                 "base_1": b1_val,
                                 "base_2": b2_val,
                                 "base_3": b3_val

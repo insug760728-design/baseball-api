@@ -17114,6 +17114,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
           if (item.outs !== undefined && item.outs !== null) target.outs = item.outs;
           if (item.balls !== undefined && item.balls !== null) target.balls = item.balls;
           if (item.strikes !== undefined && item.strikes !== null) target.strikes = item.strikes;
+          if (item.base1 !== undefined) target.base1 = item.base1;
+          else if (item.base_1 !== undefined) target.base1 = item.base_1;
+          if (item.base2 !== undefined) target.base2 = item.base2;
+          else if (item.base_2 !== undefined) target.base2 = item.base_2;
+          if (item.base3 !== undefined) target.base3 = item.base3;
+          else if (item.base_3 !== undefined) target.base3 = item.base_3;
           if (item.details) target.details = item.details;
           if (item.scoreboard) target.scoreboard = item.scoreboard;
         }
@@ -17646,14 +17652,14 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
       // Only display live base runners and counts if the game is genuinely LIVE
       if (isLive && m.sport_code === 'BASEBALL') {
-        b1 = !!(ts.base1 || ts.runner_1b || sb.base1 || sb.runner_1b || sb.runner_on_1b || sb.first_base || sb.first);
-        b2 = !!(ts.base2 || ts.runner_2b || sb.base2 || sb.runner_2b || sb.runner_on_2b || sb.second_base || sb.second);
-        b3 = !!(ts.base3 || ts.runner_3b || sb.base3 || sb.runner_3b || sb.runner_on_3b || sb.third_base || sb.third);
-        outs = Number(ts.outs ?? sb.outs ?? 0);
-        balls = Number(ts.balls ?? sb.balls ?? 0);
-        strikes = Number(ts.strikes ?? sb.strikes ?? 0);
+        b1 = !!(m.base1 || m.runner_1b || m.base_1 || ts.base1 || ts.runner_1b || ts.base_1 || sb.base1 || sb.runner_1b || sb.runner_on_1b || sb.first_base || sb.first || sb.base_1);
+        b2 = !!(m.base2 || m.runner_2b || m.base_2 || ts.base2 || ts.runner_2b || ts.base_2 || sb.base2 || sb.runner_2b || sb.runner_on_2b || sb.second_base || sb.second || sb.base_2);
+        b3 = !!(m.base3 || m.runner_3b || m.base_3 || ts.base3 || ts.runner_3b || ts.base_3 || sb.base3 || sb.runner_3b || sb.runner_on_3b || sb.third_base || sb.third || sb.base_3);
+        outs = Number(m.outs ?? ts.outs ?? sb.outs ?? 0);
+        balls = Number(m.balls ?? ts.balls ?? sb.balls ?? 0);
+        strikes = Number(m.strikes ?? ts.strikes ?? 0);
       } else if (m.status === 'FINISHED' && m.sport_code === 'BASEBALL') {
-        outs = 3;
+        outs = Number(m.outs ?? 3);
       }
 
       let inning_text = ts.current_inning || sb.current_inning || m.current_inning || '';

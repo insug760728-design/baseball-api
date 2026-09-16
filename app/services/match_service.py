@@ -413,6 +413,12 @@ class MatchService:
             m.outs = None
             m.balls = None
             m.strikes = None
+            m.base1 = False
+            m.base2 = False
+            m.base3 = False
+            m.base_1 = False
+            m.base_2 = False
+            m.base_3 = False
             h_confirmed = False
             a_confirmed = False
 
@@ -436,9 +442,21 @@ class MatchService:
                             m.outs = sb.get("outs")
                             m.balls = sb.get("balls")
                             m.strikes = sb.get("strikes")
-                        elif ts.get("current_inning"):
+                            m.base1 = bool(sb.get("base1") or sb.get("runner_1b") or sb.get("runner_on_1b") or sb.get("first") or sb.get("first_base") or sb.get("base_1"))
+                            m.base2 = bool(sb.get("base2") or sb.get("runner_2b") or sb.get("runner_on_2b") or sb.get("second") or sb.get("second_base") or sb.get("base_2"))
+                            m.base3 = bool(sb.get("base3") or sb.get("runner_3b") or sb.get("runner_on_3b") or sb.get("third") or sb.get("third_base") or sb.get("base_3"))
+                        elif ts.get("current_inning") or ts.get("base1") or ts.get("runner_1b"):
                             m.current_inning = ts.get("current_inning") or m.current_inning
                             m.inning_text = ts.get("current_inning") or m.inning_text
+                            m.outs = ts.get("outs")
+                            m.balls = ts.get("balls")
+                            m.strikes = ts.get("strikes")
+                            m.base1 = bool(ts.get("base1") or ts.get("runner_1b") or ts.get("runner_on_1b") or ts.get("first") or ts.get("first_base") or ts.get("base_1"))
+                            m.base2 = bool(ts.get("base2") or ts.get("runner_2b") or ts.get("runner_on_2b") or ts.get("second") or ts.get("second_base") or ts.get("base_2"))
+                            m.base3 = bool(ts.get("base3") or ts.get("runner_3b") or ts.get("runner_on_3b") or ts.get("third") or ts.get("third_base") or ts.get("base_3"))
+                        m.base_1 = m.base1
+                        m.base_2 = m.base2
+                        m.base_3 = m.base3
 
                         st = ts.get("starters", {})
                         h_st = st.get("home", {})
