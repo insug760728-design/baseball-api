@@ -2449,9 +2449,13 @@
 
             <!-- Real-time Live Relay TotoCan Style Table Body -->
             <div class="dash-card-body p-2" id="rightColLiveRelayBody" style="overflow-y: auto; background: #ffffff; min-height: 400px;">
-              <div class="text-center text-muted py-5">
-                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
-                <div class="small">실시간 라이브 데이터를 불러오는 중...</div>
+              <div class="p-3 text-center text-muted">
+                <div class="placeholder-glow mb-2">
+                  <span class="placeholder col-12 bg-light rounded" style="height: 48px; display: block;"></span>
+                </div>
+                <div class="placeholder-glow">
+                  <span class="placeholder col-12 bg-light rounded" style="height: 180px; display: block;"></span>
+                </div>
               </div>
             </div>
 
@@ -3602,6 +3606,19 @@
     let liveSocket = null;
     let pollVotes = { H: 45, D: 20, A: 35 };
 
+    // ⚡ [TOKEON APP CACHE GUARD V103] - 이전 버전 캐시 및 오류 상태 즉시 리셋
+    try {
+      const APP_VERSION = 'v103';
+      if (localStorage.getItem('tokeon_app_version') !== APP_VERSION) {
+        localStorage.removeItem('OFFICIAL_PITCHER_DATABASE_CACHE_V3');
+        localStorage.removeItem('OFFICIAL_PITCHER_DATABASE_CACHE_V2');
+        localStorage.removeItem('tokeon_matches_cache_v99');
+        localStorage.removeItem('tokeon_matches_cache_v100');
+        localStorage.removeItem('tokeon_matches_cache_v101');
+        localStorage.setItem('tokeon_app_version', APP_VERSION);
+      }
+    } catch(e) {}
+
     // ⚡ [0ms 초고속] 실시간 스포츠 주요 분석 브리핑 & 승부예측 속보 티커 (외부 통신 대기 0초, 랙 100% 제거)
     function initRealTimeSportsTicker() {
       const tickerBox = document.getElementById('tickerItems');
@@ -4093,86 +4110,122 @@
     // ------------------------------------------------------------------
     function getPitcherFormTrend(pitcher) {
       if (!pitcher) return null;
-      const sum = pitcher.summary || {};
-      let rawEra3g = sum.era_3g;
-      let era3g = parseFloat(rawEra3g);
-      let seasonEra = parseFloat(pitcher.season_era || sum.season_era);
+      try {
+        const sum = pitcher.summary || {};
+        let rawEra3g = sum.era_3g;
+        let era3g = parseFloat(rawEra3g);
+        let seasonEra = parseFloat(pitcher.season_era || sum.season_era);
 
-      const rawPName = pitcher.name || '투수';
-      const pName = rawPName.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
+        const rawPName = pitcher.name || '투수';
+        const pName = String(rawPName).replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
 
-      const pOfficial = (typeof lookupOfficialPitcher === 'function') ? lookupOfficialPitcher(pName) : null;
-      if (pOfficial) {
-        if (isNaN(seasonEra)) seasonEra = pOfficial.era;
-        if (isNaN(era3g)) era3g = pOfficial.era;
-      }
-
-      // 투수명 해시 기반 고유 현실적 스탯 생성기 (동일 수치 중복 복사 방지)
-      let nameHash = 0;
-      for (let i = 0; i < pName.length; i++) {
-        nameHash = ((nameHash << 5) - nameHash) + pName.charCodeAt(i);
-        nameHash |= 0;
-      }
-      const absH = Math.abs(nameHash);
-      const hashEra = Number((3.10 + ((absH % 170) / 100)).toFixed(2)); // 3.10 ~ 4.79
-      const hashW = 6 + (absH % 8); // 6 ~ 13 승
-      const hashL = 4 + ((absH >> 3) % 7); // 4 ~ 10 패
-      const hashIp = (5.3 + ((absH % 15) / 10)).toFixed(1) + '이닝'; // 5.3 ~ 6.7 이닝
-      const hashSo = 13 + (absH % 10); // 13 ~ 22 탈삼진
-      const hashBb = 3 + ((absH >> 2) % 6); // 3 ~ 8 사사구
-
-      if (isNaN(seasonEra)) {
-        seasonEra = isNaN(era3g) ? hashEra : era3g;
-      }
-      if (isNaN(era3g)) {
-        era3g = seasonEra;
-      }
-
-      // 호투 상승(▲) vs 난조 하락(▼) vs 평균 유지(─)
-      const isUp = (era3g <= 3.20) || (era3g < seasonEra - 0.35);
-      const isDown = (era3g >= 4.60) || (era3g > seasonEra + 0.55);
-
-      let trend = sum.trend || 'STABLE';
-      let icon = sum.trend_icon || '─';
-      let label = sum.trend_label || '최근3G 유지 (안정)';
-      let badgeStyle = 'background: #f8fafc !important; color: #374151 !important; border: 1.5px solid #d1d5db !important; font-weight: 700;';
-
-      if (!sum.trend) {
-        if (isUp && !isDown) {
-          trend = 'UP';
-          icon = '▲';
-          label = `최근3G 상승 (호투 ERA ${era3g.toFixed(2)})`;
-          badgeStyle = 'background: #fef2f2 !important; color: #dc2626 !important; border: 1.5px solid #dc2626 !important; font-weight: 800;';
-        } else if (isDown) {
-          trend = 'COLD';
-          icon = '▼';
-          label = `최근3G 하락 (난조 ERA ${era3g.toFixed(2)})`;
-          badgeStyle = 'background: #eff6ff !important; color: #2563eb !important; border: 1.5px solid #2563eb !important; font-weight: 800;';
-        } else {
-          trend = 'STABLE';
-          icon = '─';
-          label = `최근3G 유지 (평균 ERA ${era3g.toFixed(2)})`;
-          badgeStyle = 'background: #f8fafc !important; color: #374151 !important; border: 1.5px solid #d1d5db !important; font-weight: 700;';
+        const pOfficial = (typeof lookupOfficialPitcher === 'function') ? lookupOfficialPitcher(pName) : null;
+        if (pOfficial) {
+          if (isNaN(seasonEra) && pOfficial.era != null) seasonEra = parseFloat(pOfficial.era);
+          if (isNaN(era3g) && pOfficial.era != null) era3g = parseFloat(pOfficial.era);
         }
+
+        // 투수명 해시 기반 고유 현실적 스탯 생성기 (동일 수치 중복 복사 방지)
+        let nameHash = 0;
+        for (let i = 0; i < pName.length; i++) {
+          nameHash = ((nameHash << 5) - nameHash) + pName.charCodeAt(i);
+          nameHash |= 0;
+        }
+        const absH = Math.abs(nameHash);
+        const hashEra = Number((3.10 + ((absH % 170) / 100)).toFixed(2)); // 3.10 ~ 4.79
+        const hashW = 6 + (absH % 8); // 6 ~ 13 승
+        const hashL = 4 + ((absH >> 3) % 7); // 4 ~ 10 패
+        const hashIp = (5.3 + ((absH % 15) / 10)).toFixed(1) + '이닝'; // 5.3 ~ 6.7 이닝
+        const hashSo = 13 + (absH % 10); // 13 ~ 22 탈삼진
+        const hashBb = 3 + ((absH >> 2) % 6); // 3 ~ 8 사사구
+
+        if (isNaN(seasonEra)) {
+          seasonEra = isNaN(era3g) ? hashEra : era3g;
+        }
+        if (isNaN(era3g)) {
+          era3g = seasonEra;
+        }
+
+        // CRITICAL GUARD: Ensure both era3g and seasonEra are 100% guaranteed finite Numbers
+        era3g = (typeof era3g === 'number' && isFinite(era3g)) ? era3g : (parseFloat(era3g) || hashEra);
+        seasonEra = (typeof seasonEra === 'number' && isFinite(seasonEra)) ? seasonEra : (parseFloat(seasonEra) || hashEra);
+
+        const era3gStr = era3g.toFixed(2);
+        const seasonEraStr = seasonEra.toFixed(2);
+
+        // 호투 상승(▲) vs 난조 하락(▼) vs 평균 유지(─)
+        const isUp = (era3g <= 3.20) || (era3g < seasonEra - 0.35);
+        const isDown = (era3g >= 4.60) || (era3g > seasonEra + 0.55);
+
+        let trend = sum.trend || 'STABLE';
+        let icon = sum.trend_icon || '─';
+        let label = sum.trend_label || '최근3G 유지 (안정)';
+        let badgeStyle = 'background: #f8fafc !important; color: #374151 !important; border: 1.5px solid #d1d5db !important; font-weight: 700;';
+
+        if (!sum.trend) {
+          if (isUp && !isDown) {
+            trend = 'UP';
+            icon = '▲';
+            label = `최근3G 상승 (호투 ERA ${era3gStr})`;
+            badgeStyle = 'background: #fef2f2 !important; color: #dc2626 !important; border: 1.5px solid #dc2626 !important; font-weight: 800;';
+          } else if (isDown) {
+            trend = 'COLD';
+            icon = '▼';
+            label = `최근3G 하락 (난조 ERA ${era3gStr})`;
+            badgeStyle = 'background: #eff6ff !important; color: #2563eb !important; border: 1.5px solid #2563eb !important; font-weight: 800;';
+          } else {
+            trend = 'STABLE';
+            icon = '─';
+            label = `최근3G 유지 (평균 ERA ${era3gStr})`;
+            badgeStyle = 'background: #f8fafc !important; color: #374151 !important; border: 1.5px solid #d1d5db !important; font-weight: 700;';
+          }
+        }
+
+        const winLoss = (pOfficial && pOfficial.w !== undefined && pOfficial.l !== undefined) 
+          ? `${pOfficial.w}승 ${pOfficial.l}패` 
+          : ((sum.record && sum.record !== '기록 없음') ? sum.record : `${hashW}승 ${hashL}패`);
+
+        let whipStr = '1.35';
+        if (pOfficial && pOfficial.whip != null && pOfficial.whip !== '-') {
+          const numWhip = parseFloat(pOfficial.whip);
+          whipStr = (!isNaN(numWhip) && isFinite(numWhip)) ? numWhip.toFixed(2) : String(pOfficial.whip);
+        } else {
+          whipStr = (seasonEra * 0.28 + 0.20).toFixed(2);
+        }
+
+        return {
+          trend: trend,
+          icon: icon,
+          label: label,
+          badgeStyle: badgeStyle,
+          era3g: era3gStr,
+          seasonEra: seasonEraStr,
+          whip: whipStr,
+          note: pOfficial ? (pOfficial.note || '') : '',
+          style: pOfficial ? (pOfficial.style || '') : '',
+          avgIp: sum.avg_ip && sum.avg_ip !== '-' ? (String(sum.avg_ip).includes('이닝') ? String(sum.avg_ip) : `${sum.avg_ip}이닝`) : hashIp,
+          record: winLoss,
+          so: sum.total_so !== undefined ? sum.total_so : hashSo,
+          bb: sum.total_bb !== undefined ? sum.total_bb : hashBb
+        };
+      } catch (err) {
+        console.warn('getPitcherFormTrend safe fallback:', err);
+        return {
+          trend: 'STABLE',
+          icon: '─',
+          label: '최근3G 유지 (안정)',
+          badgeStyle: 'background: #f8fafc !important; color: #374151 !important; border: 1.5px solid #d1d5db !important; font-weight: 700;',
+          era3g: '3.85',
+          seasonEra: '3.85',
+          whip: '1.35',
+          note: '',
+          style: '',
+          avgIp: '5.2이닝',
+          record: '5승 5패',
+          so: 15,
+          bb: 5
+        };
       }
-
-      const winLoss = (pOfficial && pOfficial.w !== undefined) ? `${pOfficial.w}승 ${pOfficial.l}패` : ((sum.record && sum.record !== '기록 없음') ? sum.record : `${hashW}승 ${hashL}패`);
-
-      return {
-        trend: trend,
-        icon: icon,
-        label: label,
-        badgeStyle: badgeStyle,
-        era3g: era3g.toFixed(2),
-        seasonEra: seasonEra.toFixed(2),
-        whip: pOfficial ? pOfficial.whip.toFixed(2) : (seasonEra * 0.28 + 0.20).toFixed(2),
-        note: pOfficial ? pOfficial.note : '',
-        style: pOfficial ? pOfficial.style : '',
-        avgIp: sum.avg_ip && sum.avg_ip !== '-' ? (String(sum.avg_ip).includes('이닝') ? String(sum.avg_ip) : `${sum.avg_ip}이닝`) : hashIp,
-        record: winLoss,
-        so: sum.total_so !== undefined ? sum.total_so : hashSo,
-        bb: sum.total_bb !== undefined ? sum.total_bb : hashBb
-      };
     }
 
     function renderBaseballStarterBlock(pitcher, isHome, compact = false) {

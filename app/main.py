@@ -359,9 +359,11 @@ def b2b_portal():
 @app.get("/portal", response_class=HTMLResponse)
 def analytics_portal(request: Request):
     try:
-        with open(landing_path, "r", encoding="utf-8") as f:
-            content = f.read()
-        return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
+        content, etag = get_portal_html(landing_path)
+        client_etag = request.headers.get("if-none-match")
+        if client_etag and client_etag == etag:
+            return Response(status_code=304, headers={"ETag": etag, "Cache-Control": "no-cache, no-store, must-revalidate"})
+        return HTMLResponse(content=content, headers={"ETag": etag, "Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
     except Exception as e:
         return HTMLResponse(content=f"<h1>분석 포털 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
 
@@ -527,8 +529,8 @@ async def not_found_exception_handler(request: Request, exc):
     if not request.url.path.startswith("/api/"):
         try:
             target = b2b_portal_path if is_b2b_domain(request) else landing_path
-            with open(target, "r", encoding="utf-8") as f:
-                return HTMLResponse(content=f.read())
+            content, _ = get_portal_html(target)
+            return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
         except Exception:
             pass
     return JSONResponse(status_code=404, content={"detail": "Not Found"})
