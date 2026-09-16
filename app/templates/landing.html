@@ -12531,16 +12531,6 @@ function updateSlimPanel(matchId, type, contentHtml) {
           return (mHome === curTeam || mAway === curTeam || m.home_team_name === rawTeam || m.away_team_name === rawTeam);
         });
       }
-
-      let oppTeam = '';
-      let teamScore = 0;
-      let oppScore = 0;
-      let matchDateText = '직전 경기';
-      let isWin = false;
-      let isDraw = false;
-
-      const seed = (typeof getTeamHash === 'function' ? getTeamHash(curTeam + '_' + (match.id || 1)) : ((match.id || 1) * 31)) + (isHome ? 7 : 19);
-
       // 1. match.history (API-Sports/HistoricalAgentRouter) 우선 조회
       let pMatch = null;
       if (match.history) {
