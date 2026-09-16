@@ -2679,31 +2679,11 @@
         <!-- Top Sleek Header -->
         <div class="modal-header d-flex justify-content-between align-items-center py-2 px-3" style="background: #ffffff; color: #1e293b; border-bottom: 1px solid #e2e8f0;">
           <div class="d-flex align-items-center gap-2 flex-wrap" style="min-width: 0;">
-            <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 800; font-size: 0.80rem;" id="ngModalNumBadge">NO. 1634</span>
             <span class="badge bg-light border text-dark" style="border-color: #cbd5e1 !important;" id="ngModalLeagueBadge">⚾ MLB</span>
             <span class="text-dark fw-bold text-truncate" style="font-size: 0.98rem;" id="ngModalHeadTitle">애리조나 vs 텍사스</span>
             <span class="text-muted small d-none d-md-inline" id="ngModalVenueDate">2026.09.14(월) 05:10 [ 체이스필드 ]</span>
           </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-
-        <!-- 6-Section Quick Jump Pill Bar (통합 정밀 상세분석 6대 섹션 바로가기 & 연속 세로 스크롤) -->
-        <div class="px-3 py-2 d-flex gap-1.5 overflow-x-auto border-bottom" style="background: #ffffff; border-color: #e2e8f0 !important; scrollbar-width: none; white-space: nowrap; position: sticky; top: 0; z-index: 10;">
-          <button type="button" class="btn btn-sm ng-tab-btn active fw-bold py-1 px-2.5" id="ngTabBtn_roster" onclick="scrollToNgSection('roster')">
-            <i class="bi bi-people-fill text-warning me-1"></i>1. 라인업·수비위치
-          </button>
-          <button type="button" class="btn btn-sm ng-tab-btn fw-bold py-1 px-2.5" id="ngTabBtn_starters" onclick="scrollToNgSection('starters')">
-            <i class="bi bi-fire text-danger me-1"></i>2. 선발투수·에이스
-          </button>
-          <button type="button" class="btn btn-sm ng-tab-btn fw-bold py-1 px-2.5" id="ngTabBtn_h2h" onclick="scrollToNgSection('h2h')">
-            <i class="bi bi-shield-shaded text-primary me-1"></i>3. 상대전적 (H2H)
-          </button>
-          <button type="button" class="btn btn-sm ng-tab-btn fw-bold py-1 px-2.5" id="ngTabBtn_recent" onclick="scrollToNgSection('recent')">
-            <i class="bi bi-calendar2-check-fill text-success me-1"></i>4. 최근결과 누적
-          </button>
-          <button type="button" class="btn btn-sm ng-tab-btn fw-bold py-1 px-2.5" id="ngTabBtn_saber" onclick="scrollToNgSection('saber')">
-            <i class="bi bi-graph-up-arrow text-info me-1"></i>5. 통계·배당분석
-          </button>
         </div>
 
         <!-- Modal Body: Injected Tab Content -->
@@ -12883,6 +12863,53 @@ function updateSlimPanel(matchId, type, contentHtml) {
       }
     };
 
+    window.sendNgMatchChatMessage = function(matchId) {
+      const input = document.getElementById(`ngChatInput_${matchId}`);
+      const feed = document.getElementById(`ngMatchChatFeed_${matchId}`);
+      if (!input || !feed) return;
+      const text = input.value.trim();
+      if (!text) return;
+
+      const myNick = localStorage.getItem('tokeon_nickname') || '나';
+      const now = new Date();
+      const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+      const msgHtml = `
+        <div class="d-flex align-items-start gap-2 mb-2">
+          <span class="badge bg-primary text-white rounded-circle flex-shrink-0" style="width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; font-size:0.68rem; font-weight:800;">
+            나
+          </span>
+          <div style="flex:1; min-width:0;">
+            <div class="d-flex align-items-center gap-1.5 mb-0.5">
+              <strong class="text-dark" style="font-size:0.78rem;">${myNick}</strong>
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle p-0.5" style="font-size:0.60rem;">내 응원</span>
+              <span class="text-muted ms-auto" style="font-size:0.65rem;">${timeStr}</span>
+            </div>
+            <div class="p-2 rounded-2 text-dark small" style="background:#eff6ff; border:1px solid #bfdbfe; font-size:0.75rem; line-height: 1.45; word-break: break-word;">
+              ${text}
+            </div>
+          </div>
+        </div>
+      `;
+      feed.insertAdjacentHTML('beforeend', msgHtml);
+      feed.scrollTop = feed.scrollHeight;
+      input.value = '';
+
+      // Broadcast to live backend community endpoint
+      try {
+        fetch('/api/v1/community/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            author: myNick,
+            content: text,
+            channel: 'ALL',
+            sport_tag: 'LIVE'
+          })
+        }).catch(() => {});
+      } catch (e) {}
+    };
+
     function renderNextGenDetail(m, activeTab = 'roster', rosterTeam = 'home') {
       const container = document.getElementById('nextGenDetailModalBody');
       if (!container) return;
@@ -13222,341 +13249,71 @@ function updateSlimPanel(matchId, type, contentHtml) {
       }
 
       // -------------------------------------------------------------
-      // 팀 라인업 & 수비 위치 (시각적 그라운드/코트 뷰)
+      // 💬 실시간 라이브 경기 응원 & 소통 채팅창
       // -------------------------------------------------------------
-      const curSelectedTeam = rosterTeam || _ngRosterSelectedTeam || 'home';
-      const targetTeamName = curSelectedTeam === 'home' ? hName : aName;
-      const targetStarter = curSelectedTeam === 'home' ? startersInfo.homeStarter : startersInfo.awayStarter;
-      const targetRoster = getDynamicTeamRoster(targetTeamName, m.sport_code, targetStarter);
+      const defaultNick = localStorage.getItem('tokeon_nickname') || `팬_${Math.floor(1000 + Math.random() * 9000)}`;
+      
+      const initialMatchChats = [
+        { author: 'AI세이버분석', tag: 'AI분석', time: '방금 전', text: `[실시간 팩트] ${hName} vs ${aName} 경기 투수 지표 및 매치업 분석이 실시간 제공 중입니다. 실시간 응원과 소통에 참여해보세요!`, isAi: true },
+        { author: `${hName}팬`, tag: '홈응원', time: '2분 전', text: `오늘 ${hName} 선발 투수 구위 믿고 갑니다! 초반 득점 지원만 나오면 충분히 이깁니다 🔥`, isHome: true },
+        { author: `${aName}응원단`, tag: '원정응원', time: '1분 전', text: `${aName} 오늘 원정이지만 집중력 발휘해서 승리 가자! 파이팅! ⚾`, isAway: true }
+      ];
 
-      const rosterSectionHtml = `
-        <div id="ngSection_roster" class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #e2e8f0 !important; scroll-margin-top: 55px;">
-          <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-            <strong class="text-dark fs-6"><i class="bi bi-people-fill text-warning me-1"></i>${isBaseball ? '2. 팀 라인업 & 수비 위치 포메이션' : '1. 팀 라인업 & 수비 위치 포메이션'}</strong>
-            <span class="badge bg-light text-secondary border">${isBaseball ? '⚾ 10인 라인업' : (isBasketball ? '🏀 5인 스타팅' : '⚽ 11인 포메이션')}</span>
+      const chatSectionHtml = `
+        <div id="ngSection_chat" class="p-3 mb-2 rounded-3 border bg-white shadow-sm" style="border-color: #e2e8f0 !important;">
+          <!-- Chat Header -->
+          <div class="d-flex justify-content-between align-items-center mb-2.5 pb-2 border-bottom">
+            <div class="d-flex align-items-center gap-2">
+              <strong class="text-dark fs-6"><i class="bi bi-chat-dots-fill text-primary me-1"></i>실시간 경기 응원 & 라이브 소통 채팅창</strong>
+              <span class="badge bg-success-subtle text-success border border-success-subtle py-0.5 px-1.5" style="font-size:0.65rem; font-weight:700;">
+                <span class="pulse-dot me-1" style="display:inline-block; width:5px; height:5px; border-radius:50%; background:#10b981;"></span>실시간 연결됨
+              </span>
+            </div>
+            <div class="text-muted small" style="font-size:0.72rem;">
+              <i class="bi bi-people me-1"></i>현재 <strong>${currentLiveUsersCount || 685}명</strong> 참여 중
+            </div>
           </div>
 
-          <!-- Home/Away Switch Button -->
-          <div class="d-flex gap-2 mb-2.5">
-            <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5 ${curSelectedTeam === 'home' ? 'btn-danger text-white' : 'btn-outline-danger'}" onclick="setNgRosterTeam('home')">
-              🔴 [홈팀] ${hName} 라인업
-            </button>
-            <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5 ${curSelectedTeam === 'away' ? 'btn-primary text-white' : 'btn-outline-primary'}" onclick="setNgRosterTeam('away')">
-              🔵 [원정팀] ${aName} 라인업
-            </button>
-          </div>
-
-          <!-- Visual Graphic Field View -->
-          ${renderVisualFieldHtml(targetRoster, isBaseball, isBasketball, curSelectedTeam === 'home' ? '#dc2626' : '#2563eb', targetTeamName)}
-
-          <!-- Detailed Roster Table -->
-          <div class="table-responsive">
-            <table class="table table-bordered table-sm text-center mb-0" style="font-size: 0.74rem;">
-              <thead class="table-light">
-                <tr>
-                  <th style="width: 14%;">구분</th>
-                  <th style="width: 14%;">포지션</th>
-                  <th style="width: 32%;">선수명</th>
-                  <th style="width: 20%;">주요기록</th>
-                  <th style="width: 20%;">세부스탯</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${targetRoster.map(p => `
-                  <tr class="${p.pos === 'P' || p.pos === 'DH' || p.order === 1 ? 'table-warning-subtle fw-bold' : ''}">
-                    <td><span class="badge ${p.pos === 'P' ? 'bg-danger' : 'bg-secondary'} text-white" style="font-size:0.65rem;">${p.order}</span></td>
-                    <td><span class="badge bg-light text-dark border" style="font-size:0.65rem;">${p.posKr || p.pos}</span></td>
-                    <td class="fw-bold text-dark text-truncate">${p.name}</td>
-                    <td>${p.r1}</td>
-                    <td class="text-muted">${p.ops || p.r2}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      `;
-
-      // -------------------------------------------------------------
-      // 3단계: ⚔️ 올 시즌 맞대결 상대전적 (H2H) - 실제 DB 공식 경기 및 분석 데이터 기준
-      // -------------------------------------------------------------
-      let realH2HMatches = [];
-      if (matchup && matchup.h2h_matches && Array.isArray(matchup.h2h_matches) && matchup.h2h_matches.length > 0) {
-        realH2HMatches = matchup.h2h_matches.map(x => ({
-          id: x.match_id || x.id || 900000,
-          match_date: x.date ? `${x.date} ${x.time || ''}`.trim() : '',
-          home_team_name: x.home_team || hName,
-          away_team_name: x.away_team || aName,
-          home_score: x.home_score ?? 0,
-          away_score: x.away_score ?? 0,
-          sport_code: m.sport_code,
-          status: 'FINISHED'
-        }));
-      } else if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
-        realH2HMatches = allMatches.filter(otherM => {
-          if (!otherM || String(otherM.id) === String(m.id)) return false;
-          if (otherM.status !== 'FINISHED') return false;
-          if (otherM.sport_code && m.sport_code && otherM.sport_code !== m.sport_code) return false;
-          const isDirect = (isSameTeamName(otherM.home_team_name, hName, otherM.sport_code, m.sport_code) && isSameTeamName(otherM.away_team_name, aName, otherM.sport_code, m.sport_code));
-          const isReverse = (isSameTeamName(otherM.home_team_name, aName, otherM.sport_code, m.sport_code) && isSameTeamName(otherM.away_team_name, hName, otherM.sport_code, m.sport_code));
-          return isDirect || isReverse;
-        }).sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
-      }
-
-      if (realH2HMatches.length === 0) {
-        const refDateStr = (m && m.match_date) ? m.match_date : '2026-09-15';
-        let refD = new Date(refDateStr.slice(0, 10));
-        if (isNaN(refD.getTime())) refD = new Date();
-        const dayStep = m.sport_code === 'SOCCER' ? 25 : (m.sport_code === 'BASEBALL' ? 14 : 18);
-        for (let i = 0; i < 5; i++) {
-          const pastD = new Date(refD.getTime() - (i + 1) * dayStep * 86400000);
-          const dStr = `${pastD.getFullYear()}-${String(pastD.getMonth() + 1).padStart(2, '0')}-${String(pastD.getDate()).padStart(2, '0')}`;
-          const isH = (i % 2 === 0);
-          let hs = 0, as = 0;
-          if (m.sport_code === 'SOCCER') {
-            hs = (i === 0 ? 2 : (i === 1 ? 1 : (i === 2 ? 0 : (i === 3 ? 1 : 2))));
-            as = (i === 0 ? 1 : (i === 1 ? 1 : (i === 2 ? 2 : (i === 3 ? 0 : 1))));
-          } else if (m.sport_code === 'BASKETBALL') {
-            hs = 106 + ((i * 3) % 10);
-            as = 102 + (((i + 2) * 4) % 10);
-          } else {
-            hs = 4 + (i % 4);
-            as = 3 + ((i + 1) % 4);
-          }
-          realH2HMatches.push({
-            id: 970000 + i,
-            match_date: dStr,
-            home_team_name: isH ? hName : aName,
-            away_team_name: isH ? aName : hName,
-            home_score: isH ? hs : as,
-            away_score: isH ? as : hs,
-            sport_code: m.sport_code,
-            status: 'FINISHED'
-          });
-        }
-      }
-
-      let calcHWins = 0, calcDraws = 0, calcAWins = 0;
-      realH2HMatches.forEach(hm => {
-        const isH = isSameTeamName(hm.home_team_name, hName, hm.sport_code, m.sport_code);
-        const hScore = Number(isH ? hm.home_score : hm.away_score) || 0;
-        const aScore = Number(isH ? hm.away_score : hm.home_score) || 0;
-        if (hScore > aScore) calcHWins++;
-        else if (hScore === aScore) calcDraws++;
-        else calcAWins++;
-      });
-
-      const h2hSectionHtml = `
-        <div id="ngSection_h2h" class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #e2e8f0 !important; scroll-margin-top: 55px;">
-          <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-            <strong class="text-dark fs-6"><i class="bi bi-shield-shaded text-primary me-1"></i>3. 올 시즌 맞대결 상대전적 (H2H)</strong>
-            <span class="badge bg-success text-white">공식 전적 ${realH2HMatches.length}경기</span>
-          </div>
-
-          <!-- Summary Scorebar -->
-          <div class="d-flex justify-content-between align-items-center p-2.5 rounded-2 bg-light border mb-2.5">
-            <span class="fw-bold text-danger fs-6">[홈] ${hName} ${calcHWins}승</span>
-            <span class="badge bg-dark text-white px-2 py-1">총 ${realH2HMatches.length}경기 맞대결${calcDraws > 0 ? ` (${calcDraws}무)` : ''}</span>
-            <span class="fw-bold text-primary fs-6">[원정] ${aName} ${calcAWins}승</span>
-          </div>
-
-          <!-- List of Real H2H Matchups -->
-          <div class="text-muted small mb-1.5 fw-bold"><i class="bi bi-caret-right-fill"></i> 공식 맞대결 결과 일지 (클릭 시 해당 경기 세부 분석 열기)</div>
-          <div class="d-flex flex-column gap-1.5">
-            ${realH2HMatches.map((g, idx) => {
-              const isH = isSameTeamName(g.home_team_name, hName, g.sport_code, m.sport_code);
-              const hScore = Number(isH ? g.home_score : g.away_score) || 0;
-              const aScore = Number(isH ? g.away_score : g.home_score) || 0;
-              const resBadge = hScore > aScore ? 'bg-danger' : (hScore === aScore ? 'bg-secondary' : 'bg-primary');
-              const resLabel = hScore > aScore ? '홈승' : (hScore === aScore ? '무승부' : '원정승');
-              const dateStr = (g.match_date || '').slice(5, 10).replace('-', '.');
-              return `
-                <div class="p-2 rounded-2 border bg-light d-flex justify-content-between align-items-center" style="font-size:0.75rem; cursor:pointer; transition: background 0.15s ease;" onclick="openNextGenDetailModal(${g.id})">
-                  <div class="d-flex align-items-center">
-                    <span class="badge ${resBadge} text-white me-1.5">${resLabel}</span>
-                    <span class="text-muted me-2">${dateStr}</span>
-                    <strong class="text-dark">${formatTeamName(g.home_team_name)} vs ${formatTeamName(g.away_team_name)}</strong>
+          <!-- Chat Messages Scrollable Box -->
+          <div id="ngMatchChatFeed_${m.id}" class="p-2.5 rounded-3 mb-2.5 d-flex flex-column gap-2" style="height: 320px; max-height: 360px; overflow-y: auto; background: #f8fafc; border: 1px solid #e2e8f0;">
+            ${initialMatchChats.map(c => `
+              <div class="d-flex align-items-start gap-2">
+                <span class="badge ${c.isHome ? 'bg-danger' : (c.isAway ? 'bg-primary' : 'bg-dark')} text-white rounded-circle flex-shrink-0" style="width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; font-size:0.68rem; font-weight:800;">
+                  ${c.isHome ? '홈' : (c.isAway ? '원' : 'AI')}
+                </span>
+                <div style="flex:1; min-width:0;">
+                  <div class="d-flex align-items-center gap-1.5 mb-0.5">
+                    <strong class="text-dark" style="font-size:0.78rem;">${c.author}</strong>
+                    <span class="badge bg-light text-secondary border p-0.5" style="font-size:0.60rem;">${c.tag}</span>
+                    <span class="text-muted ms-auto" style="font-size:0.65rem;">${c.time}</span>
                   </div>
-                  <div class="d-flex align-items-center gap-2">
-                    <strong class="text-dark fs-6" style="letter-spacing: 1px;">${g.home_score ?? 0} : ${g.away_score ?? 0}</strong>
-                    <button type="button" class="btn btn-sm btn-white border py-0.5 px-1.5 d-inline-flex align-items-center gap-0.5" style="font-size:0.68rem; font-weight:700; background:#ffffff; color:#374151; border-color:#d1d5db;" onclick="event.stopPropagation(); openNextGenDetailModal(${g.id})" title="상세보기">
-                      <span>상세</span>
-                      <i class="bi bi-arrow-right-short text-dark"></i>
-                    </button>
+                  <div class="p-2 rounded-2 text-dark small" style="background:#ffffff; border:1px solid #e2e8f0; font-size:0.75rem; line-height: 1.45; word-break: break-word;">
+                    ${c.text}
                   </div>
                 </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
-
-      // -------------------------------------------------------------
-      // 4단계: 📈 최근 경기 결과 누적 아카이브 (100% 실제 DB 공식 경기 기준)
-      // -------------------------------------------------------------
-      function getDbRecentList(teamName) {
-        if (typeof allMatches === 'undefined' || !Array.isArray(allMatches)) return [];
-        return allMatches.filter(otherM => {
-          if (!otherM || String(otherM.id) === String(m.id)) return false;
-          if (otherM.status !== 'FINISHED') return false;
-          if (m.match_date && otherM.match_date && otherM.match_date >= m.match_date) return false;
-          return isSameTeamName(otherM.home_team_name, teamName, m.sport_code, otherM.sport_code) ||
-                 isSameTeamName(otherM.away_team_name, teamName, m.sport_code, otherM.sport_code);
-        }).sort((a, b) => (b.match_date || '').localeCompare(a.match_date || '')).slice(0, 5).map(rm => {
-          const isHome = isSameTeamName(rm.home_team_name, teamName, m.sport_code, rm.sport_code);
-          const ts = isHome ? rm.home_score : rm.away_score;
-          const os = isHome ? rm.away_score : rm.home_score;
-          const opp = isHome ? rm.away_team_name : rm.home_team_name;
-          const res = ts > os ? 'W' : (ts < os ? 'L' : 'D');
-          return {
-            match_id: rm.id,
-            match_date: (rm.match_date || '').slice(5, 10).replace('-', '.'),
-            opponent: formatTeamName(opp),
-            result: res,
-            team_score: ts,
-            opp_score: os
-          };
-        });
-      }
-
-      let homeHistory = (matchup && matchup.home_recent_matches && matchup.home_recent_matches.length > 0) ? matchup.home_recent_matches.map(x => ({
-        match_id: x.match_id || x.id,
-        match_date: x.date ? x.date.slice(5, 10).replace('-', '.') : '',
-        opponent: formatTeamName(x.opponent || '상대팀'),
-        result: x.result || (x.team_score > x.opp_score ? 'W' : (x.team_score === x.opp_score ? 'D' : 'L')),
-        team_score: x.team_score,
-        opp_score: x.opp_score
-      })) : getDbRecentList(hName);
-
-      let awayHistory = (matchup && matchup.away_recent_matches && matchup.away_recent_matches.length > 0) ? matchup.away_recent_matches.map(x => ({
-        match_id: x.match_id || x.id,
-        match_date: x.date ? x.date.slice(5, 10).replace('-', '.') : '',
-        opponent: formatTeamName(x.opponent || '상대팀'),
-        result: x.result || (x.team_score > x.opp_score ? 'W' : (x.team_score === x.opp_score ? 'D' : 'L')),
-        team_score: x.team_score,
-        opp_score: x.opp_score
-      })) : getDbRecentList(aName);
-
-      if (!homeHistory || homeHistory.length === 0) homeHistory = getDbRecentList(hName);
-      if (!awayHistory || awayHistory.length === 0) awayHistory = getDbRecentList(aName);
-
-      const renderHistoryListHtml = (historyList, teamName, isHome) => {
-        if (!historyList || historyList.length === 0) {
-          return `<div class="p-2.5 text-center text-muted rounded-2 bg-light border small"><i class="bi bi-calendar-x me-1"></i>현재 DB에 등록된 ${teamName}의 최근 공식 종료 경기 데이터가 없습니다. (공식 경기 종료 시 자동 누적)</div>`;
-        }
-        return historyList.map((g, idx) => {
-          const res = g.result === 'W' ? '승' : (g.result === 'D' ? '무' : '패');
-          const resBg = g.result === 'W' ? 'bg-danger' : (g.result === 'D' ? 'bg-secondary' : 'bg-primary');
-          return `
-            <div class="p-2 rounded-2 border bg-light d-flex justify-content-between align-items-center" style="font-size:0.75rem; cursor:pointer; transition: background 0.15s ease;" ${g.match_id ? `onclick="openNextGenDetailModal(${g.match_id})"` : ''}>
-              <div class="d-flex align-items-center">
-                <span class="badge ${resBg} text-white me-1.5">${res}</span>
-                <span class="text-muted me-2">${g.match_date || ''}</span>
-                <strong class="text-dark">${teamName} vs ${g.opponent || '상대팀'}</strong>
               </div>
-              <div class="d-flex align-items-center gap-2">
-                <strong class="text-dark fs-6" style="letter-spacing: 1px;">${g.team_score ?? 0} : ${g.opp_score ?? 0}</strong>
-                <button type="button" class="btn btn-sm btn-white border py-0.5 px-1.5 d-inline-flex align-items-center gap-0.5" style="font-size:0.68rem; font-weight:700; background:#ffffff; color:#374151; border-color:#d1d5db;" ${g.match_id ? `onclick="event.stopPropagation(); openNextGenDetailModal(${g.match_id})"` : ''} title="상세보기">
-                  <span>상세</span>
-                  <i class="bi bi-arrow-right-short text-dark"></i>
-                </button>
-              </div>
-            </div>
-          `;
-        }).join('');
-      };
-
-      const recentSectionHtml = `
-        <div id="ngSection_recent" class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #e2e8f0 !important; scroll-margin-top: 55px;">
-          <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-            <strong class="text-dark fs-6"><i class="bi bi-calendar2-check-fill text-success me-1"></i>4. 최근 경기 결과 (공식 종료 경기 자동 누적)</strong>
-            <span class="badge bg-success-subtle text-success border border-success-subtle">공식 아카이브</span>
-          </div>
-          <div class="text-muted small mb-2.5">
-            💡 경기가 종료되면 시스템에 자동으로 누적되며, <b>[상세]</b> 버튼 클릭 시 해당 경기의 세부 분석이 열립니다.
+            `).join('')}
           </div>
 
-          <!-- Home Team Recent Matches -->
-          <div class="mb-3">
-            <div class="fw-bold text-danger mb-1.5 small"><i class="bi bi-caret-right-fill"></i> ${hName} 최근 경기 결과 ${homeHistory.length > 0 ? `(${homeHistory.length}경기)` : ''}</div>
-            <div class="d-flex flex-column gap-1.5">
-              ${renderHistoryListHtml(homeHistory, hName, true)}
-            </div>
-          </div>
-
-          <!-- Away Team Recent Matches -->
-          <div>
-            <div class="fw-bold text-primary mb-1.5 small"><i class="bi bi-caret-right-fill"></i> ${aName} 최근 경기 결과 ${awayHistory.length > 0 ? `(${awayHistory.length}경기)` : ''}</div>
-            <div class="d-flex flex-column gap-1.5">
-              ${renderHistoryListHtml(awayHistory, aName, false)}
-            </div>
+          <!-- Chat Input Bar -->
+          <div class="d-flex gap-1.5 align-items-center">
+            <span class="badge bg-light text-dark border py-1.5 px-2 flex-shrink-0" style="font-size:0.72rem;" title="내 닉네임">
+              <i class="bi bi-person-circle me-1 text-secondary"></i>${defaultNick}
+            </span>
+            <input type="text" id="ngChatInput_${m.id}" class="form-control form-control-sm" placeholder="[${hName} vs ${aName}] 실시간 응원 메시지나 경기 의견을 입력하세요..." style="font-size:0.78rem; border-color:#cbd5e1;" onkeydown="if(event.key==='Enter') sendNgMatchChatMessage(${m.id})">
+            <button type="button" class="btn btn-sm btn-primary px-3 fw-bold flex-shrink-0 d-inline-flex align-items-center gap-1" style="font-size:0.78rem;" onclick="sendNgMatchChatMessage(${m.id})">
+              <i class="bi bi-send-fill"></i>
+              <span>전송</span>
+            </button>
           </div>
         </div>
       `;
 
-      // -------------------------------------------------------------
-      // 5단계: 📊 핵심 팀 스탯 & 배당/순위 분석
-      // -------------------------------------------------------------
-      const standings = getDynamicLeagueStandings(m);
-      const saberSectionHtml = `
-        <div id="ngSection_saber" class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #e2e8f0 !important; scroll-margin-top: 55px;">
-          <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-            <strong class="text-dark fs-6"><i class="bi bi-graph-up-arrow text-info me-1"></i>5. 공식 리그 순위 & 핵심 베팅 통계</strong>
-            <span class="badge bg-light text-secondary border">공식 순위표</span>
-          </div>
-
-          <!-- League Table -->
-          <div class="table-responsive mb-3">
-            <table class="table table-bordered table-sm text-center mb-0" style="font-size:0.74rem;">
-              <thead class="table-light">
-                <tr>
-                  <th>순위</th>
-                  <th>팀명</th>
-                  <th>경기</th>
-                  <th>승</th>
-                  <th>패</th>
-                  <th>승률/승점</th>
-                  <th>최근 5경기</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${standings.map(t => `
-                  <tr class="${t.isHome ? 'table-danger-subtle fw-bold' : (t.isAway ? 'table-primary-subtle fw-bold' : '')}">
-                    <td>${t.rank}</td>
-                    <td class="text-truncate">${t.team} ${t.isHome ? '<span class="badge bg-danger text-white">홈</span>' : (t.isAway ? '<span class="badge bg-primary text-white">원정</span>' : '')}</td>
-                    <td>${t.gp}</td>
-                    <td>${t.w}</td>
-                    <td>${t.l}</td>
-                    <td>${t.pct}</td>
-                    <td>
-                      ${(t.form || ['W','W','L','W','W']).map(f => `<span class="badge ${f==='W'?'bg-danger':'bg-primary'} text-white p-0.5" style="font-size:0.58rem;">${f==='W'?'승':'패'}</span>`).join(' ')}
-                    </td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Betting Summary Box -->
-          <div class="p-2.5 rounded-2 bg-light border text-dark small">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <strong><i class="bi bi-cash-stack text-success me-1"></i>배당률 및 기준점 분석</strong>
-              <span class="badge bg-primary text-white">추천: ${pickTitle}</span>
-            </div>
-            <div>• 프로토 승부식 배당: 홈승 [${oddsInfo.domHome || '1.65'}] | 원정승 [${oddsInfo.domAway || '2.25'}]</div>
-            <div>• 언오버 기준점 (${isBaseball ? 'U/O 5.5' : (isBasketball ? 'U/O 215.5' : 'U/O 2.5')}): 언더 60% 우세 전망</div>
-          </div>
-        </div>
-      `;
-
-      // Assemble all 5 Steps (For Baseball: Starters positioned at the VERY TOP!)
+      // Assemble: Hero Overview + Starting Pitcher Details + Real-time Match Chatting Studio
       container.innerHTML = `
         ${heroBannerHtml}
-        ${isBaseball ? startersSectionHtml : rosterSectionHtml}
-        ${isBaseball ? rosterSectionHtml : startersSectionHtml}
-        ${h2hSectionHtml}
-        ${recentSectionHtml}
-        ${saberSectionHtml}
+        ${startersSectionHtml}
+        ${chatSectionHtml}
       `;
     }
 
