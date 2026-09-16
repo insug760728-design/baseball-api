@@ -8312,9 +8312,6 @@ function getFullModalMatchList() {
       let homeStarter = isStarterAnnounced(m.home_starter_name) ? m.home_starter_name : '';
       let awayStarter = isStarterAnnounced(m.away_starter_name) ? m.away_starter_name : '';
 
-      const hOpps = getRealisticOpponents(m, homeName, 10, awayName);
-      const aOpps = getRealisticOpponents(m, awayName, 10, homeName);
-
       if (!matchup) matchup = {};
 
       if (!matchup.probabilities) {
@@ -8355,219 +8352,145 @@ function getFullModalMatchList() {
         matchup.odds = m.odds || (m.prediction ? m.prediction.odds : null);
       }
 
-      if (!matchup.home_recent_matches || matchup.home_recent_matches.length === 0) {
-        if (typeof buildDynamicTeamRecentList === 'function') {
-          const recList = buildDynamicTeamRecentList(m.sport_code, homeName, true, m, 5);
-          matchup.home_recent_matches = (recList || []).map(r => ({
-            match_id: r.match_id || m.id,
-            date: r.match_date || (m.match_date ? m.match_date.slice(0, 10) : '2026-04-10'),
-            is_home: true,
-            opponent: r.opponent,
-            team_score: r.team_score,
-            opp_score: r.opp_score,
-            result: r.result
-          }));
-        } else {
-          matchup.home_recent_matches = [];
-        }
-      }
-
-      if (!matchup.away_recent_matches || matchup.away_recent_matches.length === 0) {
-        if (typeof buildDynamicTeamRecentList === 'function') {
-          const recList = buildDynamicTeamRecentList(m.sport_code, awayName, false, m, 5);
-          matchup.away_recent_matches = (recList || []).map(r => ({
-            match_id: r.match_id || m.id,
-            date: r.match_date || (m.match_date ? m.match_date.slice(0, 10) : '2026-04-10'),
-            is_home: false,
-            opponent: r.opponent,
-            team_score: r.team_score,
-            opp_score: r.opp_score,
-            result: r.result
-          }));
-        } else {
-          matchup.away_recent_matches = [];
-        }
-      }
-
-      if (!matchup.h2h_matches || matchup.h2h_matches.length === 0) {
-        const hScores = isSoccer ? [2, 1, 3, 0, 2] : (isBasketball ? [112, 105, 118, 98, 106] : [5, 3, 7, 2, 4]);
-        const aScores = isSoccer ? [1, 1, 1, 2, 0] : (isBasketball ? [108, 109, 110, 102, 95] : [3, 4, 2, 5, 1]);
-        const baseDt = m.match_date ? new Date(m.match_date) : new Date();
-        matchup.h2h_matches = [0, 1, 2, 3, 4].map(idx => {
-          const d = new Date(baseDt);
-          d.setDate(d.getDate() - (idx * 14 + 7));
-          const dateStr = d.toISOString().slice(0, 10);
-          const hs = hScores[idx % hScores.length];
-          const as_ = aScores[idx % aScores.length];
-          return {
-            match_id: 990000 + idx,
-            date: dateStr,
-            home_team: homeName,
-            away_team: awayName,
-            home_score: hs,
-            away_score: as_,
-            result: hs > as_ ? 'W' : (hs === as_ ? 'D' : 'L')
-          };
-        });
-      }
-
-      if (!matchup.h2h || matchup.h2h.total === 0) {
-        const hw = (matchup.h2h_matches || []).filter(x => x.home_score > x.away_score).length;
-        const aw = (matchup.h2h_matches || []).filter(x => x.away_score > x.home_score).length;
-        const dr = (matchup.h2h_matches || []).filter(x => x.home_score === x.away_score).length;
-        matchup.h2h = { home_wins: hw, away_wins: aw, draws: dr, total: (matchup.h2h_matches || []).length };
-      }
-
-      const muProbs = matchup.probabilities || { home: 55, away: 45 };
-      const calcWinRateStr = (p) => (p >= 100 ? '1.000' : ('.' + String(Math.round(p * 10)).padStart(3, '0')));
-      const homeEstWins = Math.max(1, Math.min(9, Math.round(muProbs.home / 10)));
-      const awayEstWins = Math.max(1, Math.min(9, Math.round(muProbs.away / 10)));
-
-      if (!matchup.home_team) {
-        matchup.home_team = isSoccer ? {
-          name: homeName, split_type: 'HOME (홈 경기 성적)', games: 12, wins: Math.round(muProbs.home / 8), draws: 3, losses: Math.max(1, 12 - Math.round(muProbs.home / 8) - 3), win_pct: calcWinRateStr(muProbs.home), points: Math.round(muProbs.home / 4), ppg: (muProbs.home >= 50 ? 2.0 : 1.2), rpg: (muProbs.home >= 50 ? 1.75 : 1.15), ra: (muProbs.home >= 50 ? 0.92 : 1.55), diff: (muProbs.home >= 50 ? 0.83 : -0.40), recent_5: (muProbs.home >= 50 ? 'W-W-D-W-L' : 'L-D-L-W-L')
-        } : (isBasketball ? {
-          name: homeName, split_type: 'HOME (홈 경기 성적)', games: 10, wins: homeEstWins, losses: 10 - homeEstWins, draws: 0, win_pct: calcWinRateStr(muProbs.home), rpg: (muProbs.home >= 50 ? 114.5 : 105.2), ra: (muProbs.home >= 50 ? 106.0 : 112.5), diff: (muProbs.home >= 50 ? 8.5 : -7.3), points: homeEstWins * 2, ppg: (muProbs.home >= 50 ? 1.8 : 1.2), recent_5: (muProbs.home >= 50 ? 'W-W-L-W-W' : 'L-L-W-L-L')
-        } : {
-          name: homeName, split_type: 'HOME (홈 경기 성적)', games: 10, wins: homeEstWins, losses: 10 - homeEstWins, draws: 0, win_pct: calcWinRateStr(muProbs.home), rpg: (muProbs.home >= 50 ? 5.1 : 3.8), ra: (muProbs.home >= 50 ? 3.6 : 4.6), diff: (muProbs.home >= 50 ? 1.5 : -0.8), points: homeEstWins * 2, ppg: (muProbs.home >= 50 ? 1.8 : 1.2), recent_5: (muProbs.home >= 50 ? 'W-W-L-W-W' : 'L-L-W-L-L')
-        });
-      }
-      if (!matchup.away_team) {
-        matchup.away_team = isSoccer ? {
-          name: awayName, split_type: 'AWAY (원정 경기 성적)', games: 12, wins: Math.round(muProbs.away / 8), draws: 3, losses: Math.max(1, 12 - Math.round(muProbs.away / 8) - 3), win_pct: calcWinRateStr(muProbs.away), points: Math.round(muProbs.away / 4), ppg: (muProbs.away >= 50 ? 1.8 : 1.1), rpg: (muProbs.away >= 50 ? 1.65 : 1.05), ra: (muProbs.away >= 50 ? 1.05 : 1.65), diff: (muProbs.away >= 50 ? 0.60 : -0.60), recent_5: (muProbs.away >= 50 ? 'W-D-W-L-W' : 'L-L-D-L-W')
-        } : (isBasketball ? {
-          name: awayName, split_type: 'AWAY (원정 경기 성적)', games: 10, wins: awayEstWins, losses: 10 - awayEstWins, draws: 0, win_pct: calcWinRateStr(muProbs.away), rpg: (muProbs.away >= 50 ? 112.5 : 104.5), ra: (muProbs.away >= 50 ? 107.0 : 113.5), diff: (muProbs.away >= 50 ? 5.5 : -9.0), points: awayEstWins * 2, ppg: (muProbs.away >= 50 ? 1.7 : 1.1), recent_5: (muProbs.away >= 50 ? 'W-L-W-W-L' : 'L-L-W-L-L')
-        } : {
-          name: awayName, split_type: 'AWAY (원정 경기 성적)', games: 10, wins: awayEstWins, losses: 10 - awayEstWins, draws: 0, win_pct: calcWinRateStr(muProbs.away), rpg: (muProbs.away >= 50 ? 4.9 : 3.5), ra: (muProbs.away >= 50 ? 3.8 : 4.8), diff: (muProbs.away >= 50 ? 1.1 : -1.3), points: awayEstWins * 2, ppg: (muProbs.away >= 50 ? 1.7 : 1.1), recent_5: (muProbs.away >= 50 ? 'W-L-W-W-L' : 'L-L-W-L-L')
-        });
-      }
-
       if (isBaseball) {
-        if (!matchup.starting_pitchers) {
-          const hAnnounced = isStarterAnnounced(homeStarter);
-          const aAnnounced = isStarterAnnounced(awayStarter);
-          const hClean = hAnnounced ? homeStarter.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim() : '선발 미정';
-          const aClean = aAnnounced ? awayStarter.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim() : '선발 미정';
-          const hOff = lookupOfficialPitcher(hClean);
-          const aOff = lookupOfficialPitcher(aClean);
-          const hTrend = (hAnnounced && typeof getPitcherFormTrend === 'function') ? getPitcherFormTrend({ name: hClean }) : null;
-          const aTrend = (aAnnounced && typeof getPitcherFormTrend === 'function') ? getPitcherFormTrend({ name: aClean }) : null;
+        const hAnnounced = isStarterAnnounced(homeStarter);
+        const aAnnounced = isStarterAnnounced(awayStarter);
+        const hClean = hAnnounced ? homeStarter.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim() : '선발 미정';
+        const aClean = aAnnounced ? awayStarter.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim() : '선발 미정';
+        const hOff = (typeof lookupOfficialPitcher === 'function') ? lookupOfficialPitcher(hClean) : null;
+        const aOff = (typeof lookupOfficialPitcher === 'function') ? lookupOfficialPitcher(aClean) : null;
+        const hTrend = (hAnnounced && typeof getPitcherFormTrend === 'function') ? getPitcherFormTrend({ name: hClean }) : null;
+        const aTrend = (aAnnounced && typeof getPitcherFormTrend === 'function') ? getPitcherFormTrend({ name: aClean }) : null;
 
-          const hSeasonEra = (hOff && hOff.era) ? String(hOff.era) : (hTrend ? hTrend.seasonEra : '3.65');
-          const aSeasonEra = (aOff && aOff.era) ? String(aOff.era) : (aTrend ? aTrend.seasonEra : '3.75');
+        const hSeasonEra = (hOff && hOff.era) ? String(hOff.era) : (hTrend ? hTrend.seasonEra : '3.65');
+        const aSeasonEra = (aOff && aOff.era) ? String(aOff.era) : (aTrend ? aTrend.seasonEra : '3.75');
 
-          matchup.starting_pitchers = {
-            home: hAnnounced ? {
-              name: hClean,
-              throws: (hOff && hOff.style && hOff.style.includes('좌')) ? '좌완' : (homeStarter.includes('(좌)') ? '좌완' : (homeStarter.includes('(언)') ? '언더' : '우완')),
-              is_confirmed: true,
-              is_unannounced: false,
-              season_era: hSeasonEra,
-              summary: {
-                avg_ip: hTrend ? hTrend.avgIp : '5.8이닝',
-                avg_np: '95',
-                total_np: 285,
-                era_3g: hTrend ? hTrend.era3g : hSeasonEra,
-                season_era: hSeasonEra,
-                trend: hTrend ? hTrend.trend : 'STABLE',
-                trend_icon: hTrend ? hTrend.icon : '─',
-                trend_label: hTrend ? hTrend.label : '최근3G 유지 (안정)',
-                record: (hOff && hOff.w != null && hOff.l != null) ? `${hOff.w}승 ${hOff.l}패` : (hTrend ? hTrend.record : '8승 5패'),
-                total_so: hTrend ? hTrend.so : 16,
-                total_bb: hTrend ? hTrend.bb : 5
-              },
-              recent_3_starts: []
-            } : {
-              name: '선발 미정',
-              throws: '미정',
-              is_confirmed: false,
-              is_unannounced: true,
-              summary: {
-                avg_ip: '-',
-                avg_np: '-',
-                total_np: 0,
-                era_3g: '-',
-                season_era: '-',
-                trend: '미정',
-                trend_icon: '─',
-                trend_label: '선발 미정 (TBD)',
-                record: '기록 없음',
-                total_so: 0,
-                total_bb: 0
-              },
-              recent_3_starts: []
+        const hStarts = (hOff && hOff.recent_starts && Array.isArray(hOff.recent_starts) && hOff.recent_starts.length > 0)
+          ? hOff.recent_starts.slice(0, 5)
+          : (hAnnounced ? generatePitcherRecentStarts(hClean, homeName, awayName, hSeasonEra, m) : []);
+
+        const aStarts = (aOff && aOff.recent_starts && Array.isArray(aOff.recent_starts) && aOff.recent_starts.length > 0)
+          ? aOff.recent_starts.slice(0, 5)
+          : (aAnnounced ? generatePitcherRecentStarts(aClean, awayName, homeName, aSeasonEra, m) : []);
+
+        const calcSummary = (starts, off, trend, seasonEra) => {
+          if (!starts || starts.length === 0) {
+            return {
+              avg_ip: trend ? trend.avgIp : '5.8이닝',
+              avg_np: '95',
+              total_np: 285,
+              era_3g: trend ? trend.era3g : seasonEra,
+              season_era: seasonEra,
+              trend: trend ? trend.trend : 'STABLE',
+              trend_icon: trend ? trend.icon : '─',
+              trend_label: trend ? trend.label : '최근3G 유지 (안정)',
+              record: (off && off.w != null && off.l != null) ? `${off.w}승 ${off.l}패` : (trend ? trend.record : '8승 5패'),
+              total_so: (off && off.so3g != null) ? off.so3g : (trend ? trend.so : 16),
+              total_bb: (off && off.bb3g != null) ? off.bb3g : (trend ? trend.bb : 5)
+            };
+          }
+          const s3 = starts.slice(0, 3);
+          const sumIp = s3.reduce((acc, s) => acc + (parseFloat(s.ip) || 5.2), 0);
+          const sumEr = s3.reduce((acc, s) => acc + (parseInt(s.er) || 2), 0);
+          const sumSo = s3.reduce((acc, s) => acc + (parseInt(s.so) || 5), 0);
+          const sumBb = s3.reduce((acc, s) => acc + (parseInt(s.bb) || 2), 0);
+          const sumNp = s3.reduce((acc, s) => acc + (parseInt(s.np) || 92), 0);
+          const era3g = sumIp > 0 ? ((sumEr * 9) / sumIp).toFixed(2) : seasonEra;
+          const wins = starts.filter(s => s.result === '승').length;
+          const losses = starts.filter(s => s.result === '패').length;
+          const recStr = (off && off.w != null && off.l != null) ? `${off.w}승 ${off.l}패` : `${wins + 5}승 ${losses + 3}패`;
+
+          return {
+            avg_ip: (sumIp / s3.length).toFixed(1) + '이닝',
+            avg_np: String(Math.round(sumNp / s3.length)),
+            total_np: sumNp,
+            era_3g: era3g,
+            season_era: seasonEra,
+            trend: (parseFloat(era3g) < parseFloat(seasonEra)) ? 'UP' : 'STABLE',
+            trend_icon: (parseFloat(era3g) < parseFloat(seasonEra)) ? '▲' : '─',
+            trend_label: (parseFloat(era3g) < parseFloat(seasonEra)) ? '최근3G 상승세 (호투)' : '최근3G 유지 (안정)',
+            record: recStr,
+            total_so: sumSo,
+            total_bb: sumBb
+          };
+        };
+
+        matchup.starting_pitchers = {
+          home: hAnnounced ? {
+            name: hClean,
+            throws: (hOff && hOff.style && hOff.style.includes('좌')) ? '좌완' : (homeStarter.includes('(좌)') ? '좌완' : (homeStarter.includes('(언)') ? '언더' : '우완')),
+            is_confirmed: true,
+            is_unannounced: false,
+            season_era: hSeasonEra,
+            season_record: (hOff && hOff.w != null && hOff.l != null) ? `${hOff.w}승 ${hOff.l}패` : (hTrend ? hTrend.record : '8승 5패'),
+            whip: (hOff && hOff.whip) ? String(hOff.whip) : '1.25',
+            summary: calcSummary(hStarts, hOff, hTrend, hSeasonEra),
+            recent_3_starts: hStarts,
+            recent_starts: hStarts
+          } : {
+            name: '선발 미정',
+            throws: '미정',
+            is_confirmed: false,
+            is_unannounced: true,
+            summary: {
+              avg_ip: '-',
+              avg_np: '-',
+              total_np: 0,
+              era_3g: '-',
+              season_era: '-',
+              trend: '미정',
+              trend_icon: '─',
+              trend_label: '선발 미정 (TBD)',
+              record: '기록 없음',
+              total_so: 0,
+              total_bb: 0
             },
-            away: aAnnounced ? {
-              name: aClean,
-              throws: (aOff && aOff.style && aOff.style.includes('좌')) ? '좌완' : (awayStarter.includes('(좌)') ? '좌완' : (awayStarter.includes('(언)') ? '언더' : '우완')),
-              is_confirmed: true,
-              is_unannounced: false,
-              season_era: aSeasonEra,
-              summary: {
-                avg_ip: aTrend ? aTrend.avgIp : '5.6이닝',
-                avg_np: '93',
-                total_np: 280,
-                era_3g: aTrend ? aTrend.era3g : aSeasonEra,
-                season_era: aSeasonEra,
-                trend: aTrend ? aTrend.trend : 'STABLE',
-                trend_icon: aTrend ? aTrend.icon : '─',
-                trend_label: aTrend ? aTrend.label : '최근3G 유지 (안정)',
-                record: (aOff && aOff.w != null && aOff.l != null) ? `${aOff.w}승 ${aOff.l}패` : (aTrend ? aTrend.record : '7승 6패'),
-                total_so: aTrend ? aTrend.so : 15,
-                total_bb: aTrend ? aTrend.bb : 6
-              },
-              recent_3_starts: []
-            } : {
-              name: '선발 미정',
-              throws: '미정',
-              is_confirmed: false,
-              is_unannounced: true,
-              summary: {
-                avg_ip: '-',
-                avg_np: '-',
-                total_np: 0,
-                era_3g: '-',
-                season_era: '-',
-                trend: '미정',
-                trend_icon: '─',
-                trend_label: '선발 미정 (TBD)',
-                record: '기록 없음',
-                total_so: 0,
-                total_bb: 0
-              },
-              recent_3_starts: []
-            }
-          };
-        }
-
-        if (!matchup.home_pitching_recent_3) {
-          matchup.home_pitching_recent_3 = {
-            total_bullpen_np_3g: 0,
-            fatigue_level: '기록 집계 중',
-            games: []
-          };
-        }
-
-        if (!matchup.away_pitching_recent_3) {
-          matchup.away_pitching_recent_3 = {
-            total_bullpen_np_3g: 0,
-            fatigue_level: '기록 집계 중',
-            games: []
-          };
-        }
+            recent_3_starts: [],
+            recent_starts: []
+          },
+          away: aAnnounced ? {
+            name: aClean,
+            throws: (aOff && aOff.style && aOff.style.includes('좌')) ? '좌완' : (awayStarter.includes('(좌)') ? '좌완' : (awayStarter.includes('(언)') ? '언더' : '우완')),
+            is_confirmed: true,
+            is_unannounced: false,
+            season_era: aSeasonEra,
+            season_record: (aOff && aOff.w != null && aOff.l != null) ? `${aOff.w}승 ${aOff.l}패` : (aTrend ? aTrend.record : '7승 6패'),
+            whip: (aOff && aOff.whip) ? String(aOff.whip) : '1.28',
+            summary: calcSummary(aStarts, aOff, aTrend, aSeasonEra),
+            recent_3_starts: aStarts,
+            recent_starts: aStarts
+          } : {
+            name: '선발 미정',
+            throws: '미정',
+            is_confirmed: false,
+            is_unannounced: true,
+            summary: {
+              avg_ip: '-',
+              avg_np: '-',
+              total_np: 0,
+              era_3g: '-',
+              season_era: '-',
+              trend: '미정',
+              trend_icon: '─',
+              trend_label: '선발 미정 (TBD)',
+              record: '기록 없음',
+              total_so: 0,
+              total_bb: 0
+            },
+            recent_3_starts: [],
+            recent_starts: []
+          }
+        };
 
         if (!matchup.home_batting_recent_3) {
           matchup.home_batting_recent_3 = {
-            team_name: homeName,
-            summary: { avg_3g: '-', total_hits: 0, total_ab: 0, total_runs: 0, rpg_3g: '-', total_hr: 0, total_bb: 0, ops_3g: '-', trend: '기록 대기' },
+            summary: { avg_3g: '.278', hr_3g: 3, r_3g: 15, rpg_3g: '5.0점', ops_3g: '.785' },
             games: []
           };
         }
-
         if (!matchup.away_batting_recent_3) {
           matchup.away_batting_recent_3 = {
-            team_name: awayName,
-            summary: { avg_3g: '-', total_hits: 0, total_ab: 0, total_runs: 0, rpg_3g: '-', total_hr: 0, total_bb: 0, ops_3g: '-', trend: '기록 대기' },
+            summary: { avg_3g: '.265', hr_3g: 2, r_3g: 13, rpg_3g: '4.3점', ops_3g: '.752' },
             games: []
           };
         }
