@@ -13077,7 +13077,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const matchup = m.matchup_analysis || (typeof matchDetailCache !== 'undefined' && matchDetailCache ? (matchDetailCache.get(Number(m.id))?.matchup_analysis || matchDetailCache.get(m.id)?.matchup_analysis) : null) || {};
 
       // -------------------------------------------------------------
-      // ⚾ 투수 프로필 & 데이터 추출 헬퍼
+      // ⚾ 투수 프로필 & 데이터 추출 헬퍼 (100% 사실 기반, 가짜 데이터 생성 금지)
       // -------------------------------------------------------------
       function getPitcherProfile(isHome, teamName, starterName) {
         const sideKey = isHome ? 'home' : 'away';
@@ -13088,63 +13088,39 @@ function updateSlimPanel(matchId, type, contentHtml) {
         const pOfficial = (typeof lookupOfficialPitcher === 'function') ? lookupOfficialPitcher(cleanName) : null;
         const cachedPitcherObj = (matchup && matchup.starting_pitchers && matchup.starting_pitchers[sideKey]) ? matchup.starting_pitchers[sideKey] : null;
 
-        let nameHash = 0;
-        for (let i = 0; i < cleanName.length; i++) {
-          nameHash = ((nameHash << 5) - nameHash) + cleanName.charCodeAt(i);
-          nameHash |= 0;
-        }
-        const absH = Math.abs(nameHash);
-
         const pThrows = (pOfficial && pOfficial.style) ? pOfficial.style : (pNameRaw.includes('(좌)') ? '좌완' : (pNameRaw.includes('(언)') ? '언더' : (cachedPitcherObj?.throws || '우완')));
-        const seasonEra = pOfficial ? pOfficial.era.toFixed(2) : ((cachedPitcherObj && cachedPitcherObj.season_era && cachedPitcherObj.season_era !== '-') ? Number(cachedPitcherObj.season_era).toFixed(2) : (3.10 + ((absH % 170) / 100)).toFixed(2));
-        const seasonRecord = pOfficial ? `${pOfficial.w}승 ${pOfficial.l}패` : ((cachedPitcherObj && cachedPitcherObj.season_record && cachedPitcherObj.season_record !== '-') ? cachedPitcherObj.season_record : `${6 + (absH % 8)}승 ${4 + ((absH >> 3) % 7)}패`);
-        const whip = pOfficial ? pOfficial.whip.toFixed(2) : ((parseFloat(seasonEra) * 0.28 + 0.20).toFixed(2));
-        const avgIp = (pOfficial && pOfficial.avgIp) ? pOfficial.avgIp : ((cachedPitcherObj?.summary?.avg_ip && cachedPitcherObj.summary.avg_ip !== '-') ? cachedPitcherObj.summary.avg_ip : `${(5.3 + ((absH % 15) / 10)).toFixed(1)}이닝`);
-        const so3g = (pOfficial && pOfficial.so3g !== undefined) ? pOfficial.so3g : ((cachedPitcherObj?.summary?.total_so !== undefined) ? cachedPitcherObj.summary.total_so : (13 + (absH % 10)));
-        const bb3g = (pOfficial && pOfficial.bb3g !== undefined) ? pOfficial.bb3g : ((cachedPitcherObj?.summary?.total_bb !== undefined) ? cachedPitcherObj.summary.total_bb : (3 + ((absH >> 2) % 6)));
+        
+        let seasonEra = '-';
+        let seasonRecord = '-';
+        let whip = '-';
+        let avgIp = '-';
+        let so3g = '-';
+        let bb3g = '-';
+
+        if (pOfficial) {
+          seasonEra = (pOfficial.era !== undefined && pOfficial.era !== null) ? Number(pOfficial.era).toFixed(2) : '-';
+          seasonRecord = (pOfficial.w !== undefined && pOfficial.l !== undefined) ? `${pOfficial.w}승 ${pOfficial.l}패` : '-';
+          whip = (pOfficial.whip !== undefined && pOfficial.whip !== null) ? Number(pOfficial.whip).toFixed(2) : '-';
+          avgIp = pOfficial.avgIp || '-';
+          so3g = (pOfficial.so3g !== undefined) ? pOfficial.so3g : '-';
+          bb3g = (pOfficial.bb3g !== undefined) ? pOfficial.bb3g : '-';
+        } else if (cachedPitcherObj) {
+          const cEra = cachedPitcherObj.season_era || cachedPitcherObj.era;
+          seasonEra = (cEra && cEra !== '-') ? Number(cEra).toFixed(2) : '-';
+          seasonRecord = (cachedPitcherObj.season_record && cachedPitcherObj.season_record !== '-') 
+            ? cachedPitcherObj.season_record 
+            : ((cachedPitcherObj.wins !== undefined && cachedPitcherObj.losses !== undefined) ? `${cachedPitcherObj.wins}승 ${cachedPitcherObj.losses}패` : '-');
+          whip = (cachedPitcherObj.whip && cachedPitcherObj.whip !== '-') ? Number(cachedPitcherObj.whip).toFixed(2) : (cachedPitcherObj.season_whip || '-');
+          avgIp = (cachedPitcherObj.summary?.avg_ip && cachedPitcherObj.summary.avg_ip !== '-') ? cachedPitcherObj.summary.avg_ip : (cachedPitcherObj.avg_ip || '-');
+          so3g = (cachedPitcherObj.summary?.total_so !== undefined) ? cachedPitcherObj.summary.total_so : (cachedPitcherObj.season_so || '-');
+          bb3g = (cachedPitcherObj.summary?.total_bb !== undefined) ? cachedPitcherObj.summary.total_bb : (cachedPitcherObj.season_bb || '-');
+        }
 
         let startsList = [];
         if (pOfficial && pOfficial.recent_starts && Array.isArray(pOfficial.recent_starts) && pOfficial.recent_starts.length > 0) {
           startsList = pOfficial.recent_starts.slice(0, 10);
         } else if (cachedPitcherObj && cachedPitcherObj.recent_starts && Array.isArray(cachedPitcherObj.recent_starts) && cachedPitcherObj.recent_starts.length > 0) {
           startsList = cachedPitcherObj.recent_starts.slice(0, 10);
-        } else {
-          const refDateStr = m.match_date || '2026-09-15';
-          let refD = new Date(refDateStr.slice(0, 10));
-          if (isNaN(refD.getTime())) refD = new Date();
-
-          const kboPool = ['삼성', 'LG', '두산', 'KT', 'SSG', 'NC', '한화', '롯데', '키움', 'KIA'].filter(t => !teamName.includes(t));
-          const mlbPool = ['양키스', '다저스', '보스턴', '휴스턴', '필라델피아', '볼티모어', '애틀랜타', '샌디에이고', '클리블랜드', '시애틀'].filter(t => !teamName.includes(t));
-          const npbPool = ['요미우리', '한신', 'DeNA', '히로시마', '야쿠르트', '주니치', '소프트뱅크', '닛폰햄', '지바롯데', '라쿠텐', '오릭스', '세이부'].filter(t => !teamName.includes(t));
-          
-          const isMlb = ['MLB', '메이저리그'].some(k => (m.league_name || '').includes(k)) || mlbPool.some(k => teamName.includes(k));
-          const isNpb = ['NPB', '일본'].some(k => (m.league_name || '').includes(k)) || npbPool.some(k => teamName.includes(k));
-          const pool = isMlb ? mlbPool : (isNpb ? npbPool : kboPool);
-
-          const totalStartsCount = 7 + (absH % 4);
-          for (let i = 0; i < totalStartsCount; i++) {
-            const pastD = new Date(refD.getTime() - (i + 1) * 5.5 * 86400000);
-            const dStr = `${String(pastD.getMonth() + 1).padStart(2, '0')}.${String(pastD.getDate()).padStart(2, '0')}`;
-            const oppTeam = pool[(absH + i * 3) % pool.length] || '상대팀';
-            const ipVal = (5.1 + ((absH + i * 4) % 21) / 10).toFixed(1);
-            const erVal = (absH + i * 2) % 4;
-            const hitsVal = 3 + ((absH + i) % 5);
-            const soVal = 4 + ((absH + i * 3) % 6);
-            const bbVal = (absH + i) % 4;
-            const resVal = erVal <= 2 ? '승' : (erVal >= 4 ? '패' : '-');
-            const eraCalc = (parseFloat(ipVal) > 0) ? ((erVal * 9) / parseFloat(ipVal)).toFixed(2) : '3.00';
-            startsList.push({
-              date: dStr,
-              opponent: oppTeam,
-              result: resVal,
-              ip: ipVal,
-              er: erVal,
-              h: hitsVal,
-              so: soVal,
-              bb: bbVal,
-              era: eraCalc
-            });
-          }
         }
 
         return {
@@ -13157,16 +13133,25 @@ function updateSlimPanel(matchId, type, contentHtml) {
           avgIp: avgIp,
           so3g: so3g,
           bb3g: bb3g,
-          startsList,
-          absH
+          startsList
         };
       }
 
       function renderLogRowsHtml(startsList, uniqueId) {
+        if (!startsList || startsList.length === 0) {
+          return `
+            <tr>
+              <td colspan="9" class="text-center text-muted py-3 fw-bold" style="background:#ffffff; font-size:0.75rem;">
+                <i class="bi bi-info-circle me-1 text-primary"></i>공식 등판 기록 집계 중 (시즌 첫 등판 또는 경기 일지 대기)
+              </td>
+            </tr>
+          `;
+        }
+
         return startsList.map((st, sIdx) => {
           const isExtra = (sIdx >= 3);
           const dateVal = st.date || st.match_date || '-';
-          const oppVal = st.opponent || st.opp || '상대팀';
+          const oppVal = st.opponent || st.opp || '-';
           const resRaw = st.result || '-';
           const resBadge = resRaw === '승' ? 'bg-danger' : (resRaw === '패' ? 'bg-primary' : (['홀', '세'].includes(resRaw) ? 'bg-success' : 'bg-secondary'));
           const ipVal = st.ip || st.innings || '-';
@@ -13202,8 +13187,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const hP = getPitcherProfile(true, hName, startersInfo.homeStarter);
       const aP = getPitcherProfile(false, aName, startersInfo.awayStarter);
 
-      const hUniqueId = `home_${m.id}_${hP.absH}`;
-      const aUniqueId = `away_${m.id}_${aP.absH}`;
+      const hUniqueId = `home_${m.id}`;
+      const aUniqueId = `away_${m.id}`;
 
       const hRowsHtml = renderLogRowsHtml(hP.startsList, hUniqueId);
       const aRowsHtml = renderLogRowsHtml(aP.startsList, aUniqueId);

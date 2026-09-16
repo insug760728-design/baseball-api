@@ -58,11 +58,84 @@ class MlbOfficialScraper:
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
         }
+        self._pitcher_cache: Dict[int, Dict[str, Any]] = {}
 
     def _fetch_json(self, url: str) -> Dict[str, Any]:
         req = urllib.request.Request(url, headers=self.headers)
         with urllib.request.urlopen(req, timeout=12) as response:
             return json.loads(response.read().decode("utf-8"))
+
+    def fetch_pitcher_profile(self, person_id: int, person_name: str = "") -> Dict[str, Any]:
+        """MLB 공식 Stats API에서 투수의 실시간 시즌 성적 및 최근 등판 일지 100% 실데이터 수집"""
+        if not person_id:
+            return {}
+        if person_id in self._pitcher_cache:
+            return self._pitcher_cache[person_id]
+
+        url = f"{MLB_API_BASE}/people/{person_id}/stats?stats=season,gameLog&group=pitching"
+        try:
+            data = self._fetch_json(url)
+            season_stat = {}
+            game_logs = []
+            for s in data.get("stats", []):
+                d_name = s.get("type", {}).get("displayName")
+                if d_name == "season":
+                    splits = s.get("splits", [])
+                    if splits:
+                        season_stat = splits[0].get("stat", {})
+                elif d_name == "gameLog":
+                    game_logs = s.get("splits", [])
+
+            recent_starts = []
+            for g in game_logs[:7]:
+                st = g.get("stat", {})
+                dt_str = g.get("date", "")
+                opp_name_raw = g.get("opponent", {}).get("name", "상대팀")
+                opp_name = get_team_name_ko(opp_name_raw)
+                is_home = g.get("isHome", True)
+                dec = st.get("decision", "-")
+                res_label = "승" if dec == "W" else ("패" if dec == "L" else ("세" if dec == "S" else ("홀" if dec == "H" else "-")))
+                recent_starts.append({
+                    "date": dt_str[5:].replace("-", ".") if len(dt_str) >= 10 else dt_str,
+                    "venue": "홈" if is_home else "원",
+                    "opponent": opp_name,
+                    "ip": str(st.get("inningsPitched", "0.0")),
+                    "np": int(st.get("numberOfPitches", 0)),
+                    "h": int(st.get("hits", 0)),
+                    "hr": int(st.get("homeRuns", 0)),
+                    "bb": int(st.get("baseOnBalls", 0)),
+                    "so": int(st.get("strikeOuts", 0)),
+                    "er": int(st.get("earnedRuns", 0)),
+                    "era": str(st.get("era", "0.00")),
+                    "result": res_label
+                })
+
+            wins = season_stat.get("wins")
+            losses = season_stat.get("losses")
+            era_val = season_stat.get("era")
+            clean_name = sanitize_player_name(person_name) if person_name else ""
+            prof = {
+                "name": clean_name,
+                "name_raw": person_name,
+                "name_en": person_name,
+                "id": person_id,
+                "season_era": str(era_val) if era_val is not None else "-",
+                "era": str(era_val) if era_val is not None else "-",
+                "wins": wins,
+                "losses": losses,
+                "games": season_stat.get("gamesPitched"),
+                "season_record": f"{wins}승 {losses}패" if (wins is not None and losses is not None) else "시즌 첫 등판",
+                "season_ip": str(season_stat.get("inningsPitched", "-")),
+                "season_so": season_stat.get("strikeOuts"),
+                "season_bb": season_stat.get("baseOnBalls"),
+                "whip": str(season_stat.get("whip", "-")),
+                "recent_starts": recent_starts
+            }
+            self._pitcher_cache[person_id] = prof
+            return prof
+        except Exception as e:
+            print(f"[MLB Scraper] Pitcher fetch error ({person_id}): {e}")
+            return {}
 
     def get_latest_available_date(self) -> str:
         """가장 최근에 공식 MLB 경기가 있었던 날짜 확인"""
@@ -122,8 +195,17 @@ class MlbOfficialScraper:
                 home_score = g["teams"]["home"].get("score", 0)
 
                 # 공식 선발 예고 투수 (probablePitcher)
-                h_prob_p = sanitize_player_name(g.get("teams", {}).get("home", {}).get("probablePitcher", {}).get("fullName") or "") or None
-                a_prob_p = sanitize_player_name(g.get("teams", {}).get("away", {}).get("probablePitcher", {}).get("fullName") or "") or None
+                h_prob_obj = g.get("teams", {}).get("home", {}).get("probablePitcher", {})
+                a_prob_obj = g.get("teams", {}).get("away", {}).get("probablePitcher", {})
+                h_id = h_prob_obj.get("id")
+                a_id = a_prob_obj.get("id")
+                h_name_raw = h_prob_obj.get("fullName") or ""
+                a_name_raw = a_prob_obj.get("fullName") or ""
+                h_prob_p = sanitize_player_name(h_name_raw) or None
+                a_prob_p = sanitize_player_name(a_name_raw) or None
+
+                h_prof = self.fetch_pitcher_profile(h_id, h_name_raw) if h_id else {}
+                a_prof = self.fetch_pitcher_profile(a_id, a_name_raw) if a_id else {}
 
                 # 상태 (FINAL, IN_PROGRESS, SCHEDULED)
                 raw_state = g.get("status", {}).get("abstractGameState", "Scheduled")
@@ -199,6 +281,18 @@ class MlbOfficialScraper:
                     "bso": f"{balls or 0}B-{strikes or 0}S-{outs or 0}O" if curr_inn else None
                 }
 
+                team_stats = {
+                    "scoreboard": scoreboard,
+                    "current_inning": inning_text,
+                    "hits": {"home": h_sum.get("hits", 0), "away": a_sum.get("hits", 0)},
+                    "errors": {"home": h_sum.get("errors", 0), "away": a_sum.get("errors", 0)},
+                    "left_on_base": {"home": h_sum.get("leftOnBase", 0), "away": a_sum.get("leftOnBase", 0)},
+                    "starters": {
+                        "home": h_prof,
+                        "away": a_prof
+                    }
+                }
+
                 results.append({
                     "official_id": f"MLB_{game_pk}",
                     "sport_code": "BASEBALL",
@@ -223,7 +317,8 @@ class MlbOfficialScraper:
                     "balls": balls,
                     "strikes": strikes,
                     "period_scores": period_scores,
-                    "scoreboard": scoreboard
+                    "scoreboard": scoreboard,
+                    "team_stats": team_stats
                 })
 
         return results
@@ -232,6 +327,7 @@ class MlbOfficialScraper:
         """특정 경기의 1~9회 이닝별 라인스코어, 전 선수 박스스코어, 타임라인 이벤트 (feed/live 단일 고속 호출)"""
         feed_url = f"https://statsapi.mlb.com/api/v1.1/game/{game_pk}/feed/live"
         live_data = {}
+        feed_data = {}
         try:
             feed_data = self._fetch_json(feed_url)
             live_data = feed_data.get("liveData", {})
@@ -241,6 +337,7 @@ class MlbOfficialScraper:
         linescore_data = live_data.get("linescore", {})
         boxscore_data = live_data.get("boxscore", {})
         plays_data = live_data.get("plays", {})
+        game_data = feed_data.get("gameData", {})
 
         curr_inn = linescore_data.get("currentInning")
         inn_half = linescore_data.get("inningHalf", "")
@@ -303,13 +400,32 @@ class MlbOfficialScraper:
             "bso": f"{balls or 0}B-{strikes or 0}S-{outs or 0}O" if curr_inn else None
         }
 
+        # 선발 투수 프로필 실시간 추출
+        prob_pitchers = game_data.get("probablePitchers", {})
+        h_prob = prob_pitchers.get("home", {})
+        a_prob = prob_pitchers.get("away", {})
+        h_box_pitchers = boxscore_data.get("teams", {}).get("home", {}).get("pitchers", [])
+        a_box_pitchers = boxscore_data.get("teams", {}).get("away", {}).get("pitchers", [])
+
+        h_starter_id = h_box_pitchers[0] if h_box_pitchers else h_prob.get("id")
+        a_starter_id = a_box_pitchers[0] if a_box_pitchers else a_prob.get("id")
+        h_starter_name = h_prob.get("fullName") or ""
+        a_starter_name = a_prob.get("fullName") or ""
+
+        h_starter_prof = self.fetch_pitcher_profile(h_starter_id, h_starter_name) if h_starter_id else {}
+        a_starter_prof = self.fetch_pitcher_profile(a_starter_id, a_starter_name) if a_starter_id else {}
+
         # (2) 팀 스탯
         team_stats = {
             "scoreboard": scoreboard,
             "current_inning": inning_text,
             "hits": {"home": home_summary.get("hits", 0), "away": away_summary.get("hits", 0)},
             "errors": {"home": home_summary.get("errors", 0), "away": away_summary.get("errors", 0)},
-            "left_on_base": {"home": home_summary.get("leftOnBase", 0), "away": away_summary.get("leftOnBase", 0)}
+            "left_on_base": {"home": home_summary.get("leftOnBase", 0), "away": away_summary.get("leftOnBase", 0)},
+            "starters": {
+                "home": h_starter_prof,
+                "away": a_starter_prof
+            }
         }
 
         # (3) 득점 타임라인 이벤트

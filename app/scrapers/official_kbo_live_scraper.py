@@ -426,6 +426,29 @@ class KboOfficialScraper:
             except Exception as e:
                 print(f"Error parsing KBO tableEtc: {e}")
 
+        # 선발 투수 정보 추출
+        home_st_p = next((p for p in player_stats if p["team_name"] == home_team_name and p.get("extra_stats", {}).get("is_starter")), None)
+        away_st_p = next((p for p in player_stats if p["team_name"] == away_team_name and p.get("extra_stats", {}).get("is_starter")), None)
+
+        def make_kbo_st_dict(p_obj):
+            if not p_obj:
+                return {}
+            ex = p_obj.get("extra_stats", {})
+            return {
+                "name": p_obj.get("player_name", ""),
+                "name_raw": p_obj.get("player_name", ""),
+                "name_en": p_obj.get("player_name", ""),
+                "throws": "우완",
+                "season_era": ex.get("era", "-"),
+                "era": ex.get("era", "-"),
+                "is_confirmed": True
+            }
+
+        team_stats["starters"] = {
+            "home": make_kbo_st_dict(home_st_p),
+            "away": make_kbo_st_dict(away_st_p)
+        }
+
         return {
             "period_scores": period_scores,
             "team_stats": team_stats,
