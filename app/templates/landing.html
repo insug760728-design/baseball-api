@@ -1500,6 +1500,23 @@
       padding: 1px 5px;
     }
 
+    /* Starting Pitcher Detail Styles */
+    .pitcher-metric-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+    }
+    @media (max-width: 576px) {
+      .pitcher-metric-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 4px !important;
+      }
+    }
+    .pitcher-log-table th, .pitcher-log-table td {
+      vertical-align: middle !important;
+      padding: 6px 3px !important;
+    }
+
     /* 3 Chips: Clean Flat Styling */
     .toto-grand-chips {
       display: flex;
@@ -12915,73 +12932,15 @@ function updateSlimPanel(matchId, type, contentHtml) {
       if (!container) return;
 
       const isBaseball = (m.sport_code === 'BASEBALL');
-      const isBasketball = (m.sport_code === 'BASKETBALL');
       const isSoccer = (m.sport_code === 'SOCCER');
-      const isLive = (m.status === 'LIVE');
-      const isFinished = (m.status === 'FINISHED');
 
-      const oddsInfo = getMatchOdds(m);
       const startersInfo = getMatchStarters(m);
       const hName = formatTeamName(m.home_team_name);
       const aName = formatTeamName(m.away_team_name);
       const matchup = m.matchup_analysis || (typeof matchDetailCache !== 'undefined' && matchDetailCache ? (matchDetailCache.get(Number(m.id))?.matchup_analysis || matchDetailCache.get(m.id)?.matchup_analysis) : null) || {};
 
-      const pred = m.prediction || {};
-      const conf = pred.confidence ? Number(pred.confidence) : 55;
-      const isHFav = pred.favored_team ? (pred.favored_team === m.home_team_name) : (pred.pick_type === 'HOME_WIN');
-      const hProb = isHFav ? conf : (100 - conf);
-      const aProb = 100 - hProb;
-      const pickTitle = isHFav ? `[홈] ${hName} 승리 유력` : `[원정] ${aName} 승리 유력`;
-
-      const isNgSubscribed = (typeof _subscribedMatchAlerts !== 'undefined' && _subscribedMatchAlerts.has(Number(m.id)));
-
-      // 0. Top Hero Overview
-      const heroBannerHtml = `
-        <div id="ngSection_overview" class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #cbd5e1 !important;">
-          <div class="row align-items-center text-center">
-            <div class="col-5">
-              <div class="fw-black text-dark text-truncate" style="font-size: 1.15rem;">${hName}</div>
-              <span class="badge bg-danger text-white px-2 py-0.5 mt-1" style="font-size: 0.70rem;">홈팀</span>
-              ${startersInfo.homeAnnounced ? `<div class="small fw-bold text-muted mt-1 text-truncate">선발: ${startersInfo.homeStarter}</div>` : ''}
-            </div>
-            <div class="col-2">
-              <div class="d-flex align-items-center justify-content-center gap-1.5 my-1">
-                <span class="fs-4 fw-black text-dark">${m.home_score ?? 0}</span>
-                <span class="badge ${isLive ? 'bg-danger text-white' : 'bg-light text-secondary border'} px-1.5 py-0.5" style="font-size: 0.68rem;">
-                  ${isLive ? 'LIVE' : (isFinished ? '종료' : 'VS')}
-                </span>
-                <span class="fs-4 fw-black text-dark">${m.away_score ?? 0}</span>
-              </div>
-              <div class="text-muted small" style="font-size: 0.68rem;">${(m.match_date || '').slice(11, 16)}</div>
-              <button type="button" class="btn btn-xs py-0.5 px-2 mt-1 ${isNgSubscribed ? 'btn-warning text-dark' : 'btn-outline-secondary'} fw-bold d-inline-flex align-items-center gap-1" style="font-size:0.68rem; border-radius:6px; white-space:nowrap;" onclick="toggleMatchScoreAlert(${m.id}, event);" title="${isNgSubscribed ? '경기종료까지 실시간 알림 켜짐' : '경기종료까지 실시간 알림 받기'}">
-                <i class="bi ${isNgSubscribed ? 'bi-bell-fill' : 'bi-bell'}"></i>
-                <span>${isNgSubscribed ? '알림 켜짐' : '알림 받기'}</span>
-              </button>
-            </div>
-            <div class="col-5">
-              <div class="fw-black text-dark text-truncate" style="font-size: 1.15rem;">${aName}</div>
-              <span class="badge bg-primary text-white px-2 py-0.5 mt-1" style="font-size: 0.70rem;">원정팀</span>
-              ${startersInfo.awayAnnounced ? `<div class="small fw-bold text-muted mt-1 text-truncate">선발: ${startersInfo.awayStarter}</div>` : ''}
-            </div>
-          </div>
-
-          <!-- AI Win Probability Bar -->
-          <div class="mt-2.5 pt-2 border-top" style="border-color: #f1f5f9 !important;">
-            <div class="d-flex justify-content-between align-items-center mb-1 small fw-bold">
-              <span class="text-danger">홈 ${hProb}% (배당 ${oddsInfo.domHome || oddsInfo.home || '-'})</span>
-              <span class="badge bg-dark text-white px-2 py-0.5" style="font-size:0.65rem;">🤖 AI 예측: ${pickTitle}</span>
-              <span class="text-primary">원정 ${aProb}% (배당 ${oddsInfo.domAway || oddsInfo.away || '-'})</span>
-            </div>
-            <div class="d-flex rounded-pill overflow-hidden" style="height: 7px; background: #e2e8f0;">
-              <div style="width: ${hProb}%; background: #dc2626;"></div>
-              <div style="width: ${aProb}%; background: #2563eb;"></div>
-            </div>
-          </div>
-        </div>
-      `;
-
       // -------------------------------------------------------------
-      // ⚾ 야구 전용: 선발 투수 종합 분석 & 최근 등판일지 (최상단 배치)
+      // ⚾ 야구 전용: 선발 투수 종합 분석 & 최근 등판일지 (최상단 직관적 배치)
       // -------------------------------------------------------------
       function renderPitcherIntegratedCard(isHome, teamName, starterName, matchObj, matchupObj) {
         const sideKey = isHome ? 'home' : 'away';
@@ -13055,18 +13014,18 @@ function updateSlimPanel(matchId, type, contentHtml) {
             const hitsVal = 3 + ((absH + i) % 5);
             const soVal = 4 + ((absH + i * 3) % 6);
             const bbVal = (absH + i) % 4;
-            const pitchesVal = 84 + ((absH + i * 7) % 20);
-            const resVal = erVal <= 2 ? '승' : (erVal >= 4 ? '패' : 'ND');
+            const resVal = erVal <= 2 ? '승' : (erVal >= 4 ? '패' : '-');
+            const eraCalc = (parseFloat(ipVal) > 0) ? ((erVal * 9) / parseFloat(ipVal)).toFixed(2) : '3.00';
             startsList.push({
               date: dStr,
               opponent: oppTeam,
               result: resVal,
               ip: ipVal,
               er: erVal,
-              hits: hitsVal,
+              h: hitsVal,
               so: soVal,
               bb: bbVal,
-              pitches: pitchesVal
+              era: eraCalc
             });
           }
         }
@@ -13074,18 +13033,35 @@ function updateSlimPanel(matchId, type, contentHtml) {
         const uniquePitcherId = `${isHome ? 'home' : 'away'}_${matchObj.id}_${absH}`;
         const rowsHtml = startsList.map((st, sIdx) => {
           const isExtra = (sIdx >= 3);
-          const resBadge = st.result === '승' ? 'bg-danger' : (st.result === '패' ? 'bg-primary' : 'bg-secondary');
+          const dateVal = st.date || st.match_date || '-';
+          const oppVal = st.opponent || st.opp || '상대팀';
+          const resRaw = st.result || '-';
+          const resBadge = resRaw === '승' ? 'bg-danger' : (resRaw === '패' ? 'bg-primary' : (['홀', '세'].includes(resRaw) ? 'bg-success' : 'bg-secondary'));
+          const ipVal = st.ip || st.innings || '-';
+          const erVal = (st.er !== undefined && st.er !== null) ? st.er : '-';
+          const hitsVal = (st.h !== undefined && st.h !== null) ? st.h : ((st.hits !== undefined && st.hits !== null) ? st.hits : '-');
+          const bbVal = (st.bb !== undefined && st.bb !== null) ? st.bb : '-';
+          const soVal = (st.so !== undefined && st.so !== null) ? st.so : '-';
+          let eraVal = st.era || '-';
+          if (eraVal === '-' && erVal !== '-' && ipVal !== '-') {
+            const ipNum = parseFloat(ipVal);
+            const erNum = parseFloat(erVal);
+            if (!isNaN(ipNum) && ipNum > 0 && !isNaN(erNum)) {
+              eraVal = ((erNum * 9) / ipNum).toFixed(2);
+            }
+          }
+
           return `
-            <tr class="${isExtra ? `extraStarts_${uniquePitcherId}` : ''}" style="${isExtra ? 'display: none;' : ''}">
-              <td class="text-muted fw-bold">${st.date || st.match_date || ''}</td>
-              <td class="fw-bold text-dark text-truncate">${st.opponent || st.opp || '상대팀'}</td>
-              <td><span class="badge ${resBadge} text-white p-0.5" style="font-size:0.65rem;">${st.result || 'ND'}</span></td>
-              <td class="fw-bold">${st.ip || st.innings || '6.0'}</td>
-              <td class="${st.er > 2 ? 'text-danger fw-bold' : 'text-dark'}">${st.er ?? 2}</td>
-              <td>${st.hits ?? 5}</td>
-              <td class="fw-bold text-dark">${st.so ?? 6}</td>
-              <td>${st.bb ?? 2}</td>
-              <td class="text-muted">${st.pitches || 90}</td>
+            <tr class="${isExtra ? `extraStarts_${uniquePitcherId}` : ''}" style="${isExtra ? 'display: none;' : ''}; height:32px; background: ${sIdx % 2 === 0 ? '#ffffff' : '#fafafa'};">
+              <td class="text-muted fw-bold" style="white-space:nowrap;">${dateVal}</td>
+              <td class="fw-bold text-dark text-truncate" style="white-space:nowrap; max-width:90px;" title="${oppVal}">${oppVal}</td>
+              <td><span class="badge ${resBadge} text-white px-1.5 py-0.5" style="font-size:0.65rem;">${resRaw}</span></td>
+              <td class="fw-bold text-dark" style="white-space:nowrap;">${ipVal}</td>
+              <td class="${Number(erVal) > 2 ? 'text-danger fw-black' : 'text-dark'}" style="white-space:nowrap;">${erVal}</td>
+              <td class="text-dark" style="white-space:nowrap;">${hitsVal}</td>
+              <td class="text-dark" style="white-space:nowrap;">${bbVal}</td>
+              <td class="fw-bold text-dark" style="white-space:nowrap;">${soVal}</td>
+              <td class="text-muted fw-bold" style="white-space:nowrap;">${eraVal}</td>
             </tr>
           `;
         }).join('');
@@ -13112,42 +13088,30 @@ function updateSlimPanel(matchId, type, contentHtml) {
             </div>
 
             <!-- Horizontal Season Summary Metric Grid -->
-            <div class="row g-1 text-center mb-2.5">
-              <div class="col-2">
-                <div class="p-1.5 rounded bg-light border">
-                  <div class="text-muted small" style="font-size:0.62rem;">시즌 ERA</div>
-                  <div class="fw-black text-danger" style="font-size:0.85rem;">${seasonEra}</div>
-                </div>
+            <div class="pitcher-metric-grid mb-2.5" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;">
+              <div class="p-1.5 rounded text-center border" style="background:#f8fafc; min-width: 0;">
+                <div class="text-muted" style="font-size:0.62rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">시즌 ERA</div>
+                <div class="fw-black text-danger" style="font-size:0.88rem; white-space:nowrap;">${seasonEra}</div>
               </div>
-              <div class="col-2">
-                <div class="p-1.5 rounded bg-light border">
-                  <div class="text-muted small" style="font-size:0.62rem;">시즌 승-패</div>
-                  <div class="fw-bold text-dark" style="font-size:0.82rem;">${seasonRecord}</div>
-                </div>
+              <div class="p-1.5 rounded text-center border" style="background:#f8fafc; min-width: 0;">
+                <div class="text-muted" style="font-size:0.62rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">시즌 승-패</div>
+                <div class="fw-bold text-dark" style="font-size:0.82rem; white-space:nowrap;">${seasonRecord}</div>
               </div>
-              <div class="col-2">
-                <div class="p-1.5 rounded bg-light border">
-                  <div class="text-muted small" style="font-size:0.62rem;">WHIP</div>
-                  <div class="fw-bold text-dark" style="font-size:0.82rem;">${whip}</div>
-                </div>
+              <div class="p-1.5 rounded text-center border" style="background:#f8fafc; min-width: 0;">
+                <div class="text-muted" style="font-size:0.62rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">WHIP</div>
+                <div class="fw-bold text-dark" style="font-size:0.82rem; white-space:nowrap;">${whip}</div>
               </div>
-              <div class="col-2">
-                <div class="p-1.5 rounded bg-light border">
-                  <div class="text-muted small" style="font-size:0.62rem;">평균 이닝</div>
-                  <div class="fw-bold text-dark" style="font-size:0.82rem;">${avgIp}</div>
-                </div>
+              <div class="p-1.5 rounded text-center border" style="background:#f8fafc; min-width: 0;">
+                <div class="text-muted" style="font-size:0.62rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">평균 이닝</div>
+                <div class="fw-bold text-dark" style="font-size:0.82rem; white-space:nowrap;">${avgIp}</div>
               </div>
-              <div class="col-2">
-                <div class="p-1.5 rounded bg-light border">
-                  <div class="text-muted small" style="font-size:0.62rem;">3G 탈삼진</div>
-                  <div class="fw-bold text-dark" style="font-size:0.82rem;">${so3g}K</div>
-                </div>
+              <div class="p-1.5 rounded text-center border" style="background:#f8fafc; min-width: 0;">
+                <div class="text-muted" style="font-size:0.62rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">3G 탈삼진</div>
+                <div class="fw-bold text-dark" style="font-size:0.82rem; white-space:nowrap;">${so3g}K</div>
               </div>
-              <div class="col-2">
-                <div class="p-1.5 rounded bg-light border">
-                  <div class="text-muted small" style="font-size:0.62rem;">3G 사사구</div>
-                  <div class="fw-bold text-dark" style="font-size:0.82rem;">${bb3g}개</div>
-                </div>
+              <div class="p-1.5 rounded text-center border" style="background:#f8fafc; min-width: 0;">
+                <div class="text-muted" style="font-size:0.62rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">3G 사사구</div>
+                <div class="fw-bold text-dark" style="font-size:0.82rem; white-space:nowrap;">${bb3g}개</div>
               </div>
             </div>
 
@@ -13157,23 +13121,23 @@ function updateSlimPanel(matchId, type, contentHtml) {
             </div>
 
             <!-- Vertical Recent Starts Log Table (3G default, up to 10G max) -->
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="fw-bold text-dark small" style="font-size:0.75rem;"><i class="bi bi-calendar-week me-1 text-primary"></i>최근 등판 일지 <span class="text-muted fw-normal">(${startsList.length}경기 기록)</span></span>
+            <div class="d-flex justify-content-between align-items-center mb-1.5">
+              <span class="fw-bold text-dark small" style="font-size:0.75rem;"><i class="bi bi-calendar2-check me-1 text-primary"></i>최근 등판 일지 <span class="text-muted fw-normal">(${startsList.length}경기 기록)</span></span>
               <span class="badge bg-light text-secondary border" style="font-size:0.60rem;">기본 3경기 표시 (최대 10경기)</span>
             </div>
-            <div class="table-responsive">
-              <table class="table table-sm table-bordered text-center mb-0" style="font-size:0.72rem;">
-                <thead class="table-light">
-                  <tr>
-                    <th style="width: 12%;">등판일</th>
-                    <th style="width: 18%;">상대팀</th>
-                    <th style="width: 10%;">결과</th>
-                    <th style="width: 12%;">이닝(IP)</th>
-                    <th style="width: 12%;">자책(ER)</th>
-                    <th style="width: 11%;">피안타</th>
-                    <th style="width: 11%;">탈삼진</th>
-                    <th style="width: 11%;">사사구</th>
-                    <th style="width: 13%;">투구수</th>
+            <div class="table-responsive rounded-2 border" style="border-color:#e2e8f0; overflow-x:auto;">
+              <table class="table table-sm table-bordered text-center align-middle mb-0 pitcher-log-table" style="width:100%; min-width:540px; table-layout:fixed; font-size:0.72rem; border-collapse:collapse;">
+                <thead style="background:#f1f5f9; color:#334155;">
+                  <tr style="height:32px;">
+                    <th style="width: 14%; font-weight:700;">등판일</th>
+                    <th style="width: 18%; font-weight:700;">상대</th>
+                    <th style="width: 10%; font-weight:700;">결과</th>
+                    <th style="width: 11%; font-weight:700;">이닝</th>
+                    <th style="width: 11%; font-weight:700;">자책</th>
+                    <th style="width: 11%; font-weight:700;">피안타</th>
+                    <th style="width: 11%; font-weight:700;">4사구</th>
+                    <th style="width: 11%; font-weight:700;">탈삼진</th>
+                    <th style="width: 13%; font-weight:700;">ERA</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -13189,9 +13153,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
       let startersSectionHtml = '';
       if (isBaseball) {
         startersSectionHtml = `
-          <div id="ngSection_starters" class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #e2e8f0 !important; scroll-margin-top: 55px;">
+          <div id="ngSection_starters" class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #e2e8f0 !important;">
             <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-              <strong class="text-dark fs-6"><i class="bi bi-fire text-danger me-1"></i>1. ⚾ 선발 투수 종합 분석 & 최근 등판일지</strong>
+              <strong class="text-dark fs-6"><i class="bi bi-fire text-danger me-1"></i>선발 투수 종합 분석 & 등판 일지</strong>
               <span class="badge bg-light text-secondary border">2026 시즌 공식 성적 & 일지</span>
             </div>
 
@@ -13200,50 +13164,6 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
             <!-- Away Pitcher Block (Displayed Second) -->
             ${renderPitcherIntegratedCard(false, aName, startersInfo.awayStarter, m, matchup)}
-          </div>
-        `;
-      } else {
-        // Extract genuine top star / ace player dynamically from each team's roster
-        const hRoster = getDynamicTeamRoster(hName, m.sport_code, startersInfo.homeStarter);
-        const aRoster = getDynamicTeamRoster(aName, m.sport_code, startersInfo.awayStarter);
-
-        const findAce = (rList, isSc, isBb) => {
-          if (!rList || rList.length === 0) return { name: '핵심 에이스', posKr: '에이스', r1: '주요전력', ops: '평점 7.8' };
-          if (isSc) {
-            const cand = rList.find(p => ['FW', 'LW', 'RW', 'CAM', 'ST'].includes(p.pos) && (p.badge || '').includes('에이스'))
-              || rList.find(p => p.pos === 'FW' || p.pos === 'ST')
-              || rList.find(p => ['LW', 'RW', 'CAM'].includes(p.pos))
-              || rList[rList.length - 1];
-            return cand || rList[0];
-          }
-          if (isBb) {
-            const cand = rList.find(p => (p.badge || '').includes('에이스') || p.pos === 'SF' || p.pos === 'PF' || p.pos === 'PG') || rList[0];
-            return cand;
-          }
-          return rList.find(p => p.order === 3 || p.order === 4) || rList[0];
-        };
-
-        const hAce = findAce(hRoster, isSoccer, isBasketball);
-        const aAce = findAce(aRoster, isSoccer, isBasketball);
-
-        startersSectionHtml = `
-          <div id="ngSection_starters" class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="border-color: #e2e8f0 !important; scroll-margin-top: 55px;">
-            <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
-              <strong class="text-dark fs-6"><i class="bi bi-fire text-danger me-1"></i>2. 핵심 에이스 1:1 맞대결 (Key Matchup)</strong>
-              <span class="badge bg-light text-secondary border">Ace Battle</span>
-            </div>
-            <div class="row text-center">
-              <div class="col-6 border-end">
-                <div class="badge bg-danger text-white px-2 py-0.5 mb-1">${hName} 1옵션</div>
-                <div class="fw-bold text-dark fs-6 text-truncate">${hAce.name} <span class="badge bg-light text-dark border" style="font-size:0.65rem;">${hAce.posKr || hAce.pos}</span></div>
-                <div class="text-muted small" style="font-size:0.75rem;">${hAce.r1} · ${hAce.r2 || hAce.ops || '평점 7.8'}</div>
-              </div>
-              <div class="col-6">
-                <div class="badge bg-primary text-white px-2 py-0.5 mb-1">${aName} 1옵션</div>
-                <div class="fw-bold text-dark fs-6 text-truncate">${aAce.name} <span class="badge bg-light text-dark border" style="font-size:0.65rem;">${aAce.posKr || aAce.pos}</span></div>
-                <div class="text-muted small" style="font-size:0.75rem;">${aAce.r1} · ${aAce.r2 || aAce.ops || '평점 7.6'}</div>
-              </div>
-            </div>
           </div>
         `;
       }
@@ -13309,10 +13229,18 @@ function updateSlimPanel(matchId, type, contentHtml) {
         </div>
       `;
 
-      // Assemble: Hero Overview + Starting Pitcher Details + Real-time Match Chatting Studio
+      // Assemble: For baseball: Starting Pitcher Analysis + Real-time Match Chatting Studio
+      const nonBaseballHtml = `
+        <div class="p-4 mb-3 rounded-3 border bg-white shadow-sm text-center" style="border-color: #e2e8f0 !important;">
+          <div class="text-muted small py-3">
+            <i class="bi bi-clock-history fs-4 d-block mb-1 text-secondary"></i>
+            ${m.league_name || (isSoccer ? '축구' : '해당 종목')} 상세 데이터는 추후 업데이트될 예정입니다.
+          </div>
+        </div>
+      `;
+
       container.innerHTML = `
-        ${heroBannerHtml}
-        ${startersSectionHtml}
+        ${isBaseball ? startersSectionHtml : nonBaseballHtml}
         ${chatSectionHtml}
       `;
     }
