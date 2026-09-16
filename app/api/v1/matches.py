@@ -1,3 +1,4 @@
+import os
 import time
 import json
 from typing import List, Optional, Dict, Tuple, Any
@@ -15,10 +16,13 @@ router = APIRouter(prefix="/matches", tags=["야구 경기 일정 및 결과"])
 _MATCHES_CACHE: Dict[str, Tuple[float, Any]] = {}
 _MATCHES_JSON_CACHE: Dict[str, Tuple[float, bytes]] = {}
 _MATCH_FULL_CACHE: Dict[int, Tuple[float, Any]] = {}
+_PITCHERS_DATASET_CACHE: Tuple[float, bytes] = (0.0, b"{}")
 
 def clear_matches_cache(match_id: Optional[int] = None):
+    global _PITCHERS_DATASET_CACHE
     _MATCHES_CACHE.clear()
     _MATCHES_JSON_CACHE.clear()
+    _PITCHERS_DATASET_CACHE = (0.0, b"{}")
     if match_id:
         _MATCH_FULL_CACHE.pop(match_id, None)
     else:
@@ -29,6 +33,24 @@ def clear_match_full_cache(match_id: Optional[int] = None):
         _MATCH_FULL_CACHE.pop(match_id, None)
     else:
         _MATCH_FULL_CACHE.clear()
+
+@router.get("/pitchers", summary="공식 선발투수 314명 전체 실데이터 데이터베이스 조회")
+def get_official_pitchers(response: Response):
+    global _PITCHERS_DATASET_CACHE
+    now = time.time()
+    cache_time, cached_bytes = _PITCHERS_DATASET_CACHE
+    if now - cache_time < 3600 and cached_bytes != b"{}":
+        response.headers["Cache-Control"] = "public, max-age=3600"
+        return Response(content=cached_bytes, media_type="application/json")
+
+    json_path = os.path.join(os.path.dirname(__file__), "../../services/official_pitchers_dataset.json")
+    if os.path.exists(json_path):
+        with open(json_path, "r", encoding="utf-8") as f:
+            content = f.read().encode("utf-8")
+        _PITCHERS_DATASET_CACHE = (now, content)
+        response.headers["Cache-Control"] = "public, max-age=3600"
+        return Response(content=content, media_type="application/json")
+    return {}
 
 @router.get("", summary="경기 목록 조회 (종목/기간/상태 필터)")
 def list_matches(

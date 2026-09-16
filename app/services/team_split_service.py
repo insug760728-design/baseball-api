@@ -8747,27 +8747,21 @@ class TeamSplitService:
             rec_diff = (h_rec_w - a_rec_w) * 0.015
             prob_home = min(0.89, max(0.11, prob_home + rec_diff))
 
-            # Fetch starting pitcher stats if names are announced (only for active/scheduled matches, local only)
+            # Fetch starting pitcher stats if names are announced (in-memory lookup for ultra-high speed)
             if status != "FINISHED" and (starter_h or starter_a):
                 try:
-                    c_conn_qp = sqlite3.connect("sports_data.db", timeout=3.0)
                     if starter_h and is_valid_starter_name(starter_h):
                         sh_clean = starter_h.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
-                        sh_data = _get_pitcher_recent_3_starts(c_conn_qp, sh_clean, home_team, "우완", league_name=league_name, allow_remote=False)
-                        if sh_data and "summary" in sh_data:
-                            era_str = sh_data.get("season_era") or sh_data["summary"].get("season_era") or sh_data["summary"].get("era_3g")
-                            if era_str and era_str != "-":
-                                try: h_starter_era = float(era_str)
-                                except: pass
+                        era_val = lookup_pitcher_season_era(sh_clean)
+                        if era_val and era_val != "-":
+                            try: h_starter_era = float(era_val)
+                            except: pass
                     if starter_a and is_valid_starter_name(starter_a):
                         sa_clean = starter_a.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
-                        sa_data = _get_pitcher_recent_3_starts(c_conn_qp, sa_clean, away_team, "우완", league_name=league_name, allow_remote=False)
-                        if sa_data and "summary" in sa_data:
-                            era_str = sa_data.get("season_era") or sa_data["summary"].get("season_era") or sa_data["summary"].get("era_3g")
-                            if era_str and era_str != "-":
-                                try: a_starter_era = float(era_str)
-                                except: pass
-                    c_conn_qp.close()
+                        era_val = lookup_pitcher_season_era(sa_clean)
+                        if era_val and era_val != "-":
+                            try: a_starter_era = float(era_val)
+                            except: pass
                 except Exception:
                     pass
 
@@ -8797,10 +8791,7 @@ class TeamSplitService:
                     if cache_key_ctx in _series_context_cache:
                         series_ctx = _series_context_cache[cache_key_ctx]
                     else:
-                        c_conn_ctx = sqlite3.connect("sports_data.db", timeout=3.0)
-                        series_ctx = _detect_baseball_series_context(c_conn_ctx, home_team, away_team, match_date)
-                        c_conn_ctx.close()
-                        _series_context_cache[cache_key_ctx] = series_ctx
+                        series_ctx = None
                 except Exception as e:
                     series_ctx = None
             else:

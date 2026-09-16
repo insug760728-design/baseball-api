@@ -198,7 +198,7 @@ _SERVER_MATCHES_CACHE = {"json_str": "[]", "updated_at": 0}
 def get_server_initial_matches_json() -> str:
     import json
     now = time.time()
-    if now - _SERVER_MATCHES_CACHE["updated_at"] < 3.0 and _SERVER_MATCHES_CACHE["json_str"] != "[]":
+    if now - _SERVER_MATCHES_CACHE["updated_at"] < 30.0 and _SERVER_MATCHES_CACHE["json_str"] != "[]":
         return _SERVER_MATCHES_CACHE["json_str"]
     db = None
     try:
