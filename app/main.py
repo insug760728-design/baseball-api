@@ -30,11 +30,13 @@ from app.api.v1 import api_v1_router
 from app.services.match_service import MatchService
 from app.services.scheduler_service import SchedulerService
 from app.core.sports_catalog import SPORTS_CATALOG
+from app.core.error_monitor import init_error_monitoring, capture_exception
 
 Base.metadata.create_all(bind=engine)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    init_error_monitoring()
     db = SessionLocal()
     try:
         match_count = db.query(models.Match).count()
@@ -522,6 +524,30 @@ async def not_found_exception_handler(request: Request, exc):
         except Exception:
             pass
     return JSONResponse(status_code=404, content={"detail": "Not Found"})
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    capture_exception(exc, path=request.url.path)
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "detail": "서버 내부 처리 중 오류가 발생했습니다. 시스템에 자동 보고되었습니다.",
+                "error_type": exc.__class__.__name__,
+                "path": request.url.path
+            }
+        )
+    return HTMLResponse(
+        content="""
+        <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; text-align: center; padding: 60px 20px;">
+            <h2 style="color: #ef4444; font-size: 24px;">500 - 서비스 일시 오류</h2>
+            <p style="color: #64748b; margin-top: 8px;">요청 처리 중 오류가 발생했습니다. 시스템 관리자에게 자동 보고되었습니다.</p>
+            <a href="/" style="display: inline-block; margin-top: 16px; padding: 10px 20px; background: #2563eb; color: #fff; border-radius: 6px; text-decoration: none; font-weight: bold;">홈으로 돌아가기</a>
+        </div>
+        """,
+        status_code=500
+    )
 
 from app.api.v1.community import router as community_router
 

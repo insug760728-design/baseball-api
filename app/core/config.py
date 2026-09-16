@@ -9,5 +9,6 @@ class Settings:
     API_V1_STR: str = '/api/v1'
     API_SPORTS_KEY: str = os.getenv('API_SPORTS_KEY', '050a2debf0dc45ecf519ce236c9f46f5')
     RAPIDAPI_KEY: str = os.getenv('RAPIDAPI_KEY', '')
+    SENTRY_DSN: str = os.getenv('SENTRY_DSN', '')
 
 settings = Settings()

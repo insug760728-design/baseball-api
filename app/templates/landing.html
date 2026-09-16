@@ -2837,7 +2837,38 @@
 
   <!-- Real News & Matches Script -->
   <script>
-// =============================================================
+    // 🛡️ [클라이언트 에러 수호자 (Frontend Error Guardian)]
+    (function() {
+      let _lastErrorTime = 0;
+      function reportClientError(type, message, detail) {
+        const now = Date.now();
+        if (now - _lastErrorTime < 3000) return;
+        _lastErrorTime = now;
+        try {
+          fetch('/api/v1/system/client-error', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: type || 'ClientError',
+              message: String(message || 'Unknown browser error'),
+              detail: String(detail || ''),
+              path: window.location.pathname + window.location.search
+            })
+          }).catch(function() {});
+        } catch (e) {}
+      }
+
+      window.addEventListener('error', function(event) {
+        reportClientError('UncaughtError', event.message, (event.filename || '') + ':' + (event.lineno || '') + ':' + (event.colno || ''));
+      });
+
+      window.addEventListener('unhandledrejection', function(event) {
+        reportClientError('UnhandledRejection', event.reason ? (event.reason.message || event.reason) : 'Promise rejected', event.reason?.stack || '');
+      });
+      window.__reportClientError = reportClientError;
+    })();
+
+    // =============================================================
     // ⚾ MLB / 해외 선수 영문 이름 & NPB 일본어 -> 한국어 완벽 표기 변환기
     // =============================================================
     const FULL_PLAYER_KO_MAP = {"Paul Skenes": "폴 스킨스", "Tarik Skubal": "타릭 스쿠발", "Zack Wheeler": "잭 휠러", "Chris Sale": "크리스 세일", "Corbin Burnes": "코빈 번스", "Shohei Ohtani": "오타니 쇼헤이", "Yoshinobu Yamamoto": "야마모토 요시노부", "Shota Imanaga": "이마나가 쇼타", "Kodai Senga": "센가 코다이", "Yu Darvish": "다르빗슈 유", "Tyler Glasnow": "타일러 글래스나우", "Spencer Strider": "스펜서 스트라이더", "Spencer Schwellenbach": "스펜서 슈웰렌바크", "Cristopher Sanchez": "크리스토퍼 산체스", "Cristopher Sánchez": "크리스토퍼 산체스", "Ranger Suarez": "레인저 수아레즈", "Ranger Suárez": "레인저 수아레즈", "Gerrit Cole": "게릿 콜", "Carlos Rodon": "카를로스 로돈", "Carlos Rodón": "카를로스 로돈", "Nestor Cortes": "네스터 코르테스", "Nestor Cortés": "네스터 코르테스", "Marcus Stroman": "마커스 스트로먼", "Luis Gil": "루이스 힐", "Clarke Schmidt": "클라크 슈미트", "Kevin Gausman": "케빈 가우스먼", "Jose Berrios": "호세 베리오스", "José Berríos": "호세 베리오스", "Chris Bassitt": "크리스 배싯", "Bowden Francis": "보든 프랜시스", "Yusei Kikuchi": "기쿠치 유세이", "Tanner Houck": "태너 하우크", "Kutter Crawford": "커터 크로포드", "Brayan Bello": "브라얀 베요", "Nick Pivetta": "닉 피베타", "Grayson Rodriguez": "그레이슨 로드리게스", "Dean Kremer": "딘 크레머", "Albert Suarez": "알버트 수아레즈", "Albert Suárez": "알버트 수아레즈", "Zach Eflin": "잭 에플린", "Ryan Pepiot": "라이언 페피오", "Taj Bradley": "타지 브래들리", "Shane Baz": "셰인 바즈", "Jeffrey Springs": "제프리 스프링스", "Zack Littell": "잭 리텔", "Tanner Bibee": "태너 바이비", "Gavin Williams": "개빈 윌리엄스", "Ben Lively": "벤 라이블리", "Matthew Boyd": "매튜 보이드", "Joey Cantillo": "조이 칸티요", "Jack Flaherty": "잭 플래허티", "Reese Olson": "리스 올슨", "Keider Montero": "케이더 몬테로", "Pablo Lopez": "파블로 로페즈", "Pablo López": "파블로 로페즈", "Bailey Ober": "베일리 오버", "Joe Ryan": "조 라이언", "Simeon Woods Richardson": "시미언 우즈-리차드슨", "David Festa": "데이비드 페스타", "Zebby Matthews": "제비 매튜스", "Garrett Crochet": "개럿 크로셰", "Jonathan Cannon": "조나단 캐넌", "Chris Flexen": "크리스 플렉센", "Davis Martin": "데이비스 마틴", "Nick Nastrini": "닉 나스트리니", "Framber Valdez": "프람버 발데스", "Hunter Brown": "헌터 브라운", "Ronel Blanco": "로넬 블랑코", "Spencer Arrighetti": "스펜서 아리게티", "Nathan Eovaldi": "네이선 이볼디", "Andrew Heaney": "앤드루 히니", "Cody Bradford": "코디 브래드포드", "Jack Leiter": "잭 라이터", "Kumar Rocker": "쿠마 로커", "Logan Gilbert": "로건 길버트", "George Kirby": "조지 커비", "Bryan Woo": "브라이언 우", "Bryce Miller": "브라이스 밀러", "Logan Webb": "로건 웹", "Blake Snell": "블레이크 스넬", "Kyle Harrison": "카일 해리슨", "Hayden Birdsong": "헤이든 버드송", "Robbie Ray": "로비 레이", "Mason Black": "메이슨 블랙", "Landen Roupp": "랜든 룹", "Dylan Cease": "딜런 시즈", "Michael King": "마이클 킹", "Joe Musgrove": "조 머스그로브", "Matt Waldron": "맷 월드론", "Martin Perez": "마틴 페레즈", "Martín Pérez": "마틴 페레즈", "Clayton Kershaw": "클레이튼 커쇼", "Gavin Stone": "개빈 스톤", "Bobby Miller": "바비 밀러", "Walker Buehler": "워커 뷸러", "Landon Knack": "랜던 낵", "Justin Wrobleski": "저스틴 로블레스키", "Zac Gallen": "잭 갤런", "Merrill Kelly": "메릴 켈리", "Brandon Pfaadt": "브랜든 팟", "Eduardo Rodriguez": "에두아르도 로드리게스", "Eduardo Rodríguez": "에두아르도 로드리게스", "Jordan Montgomery": "조던 몽고메리", "Ryne Nelson": "라인 넬슨", "Kyle Freeland": "카일 프리랜드", "Cal Quantrill": "칼 콴트릴", "Austin Gomber": "오스틴 곰버", "Ryan Feltner": "라이언 펠트너", "Bradley Blalock": "브래들리 블레이록", "Ty Blach": "타이 블라크", "JP Sears": "JP 시어스", "J.P. Sears": "JP 시어스", "Mitch Spence": "미치 스펜스", "Osvaldo Bido": "오스발도 비도", "JT Ginn": "JT 진", "J.T. Ginn": "JT 진", "Joey Estes": "조이 에스테스", "Paul Blackburn": "폴 블랙번", "Mason Miller": "메이슨 밀러", "Tyler Anderson": "타일러 앤더슨", "Jose Soriano": "호세 소리아노", "José Soriano": "호세 소리아노", "Griffin Canning": "그리핀 캐닝", "Jack Kochanowicz": "잭 코차노위츠", "Reid Detmers": "리드 데트머스", "Caden Dana": "케이든 다나", "Carson Fulmer": "카슨 풀머", "Mitch Keller": "미치 켈러", "Bailey Falter": "베일리 폴터", "Luis L. Ortiz": "루이스 오르티스", "Luis Ortiz": "루이스 오르티스", "Sonny Gray": "소니 그레이", "Erick Fedde": "에릭 페디", "Kyle Gibson": "카일 깁슨", "Miles Mikolas": "마일스 마이콜라스", "Andre Pallante": "안드레 팔란테", "Michael McGreevy": "마이클 맥그리비", "Justin Steele": "저스틴 스틸", "Jameson Taillon": "제임슨 타이욘", "Javier Assad": "하비에르 아사드", "Kyle Hendricks": "카일 헨드릭스", "Jordan Wicks": "조던 윅스", "Hunter Greene": "헌터 그린", "Nick Lodolo": "닉 로돌로", "Andrew Abbott": "앤드루 애벗", "Rhett Lowder": "렛 라우더", "Julian Aguiar": "줄리안 아기아르", "Freddy Peralta": "프레디 페랄타", "Colin Rea": "콜린 레이", "Tobias Myers": "토비아스 마이어스", "Frankie Montas": "프랭키 몬타스", "Aaron Civale": "애런 시발레", "DL Hall": "DL 홀", "D.L. Hall": "DL 홀", "Reynaldo Lopez": "레이날도 로페즈", "Reynaldo López": "레이날도 로페즈", "Max Fried": "맥스 프리드", "Charlie Morton": "찰리 모튼", "Grant Holmes": "그랜트 홈즈", "Ian Anderson": "이안 앤더슨", "Hurston Waldrep": "허스턴 왈드렙", "Sean Manaea": "션 마네아", "Luis Severino": "루이스 세베리노", "David Peterson": "데이비드 피터슨", "Jose Quintana": "호세 킨타나", "José Quintana": "호세 킨타나", "Tylor Megill": "타일러 메길", "MacKenzie Gore": "맥켄지 고어", "Mackenzie Gore": "맥켄지 고어", "Jake Irvin": "제이크 어빈", "DJ Herz": "DJ 헤르츠", "D.J. Herz": "DJ 헤르츠", "Mitchell Parker": "미첼 파커", "Patrick Corbin": "패트릭 코빈", "Edward Cabrera": "에드워드 카브레라", "Max Meyer": "맥스 마이어", "Valente Bellozo": "발렌테 벨로조", "Adam Oller": "아담 올러", "Darren McCaughan": "대런 맥코건", "Xzavion Curry": "즈자비온 커리", "Michael Lorenzen": "마이클 로렌젠", "Jose Urena": "호세 우레냐", "Michael Wacha": "마이클 와카", "Cole Ragans": "콜 레이건스", "Seth Lugo": "세스 루고", "Brady Singer": "브래디 싱어", "Alec Marsh": "알렉 마쉬", "Aaron Nola": "애런 놀라", "Parker Messick": "파커 메식", "Anthony Kay": "앤서니 케이", "Mason Montgomery": "메이슨 몽고메리", "Cade Cavalli": "케이드 카발리", "Jacob Misiorowski": "제이콥 미시오로우스키", "Clay Holmes": "클레이 홈즈", "Wilber Dotel": "윌버 도텔", "Miguel Ulloa": "미겔 우요아", "Walbert Ureña": "왈버트 우레냐", "Walbert Urena": "왈버트 우레냐", "Connor Prielipp": "코너 프릴립", "Peter Lambert": "피터 램버트", "Tyler Mahle": "타일러 말리", "Gage Jump": "게이지 점프", "Jackson Jobe": "잭슨 조브", "Gabriel Hughes": "가브리엘 휴즈", "Payton Tolle": "페이튼 톨레", "Noah Cameron": "노아 카메론", "Cam Schlittler": "캠 슐리틀러", "Bubba Chandler": "버바 챈들러", "Eury Pérez": "유리 페레즈", "Eury Perez": "유리 페레즈", "Zac Thornton": "잭 손튼", "Zach Thornton": "잭 손튼", "Randy Dobnak": "랜디 도브낙", "Tyler Phillips": "타일러 필립스", "Andrew Painter": "앤드루 페인터", "Cesar Perdomo": "세사르 페르도모", "César Perdomo": "세사르 페르도모", "Andrew Alvarez": "앤드루 알바레즈", "Andrew Álvarez": "앤드루 알바레즈", "Ian Seymour": "이안 시모어", "Kyle Leahy": "카일 리히", "Chase Burns": "체이스 번스", "Jacob Lopez": "제이콥 로페즈", "Jacob López": "제이콥 로페즈", "Nolan McLean": "놀란 맥클레인", "Drew Rasmussen": "드류 라스무센", "Ryan Gusto": "라이언 구스토", "Dustin May": "더스틴 메이", "Matthew Liberatore": "매튜 리베라토레", "Anthony Molina": "앤서니 몰리나", "Hayden Wesneski": "헤이든 웨스네스키", "Christian Scott": "크리스천 스콧", "Trevor Rogers": "트레버 로저스", "Tanner Gordon": "태너 고든", "Kyle Bradish": "카일 브래디시", "Jacob deGrom": "제이콥 디그롬", "Jacob DeGrom": "제이콥 디그롬", "Max Scherzer": "맥스 슈어저", "Luis Castillo": "루이스 카스티요", "Christian Javier": "크리스티안 하비에르", "Troy Melton": "트로이 멜튼", "Jung Hoo Lee": "이정후", "Jung-Hoo Lee": "이정후", "Ha-Seong Kim": "김하성", "Ha-seong Kim": "김하성", "Ji-Hwan Bae": "배지환", "Ji Hwan Bae": "배지환", "Hyun Jin Ryu": "류현진", "Kwang Hyun Kim": "김광현", "Aaron Judge": "애런 저지", "Juan Soto": "후안 소토", "Mookie Betts": "무키 베츠", "Freddie Freeman": "프레디 프리먼", "Bryce Harper": "브라이스 하퍼", "Gunnar Henderson": "거너 헨더슨", "Bobby Witt Jr.": "바비 위트 주니어", "Bobby Witt Jr": "바비 위트 주니어", "Adley Rutschman": "애들리 러치맨", "Elly De La Cruz": "엘리 데 라 크루즈", "Fernando Tatis Jr.": "페르난도 타티스 주니어", "Fernando Tatis Jr": "페르난도 타티스 주니어", "Manny Machado": "매니 마차도", "Jurickson Profar": "주릭슨 프로파", "Jackson Merrill": "잭슨 메릴", "Pete Alonso": "피트 알론소", "Francisco Lindor": "프란시스코 린도어", "Kyle Schwarber": "카일 슈와버", "Trea Turner": "트레이 터너", "Alec Bohm": "알렉 봄", "Corey Seager": "코리 시거", "Marcus Semien": "마커스 세미엔", "Jose Altuve": "호세 알투베", "Yordan Alvarez": "요르단 알바레즈", "Alex Bregman": "알렉스 브레그먼", "Jose Ramirez": "호세 라미레즈", "José Ramírez": "호세 라미레즈", "Steven Kwan": "스티븐 관", "Josh Naylor": "조시 네일러", "Vladimir Guerrero Jr.": "블라디미르 게레로 주니어", "Vladimir Guerrero Jr": "블라디미르 게레로 주니어", "George Springer": "조지 스프링어", "Bo Bichette": "보 비셋", "Rafael Devers": "라파엘 디버스", "Jarren Duran": "재런 두란", "Triston Casas": "트리스톤 카사스", "Seiya Suzuki": "스즈키 세이야", "Masataka Yoshida": "요시다 마사타카", "Cody Bellinger": "코디 벨린저", "Ian Happ": "이안 햅", "Dansby Swanson": "댄스비 스완슨", "Nico Hoerner": "니코 호너", "Marcell Ozuna": "마르셀 오주나", "Matt Olson": "맷 올슨", "Austin Riley": "오스틴 라일리", "Michael Harris II": "마이클 해리스 2세", "Ketel Marte": "케텔 마르테", "Corbin Carroll": "코빈 캐롤", "Christian Walker": "크리스천 워커", "Lourdes Gurriel Jr.": "루르데스 구리엘 주니어", "Lourdes Gurriel Jr": "루르데스 구리엘 주니어", "Jackson Chourio": "잭슨 츄리오", "Willy Adames": "윌리 아다메스", "William Contreras": "윌리엄 콘트레라스", "Sal Frelick": "샐 프렐릭", "Paul Goldschmidt": "폴 골드슈미트", "Nolan Arenado": "놀란 아레나도", "Alec Burleson": "알렉 벌레슨", "Brent Rooker": "브렌트 루커", "JJ Bleday": "JJ 블레데이", "Shea Langeliers": "셰이 랭겔리어스", "Lawrence Butler": "로렌스 버틀러", "Julio Rodriguez": "훌리오 로드리게스", "Julio Rodríguez": "훌리오 로드리게스", "Cal Raleigh": "칼 랄리", "Randy Arozarena": "랜디 아로자레나", "Josh Lowe": "조시 로우", "Yandy Diaz": "얀디 디아즈", "Yandy Díaz": "얀디 디아즈", "Brandon Lowe": "브랜든 로우", "Christopher Morel": "크리스토퍼 모렐", "Oneil Cruz": "오닐 크루즈", "Bryan Reynolds": "브라이언 레이놀즈", "Ke'Bryan Hayes": "키브라이언 헤이즈", "Spencer Steer": "스펜서 스티어", "Jonathan India": "조나단 인디아", "TJ Friedl": "TJ 프리들", "Ezequiel Tovar": "에세키엘 토바", "Ryan McMahon": "라이언 맥맨", "Brenton Doyle": "브렌턴 도일", "Luis Garcia Jr.": "루이스 가르시아 주니어", "CJ Abrams": "CJ 에이브람스", "James Wood": "제임스 우드", "Lane Thomas": "레인 토마스", "Jazz Chisholm Jr.": "재즈 치좀 주니어", "Jazz Chisholm Jr": "재즈 치좀 주니어", "Jake Burger": "제이크 버거", "Jesus Sanchez": "헤수스 산체스", "Jesús Sánchez": "헤수스 산체스", "戸郷 翔征": "토고 쇼세이", "戸郷翔征": "토고 쇼세이", "Togo Shosei": "토고 쇼세이", "Shosei Togo": "토고 쇼세이", "柳 裕也": "야나기 유야", "柳裕也": "야나기 유야", "Yanagi Yuya": "야나기 유야", "Yuya Yanagi": "야나기 유야", "東 克樹": "아즈마 카츠키", "東克樹": "아즈마 카츠키", "Higashi Katsuki": "아즈마 카츠키", "Katsuki Higashi": "아즈마 카츠키", "奥川 恭伸": "오쿠가와 야스노부", "奥川恭伸": "오쿠가와 야스노부", "Okugawa Yasunobu": "오쿠가와 야스노부", "才木 浩人": "사이키 히로토", "才木浩人": "사이키 히로토", "Saiki Hiroto": "사이키 히로토", "Hiroto Saiki": "사이키 히로토", "床田 寛樹": "토코다 히로키", "床田寛樹": "토코다 히로키", "Tokoda Hiroki": "토코다 히로키", "Hiroki Tokoda": "토코다 히로키", "田中 晴也": "타나카 세이야", "田中晴也": "타나카 세이야", "Tanaka Seiya": "타나카 세이야", "前田 健太": "마에다 켄타", "前田健太": "마에다 켄타", "Maeda Kenta": "마에다 켄타", "Kenta Maeda": "마에다 켄타", "平良 海馬": "타이라 카이마", "平良海馬": "타이라 카이마", "Taira Kaima": "타이라 카이마", "Kaima Taira": "타이라 카이마", "山﨑 福也": "야마사키 사치야", "山﨑福也": "야마사키 사치야", "山崎 福也": "야마사키 사치야", "山崎福也": "야마사키 사치야", "Yamasaki Sachiya": "야마사키 사치야", "有原 航平": "아리하라 코헤이", "有原航平": "아리하라 코헤이", "Arihara Kohei": "아리하라 코헤이", "宮城 大弥": "미야기 히로야", "宮城大弥": "미야기 히로야", "Miyagi Hiroya": "미야기 히로야", "Hiroya Miyagi": "미야기 히로야", "村上 頌樹": "무라카미 쇼키", "村上頌樹": "무라카미 쇼키", "Murakami Shoki": "무라카미 쇼키", "今井 達也": "이마이 타츠야", "今井達也": "이마이 타츠야", "Imai Tatsuya": "이마이 타츠야", "Tatsuya Imai": "이마이 타츠야", "伊藤 大海": "이토 히로미", "伊藤大海": "이토 히로미", "Ito Hiromi": "이토 히로미", "Hiromi Ito": "이토 히로미", "小島 和哉": "코지마 카즈야", "小島和哉": "코지마 카즈야", "Kojima Kazuya": "코지마 카즈야", "早川 隆久": "하야카와 타카히사", "早川隆久": "하야카와 타카히사", "Hayakawa Takahisa": "하야카와 타카히사", "小川 泰弘": "오가와 야스히로", "小川泰弘": "오가와 야스히로", "Ogawa Yasuhiro": "오가와 야스히로", "高橋 宏斗": "타카하시 히로토", "高橋宏斗": "타카하시 히로토", "髙橋 宏斗": "타카하시 히로토", "髙橋宏斗": "타카하시 히로토", "Takahashi Hiroto": "타카하시 히로토", "九里 亜蓮": "쿠리 아렌", "九里亜蓮": "쿠리 아렌", "Kuri Aren": "쿠리 아렌", "Aren Kuri": "쿠리 아렌", "大瀬良 大地": "오오세라 다이치", "大瀬良大地": "오오세라 다이치", "Osera Daichi": "오오세라 다이치", "菅野 智之": "스가노 토모유키", "菅野智之": "스가노 토모유키", "Sugano Tomoyuki": "스가노 토모유키", "Tomoyuki Sugano": "스가노 토모유키", "髙橋 光成": "타카하시 코나", "髙橋光成": "타카하시 코나", "高橋 光成": "타카하시 코나", "高橋光成": "타카하시 코나", "Takahashi Kona": "타카하시 코나", "隅田 知一郎": "스미다 치히로", "隅田知一郎": "스미다 치히로", "Sumida Chihiro": "스미다 치히로", "松本 航": "마츠모토 와타루", "松本航": "마츠모토 와타루", "Matsumoto Wataru": "마츠모토 와타루", "山下 舜平大": "야마시타 슌페이타", "山下舜平大": "야마시타 슌페이타", "Yamashita Shunpeita": "야마시타 슌페이타", "田嶋 大樹": "타지마 다이키", "田嶋대樹": "타지마 다이키", "田嶋大樹": "타지마 다이키", "Tajima Daiki": "타지마 다이키", "種市 篤暉": "타네이치 아츠키", "種市篤暉": "타네이치 아츠키", "Taneichi Atsuki": "타네이치 아츠키", "佐々木 朗希": "사사키 로키", "佐々木朗希": "사사키 로키", "Sasaki Roki": "사사키 로키", "Roki Sasaki": "사사키 로키", "岸 孝之": "키시 타카유키", "岸孝之": "키시 타카유키", "Kishi Takayuki": "키시 타카유키", "則本 昂大": "노리모토 타카히로", "則本昂大": "노리모토 타카히로", "Norimoto Takahiro": "노리모토 타카히로", "加藤 貴之": "카토 타카유키", "加藤貴之": "카토 타카유키", "Kato Takayuki": "카토 타카유키", "上原 健太": "우에하라 켄타", "上原健太": "우에하라 켄타", "Uehara Kenta": "우에하라 켄타", "東浜 巨": "히가시하마 나오", "東浜巨": "히가시하마 나오", "Higashihama Nao": "히가시하마 나오", "大津 亮介": "오오츠 료스케", "大津亮介": "오오츠 료스케", "Otsu Ryosuke": "오오츠 료스케", "和田 毅": "와다 츠요시", "和田毅": "와다 츠요시", "Wada Tsuyoshi": "와다 츠요시", "森下 暢仁": "모리시타 마사토", "森下暢仁": "모리시타 마사토", "Morishita Masato": "모리시타 마사토", "小園 健太": "코조노 켄타", "小園健太": "코조노 켄타", "Kozono Kenta": "코조노 켄타", "大貫 晋一": "오오누키 신이치", "大貫晋一": "오오누키 신이치", "Onuki Shinichi": "오오누키 신이치", "高橋 奎二": "타카하시 케이지", "高橋奎二": "타카하시 케이지", "Takahashi Keiji": "타카하시 케이지", "吉村 貢司郎": "요시무라 코지로", "吉村貢司郎": "요시무라 코지로", "Yoshimura Kojiro": "요시무라 코지로", "小笠原 慎之介": "오가사와라 신노스케", "小笠原慎之介": "오가사와라 신노스케", "Ogasawara Shinnosuke": "오가사와라 신노스케", "大野 雄大": "오오노 유다이", "大野雄大": "오오노 유다이", "Ohno Yudai": "오오노 유다이", "西 勇輝": "니시 유키", "西勇輝": "니시 유키", "Nishi Yuki": "니시 유키", "伊藤 将司": "이토 마사시", "伊藤将司": "이토 마사시", "Ito Masashi": "이토 마사시", "青柳 晃洋": "아오야기 코요", "青柳晃洋": "아오야기 코요", "Aoyagi Koyo": "아오야기 코요", "大竹 耕太郎": "오오타케 코타로", "大竹耕太郎": "오오타케 코타로", "Otake Kotaro": "오오타케 코타로", "山崎 伊織": "야마사키 이오리", "山崎伊織": "야마사키 이오리", "Yamasaki Iori": "야마사키 이오리", "赤星 優志": "아카호시 유지", "赤星優志": "아카호시 유지", "Akahoshi Yuji": "아카호시 유지", "井上 温大": "이노우에 하루토", "井上温大": "이노우에 하루토", "Inoue Haruto": "이노우에 하루토", "武内 夏暉": "타케우치 나츠키", "武内夏暉": "타케우치 나츠키", "Takeuchi Natsuki": "타케우치 나츠키", "髙島 泰都": "타카시마 타이스케", "高島 泰都": "타카시마 타이스케", "高島泰都": "타카시마 타이스케", "涌井 秀章": "와쿠이 히데아키", "涌井秀章": "와쿠이 히데아키", "Wakui Hideaki": "와쿠이 히데아키", "高梨 雄平": "타카나시 유헤이", "高梨雄平": "타카나시 유헤이", "Takanashi Yuhei": "타카나시 유헤이", "尾形 崇斗": "오가타 슈토", "尾形崇斗": "오가타 슈토", "Ogata Shuto": "오가타 슈토", "佐藤 爽": "사토 소우", "佐藤爽": "사토 소우", "高野 脩汰": "타카노 슈타", "高野脩汰": "타카노 슈타", "松本 晴": "마츠모토 하루", "松本晴": "마츠모토 하루", "深沢 鳳介": "후카자와 호스케", "深沢鳳介": "후카자와 호스케", "栗林 良吏": "쿠리바야시 료지", "栗林良吏": "쿠리바야시 료지", "金丸 夢斗": "카네마루 유메토", "金丸夢斗": "카네마루 유메토", "豆田 泰志": "마메다 타츠키", "豆田泰志": "마메다 타츠키", "佐藤 隼輔": "사토 슌스케", "佐藤隼輔": "사토 슌스케", "黒木 優太": "쿠로키 유타", "黒木優太": "쿠로키 유타", "本田 圭佑": "혼다 케이스케", "本田圭佑": "혼다 케이스케", "水上 由伸": "미즈카미 요시노부", "水上由伸": "미즈카미 요시노부", "富山 凌雅": "토미야마 료타", "富山凌雅": "토미야마 료타", "椋木 蓮": "무쿠노키 렌", "椋木蓮": "무쿠노키 렌", "山﨑 颯一郎": "야마사키 소이치로", "山﨑颯一郎": "야마사키 소이치로", "阿部 翔太": "아베 쇼타", "阿部翔太": "아베 쇼타", "山田 修義": "야마다 노부요시", "山田修義": "야마다 노부요시", "曽谷 龍平": "소타니 류헤이", "曽谷龍平": "소타니 류헤이", "菅井 信也": "스가이 신야", "菅井信也": "스가이 신야", "片山 皓心": "카타야마 코신", "片山皓心": "카타야마 코신", "Katayama Koshin": "카타야마 코신", "山口 廉王": "야마구치 레오", "山口廉王": "야마구치 레오", "Yamaguchi Reo": "야마구치 레오", "渡邉 勇太朗": "와타나베 유타로", "渡邉勇太朗": "와타나베 유타로", "渡辺 勇太朗": "와타나베 유타로", "渡辺勇太朗": "와타나베 유타로", "Watanabe Yutaro": "와타나베 유타로", "前田 悠伍": "마에다 유고", "前田悠伍": "마에다 유고", "Maeda Yugo": "마에다 유고", "石川 柊太": "이시카와 슈타", "石川柊太": "이시카와 슈타", "Ishikawa Shuta": "이시카와 슈타", "マチャド": "마차도", "A.マチャド": "안드레스 마차도", "A.마차도": "안드레스 마차도", "ペルドモ": "루이스 페르도모", "L.ペルドモ": "루이스 페르도모", "L.페르도모": "루이스 페르도모", "エスピノーザ": "안데르손 에스피노자", "A.エスピノーザ": "안데르손 에스피노자", "A.에스피노자": "안데르손 에스피노자", "モイネロ": "리반 모이넬로", "L.モイネロ": "리반 모이넬로", "L.모이넬로": "리반 모이넬로", "オスナ": "로베르토 오스나", "R.オスナ": "로베르토 오스나", "J.オスナ": "호세 오스나", "ヘルナンデス": "에르난데스", "E.ヘルナンデス": "엘리에세르 에르난데스", "マルティネス": "라이델 마르티네스", "マルチネス": "라이델 마르티네스", "R.マルティネス": "라이델 마르티네스", "R.マルチネス": "라이델 마르티네스", "ルイーズ": "루이즈", "サイスニード": "사이 스니드", "C.サイスニード": "사이 스니드", "ケイ": "안소니 케이", "A.ケイ": "안소니 케이", "ジャクソン": "안드레 잭슨", "A.ジャクソン": "안드레 잭슨", "バウアー": "트레버 바우어", "T.バウアー": "트레버 바우어", "エンス": "디트릭 엔스", "D.エンス": "디트릭 엔스", "メルセデス": "C.C. 멜세데스", "C.C.メルセデス": "C.C. 멜세데스", "サンタナ": "도밍고 산타나", "D.サンタナ": "도밍고 산타나", "ポランコ": "그레고리 폴랑코", "G.ポランコ": "그레고리 폴랑코", "ソト": "네프탈리 소토", "N.ソト": "네프탈리 소토", "ウォーカー": "아담 워커", "C.ウォーカー": "크리스천 워커", "ディアス": "디아즈", "ゴンザレス": "곤잘레스", "カスティーヨ": "카스티요", "バルドナード": "발도나도", "グリフィン": "포스터 그리핀", "F.グリフィン": "포스터 그리핀", "メンデス": "요안데르 멘데스", "Y.メンデス": "요안데르 멘데스", "ボス": "코디 보스", "C.ボス": "코디 보스", "ビシエド": "다얀 비시에도", "D.ビシエド": "다얀 비시에도", "カリ스테": "올란도 칼리스테", "ロドリ게스": "로드리게스", "ロドリゲス": "로드리게스", "Ｓ．ジェリー": "S.젤리", "S.ジェリー": "S.젤리", "ジェリー": "S.젤리", "마타": "데이비드 마타", "ラトリッジ": "러틀리지", "クラーク": "클라크", "スチュワート": "스튜어트", "C.スチュワートJr.": "카터 스튜어트 주니어", "スチュワートJr.": "카터 스튜어트 주니어", "アンダーソン": "앤더슨", "ボー・タカハシ": "보 다카하시", "ボータカハシ": "보 다카하시"};
@@ -13050,6 +13081,29 @@ function updateSlimPanel(matchId, type, contentHtml) {
         match = getMatchById(matchId);
       }
       if (!match) {
+        // 즉시 로딩 인디케이터를 띄워 모달이 하얗게 멈춰있지 않도록 보장
+        const modalEl = document.getElementById('nextGenDetailModal');
+        const container = document.getElementById('nextGenDetailModalBody');
+        const headTitle = document.getElementById('ngModalHeadTitle');
+        if (headTitle) headTitle.innerText = '경기 정밀 분석 데이터 로딩 중...';
+        if (container) {
+          container.innerHTML = `
+            <div class="d-flex flex-column align-items-center justify-content-center py-5 text-center">
+              <div class="spinner-border text-primary mb-3" role="status" style="width: 2.5rem; height: 2.5rem;">
+                <span class="visually-hidden">로딩 중...</span>
+              </div>
+              <h6 class="fw-bold text-dark mb-1">경기 정밀 분석 데이터를 실시간 집계 중입니다</h6>
+              <p class="text-muted small">선발투수 기록, 상대전적, 세이버메트릭스 통계를 준비하고 있습니다...</p>
+            </div>
+          `;
+        }
+        if (modalEl) {
+          try {
+            const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            bsModal.show();
+          } catch(e) {}
+        }
+
         // Fallback: fetch directly from backend API
         fetch(`/api/v1/matches/${matchId}`)
           .then(res => {
@@ -13066,6 +13120,24 @@ function updateSlimPanel(matchId, type, contentHtml) {
           })
           .catch(err => {
             console.warn('openNextGenDetailModal: match not found for id', matchId, err);
+            if (window.__reportClientError) {
+              window.__reportClientError('DetailFetchError', `Match ${matchId} fetch failed: ${err.message}`, err.stack);
+            }
+            if (container) {
+              container.innerHTML = `
+                <div class="p-4 my-4 text-center bg-white rounded-3 border shadow-sm" style="border-color: #fecaca !important;">
+                  <div style="font-size: 2.2rem; color: #ef4444; margin-bottom: 8px;">⚠️</div>
+                  <h5 class="fw-bold text-dark mb-1">경기 상세 정보를 불러올 수 없습니다</h5>
+                  <p class="text-muted small mb-3">경기 번호: ${matchId} | 일시적 네트워크 지연 또는 존재하지 않는 경기입니다.</p>
+                  <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-sm btn-primary px-3 py-1.5 fw-bold" onclick="openNextGenDetailModal(${matchId})">
+                      <i class="bi bi-arrow-clockwise me-1"></i>다시 시도
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-3 py-1.5" data-bs-dismiss="modal">닫기</button>
+                  </div>
+                </div>
+              `;
+            }
           });
         return;
       }
@@ -14062,8 +14134,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const container = document.getElementById('nextGenDetailModalBody');
       if (!container) return;
 
-      const isBaseball = (m.sport_code === 'BASEBALL');
-      const isSoccer = (m.sport_code === 'SOCCER');
+      try {
+        const isBaseball = (m.sport_code === 'BASEBALL');
+        const isSoccer = (m.sport_code === 'SOCCER');
 
       const startersInfo = getMatchStarters(m);
       const hName = formatTeamName(m.home_team_name);
@@ -14795,6 +14868,25 @@ function updateSlimPanel(matchId, type, contentHtml) {
         ${recentMatchesSectionHtml}
         ${chatSectionHtml}
       `;
+      } catch (err) {
+        console.error('renderNextGenDetail caught error:', err);
+        if (window.__reportClientError) {
+          window.__reportClientError('DetailRenderError', err.message, err.stack);
+        }
+        container.innerHTML = `
+          <div class="p-4 my-4 text-center bg-white rounded-3 border shadow-sm" style="border-color: #fed7aa !important;">
+            <div style="font-size: 2.4rem; color: #f97316; margin-bottom: 8px;">⚾</div>
+            <h5 class="fw-bold text-dark mb-1">상세 분석 화면 렌더링 중 오류가 발생했습니다</h5>
+            <p class="text-muted small mb-3">일시적인 데이터 포맷 오류입니다. 아래 버튼을 눌러 다시 로드해 주세요.</p>
+            <div class="d-flex justify-content-center gap-2">
+              <button type="button" class="btn btn-sm btn-primary px-3 py-1.5 fw-bold" onclick="openNextGenDetailModal(${m?.id || _ngActiveMatchId})">
+                <i class="bi bi-arrow-clockwise me-1"></i>다시 시도
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary px-3 py-1.5" data-bs-dismiss="modal">닫기</button>
+            </div>
+          </div>
+        `;
+      }
     }
 
     // 야구 상세 투수/타자 팀 전환 전역 바인딩
