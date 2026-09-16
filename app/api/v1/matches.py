@@ -79,7 +79,7 @@ def list_matches(
     now = time.time()
     if cache_key in _MATCHES_JSON_CACHE:
         cache_time, cached_bytes = _MATCHES_JSON_CACHE[cache_key]
-        if now - cache_time < 5: # 5초 메모리 고속 서빙 (0.1ms 응답)
+        if now - cache_time < 10: # 10초 메모리 고속 서빙 (0.1ms 응답)
             return Response(content=cached_bytes, media_type="application/json")
 
     res = MatchService.get_matches(

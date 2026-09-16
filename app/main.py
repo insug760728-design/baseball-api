@@ -1,5 +1,8 @@
 import os
 import sys
+import json
+import time
+import threading
 
 if sys.platform == "win32":
     import asyncio
@@ -78,6 +81,8 @@ async def lifespan(app: FastAPI):
                 t0 = time.time()
                 TeamSplitService.get_all_splits()
                 print(f"[INFO] TeamSplitService 분할 통계 사전 워밍업 완료 ({time.time() - t0:.2f}s).")
+                refresh_server_matches_cache()
+                print("[INFO] Server Matches Cache 초기 선적재 완료.")
             except Exception as e:
                 print(f"[WARN] TeamSplitService 워밍업 중 오류: {e}")
 
@@ -193,37 +198,45 @@ if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 _PORTAL_HTML_CACHE = {}
-_SERVER_MATCHES_CACHE = {"json_str": "[]", "updated_at": 0}
+_SERVER_MATCHES_CACHE = {"json_str": "[]", "updated_at": 0.0, "is_refreshing": False}
 
-def get_server_initial_matches_json() -> str:
-    import json
-    now = time.time()
-    if now - _SERVER_MATCHES_CACHE["updated_at"] < 30.0 and _SERVER_MATCHES_CACHE["json_str"] != "[]":
-        return _SERVER_MATCHES_CACHE["json_str"]
+def refresh_server_matches_cache() -> str:
+    global _SERVER_MATCHES_CACHE
+    if _SERVER_MATCHES_CACHE.get("is_refreshing"):
+        return _SERVER_MATCHES_CACHE.get("json_str", "[]")
+    _SERVER_MATCHES_CACHE["is_refreshing"] = True
     db = None
     try:
+        from app.schemas.schemas import MatchResponse
         db = SessionLocal()
         matches = MatchService.get_matches(db, limit=400, order='asc')
-        match_dicts = []
-        for m in matches:
-            d = {c.name: getattr(m, c.name) for c in m.__table__.columns}
-            for k, v in d.items():
-                if hasattr(v, 'isoformat'):
-                    d[k] = v.isoformat()
-            match_dicts.append(d)
-        json_str = json.dumps(match_dicts, ensure_ascii=False)
+        serialized = [MatchResponse.model_validate(m).model_dump(mode="json") for m in matches]
+        json_str = json.dumps(serialized, ensure_ascii=False)
         _SERVER_MATCHES_CACHE["json_str"] = json_str
-        _SERVER_MATCHES_CACHE["updated_at"] = now
+        _SERVER_MATCHES_CACHE["updated_at"] = time.time()
         return json_str
     except Exception as e:
-        print(f"[WARN] Failed to serialize server initial matches: {e}")
+        print(f"[WARN] Failed to refresh server matches cache: {e}")
         return _SERVER_MATCHES_CACHE.get("json_str", "[]")
     finally:
+        _SERVER_MATCHES_CACHE["is_refreshing"] = False
         if db is not None:
             try:
                 db.close()
             except Exception:
                 pass
+
+def get_server_initial_matches_json() -> str:
+    global _SERVER_MATCHES_CACHE
+    now = time.time()
+    if _SERVER_MATCHES_CACHE["json_str"] != "[]":
+        # If cache is older than 20 seconds, trigger async background refresh without blocking current request
+        if (now - _SERVER_MATCHES_CACHE["updated_at"] > 20.0) and not _SERVER_MATCHES_CACHE.get("is_refreshing"):
+            import threading
+            threading.Thread(target=refresh_server_matches_cache, daemon=True).start()
+        return _SERVER_MATCHES_CACHE["json_str"]
+    
+    return refresh_server_matches_cache()
 
 def get_portal_html(target_path: str):
     if not os.path.exists(target_path):
