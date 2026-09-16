@@ -10657,20 +10657,23 @@ function getFullModalMatchList() {
     // ============================================================
     let OFFICIAL_PITCHER_DATABASE = {};
     try {
-      const cached = localStorage.getItem('OFFICIAL_PITCHER_DATABASE_CACHE');
+      const cached = localStorage.getItem('OFFICIAL_PITCHER_DATABASE_CACHE_V3');
       if (cached) OFFICIAL_PITCHER_DATABASE = JSON.parse(cached);
     } catch (e) {}
 
     async function loadOfficialPitchersAsync() {
       try {
-        const resp = await fetch('/api/v1/matches/pitchers');
+        const resp = await fetch('/api/v1/matches/pitchers?t=' + Date.now());
         if (resp.ok) {
           const data = await resp.json();
           if (data && typeof data === 'object' && Object.keys(data).length > 0) {
             OFFICIAL_PITCHER_DATABASE = data;
             try {
-              localStorage.setItem('OFFICIAL_PITCHER_DATABASE_CACHE', JSON.stringify(data));
+              localStorage.setItem('OFFICIAL_PITCHER_DATABASE_CACHE_V3', JSON.stringify(data));
             } catch (e) {}
+            if (window._currentOpenDetailMatch && typeof renderNextGenDetail === 'function') {
+              try { renderNextGenDetail(window._currentOpenDetailMatch, _ngActiveTab, _ngRosterSelectedTeam); } catch(e) {}
+            }
           }
         }
       } catch (e) {
@@ -10688,9 +10691,58 @@ function getFullModalMatchList() {
       const clean = String(name).replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
       if (OFFICIAL_PITCHER_DATABASE[clean]) return { ...OFFICIAL_PITCHER_DATABASE[clean], cleanName: clean };
       for (const [k, v] of Object.entries(OFFICIAL_PITCHER_DATABASE)) {
-        if (clean.includes(k) || k.includes(clean)) return { ...v, cleanName: k };
+        if (clean === k || clean.includes(k) || k.includes(clean)) return { ...v, cleanName: k };
       }
       return null;
+    }
+
+    async function fetchPitcherProfileAsync(matchId, hName, aName, leagueName) {
+      let updated = false;
+      const promises = [];
+      const checkStarter = (name) => {
+        if (!name || name === '선발 미정') return false;
+        const off = lookupOfficialPitcher(name);
+        return !off || !off.recent_starts || off.recent_starts.length <= 1;
+      };
+
+      if (checkStarter(hName)) {
+        promises.push(
+          fetch(`/api/v1/matches/pitcher-profile?name=${encodeURIComponent(hName)}&league=${encodeURIComponent(leagueName || '')}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+              if (data && (data.name || data.record)) {
+                OFFICIAL_PITCHER_DATABASE[hName] = data;
+                if (data.name) OFFICIAL_PITCHER_DATABASE[data.name] = data;
+                updated = true;
+              }
+            }).catch(e => console.warn('hPitcher fetch error', e))
+        );
+      }
+      if (checkStarter(aName)) {
+        promises.push(
+          fetch(`/api/v1/matches/pitcher-profile?name=${encodeURIComponent(aName)}&league=${encodeURIComponent(leagueName || '')}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+              if (data && (data.name || data.record)) {
+                OFFICIAL_PITCHER_DATABASE[aName] = data;
+                if (data.name) OFFICIAL_PITCHER_DATABASE[data.name] = data;
+                updated = true;
+              }
+            }).catch(e => console.warn('aPitcher fetch error', e))
+        );
+      }
+
+      if (promises.length > 0) {
+        await Promise.all(promises);
+        if (updated) {
+          try {
+            localStorage.setItem('OFFICIAL_PITCHER_DATABASE_CACHE_V3', JSON.stringify(OFFICIAL_PITCHER_DATABASE));
+          } catch(e) {}
+          if (window._currentOpenDetailMatch && window._currentOpenDetailMatch.id === matchId && typeof renderNextGenDetail === 'function') {
+            try { renderNextGenDetail(window._currentOpenDetailMatch, _ngActiveTab, _ngRosterSelectedTeam); } catch(e) {}
+          }
+        }
+      }
     }
 
     // =============================================================
@@ -13030,6 +13082,14 @@ function updateSlimPanel(matchId, type, contentHtml) {
       if (headTitle) headTitle.innerText = `${formatTeamName(match.home_team_name)} VS ${formatTeamName(match.away_team_name)}`;
       if (venueDate) venueDate.innerText = `${match.match_date || ''} [ ${match.stadium || '홈구장'} ]`;
 
+      window._currentOpenDetailMatch = match;
+      if (match.sport_code === 'BASEBALL' && typeof getMatchStarters === 'function' && typeof fetchPitcherProfileAsync === 'function') {
+        try {
+          const stInfo = getMatchStarters(match);
+          fetchPitcherProfileAsync(match.id, stInfo.homeStarter, stInfo.awayStarter, match.league_name);
+        } catch(e) {}
+      }
+
       try {
         renderNextGenDetail(match, _ngActiveTab, _ngRosterSelectedTeam);
       } catch (e) {
@@ -13054,10 +13114,15 @@ function updateSlimPanel(matchId, type, contentHtml) {
           .then(freshData => {
             if (freshData && _ngActiveMatchId === match.id) {
               Object.assign(match, freshData);
+              window._currentOpenDetailMatch = match;
               if (typeof matchDetailCache !== 'undefined' && matchDetailCache) {
                 matchDetailCache.set(Number(match.id), freshData);
               }
               renderNextGenDetail(match, _ngActiveTab, _ngRosterSelectedTeam);
+              if (match.sport_code === 'BASEBALL' && typeof getMatchStarters === 'function' && typeof fetchPitcherProfileAsync === 'function') {
+                const stInfo = getMatchStarters(match);
+                fetchPitcherProfileAsync(match.id, stInfo.homeStarter, stInfo.awayStarter, match.league_name);
+              }
             }
           }).catch(()=>{});
       } catch (e) {}
@@ -14005,7 +14070,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
         const isAnnounced = isStarterAnnounced(pNameRaw);
 
         const cleanName = pNameRaw.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
-        const pOfficial = (typeof lookupOfficialPitcher === 'function') ? lookupOfficialPitcher(cleanName) : null;
+        const pOfficial = (typeof lookupOfficialPitcher === 'function') ? (lookupOfficialPitcher(cleanName) || lookupOfficialPitcher(pNameRaw)) : null;
         
         const detailsTeamStats = (m.details && m.details.team_stats) ? ((typeof m.details.team_stats === 'string') ? JSON.parse(m.details.team_stats) : m.details.team_stats) : null;
         const mTeamStats = (m.team_stats && typeof m.team_stats === 'object') ? m.team_stats : (detailsTeamStats || {});
@@ -14015,61 +14080,97 @@ function updateSlimPanel(matchId, type, contentHtml) {
           ? matchup.starting_pitchers[sideKey] 
           : (teamStatsStarters || (m.starters && m.starters[sideKey] ? m.starters[sideKey] : null));
 
-        const pThrows = (cachedPitcherObj && cachedPitcherObj.style) ? cachedPitcherObj.style : ((pOfficial && pOfficial.style) ? pOfficial.style : (pNameRaw.includes('(좌)') ? '좌완' : (pNameRaw.includes('(언)') ? '언더' : (cachedPitcherObj?.throws || '우완'))));
-        const pHand = (cachedPitcherObj && cachedPitcherObj.hand) ? cachedPitcherObj.hand : ((pOfficial && pOfficial.hand) ? pOfficial.hand : (pThrows === '좌완' ? 'L' : 'R'));
+        const pThrows = (pOfficial && pOfficial.style) 
+          ? pOfficial.style 
+          : ((pOfficial && pOfficial.throws)
+              ? pOfficial.throws
+              : ((cachedPitcherObj && cachedPitcherObj.style) 
+                  ? cachedPitcherObj.style 
+                  : (pNameRaw.includes('(좌)') ? '좌완' : (pNameRaw.includes('(언)') ? '언더' : (cachedPitcherObj?.throws || (pOfficial && pOfficial.hand === 'L' ? '좌완' : '우완'))))));
+
+        const pHand = (pOfficial && pOfficial.hand) 
+          ? pOfficial.hand 
+          : ((cachedPitcherObj && cachedPitcherObj.hand) 
+              ? cachedPitcherObj.hand 
+              : (pThrows === '좌완' ? 'L' : 'R'));
 
         // 100% 공식 시즌 방어율 (ERA)
         let seasonEra = '-';
-        if (cachedPitcherObj && cachedPitcherObj.era && cachedPitcherObj.era !== '-') {
-          seasonEra = String(cachedPitcherObj.era);
-        } else if (pOfficial && pOfficial.era !== undefined && pOfficial.era !== null && pOfficial.era !== '-') {
+        if (pOfficial && pOfficial.era !== undefined && pOfficial.era !== null && pOfficial.era !== '-') {
           seasonEra = String(pOfficial.era);
+        } else if (pOfficial && pOfficial.season_era && pOfficial.season_era !== '-') {
+          seasonEra = String(pOfficial.season_era);
+        } else if (cachedPitcherObj && cachedPitcherObj.era && cachedPitcherObj.era !== '-') {
+          seasonEra = String(cachedPitcherObj.era);
+        } else if (cachedPitcherObj && cachedPitcherObj.season_era && cachedPitcherObj.season_era !== '-') {
+          seasonEra = String(cachedPitcherObj.season_era);
         }
 
         // 100% 공식 시즌 전적 (W승 L패)
         let seasonRecord = '-';
-        if (cachedPitcherObj && cachedPitcherObj.record && cachedPitcherObj.record !== '-') {
+        if (pOfficial && pOfficial.record && pOfficial.record !== '-') {
+          seasonRecord = pOfficial.record;
+        } else if (pOfficial && pOfficial.season_record && pOfficial.season_record !== '-') {
+          seasonRecord = pOfficial.season_record;
+        } else if (pOfficial && pOfficial.wins !== undefined && pOfficial.losses !== undefined) {
+          seasonRecord = `${pOfficial.wins}승 ${pOfficial.losses}패`;
+        } else if (pOfficial && pOfficial.w !== undefined && pOfficial.l !== undefined) {
+          seasonRecord = `${pOfficial.w}승 ${pOfficial.l}패`;
+        } else if (cachedPitcherObj && cachedPitcherObj.record && cachedPitcherObj.record !== '-') {
           seasonRecord = cachedPitcherObj.record;
         } else if (cachedPitcherObj && cachedPitcherObj.season_record && cachedPitcherObj.season_record !== '-') {
           seasonRecord = cachedPitcherObj.season_record;
         } else if (cachedPitcherObj && cachedPitcherObj.wins !== undefined && cachedPitcherObj.losses !== undefined) {
           seasonRecord = `${cachedPitcherObj.wins}승 ${cachedPitcherObj.losses}패`;
-        } else if (pOfficial && pOfficial.record && pOfficial.record !== '-') {
-          seasonRecord = pOfficial.record;
-        } else if (pOfficial && pOfficial.season_record && pOfficial.season_record !== '-') {
-          seasonRecord = pOfficial.season_record;
-        } else if (pOfficial && pOfficial.w !== undefined && pOfficial.l !== undefined) {
-          seasonRecord = `${pOfficial.w}승 ${pOfficial.l}패`;
         }
 
-        // 공식 요약 스탯 (e.g. 30.1이닝 29K 15BB)
+        // 공식 요약 스탯 (e.g. 172.1이닝 178K 47BB) - [object Object] 절대 방지
         let summaryText = '';
-        if (cachedPitcherObj && cachedPitcherObj.summary && cachedPitcherObj.summary !== '-') {
-          summaryText = cachedPitcherObj.summary;
-        } else if (cachedPitcherObj && cachedPitcherObj.season_summary && cachedPitcherObj.season_summary !== '-') {
-          summaryText = cachedPitcherObj.season_summary;
-        } else if (pOfficial && pOfficial.summary && pOfficial.summary !== '-') {
+        if (pOfficial && typeof pOfficial.summary === 'string' && pOfficial.summary !== '-') {
           summaryText = pOfficial.summary;
-        } else if (pOfficial && pOfficial.season_summary && pOfficial.season_summary !== '-') {
+        } else if (pOfficial && typeof pOfficial.season_summary === 'string' && pOfficial.season_summary !== '-') {
           summaryText = pOfficial.season_summary;
+        } else if (cachedPitcherObj && typeof cachedPitcherObj.summary === 'string' && cachedPitcherObj.summary !== '-') {
+          summaryText = cachedPitcherObj.summary;
+        } else if (cachedPitcherObj && typeof cachedPitcherObj.season_summary === 'string' && cachedPitcherObj.season_summary !== '-') {
+          summaryText = cachedPitcherObj.season_summary;
         }
 
-        if (!summaryText || summaryText === '-') {
-          const ipVal = cachedPitcherObj?.season_ip || pOfficial?.season_ip || pOfficial?.avgIp || '';
-          const soVal = cachedPitcherObj?.season_so != null ? cachedPitcherObj.season_so : (pOfficial?.season_so != null ? pOfficial.season_so : pOfficial?.so3g);
-          const bbVal = cachedPitcherObj?.season_bb != null ? cachedPitcherObj.season_bb : (pOfficial?.season_bb != null ? pOfficial.season_bb : pOfficial?.bb3g);
+        if (!summaryText || summaryText === '-' || typeof summaryText !== 'string') {
+          const ipVal = (pOfficial && (pOfficial.season_ip || pOfficial.avgIp || (typeof pOfficial.summary === 'object' && pOfficial.summary?.avg_ip)))
+            || (cachedPitcherObj && (cachedPitcherObj.season_ip || (typeof cachedPitcherObj.summary === 'object' && cachedPitcherObj.summary?.avg_ip)))
+            || '';
+          const soVal = (pOfficial && (pOfficial.season_so ?? pOfficial.so3g ?? (typeof pOfficial.summary === 'object' && pOfficial.summary?.total_so)))
+            ?? (cachedPitcherObj && (cachedPitcherObj.season_so ?? (typeof cachedPitcherObj.summary === 'object' && cachedPitcherObj.summary?.total_so)));
+          const bbVal = (pOfficial && (pOfficial.season_bb ?? pOfficial.bb3g ?? (typeof pOfficial.summary === 'object' && pOfficial.summary?.total_bb)))
+            ?? (cachedPitcherObj && (cachedPitcherObj.season_bb ?? (typeof cachedPitcherObj.summary === 'object' && cachedPitcherObj.summary?.total_bb)));
+
           if (ipVal && ipVal !== '-') {
-            summaryText = `${ipVal} ${soVal != null ? `${soVal}K` : ''} ${bbVal != null ? `${bbVal}BB` : ''}`.trim();
+            const parts = [String(ipVal).includes('이닝') ? String(ipVal) : `${ipVal}이닝`];
+            if (soVal != null && soVal !== '-') parts.push(`${soVal}K`);
+            if (bbVal != null && bbVal !== '-') parts.push(`${bbVal}BB`);
+            summaryText = parts.join(' ');
           } else {
             summaryText = isAnnounced ? '공식 기록 집계 중' : '선발 미정';
           }
         }
 
         let startsList = [];
-        if (cachedPitcherObj && cachedPitcherObj.recent_starts && Array.isArray(cachedPitcherObj.recent_starts) && cachedPitcherObj.recent_starts.length > 0) {
-          startsList = cachedPitcherObj.recent_starts.slice(0, 10);
-        } else if (pOfficial && pOfficial.recent_starts && Array.isArray(pOfficial.recent_starts) && pOfficial.recent_starts.length > 0) {
+        if (pOfficial && pOfficial.recent_starts && Array.isArray(pOfficial.recent_starts) && pOfficial.recent_starts.length > 0) {
           startsList = pOfficial.recent_starts.slice(0, 10);
+        } else if (cachedPitcherObj && cachedPitcherObj.recent_starts && Array.isArray(cachedPitcherObj.recent_starts) && cachedPitcherObj.recent_starts.length > 0) {
+          startsList = cachedPitcherObj.recent_starts.slice(0, 10);
+        }
+
+        let displayRecordEra = '';
+        if (seasonRecord !== '-' && seasonEra !== '-') {
+          displayRecordEra = `${seasonRecord} ${seasonEra}`;
+        } else if (seasonRecord !== '-') {
+          displayRecordEra = seasonRecord;
+        } else if (seasonEra !== '-') {
+          displayRecordEra = `ERA ${seasonEra}`;
+        } else {
+          displayRecordEra = isAnnounced ? '공식 기록 집계 중' : '선발 미정';
         }
 
         return {
@@ -14079,6 +14180,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
           throws: pThrows,
           era: seasonEra,
           record: seasonRecord,
+          displayRecordEra,
           summary: summaryText,
           startsList
         };
@@ -14172,7 +14274,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
               <!-- 전적 & 방어율 & 요약 스탯 (우측 정렬) -->
               <div class="d-flex flex-column justify-content-center align-items-end pe-3 text-end" style="min-width:145px;">
                 <div class="fw-bold text-danger" style="font-size:0.86rem; line-height:1.2;">
-                  ${hP.record} ${hP.era}
+                  ${hP.displayRecordEra}
                 </div>
                 <div class="text-secondary" style="font-size:0.72rem; line-height:1.2;">
                   ${hP.summary}
@@ -14222,7 +14324,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
               <!-- 전적 & 방어율 & 요약 스탯 (우측 정렬) -->
               <div class="d-flex flex-column justify-content-center align-items-end pe-3 text-end" style="min-width:145px;">
                 <div class="fw-bold text-danger" style="font-size:0.86rem; line-height:1.2;">
-                  ${aP.record} ${aP.era}
+                  ${aP.displayRecordEra}
                 </div>
                 <div class="text-secondary" style="font-size:0.72rem; line-height:1.2;">
                   ${aP.summary}
@@ -14684,6 +14786,14 @@ function updateSlimPanel(matchId, type, contentHtml) {
         ${recentMatchesSectionHtml}
         ${chatSectionHtml}
       `;
+
+      if (isBaseball && typeof fetchPitcherProfileAsync === 'function') {
+        if (hP.era === '-' || aP.era === '-' || hP.startsList.length <= 1 || aP.startsList.length <= 1) {
+          try {
+            fetchPitcherProfileAsync(m.id, hP.cleanName, aP.cleanName, m.league_name);
+          } catch(e) {}
+        }
+      }
     }
 
     // 야구 상세 투수/타자 팀 전환 전역 바인딩

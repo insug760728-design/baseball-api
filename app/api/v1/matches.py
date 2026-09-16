@@ -35,20 +35,22 @@ def clear_match_full_cache(match_id: Optional[int] = None):
     else:
         _MATCH_FULL_CACHE.clear()
 
-@router.get("/pitchers", summary="공식 선발투수 314명 전체 실데이터 데이터베이스 조회")
+_PITCHERS_DATASET_CACHE: Tuple[float, bytes] = (0.0, b"{}")
+
+@router.get("/pitchers", summary="공식 선발투수 전체 실데이터 데이터베이스 조회")
 def get_official_pitchers(response: Response):
     global _PITCHERS_DATASET_CACHE
-    now = time.time()
-    cache_time, cached_bytes = _PITCHERS_DATASET_CACHE
-    if now - cache_time < 3600 and cached_bytes != b"{}":
-        response.headers["Cache-Control"] = "public, max-age=3600"
-        return Response(content=cached_bytes, media_type="application/json")
     json_path = os.path.join(os.path.dirname(__file__), "../../services/official_pitchers_dataset.json")
     if os.path.exists(json_path):
+        mtime = os.path.getmtime(json_path)
+        cache_mtime, cached_bytes = _PITCHERS_DATASET_CACHE
+        if cache_mtime == mtime and cached_bytes != b"{}":
+            response.headers["Cache-Control"] = "no-cache, must-revalidate"
+            return Response(content=cached_bytes, media_type="application/json")
         with open(json_path, "r", encoding="utf-8") as f:
             content = f.read().encode("utf-8")
-        _PITCHERS_DATASET_CACHE = (now, content)
-        response.headers["Cache-Control"] = "public, max-age=3600"
+        _PITCHERS_DATASET_CACHE = (mtime, content)
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
         return Response(content=content, media_type="application/json")
     return {}
 

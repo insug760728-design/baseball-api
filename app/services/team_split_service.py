@@ -8,6 +8,7 @@
 - 상대전적(Head-to-Head) 및 최근 5경기 전적
 - 푸아송(축구) 및 피타고리안(야구) 기대 승률 모델링
 """
+import os
 import sqlite3
 import json
 import logging
@@ -7144,16 +7145,45 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
     }
 }
 
+_OFFICIAL_DATASET_CACHE = None
+_OFFICIAL_DATASET_MTIME = 0
+
+def _get_official_pitchers_dataset() -> dict:
+    global _OFFICIAL_DATASET_CACHE, _OFFICIAL_DATASET_MTIME
+    try:
+        dataset_path = os.path.join(os.path.dirname(__file__), "official_pitchers_dataset.json")
+        if os.path.exists(dataset_path):
+            mtime = os.path.getmtime(dataset_path)
+            if _OFFICIAL_DATASET_CACHE is None or mtime > _OFFICIAL_DATASET_MTIME:
+                with open(dataset_path, "r", encoding="utf-8") as f:
+                    _OFFICIAL_DATASET_CACHE = json.load(f)
+                    _OFFICIAL_DATASET_MTIME = mtime
+            return _OFFICIAL_DATASET_CACHE or {}
+    except Exception as e:
+        logger.warning(f"Failed to load official_pitchers_dataset.json: {e}")
+    return {}
+
 def _lookup_official_pitcher(name: str) -> dict:
     if not name:
         return {}
     clean = str(name).replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
+    
+    # 1. 348명 메이저리그/KBO/NPB 공식 실데이터셋 우선 조회
+    dataset = _get_official_pitchers_dataset()
+    if clean in dataset:
+        return dataset[clean]
+    for k, v in dataset.items():
+        if k == clean or k in clean or clean in k:
+            return v
+
+    # 2. 로컬 하드코딩 사전 폴백
     if clean in OFFICIAL_PITCHER_SEASON_PROFILES:
         return OFFICIAL_PITCHER_SEASON_PROFILES[clean]
     for k, v in OFFICIAL_PITCHER_SEASON_PROFILES.items():
         if k in clean or clean in k:
             return v
     return {}
+
 
 def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], home_team: str, away_team: str, sport_code: str, team_stats: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     if sport_code != "BASEBALL":
@@ -7280,49 +7310,59 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
         home_name_clean = home_name.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
         h_prof = _lookup_official_pitcher(home_name_clean) or _lookup_official_pitcher(home_name)
         home_name_ko = h_prof.get("name") or translate_player_name(home_name_clean)
-        h_throws = h_prof.get("throws") or h_st_dict.get("throws") or home_throws or ("좌완" if "(좌)" in home_name else "우완")
-        h_era = str(h_prof.get("season_era") or h_st_dict.get("season_era") or h_st_dict.get("era") or "-")
+        h_throws = h_prof.get("style") or h_prof.get("throws") or h_st_dict.get("throws") or home_throws or ("좌완" if "(좌)" in home_name or h_prof.get("hand") == "L" else "우완")
+        h_hand = h_prof.get("hand") or ("L" if h_throws == "좌완" else "R")
+        h_era = str(h_prof.get("season_era") or h_prof.get("era") or h_st_dict.get("season_era") or h_st_dict.get("era") or "-")
         h_wins = h_prof.get("wins") if h_prof.get("wins") is not None else h_st_dict.get("wins")
         h_losses = h_prof.get("losses") if h_prof.get("losses") is not None else h_st_dict.get("losses")
         h_games = h_prof.get("games") if h_prof.get("games") is not None else h_st_dict.get("games")
         h_jersey = h_prof.get("jersey") or h_st_dict.get("jersey")
         h_recent_starts = h_prof.get("recent_starts") or h_st_dict.get("recent_starts") or []
-        h_ip = h_prof.get("season_ip") or h_st_dict.get("season_ip") or h_st_dict.get("ip") or "-"
+        h_ip = str(h_prof.get("season_ip") or h_st_dict.get("season_ip") or h_st_dict.get("ip") or "-")
         h_so = h_prof.get("season_so") if h_prof.get("season_so") is not None else h_st_dict.get("season_so")
         h_bb = h_prof.get("season_bb") if h_prof.get("season_bb") is not None else h_st_dict.get("season_bb")
 
-        if h_era == "-" or h_wins is None:
-            h_era = "-"
-            h_wins = None
-            h_losses = None
-            h_games = None
-            h_ip = "-"
-            h_so = None
-            h_bb = None
-            h_recent_starts = []
+        if h_era == "-" and h_wins is None and not h_recent_starts:
             h_record_str = "시즌 첫 등판"
-        else:
+        elif h_wins is not None and h_losses is not None:
             h_record_str = f"{h_wins}승 {h_losses}패"
+        elif h_prof.get("record"):
+            h_record_str = h_prof.get("record")
+        else:
+            h_record_str = "공식 집계 중"
+
+        summary_str = h_prof.get("summary") or h_prof.get("season_summary")
+        if not summary_str or not isinstance(summary_str, str):
+            if h_ip != "-" and h_so is not None and h_bb is not None:
+                summary_str = f"{h_ip}이닝 {h_so}K {h_bb}BB"
+            elif h_ip != "-":
+                summary_str = f"{h_ip}이닝"
+            else:
+                summary_str = f"{h_throws} | {h_record_str}"
 
         home_res = {
             "name": home_name_ko,
             "name_raw": h_prof.get("name_raw") or h_st_dict.get("name_raw") or home_name_clean,
-            "name_en": home_name_clean,
+            "name_en": h_prof.get("name_en") or home_name_clean,
             "jersey": h_jersey,
             "throws": h_throws,
+            "hand": h_hand,
+            "style": h_throws,
             "season_era": h_era,
             "era": h_era,
             "season_wins": h_wins,
             "season_losses": h_losses,
             "season_games": h_games,
             "season_record": h_record_str,
+            "record": h_record_str,
             "season_ip": h_ip,
             "season_so": h_so,
             "season_bb": h_bb,
             "is_confirmed": home_confirmed,
             "is_unannounced": False,
             "status_label": "선발 확정" if home_confirmed else "선발 예고",
-            "summary": {
+            "summary": summary_str,
+            "summary_detail": {
                 "season_era": h_era,
                 "era_3g": h_era,
                 "avg_ip": f"{round(float(h_ip)/max(1, h_games), 1)}이닝" if (h_ip != '-' and h_games) else "-",
@@ -7331,7 +7371,7 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
                 "total_bb": h_bb or "-",
                 "trend_label": f"{h_throws} | {h_record_str} (ERA {h_era})" if h_era != '-' else f"{h_throws}"
             },
-            "recent_3_starts": h_recent_starts,
+            "recent_3_starts": h_recent_starts[:3],
             "recent_starts": h_recent_starts
         }
     else:
@@ -7341,22 +7381,30 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
             "name_en": "TBD",
             "jersey": None,
             "throws": "미정",
+            "hand": "R",
+            "style": "미정",
             "season_era": "-",
             "era": "-",
             "season_wins": None,
             "season_losses": None,
             "season_games": None,
             "season_record": "-",
+            "record": "-",
             "season_ip": "-",
             "season_so": None,
             "season_bb": None,
             "is_confirmed": False,
             "is_unannounced": True,
-            "status_label": "선발 미정 (TBD)",
-            "summary": {
+            "status_label": "선발 미정",
+            "summary": "선발 미정",
+            "summary_detail": {
                 "season_era": "-",
+                "era_3g": "-",
+                "avg_ip": "-",
                 "record": "-",
-                "trend_label": "선발 미정 (TBD)"
+                "total_so": "-",
+                "total_bb": "-",
+                "trend_label": "선발 미정"
             },
             "recent_3_starts": [],
             "recent_starts": []
@@ -7366,58 +7414,68 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
         away_name_clean = away_name.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
         a_prof = _lookup_official_pitcher(away_name_clean) or _lookup_official_pitcher(away_name)
         away_name_ko = a_prof.get("name") or translate_player_name(away_name_clean)
-        a_throws = a_prof.get("throws") or a_st_dict.get("throws") or away_throws or ("좌완" if "(좌)" in away_name else "우완")
-        a_era = str(a_prof.get("season_era") or a_st_dict.get("season_era") or a_st_dict.get("era") or "-")
+        a_throws = a_prof.get("style") or a_prof.get("throws") or a_st_dict.get("throws") or away_throws or ("좌완" if "(좌)" in away_name or a_prof.get("hand") == "L" else "우완")
+        a_hand = a_prof.get("hand") or ("L" if a_throws == "좌완" else "R")
+        a_era = str(a_prof.get("season_era") or a_prof.get("era") or a_st_dict.get("season_era") or a_st_dict.get("era") or "-")
         a_wins = a_prof.get("wins") if a_prof.get("wins") is not None else a_st_dict.get("wins")
         a_losses = a_prof.get("losses") if a_prof.get("losses") is not None else a_st_dict.get("losses")
         a_games = a_prof.get("games") if a_prof.get("games") is not None else a_st_dict.get("games")
         a_jersey = a_prof.get("jersey") or a_st_dict.get("jersey")
         a_recent_starts = a_prof.get("recent_starts") or a_st_dict.get("recent_starts") or []
-        a_ip = a_prof.get("season_ip") or a_st_dict.get("season_ip") or a_st_dict.get("ip") or "-"
+        a_ip = str(a_prof.get("season_ip") or a_st_dict.get("season_ip") or a_st_dict.get("ip") or "-")
         a_so = a_prof.get("season_so") if a_prof.get("season_so") is not None else a_st_dict.get("season_so")
         a_bb = a_prof.get("season_bb") if a_prof.get("season_bb") is not None else a_st_dict.get("season_bb")
 
-        if a_era == "-" or a_wins is None:
-            a_era = "-"
-            a_wins = None
-            a_losses = None
-            a_games = None
-            a_ip = "-"
-            a_so = None
-            a_bb = None
-            a_recent_starts = []
+        if a_era == "-" and a_wins is None and not a_recent_starts:
             a_record_str = "시즌 첫 등판"
-        else:
+        elif a_wins is not None and a_losses is not None:
             a_record_str = f"{a_wins}승 {a_losses}패"
+        elif a_prof.get("record"):
+            a_record_str = a_prof.get("record")
+        else:
+            a_record_str = "공식 집계 중"
+
+        summary_str = a_prof.get("summary") or a_prof.get("season_summary")
+        if not summary_str or not isinstance(summary_str, str):
+            if a_ip != "-" and a_so is not None and a_bb is not None:
+                summary_str = f"{a_ip}이닝 {a_so}K {a_bb}BB"
+            elif a_ip != "-":
+                summary_str = f"{a_ip}이닝"
+            else:
+                summary_str = f"{a_throws} | {a_record_str}"
 
         away_res = {
             "name": away_name_ko,
             "name_raw": a_prof.get("name_raw") or a_st_dict.get("name_raw") or away_name_clean,
-            "name_en": away_name_clean,
+            "name_en": a_prof.get("name_en") or away_name_clean,
             "jersey": a_jersey,
             "throws": a_throws,
+            "hand": a_hand,
+            "style": a_throws,
             "season_era": a_era,
             "era": a_era,
             "season_wins": a_wins,
             "season_losses": a_losses,
             "season_games": a_games,
             "season_record": a_record_str,
+            "record": a_record_str,
             "season_ip": a_ip,
             "season_so": a_so,
             "season_bb": a_bb,
             "is_confirmed": away_confirmed,
             "is_unannounced": False,
             "status_label": "선발 확정" if away_confirmed else "선발 예고",
-            "summary": {
+            "summary": summary_str,
+            "summary_detail": {
                 "season_era": a_era,
                 "era_3g": a_era,
-                "avg_ip": f"{round(float(a_ip)/max(1, a_games), 1)}이닝" if a_ip != '-' else "5.6이닝",
+                "avg_ip": f"{round(float(a_ip)/max(1, a_games), 1)}이닝" if (a_ip != '-' and a_games) else "-",
                 "record": a_record_str,
-                "total_so": a_so or 14,
-                "total_bb": a_bb or 6,
+                "total_so": a_so or "-",
+                "total_bb": a_bb or "-",
                 "trend_label": f"{a_throws} | {a_record_str} (ERA {a_era})" if a_era != '-' else f"{a_throws}"
             },
-            "recent_3_starts": a_recent_starts,
+            "recent_3_starts": a_recent_starts[:3],
             "recent_starts": a_recent_starts
         }
     else:
@@ -7427,22 +7485,30 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
             "name_en": "TBD",
             "jersey": None,
             "throws": "미정",
+            "hand": "R",
+            "style": "미정",
             "season_era": "-",
             "era": "-",
             "season_wins": None,
             "season_losses": None,
             "season_games": None,
             "season_record": "-",
+            "record": "-",
             "season_ip": "-",
             "season_so": None,
             "season_bb": None,
             "is_confirmed": False,
             "is_unannounced": True,
-            "status_label": "선발 미정 (TBD)",
-            "summary": {
+            "status_label": "선발 미정",
+            "summary": "선발 미정",
+            "summary_detail": {
                 "season_era": "-",
+                "era_3g": "-",
+                "avg_ip": "-",
                 "record": "-",
-                "trend_label": "선발 미정 (TBD)"
+                "total_so": "-",
+                "total_bb": "-",
+                "trend_label": "선발 미정"
             },
             "recent_3_starts": [],
             "recent_starts": []
