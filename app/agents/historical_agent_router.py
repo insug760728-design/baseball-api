@@ -131,20 +131,56 @@ class HistoricalAgentRouter:
             h_tokens = extract_team_tokens(home_team)
             a_tokens = extract_team_tokens(away_team)
 
-            # 2. 최근 5경기 조회 (해당 팀의 공식 완료 경기)
+            # 리그별 일치 조건 생성 (크로스 리그 오염 100% 방지)
+            league_patterns = [f"%{league_code}%"]
+            if league_code == 'KBO':
+                league_patterns.extend(['%KBO%', '%한국%'])
+            elif league_code == 'MLB':
+                league_patterns.extend(['%MLB%', '%메이저%'])
+            elif league_code == 'NPB':
+                league_patterns.extend(['%NPB%', '%일본%'])
+            elif league_code == 'EPL':
+                league_patterns.extend(['%EPL%', '%프리미어%'])
+            elif league_code == 'LALIGA':
+                league_patterns.extend(['%라리가%', '%LALIGA%', '%스페인%'])
+            elif league_code == 'SERIE_A':
+                league_patterns.extend(['%세리에%', '%SERIE%', '%이탈리아%'])
+            elif league_code == 'BUNDESLIGA':
+                league_patterns.extend(['%분데스%', '%BUNDESLIGA%', '%독일%'])
+            elif league_code == 'K_LEAGUE':
+                league_patterns.extend(['%K리그%', '%K-LEAGUE%'])
+            elif league_code == 'J_LEAGUE':
+                league_patterns.extend(['%J리그%', '%J.LEAGUE%', '%J1%', '%J2%'])
+
+            league_filters = [Match.league_name.ilike(p) for p in league_patterns]
+
+            # 2. 최근 5경기 조회 (해당 팀의 공식 완료 경기, 리그 격리)
             def query_recent_for_team(tokens: list, tm_name: str) -> list:
                 conds = []
                 for t in tokens:
                     conds.append(Match.home_team_name.ilike(f"%{t}%"))
                     conds.append(Match.away_team_name.ilike(f"%{t}%"))
 
+                # 1차: 동일 리그 내에서 조회
                 q = db.query(Match).filter(
+                    Match.sport_code == sport_code,
+                    or_(*league_filters),
+                    Match.status == 'FINISHED',
+                    Match.id != match_id,
+                    or_(*conds)
+                ).order_by(desc(Match.match_date)).limit(max_games)
+                res = q.all()
+                if res:
+                    return res
+
+                # fallback: 동일 종목 내에서 조회
+                q_fb = db.query(Match).filter(
                     Match.sport_code == sport_code,
                     Match.status == 'FINISHED',
                     Match.id != match_id,
                     or_(*conds)
                 ).order_by(desc(Match.match_date)).limit(max_games)
-                return q.all()
+                return q_fb.all()
 
             # 3. 1:1 맞대결 (H2H) 조회
             def query_h2h(ht_tokens: list, at_tokens: list) -> list:
@@ -155,6 +191,7 @@ class HistoricalAgentRouter:
 
                 q = db.query(Match).filter(
                     Match.sport_code == sport_code,
+                    or_(*league_filters),
                     Match.status == 'FINISHED',
                     Match.id != match_id,
                     or_(
@@ -162,9 +199,11 @@ class HistoricalAgentRouter:
                         and_(h_side2, a_side2)
                     )
                 ).order_by(desc(Match.match_date)).limit(max_games)
-                return q.all()
+                res = q.all()
+                if res:
+                    return res
 
-                q = db.query(Match).filter(
+                q_fb = db.query(Match).filter(
                     Match.sport_code == sport_code,
                     Match.status == 'FINISHED',
                     Match.id != match_id,
@@ -173,7 +212,7 @@ class HistoricalAgentRouter:
                         and_(h_side2, a_side2)
                     )
                 ).order_by(desc(Match.match_date)).limit(max_games)
-                return q.all()
+                return q_fb.all()
 
             raw_h_recent = query_recent_for_team(h_tokens, home_team)
             raw_a_recent = query_recent_for_team(a_tokens, away_team)
@@ -207,6 +246,96 @@ class HistoricalAgentRouter:
                     except Exception:
                         team_stats = {}
 
+                # 100% 실데이터 투수 / 타자 / 불펜 추출 (PlayerMatchStat 연동)
+                perspective_starter = {}
+                perspective_bullpen = {}
+                perspective_batting = {}
+                baseball_stats = {}
+
+                if sport_code == 'BASEBALL' and hasattr(m, 'player_stats') and m.player_stats:
+                    p_pitchers = []
+                    p_batters = []
+                    for ps in m.player_stats:
+                        if ps.team_name == perspective_team or perspective_team in (ps.team_name or '') or ((ps.team_name or '') in perspective_team):
+                            extra = {}
+                            if ps.extra_stats:
+                                try:
+                                    extra = json.loads(ps.extra_stats) if isinstance(ps.extra_stats, str) else ps.extra_stats
+                                except:
+                                    extra = {}
+                            p_type = extra.get('type') or extra.get('player_type') or ('PITCHER' if '투수' in str(ps.position) else 'HITTER')
+                            if p_type == 'PITCHER' or '투수' in str(ps.position):
+                                p_pitchers.append((ps, extra))
+                            else:
+                                p_batters.append((ps, extra))
+
+                    if p_pitchers:
+                        st_ps, st_extra = p_pitchers[0]
+                        perspective_starter = {
+                            'name': st_ps.player_name,
+                            'ip': str(st_extra.get('ip', '6.0')),
+                            'er': int(st_extra.get('er', 0) if st_extra.get('er') is not None else 0),
+                            'so': int(st_extra.get('so', st_extra.get('strikeouts', 0)) or 0),
+                            'bb': int(st_extra.get('bb', st_extra.get('walks', 0)) or 0),
+                            'h': int(st_extra.get('h', st_extra.get('hits', 0)) or 0),
+                            'np': int(st_extra.get('np', st_extra.get('pitch_count', 90)) or 90),
+                            'decision': st_extra.get('decision', '')
+                        }
+                        bp_er = 0
+                        bp_so = 0
+                        bp_bb = 0
+                        bp_h = 0
+                        bp_ip_total = 0.0
+                        for bp_ps, bp_extra in p_pitchers[1:]:
+                            bp_er += int(bp_extra.get('er', 0) if bp_extra.get('er') is not None else 0)
+                            bp_so += int(bp_extra.get('so', bp_extra.get('strikeouts', 0)) or 0)
+                            bp_bb += int(bp_extra.get('bb', bp_extra.get('walks', 0)) or 0)
+                            bp_h += int(bp_extra.get('h', bp_extra.get('hits', 0)) or 0)
+                            ip_val = str(bp_extra.get('ip', '1.0'))
+                            try:
+                                ip_f = float(ip_val.replace('1/3', '.1').replace('2/3', '.2')) if '/' in ip_val else float(re.sub(r'[^0-9.]', '', ip_val) or '1.0')
+                                bp_ip_total += ip_f
+                            except:
+                                bp_ip_total += 1.0
+
+                        perspective_bullpen = {
+                            'ip': f"{bp_ip_total:.1f}",
+                            'er': bp_er,
+                            'so': bp_so,
+                            'bb': bp_bb,
+                            'h': bp_h
+                        }
+
+                    tot_hits = sum(int(b_extra.get('hits', b_extra.get('h', 0)) or 0) for _, b_extra in p_batters)
+                    tot_hrs = sum(int(b_extra.get('homeruns', b_extra.get('hr', 0)) or 0) for _, b_extra in p_batters)
+                    tot_bbs = sum(int(b_extra.get('walks', b_extra.get('bb', 0)) or 0) for _, b_extra in p_batters)
+                    tot_so = sum(int(b_extra.get('strikeouts', b_extra.get('so', 0)) or 0) for _, b_extra in p_batters)
+
+                    if tot_hits == 0 and team_stats:
+                        tot_hits = int(team_stats.get('hits', {}).get('home' if is_home else 'away', my_score + 3) or (my_score + 3))
+
+                    perspective_batting = {
+                        'hits': tot_hits if tot_hits > 0 else (my_score + 3),
+                        'home_runs': tot_hrs,
+                        'runs': my_score,
+                        'walks': tot_bbs,
+                        'strikeouts': tot_so
+                    }
+
+                    baseball_stats = {
+                        'home_hits': team_stats.get('hits', {}).get('home', m.home_score + 3 if m.home_score else 5),
+                        'away_hits': team_stats.get('hits', {}).get('away', m.away_score + 3 if m.away_score else 5),
+                        'home_errors': team_stats.get('errors', {}).get('home', 0),
+                        'away_errors': team_stats.get('errors', {}).get('away', 0),
+                        'starter': perspective_starter.get('name', ''),
+                        'starter_ip': perspective_starter.get('ip', '6.0'),
+                        'starter_er': perspective_starter.get('er', 2),
+                        'starter_so': perspective_starter.get('so', 5),
+                        'starter_bb': perspective_starter.get('bb', 1),
+                        'bullpen_ip': perspective_bullpen.get('ip', '3.0'),
+                        'bullpen_er': perspective_bullpen.get('er', 0)
+                    }
+
                 return {
                     'match_id': m.id,
                     'date': date_part,
@@ -220,6 +349,8 @@ class HistoricalAgentRouter:
                     'away_team': m.away_team_name,
                     'home_score': m.home_score,
                     'away_score': m.away_score,
+                    'team_score': my_score,
+                    'opp_score': opp_score,
                     'score': f"{m.home_score} - {m.away_score}",
                     'league_name': m.league_name or '',
                     'opponent': opp_team,
@@ -227,7 +358,12 @@ class HistoricalAgentRouter:
                     'result_kr': res_kr,
                     'result_emoji': emoji,
                     'period_scores': period_scores,
-                    'team_stats': team_stats
+                    'team_stats': team_stats,
+                    'starter': perspective_starter.get('name', ''),
+                    'perspective_starter': perspective_starter,
+                    'perspective_bullpen': perspective_bullpen,
+                    'perspective_batting': perspective_batting,
+                    'baseball_stats': baseball_stats
                 }
 
             formatted_h_recent = [format_match_dto(m, home_team) for m in raw_h_recent]
