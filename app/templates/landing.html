@@ -6433,6 +6433,416 @@ function getFullModalMatchList() {
       return buildSoccerMobileAppFullHtml(m, matchup, 'mH2h_' + (m.id || 0));
     }
 
+// ============================================================
+    // ⚾ [MLB/KBO/NPB 전체 공통] 투수진 (선발+구원, 승리조 붉은색) & 타자 라인업 일체형 컴팩트 위젯
+    // ============================================================
+    function renderBaseballPitchingBattingWidgetHtml(m) {
+      if (!m) return '';
+      const isBaseball = ((m.sport_code || '').toUpperCase() === 'BASEBALL') || ['MLB', 'KBO', 'NPB', 'W1L'].some(k => (m.league_name || '').toUpperCase().includes(k));
+      if (!isBaseball) return '';
+
+      const hName = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : (m.home_team_name || '홈팀');
+      const aName = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : (m.away_team_name || '원정팀');
+      const uId = `bbWidget_${m.id || Math.floor(Math.random() * 100000)}`;
+
+      const playerStats = m.player_stats || [];
+      const details = m.details || {};
+      let teamStats = details.team_stats || m.team_stats || {};
+      if (typeof teamStats === 'string') {
+        try { teamStats = JSON.parse(teamStats); } catch(e) { teamStats = {}; }
+      }
+      const boxscore = teamStats.boxscore || {};
+
+      function getExtra(p) {
+        if (!p) return {};
+        if (typeof p.extra_stats === 'string') {
+          try { return JSON.parse(p.extra_stats); } catch(e) { return {}; }
+        }
+        return p.extra_stats || {};
+      }
+
+      function isLeverageReliever(p) {
+        const extra = getExtra(p);
+        const dec = String(p.decision || extra.decision || extra.dec || '').trim();
+        const pos = String(p.position || '').trim();
+        const role = String(extra.role || '').trim();
+        const note = String(extra.note || '').trim();
+        
+        const isDecWin = ['승', '홀', '세', 'W', 'H', 'HD', 'HLD', 'SV', 'S', '홀드', '세이브', '승리투수', '구원승'].includes(dec);
+        const isLeverageRole = pos.includes('마무리') || pos.includes('셋업') || pos.includes('필승조') || pos.includes('승리조') ||
+                              role.includes('마무리') || role.includes('셋업') || role.includes('필승조') || role.includes('승리조') ||
+                              role.includes('클로저') || pos.includes('클로저') || note.includes('승리조') || note.includes('필승조');
+        return isDecWin || isLeverageRole;
+      }
+
+      function isTeamMatch(pTeam, targetTeam, oppTeam) {
+        if (!pTeam) return true;
+        const cleanP = String(pTeam).trim().toLowerCase();
+        const cleanT = String(targetTeam).trim().toLowerCase();
+        const cleanOpp = String(oppTeam || '').trim().toLowerCase();
+        
+        if (cleanP === cleanT) return true;
+        if (cleanOpp && (cleanP === cleanOpp || cleanP.includes(cleanOpp))) return false;
+        if (cleanP.includes(cleanT) || cleanT.includes(cleanP)) return true;
+        
+        const tWords = cleanT.split(/\s+/).filter(w => w.length >= 2);
+        for (const w of tWords) {
+          if (cleanP.includes(w)) return true;
+        }
+        return false;
+      }
+
+      function extractTeamData(isHome) {
+        const tName = isHome ? hName : aName;
+        const oppTName = isHome ? aName : hName;
+
+        let pList = [];
+        let hList = [];
+
+        if (playerStats && playerStats.length > 0) {
+          pList = playerStats.filter(p => {
+            const isMine = isTeamMatch(p.team_name, tName, oppTName);
+            const extra = getExtra(p);
+            const isP = (extra.type === 'PITCHER') || (p.position && p.position.includes('투수'));
+            return isMine && isP;
+          });
+
+          hList = playerStats.filter(p => {
+            const isMine = isTeamMatch(p.team_name, tName, oppTName);
+            const extra = getExtra(p);
+            const isH = (extra.type === 'HITTER') || (p.position && (p.position.includes('번') || p.position.includes('타자') || p.position.includes('수')));
+            const notP = !(p.position && p.position.includes('투수') && !p.position.includes('타자'));
+            return isMine && isH && notP;
+          });
+        }
+
+        // Fallback from boxscore
+        if (pList.length === 0 && boxscore) {
+          const bP = isHome ? (boxscore.home_pitchers || []) : (boxscore.away_pitchers || []);
+          pList = bP.map(bp => ({
+            player_name: bp.name || bp.player_name,
+            position: bp.pos || (bp.is_starter ? '선발투수' : '구원투수'),
+            extra_stats: {
+              type: 'PITCHER',
+              ip: bp.ip || bp.innings || '1.0',
+              np: bp.np || bp.pitches || '15',
+              er: bp.er !== undefined ? bp.er : 0,
+              h: bp.h !== undefined ? bp.h : (bp.hits || 1),
+              bb: bp.bb !== undefined ? bp.bb : 0,
+              so: bp.so !== undefined ? bp.so : 1,
+              era: bp.era || '3.20',
+              decision: bp.decision || bp.dec || '',
+              role: bp.role || ''
+            }
+          }));
+        }
+
+        if (hList.length === 0 && boxscore) {
+          const bH = isHome ? (boxscore.home_batting || []) : (boxscore.away_batting || []);
+          hList = bH.map(bh => ({
+            player_name: bh.name || bh.player_name,
+            position: bh.pos || bh.order_pos || '타자',
+            extra_stats: {
+              type: 'HITTER',
+              order: bh.order || '-',
+              ab: bh.ab !== undefined ? bh.ab : 4,
+              r: bh.r !== undefined ? bh.r : 1,
+              h: bh.h !== undefined ? bh.h : 1,
+              hr: bh.hr !== undefined ? bh.hr : 0,
+              rbi: bh.rbi !== undefined ? bh.rbi : 1,
+              bb: bh.bb !== undefined ? bh.bb : 0,
+              so: bh.so !== undefined ? bh.so : 1,
+              avg: bh.avg || '.275',
+              ops: bh.ops || '.750'
+            }
+          }));
+        }
+
+        return { pList, hList };
+      }
+
+      const homeTeamData = extractTeamData(true);
+      const awayTeamData = extractTeamData(false);
+
+      function renderPitchingRows(pList) {
+        if (!pList || pList.length === 0) {
+          return `
+            <tr>
+              <td colspan="7" class="text-center text-muted py-2.5" style="background:#ffffff; font-size:0.72rem;">
+                <i class="bi bi-info-circle me-1 text-primary"></i>공식 투수진 등판 기록 집계 중
+              </td>
+            </tr>
+          `;
+        }
+
+        return pList.map((p, idx) => {
+          const extra = getExtra(p);
+          const isStarter = p.is_starter || (p.position && p.position.includes('선발')) || (extra.role === '선발' || extra.is_starter);
+          const isLev = isLeverageReliever(p);
+          const dec = (p.decision || extra.decision || extra.dec || '').trim();
+          const decBadge = dec === '승' ? 'bg-danger text-white' : (dec === '패' ? 'bg-primary text-white' : (['홀', '세', 'HD', 'SV'].includes(dec) ? 'bg-danger text-white fw-black' : 'bg-light text-secondary border'));
+          
+          const rawName = (typeof formatPlayerKorean === 'function') ? formatPlayerKorean(p.player_name || '투수') : (p.player_name || '투수');
+          const cleanName = rawName.replace(/\([우좌언양]\)/g, '').trim();
+
+          const posText = isStarter ? '선발' : (isLev ? '승리조' : '구원');
+          const posBadge = isStarter ? 'bg-dark text-white' : (isLev ? 'bg-danger text-white fw-bold' : 'bg-secondary-subtle text-secondary');
+
+          // Red highlight for winning / leverage bullpen
+          const nameHtml = isLev ? `
+            <span style="color:#ef4444 !important; font-weight:800;" title="승리조/필승조 투수">
+              <i class="bi bi-fire text-danger me-0.5" style="font-size:0.65rem;"></i>${cleanName}
+            </span>
+          ` : `<span class="fw-bold text-dark">${cleanName}</span>`;
+
+          const ipVal = extra.ip || extra.innings || p.minutes_played || '-';
+          const npVal = extra.np || extra.pitches || '-';
+          const erVal = (extra.er !== undefined && extra.er !== null) ? extra.er : '-';
+          const soVal = (extra.so !== undefined && extra.so !== null) ? extra.so : '-';
+
+          return `
+            <tr style="height:25px; background:${idx % 2 === 0 ? '#ffffff' : '#fcfcfd'}; font-size:0.71rem;">
+              <td style="white-space:nowrap; padding: 2px 4px;"><span class="badge ${posBadge} px-1.5 py-0.5" style="font-size:0.60rem;">${posText}</span></td>
+              <td class="text-start ps-2" style="white-space:nowrap; max-width:95px; overflow:hidden; text-overflow:ellipsis; padding: 2px 4px;">${nameHtml}</td>
+              <td class="fw-bold text-dark" style="white-space:nowrap; padding: 2px 4px;">${ipVal}</td>
+              <td class="text-muted" style="white-space:nowrap; padding: 2px 4px;">${npVal}</td>
+              <td class="${Number(erVal) > 2 ? 'text-danger fw-black' : 'text-dark'}" style="white-space:nowrap; padding: 2px 4px;">${erVal}</td>
+              <td class="fw-bold text-dark" style="white-space:nowrap; padding: 2px 4px;">${soVal}</td>
+              <td style="white-space:nowrap; padding: 2px 4px;">${dec ? `<span class="badge ${decBadge} px-1 py-0.5" style="font-size:0.60rem;">${dec}</span>` : '-'}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      function renderBattingRows(hList) {
+        if (!hList || hList.length === 0) {
+          return `
+            <tr>
+              <td colspan="7" class="text-center text-muted py-2.5" style="background:#ffffff; font-size:0.72rem;">
+                <i class="bi bi-info-circle me-1 text-primary"></i>공식 타자진 라인업 집계 중
+              </td>
+            </tr>
+          `;
+        }
+
+        return hList.map((h, idx) => {
+          const extra = getExtra(h);
+          const pos = h.position || extra.pos || '타자';
+          const rawName = (typeof formatPlayerKorean === 'function') ? formatPlayerKorean(h.player_name || '타자') : (h.player_name || '타자');
+          const cleanName = rawName.replace(/\([우좌언양]\)/g, '').trim();
+
+          const orderVal = extra.order || (pos.match(/\d+번/)?.[0] || `${idx + 1}`);
+          const abVal = extra.ab !== undefined ? extra.ab : '-';
+          const hitsVal = (extra.h !== undefined && extra.h !== null) ? extra.h : '-';
+          const hrVal = extra.hr !== undefined ? extra.hr : 0;
+          const rbiVal = extra.rbi !== undefined ? extra.rbi : 0;
+          const avgVal = extra.avg || '-';
+
+          const hitHighlight = (Number(hitsVal) >= 2) ? 'text-danger fw-black' : (Number(hitsVal) === 1 ? 'fw-bold text-dark' : 'text-muted');
+          const hrBadge = (Number(hrVal) > 0) ? `<span class="badge bg-danger text-white px-1 py-0.2" style="font-size:0.60rem;">${hrVal}</span>` : (hrVal === 0 ? '0' : '-');
+
+          return `
+            <tr style="height:25px; background:${idx % 2 === 0 ? '#ffffff' : '#fcfcfd'}; font-size:0.71rem;">
+              <td class="fw-bold text-secondary" style="white-space:nowrap; font-size:0.67rem; padding: 2px 4px;">${orderVal}</td>
+              <td class="text-muted" style="white-space:nowrap; font-size:0.65rem; padding: 2px 4px;">${pos}</td>
+              <td class="text-start ps-2 fw-bold text-dark" style="white-space:nowrap; max-width:95px; overflow:hidden; text-overflow:ellipsis; padding: 2px 4px;">${cleanName}</td>
+              <td class="text-dark" style="white-space:nowrap; padding: 2px 4px;">${abVal}</td>
+              <td class="${hitHighlight}" style="white-space:nowrap; padding: 2px 4px;">${hitsVal}</td>
+              <td style="white-space:nowrap; padding: 2px 4px;">${hrBadge}</td>
+              <td class="${Number(rbiVal) > 0 ? 'fw-bold text-danger' : 'text-dark'}" style="white-space:nowrap; padding: 2px 4px;">${rbiVal}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      const hPitchingHtml = renderPitchingRows(homeTeamData.pList);
+      const aPitchingHtml = renderPitchingRows(awayTeamData.pList);
+      const hBattingHtml = renderBattingRows(homeTeamData.hList);
+      const aBattingHtml = renderBattingRows(awayTeamData.hList);
+
+      return `
+        <div class="p-2.5 mb-2.5 rounded-3 bg-white border shadow-sm" style="border-color: #cbd5e1 !important;" id="${uId}">
+          <!-- Header with Team Switcher & Legend -->
+          <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom flex-wrap gap-1" style="border-color:#f1f5f9 !important;">
+            <div class="d-flex align-items-center gap-1.5">
+              <span class="badge bg-dark text-white px-2 py-0.5" style="font-size:0.72rem;"><i class="bi bi-shield-shaded text-warning me-1"></i>투수·타자 상세 기록</span>
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle py-0.5 px-1.5" style="font-size:0.62rem; font-weight:700;"><i class="bi bi-fire me-0.5"></i>승리조 붉은색</span>
+            </div>
+            <!-- Team Selector Buttons -->
+            <div class="btn-group btn-group-sm" role="group">
+              <button type="button" id="btnBbTeam_h_${uId}" class="btn btn-xs btn-danger text-white fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#dc2626; border-color:#dc2626;" onclick="switchBbWidgetTeam('${uId}', 'home')">
+                🔴 홈 ${hName}
+              </button>
+              <button type="button" id="btnBbTeam_a_${uId}" class="btn btn-xs btn-outline-primary fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#ffffff; border-color:#93c5fd; color:#1d4ed8;" onclick="switchBbWidgetTeam('${uId}', 'away')">
+                🔵 원정 ${aName}
+              </button>
+            </div>
+          </div>
+
+          <!-- HOME TEAM VIEW -->
+          <div id="boxBbTeam_h_${uId}">
+            <div class="row g-2">
+              <!-- Pitching Column -->
+              <div class="col-12 col-lg-6">
+                <div class="rounded-2 border p-1.5 h-100" style="border-color:#fecaca; background:#fffafa;">
+                  <div class="d-flex justify-content-between align-items-center mb-1 px-1">
+                    <strong class="text-danger small" style="font-size:0.73rem;"><i class="bi bi-person-fill me-1"></i>${hName} 투수진 (선발·구원)</strong>
+                    <span class="text-muted" style="font-size:0.65rem;">총 ${homeTeamData.pList.length}명 등판</span>
+                  </div>
+                  <div class="table-responsive rounded border bg-white" style="border-color:#fecaca; max-height:220px; overflow-y:auto;">
+                    <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size:0.70rem; border-collapse:collapse; min-width:300px;">
+                      <thead style="background:#fee2e2; color:#991b1b; position:sticky; top:0; z-index:1;">
+                        <tr style="height:24px;">
+                          <th style="width:15%;">구분</th>
+                          <th style="width:28%;">투수명</th>
+                          <th style="width:12%;">이닝</th>
+                          <th style="width:12%;">투구</th>
+                          <th style="width:10%;">자책</th>
+                          <th style="width:10%;">삼진</th>
+                          <th style="width:13%;">결과</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${hPitchingHtml}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Batting Column -->
+              <div class="col-12 col-lg-6">
+                <div class="rounded-2 border p-1.5 h-100" style="border-color:#e2e8f0; background:#f8fafc;">
+                  <div class="d-flex justify-content-between align-items-center mb-1 px-1">
+                    <strong class="text-dark small" style="font-size:0.73rem;"><i class="bi bi-bullseye me-1 text-primary"></i>${hName} 타자진 (1~9번 라인업)</strong>
+                    <span class="text-muted" style="font-size:0.65rem;">총 ${homeTeamData.hList.length}명 타석</span>
+                  </div>
+                  <div class="table-responsive rounded border bg-white" style="border-color:#e2e8f0; max-height:220px; overflow-y:auto;">
+                    <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size:0.70rem; border-collapse:collapse; min-width:300px;">
+                      <thead style="background:#f1f5f9; color:#334155; position:sticky; top:0; z-index:1;">
+                        <tr style="height:24px;">
+                          <th style="width:12%;">타순</th>
+                          <th style="width:15%;">포지션</th>
+                          <th style="width:28%;">타자명</th>
+                          <th style="width:12%;">타수</th>
+                          <th style="width:12%;">안타</th>
+                          <th style="width:10%;">홈런</th>
+                          <th style="width:11%;">타점</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${hBattingHtml}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AWAY TEAM VIEW -->
+          <div id="boxBbTeam_a_${uId}" style="display: none;">
+            <div class="row g-2">
+              <!-- Pitching Column -->
+              <div class="col-12 col-lg-6">
+                <div class="rounded-2 border p-1.5 h-100" style="border-color:#bfdbfe; background:#f0f7ff;">
+                  <div class="d-flex justify-content-between align-items-center mb-1 px-1">
+                    <strong class="text-primary small" style="font-size:0.73rem;"><i class="bi bi-person-fill me-1"></i>${aName} 투수진 (선발·구원)</strong>
+                    <span class="text-muted" style="font-size:0.65rem;">총 ${awayTeamData.pList.length}명 등판</span>
+                  </div>
+                  <div class="table-responsive rounded border bg-white" style="border-color:#bfdbfe; max-height:220px; overflow-y:auto;">
+                    <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size:0.70rem; border-collapse:collapse; min-width:300px;">
+                      <thead style="background:#dbeafe; color:#1e40af; position:sticky; top:0; z-index:1;">
+                        <tr style="height:24px;">
+                          <th style="width:15%;">구분</th>
+                          <th style="width:28%;">투수명</th>
+                          <th style="width:12%;">이닝</th>
+                          <th style="width:12%;">투구</th>
+                          <th style="width:10%;">자책</th>
+                          <th style="width:10%;">삼진</th>
+                          <th style="width:13%;">결과</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${aPitchingHtml}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Batting Column -->
+              <div class="col-12 col-lg-6">
+                <div class="rounded-2 border p-1.5 h-100" style="border-color:#e2e8f0; background:#f8fafc;">
+                  <div class="d-flex justify-content-between align-items-center mb-1 px-1">
+                    <strong class="text-dark small" style="font-size:0.73rem;"><i class="bi bi-bullseye me-1 text-primary"></i>${aName} 타자진 (1~9번 라인업)</strong>
+                    <span class="text-muted" style="font-size:0.65rem;">총 ${awayTeamData.hList.length}명 타석</span>
+                  </div>
+                  <div class="table-responsive rounded border bg-white" style="border-color:#e2e8f0; max-height:220px; overflow-y:auto;">
+                    <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size:0.70rem; border-collapse:collapse; min-width:300px;">
+                      <thead style="background:#f1f5f9; color:#334155; position:sticky; top:0; z-index:1;">
+                        <tr style="height:24px;">
+                          <th style="width:12%;">타순</th>
+                          <th style="width:15%;">포지션</th>
+                          <th style="width:28%;">타자명</th>
+                          <th style="width:12%;">타수</th>
+                          <th style="width:12%;">안타</th>
+                          <th style="width:10%;">홈런</th>
+                          <th style="width:11%;">타점</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${aBattingHtml}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    window.switchBbWidgetTeam = function(uId, team) {
+      const hBox = document.getElementById(`boxBbTeam_h_${uId}`);
+      const aBox = document.getElementById(`boxBbTeam_a_${uId}`);
+      const hBtn = document.getElementById(`btnBbTeam_h_${uId}`);
+      const aBtn = document.getElementById(`btnBbTeam_a_${uId}`);
+
+      if (team === 'home') {
+        if (hBox) hBox.style.display = 'block';
+        if (aBox) aBox.style.display = 'none';
+        if (hBtn) {
+          hBtn.className = 'btn btn-xs btn-danger text-white fw-bold py-1 px-2.5';
+          hBtn.style.background = '#dc2626';
+          hBtn.style.borderColor = '#dc2626';
+          hBtn.style.color = '#ffffff';
+        }
+        if (aBtn) {
+          aBtn.className = 'btn btn-xs btn-outline-primary fw-bold py-1 px-2.5';
+          aBtn.style.background = '#ffffff';
+          aBtn.style.borderColor = '#93c5fd';
+          aBtn.style.color = '#1d4ed8';
+        }
+      } else {
+        if (hBox) hBox.style.display = 'none';
+        if (aBox) aBox.style.display = 'block';
+        if (aBtn) {
+          aBtn.className = 'btn btn-xs btn-primary text-white fw-bold py-1 px-2.5';
+          aBtn.style.background = '#2563eb';
+          aBtn.style.borderColor = '#2563eb';
+          aBtn.style.color = '#ffffff';
+        }
+        if (hBtn) {
+          hBtn.className = 'btn btn-xs btn-outline-danger fw-bold py-1 px-2.5';
+          hBtn.style.background = '#ffffff';
+          hBtn.style.borderColor = '#fca5a5';
+          hBtn.style.color = '#dc2626';
+        }
+      }
+    };
+
     function buildPitchersOnlyHtml(m, matchup) {
       matchup = ensureMatchupData(m, matchup);
       const isBaseball = (m.sport_code || (matchup && matchup.sport_code) || '').toUpperCase() === 'BASEBALL' || !!(matchup && matchup.starting_pitchers);
@@ -6693,6 +7103,7 @@ function getFullModalMatchList() {
 
       return `
         ${startingPitchersHtml}
+        ${renderBaseballPitchingBattingWidgetHtml(m)}
         ${bullpenHtml}
       `;
     }
@@ -7770,6 +8181,7 @@ function getFullModalMatchList() {
             </div>
           </div>
         </div>
+        ${renderBaseballPitchingBattingWidgetHtml(m)}
       `;
     }
 
@@ -13773,7 +14185,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
         </div>
       `;
 
-      const pitchingBattingSectionHtml = isBaseball ? buildPitchingBattingSectionHtml() : '';
+      const pitchingBattingSectionHtml = isBaseball ? renderBaseballPitchingBattingWidgetHtml(m) : '';
 
       container.innerHTML = `
         ${isBaseball ? startersSectionHtml : nonBaseballHtml}
