@@ -51,6 +51,29 @@ class LivePollingAgent {
     console.log('[LivePollingAgent] Polling stopped.');
   }
 
+  setWebSocketActive(active) {
+    this._isWebSocketActive = active;
+    if (active) {
+      // 웹소켓 정상 연결 시, 불필요한 대역폭 낭비를 막고 60초 완화 폴링 백업으로 전환
+      if (this.intervalSeconds !== 60) {
+        this.start(60);
+      }
+      const statusEl = document.getElementById('hourlySyncStatus');
+      if (statusEl) {
+        statusEl.innerText = '⚡ WebSocket 실시간 초고속 동기화 활성 (지연 0ms)';
+      }
+    } else {
+      // 웹소켓 단절 시 즉각 5초 긴급 HTTP 폴링으로 자가 복구
+      if (this.intervalSeconds !== 5) {
+        this.start(5);
+      }
+      const statusEl = document.getElementById('hourlySyncStatus');
+      if (statusEl) {
+        statusEl.innerText = '실시간 라이브 자동 갱신 (5초 주기 가동 중)';
+      }
+    }
+  }
+
   /**
    * 1회성 실시간 폴링 실행
    */

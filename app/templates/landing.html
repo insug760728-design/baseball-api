@@ -17465,8 +17465,11 @@ function updateSlimPanel(matchId, type, contentHtml) {
         liveSocket.onopen = () => {
           console.log('[WebSocket] Connected to tokeon.kr live feed');
           if (badge) {
-            badge.innerText = '실시간 웹소켓 연결됨';
+            badge.innerText = '실시간 웹소켓 연결됨 (0ms)';
             badge.parentElement.style.background = 'rgba(16, 185, 129, 0.2)';
+          }
+          if (window.livePollingAgent && typeof window.livePollingAgent.setWebSocketActive === 'function') {
+            window.livePollingAgent.setWebSocketActive(true);
           }
           if (!allMatches || allMatches.length === 0) {
             loadLiveMatches();
@@ -17475,6 +17478,17 @@ function updateSlimPanel(matchId, type, contentHtml) {
             loadCommunityMessages();
           }
         };
+
+        // 25초 주기 자동 핑 하트비트 (프록시/모바일 슬립 방지)
+        if (!window._wsPingTimer) {
+          window._wsPingTimer = setInterval(() => {
+            if (liveSocket && liveSocket.readyState === WebSocket.OPEN) {
+              try {
+                liveSocket.send(JSON.stringify({ type: 'PING' }));
+              } catch(e) {}
+            }
+          }, 25000);
+        }
 
         liveSocket.onmessage = (event) => {
           try {
@@ -17492,6 +17506,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
             badge.innerText = '실시간 스트림 동기화 중...';
             badge.parentElement.style.background = 'rgba(245, 158, 11, 0.2)';
           }
+          if (window.livePollingAgent && typeof window.livePollingAgent.setWebSocketActive === 'function') {
+            window.livePollingAgent.setWebSocketActive(false);
+          }
           setTimeout(() => {
             connectLiveWebSocket();
             wsRetryDelay = Math.min(4000, Math.round(wsRetryDelay * 1.5));
@@ -17500,6 +17517,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
         liveSocket.onerror = (err) => {
           console.warn('[WebSocket Error]:', err);
+          if (window.livePollingAgent && typeof window.livePollingAgent.setWebSocketActive === 'function') {
+            window.livePollingAgent.setWebSocketActive(false);
+          }
         };
       } catch (e) {
         console.warn('WS Init failed:', e);
@@ -17520,8 +17540,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
         communityMessages.push(msg);
         if (currentChatChannel === 'ALL' || msg.channel === currentChatChannel) {
           if (!document.querySelector(`[data-chat-content="${msg.content}"]`)) {
-          appendMessageToFeed(msg);
-        }
+            appendMessageToFeed(msg);
+          }
         }
       } else if (data.type === 'HOURLY_SYNC_COMPLETE') {
         // 1-Hour Automated Sync Broadcast arrived!
@@ -17534,8 +17554,15 @@ function updateSlimPanel(matchId, type, contentHtml) {
           setTimeout(() => { badge.innerText = '1시간 자동 업데이트 활성'; }, 5000);
         }
       } else if (data.type === 'LIVE_SCORE_UPDATE') {
-        // ⚡ WebSocket 초고속 실시간 점수 즉각 반영 (HTTP 지연 0ms)
+        // ⚡ WebSocket 초고속 실시간 점수 즉각 반영 (지연 0ms)
         console.log('[WebSocket] Live score update received!', data);
+        const liveItems = data.matches || (data.match ? [data.match] : []);
+        if (window.matchListAgent && Array.isArray(liveItems) && liveItems.length > 0) {
+          const changedIds = window.matchListAgent.mergeMatches(liveItems);
+          if (changedIds && changedIds.length > 0 && window.livePollingAgent) {
+            window.livePollingAgent.applyMicroDomUpdates(changedIds);
+          }
+        }
         handleLiveScoreWebSocketUpdate(data);
       }
     }

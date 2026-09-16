@@ -31,12 +31,18 @@ from app.services.match_service import MatchService
 from app.services.scheduler_service import SchedulerService
 from app.core.sports_catalog import SPORTS_CATALOG
 from app.core.error_monitor import init_error_monitoring, capture_exception
+from app.core.websocket_manager import manager as ws_manager
 
 Base.metadata.create_all(bind=engine)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_error_monitoring()
+    try:
+        import asyncio
+        ws_manager.set_event_loop(asyncio.get_running_loop())
+    except Exception:
+        pass
     db = SessionLocal()
     try:
         match_count = db.query(models.Match).count()
