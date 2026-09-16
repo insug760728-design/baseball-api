@@ -1,6 +1,7 @@
 import os
 import time
 import json
+import re
 from typing import List, Optional, Dict, Tuple, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
@@ -42,7 +43,6 @@ def get_official_pitchers(response: Response):
     if now - cache_time < 3600 and cached_bytes != b"{}":
         response.headers["Cache-Control"] = "public, max-age=3600"
         return Response(content=cached_bytes, media_type="application/json")
-
     json_path = os.path.join(os.path.dirname(__file__), "../../services/official_pitchers_dataset.json")
     if os.path.exists(json_path):
         with open(json_path, "r", encoding="utf-8") as f:
@@ -51,6 +51,49 @@ def get_official_pitchers(response: Response):
         response.headers["Cache-Control"] = "public, max-age=3600"
         return Response(content=content, media_type="application/json")
     return {}
+
+@router.get("/pitcher-profile", summary="선발투수 실시간 공식 프로필 및 최근 10등판 일지 단일 조회")
+def get_pitcher_profile_endpoint(
+    name: str = Query(..., description="투수 이름 (한글 또는 영문)"),
+    league: Optional[str] = Query(None, description="리그명 (MLB, KBO, NPB)")
+):
+    """
+    선발투수의 실시간 공식 시즌 성적 및 최근 10경기 등판 일지를 100% 공식 실데이터로 반환합니다.
+    """
+    clean = re.sub(r"\([^\)]+\)", "", name).strip()
+    json_path = os.path.join(os.path.dirname(__file__), "../../services/official_pitchers_dataset.json")
+    dataset = {}
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                dataset = json.load(f)
+        except Exception:
+            pass
+
+    # Direct match or partial match in dataset
+    if clean in dataset and dataset[clean].get("recent_starts"):
+        return dataset[clean]
+    for k, v in dataset.items():
+        if (clean == k or clean in k or k in clean) and v.get("recent_starts"):
+            return v
+
+    # Fallback to live MLB Stats API scraper if not found
+    try:
+        from app.scrapers.official_mlb_live_scraper import MlbOfficialScraper
+        scraper = MlbOfficialScraper()
+        prof = scraper.search_and_fetch_pitcher(name)
+        if prof and prof.get("recent_starts"):
+            dataset[clean] = prof
+            try:
+                with open(json_path, "w", encoding="utf-8") as f:
+                    json.dump(dataset, f, ensure_ascii=False, indent=2)
+            except Exception:
+                pass
+            return prof
+    except Exception as e:
+        print(f"[Matches API] Pitcher profile fetch error ({name}): {e}")
+
+    return dataset.get(clean, {})
 
 @router.get("", summary="경기 목록 조회 (종목/기간/상태 필터)")
 def list_matches(

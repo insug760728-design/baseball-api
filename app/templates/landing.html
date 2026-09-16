@@ -13862,6 +13862,28 @@ function updateSlimPanel(matchId, type, contentHtml) {
     // ============================================================
     // 🌟 [차세대 프리미엄 정밀 상세분석 모달 5단계 렌더러]
     // ============================================================
+    window.toggleStarterRecentLogs = function(matchId) {
+      const hBox = document.getElementById(`tableBox_hStarts_${matchId}`);
+      const aBox = document.getElementById(`tableBox_aStarts_${matchId}`);
+      const btn = document.getElementById(`btnToggleRecent_${matchId}`);
+      if (!hBox || !aBox || !btn) return;
+
+      const isHidden = (hBox.style.display === 'none' || hBox.style.display === '');
+      if (isHidden) {
+        hBox.style.display = 'block';
+        aBox.style.display = 'block';
+        btn.style.background = '#4b5563';
+        btn.style.borderColor = '#ffffff';
+        btn.style.color = '#ffffff';
+      } else {
+        hBox.style.display = 'none';
+        aBox.style.display = 'none';
+        btn.style.background = 'transparent';
+        btn.style.borderColor = '#9ca3af';
+        btn.style.color = '#ffffff';
+      }
+    };
+
     window.togglePitcherStarts = function(btnId, targetClass, totalCount) {
       const rows = document.querySelectorAll('.' + targetClass);
       const btn = document.getElementById(btnId);
@@ -13993,94 +14015,80 @@ function updateSlimPanel(matchId, type, contentHtml) {
           ? matchup.starting_pitchers[sideKey] 
           : (teamStatsStarters || (m.starters && m.starters[sideKey] ? m.starters[sideKey] : null));
 
-        const pThrows = (pOfficial && pOfficial.style) ? pOfficial.style : (pNameRaw.includes('(좌)') ? '좌완' : (pNameRaw.includes('(언)') ? '언더' : (cachedPitcherObj?.throws || '우완')));
-        
-        let seasonEra = '-';
-        let seasonRecord = '-';
-        let whip = '-';
-        let avgIp = '-';
-        let so3g = '-';
-        let bb3g = '-';
+        const pThrows = (cachedPitcherObj && cachedPitcherObj.style) ? cachedPitcherObj.style : ((pOfficial && pOfficial.style) ? pOfficial.style : (pNameRaw.includes('(좌)') ? '좌완' : (pNameRaw.includes('(언)') ? '언더' : (cachedPitcherObj?.throws || '우완'))));
+        const pHand = (cachedPitcherObj && cachedPitcherObj.hand) ? cachedPitcherObj.hand : ((pOfficial && pOfficial.hand) ? pOfficial.hand : (pThrows === '좌완' ? 'L' : 'R'));
 
-        if (pOfficial) {
-          seasonEra = (pOfficial.era !== undefined && pOfficial.era !== null) ? Number(pOfficial.era).toFixed(2) : '-';
-          seasonRecord = (pOfficial.w !== undefined && pOfficial.l !== undefined) ? `${pOfficial.w}승 ${pOfficial.l}패` : '-';
-          whip = (pOfficial.whip !== undefined && pOfficial.whip !== null) ? Number(pOfficial.whip).toFixed(2) : '-';
-          avgIp = pOfficial.avgIp || '-';
-          so3g = (pOfficial.so3g !== undefined) ? pOfficial.so3g : '-';
-          bb3g = (pOfficial.bb3g !== undefined) ? pOfficial.bb3g : '-';
-        } else if (cachedPitcherObj) {
-          const cEra = cachedPitcherObj.season_era || cachedPitcherObj.era;
-          seasonEra = (cEra && cEra !== '-') ? Number(cEra).toFixed(2) : '-';
-          seasonRecord = (cachedPitcherObj.season_record && cachedPitcherObj.season_record !== '-') 
-            ? cachedPitcherObj.season_record 
-            : ((cachedPitcherObj.wins !== undefined && cachedPitcherObj.losses !== undefined) ? `${cachedPitcherObj.wins}승 ${cachedPitcherObj.losses}패` : '-');
-          whip = (cachedPitcherObj.whip && cachedPitcherObj.whip !== '-') ? Number(cachedPitcherObj.whip).toFixed(2) : (cachedPitcherObj.season_whip || '-');
-          avgIp = (cachedPitcherObj.summary?.avg_ip && cachedPitcherObj.summary.avg_ip !== '-') ? cachedPitcherObj.summary.avg_ip : (cachedPitcherObj.avg_ip || '-');
-          so3g = (cachedPitcherObj.summary?.total_so !== undefined) ? cachedPitcherObj.summary.total_so : (cachedPitcherObj.season_so || '-');
-          bb3g = (cachedPitcherObj.summary?.total_bb !== undefined) ? cachedPitcherObj.summary.total_bb : (cachedPitcherObj.season_bb || '-');
+        // 100% 공식 시즌 방어율 (ERA)
+        let seasonEra = '-';
+        if (cachedPitcherObj && cachedPitcherObj.era && cachedPitcherObj.era !== '-') {
+          seasonEra = String(cachedPitcherObj.era);
+        } else if (pOfficial && pOfficial.era !== undefined && pOfficial.era !== null && pOfficial.era !== '-') {
+          seasonEra = String(pOfficial.era);
+        }
+
+        // 100% 공식 시즌 전적 (W승 L패)
+        let seasonRecord = '-';
+        if (cachedPitcherObj && cachedPitcherObj.record && cachedPitcherObj.record !== '-') {
+          seasonRecord = cachedPitcherObj.record;
+        } else if (cachedPitcherObj && cachedPitcherObj.season_record && cachedPitcherObj.season_record !== '-') {
+          seasonRecord = cachedPitcherObj.season_record;
+        } else if (cachedPitcherObj && cachedPitcherObj.wins !== undefined && cachedPitcherObj.losses !== undefined) {
+          seasonRecord = `${cachedPitcherObj.wins}승 ${cachedPitcherObj.losses}패`;
+        } else if (pOfficial && pOfficial.record && pOfficial.record !== '-') {
+          seasonRecord = pOfficial.record;
+        } else if (pOfficial && pOfficial.season_record && pOfficial.season_record !== '-') {
+          seasonRecord = pOfficial.season_record;
+        } else if (pOfficial && pOfficial.w !== undefined && pOfficial.l !== undefined) {
+          seasonRecord = `${pOfficial.w}승 ${pOfficial.l}패`;
+        }
+
+        // 공식 요약 스탯 (e.g. 30.1이닝 29K 15BB)
+        let summaryText = '';
+        if (cachedPitcherObj && cachedPitcherObj.summary && cachedPitcherObj.summary !== '-') {
+          summaryText = cachedPitcherObj.summary;
+        } else if (cachedPitcherObj && cachedPitcherObj.season_summary && cachedPitcherObj.season_summary !== '-') {
+          summaryText = cachedPitcherObj.season_summary;
+        } else if (pOfficial && pOfficial.summary && pOfficial.summary !== '-') {
+          summaryText = pOfficial.summary;
+        } else if (pOfficial && pOfficial.season_summary && pOfficial.season_summary !== '-') {
+          summaryText = pOfficial.season_summary;
+        }
+
+        if (!summaryText || summaryText === '-') {
+          const ipVal = cachedPitcherObj?.season_ip || pOfficial?.season_ip || pOfficial?.avgIp || '';
+          const soVal = cachedPitcherObj?.season_so != null ? cachedPitcherObj.season_so : (pOfficial?.season_so != null ? pOfficial.season_so : pOfficial?.so3g);
+          const bbVal = cachedPitcherObj?.season_bb != null ? cachedPitcherObj.season_bb : (pOfficial?.season_bb != null ? pOfficial.season_bb : pOfficial?.bb3g);
+          if (ipVal && ipVal !== '-') {
+            summaryText = `${ipVal} ${soVal != null ? `${soVal}K` : ''} ${bbVal != null ? `${bbVal}BB` : ''}`.trim();
+          } else {
+            summaryText = isAnnounced ? '공식 기록 집계 중' : '선발 미정';
+          }
         }
 
         let startsList = [];
-        if (pOfficial && pOfficial.recent_starts && Array.isArray(pOfficial.recent_starts) && pOfficial.recent_starts.length > 0) {
-          startsList = pOfficial.recent_starts.slice(0, 10);
-        } else if (cachedPitcherObj && cachedPitcherObj.recent_starts && Array.isArray(cachedPitcherObj.recent_starts) && cachedPitcherObj.recent_starts.length > 0) {
+        if (cachedPitcherObj && cachedPitcherObj.recent_starts && Array.isArray(cachedPitcherObj.recent_starts) && cachedPitcherObj.recent_starts.length > 0) {
           startsList = cachedPitcherObj.recent_starts.slice(0, 10);
-        } else if (cachedPitcherObj && cachedPitcherObj.recent_3_starts && Array.isArray(cachedPitcherObj.recent_3_starts) && cachedPitcherObj.recent_3_starts.length > 0) {
-          startsList = cachedPitcherObj.recent_3_starts.slice(0, 10);
-        }
-
-        if (startsList.length === 0 && (isAnnounced || (cleanName && cleanName !== '선발 미정'))) {
-          const genStarts = generatePitcherRecentStarts(cleanName, teamName, isHome ? aName : hName, seasonEra !== '-' ? seasonEra : '3.45', m);
-          startsList = genStarts.slice(0, 10);
-        }
-
-        if (startsList.length > 0) {
-          if (avgIp === '-' || avgIp === '') {
-            const sumIp = startsList.slice(0, 3).reduce((acc, s) => acc + (parseFloat(s.ip) || 5.2), 0);
-            avgIp = (sumIp / Math.min(3, startsList.length)).toFixed(1) + '이닝';
-          }
-          if (so3g === '-' || so3g === '') {
-            so3g = startsList.slice(0, 3).reduce((acc, s) => acc + (parseInt(s.so) || 5), 0);
-          }
-          if (bb3g === '-' || bb3g === '') {
-            bb3g = startsList.slice(0, 3).reduce((acc, s) => acc + (parseInt(s.bb) || 2), 0);
-          }
-          if (seasonRecord === '-' || seasonRecord === '') {
-            const wins = startsList.filter(s => s.result === '승').length + 5;
-            const losses = startsList.filter(s => s.result === '패').length + 3;
-            seasonRecord = `${wins}승 ${losses}패`;
-          }
-          if (seasonEra === '-' || seasonEra === '') {
-            const sumEr = startsList.slice(0, 3).reduce((acc, s) => acc + (parseInt(s.er) || 2), 0);
-            const sumIpNum = startsList.slice(0, 3).reduce((acc, s) => acc + (parseFloat(s.ip) || 5.2), 0);
-            seasonEra = sumIpNum > 0 ? ((sumEr * 9) / sumIpNum).toFixed(2) : '3.45';
-          }
-          if (whip === '-' || whip === '') {
-            const eraNum = parseFloat(seasonEra) || 3.45;
-            whip = (0.88 + (eraNum * 0.08)).toFixed(2);
-          }
+        } else if (pOfficial && pOfficial.recent_starts && Array.isArray(pOfficial.recent_starts) && pOfficial.recent_starts.length > 0) {
+          startsList = pOfficial.recent_starts.slice(0, 10);
         }
 
         return {
           isAnnounced,
-          cleanName,
+          cleanName: cleanName || '선발 미정',
+          hand: pHand,
           throws: pThrows,
           era: seasonEra,
           record: seasonRecord,
-          whip: whip,
-          avgIp: avgIp,
-          so3g: so3g,
-          bb3g: bb3g,
+          summary: summaryText,
           startsList
         };
       }
 
-      function renderLogRowsHtml(startsList, uniqueId) {
+      function renderLogRowsHtml(startsList) {
         if (!startsList || startsList.length === 0) {
           return `
             <tr>
-              <td colspan="9" class="text-center text-muted py-3 fw-bold" style="background:#ffffff; font-size:0.75rem;">
+              <td colspan="10" class="text-center text-muted py-2.5 fw-bold" style="background:#ffffff; font-size:0.75rem;">
                 <i class="bi bi-info-circle me-1 text-primary"></i>공식 등판 기록 집계 중 (시즌 첫 등판 또는 경기 일지 대기)
               </td>
             </tr>
@@ -14088,16 +14096,17 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
 
         return startsList.map((st, sIdx) => {
-          const isExtra = (sIdx >= 3);
+          const venueVal = st.venue || (st.is_home ? '홈' : '원');
           const dateVal = st.date || st.match_date || '-';
+          const matchCol = `${venueVal} ${dateVal}`;
           const oppVal = st.opponent || st.opp || '-';
-          const resRaw = st.result || '-';
-          const resBadge = resRaw === '승' ? 'bg-danger' : (resRaw === '패' ? 'bg-primary' : (['홀', '세'].includes(resRaw) ? 'bg-success' : 'bg-secondary'));
           const ipVal = st.ip || st.innings || '-';
-          const erVal = (st.er !== undefined && st.er !== null) ? st.er : '-';
+          const bfVal = (st.bf !== undefined && st.bf !== null) ? st.bf : '-';
           const hitsVal = (st.h !== undefined && st.h !== null) ? st.h : ((st.hits !== undefined && st.hits !== null) ? st.hits : '-');
+          const hrVal = (st.hr !== undefined && st.hr !== null) ? st.hr : 0;
           const bbVal = (st.bb !== undefined && st.bb !== null) ? st.bb : '-';
           const soVal = (st.so !== undefined && st.so !== null) ? st.so : '-';
+          const erVal = (st.er !== undefined && st.er !== null) ? st.er : '-';
           let eraVal = st.era || '-';
           if (eraVal === '-' && erVal !== '-' && ipVal !== '-') {
             const ipNum = parseFloat(ipVal);
@@ -14107,17 +14116,19 @@ function updateSlimPanel(matchId, type, contentHtml) {
             }
           }
 
+          const isEven = (sIdx % 2 === 0);
           return `
-            <tr class="${isExtra ? `extraStarts_${uniqueId}` : ''}" style="${isExtra ? 'display: none;' : ''}; height:28px; background: ${sIdx % 2 === 0 ? '#ffffff' : '#fafafa'};">
-              <td class="text-muted fw-bold" style="white-space:nowrap;">${dateVal}</td>
-              <td class="fw-bold text-dark text-truncate" style="white-space:nowrap; max-width:90px;" title="${oppVal}">${oppVal}</td>
-              <td><span class="badge ${resBadge} text-white px-1.5 py-0.5" style="font-size:0.65rem;">${resRaw}</span></td>
-              <td class="fw-bold text-dark" style="white-space:nowrap;">${ipVal}</td>
-              <td class="${Number(erVal) > 2 ? 'text-danger fw-black' : 'text-dark'}" style="white-space:nowrap;">${erVal}</td>
-              <td class="text-dark" style="white-space:nowrap;">${hitsVal}</td>
-              <td class="text-dark" style="white-space:nowrap;">${bbVal}</td>
-              <td class="fw-bold text-dark" style="white-space:nowrap;">${soVal}</td>
-              <td class="text-muted fw-bold" style="white-space:nowrap;">${eraVal}</td>
+            <tr style="height:26px; background: ${isEven ? '#ffffff' : '#f9fafb'}; font-size:0.75rem; border-bottom:1px solid #e5e7eb;">
+              <td class="text-secondary fw-semibold text-center" style="white-space:nowrap; padding: 4px 6px;">${matchCol}</td>
+              <td class="text-dark fw-bold text-center text-truncate" style="white-space:nowrap; max-width:85px; padding: 4px 6px;" title="${oppVal}">${oppVal}</td>
+              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">${ipVal}</td>
+              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">${bfVal}</td>
+              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">${hitsVal}</td>
+              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">${hrVal}</td>
+              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">${bbVal}</td>
+              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">${soVal}</td>
+              <td class="${Number(erVal) > 2 ? 'text-danger fw-bold' : 'text-dark'} text-center" style="white-space:nowrap; padding: 4px 4px;">${erVal}</td>
+              <td class="text-secondary fw-bold text-center" style="white-space:nowrap; padding: 4px 6px;">${eraVal}</td>
             </tr>
           `;
         }).join('');
@@ -14126,169 +14137,123 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const hP = getPitcherProfile(true, hName, startersInfo.homeStarter);
       const aP = getPitcherProfile(false, aName, startersInfo.awayStarter);
 
-      const hUniqueId = `home_${m.id}`;
-      const aUniqueId = `away_${m.id}`;
-
-      const hRowsHtml = renderLogRowsHtml(hP.startsList, hUniqueId);
-      const aRowsHtml = renderLogRowsHtml(aP.startsList, aUniqueId);
-
-      const hToggleBtn = (hP.startsList.length > 3) ? `
-        <div class="text-center mt-1.5">
-          <button type="button" id="btnExtra_${hUniqueId}" class="btn btn-xs btn-outline-secondary py-1 px-3 fw-bold rounded-pill" style="font-size:0.70rem; border-color:#cbd5e1;" onclick="togglePitcherStarts('btnExtra_${hUniqueId}', 'extraStarts_${hUniqueId}', ${hP.startsList.length})">
-            <i class="bi bi-chevron-down me-1"></i>${hName} 최근 등판 전체보기 (총 ${hP.startsList.length}경기)
-          </button>
-        </div>
-      ` : '';
-
-      const aToggleBtn = (aP.startsList.length > 3) ? `
-        <div class="text-center mt-1.5">
-          <button type="button" id="btnExtra_${aUniqueId}" class="btn btn-xs btn-outline-secondary py-1 px-3 fw-bold rounded-pill" style="font-size:0.70rem; border-color:#cbd5e1;" onclick="togglePitcherStarts('btnExtra_${aUniqueId}', 'extraStarts_${aUniqueId}', ${aP.startsList.length})">
-            <i class="bi bi-chevron-down me-1"></i>${aName} 최근 등판 전체보기 (총 ${aP.startsList.length}경기)
-          </button>
-        </div>
-      ` : '';
+      const hRowsHtml = renderLogRowsHtml(hP.startsList);
+      const aRowsHtml = renderLogRowsHtml(aP.startsList);
 
       // -------------------------------------------------------------
-      // 🏆 단일 일체형 선발투수 1:1 매치업 & 등판일지 대시보드
+      // 🏆 와이즈토토/베트맨 공식 레이아웃 100% 일치 선발투수 대시보드
       // -------------------------------------------------------------
       const startersSectionHtml = `
-        <div class="p-2.5 mb-2.5 rounded-3 bg-white border shadow-sm" style="border-color: #cbd5e1 !important;">
-          <!-- Top Pitcher Profile Face-off -->
-          <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom" style="border-color:#f1f5f9 !important;">
-            <div class="d-flex align-items-center gap-1.5">
-              <span class="badge bg-dark text-white px-2 py-0.5" style="font-size:0.72rem;"><i class="bi bi-fire text-warning me-1"></i>선발투수 1:1 매치업</span>
-              <span class="text-muted small" style="font-size:0.70rem;">2026 시즌 공식 기록</span>
-            </div>
-            <span class="badge bg-success-subtle text-success border border-success-subtle py-0.5 px-1.5" style="font-size:0.65rem; font-weight:700;"><i class="bi bi-check-circle-fill me-0.5"></i>선발확정</span>
+        <div class="mb-2.5 rounded-2 overflow-hidden border shadow-sm" style="border-color:#cbd5e1; background:#ffffff;">
+          <!-- 상단 헤더 바 (다크 그레이 배경 + [최근경기] 토글 버튼) -->
+          <div class="d-flex justify-content-between align-items-center px-3 py-1.5" style="background:#374151; color:#ffffff;">
+            <span class="fw-bold" style="font-size:0.86rem; letter-spacing:-0.2px;">예상 선발투수</span>
+            <button type="button" id="btnToggleRecent_${m.id}" 
+                    class="btn btn-xs fw-bold px-2 py-0.5 rounded" 
+                    style="font-size:0.72rem; color:#ffffff; border:1px solid #9ca3af; background:transparent; transition: all 0.2s;" 
+                    onclick="toggleStarterRecentLogs(${m.id})">
+              최근경기
+            </button>
           </div>
 
-          <!-- Top Face-off Names -->
-          <div class="row align-items-center text-center g-1 mb-2">
-            <div class="col-5">
-              <div class="p-1.5 rounded-2" style="background: #fef2f2; border: 1px solid #fecaca;">
-                <span class="badge bg-danger text-white px-1.5 py-0.5" style="font-size:0.62rem;">🔴 홈 ${hName}</span>
-                <div class="fw-black text-dark text-truncate mt-0.5" style="font-size: 0.95rem;">${hP.cleanName}</div>
-                <div class="text-muted small" style="font-size:0.65rem;">${hP.throws} · 시즌 ${hP.era}</div>
+          <!-- 홈 팀 선발투수 요약 행 (Image 2) -->
+          <div class="border-bottom" style="border-color:#e5e7eb;">
+            <div class="d-flex align-items-stretch" style="min-height:46px;">
+              <!-- 팀명 뱃지 (홈 = 연한 핑크/레드) -->
+              <div class="d-flex align-items-center justify-content-center px-2.5 fw-bold text-danger text-center" 
+                   style="width:90px; min-width:90px; background:#fee2e2; font-size:0.82rem; border-right:1px solid #fecaca;">
+                ${hName}
+              </div>
+              <!-- 선수명 & 투구 유형 (R / L) -->
+              <div class="d-flex align-items-center px-3 flex-grow-1" style="font-size:0.88rem;">
+                <span class="fw-bold text-dark me-2">${hP.cleanName}</span>
+                <span class="fw-bold text-primary" style="font-size:0.85rem;">${hP.hand || 'R'}</span>
+              </div>
+              <!-- 전적 & 방어율 & 요약 스탯 (우측 정렬) -->
+              <div class="d-flex flex-column justify-content-center align-items-end pe-3 text-end" style="min-width:145px;">
+                <div class="fw-bold text-danger" style="font-size:0.86rem; line-height:1.2;">
+                  ${hP.record} ${hP.era}
+                </div>
+                <div class="text-secondary" style="font-size:0.72rem; line-height:1.2;">
+                  ${hP.summary}
+                </div>
               </div>
             </div>
-            <div class="col-2 text-center">
-              <span class="badge bg-light text-secondary border fw-black px-2 py-1" style="font-size:0.75rem;">VS</span>
-            </div>
-            <div class="col-5">
-              <div class="p-1.5 rounded-2" style="background: #eff6ff; border: 1px solid #bfdbfe;">
-                <span class="badge bg-primary text-white px-1.5 py-0.5" style="font-size:0.62rem;">🔵 원정 ${aName}</span>
-                <div class="fw-black text-dark text-truncate mt-0.5" style="font-size: 0.95rem;">${aP.cleanName}</div>
-                <div class="text-muted small" style="font-size:0.65rem;">${aP.throws} · 시즌 ${aP.era}</div>
+
+            <!-- 홈 투수 최근 10경기 테이블 (최근경기 토글 시 노출, Image 3) -->
+            <div id="tableBox_hStarts_${m.id}" class="pitcher-starts-table-box" style="display:none; border-top:1px solid #e5e7eb;">
+              <div class="table-responsive" style="overflow-x:auto;">
+                <table class="table table-sm text-center align-middle mb-0" style="width:100%; min-width:540px; font-size:0.72rem; border-collapse:collapse;">
+                  <thead style="background:#f3f4f6; color:#4b5563; border-bottom:1px solid #d1d5db;">
+                    <tr style="height:26px;">
+                      <th style="width:16%; font-weight:700;">최근경기</th>
+                      <th style="width:14%; font-weight:700;">상대</th>
+                      <th style="width:8%; font-weight:700;">이닝</th>
+                      <th style="width:8%; font-weight:700;">타자</th>
+                      <th style="width:8%; font-weight:700;">안타</th>
+                      <th style="width:8%; font-weight:700;">홈런</th>
+                      <th style="width:8%; font-weight:700;">볼넷</th>
+                      <th style="width:8%; font-weight:700;">삼진</th>
+                      <th style="width:8%; font-weight:700;">자책</th>
+                      <th style="width:14%; font-weight:700;">방어율</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${hRowsHtml}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
 
-          <!-- 1:1 Comparative Metric Table (한눈에 보는 비교표) -->
-          <div class="rounded-2 overflow-hidden border mb-2.5" style="border-color:#e2e8f0;">
-            <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size:0.74rem; border-collapse:collapse;">
-              <thead style="background:#f8fafc; color:#475569;">
-                <tr style="height:26px;">
-                  <th style="width:38%;" class="text-danger fw-bold"><i class="bi bi-circle-fill text-danger me-1" style="font-size:0.45rem;"></i>${hP.cleanName}</th>
-                  <th style="width:24%; background:#f1f5f9; font-weight:800; color:#1e293b;">시즌 지표 비교</th>
-                  <th style="width:38%;" class="text-primary fw-bold"><i class="bi bi-circle-fill text-primary me-1" style="font-size:0.45rem;"></i>${aP.cleanName}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style="height:28px;">
-                  <td class="fw-black ${parseFloat(hP.era) <= parseFloat(aP.era) ? 'text-danger bg-danger-subtle' : 'text-dark'}">${hP.era}</td>
-                  <td class="bg-light fw-bold text-secondary" style="font-size:0.70rem;">평균자책(ERA)</td>
-                  <td class="fw-black ${parseFloat(aP.era) <= parseFloat(hP.era) ? 'text-primary bg-primary-subtle' : 'text-dark'}">${aP.era}</td>
-                </tr>
-                <tr style="height:28px;">
-                  <td class="fw-bold text-dark">${hP.record}</td>
-                  <td class="bg-light fw-bold text-secondary" style="font-size:0.70rem;">시즌 승-패</td>
-                  <td class="fw-bold text-dark">${aP.record}</td>
-                </tr>
-                <tr style="height:28px;">
-                  <td class="fw-bold ${parseFloat(hP.whip) <= parseFloat(aP.whip) ? 'text-danger' : 'text-dark'}">${hP.whip}</td>
-                  <td class="bg-light fw-bold text-secondary" style="font-size:0.70rem;">WHIP(이닝출루)</td>
-                  <td class="fw-bold ${parseFloat(aP.whip) <= parseFloat(hP.whip) ? 'text-primary' : 'text-dark'}">${aP.whip}</td>
-                </tr>
-                <tr style="height:28px;">
-                  <td class="fw-bold text-dark">${hP.avgIp}</td>
-                  <td class="bg-light fw-bold text-secondary" style="font-size:0.70rem;">경기당 이닝</td>
-                  <td class="fw-bold text-dark">${aP.avgIp}</td>
-                </tr>
-                <tr style="height:28px;">
-                  <td class="fw-bold text-dark">${hP.so3g}개</td>
-                  <td class="bg-light fw-bold text-secondary" style="font-size:0.70rem;">최근 3G 탈삼진</td>
-                  <td class="fw-bold text-dark">${aP.so3g}개</td>
-                </tr>
-                <tr style="height:28px;">
-                  <td class="fw-bold text-dark">${hP.bb3g}개</td>
-                  <td class="bg-light fw-bold text-secondary" style="font-size:0.70rem;">최근 3G 사사구</td>
-                  <td class="fw-bold text-dark">${aP.bb3g}개</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Pitching Log Switcher Bar -->
-          <div class="d-flex justify-content-between align-items-center mb-1.5 flex-wrap gap-1">
-            <strong class="text-dark small" style="font-size:0.76rem;"><i class="bi bi-calendar2-check-fill text-primary me-1"></i>최근 등판 일지</strong>
-            <div class="btn-group btn-group-sm" role="group">
-              <button type="button" id="tabBtn_hStarts_${m.id}" class="btn btn-xs btn-danger text-white fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#dc2626; border-color:#dc2626;" onclick="switchPitcherLogTab(${m.id}, 'home')">
-                🔴 홈 ${hName} (${hP.cleanName})
-              </button>
-              <button type="button" id="tabBtn_aStarts_${m.id}" class="btn btn-xs btn-outline-primary fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#ffffff; border-color:#93c5fd; color:#1d4ed8;" onclick="switchPitcherLogTab(${m.id}, 'away')">
-                🔵 원정 ${aName} (${aP.cleanName})
-              </button>
+          <!-- 원정 팀 선발투수 요약 행 (Image 2) -->
+          <div>
+            <div class="d-flex align-items-stretch" style="min-height:46px;">
+              <!-- 팀명 뱃지 (원정 = 연한 블루) -->
+              <div class="d-flex align-items-center justify-content-center px-2.5 fw-bold text-primary text-center" 
+                   style="width:90px; min-width:90px; background:#e0f2fe; font-size:0.82rem; border-right:1px solid #bfdbfe;">
+                ${aName}
+              </div>
+              <!-- 선수명 & 투구 유형 (R / L) -->
+              <div class="d-flex align-items-center px-3 flex-grow-1" style="font-size:0.88rem;">
+                <span class="fw-bold text-dark me-2">${aP.cleanName}</span>
+                <span class="fw-bold text-primary" style="font-size:0.85rem;">${aP.hand || 'R'}</span>
+              </div>
+              <!-- 전적 & 방어율 & 요약 스탯 (우측 정렬) -->
+              <div class="d-flex flex-column justify-content-center align-items-end pe-3 text-end" style="min-width:145px;">
+                <div class="fw-bold text-danger" style="font-size:0.86rem; line-height:1.2;">
+                  ${aP.record} ${aP.era}
+                </div>
+                <div class="text-secondary" style="font-size:0.72rem; line-height:1.2;">
+                  ${aP.summary}
+                </div>
+              </div>
             </div>
-          </div>
 
-          <!-- Home Pitcher Log Table -->
-          <div id="box_hStarts_${m.id}" class="pitcher-log-box">
-            <div class="table-responsive rounded-2 border" style="border-color:#e2e8f0; overflow-x:auto;">
-              <table class="table table-sm table-bordered text-center align-middle mb-0 pitcher-log-table" style="width:100%; min-width:540px; table-layout:fixed; font-size:0.72rem; border-collapse:collapse;">
-                <thead style="background:#fef2f2; color:#991b1b;">
-                  <tr style="height:28px;">
-                    <th style="width: 14%; font-weight:700;">등판일</th>
-                    <th style="width: 18%; font-weight:700;">상대</th>
-                    <th style="width: 10%; font-weight:700;">결과</th>
-                    <th style="width: 11%; font-weight:700;">이닝</th>
-                    <th style="width: 11%; font-weight:700;">자책</th>
-                    <th style="width: 11%; font-weight:700;">피안타</th>
-                    <th style="width: 11%; font-weight:700;">4사구</th>
-                    <th style="width: 11%; font-weight:700;">탈삼진</th>
-                    <th style="width: 13%; font-weight:700;">ERA</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${hRowsHtml}
-                </tbody>
-              </table>
+            <!-- 원정 투수 최근 10경기 테이블 (최근경기 토글 시 노출, Image 3) -->
+            <div id="tableBox_aStarts_${m.id}" class="pitcher-starts-table-box" style="display:none; border-top:1px solid #e5e7eb;">
+              <div class="table-responsive" style="overflow-x:auto;">
+                <table class="table table-sm text-center align-middle mb-0" style="width:100%; min-width:540px; font-size:0.72rem; border-collapse:collapse;">
+                  <thead style="background:#f3f4f6; color:#4b5563; border-bottom:1px solid #d1d5db;">
+                    <tr style="height:26px;">
+                      <th style="width:16%; font-weight:700;">최근경기</th>
+                      <th style="width:14%; font-weight:700;">상대</th>
+                      <th style="width:8%; font-weight:700;">이닝</th>
+                      <th style="width:8%; font-weight:700;">타자</th>
+                      <th style="width:8%; font-weight:700;">안타</th>
+                      <th style="width:8%; font-weight:700;">홈런</th>
+                      <th style="width:8%; font-weight:700;">볼넷</th>
+                      <th style="width:8%; font-weight:700;">삼진</th>
+                      <th style="width:8%; font-weight:700;">자책</th>
+                      <th style="width:14%; font-weight:700;">방어율</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${aRowsHtml}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            ${hToggleBtn}
-          </div>
-
-          <!-- Away Pitcher Log Table -->
-          <div id="box_aStarts_${m.id}" class="pitcher-log-box" style="display: none;">
-            <div class="table-responsive rounded-2 border" style="border-color:#e2e8f0; overflow-x:auto;">
-              <table class="table table-sm table-bordered text-center align-middle mb-0 pitcher-log-table" style="width:100%; min-width:540px; table-layout:fixed; font-size:0.72rem; border-collapse:collapse;">
-                <thead style="background:#eff6ff; color:#1e40af;">
-                  <tr style="height:28px;">
-                    <th style="width: 14%; font-weight:700;">등판일</th>
-                    <th style="width: 18%; font-weight:700;">상대</th>
-                    <th style="width: 10%; font-weight:700;">결과</th>
-                    <th style="width: 11%; font-weight:700;">이닝</th>
-                    <th style="width: 11%; font-weight:700;">자책</th>
-                    <th style="width: 11%; font-weight:700;">피안타</th>
-                    <th style="width: 11%; font-weight:700;">4사구</th>
-                    <th style="width: 11%; font-weight:700;">탈삼진</th>
-                    <th style="width: 13%; font-weight:700;">ERA</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${aRowsHtml}
-                </tbody>
-              </table>
-            </div>
-            ${aToggleBtn}
           </div>
         </div>
       `;

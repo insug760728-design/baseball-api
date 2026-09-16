@@ -70,6 +70,7 @@ FULL_NAMES = {
     "Nestor Cortes": "네스터 코르테스", "Nestor Cortés": "네스터 코르테스", "Marcus Stroman": "마커스 스트로먼",
     "Luis Gil": "루이스 힐", "Clarke Schmidt": "클라크 슈미트", "Kevin Gausman": "케빈 가우스먼",
     "Jose Berrios": "호세 베리오스", "José Berríos": "호세 베리오스", "Chris Bassitt": "크리스 배싯",
+    "Robert Stock": "로버트 스탁",
     "Bowden Francis": "보든 프랜시스", "Yusei Kikuchi": "기쿠치 유세이", "Tanner Houck": "태너 하우크",
     "Kutter Crawford": "커터 크로포드", "Brayan Bello": "브라얀 베요", "Nick Pivetta": "닉 피베타",
     "Grayson Rodriguez": "그레이슨 로드리게스", "Dean Kremer": "딘 크레머", "Albert Suarez": "알버트 수아레즈",
@@ -746,6 +747,20 @@ def translate_player_name(raw: str) -> str:
         last_ko = " ".join(last_parts)
         
     return f"{first_ko} {last_ko}".strip() + jr_suffix + suffix
+
+def resolve_player_english_name(raw: str) -> str:
+    """Finds original English name from Korean player name if available."""
+    if not raw: return ""
+    clean = re.sub(r'\([^\)]+\)', '', raw).strip()
+    if re.match(r'^[A-Za-z\s\.\'-]+$', clean):
+        return clean
+    for en, ko in FULL_NAMES.items():
+        if ko == clean:
+            return en
+    for en, ko in FULL_NAMES.items():
+        if clean in ko or ko in clean:
+            return en
+    return clean
 
 def rule_transliterate_word(word: str) -> str:
     """Robust phoneme-based English/Foreign to Korean transliteration."""

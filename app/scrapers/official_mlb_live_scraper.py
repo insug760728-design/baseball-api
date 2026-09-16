@@ -51,6 +51,69 @@ MLB_TEAMS_KO = {
 def get_team_name_ko(en_name: str) -> str:
     return MLB_TEAMS_KO.get(en_name, en_name)
 
+MLB_SHORT_TEAMS = {
+    "Miami Marlins": "마이말린",
+    "San Francisco Giants": "샌프자이",
+    "Tampa Bay Rays": "탬파레이",
+    "Milwaukee Brewers": "밀워브루",
+    "San Diego Padres": "샌디파드",
+    "Washington Nationals": "워싱내셔",
+    "Pittsburgh Pirates": "피츠파이",
+    "Toronto Blue Jays": "토론블루",
+    "Boston Red Sox": "보스레드",
+    "Athletics": "애슬레틱",
+    "Oakland Athletics": "애슬레틱",
+    "St. Louis Cardinals": "세인카디",
+    "New York Yankees": "뉴욕양키",
+    "Detroit Tigers": "디트타이",
+    "New York Mets": "뉴욕메츠",
+    "Baltimore Orioles": "볼티오리",
+    "Los Angeles Dodgers": "LA다저스",
+    "Los Angeles Angels": "LA에인절",
+    "Chicago Cubs": "시카컵스",
+    "Chicago White Sox": "시카화삭",
+    "Atlanta Braves": "애틀브레",
+    "Houston Astros": "휴스애스",
+    "Seattle Mariners": "시애매리",
+    "Texas Rangers": "텍사레인",
+    "Philadelphia Phillies": "필라필리",
+    "Arizona Diamondbacks": "애리다이",
+    "Colorado Rockies": "콜로로키",
+    "Cleveland Guardians": "클리가디",
+    "Minnesota Twins": "미네트윈",
+    "Kansas City Royals": "캔자로열",
+    "Cincinnati Reds": "신시레즈"
+}
+
+def get_short_team_name_ko(raw_name: str) -> str:
+    if not raw_name:
+        return "상대팀"
+    if raw_name in MLB_SHORT_TEAMS:
+        return MLB_SHORT_TEAMS[raw_name]
+    for en, ko in MLB_SHORT_TEAMS.items():
+        if en.lower() in raw_name.lower():
+            return ko
+    ko_full = get_team_name_ko(raw_name)
+    clean = ko_full.replace(" ", "")
+    return clean[:4] if len(clean) > 4 else clean
+
+def calc_game_era(ip_str: str, er: int) -> str:
+    er = int(er or 0)
+    ip_str = str(ip_str or "0.0").strip()
+    if not ip_str or ip_str in ("0", "0.0"):
+        return "0.00" if er == 0 else "99.99"
+    try:
+        parts = ip_str.split(".")
+        whole = int(parts[0])
+        frac = int(parts[1]) if len(parts) > 1 else 0
+        ip_float = whole + (frac / 3.0)
+        if ip_float <= 0:
+            return "0.00"
+        val = (er * 9.0) / ip_float
+        return f"{val:.2f}"
+    except Exception:
+        return "0.00"
+
 class MlbOfficialScraper:
     """공식 MLB Stats API 실시간 수집 엔진"""
 
@@ -58,7 +121,7 @@ class MlbOfficialScraper:
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
         }
-        self._pitcher_cache: Dict[int, Dict[str, Any]] = {}
+        self._pitcher_cache: Dict[Any, Dict[str, Any]] = {}
 
     def _fetch_json(self, url: str) -> Dict[str, Any]:
         req = urllib.request.Request(url, headers=self.headers)
@@ -86,56 +149,133 @@ class MlbOfficialScraper:
                 elif d_name == "gameLog":
                     game_logs = s.get("splits", [])
 
+            # Fetch player bio for throw hand (R/L)
+            hand = "R"
+            try:
+                bio_url = f"{MLB_API_BASE}/people/{person_id}"
+                bio_data = self._fetch_json(bio_url)
+                hand = bio_data.get("people", [{}])[0].get("pitchHand", {}).get("code", "R")
+            except Exception:
+                pass
+
+            weekdays_ko = ["월", "화", "수", "목", "금", "토", "일"]
             recent_starts = []
-            for g in game_logs[:7]:
+            for g in game_logs[::-1][:10]:
                 st = g.get("stat", {})
                 dt_str = g.get("date", "")
+                kst_date_display = dt_str
+                if dt_str and len(dt_str) >= 10:
+                    try:
+                        dt = datetime.strptime(dt_str[:10], "%Y-%m-%d")
+                        kst_dt = dt + timedelta(days=1)
+                        kst_date_display = f"{kst_dt.strftime('%m.%d')}({weekdays_ko[kst_dt.weekday()]})"
+                    except Exception:
+                        kst_date_display = dt_str[5:].replace("-", ".")
+
                 opp_name_raw = g.get("opponent", {}).get("name", "상대팀")
-                opp_name = get_team_name_ko(opp_name_raw)
+                opp_name = get_short_team_name_ko(opp_name_raw)
                 is_home = g.get("isHome", True)
                 dec = st.get("decision", "-")
                 res_label = "승" if dec == "W" else ("패" if dec == "L" else ("세" if dec == "S" else ("홀" if dec == "H" else "-")))
+
+                ip_val = str(st.get("inningsPitched", "0.0"))
+                er_val = int(st.get("earnedRuns", 0))
+                game_era = calc_game_era(ip_val, er_val)
+
                 recent_starts.append({
-                    "date": dt_str[5:].replace("-", ".") if len(dt_str) >= 10 else dt_str,
+                    "date": kst_date_display,
                     "venue": "홈" if is_home else "원",
                     "opponent": opp_name,
-                    "ip": str(st.get("inningsPitched", "0.0")),
-                    "np": int(st.get("numberOfPitches", 0)),
+                    "ip": ip_val,
+                    "bf": int(st.get("battersFaced", 0)),
                     "h": int(st.get("hits", 0)),
                     "hr": int(st.get("homeRuns", 0)),
                     "bb": int(st.get("baseOnBalls", 0)),
                     "so": int(st.get("strikeOuts", 0)),
-                    "er": int(st.get("earnedRuns", 0)),
-                    "era": str(st.get("era", "0.00")),
+                    "er": er_val,
+                    "era": game_era,
+                    "np": int(st.get("numberOfPitches", 0)),
                     "result": res_label
                 })
 
             wins = season_stat.get("wins")
             losses = season_stat.get("losses")
             era_val = season_stat.get("era")
-            clean_name = sanitize_player_name(person_name) if person_name else ""
+            ip_val = str(season_stat.get("inningsPitched", "-"))
+            so_val = season_stat.get("strikeOuts")
+            bb_val = season_stat.get("baseOnBalls")
+
+            from app.services.player_translation import translate_player_name
+            ko_name = translate_player_name(person_name) if person_name else person_name
+            clean_name = sanitize_player_name(ko_name) if ko_name else ""
+
+            summary_text = f"{ip_val}이닝 {so_val or 0}K {bb_val or 0}BB" if ip_val != "-" else "-"
+            record_text = f"{wins}승 {losses}패" if (wins is not None and losses is not None) else "시즌 첫 등판"
+
             prof = {
                 "name": clean_name,
                 "name_raw": person_name,
                 "name_en": person_name,
                 "id": person_id,
+                "hand": hand,
+                "style": "우완" if hand == "R" else ("좌완" if hand == "L" else hand),
                 "season_era": str(era_val) if era_val is not None else "-",
                 "era": str(era_val) if era_val is not None else "-",
                 "wins": wins,
                 "losses": losses,
+                "w": wins if wins is not None else 0,
+                "l": losses if losses is not None else 0,
                 "games": season_stat.get("gamesPitched"),
-                "season_record": f"{wins}승 {losses}패" if (wins is not None and losses is not None) else "시즌 첫 등판",
-                "season_ip": str(season_stat.get("inningsPitched", "-")),
-                "season_so": season_stat.get("strikeOuts"),
-                "season_bb": season_stat.get("baseOnBalls"),
+                "season_record": record_text,
+                "record": record_text,
+                "season_ip": ip_val,
+                "season_so": so_val,
+                "season_bb": bb_val,
+                "summary": summary_text,
+                "season_summary": summary_text,
                 "whip": str(season_stat.get("whip", "-")),
                 "recent_starts": recent_starts
             }
             self._pitcher_cache[person_id] = prof
+            if clean_name:
+                self._pitcher_cache[clean_name] = prof
+            if person_name:
+                self._pitcher_cache[person_name] = prof
             return prof
         except Exception as e:
             print(f"[MLB Scraper] Pitcher fetch error ({person_id}): {e}")
             return {}
+
+    def search_and_fetch_pitcher(self, name: str) -> Dict[str, Any]:
+        """선수 이름(한글/영문)으로 MLB Stats API를 검색하여 100% 공식 프로필 반환"""
+        if not name or name in ("선발 미정", "미정", "None"):
+            return {}
+        import re, urllib.parse
+        clean_ko = re.sub(r"\([^\)]+\)", "", name).strip()
+        if clean_ko in self._pitcher_cache:
+            return self._pitcher_cache[clean_ko]
+
+        from app.services.player_translation import resolve_player_english_name, translate_player_name
+        en_name = resolve_player_english_name(clean_ko)
+
+        q = urllib.parse.quote(en_name)
+        search_url = f"{MLB_API_BASE}/people/search?names={q}"
+        try:
+            res = self._fetch_json(search_url)
+            people = res.get("people", [])
+            for p in people:
+                pos = p.get("primaryPosition", {}).get("abbreviation", "")
+                if pos in ("P", "TWP") or len(people) == 1:
+                    pid = p.get("id")
+                    ko_label = translate_player_name(p.get("fullName", clean_ko))
+                    return self.fetch_pitcher_profile(pid, ko_label)
+            if people:
+                pid = people[0].get("id")
+                ko_label = translate_player_name(people[0].get("fullName", clean_ko))
+                return self.fetch_pitcher_profile(pid, ko_label)
+        except Exception as e:
+            print(f"[MLB Scraper] Search error for {name}: {e}")
+        return {}
 
     def get_latest_available_date(self) -> str:
         """가장 최근에 공식 MLB 경기가 있었던 날짜 확인"""
