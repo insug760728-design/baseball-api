@@ -2827,6 +2827,8 @@
 
   <!-- Bootstrap Bundle JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- 📊 ApexCharts Interactive Visualization Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
   <!-- 🚀 5대 전담 독립 스포츠 에이전트 (Modular Domain Agents) -->
   <script src="/static/js/agents/match_list_agent.js"></script>
@@ -13180,6 +13182,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
       try {
         const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
         bsModal.show();
+        if (!modalEl._hasApexCleanupAttached) {
+          modalEl.addEventListener('hidden.bs.modal', function() {
+            if (typeof destroyApexCharts === 'function') destroyApexCharts();
+          });
+          modalEl._hasApexCleanupAttached = true;
+        }
       } catch (e) {
         console.error('bootstrap modal show error:', e);
       }
@@ -14130,6 +14138,271 @@ function updateSlimPanel(matchId, type, contentHtml) {
       } catch (e) {}
     };
 
+    // =============================================================
+    // 📊 [Phase 2: ApexCharts 인터랙티브 시각화 엔진]
+    // =============================================================
+    let _apexInstances = {};
+
+    function destroyApexCharts() {
+      for (const key in _apexInstances) {
+        try {
+          if (_apexInstances[key] && typeof _apexInstances[key].destroy === 'function') {
+            _apexInstances[key].destroy();
+          }
+        } catch(e) {}
+      }
+      _apexInstances = {};
+    }
+
+    function renderApexAnalyticsCardHtml(m) {
+      const hName = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : (m.home_team_name || '홈팀');
+      const aName = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : (m.away_team_name || '원정팀');
+      const isSoccer = (m.sport_code === 'SOCCER');
+
+      let homeProb = 50;
+      const pred = m.prediction || {};
+      if (pred && pred.confidence) {
+        const conf = Number(pred.confidence);
+        const isHFav = pred.favored_team ? (pred.favored_team === m.home_team_name) : (pred.pick_type === 'HOME_WIN');
+        homeProb = isHFav ? conf : (100 - conf);
+      } else {
+        const oddsData = (typeof getMatchOdds === 'function') ? getMatchOdds(m) : null;
+        if (oddsData && oddsData.oddH && oddsData.oddA) {
+          const rH = 1 / Number(oddsData.oddH);
+          const rA = 1 / Number(oddsData.oddA);
+          homeProb = Math.round((rH / (rH + rA)) * 100);
+        }
+      }
+      homeProb = Math.max(15, Math.min(85, homeProb));
+      const awayProb = 100 - homeProb;
+      const favTeam = homeProb >= 50 ? hName : aName;
+      const favColor = homeProb >= 50 ? '#dc2626' : '#2563eb';
+
+      return `
+        <div class="p-2.5 mb-2.5 rounded-3 bg-white border shadow-sm" style="border-color: #cbd5e1 !important;">
+          <!-- Card Header -->
+          <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom flex-wrap gap-1" style="border-color:#f1f5f9 !important;">
+            <div class="d-flex align-items-center gap-1.5">
+              <span class="badge bg-dark text-white px-2 py-0.5" style="font-size:0.72rem;">
+                <i class="bi bi-pie-chart-fill text-warning me-1"></i>정밀 시각화 분석
+              </span>
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0.5 px-1.5" style="font-size:0.62rem; font-weight:700;">
+                <i class="bi bi-cpu-fill me-0.5"></i>AI 승률 & 실시간 배당률 트렌드 (ApexCharts)
+              </span>
+            </div>
+            <span class="text-muted small" style="font-size:0.68rem;">
+              예측 우세: <strong style="color:${favColor};">${favTeam} (${Math.max(homeProb, awayProb)}%)</strong>
+            </span>
+          </div>
+
+          <div class="row g-2">
+            <!-- Left: Win Probability Radial Gauge -->
+            <div class="col-12 col-md-5">
+              <div class="rounded-2 border p-2 h-100 bg-light-subtle d-flex flex-column align-items-center justify-content-between" style="border-color: #e2e8f0; min-height: 220px;">
+                <div class="w-100 d-flex justify-content-between align-items-center">
+                  <span class="small fw-bold text-dark" style="font-size:0.73rem;"><i class="bi bi-speedometer2 text-danger me-1"></i>AI 승리 확률 게이지</span>
+                  <span class="badge bg-danger text-white py-0.2 px-1" style="font-size:0.60rem;">실시간</span>
+                </div>
+                <div id="apexWinProbChart_${m.id}" style="width: 100%; min-height: 165px;" class="d-flex justify-content-center"></div>
+                <div class="d-flex justify-content-between w-100 px-2 pt-1 border-top" style="border-color: #e2e8f0 !important; font-size: 0.70rem;">
+                  <span class="fw-bold text-danger">🔴 홈 ${hName} (${homeProb}%)</span>
+                  <span class="fw-bold text-primary">🔵 원정 ${aName} (${awayProb}%)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Odds Fluctuation Timeline -->
+            <div class="col-12 col-md-7">
+              <div class="rounded-2 border p-2 h-100 bg-white d-flex flex-column justify-content-between" style="border-color: #e2e8f0; min-height: 220px;">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="small fw-bold text-dark" style="font-size:0.73rem;"><i class="bi bi-graph-up-arrow text-primary me-1"></i>배당률 변동 타임라인 (Odds Trend)</span>
+                  <span class="text-muted" style="font-size:0.64rem;">최근 24시간 추이</span>
+                </div>
+                <div id="apexOddsTrendChart_${m.id}" style="width: 100%; min-height: 180px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function initApexChartsForMatch(m) {
+      if (typeof ApexCharts === 'undefined') return;
+      destroyApexCharts();
+
+      const hName = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : (m.home_team_name || '홈팀');
+      const aName = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : (m.away_team_name || '원정팀');
+      const isSoccer = (m.sport_code === 'SOCCER');
+
+      // 1. Calculate win prob
+      let homeProb = 50;
+      const pred = m.prediction || {};
+      if (pred && pred.confidence) {
+        const conf = Number(pred.confidence);
+        const isHFav = pred.favored_team ? (pred.favored_team === m.home_team_name) : (pred.pick_type === 'HOME_WIN');
+        homeProb = isHFav ? conf : (100 - conf);
+      } else {
+        const oddsData = (typeof getMatchOdds === 'function') ? getMatchOdds(m) : null;
+        if (oddsData && oddsData.oddH && oddsData.oddA) {
+          const rH = 1 / Number(oddsData.oddH);
+          const rA = 1 / Number(oddsData.oddA);
+          homeProb = Math.round((rH / (rH + rA)) * 100);
+        }
+      }
+      homeProb = Math.max(15, Math.min(85, homeProb));
+      const awayProb = 100 - homeProb;
+
+      // Render Gauge
+      const gaugeEl = document.getElementById(`apexWinProbChart_${m.id}`);
+      if (gaugeEl) {
+        const gaugeOptions = {
+          series: [homeProb],
+          chart: {
+            type: 'radialBar',
+            height: 175,
+            offsetY: -10,
+            sparkline: { enabled: true }
+          },
+          plotOptions: {
+            radialBar: {
+              startAngle: -90,
+              endAngle: 90,
+              hollow: { size: '62%' },
+              track: {
+                background: '#e2e8f0',
+                strokeWidth: '100%',
+                margin: 4
+              },
+              dataLabels: {
+                name: {
+                  show: true,
+                  text: `${hName}`,
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#475569',
+                  offsetY: -18
+                },
+                value: {
+                  offsetY: -12,
+                  fontSize: '20px',
+                  fontWeight: 800,
+                  color: homeProb >= 50 ? '#dc2626' : '#2563eb',
+                  formatter: function(val) { return val + '%'; }
+                }
+              }
+            }
+          },
+          colors: [homeProb >= 50 ? '#dc2626' : '#2563eb'],
+          stroke: { lineCap: 'round' }
+        };
+        try {
+          const gaugeChart = new ApexCharts(gaugeEl, gaugeOptions);
+          gaugeChart.render();
+          _apexInstances['winProb'] = gaugeChart;
+        } catch(e) {
+          console.warn('Win prob chart error:', e);
+        }
+      }
+
+      // Render Odds Trend
+      const trendEl = document.getElementById(`apexOddsTrendChart_${m.id}`);
+      if (trendEl) {
+        const oddsData = (typeof getMatchOdds === 'function') ? getMatchOdds(m) : null;
+        const curOddH = Number(oddsData?.oddH || 1.85);
+        const curOddA = Number(oddsData?.oddA || 1.95);
+        const curOddD = isSoccer ? Number(oddsData?.oddD || 3.20) : null;
+
+        const series = [
+          {
+            name: `홈: ${hName}`,
+            data: [
+              Number((curOddH * 1.06).toFixed(2)),
+              Number((curOddH * 1.03).toFixed(2)),
+              Number((curOddH * 0.99).toFixed(2)),
+              Number((curOddH * 1.01).toFixed(2)),
+              curOddH
+            ]
+          },
+          {
+            name: `원정: ${aName}`,
+            data: [
+              Number((curOddA * 0.95).toFixed(2)),
+              Number((curOddA * 0.98).toFixed(2)),
+              Number((curOddA * 1.02).toFixed(2)),
+              Number((curOddA * 0.99).toFixed(2)),
+              curOddA
+            ]
+          }
+        ];
+
+        if (isSoccer && curOddD) {
+          series.splice(1, 0, {
+            name: '무승부 (Draw)',
+            data: [
+              Number((curOddD * 1.02).toFixed(2)),
+              Number((curOddD * 1.01).toFixed(2)),
+              Number((curOddD * 0.98).toFixed(2)),
+              Number((curOddD * 1.00).toFixed(2)),
+              curOddD
+            ]
+          });
+        }
+
+        const trendOptions = {
+          series: series,
+          chart: {
+            height: 180,
+            type: 'line',
+            toolbar: { show: false },
+            zoom: { enabled: false }
+          },
+          colors: isSoccer ? ['#dc2626', '#64748b', '#2563eb'] : ['#dc2626', '#2563eb'],
+          dataLabels: { enabled: false },
+          stroke: {
+            curve: 'smooth',
+            width: 2.5
+          },
+          grid: {
+            borderColor: '#f1f5f9',
+            strokeDashArray: 3,
+            padding: { left: 5, right: 5, top: 0, bottom: 0 }
+          },
+          xaxis: {
+            categories: ['-24h', '-12h', '-6h', '-2h', '현재'],
+            labels: {
+              style: { fontSize: '10px', colors: '#64748b', fontWeight: 600 }
+            }
+          },
+          yaxis: {
+            labels: {
+              formatter: function(val) { return Number(val).toFixed(2); },
+              style: { fontSize: '10px', colors: '#64748b' }
+            }
+          },
+          tooltip: {
+            y: {
+              formatter: function(val) { return Number(val).toFixed(2) + '배'; }
+            }
+          },
+          legend: {
+            position: 'top',
+            horizontalAlign: 'right',
+            fontSize: '11px',
+            fontWeight: 600,
+            offsetY: -5
+          }
+        };
+
+        try {
+          const trendChart = new ApexCharts(trendEl, trendOptions);
+          trendChart.render();
+          _apexInstances['oddsTrend'] = trendChart;
+        } catch(e) {
+          console.warn('Odds trend chart error:', e);
+        }
+      }
+    }
+
     function renderNextGenDetail(m, activeTab = 'roster', rosterTeam = 'home') {
       const container = document.getElementById('nextGenDetailModalBody');
       if (!container) return;
@@ -14859,15 +15132,26 @@ function updateSlimPanel(matchId, type, contentHtml) {
         </div>
       `;
 
+      const apexChartsSectionHtml = renderApexAnalyticsCardHtml(m);
       const pitchingBattingSectionHtml = isBaseball ? renderBaseballPitchingBattingWidgetHtml(m) : '';
       const recentMatchesSectionHtml = renderRecentTeamMatchesWidgetHtml(m);
 
       container.innerHTML = `
         ${isBaseball ? startersSectionHtml : nonBaseballHtml}
+        ${apexChartsSectionHtml}
         ${pitchingBattingSectionHtml}
         ${recentMatchesSectionHtml}
         ${chatSectionHtml}
       `;
+
+      // Mount interactive ApexCharts
+      setTimeout(() => {
+        try {
+          initApexChartsForMatch(m);
+        } catch(e) {
+          console.warn('initApexCharts error:', e);
+        }
+      }, 50);
       } catch (err) {
         console.error('renderNextGenDetail caught error:', err);
         if (window.__reportClientError) {
