@@ -270,6 +270,14 @@ class MlbOfficialScraper:
                     }
                 }
 
+                offense = ls.get("offense", {})
+                b1 = bool(offense.get("first"))
+                b2 = bool(offense.get("second"))
+                b3 = bool(offense.get("third"))
+                defense = ls.get("defense", {})
+                curr_pitcher = defense.get("pitcher", {}).get("fullName")
+                curr_batter = offense.get("batter", {}).get("fullName")
+
                 scoreboard = {
                     "current_inning": inning_text,
                     "inning_num": curr_inn,
@@ -278,7 +286,15 @@ class MlbOfficialScraper:
                     "outs": outs,
                     "balls": balls,
                     "strikes": strikes,
-                    "bso": f"{balls or 0}B-{strikes or 0}S-{outs or 0}O" if curr_inn else None
+                    "bso": f"{balls or 0}B-{strikes or 0}S-{outs or 0}O" if curr_inn else None,
+                    "base1": b1,
+                    "base2": b2,
+                    "base3": b3,
+                    "runner_1b": b1,
+                    "runner_2b": b2,
+                    "runner_3b": b3,
+                    "pitcher": curr_pitcher,
+                    "batter": curr_batter
                 }
 
                 team_stats = {
@@ -389,6 +405,14 @@ class MlbOfficialScraper:
             }
         }
 
+        offense = linescore_data.get("offense", {})
+        b1 = bool(offense.get("first"))
+        b2 = bool(offense.get("second"))
+        b3 = bool(offense.get("third"))
+        defense = linescore_data.get("defense", {})
+        curr_pitcher = defense.get("pitcher", {}).get("fullName")
+        curr_batter = offense.get("batter", {}).get("fullName")
+
         scoreboard = {
             "current_inning": inning_text,
             "inning_num": curr_inn,
@@ -397,7 +421,15 @@ class MlbOfficialScraper:
             "outs": outs,
             "balls": balls,
             "strikes": strikes,
-            "bso": f"{balls or 0}B-{strikes or 0}S-{outs or 0}O" if curr_inn else None
+            "bso": f"{balls or 0}B-{strikes or 0}S-{outs or 0}O" if curr_inn else None,
+            "base1": b1,
+            "base2": b2,
+            "base3": b3,
+            "runner_1b": b1,
+            "runner_2b": b2,
+            "runner_3b": b3,
+            "pitcher": curr_pitcher,
+            "batter": curr_batter
         }
 
         # 선발 투수 프로필 실시간 추출

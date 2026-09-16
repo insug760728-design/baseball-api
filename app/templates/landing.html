@@ -17637,51 +17637,27 @@ function updateSlimPanel(matchId, type, contentHtml) {
         } catch(e) {}
       }
 
-      let b1 = !!(ts.base1 || ts.runner_1b || sb.base1 || sb.runner_1b);
-      let b2 = !!(ts.base2 || ts.runner_2b || sb.base2 || sb.runner_2b);
-      let b3 = !!(ts.base3 || ts.runner_3b || sb.base3 || sb.runner_3b);
-      let outs = ts.outs ?? sb.outs;
-      let balls = ts.balls ?? sb.balls;
-      let strikes = ts.strikes ?? sb.strikes;
+      let b1 = false;
+      let b2 = false;
+      let b3 = false;
+      let outs = 0;
+      let balls = 0;
+      let strikes = 0;
+
+      // Only display live base runners and counts if the game is genuinely LIVE
+      if (isLive && m.sport_code === 'BASEBALL') {
+        b1 = !!(ts.base1 || ts.runner_1b || sb.base1 || sb.runner_1b || sb.runner_on_1b || sb.first_base || sb.first);
+        b2 = !!(ts.base2 || ts.runner_2b || sb.base2 || sb.runner_2b || sb.runner_on_2b || sb.second_base || sb.second);
+        b3 = !!(ts.base3 || ts.runner_3b || sb.base3 || sb.runner_3b || sb.runner_on_3b || sb.third_base || sb.third);
+        outs = Number(ts.outs ?? sb.outs ?? 0);
+        balls = Number(ts.balls ?? sb.balls ?? 0);
+        strikes = Number(ts.strikes ?? sb.strikes ?? 0);
+      } else if (m.status === 'FINISHED' && m.sport_code === 'BASEBALL') {
+        outs = 3;
+      }
 
       let inning_text = ts.current_inning || sb.current_inning || m.current_inning || '';
-      if (!inning_text && m.sport_code === 'BASEBALL' && isLive) {
-        const halfInningIdx = Math.floor(diffMin / 10);
-        const innNum = Math.min(9, Math.floor(halfInningIdx / 2) + 1);
-        const isTop = (halfInningIdx % 2 === 0);
-        inning_text = `${innNum}회${isTop ? '초 ▴' : '말 ▾'}`;
-      }
       if (!inning_text) inning_text = isLive ? '진행중' : (m.status === 'FINISHED' ? '종료' : '예정');
-
-      if (m.sport_code === 'BASEBALL' && isLive) {
-        if (outs === undefined || outs === null) {
-          outs = (((m.id || 1) * 7 + Math.floor(diffMin / 3)) % 2) + 1; // 1 or 2 outs
-        } else {
-          outs = Number(outs);
-        }
-        if (balls === undefined || balls === null) {
-          balls = ((m.id || 1) * 3 + Math.floor(diffMin / 2)) % 4; // 0..3
-        } else {
-          balls = Number(balls);
-        }
-        if (strikes === undefined || strikes === null) {
-          strikes = ((m.id || 1) * 5 + Math.floor(diffMin / 2)) % 3; // 0..2
-        } else {
-          strikes = Number(strikes);
-        }
-        if (!b1 && !b2 && !b3) {
-          const rSeed = ((m.id || 1) * 11 + Math.floor(diffMin / 3)) % 5;
-          if (rSeed === 0) { b1 = true; }
-          else if (rSeed === 1) { b1 = true; b2 = true; }
-          else if (rSeed === 2) { b2 = true; }
-          else if (rSeed === 3) { b1 = true; b3 = true; }
-          else { b1 = true; b2 = true; b3 = true; }
-        }
-      } else {
-        outs = Number(outs || 0);
-        balls = Number(balls || 0);
-        strikes = Number(strikes || 0);
-      }
 
       let outs_text = outs === 0 ? '노아웃' : (outs === 1 ? '1아웃' : (outs === 2 ? '2아웃' : '3아웃'));
       let runners_list = [];
@@ -17761,12 +17737,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
       }
 
-      const hHits = Math.max(hScore, Math.floor(hScore * 1.5) + (st.base1 ? 1 : 0) + (st.base2 ? 1 : 0));
-      const aHits = Math.max(aScore, Math.floor(aScore * 1.4) + (st.base3 ? 1 : 0));
-      const hErr = 0;
-      const aErr = 0;
-      const hBb = Math.floor(hScore * 0.8) + (st.balls >= 2 ? 1 : 0);
-      const aBb = Math.floor(aScore * 0.7);
+      const hHits = (ts.hits && ts.hits.home !== undefined) ? ts.hits.home : ((ts.summary && ts.summary.home && ts.summary.home.H !== undefined) ? ts.summary.home.H : hScore);
+      const aHits = (ts.hits && ts.hits.away !== undefined) ? ts.hits.away : ((ts.summary && ts.summary.away && ts.summary.away.H !== undefined) ? ts.summary.away.H : aScore);
+      const hErr = (ts.errors && ts.errors.home !== undefined) ? ts.errors.home : ((ts.summary && ts.summary.home && ts.summary.home.E !== undefined) ? ts.summary.home.E : 0);
+      const aErr = (ts.errors && ts.errors.away !== undefined) ? ts.errors.away : ((ts.summary && ts.summary.away && ts.summary.away.E !== undefined) ? ts.summary.away.E : 0);
+      const hBb = (ts.left_on_base && ts.left_on_base.home !== undefined) ? ts.left_on_base.home : ((ts.summary && ts.summary.home && ts.summary.home.B !== undefined) ? ts.summary.home.B : 0);
+      const aBb = (ts.left_on_base && ts.left_on_base.away !== undefined) ? ts.left_on_base.away : ((ts.summary && ts.summary.away && ts.summary.away.B !== undefined) ? ts.summary.away.B : 0);
 
       const renderCells = (inns) => {
         return inns.map((val, idx) => {

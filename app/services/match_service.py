@@ -982,13 +982,28 @@ class MatchService:
                     active_half = "초" if (m.id % 2 == 1) else "말"
                     curr_inn = f"{max(1, last_played_inning)}회{active_half}"
 
-                seed = (m.id * 17) % 100
-                has_1b = (seed % 2 == 0) if m.status == "LIVE" else False
-                has_2b = (seed % 3 == 0) if m.status == "LIVE" else False
-                has_3b = (seed % 5 == 0) if m.status == "LIVE" else False
-                b_cnt = (seed % 4) if m.status == "LIVE" else 0
-                s_cnt = (seed % 3) if m.status == "LIVE" else 0
-                o_cnt = (seed % 3) if m.status == "LIVE" else 0
+                real_sb = {}
+                real_ts = {}
+                if m.details and m.details.team_stats:
+                    try:
+                        real_ts = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
+                        real_sb = real_ts.get("scoreboard", {}) or real_ts
+                    except Exception:
+                        pass
+
+                has_1b = bool(real_sb.get("base1") or real_sb.get("runner_1b") or real_sb.get("runner_on_1b") or real_sb.get("first_base") or real_sb.get("first")) if m.status == "LIVE" else False
+                has_2b = bool(real_sb.get("base2") or real_sb.get("runner_2b") or real_sb.get("runner_on_2b") or real_sb.get("second_base") or real_sb.get("second")) if m.status == "LIVE" else False
+                has_3b = bool(real_sb.get("base3") or real_sb.get("runner_3b") or real_sb.get("runner_on_3b") or real_sb.get("third_base") or real_sb.get("third")) if m.status == "LIVE" else False
+                b_cnt = int(real_sb.get("balls", 0)) if m.status == "LIVE" else 0
+                s_cnt = int(real_sb.get("strikes", 0)) if m.status == "LIVE" else 0
+                o_cnt = int(real_sb.get("outs", 0)) if m.status == "LIVE" else (3 if m.status == "FINISHED" else 0)
+
+                h_hits = int(real_ts.get("hits", {}).get("home", m.home_score if m.home_score is not None else 0))
+                a_hits = int(real_ts.get("hits", {}).get("away", m.away_score if m.away_score is not None else 0))
+                h_err = int(real_ts.get("errors", {}).get("home", 0))
+                a_err = int(real_ts.get("errors", {}).get("away", 0))
+                h_lob = int(real_ts.get("left_on_base", {}).get("home", 0))
+                a_lob = int(real_ts.get("left_on_base", {}).get("away", 0))
 
                 board["baseball"] = {
                     "current_inning": curr_inn,
@@ -997,13 +1012,13 @@ class MatchService:
                     "innings_away": inn_away,
                     "innings_home": inn_home,
                     "rheb": {
-                        "away": {"r": m.away_score if m.away_score is not None else 0, "h": max(m.away_score, 5 + (seed % 5)), "e": seed % 2, "b": 2 + (seed % 4)},
-                        "home": {"r": m.home_score if m.home_score is not None else 0, "h": max(m.home_score, 6 + ((seed + 2) % 5)), "e": (seed + 1) % 2, "b": 3 + (seed % 3)}
+                        "away": {"r": m.away_score if m.away_score is not None else 0, "h": a_hits, "e": a_err, "b": a_lob},
+                        "home": {"r": m.home_score if m.home_score is not None else 0, "h": h_hits, "e": h_err, "b": h_lob}
                     },
                     "bso": {
-                        "balls": b_cnt if m.status == "LIVE" else 0,
-                        "strikes": s_cnt if m.status == "LIVE" else 0,
-                        "outs": o_cnt if m.status == "LIVE" else 0
+                        "balls": b_cnt,
+                        "strikes": s_cnt,
+                        "outs": o_cnt
                     },
                     "runners": {
                         "b1": has_1b,
@@ -1012,13 +1027,10 @@ class MatchService:
                     },
                     "pitcher": {
                         "name": home_starter if active_half == "초" else away_starter,
-                        "pitches": 65 + (seed % 35),
-                        "era": f"{2 + (seed % 3)}.{10 + (seed % 80):02d}"
+                        "era": "-"
                     },
                     "batter": {
-                        "name": f"타자 {(seed % 9) + 1}번",
-                        "avg": f".{240 + (seed % 110)}",
-                        "today": f"{(seed % 3) + 1}안타"
+                        "name": real_sb.get("batter", "-")
                     }
                 }
 

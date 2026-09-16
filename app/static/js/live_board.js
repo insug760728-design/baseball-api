@@ -81,7 +81,7 @@ const LiveBoard = (() => {
       let iconHtml = '';
       if (isBaseball) {
         const runners = item.baseball_runners || { b1: item.runner_1b, b2: item.runner_2b, b3: item.runner_3b };
-        const outs = item.baseball_outs ?? item.outs ?? (hScore % 3);
+        const outs = item.baseball_outs ?? item.outs ?? 0;
         iconHtml = CommonUtils.renderMiniDiamondSvg(runners, outs);
       } else if (isBasketball) {
         iconHtml = '<span style="font-size:1.1rem;">🏀</span>';
