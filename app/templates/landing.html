@@ -10696,35 +10696,44 @@ function getFullModalMatchList() {
       return null;
     }
 
+    const _attemptedPitcherFetches = new Set();
+
     async function fetchPitcherProfileAsync(matchId, hName, aName, leagueName) {
       let updated = false;
       const promises = [];
       const checkStarter = (name) => {
-        if (!name || name === '선발 미정') return false;
-        const off = lookupOfficialPitcher(name);
-        return !off || !off.recent_starts || off.recent_starts.length <= 1;
+        if (!name || name === '선발 미정' || name.length < 2) return false;
+        const clean = String(name).replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
+        if (_attemptedPitcherFetches.has(clean)) return false;
+        const off = lookupOfficialPitcher(clean);
+        if (off && off.recent_starts && off.recent_starts.length >= 2) return false;
+        _attemptedPitcherFetches.add(clean);
+        return true;
       };
 
-      if (checkStarter(hName)) {
+      const hClean = hName ? String(hName).replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim() : '';
+      const aClean = aName ? String(aName).replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim() : '';
+
+      if (checkStarter(hClean)) {
         promises.push(
-          fetch(`/api/v1/matches/pitcher-profile?name=${encodeURIComponent(hName)}&league=${encodeURIComponent(leagueName || '')}`)
+          fetch(`/api/v1/matches/pitcher-profile?name=${encodeURIComponent(hClean)}&league=${encodeURIComponent(leagueName || '')}`)
             .then(r => r.ok ? r.json() : null)
             .then(data => {
               if (data && (data.name || data.record)) {
-                OFFICIAL_PITCHER_DATABASE[hName] = data;
+                OFFICIAL_PITCHER_DATABASE[hClean] = data;
                 if (data.name) OFFICIAL_PITCHER_DATABASE[data.name] = data;
                 updated = true;
               }
             }).catch(e => console.warn('hPitcher fetch error', e))
         );
       }
-      if (checkStarter(aName)) {
+      if (checkStarter(aClean)) {
         promises.push(
-          fetch(`/api/v1/matches/pitcher-profile?name=${encodeURIComponent(aName)}&league=${encodeURIComponent(leagueName || '')}`)
+          fetch(`/api/v1/matches/pitcher-profile?name=${encodeURIComponent(aClean)}&league=${encodeURIComponent(leagueName || '')}`)
             .then(r => r.ok ? r.json() : null)
             .then(data => {
               if (data && (data.name || data.record)) {
-                OFFICIAL_PITCHER_DATABASE[aName] = data;
+                OFFICIAL_PITCHER_DATABASE[aClean] = data;
                 if (data.name) OFFICIAL_PITCHER_DATABASE[data.name] = data;
                 updated = true;
               }
@@ -14786,14 +14795,6 @@ function updateSlimPanel(matchId, type, contentHtml) {
         ${recentMatchesSectionHtml}
         ${chatSectionHtml}
       `;
-
-      if (isBaseball && typeof fetchPitcherProfileAsync === 'function') {
-        if (hP.era === '-' || aP.era === '-' || hP.startsList.length <= 1 || aP.startsList.length <= 1) {
-          try {
-            fetchPitcherProfileAsync(m.id, hP.cleanName, aP.cleanName, m.league_name);
-          } catch(e) {}
-        }
-      }
     }
 
     // 야구 상세 투수/타자 팀 전환 전역 바인딩

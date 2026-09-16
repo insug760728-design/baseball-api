@@ -9611,8 +9611,8 @@ class TeamSplitService:
                 if starting_pitchers_analysis:
                     hst = starting_pitchers_analysis.get("home", {})
                     ast = starting_pitchers_analysis.get("away", {})
-                    hsum = hst.get("summary", {})
-                    asum = ast.get("summary", {})
+                    hsum = hst.get("summary_detail") if isinstance(hst.get("summary_detail"), dict) else (hst.get("summary") if isinstance(hst.get("summary"), dict) else {})
+                    asum = ast.get("summary_detail") if isinstance(ast.get("summary_detail"), dict) else (ast.get("summary") if isinstance(ast.get("summary"), dict) else {})
                     h_era_val = hst.get("season_era") or hsum.get("season_era") or hsum.get("era_3g")
                     a_era_val = ast.get("season_era") or asum.get("season_era") or asum.get("era_3g")
                     if h_era_val and h_era_val != "-":
@@ -9692,28 +9692,31 @@ class TeamSplitService:
             drivers_list.insert(0, f"[시리즈 위닝 결정전] {series_ctx.get('description')}")
 
         if starting_pitchers_analysis:
-            hst = starting_pitchers_analysis.get("home", {})
-            ast = starting_pitchers_analysis.get("away", {})
-            hsum = hst.get("summary", {})
-            asum = ast.get("summary", {})
-            h_un = hst.get("is_unannounced") or not is_valid_starter_name(hst.get("name"))
-            a_un = ast.get("is_unannounced") or not is_valid_starter_name(ast.get("name"))
-            if h_un and a_un:
-                drivers_list.insert(0, "[선발 매치업] 양 팀 선발투수 공식 발표 전 (선발 미확정 TBD 상태)")
-            elif h_un:
-                a_b = "[선발 확정]" if ast.get("is_confirmed") else "[선발 예고]"
-                a_s_era = ast.get("season_era") or asum.get("season_era") or asum.get("era_3g") or "-"
-                drivers_list.insert(0, f"[선발 매치업] [홈] 선발 미확정 (TBD) vs {a_b} [원정] {ast.get('name')}({ast.get('throws')}, 시즌 평균 ERA {a_s_era}, 3G 평균 {asum.get('avg_ip')}이닝 {asum.get('avg_np')}구)")
-            elif a_un:
-                h_b = "[선발 확정]" if hst.get("is_confirmed") else "[선발 예고]"
-                h_s_era = hst.get("season_era") or hsum.get("season_era") or hsum.get("era_3g") or "-"
-                drivers_list.insert(0, f"[선발 매치업] {h_b} [홈] {hst.get('name')}({hst.get('throws')}, 시즌 평균 ERA {h_s_era}, 3G 평균 {hsum.get('avg_ip')}이닝 {hsum.get('avg_np')}구) vs [원정] 선발 미확정 (TBD)")
-            else:
-                h_b = "[선발 확정]" if hst.get("is_confirmed") else "[선발 예고]"
-                a_b = "[선발 확정]" if ast.get("is_confirmed") else "[선발 예고]"
-                h_s_era = hst.get("season_era") or hsum.get("season_era") or hsum.get("era_3g") or "-"
-                a_s_era = ast.get("season_era") or asum.get("season_era") or asum.get("era_3g") or "-"
-                drivers_list.insert(0, f"[선발 매치업] {h_b} [홈] {hst.get('name')}({hst.get('throws')}, 시즌 평균 ERA {h_s_era}, 3G 평균 {hsum.get('avg_ip')}이닝 {hsum.get('avg_np')}구) vs {a_b} [원정] {ast.get('name')}({ast.get('throws')}, 시즌 평균 ERA {a_s_era}, 3G 평균 {asum.get('avg_ip')}이닝 {asum.get('avg_np')}구)")
+            try:
+                hst = starting_pitchers_analysis.get("home", {})
+                ast = starting_pitchers_analysis.get("away", {})
+                hsum = hst.get("summary_detail") if isinstance(hst.get("summary_detail"), dict) else (hst.get("summary") if isinstance(hst.get("summary"), dict) else {})
+                asum = ast.get("summary_detail") if isinstance(ast.get("summary_detail"), dict) else (ast.get("summary") if isinstance(ast.get("summary"), dict) else {})
+                h_un = hst.get("is_unannounced") or not is_valid_starter_name(hst.get("name"))
+                a_un = ast.get("is_unannounced") or not is_valid_starter_name(ast.get("name"))
+                if h_un and a_un:
+                    drivers_list.insert(0, "[선발 매치업] 양 팀 선발투수 공식 발표 전 (선발 미확정 TBD 상태)")
+                elif h_un:
+                    a_b = "[선발 확정]" if ast.get("is_confirmed") else "[선발 예고]"
+                    a_s_era = ast.get("season_era") or asum.get("season_era") or asum.get("era_3g") or "-"
+                    drivers_list.insert(0, f"[선발 매치업] [홈] 선발 미확정 (TBD) vs {a_b} [원정] {ast.get('name')}({ast.get('throws')}, 시즌 평균 ERA {a_s_era}, 3G 평균 {asum.get('avg_ip', '-')}이닝 {asum.get('avg_np', '-')}구)")
+                elif a_un:
+                    h_b = "[선발 확정]" if hst.get("is_confirmed") else "[선발 예고]"
+                    h_s_era = hst.get("season_era") or hsum.get("season_era") or hsum.get("era_3g") or "-"
+                    drivers_list.insert(0, f"[선발 매치업] {h_b} [홈] {hst.get('name')}({hst.get('throws')}, 시즌 평균 ERA {h_s_era}, 3G 평균 {hsum.get('avg_ip', '-')}이닝 {hsum.get('avg_np', '-')}구) vs [원정] 선발 미확정 (TBD)")
+                else:
+                    h_b = "[선발 확정]" if hst.get("is_confirmed") else "[선발 예고]"
+                    a_b = "[선발 확정]" if ast.get("is_confirmed") else "[선발 예고]"
+                    h_s_era = hst.get("season_era") or hsum.get("season_era") or hsum.get("era_3g") or "-"
+                    a_s_era = ast.get("season_era") or asum.get("season_era") or asum.get("era_3g") or "-"
+                    drivers_list.insert(0, f"[선발 매치업] {h_b} [홈] {hst.get('name')}({hst.get('throws')}, 시즌 평균 ERA {h_s_era}, 3G 평균 {hsum.get('avg_ip', '-')}이닝 {hsum.get('avg_np', '-')}구) vs {a_b} [원정] {ast.get('name')}({ast.get('throws')}, 시즌 평균 ERA {a_s_era}, 3G 평균 {asum.get('avg_ip', '-')}이닝 {asum.get('avg_np', '-')}구)")
+            except Exception as e:
+                logger.warning(f"Error formulating starting pitchers driver: {e}")
         # Relative batting trend calibration between home and away (anti-contradiction guard)
         if sport_code == "BASEBALL" and home_batting_3g and away_batting_3g:
             h_bsum = home_batting_3g.get("summary", {})
