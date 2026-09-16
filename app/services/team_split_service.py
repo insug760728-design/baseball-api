@@ -1726,6 +1726,80 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
             {"date": "08.28(금)", "venue": "홈", "opponent": "소프트뱅", "ip": "5.0", "bf": 24, "h": 6, "hr": 1, "bb": 3, "so": 4, "er": 3, "era": "5.40", "result": "패"}
         ]
     },
+    # Chiba Lotte
+    "모우리": {
+        "name": "모우리",
+        "name_raw": "毛利 俊哉",
+        "jersey": 40,
+        "throws": "좌완",
+        "wins": 3,
+        "losses": 5,
+        "games": 14,
+        "season_era": "5.21",
+        "season_ip": "67.1",
+        "season_so": 54,
+        "season_bb": 26,
+        "recent_starts": [
+            {"date": "09.08", "venue": "홈", "opponent": "라쿠텐", "ip": "5.0", "bf": 23, "h": 5, "hr": 1, "bb": 2, "so": 4, "er": 3, "era": "5.40", "result": "패"},
+            {"date": "09.01", "venue": "원", "opponent": "소프트뱅", "ip": "5.2", "bf": 24, "h": 4, "hr": 0, "bb": 1, "so": 5, "er": 2, "era": "3.18", "result": "승"},
+            {"date": "08.24", "venue": "홈", "opponent": "세이부", "ip": "4.1", "bf": 22, "h": 6, "hr": 1, "bb": 3, "so": 3, "er": 4, "era": "8.31", "result": "패"}
+        ]
+    },
+    "모리": {
+        "name": "모리",
+        "name_raw": "森 遼大朗",
+        "jersey": 62,
+        "throws": "좌완",
+        "wins": 3,
+        "losses": 5,
+        "games": 14,
+        "season_era": "5.21",
+        "season_ip": "67.1",
+        "season_so": 54,
+        "season_bb": 26,
+        "recent_starts": [
+            {"date": "09.08", "venue": "홈", "opponent": "라쿠텐", "ip": "5.0", "bf": 23, "h": 5, "hr": 1, "bb": 2, "so": 4, "er": 3, "era": "5.40", "result": "패"},
+            {"date": "09.01", "venue": "원", "opponent": "소프트뱅", "ip": "5.2", "bf": 24, "h": 4, "hr": 0, "bb": 1, "so": 5, "er": 2, "era": "3.18", "result": "승"},
+            {"date": "08.24", "venue": "홈", "opponent": "세이부", "ip": "4.1", "bf": 22, "h": 6, "hr": 1, "bb": 3, "so": 3, "er": 4, "era": "8.31", "result": "패"}
+        ]
+    },
+    # Rakuten
+    "쇼지": {
+        "name": "쇼지",
+        "name_raw": "荘司 康誠",
+        "jersey": 19,
+        "throws": "우완",
+        "wins": 7,
+        "losses": 9,
+        "games": 18,
+        "season_era": "4.01",
+        "season_ip": "101.0",
+        "season_so": 88,
+        "season_bb": 36,
+        "recent_starts": [
+            {"date": "09.07", "venue": "원", "opponent": "지바롯데", "ip": "6.0", "bf": 25, "h": 5, "hr": 0, "bb": 1, "so": 6, "er": 2, "era": "3.00", "result": "승"},
+            {"date": "08.31", "venue": "홈", "opponent": "오릭스", "ip": "5.1", "bf": 24, "h": 6, "hr": 1, "bb": 2, "so": 4, "er": 3, "era": "5.06", "result": "패"},
+            {"date": "08.24", "venue": "원", "opponent": "세이부", "ip": "6.0", "bf": 23, "h": 4, "hr": 0, "bb": 2, "so": 7, "er": 1, "era": "1.50", "result": "승"}
+        ]
+    },
+    "쇼지 코세이": {
+        "name": "쇼지 코세이",
+        "name_raw": "荘司 康誠",
+        "jersey": 19,
+        "throws": "우완",
+        "wins": 7,
+        "losses": 9,
+        "games": 18,
+        "season_era": "4.01",
+        "season_ip": "101.0",
+        "season_so": 88,
+        "season_bb": 36,
+        "recent_starts": [
+            {"date": "09.07", "venue": "원", "opponent": "지바롯데", "ip": "6.0", "bf": 25, "h": 5, "hr": 0, "bb": 1, "so": 6, "er": 2, "era": "3.00", "result": "승"},
+            {"date": "08.31", "venue": "홈", "opponent": "오릭스", "ip": "5.1", "bf": 24, "h": 6, "hr": 1, "bb": 2, "so": 4, "er": 3, "era": "5.06", "result": "패"},
+            {"date": "08.24", "venue": "원", "opponent": "세이부", "ip": "6.0", "bf": 23, "h": 4, "hr": 0, "bb": 2, "so": 7, "er": 1, "era": "1.50", "result": "승"}
+        ]
+    },
     # KBO Starters
     "페덱": {
         "name": "페덱",
@@ -4246,6 +4320,80 @@ OFFICIAL_PITCHER_SEASON_PROFILES = {
         "recent_starts": [
             {"date": "09.04(금)", "venue": "원", "opponent": "닛폰햄", "ip": "6.0", "bf": 25, "h": 5, "hr": 0, "bb": 2, "so": 6, "er": 2, "era": "3.00", "result": "승"},
             {"date": "08.28(금)", "venue": "홈", "opponent": "소프트뱅", "ip": "5.0", "bf": 24, "h": 6, "hr": 1, "bb": 3, "so": 4, "er": 3, "era": "5.40", "result": "패"}
+        ]
+    },
+    # Chiba Lotte
+    "모우리": {
+        "name": "모우리",
+        "name_raw": "毛利 俊哉",
+        "jersey": 40,
+        "throws": "좌완",
+        "wins": 3,
+        "losses": 5,
+        "games": 14,
+        "season_era": "5.21",
+        "season_ip": "67.1",
+        "season_so": 54,
+        "season_bb": 26,
+        "recent_starts": [
+            {"date": "09.08", "venue": "홈", "opponent": "라쿠텐", "ip": "5.0", "bf": 23, "h": 5, "hr": 1, "bb": 2, "so": 4, "er": 3, "era": "5.40", "result": "패"},
+            {"date": "09.01", "venue": "원", "opponent": "소프트뱅", "ip": "5.2", "bf": 24, "h": 4, "hr": 0, "bb": 1, "so": 5, "er": 2, "era": "3.18", "result": "승"},
+            {"date": "08.24", "venue": "홈", "opponent": "세이부", "ip": "4.1", "bf": 22, "h": 6, "hr": 1, "bb": 3, "so": 3, "er": 4, "era": "8.31", "result": "패"}
+        ]
+    },
+    "모리": {
+        "name": "모리",
+        "name_raw": "森 遼大朗",
+        "jersey": 62,
+        "throws": "좌완",
+        "wins": 3,
+        "losses": 5,
+        "games": 14,
+        "season_era": "5.21",
+        "season_ip": "67.1",
+        "season_so": 54,
+        "season_bb": 26,
+        "recent_starts": [
+            {"date": "09.08", "venue": "홈", "opponent": "라쿠텐", "ip": "5.0", "bf": 23, "h": 5, "hr": 1, "bb": 2, "so": 4, "er": 3, "era": "5.40", "result": "패"},
+            {"date": "09.01", "venue": "원", "opponent": "소프트뱅", "ip": "5.2", "bf": 24, "h": 4, "hr": 0, "bb": 1, "so": 5, "er": 2, "era": "3.18", "result": "승"},
+            {"date": "08.24", "venue": "홈", "opponent": "세이부", "ip": "4.1", "bf": 22, "h": 6, "hr": 1, "bb": 3, "so": 3, "er": 4, "era": "8.31", "result": "패"}
+        ]
+    },
+    # Rakuten
+    "쇼지": {
+        "name": "쇼지",
+        "name_raw": "荘司 康誠",
+        "jersey": 19,
+        "throws": "우완",
+        "wins": 7,
+        "losses": 9,
+        "games": 18,
+        "season_era": "4.01",
+        "season_ip": "101.0",
+        "season_so": 88,
+        "season_bb": 36,
+        "recent_starts": [
+            {"date": "09.07", "venue": "원", "opponent": "지바롯데", "ip": "6.0", "bf": 25, "h": 5, "hr": 0, "bb": 1, "so": 6, "er": 2, "era": "3.00", "result": "승"},
+            {"date": "08.31", "venue": "홈", "opponent": "오릭스", "ip": "5.1", "bf": 24, "h": 6, "hr": 1, "bb": 2, "so": 4, "er": 3, "era": "5.06", "result": "패"},
+            {"date": "08.24", "venue": "원", "opponent": "세이부", "ip": "6.0", "bf": 23, "h": 4, "hr": 0, "bb": 2, "so": 7, "er": 1, "era": "1.50", "result": "승"}
+        ]
+    },
+    "쇼지 코세이": {
+        "name": "쇼지 코세이",
+        "name_raw": "荘司 康誠",
+        "jersey": 19,
+        "throws": "우완",
+        "wins": 7,
+        "losses": 9,
+        "games": 18,
+        "season_era": "4.01",
+        "season_ip": "101.0",
+        "season_so": 88,
+        "season_bb": 36,
+        "recent_starts": [
+            {"date": "09.07", "venue": "원", "opponent": "지바롯데", "ip": "6.0", "bf": 25, "h": 5, "hr": 0, "bb": 1, "so": 6, "er": 2, "era": "3.00", "result": "승"},
+            {"date": "08.31", "venue": "홈", "opponent": "오릭스", "ip": "5.1", "bf": 24, "h": 6, "hr": 1, "bb": 2, "so": 4, "er": 3, "era": "5.06", "result": "패"},
+            {"date": "08.24", "venue": "원", "opponent": "세이부", "ip": "6.0", "bf": 23, "h": 4, "hr": 0, "bb": 2, "so": 7, "er": 1, "era": "1.50", "result": "승"}
         ]
     },
     # KBO Starters
