@@ -10,5 +10,6 @@ class Settings:
     API_SPORTS_KEY: str = os.getenv('API_SPORTS_KEY', '050a2debf0dc45ecf519ce236c9f46f5')
     RAPIDAPI_KEY: str = os.getenv('RAPIDAPI_KEY', '')
     SENTRY_DSN: str = os.getenv('SENTRY_DSN', '')
+    REDIS_URL: str = os.getenv('REDIS_URL', '')
 
 settings = Settings()

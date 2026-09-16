@@ -11,6 +11,7 @@ from app.services.match_service import MatchService
 from app.services.team_split_service import TeamSplitService
 from app.services.player_translation import translate_player_name
 from app.schemas.schemas import MatchResponse, MatchUpdate, DateRangeSyncRequest, PlayerMatchStatUpdate
+from app.core.cache import cache_get, cache_set, cache_get_json, cache_set_json, cache_delete
 
 router = APIRouter(prefix="/matches", tags=["야구 경기 일정 및 결과"])
 
@@ -26,12 +27,14 @@ def clear_matches_cache(match_id: Optional[int] = None):
     _PITCHERS_DATASET_CACHE = (0.0, b"{}")
     if match_id:
         _MATCH_FULL_CACHE.pop(match_id, None)
+        cache_delete(f"match:full:{match_id}")
     else:
         _MATCH_FULL_CACHE.clear()
 
 def clear_match_full_cache(match_id: Optional[int] = None):
     if match_id:
         _MATCH_FULL_CACHE.pop(match_id, None)
+        cache_delete(f"match:full:{match_id}")
     else:
         _MATCH_FULL_CACHE.clear()
 
@@ -120,7 +123,10 @@ def list_matches(
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
-    cache_key = f"{sport_code}:{league_name}:{status}:{start_date}:{end_date}:{limit}:{order}"
+    cache_key = f"matches:{sport_code}:{league_name}:{status}:{start_date}:{end_date}:{limit}:{order}"
+    cached_str = cache_get(cache_key)
+    if cached_str:
+        return Response(content=cached_str.encode("utf-8"), media_type="application/json")
     now = time.time()
     if cache_key in _MATCHES_JSON_CACHE:
         cache_time, cached_bytes = _MATCHES_JSON_CACHE[cache_key]
@@ -138,8 +144,10 @@ def list_matches(
         order=order
     )
     serialized = [MatchResponse.model_validate(m).model_dump(mode="json") for m in res]
-    json_bytes = json.dumps(serialized, ensure_ascii=False).encode("utf-8")
+    json_str = json.dumps(serialized, ensure_ascii=False)
+    json_bytes = json_str.encode("utf-8")
     _MATCHES_JSON_CACHE[cache_key] = (now, json_bytes)
+    cache_set(cache_key, json_str, ttl_seconds=10)
     return Response(content=json_bytes, media_type="application/json")
 
 @router.get("/live-boards", summary="실시간 라이브 전광판 전용 종합 데이터 (구장/주자/볼카운트/이닝/스코어)")
@@ -174,13 +182,19 @@ def sync_matches(payload: DateRangeSyncRequest, db: Session = Depends(get_db)):
 
 @router.get("/{match_id}", summary="경기 상세 정보, 1~9회 스코어보드, 타자/투수 세부 기록 종합 조회")
 def get_match_full(match_id: int, response: Response, force: bool = False, db: Session = Depends(get_db)):
+    ckey = f"match:full:{match_id}"
     now = time.time()
-    if not force and match_id in _MATCH_FULL_CACHE:
-        cache_time, cached_res = _MATCH_FULL_CACHE[match_id]
-        ttl = 10 if (cached_res.get("status") == "LIVE") else (180 if cached_res.get("status") == "SCHEDULED" else 1800)
-        if now - cache_time < ttl:
+    if not force:
+        cached_res = cache_get_json(ckey)
+        if cached_res:
             response.headers["Cache-Control"] = "public, max-age=10, s-maxage=30"
             return cached_res
+        if match_id in _MATCH_FULL_CACHE:
+            cache_time, cached_res = _MATCH_FULL_CACHE[match_id]
+            ttl = 10 if (cached_res.get("status") == "LIVE") else (180 if cached_res.get("status") == "SCHEDULED" else 1800)
+            if now - cache_time < ttl:
+                response.headers["Cache-Control"] = "public, max-age=10, s-maxage=30"
+                return cached_res
 
     data = MatchService.get_match_full_detail(db, match_id)
     if not data:
@@ -230,6 +244,8 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
         "player_stats": data["player_stats"],
         "matchup_analysis": matchup_analysis
     }
+    ttl = 10 if (res.get("status") == "LIVE") else (180 if res.get("status") == "SCHEDULED" else 1800)
+    cache_set_json(ckey, res, ttl_seconds=ttl)
     _MATCH_FULL_CACHE[match_id] = (now, res)
     response.headers["Cache-Control"] = "public, max-age=10, s-maxage=30"
     return res

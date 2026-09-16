@@ -38,3 +38,11 @@ def log_client_error(payload: ClientErrorPayload, request: Request):
         path=path_with_ip
     )
     return {"status": "ok"}
+
+@router.get("/cache-status")
+def get_cache_status():
+    """
+    Redis 및 인메모리 TTL 캐시 상태와 적중률(Hit-Rate) 통계 조회
+    """
+    from app.core.cache import get_cache_stats
+    return get_cache_stats()
