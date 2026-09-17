@@ -4276,14 +4276,33 @@
         ? `<span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.60rem; font-weight:700;">● 확정</span>`
         : `<span class="badge bg-warning text-dark py-0.5 px-1" style="font-size:0.60rem; font-weight:700;">○ 예고</span>`;
 
-      const eraBadgeHtml = trend.hasOfficialEra
-        ? `<span class="badge bg-dark text-white rounded-pill text-nowrap" style="font-size: 0.68rem; padding: 2px 6px; font-weight: 700;">${trend.eraDisplay}</span>`
-        : `<span class="badge bg-secondary text-white rounded-pill text-nowrap" style="font-size: 0.68rem; padding: 2px 6px; font-weight: 700;">${trend.eraDisplay || '데이터 집계 중'}</span>`;
+      let badgesHtml = '';
+      if (trend.hasOfficialEra) {
+        badgesHtml = `
+          ${statusBadge}
+          <span class="badge rounded-pill text-nowrap" style="font-size: 0.70rem; padding: 2px 6px; ${trend.badgeStyle || ''}">
+            ${trend.icon || '─'} ${trend.label || '공식 분석 대기'}
+          </span>
+          <span class="badge bg-dark text-white rounded-pill text-nowrap" style="font-size: 0.68rem; padding: 2px 6px; font-weight: 700;">
+            ${trend.eraDisplay}
+          </span>
+        `;
+      } else {
+        // [선발 투수 스탯 및 예외 상태 출력 규칙]
+        // 선발 투수 영역에 숫자로 된 방어율이 없을 때 예외 상태 문구('시즌 첫 등판' 또는 '방어율 데이터 집계 중')를 단 1회만 참조하여 정적 고정
+        const stateText = trend.eraDisplay || '방어율 데이터 집계 중';
+        badgesHtml = `
+          ${statusBadge}
+          <span class="badge bg-secondary text-white rounded-pill text-nowrap" style="font-size: 0.70rem; padding: 2px 8px; font-weight: 700;">
+            ${stateText}
+          </span>
+        `;
+      }
 
       const statsBarHtml = trend.hasOfficialEra
         ? `
           <div class="py-1 px-1.5 rounded bg-light border d-flex justify-content-center align-items-center gap-1 text-dark fw-semibold text-truncate" style="border-color: #e2e8f0 !important; font-size: 0.68rem; letter-spacing: -0.2px;">
-            <span>최근3G <b>${trend.record}</b></span>
+            <span>시즌 <b>${trend.record}</b></span>
             <span class="text-muted">·</span>
             <span>평균 <b>${trend.avgIp}</b></span>
             <span class="text-muted">·</span>
@@ -4292,7 +4311,7 @@
         `
         : `
           <div class="py-1 px-1.5 rounded bg-light border d-flex justify-content-center align-items-center gap-1 text-muted fw-normal text-truncate" style="border-color: #e2e8f0 !important; font-size: 0.68rem; letter-spacing: -0.2px;">
-            <span><i class="bi bi-info-circle me-1 text-primary"></i>공식 경기 일지 집계 중 (시즌 첫 등판 또는 대기)</span>
+            <span>공식 기록 분석 대기</span>
           </div>
         `;
 
@@ -4304,11 +4323,7 @@
             <span class="text-muted small flex-shrink-0">(${pThrows})</span>
           </div>
           <div class="d-flex align-items-center justify-content-center gap-1 mb-1 flex-wrap">
-            ${statusBadge}
-            <span class="badge rounded-pill text-nowrap" style="font-size: 0.70rem; padding: 2px 6px; ${trend.badgeStyle || ''}">
-              ${trend.icon || '─'} ${trend.label || '공식 분석 대기'}
-            </span>
-            ${eraBadgeHtml}
+            ${badgesHtml}
           </div>
           ${statsBarHtml}
         </div>
