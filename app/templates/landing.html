@@ -6936,10 +6936,10 @@ function getFullModalMatchList() {
         league: "NPB",
         starter: { name: "사이키 히로토", throws: "우완", era: "1.83", w: 13, l: 3, whip: "1.01" },
         pitchers: [
-          { name: "사이키 히로토", pos: "선발투수", ip: "7.0", np: 96, er: 1, so: 7, dec: "승", is_starter: true, is_leverage: false },
-          { name: "하비 게라", pos: "중간계투", ip: "1.0", np: 13, er: 0, so: 1, dec: "홀", is_starter: false, is_leverage: true },
-          { name: "키리시키 타쿠마", pos: "셋업맨", ip: "1.0", np: 15, er: 0, so: 2, dec: "홀", is_starter: false, is_leverage: true },
-          { name: "이와자키 스구루", pos: "마무리", ip: "1.0", np: 14, er: 0, so: 1, dec: "세", is_starter: false, is_leverage: true }
+          { name: "사이키 히로토", pos: "선발투수", ip: "7.0", np: 96, er: 1, so: 7, bb: 1, dec: "승", is_starter: true, is_leverage: false },
+          { name: "하비 게라", pos: "중간계투", ip: "1.0", np: 13, er: 0, so: 1, bb: 0, dec: "홀", is_starter: false, is_leverage: true },
+          { name: "키리시키 타쿠마", pos: "셋업맨", ip: "1.0", np: 15, er: 0, so: 2, bb: 0, dec: "홀", is_starter: false, is_leverage: true },
+          { name: "이와자키 스구루", pos: "마무리", ip: "1.0", np: 14, er: 0, so: 1, bb: 0, dec: "세", is_starter: false, is_leverage: true }
         ],
         batters: [
           { order: 1, pos: "중견수", name: "치카모토 코지", ab: 4, r: 1, h: 2, hr: 0, rbi: 0, avg: ".285" },
@@ -6951,6 +6951,48 @@ function getFullModalMatchList() {
           { order: 7, pos: "포수", name: "우메노 류타로", ab: 3, r: 0, h: 1, hr: 0, rbi: 0, avg: ".209" },
           { order: 8, pos: "유격수", name: "키나미 세이야", ab: 3, r: 1, h: 1, hr: 0, rbi: 0, avg: ".212" },
           { order: 9, pos: "투수", name: "사이키 히로토", ab: 2, r: 0, h: 0, hr: 0, rbi: 0, avg: ".118" }
+        ]
+      },
+      "도쿄 야쿠르트 스왈로스": {
+        league: "NPB",
+        starter: { name: "야마노 타이치", throws: "우완", era: "3.86", w: 3, l: 4, whip: "1.30" },
+        pitchers: [
+          { name: "야마노 타이치", pos: "선발투수", ip: "5.0", np: 85, er: 2, so: 4, bb: 2, dec: "패", is_starter: true, is_leverage: false },
+          { name: "키자와 아키노리", pos: "중간계투", ip: "1.0", np: 14, er: 0, so: 1, bb: 0, dec: "-", is_starter: false, is_leverage: false },
+          { name: "시미즈 노보루", pos: "셋업맨", ip: "1.0", np: 15, er: 0, so: 2, bb: 0, dec: "홀", is_starter: false, is_leverage: true },
+          { name: "타구치 카즈토", pos: "마무리", ip: "1.0", np: 13, er: 0, so: 1, bb: 0, dec: "세", is_starter: false, is_leverage: true }
+        ],
+        batters: [
+          { order: 1, pos: "중견수", name: "니시카와 하루키", ab: 4, r: 0, h: 1, hr: 0, rbi: 0, avg: ".265" },
+          { order: 2, pos: "2루수", name: "야마다 테츠토", ab: 4, r: 0, h: 1, hr: 0, rbi: 0, avg: ".260" },
+          { order: 3, pos: "좌익수", name: "도밍고 산타나", ab: 4, r: 0, h: 2, hr: 0, rbi: 0, avg: ".315" },
+          { order: 4, pos: "3루수", name: "무라카미 무네타카", ab: 4, r: 0, h: 1, hr: 0, rbi: 0, avg: ".240" },
+          { order: 5, pos: "1루수", name: "호세 오스나", ab: 4, r: 0, h: 1, hr: 0, rbi: 0, avg: ".260" },
+          { order: 6, pos: "우익수", name: "나가오카 히데키", ab: 4, r: 0, h: 1, hr: 0, rbi: 0, avg: ".285" },
+          { order: 7, pos: "포수", name: "나카무라 유헤이", ab: 3, r: 0, h: 0, hr: 0, rbi: 0, avg: ".220" },
+          { order: 8, pos: "유격수", name: "타케오카 류세이", ab: 3, r: 0, h: 0, hr: 0, rbi: 0, avg: ".245" },
+          { order: 9, pos: "투수", name: "야마노 타이치", ab: 2, r: 0, h: 0, hr: 0, rbi: 0, avg: ".100" }
+        ]
+      },
+      "요코하마 DeNA 베이스타스": {
+        league: "NPB",
+        starter: { name: "카타야마 코신", throws: "우완", era: "2.50", w: 2, l: 1, whip: "1.10" },
+        pitchers: [
+          { name: "카타야마 코신", pos: "선발투수", ip: "6.0", np: 88, er: 0, so: 6, bb: 1, dec: "승", is_starter: true, is_leverage: false },
+          { name: "토쿠야마 소마", pos: "중간계투", ip: "1.0", np: 12, er: 0, so: 1, bb: 0, dec: "홀", is_starter: false, is_leverage: false },
+          { name: "이세 히로무", pos: "셋업맨", ip: "1.0", np: 15, er: 0, so: 2, bb: 0, dec: "홀", is_starter: false, is_leverage: true },
+          { name: "모리하라 코헤이", pos: "마무리", ip: "1.0", np: 14, er: 0, so: 1, bb: 0, dec: "세", is_starter: false, is_leverage: true }
+        ],
+        batters: [
+          { order: 1, pos: "우익수", name: "카지와라 코키", ab: 4, r: 1, h: 2, hr: 0, rbi: 0, avg: ".290" },
+          { order: 2, pos: "2루수", name: "마키 슈고", ab: 4, r: 1, h: 2, hr: 1, rbi: 1, avg: ".295" },
+          { order: 3, pos: "좌익수", name: "사노 케이타", ab: 4, r: 0, h: 1, hr: 0, rbi: 1, avg: ".280" },
+          { order: 4, pos: "1루수", name: "타일러 오스틴", ab: 4, r: 0, h: 1, hr: 0, rbi: 0, avg: ".310" },
+          { order: 5, pos: "3루수", name: "미야자키 토시로", ab: 4, r: 0, h: 1, hr: 0, rbi: 0, avg: ".285" },
+          { order: 6, pos: "중견수", name: "쿠와하라 마사유키", ab: 4, r: 0, h: 1, hr: 0, rbi: 0, avg: ".265" },
+          { order: 7, pos: "포수", name: "야마모토 유다이", ab: 3, r: 0, h: 1, hr: 0, rbi: 0, avg: ".250" },
+          { order: 8, pos: "유격수", name: "모리 케이토", ab: 3, r: 0, h: 0, hr: 0, rbi: 0, avg: ".240" },
+          { order: 9, pos: "투수", name: "카타야마 코신", ab: 2, r: 0, h: 0, hr: 0, rbi: 0, avg: ".120" }
         ]
       }
     };
@@ -7110,6 +7152,7 @@ function getFullModalMatchList() {
                   np: p.np,
                   er: p.er,
                   so: p.so,
+                  bb: p.bb !== undefined ? p.bb : 0,
                   decision: p.dec,
                   role: p.is_leverage ? '승리조' : (p.is_starter ? '선발' : '구원')
                 }
@@ -7144,7 +7187,7 @@ function getFullModalMatchList() {
         if (!pList || pList.length === 0) {
           return `
             <tr>
-              <td colspan="7" class="text-center text-muted py-2.5" style="background:#ffffff; font-size:0.72rem;">
+              <td colspan="8" class="text-center text-muted py-2.5" style="background:#ffffff; font-size:0.72rem;">
                 <i class="bi bi-info-circle me-1 text-primary"></i>공식 투수진 등판 기록 집계 중
               </td>
             </tr>
@@ -7175,6 +7218,7 @@ function getFullModalMatchList() {
           const npVal = extra.np || extra.pitches || '-';
           const erVal = (extra.er !== undefined && extra.er !== null) ? extra.er : '-';
           const soVal = (extra.so !== undefined && extra.so !== null) ? extra.so : '-';
+          const bbVal = (extra.bb !== undefined && extra.bb !== null) ? extra.bb : (p.bb !== undefined ? p.bb : (p.walks !== undefined ? p.walks : '-'));
 
           return `
             <tr style="height:25px; background:${idx % 2 === 0 ? '#ffffff' : '#fcfcfd'}; font-size:0.71rem;">
@@ -7184,6 +7228,7 @@ function getFullModalMatchList() {
               <td class="text-muted" style="white-space:nowrap; padding: 2px 4px;">${npVal}</td>
               <td class="${Number(erVal) > 2 ? 'text-danger fw-black' : 'text-dark'}" style="white-space:nowrap; padding: 2px 4px;">${erVal}</td>
               <td class="fw-bold text-dark" style="white-space:nowrap; padding: 2px 4px;">${soVal}</td>
+              <td class="text-muted" style="white-space:nowrap; padding: 2px 4px;">${bbVal}</td>
               <td style="white-space:nowrap; padding: 2px 4px;">${dec ? `<span class="badge ${decBadge} px-1 py-0.5" style="font-size:0.60rem;">${dec}</span>` : '-'}</td>
             </tr>
           `;
@@ -7269,13 +7314,14 @@ function getFullModalMatchList() {
                     <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size:0.70rem; border-collapse:collapse; min-width:300px;">
                       <thead style="background:#fee2e2; color:#991b1b; position:sticky; top:0; z-index:1;">
                         <tr style="height:24px;">
-                          <th style="width:15%;">구분</th>
-                          <th style="width:28%;">투수명</th>
-                          <th style="width:12%;">이닝</th>
-                          <th style="width:12%;">투구</th>
+                          <th style="width:13%;">구분</th>
+                          <th style="width:25%;">투수명</th>
+                          <th style="width:10%;">이닝</th>
+                          <th style="width:10%;">투구</th>
                           <th style="width:10%;">자책</th>
                           <th style="width:10%;">삼진</th>
-                          <th style="width:13%;">결과</th>
+                          <th style="width:10%;">볼넷</th>
+                          <th style="width:12%;">결과</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -7330,13 +7376,14 @@ function getFullModalMatchList() {
                     <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size:0.70rem; border-collapse:collapse; min-width:300px;">
                       <thead style="background:#dbeafe; color:#1e40af; position:sticky; top:0; z-index:1;">
                         <tr style="height:24px;">
-                          <th style="width:15%;">구분</th>
-                          <th style="width:28%;">투수명</th>
-                          <th style="width:12%;">이닝</th>
-                          <th style="width:12%;">투구</th>
+                          <th style="width:13%;">구분</th>
+                          <th style="width:25%;">투수명</th>
+                          <th style="width:10%;">이닝</th>
+                          <th style="width:10%;">투구</th>
                           <th style="width:10%;">자책</th>
                           <th style="width:10%;">삼진</th>
-                          <th style="width:13%;">결과</th>
+                          <th style="width:10%;">볼넷</th>
+                          <th style="width:12%;">결과</th>
                         </tr>
                       </thead>
                       <tbody>
