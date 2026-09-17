@@ -12,6 +12,7 @@ from typing import Dict, Any, List, Optional, Tuple
 import os
 import re
 import json
+from app.services.player_translation import translate_player_name
 
 _JSON_PATH = os.path.join(os.path.dirname(__file__), "baseball_rosters_master.json")
 _CACHED_ROSTERS: Dict[str, Any] = {}
@@ -81,47 +82,85 @@ class BaseballRosterService:
     def match_team_roster(cls, team_name: str) -> Optional[Dict[str, Any]]:
         """
         입력된 구단명과 가장 잘 부합하는 공식 마스터 로스터를 반환합니다.
-        (한국어 구단명, 영문 구단명, 축약어, 별칭 100% 매핑)
+        (한국어 구단명, 영문 구단명, 축약어, 별칭 100% 매핑 - 연고지 단독 매칭 금지 및 동음/유사 구단 분리 보장)
         """
         if not team_name:
             return None
         rosters = get_master_rosters()
         clean = re.sub(r"\s+", " ", str(team_name)).strip()
         lower_clean = clean.lower()
+        nospace_clean = re.sub(r"[\s\-_/]+", "", clean).lower()
 
-        # 0. English / Alias mapping check
-        mapped_korean = ENGLISH_TEAM_MAP.get(lower_clean)
-        if mapped_korean and mapped_korean in rosters:
-            return rosters[mapped_korean]
-        for eng_key, kor_target in ENGLISH_TEAM_MAP.items():
-            if eng_key in lower_clean or lower_clean in eng_key:
-                if kor_target in rosters:
-                    return rosters[kor_target]
-        
-        # 1. Exact match
+        # 1. Exact match (with or without spaces)
         if clean in rosters:
             return rosters[clean]
-        
-        # 2. Substring match
         for k, v in rosters.items():
-            if clean in k or k in clean:
+            if nospace_clean == re.sub(r"[\s\-_/]+", "", k).lower():
                 return v
-        
-        # 3. Aliases list match inside roster definition
+
+        # 2. Strict Distinct Franchise Map (MLB / KBO / NPB)
+        DISTINCT_MAP = [
+            ("에인절스", "LA 에인절스"), ("angels", "LA 에인절스"), ("anaheim", "LA 에인절스"), ("laa", "LA 에인절스"),
+            ("다저스", "LA 다저스"), ("dodgers", "LA 다저스"), ("lad", "LA 다저스"),
+            ("화이트삭스", "시카고 화이트삭스"), ("white sox", "시카고 화이트삭스"), ("whitesox", "시카고 화이트삭스"), ("cws", "시카고 화이트삭스"),
+            ("시카고 컵스", "시카고 컵스"), ("시카고컵스", "시카고 컵스"), ("chicago cubs", "시카고 컵스"), ("컵스", "시카고 컵스"), ("cubs", "시카고 컵스"),
+            ("뉴욕 양키스", "뉴욕 양키스"), ("뉴욕양키스", "뉴욕 양키스"), ("ny yankees", "뉴욕 양키스"), ("yankees", "뉴욕 양키스"), ("양키스", "뉴욕 양키스"),
+            ("뉴욕 메츠", "뉴욕 메츠"), ("뉴욕메츠", "뉴욕 메츠"), ("ny mets", "뉴욕 메츠"), ("mets", "뉴욕 메츠"), ("메츠", "뉴욕 메츠"),
+            ("보스턴 레드삭스", "보스턴 레드삭스"), ("레드삭스", "보스턴 레드삭스"), ("red sox", "보스턴 레드삭스"), ("redsox", "보스턴 레드삭스"),
+            ("미네소타 트윈스", "미네소타 트윈스"), ("미네소타트윈스", "미네소타 트윈스"), ("미네소타", "미네소타 트윈스"), ("minnesota", "미네소타 트윈스"),
+            ("lg 트윈스", "LG 트윈스"), ("lg트윈스", "LG 트윈스"), ("엘지 트윈스", "LG 트윈스"), ("엘지트윈스", "LG 트윈스"),
+            ("샌프란시스코 자이언츠", "샌프란시스코 자이언츠"), ("샌프란시스코", "샌프란시스코 자이언츠"), ("sf giants", "샌프란시스코 자이언츠"),
+            ("요미우리 자이언츠", "요미우리 자이언츠"), ("요미우리", "요미우리 자이언츠"),
+            ("롯데 자이언츠", "롯데 자이언츠"), ("지바 롯데", "지바 롯데 마린스"), ("지바롯데", "지바 롯데 마린스"),
+            ("디트로이트 타이거스", "디트로이트 타이거스"), ("디트로이트 타이거즈", "디트로이트 타이거스"), ("디트로이트", "디트로이트 타이거스"),
+            ("한신 타이거스", "한신 타이거즈"), ("한신 타이거즈", "한신 타이거즈"), ("한신", "한신 타이거즈"),
+            ("kia 타이거즈", "KIA 타이거즈"), ("기아 타이거즈", "KIA 타이거즈"), ("기아타이거즈", "KIA 타이거즈"), ("기아", "KIA 타이거즈"),
+            ("샌디에이고 파드리스", "샌디에이고 파드리스"), ("샌디에이고", "샌디에이고 파드리스"), ("파드리스", "샌디에이고 파드리스"), ("padres", "샌디에이고 파드리스"),
+            ("토론토 블루제이스", "토론토 블루제이스"), ("토론토", "토론토 블루제이스"), ("블루제이스", "토론토 블루제이스"), ("blue jays", "토론토 블루제이스"),
+            ("휴스턴 애스트로스", "휴스턴 애스트로스"), ("휴스턴", "휴스턴 애스트로스"), ("애스트로스", "휴스턴 애스트로스"), ("astros", "휴스턴 애스트로스"),
+            ("애틀랜타 브레이브스", "애틀랜타 브레이브스"), ("애틀랜타", "애틀랜타 브레이브스"), ("브레이브스", "애틀랜타 브레이브스"), ("braves", "애틀랜타 브레이브스"),
+            ("필라델피아 필리스", "필라델피아 필리스"), ("필라델피아", "필라델피아 필리스"), ("필리스", "필라델피아 필리스"), ("phillies", "필라델피아 필리스"),
+            ("볼티모어 오리올스", "볼티모어 오리올스"), ("볼티모어", "볼티모어 오리올스"), ("오리올스", "볼티모어 오리올스"), ("orioles", "볼티모어 오리올스"),
+            ("탬파베이 레이스", "탬파베이 레이스"), ("탬파베이", "탬파베이 레이스"), ("레이스", "탬파베이 레이스"), ("tampa bay", "탬파베이 레이스"),
+            ("클리블랜드 가디언스", "클리블랜드 가디언스"), ("클리블랜드", "클리블랜드 가디언스"), ("가디언스", "클리블랜드 가디언스"), ("guardians", "클리블랜드 가디언스"),
+            ("캔자스시티 로열스", "캔자스시티 로열스"), ("캔자스시티 로얄스", "캔자스시티 로열스"), ("캔자스시티", "캔자스시티 로열스"), ("로열스", "캔자스시티 로열스"),
+            ("시애틀 매리너스", "시애틀 매리너스"), ("시애틀", "시애틀 매리너스"), ("매리너스", "시애틀 매리너스"), ("mariners", "시애틀 매리너스"),
+            ("텍사스 레인저스", "텍사스 레인저스"), ("텍사스", "텍사스 레인저스"), ("레인저스", "텍사스 레인저스"), ("rangers", "텍사스 레인저스"),
+            ("마이애미 말린스", "마이애미 말린스"), ("마이애미", "마이애미 말린스"), ("말린스", "마이애미 말린스"), ("marlins", "마이애미 말린스"),
+            ("애리조나 다이아몬드백스", "애리조나 다이아몬드백스"), ("애리조나", "애리조나 다이아몬드백스"), ("디백스", "애리조나 다이아몬드백스"), ("diamondbacks", "애리조나 다이아몬드백스"),
+            ("콜로라도 로키스", "콜로라도 로키스"), ("콜로라도", "콜로라도 로키스"), ("로키스", "콜로라도 로키스"), ("rockies", "콜로라도 로키스"),
+            ("오클랜드 애슬레틱스", "오클랜드 애슬레틱스"), ("오클랜드", "오클랜드 애슬레틱스"), ("애슬레틱스", "오클랜드 애슬레틱스"), ("athletics", "오클랜드 애슬레틱스"),
+            ("피츠버그 파이어리츠", "피츠버그 파이어리츠"), ("피츠버그 파이리츠", "피츠버그 파이어리츠"), ("피츠버그", "피츠버그 파이어리츠"), ("파이어리츠", "피츠버그 파이어리츠"), ("pirates", "피츠버그 파이어리츠"),
+            ("밀워키 브루어스", "밀워키 브루어스"), ("밀워키", "밀워키 브루어스"), ("브루어스", "밀워키 브루어스"), ("brewers", "밀워키 브루어스"),
+            ("세인트루이스 카디널스", "세인트루이스 카디널스"), ("세인트루이스", "세인트루이스 카디널스"), ("카디널스", "세인트루이스 카디널스"), ("cardinals", "세인트루이스 카디널스"),
+            ("워싱턴 내셔널스", "워싱턴 내셔널스"), ("워싱턴", "워싱턴 내셔널스"), ("내셔널스", "워싱턴 내셔널스"), ("nationals", "워싱턴 내셔널스"),
+            ("신시내티 레즈", "신시내티 레즈"), ("신시내티", "신시내티 레즈"), ("reds", "신시내티 레즈")
+        ]
+        DISTINCT_MAP.sort(key=lambda x: len(x[0]), reverse=True)
+        for keyword, target in DISTINCT_MAP:
+            kw_norm = re.sub(r"[\s\-_/]+", "", keyword).lower()
+            if kw_norm in nospace_clean or keyword in lower_clean:
+                if target in rosters:
+                    return rosters[target]
+
+        # 3. Aliases list match inside roster definition (strict check)
         for k, v in rosters.items():
             aliases = v.get("aliases", [])
             for alias in aliases:
-                a_clean = str(alias).strip().lower()
-                if a_clean == lower_clean or a_clean in lower_clean or lower_clean in a_clean:
+                a_norm = re.sub(r"[\s\-_/]+", "", str(alias)).lower()
+                if a_norm and (a_norm == nospace_clean or a_norm in nospace_clean or nospace_clean in a_norm):
+                    if a_norm in ["la", "newyork", "chicago", "ny"]:
+                        continue
                     return v
-        
-        # 4. Word token match
-        clean_tokens = [w for w in re.split(r"[\s\-_/]+", clean) if len(w) >= 2]
+
+        # 4. Fallback: non-city token match
+        BANNED_TOKENS = {"la", "ny", "cws", "chc", "lad", "laa", "뉴욕", "시카고", "로스앤젤레스"}
+        clean_tokens = [w for w in re.split(r"[\s\-_/]+", clean) if len(w) >= 2 and w.lower() not in BANNED_TOKENS]
         for token in clean_tokens:
             for k, v in rosters.items():
                 if token in k:
                     return v
-                    
+
         return None
 
     @classmethod
@@ -310,9 +349,26 @@ class BaseballRosterService:
                 announced_starter = st.get("home" if is_home else "away", {}).get("name")
                 
             if announced_starter and announced_starter not in ["선발 투수", "선발 예고", "선발 미정", "TBD", "-"]:
-                res["starter"] = announced_starter
-                if res["pitchers"] and res["pitchers"][0].get("is_starter"):
-                    res["pitchers"][0]["name"] = announced_starter
+                ko_starter = translate_player_name(announced_starter) or announced_starter
+                res["starter"] = ko_starter
+                
+                # Check if pitcher already exists in roster
+                existing_idx = None
+                for idx, p in enumerate(res["pitchers"]):
+                    p_name = p.get("name", "")
+                    if p_name in [announced_starter, ko_starter] or (ko_starter and ko_starter in p_name):
+                        existing_idx = idx
+                        break
+                
+                if existing_idx is not None:
+                    target_p = res["pitchers"].pop(existing_idx)
+                    target_p["is_starter"] = True
+                    target_p["pos"] = "선발투수"
+                    target_p["name"] = ko_starter
+                    res["pitchers"].insert(0, target_p)
+                else:
+                    if res["pitchers"] and res["pitchers"][0].get("is_starter"):
+                        res["pitchers"][0]["name"] = ko_starter
 
             return res
 
