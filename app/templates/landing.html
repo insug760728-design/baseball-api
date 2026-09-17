@@ -23724,9 +23724,6 @@ function updateSlimPanel(matchId, type, contentHtml) {
         `;
       }
 
-      const hLast = (homeRecent && homeRecent.length > 0) ? homeRecent[0] : null;
-      const aLast = (awayRecent && awayRecent.length > 0) ? awayRecent[0] : null;
-
       const parseTeam = (tLast, tName, isHome) => {
         if (!tLast) return null;
         const score = Number(tLast.team_score ?? (isHome ? tLast.home_score : tLast.away_score) ?? 0);
