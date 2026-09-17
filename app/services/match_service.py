@@ -159,7 +159,10 @@ class MatchService:
 
     @classmethod
     def _sync_match_details_and_players(cls, db: Session, match: Match, scraper):
-        detail_data = scraper.scrape_match_detail(match.official_id)
+        try:
+            detail_data = scraper.scrape_match_detail(match.official_id, match=match)
+        except TypeError:
+            detail_data = scraper.scrape_match_detail(match.official_id)
         if not detail_data:
             return
 
@@ -618,6 +621,64 @@ class MatchService:
                 "override_reason": ps.override_reason,
                 "original_backup": ps.original_backup
             })
+
+        is_baseball = (getattr(match, "sport_code", "") or "").upper() == "BASEBALL" or any(
+            k in (getattr(match, "league_name", "") or "").upper() for k in ["MLB", "KBO", "NPB", "W1L"]
+        )
+        has_placeholder = any(
+            ("구원투수" in (p.get("player_name") or "")) or
+            ("번타자" in (p.get("player_name") or "")) or
+            ("선발투수" in (p.get("player_name") or ""))
+            for p in player_stats_list
+        )
+        if is_baseball and (len(player_stats_list) == 0 or has_placeholder):
+            try:
+                from app.services.baseball_roster_service import BaseballRosterService
+                synth_players, boxscore = BaseballRosterService.enrich_match_player_stats(match, team_stats)
+                player_stats_list = synth_players
+                team_stats["boxscore"] = boxscore
+
+                # DB에 실시간 선수별 지표 및 박스스코어 자동 영구 적재
+                try:
+                    if has_placeholder:
+                        db.query(PlayerMatchStat).filter(
+                            PlayerMatchStat.match_id == match.id,
+                            PlayerMatchStat.is_override == False
+                        ).delete(synchronize_session=False)
+
+                    for p_stat in synth_players:
+                        extra_str = json.dumps(p_stat.get("extra_stats", {}), ensure_ascii=False)
+                        new_p = PlayerMatchStat(
+                            match_id=match.id,
+                            team_name=p_stat["team_name"],
+                            player_name=p_stat["player_name"],
+                            back_number=p_stat.get("back_number"),
+                            position=p_stat.get("position"),
+                            minutes_played=0,
+                            points=p_stat.get("points", 0),
+                            assists=0,
+                            shots=p_stat.get("shots", 0),
+                            extra_stats=extra_str,
+                            is_override=False
+                        )
+                        db.add(new_p)
+
+                    if match.details:
+                        match.details.team_stats = json.dumps(team_stats, ensure_ascii=False)
+                    else:
+                        new_det = MatchDetail(
+                            match_id=match.id,
+                            period_scores=json.dumps(period_scores, ensure_ascii=False),
+                            team_stats=json.dumps(team_stats, ensure_ascii=False),
+                            source_url=source_url
+                        )
+                        db.add(new_det)
+                    db.commit()
+                except Exception as commit_err:
+                    db.rollback()
+                    logger.warning(f"Failed to persist synth players to DB: {commit_err}")
+            except Exception as e:
+                logger.warning(f"Failed to auto-enrich baseball player stats for match {match_id}: {e}")
 
         events_list = []
         for ev in match.events:

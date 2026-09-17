@@ -221,6 +221,17 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
         if a_st.get("name") and a_st.get("name") not in ["선발 예고", "선발 투수"]:
             a_starter = a_st.get("name")
 
+    if not h_starter and data.get("player_stats"):
+        for ps in data["player_stats"]:
+            if ps.get("team_name") == m.home_team_name and ps.get("position") == "선발투수":
+                h_starter = ps.get("player_name")
+                break
+    if not a_starter and data.get("player_stats"):
+        for ps in data["player_stats"]:
+            if ps.get("team_name") == m.away_team_name and ps.get("position") == "선발투수":
+                a_starter = ps.get("player_name")
+                break
+
     res = {
         "id": m.id,
         "official_id": m.official_id,
