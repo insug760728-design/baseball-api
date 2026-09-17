@@ -280,10 +280,10 @@
       text-decoration: underline;
     }
 
-    /* 4-Column Ultra Cockpit Dashboard */
+    /* 1-Column Full Width Clean Match List Layout (양사이드 박스 완전 제거) */
     .dash-container {
       width: 100%;
-      max-width: 100% !important;
+      max-width: 960px !important;
       margin: 0 auto;
       padding-left: 8px;
       padding-right: 8px;
@@ -291,51 +291,28 @@
     .dashboard-row {
       display: flex;
       flex-wrap: nowrap;
-      margin-left: -4px;
-      margin-right: -4px;
-      width: calc(100% + 8px);
+      margin-left: 0;
+      margin-right: 0;
+      width: 100%;
       height: 100%;
     }
     
-    /* 3-Column Width Ratio: 32% | 38% | 30% (중앙 실시간 라이브 중계센터 최적화) */
-    @media (min-width: 1200px) {
-      .col-dash-left {
-        flex: 0 0 32% !important;
-        max-width: 32% !important;
-      }
-      .col-dash-center {
-        flex: 0 0 38% !important;
-        max-width: 38% !important;
-      }
-      .col-dash-right {
-        flex: 0 0 30% !important;
-        max-width: 30% !important;
-      }
+    .col-dash-left {
+      flex: 0 0 100% !important;
+      max-width: 100% !important;
+      width: 100% !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+      margin-bottom: 0;
     }
-    @media (min-width: 992px) and (max-width: 1199px) {
-      .col-dash-left {
-        flex: 0 0 33% !important;
-        max-width: 33% !important;
-      }
-      .col-dash-center {
-        flex: 0 0 37% !important;
-        max-width: 37% !important;
-      }
-      .col-dash-right {
-        flex: 0 0 30% !important;
-        max-width: 30% !important;
-      }
+    .col-dash-center,
+    .col-dash-right,
+    #centerColMain,
+    #rightColCommunity {
+      display: none !important;
     }
     .footer-section {
       display: none !important;
-    }
-
-    .col-dash-left,
-    .col-dash-center,
-    .col-dash-right {
-      padding-left: 4px;
-      padding-right: 4px;
-      margin-bottom: 0;
     }
 
     @media (min-width: 992px) {
@@ -28038,14 +28015,13 @@ function renderPredDetail(m, customDetailData = null) {
       if (mode === 'mobile') {
         if (btnPC) btnPC.className = 'btn btn-outline-secondary fw-bold px-2 py-1';
         if (btnMobile) btnMobile.className = 'btn btn-primary fw-bold px-2 py-1';
-        switchMobileTab(currentMobileTab || 'schedule');
       } else {
         if (btnPC) btnPC.className = 'btn btn-primary fw-bold px-2 py-1';
         if (btnMobile) btnMobile.className = 'btn btn-outline-secondary fw-bold px-2 py-1';
-        if (p1) { p1.style.display = ''; p1.style.width = ''; p1.style.flex = ''; p1.style.maxWidth = ''; }
-        if (p2) { p2.style.display = ''; p2.style.width = ''; p2.style.flex = ''; p2.style.maxWidth = ''; }
-        if (p3) { p3.style.display = ''; p3.style.width = ''; p3.style.flex = ''; p3.style.maxWidth = ''; }
       }
+      if (p1) { p1.style.display = 'block'; p1.style.width = '100%'; p1.style.flex = '0 0 100%'; p1.style.maxWidth = '100%'; }
+      if (p2) { p2.style.display = 'none'; }
+      if (p3) { p3.style.display = 'none'; }
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
