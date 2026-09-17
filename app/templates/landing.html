@@ -280,10 +280,10 @@
       text-decoration: underline;
     }
 
-    /* 1-Column Full Width Clean Match List Layout (양사이드 박스 완전 제거) */
+    /* 3-Column PC Layout: [경기목록 38%] [채팅창 32%] [라이브중계 30%] */
     .dash-container {
       width: 100%;
-      max-width: 960px !important;
+      max-width: 100% !important;
       margin: 0 auto;
       padding-left: 8px;
       padding-right: 8px;
@@ -291,29 +291,102 @@
     .dashboard-row {
       display: flex;
       flex-wrap: nowrap;
+      gap: 8px;
       margin-left: 0;
       margin-right: 0;
       width: 100%;
       height: 100%;
     }
     
-    .col-dash-left {
-      flex: 0 0 100% !important;
-      max-width: 100% !important;
-      width: 100% !important;
-      padding-left: 0 !important;
-      padding-right: 0 !important;
-      margin-bottom: 0;
+    @media (min-width: 1200px) {
+      .col-dash-left {
+        flex: 0 0 calc((100% - 16px) * 0.38) !important;
+        max-width: calc((100% - 16px) * 0.38) !important;
+        width: calc((100% - 16px) * 0.38) !important;
+        display: flex !important;
+        flex-direction: column;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-bottom: 0;
+      }
+      .col-dash-center {
+        flex: 0 0 calc((100% - 16px) * 0.32) !important;
+        max-width: calc((100% - 16px) * 0.32) !important;
+        width: calc((100% - 16px) * 0.32) !important;
+        display: flex !important;
+        flex-direction: column;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-bottom: 0;
+      }
+      .col-dash-right {
+        flex: 0 0 calc((100% - 16px) * 0.30) !important;
+        max-width: calc((100% - 16px) * 0.30) !important;
+        width: calc((100% - 16px) * 0.30) !important;
+        display: flex !important;
+        flex-direction: column;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-bottom: 0;
+      }
     }
-    .col-dash-center,
-    .col-dash-right,
-    #centerColMain,
-    #rightColCommunity {
-      display: none !important;
+
+    @media (min-width: 992px) and (max-width: 1199px) {
+      .col-dash-left {
+        flex: 0 0 calc((100% - 16px) * 0.38) !important;
+        max-width: calc((100% - 16px) * 0.38) !important;
+        width: calc((100% - 16px) * 0.38) !important;
+        display: flex !important;
+        flex-direction: column;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-bottom: 0;
+      }
+      .col-dash-center {
+        flex: 0 0 calc((100% - 16px) * 0.32) !important;
+        max-width: calc((100% - 16px) * 0.32) !important;
+        width: calc((100% - 16px) * 0.32) !important;
+        display: flex !important;
+        flex-direction: column;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-bottom: 0;
+      }
+      .col-dash-right {
+        flex: 0 0 calc((100% - 16px) * 0.30) !important;
+        max-width: calc((100% - 16px) * 0.30) !important;
+        width: calc((100% - 16px) * 0.30) !important;
+        display: flex !important;
+        flex-direction: column;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-bottom: 0;
+      }
+    }
+
+    @media (max-width: 991px) {
+      .dashboard-row {
+        flex-direction: column;
+        gap: 0;
+      }
+      .col-dash-left {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        display: block;
+      }
+      .col-dash-center,
+      .col-dash-right {
+        display: none;
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        width: 100% !important;
+      }
     }
     .footer-section {
       display: none !important;
     }
+
 
     @media (min-width: 992px) {
       html, body {
@@ -2293,7 +2366,20 @@
   <section class="pt-1 pb-1 px-1" id="prediction-section" style="background: #ffffff; border-bottom: 1px solid #e5e7eb;">
     <div class="dash-container">
 
-      <!-- 3 : 4 : 3 Side-by-Side Unified Dashboard Row -->
+      <!-- 📱 Mobile Tab Bar (모바일 전용 탭 전환: 경기목록 / 채팅창 / 라이브중계) -->
+      <div class="d-flex d-lg-none gap-1 mb-1.5 px-0" id="mobileDashboardTabBar">
+        <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5 active" id="mobTabSchedule" onclick="switchMobileTab('schedule')" style="border-radius: 6px; font-size: 0.80rem; background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8;">
+          <i class="bi bi-calendar-check me-1"></i>경기목록
+        </button>
+        <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5" id="mobTabChat" onclick="switchMobileTab('chat')" style="border-radius: 6px; font-size: 0.80rem; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;">
+          <i class="bi bi-chat-dots-fill me-1 text-primary"></i>채팅창
+        </button>
+        <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5" id="mobTabRelay" onclick="switchMobileTab('relay')" style="border-radius: 6px; font-size: 0.80rem; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;">
+          <i class="bi bi-broadcast me-1 text-danger"></i>라이브중계
+        </button>
+      </div>
+
+      <!-- 3-Column Desktop Layout: [좌: 경기목록 38%] [중: 채팅창 32%] [우: 라이브중계 30%] -->
       <div class="dashboard-row" id="dashboardRow">
         
         <!-- 1. [좌측 30%] 경기바 (시간순 경기 일정 & 필터 & 실시간 스코어) -->
@@ -2369,9 +2455,9 @@
           </div>
         </div>
 
-        <!-- 2. [중앙 38%] 1:1 세부 분석창 -->
+        <!-- 2. [중앙 32%] 실시간 경기 토크 & 응원 채팅창 -->
         <div class="col-dash-center" id="centerColMain">
-          <div class="dash-card-column" style="background: #ffffff; display: flex; flex-direction: column; height: 100%;">
+          <div class="dash-card-column" style="background: #ffffff; display: flex; flex-direction: column; height: 100%; border: 1.5px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
             
             <!-- Mobile Return Helper Button (모바일 모드에서만 표시) -->
             <div class="p-1 pb-0 d-none" id="mobileReturnToScheduleBtn">
@@ -2380,10 +2466,62 @@
               </button>
             </div>
 
-            <!-- Body: Match Detail Studio (중앙 완전 백지화) -->
-            <div class="dash-card-body p-2" id="predDetailPanel" style="flex: 1; width: 100%; box-sizing: border-box; overflow-y: auto; height: 100%; background: #ffffff;"></div>
+            <!-- Chat Card Header -->
+            <div class="dash-card-header pb-1.5 pt-1.5 px-2.5" style="background: #ffffff; border-bottom: 1.5px solid #e5e7eb;">
+              <div class="d-flex justify-content-between align-items-center mb-1 flex-nowrap">
+                <div class="d-flex align-items-center gap-1.5">
+                  <span class="badge" style="background: #2563eb; color: #ffffff; font-size: 0.72rem; font-weight: 800; padding: 3px 6px; border-radius: 4px;">
+                    <span class="pulse-dot me-1" style="display:inline-block; width:5px; height:5px; border-radius:50%; background:#10b981;"></span>TALK
+                  </span>
+                  <span class="fw-bold text-dark text-nowrap" style="font-size: 0.90rem;">
+                    💬 실시간 경기 토크 & 응원
+                  </span>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                  <span class="badge" style="background: #eff6ff; border: 1px solid #bfdbfe; font-size: 0.68rem; color: #1d4ed8; padding: 2px 6px;">
+                    <span id="chatOnlineBadge">🟢 680+명 참여중</span>
+                  </span>
+                </div>
+              </div>
 
-            <!-- Hidden Live Relay Container (완벽히 업데이트 후 공개) -->
+              <!-- Chat Channel / Sports Filter Chips -->
+              <div class="d-flex gap-1 overflow-x-auto py-1" style="scrollbar-width: none;">
+                <button type="button" class="btn btn-xs fw-bold px-2.5 py-0.5 text-white flex-fill text-nowrap" id="btnChatChannelALL" onclick="setChatChannel('ALL')" style="font-size: 0.74rem; border-radius: 4px; background: #1d4ed8; border: 1px solid #1d4ed8;">전체 응원</button>
+                <button type="button" class="btn btn-xs fw-bold px-2.5 py-0.5 text-dark flex-fill text-nowrap" id="btnChatChannelSOCCER" onclick="setChatChannel('SOCCER')" style="font-size: 0.74rem; border-radius: 4px; background: #ffffff; border: 1px solid #cbd5e1;">⚽ 축구방</button>
+                <button type="button" class="btn btn-xs fw-bold px-2.5 py-0.5 text-dark flex-fill text-nowrap" id="btnChatChannelBASEBALL" onclick="setChatChannel('BASEBALL')" style="font-size: 0.74rem; border-radius: 4px; background: #ffffff; border: 1px solid #cbd5e1;">⚾ 야구방</button>
+                <button type="button" class="btn btn-xs fw-bold px-2.5 py-0.5 text-dark flex-fill text-nowrap" id="btnChatChannelBASKETBALL" onclick="setChatChannel('BASKETBALL')" style="font-size: 0.74rem; border-radius: 4px; background: #ffffff; border: 1px solid #cbd5e1;">🏀 농구방</button>
+              </div>
+            </div>
+
+            <!-- Chat Message Feed Area (Scrollable) -->
+            <div class="dash-card-body p-2" id="mainCommunityChatFeed" style="flex: 1 1 auto; overflow-y: auto; background: #f8fafc; display: flex; flex-direction: column; gap: 8px; min-height: 200px;">
+              <div class="text-center py-5 px-3 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                <div class="small">실시간 응원 토크 불러오는 중...</div>
+              </div>
+            </div>
+
+            <!-- Chat Input Footer Area -->
+            <div class="p-2 border-top" style="flex-shrink: 0; background: #ffffff; border-color: #e5e7eb !important;">
+              <div class="d-flex align-items-center gap-1.5 mb-1.5">
+                <div class="input-group input-group-sm" style="max-width: 140px;">
+                  <span class="input-group-text px-1.5 py-0.5 text-muted" style="font-size: 0.72rem; background: #f1f5f9;"><i class="bi bi-person-fill"></i></span>
+                  <input type="text" class="form-control form-control-sm px-1.5 py-0.5 fw-semibold text-dark" id="chatAuthorInput" placeholder="닉네임" value="스포츠팬" style="font-size: 0.75rem; border-color: #cbd5e1;">
+                </div>
+                <span class="text-muted text-truncate" style="font-size: 0.70rem;">
+                  <i class="bi bi-shield-check text-success me-0.5"></i>비매너·욕설 자동 필터링
+                </span>
+              </div>
+              <form id="mainCommunityChatForm" onsubmit="handleSendCommunityMessage(event); return false;" class="d-flex gap-1.5 m-0">
+                <input type="text" class="form-control form-control-sm px-2 py-1.5" id="chatContentInput" placeholder="실시간 경기 응원이나 픽 의견을 남겨보세요..." autocomplete="off" style="font-size: 0.82rem; border-color: #cbd5e1; border-radius: 6px;">
+                <button type="submit" class="btn btn-sm btn-primary px-3 py-1.5 fw-bold text-nowrap d-inline-flex align-items-center gap-1" id="btnSendChatMessage" style="font-size: 0.80rem; border-radius: 6px; background: #1d4ed8; border: 1px solid #1d4ed8;">
+                  <i class="bi bi-send-fill"></i>전송
+                </button>
+              </form>
+            </div>
+
+            <!-- Hidden Safe Backwards Compatibility Containers -->
+            <div class="d-none" id="predDetailPanel"></div>
             <div class="d-none" id="liveRelayContainer"></div>
 
           </div>
@@ -19444,8 +19582,200 @@ function getFullModalMatchList() {
       if (typeof allMatches === 'undefined' || !Array.isArray(allMatches)) return null;
       return allMatches.find(m => m.id == id) || null;
     }
-    function renderCommunityFeed() {}
-    function appendMessageToFeed(msg) {}
+    function buildChatMessageItemHtml(msg) {
+      if (!msg) return '';
+      const isMine = (currentUser && currentUser.nickname && msg.author && msg.author.includes(currentUser.nickname));
+      
+      let sportBadge = '<span class="badge bg-light text-secondary border py-0.5 px-1.5" style="font-size: 0.68rem;">토크</span>';
+      const ch = (msg.channel || '').toUpperCase();
+      const tag = (msg.sport_tag || '').toUpperCase();
+
+      if (ch === 'SOCCER' || tag.includes('EPL') || tag.includes('라리가') || tag.includes('K리그') || tag.includes('축구') || tag.includes('세리에') || tag.includes('분데스')) {
+        sportBadge = `<span class="badge py-0.5 px-1.5" style="background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; font-size: 0.68rem; font-weight: 700;">⚽ ${msg.sport_tag || '축구'}</span>`;
+      } else if (ch === 'BASEBALL' || tag.includes('MLB') || tag.includes('KBO') || tag.includes('야구') || tag.includes('NPB')) {
+        sportBadge = `<span class="badge py-0.5 px-1.5" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 0.68rem; font-weight: 700;">⚾ ${msg.sport_tag || '야구'}</span>`;
+      } else if (ch === 'BASKETBALL' || tag.includes('NBA') || tag.includes('KBL') || tag.includes('농구') || tag.includes('WKBL')) {
+        sportBadge = `<span class="badge py-0.5 px-1.5" style="background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; font-size: 0.68rem; font-weight: 700;">🏀 ${msg.sport_tag || '농구'}</span>`;
+      }
+
+      const rawContent = (msg.content || '');
+      const escapedContent = rawContent.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      return `
+        <div class="chat-msg-item p-2 rounded-2 ${isMine ? 'border-primary' : ''}" 
+             data-msg-id="${msg.id || ''}" 
+             data-chat-content="${escapedContent}" 
+             style="background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.03); border-radius: 8px;">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <div class="d-flex align-items-center gap-1.5 flex-nowrap text-truncate">
+              ${sportBadge}
+              <strong class="text-dark text-truncate" style="font-size: 0.78rem;">${msg.author || '스포츠팬'}</strong>
+            </div>
+            <div class="d-flex align-items-center gap-1 flex-shrink-0 text-muted" style="font-size: 0.68rem;">
+              <span><i class="bi bi-clock me-0.5"></i>${msg.created_at || ''}</span>
+            </div>
+          </div>
+          <div class="chat-msg-body text-dark" style="font-size: 0.82rem; line-height: 1.45; word-break: break-word;">
+            ${escapedContent}
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-1.5 pt-1 border-top" style="border-color: #f1f5f9 !important;">
+            <span class="text-muted" style="font-size: 0.66rem;">#${msg.channel || '응원'}</span>
+            <button type="button" class="btn btn-xs py-0 px-1.5 d-inline-flex align-items-center gap-1" onclick="likeChatMessage(${msg.id || 0}, this)" style="background:#f8fafc; border: 1px solid #e2e8f0; font-size: 0.68rem; border-radius: 4px; color: #64748b;">
+              <i class="bi bi-hand-thumbs-up text-danger"></i><span class="chat-like-count">${msg.likes || 0}</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCommunityFeed() {
+      const feed = document.getElementById('mainCommunityChatFeed');
+      if (!feed) return;
+
+      const list = (communityMessages || []).filter(msg => {
+        if (!msg) return false;
+        if (!currentChatChannel || currentChatChannel === 'ALL') return true;
+        const ch = (msg.channel || '').toUpperCase();
+        const tag = (msg.sport_tag || '').toUpperCase();
+        const target = currentChatChannel.toUpperCase();
+        return ch === target || tag.includes(target);
+      });
+
+      if (list.length === 0) {
+        feed.innerHTML = `
+          <div class="text-center py-5 px-3 text-muted">
+            <div style="font-size: 2rem;" class="mb-2">💬</div>
+            <div class="fw-bold text-dark fs-6 mb-1">등록된 응원 토크가 없습니다.</div>
+            <div class="small mb-3">첫 번째 실시간 경기 응원 메시지를 남겨보세요!</div>
+          </div>
+        `;
+        return;
+      }
+
+      feed.innerHTML = list.map(msg => buildChatMessageItemHtml(msg)).join('');
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function appendMessageToFeed(msg) {
+      const feed = document.getElementById('mainCommunityChatFeed');
+      if (!feed) return;
+
+      const placeholder = feed.querySelector('.text-center.py-5');
+      if (placeholder) placeholder.remove();
+
+      const html = buildChatMessageItemHtml(msg);
+      feed.insertAdjacentHTML('beforeend', html);
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function setChatChannel(channel) {
+      currentChatChannel = channel;
+      const channels = ['ALL', 'SOCCER', 'BASEBALL', 'BASKETBALL'];
+      channels.forEach(ch => {
+        const btn = document.getElementById('btnChatChannel' + ch);
+        if (btn) {
+          if (ch === channel) {
+            btn.className = 'btn btn-xs fw-bold px-2.5 py-0.5 text-white flex-fill text-nowrap';
+            btn.style.background = '#1d4ed8';
+            btn.style.borderColor = '#1d4ed8';
+          } else {
+            btn.className = 'btn btn-xs fw-bold px-2.5 py-0.5 text-dark flex-fill text-nowrap';
+            btn.style.background = '#ffffff';
+            btn.style.borderColor = '#cbd5e1';
+          }
+        }
+      });
+      renderCommunityFeed();
+    }
+
+    async function handleSendCommunityMessage(e) {
+      if (e) e.preventDefault();
+      const contentEl = document.getElementById('chatContentInput');
+      const authorEl = document.getElementById('chatAuthorInput');
+      if (!contentEl) return;
+
+      const content = contentEl.value.trim();
+      if (!content) {
+        contentEl.focus();
+        return;
+      }
+
+      let author = (authorEl && authorEl.value.trim()) ? authorEl.value.trim() : ((currentUser && currentUser.nickname) ? currentUser.nickname : '스포츠팬');
+
+      const now = new Date();
+      const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+      let sportTag = '응원';
+      if (currentChatChannel === 'SOCCER') sportTag = '축구';
+      else if (currentChatChannel === 'BASEBALL') sportTag = '야구';
+      else if (currentChatChannel === 'BASKETBALL') sportTag = '농구';
+
+      const optimisticMsg = {
+        id: Date.now(),
+        author: author,
+        channel: currentChatChannel || 'ALL',
+        sport_tag: sportTag,
+        content: content,
+        created_at: timeStr,
+        likes: 0
+      };
+
+      if (typeof communityMessages !== 'undefined') {
+        communityMessages.push(optimisticMsg);
+      }
+      appendMessageToFeed(optimisticMsg);
+      contentEl.value = '';
+      contentEl.focus();
+
+      if (typeof liveSocket !== 'undefined' && liveSocket && liveSocket.readyState === WebSocket.OPEN) {
+        try {
+          liveSocket.send(JSON.stringify({
+            type: 'CHAT',
+            author: author,
+            channel: optimisticMsg.channel,
+            sport_tag: optimisticMsg.sport_tag,
+            content: content
+          }));
+          return;
+        } catch(err) {
+          console.warn('WS send failed, falling back to HTTP POST:', err);
+        }
+      }
+
+      try {
+        await fetch('/api/v1/community/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            author: author,
+            channel: optimisticMsg.channel,
+            sport_tag: optimisticMsg.sport_tag,
+            content: content
+          })
+        });
+      } catch(err) {
+        console.error('Failed to post community message:', err);
+      }
+    }
+
+    function likeChatMessage(msgId, btn) {
+      if (!msgId) return;
+      const target = (communityMessages || []).find(m => m.id === msgId);
+      if (target) {
+        target.likes = (target.likes || 0) + 1;
+      }
+      if (btn) {
+        const countSpan = btn.querySelector('.chat-like-count');
+        if (countSpan) {
+          const current = parseInt(countSpan.innerText, 10) || 0;
+          countSpan.innerText = current + 1;
+          btn.style.color = '#dc2626';
+          btn.style.borderColor = '#fca5a5';
+          btn.style.background = '#fef2f2';
+        }
+      }
+    }
+
     function manualHourlyRefresh(silent = false) {
       if (typeof silentLiveRefresh === 'function') silentLiveRefresh();
     }
@@ -24804,9 +25134,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
           isMultiPlayMode = false;
           if (typeof updateMultiPlayBtnState === 'function') updateMultiPlayBtnState();
         }
-        if (isMobileView) {
-          openMatchModal(matchId);
-        }
+        openMatchModal(matchId);
       }
     }
 
@@ -28265,6 +28593,8 @@ function renderPredDetail(m, customDetailData = null) {
     function syncLiveUserCounts() {
       const el = document.getElementById('topLiveUsersCount');
       if (el) el.innerText = currentLiveUsersCount;
+      const chatBadge = document.getElementById('chatOnlineBadge');
+      if (chatBadge) chatBadge.innerText = `🟢 ${currentLiveUsersCount}명 참여중`;
     }
 
     function startLiveUsersFluctuation() {
@@ -28343,8 +28673,8 @@ function renderPredDetail(m, customDetailData = null) {
     }
 
     function switchMobileTab(tabKey) {
-      if (tabKey === 'center') tabKey = 'toto';
-      if (tabKey === 'news' || tabKey === 'live_relay' || tabKey === 'relay') tabKey = 'community';
+      if (tabKey === 'center' || tabKey === 'toto') tabKey = 'chat';
+      if (tabKey === 'news' || tabKey === 'live_relay' || tabKey === 'community') tabKey = 'relay';
       currentMobileTab = tabKey;
       const p1 = document.getElementById('leftColSchedule');
       const p2 = document.getElementById('centerColMain');
@@ -28352,12 +28682,16 @@ function renderPredDetail(m, customDetailData = null) {
 
       const panels = {
         schedule: p1,
+        chat: p2,
+        relay: p3,
         toto: p2,
         community: p3
       };
 
       const tabs = {
         schedule: 'mobTabSchedule',
+        chat: 'mobTabChat',
+        relay: 'mobTabRelay',
         toto: 'mobTabToto',
         community: 'mobTabCommunity'
       };
@@ -28366,7 +28700,7 @@ function renderPredDetail(m, customDetailData = null) {
         const el = panels[k];
         const btn = document.getElementById(tabs[k]);
         if (el) {
-          if (k === tabKey) {
+          if (k === tabKey || (tabKey === 'chat' && k === 'toto') || (tabKey === 'relay' && k === 'community')) {
             el.style.display = 'block';
             el.style.width = '100%';
             el.style.maxWidth = '100%';
@@ -28376,9 +28710,15 @@ function renderPredDetail(m, customDetailData = null) {
           }
         }
         if (btn) {
-          if (k === tabKey) {
+          if (k === tabKey || (tabKey === 'chat' && k === 'toto') || (tabKey === 'relay' && k === 'community')) {
+            btn.style.background = '#1d4ed8';
+            btn.style.color = '#ffffff';
+            btn.style.borderColor = '#1d4ed8';
             btn.classList.add('active');
           } else {
+            btn.style.background = '#f8fafc';
+            btn.style.color = '#475569';
+            btn.style.borderColor = '#cbd5e1';
             btn.classList.remove('active');
           }
         }
@@ -28400,13 +28740,14 @@ function renderPredDetail(m, customDetailData = null) {
       if (mode === 'mobile') {
         if (btnPC) btnPC.className = 'btn btn-outline-secondary fw-bold px-2 py-1';
         if (btnMobile) btnMobile.className = 'btn btn-primary fw-bold px-2 py-1';
+        switchMobileTab(currentMobileTab || 'schedule');
       } else {
         if (btnPC) btnPC.className = 'btn btn-primary fw-bold px-2 py-1';
         if (btnMobile) btnMobile.className = 'btn btn-outline-secondary fw-bold px-2 py-1';
+        if (p1) { p1.style.display = ''; p1.style.width = ''; p1.style.flex = ''; p1.style.maxWidth = ''; }
+        if (p2) { p2.style.display = ''; p2.style.width = ''; p2.style.flex = ''; p2.style.maxWidth = ''; }
+        if (p3) { p3.style.display = ''; p3.style.width = ''; p3.style.flex = ''; p3.style.maxWidth = ''; }
       }
-      if (p1) { p1.style.display = 'block'; p1.style.width = '100%'; p1.style.flex = '0 0 100%'; p1.style.maxWidth = '100%'; }
-      if (p2) { p2.style.display = 'none'; }
-      if (p3) { p3.style.display = 'none'; }
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -28416,6 +28757,7 @@ function renderPredDetail(m, customDetailData = null) {
       initRealTimeSportsTicker();
       startLiveUsersFluctuation();
       start4MinAiChatTimer();
+      initCommunityAndWebSocket();
       // Instant Render + Immediate background sync (0ms wait, eliminating stale cache freeze)
       if (allMatches && allMatches.length > 0) {
         window.matchesLoadedInitial = true;
@@ -28423,9 +28765,6 @@ function renderPredDetail(m, customDetailData = null) {
         try { renderRightColLiveRelay(); } catch(e) {}
       }
       loadLiveMatches().catch(err => console.error('Matches load error:', err));
-      setTimeout(() => {
-        initCommunityAndWebSocket();
-      }, 3000);
     });
 
   </script>
