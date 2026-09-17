@@ -310,7 +310,7 @@ def health_check():
 @app.get("/app", response_class=HTMLResponse, summary="TOKEON 스포츠 모바일 전용 앱 화면")
 def mobile_portal(request: Request):
     try:
-        target = mobile_path if os.path.exists(mobile_path) else landing_path
+        target = mlb_dashboard_path if os.path.exists(mlb_dashboard_path) else landing_path
         content, etag = get_portal_html(target)
         return HTMLResponse(
             content=content,
@@ -326,11 +326,11 @@ def mobile_portal(request: Request):
 @app.get("/", response_class=HTMLResponse, summary="TOKEON 스포츠 분석 전문 포털 (tokeon.co.kr)")
 def domain_portal(request: Request):
     try:
-        # 모바일 강제 뷰 요청 (?view=mobile) 확인
-        if request.query_params.get("view") == "mobile":
-            target = mobile_path if os.path.exists(mobile_path) else landing_path
-        else:
+        if request.query_params.get("view") == "portal":
             target = landing_path if os.path.exists(landing_path) else dashboard_path
+        else:
+            # 어제 저녁 완성한 전경기 MLB 전광판 대시보드를 메인에 즉시 표출
+            target = mlb_dashboard_path if os.path.exists(mlb_dashboard_path) else landing_path
 
         content, etag = get_portal_html(target)
         return HTMLResponse(
