@@ -65,9 +65,8 @@ class SchedulerService:
                 id="hourly_sports_sync_job",
                 replace_existing=True
             )
-            # 10분마다 베트맨(Betman) 공식 발매금액·투표율·이월금 자동 최신화 (매 10분마다 실행)
-            # 10분마다 베트맨(Betman) 공식 발매금액·투표율·이월금 자동 최신화 (매 10분마다 실행)
-            betman_trigger = CronTrigger(minute="*/10")
+            # 3분마다 베트맨(Betman) 공식 배당·투표율·발매금액 자동 최신화 (Fix 3: 5분/10분 -> 3분 주기 단축)
+            betman_trigger = CronTrigger(minute="*/3")
             scheduler.add_job(
                 cls.execute_betman_10min_sync_job,
                 trigger=betman_trigger,
@@ -172,9 +171,9 @@ class SchedulerService:
 
     @classmethod
     async def execute_startup_sync(cls):
-        """서버 시작 직후 어제~오늘+1일 전 종목(UCL/UEL 포함) 즉시 동기화.
-        Render 슬립 후 재시작 시에도 최신 경기 데이터가 바로 반영되도록 보장."""
-        await asyncio.sleep(5)  # lifespan 초기화 및 웹 서버 안정화 대기
+        """서버 시작 직후 어제~오늘+1일 전 종목(UCL/UEL 포함) 및 베트맨 프로토 배당 즉시 동기화.
+        Render 슬립 후 재시작 시에도 30초 대기 없이 즉시 배당 sync 보장 (Fix 4)."""
+        await asyncio.sleep(1)  # 서버 소켓 바인딩 직후 1초 내 즉시 기동 (30초 대기 없음)
         if cls._is_running_task:
             logger.info("[Startup Sync] 다른 작업 진행 중 - 시작 동기화 건너뜀")
             return
@@ -194,12 +193,12 @@ class SchedulerService:
         db = SessionLocal()
         summary = {}
         try:
-            # 1. 베트맨 프로토 발매 경기 및 최신 배당 즉시 동기화
+            # 1. 베트맨 프로토 발매 경기 및 최신 배당 즉시 강제 수집 (Fix 4: 30초 대기 없이 즉시 배당 sync)
             try:
                 from app.services.betman_service import BetmanService
                 proto_res = await asyncio.to_thread(BetmanService.sync_betman_proto_matches, db=db)
                 summary["BETMAN_PROTO"] = proto_res
-                logger.info(f"[Startup Sync] 베트맨 프로토 동기화 완료: {proto_res}")
+                logger.info(f"[Startup Sync] 베트맨 프로토 즉시 배당 동기화 완료: {proto_res}")
             except Exception as be:
                 logger.warning(f"[Startup Sync] 베트맨 프로토 동기화 경고: {be}")
                 summary["BETMAN_PROTO"] = f"ERR: {str(be)[:60]}"
@@ -446,11 +445,24 @@ class SchedulerService:
                     except Exception as ex_target:
                         logger.warning(f"[Scheduler] 베트맨 개별 회차({gid}) 동기화 경고: {ex_target}")
 
-            # 2. 프로토 승부식 최신 배당 및 투표율을 DB 경기에 자동 동기화
+            # 2. 프로토 승부식 최신 배당 및 투표율을 DB 경기에 자동 동기화 (Fix 2 & Fix 3)
             db = SessionLocal()
             try:
                 proto_res = await asyncio.to_thread(BetmanService.sync_betman_proto_matches, db=db)
-                logger.info(f"[Scheduler] 베트맨 프로토 배당 자동 동기화: {proto_res}")
+                logger.info(f"[Scheduler] 베트맨 프로토 배당 3분 주기 자동 동기화: {proto_res}")
+
+                # 배당 변화 시 WebSocket으로 실시간 브라우저 알림 (Fix 2)
+                chg_cnt = proto_res.get('changed_odds_count', 0)
+                if chg_cnt > 0:
+                    changed_list = proto_res.get('changed_matches', [])
+                    await manager.broadcast({
+                        "type": "BETMAN_ODDS_CHANGED",
+                        "timestamp": get_now_kst().isoformat(),
+                        "changed_count": chg_cnt,
+                        "changes": changed_list[:30],
+                        "message": f"베트맨 프로토 {chg_cnt}개 경기 실시간 배당 변동 감지"
+                    })
+                    logger.info(f"[Scheduler WebSocket] 베트맨 배당 변동 {chg_cnt}건 브라우저 실시간 브로드캐스트 전송 완료")
             finally:
                 db.close()
 
@@ -463,7 +475,7 @@ class SchedulerService:
             except Exception:
                 pass
         except Exception as e:
-            logger.error(f"[Scheduler] 베트맨 10분 동기화 오류: {e}")
+            logger.error(f"[Scheduler] 베트맨 3분 주기 동기화 오류: {e}")
 
     @classmethod
     def execute_traffic_export_job(cls):

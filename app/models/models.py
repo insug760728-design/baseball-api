@@ -91,6 +91,7 @@ class Match(Base):
     details = relationship('MatchDetail', back_populates='match', uselist=False, cascade='all, delete-orphan')
     events = relationship('MatchEvent', back_populates='match', cascade='all, delete-orphan')
     player_stats = relationship('PlayerMatchStat', back_populates='match', cascade='all, delete-orphan')
+    odds_history = relationship('BetmanOddsHistory', back_populates='match', cascade='all, delete-orphan')
 
 class MatchDetail(Base):
     __tablename__ = 'match_details'
@@ -152,3 +153,20 @@ class PlayerMatchStat(Base):
     original_backup = Column(Text, nullable=True) # 공식 사이트 원본 값 백업(JSON)
 
     match = relationship('Match', back_populates='player_stats')
+ 
+class BetmanOddsHistory(Base):
+    __tablename__ = 'betman_odds_history'
+
+    id = Column(Integer, primary_key=True, index=True)
+    match_id = Column(Integer, ForeignKey('matches.id', ondelete='CASCADE'), nullable=True, index=True)
+    seq = Column(Integer, nullable=True, index=True)
+    home_odds = Column(String(20), nullable=True)
+    draw_odds = Column(String(20), nullable=True)
+    away_odds = Column(String(20), nullable=True)
+    win_vote_pct = Column(String(20), nullable=True)
+    draw_vote_pct = Column(String(20), nullable=True)
+    loss_vote_pct = Column(String(20), nullable=True)
+    captured_at = Column(DateTime, default=datetime.utcnow, index=True)
+    is_changed = Column(Boolean, default=False, index=True)
+
+    match = relationship('Match', back_populates='odds_history')

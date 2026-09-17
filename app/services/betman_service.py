@@ -557,31 +557,41 @@ class BetmanService:
         if not force_refresh and cache_key in _CACHE:
             ts_cached, data = _CACHE[cache_key]
             if now - ts_cached < CACHE_TTL:
-                return data
+                # 캐시의 회차가 active_ts와 일치할 때만 반환
+                if data and str(data.get('gmTs')) == str(active_ts):
+                    return data
 
-        # 1. 스냅샷 파일이 있으면 즉시 메모리 캐시에 적재하여 0ms로 반환
+        # 1. 스냅샷 파일 검사 및 회차 불일치(Fix 1) 감지
         snapshot_data = None
         for s_file in ['betman_proto_G101_latest.json', f'betman_proto_G101_{active_ts}.json', 'betman_G101.json']:
             if os.path.exists(s_file):
                 try:
                     with open(s_file, 'r', encoding='utf-8') as f:
-                        snapshot_data = json.load(f)
-                        if snapshot_data and snapshot_data.get('datas'):
+                        s_data = json.load(f)
+                        if s_data and s_data.get('datas'):
+                            snapshot_data = s_data
                             break
                 except Exception:
                     pass
 
-        if snapshot_data and not force_refresh:
-            _CACHE[cache_key] = (now, snapshot_data)
-            return snapshot_data
+        # Fix 1: 스냅샷의 gmTs ≠ active_ts이면 무조건 실시간 fetch 실행
+        mismatch_round = False
+        if snapshot_data:
+            snap_ts = snapshot_data.get('gmTs')
+            if snap_ts and str(snap_ts) != str(active_ts):
+                # 회차 불일치 감지 -> 무조건 실시간 fetch 실행
+                mismatch_round = True
+                force_refresh = True
+            elif not force_refresh:
+                _CACHE[cache_key] = (now, snapshot_data)
+                return snapshot_data
 
-        if not force_refresh:
-            # 웹 요청 처리 중에는 외부 블로킹 방지를 위해 스냅샷/캐시 즉시 반환
+        if not force_refresh and not mismatch_round:
             if snapshot_data:
                 return snapshot_data
             return {'gmTs': active_ts, 'total_lines': 0, 'keys': [], 'datas': [], 'votes': {}}
 
-        # 2. 백그라운드 스케줄러에서만 실시간 라이브 페칭 시도 (짧은 1.0초 타임아웃)
+        # 2. 실시간 라이브 페칭 시도 (회차 불일치 또는 force_refresh 시)
         try:
             payload = {
                 "gmId": "G101",
@@ -589,7 +599,7 @@ class BetmanService:
                 "gameYear": "2026",
                 "_sbmInfo": {"_sbmInfo": {"debugMode": "false"}}
             }
-            r = _SESSION.post(BETMAN_INQ_URL, json=payload, timeout=1.5)
+            r = _SESSION.post(BETMAN_INQ_URL, json=payload, timeout=2.5)
             if r.status_code == 200:
                 data = r.json()
                 keys = data.get('compSchedules', {}).get('keys', [])
@@ -605,11 +615,13 @@ class BetmanService:
                         'votes': vote_dict
                     }
                     _CACHE[cache_key] = (now, parsed_result)
-                    try:
-                        with open('betman_proto_G101_latest.json', 'w', encoding='utf-8') as sf:
-                            json.dump(parsed_result, sf, ensure_ascii=False, indent=2)
-                    except Exception:
-                        pass
+                    # 새 회차 스냅샷 즉시 저장 (Fix 1)
+                    for sf_name in ['betman_proto_G101_latest.json', f'betman_proto_G101_{active_ts}.json']:
+                        try:
+                            with open(sf_name, 'w', encoding='utf-8') as sf:
+                                json.dump(parsed_result, sf, ensure_ascii=False, indent=2)
+                        except Exception:
+                            pass
                     return parsed_result
         except Exception as e:
             pass
@@ -909,13 +921,14 @@ class BetmanService:
         - 신규 경기 자동 등록
         - 공식 배당 및 실시간 투표율을 match_details에 저장
         """
-        from app.models.models import Match, MatchDetail
+        from app.models.models import Match, MatchDetail, BetmanOddsHistory
 
         proto_data = BetmanService.get_proto_odds(force_refresh=True)
         keys = proto_data.get('keys', [])
         datas = proto_data.get('datas', [])
         vote_dict = proto_data.get('votes', {})
         active_ts = proto_data.get('gmTs', 260093)
+        changed_matches = []
 
         if not datas:
             return {'status': 'error', 'message': '프로토 데이터를 불러올 수 없습니다.'}
@@ -1045,12 +1058,83 @@ class BetmanService:
             detail.team_stats = json.dumps(ts, ensure_ascii=False)
             db.commit()
 
+            # Fix 2: betman_odds_history 실시간 배당 변화 추적 테이블 기록
+            main_odd = g_info.get('main_odds') or (g_info['odds_list'][0] if g_info['odds_list'] else None)
+            if main_odd:
+                cur_seq = main_odd.get('seq')
+                cur_h = str(main_odd.get('home_odds') or '0.0')
+                cur_d = str(main_odd.get('draw_odds') or '0.0')
+                cur_a = str(main_odd.get('away_odds') or '0.0')
+                w_pct = str(main_odd.get('win_pct') or '0.0')
+                d_pct = str(main_odd.get('draw_pct') or '0.0')
+                l_pct = str(main_odd.get('loss_pct') or '0.0')
+
+                last_hist = db.query(BetmanOddsHistory).filter(
+                    BetmanOddsHistory.match_id == match.id
+                ).order_by(BetmanOddsHistory.captured_at.desc(), BetmanOddsHistory.id.desc()).first()
+
+                if not last_hist:
+                    # 최초 수집 시 초기 레코드 추가 (is_changed=False)
+                    init_hist = BetmanOddsHistory(
+                        match_id=match.id,
+                        seq=cur_seq,
+                        home_odds=cur_h,
+                        draw_odds=cur_d,
+                        away_odds=cur_a,
+                        win_vote_pct=w_pct,
+                        draw_vote_pct=d_pct,
+                        loss_vote_pct=l_pct,
+                        captured_at=datetime.utcnow(),
+                        is_changed=False
+                    )
+                    db.add(init_hist)
+                    db.commit()
+                else:
+                    # 배당값이 이전과 다르면 이력 레코드 추가 (is_changed=True)
+                    prev_h = str(last_hist.home_odds or '0.0')
+                    prev_d = str(last_hist.draw_odds or '0.0')
+                    prev_a = str(last_hist.away_odds or '0.0')
+
+                    try:
+                        is_odds_diff = (float(prev_h) != float(cur_h) or float(prev_d) != float(cur_d) or float(prev_a) != float(cur_a))
+                    except Exception:
+                        is_odds_diff = (prev_h != cur_h or prev_d != cur_d or prev_a != cur_a)
+
+                    if is_odds_diff:
+                        chg_hist = BetmanOddsHistory(
+                            match_id=match.id,
+                            seq=cur_seq,
+                            home_odds=cur_h,
+                            draw_odds=cur_d,
+                            away_odds=cur_a,
+                            win_vote_pct=w_pct,
+                            draw_vote_pct=d_pct,
+                            loss_vote_pct=l_pct,
+                            captured_at=datetime.utcnow(),
+                            is_changed=True
+                        )
+                        db.add(chg_hist)
+                        db.commit()
+                        changed_matches.append({
+                            "match_id": match.id,
+                            "home_team": match.home_team_name,
+                            "away_team": match.away_team_name,
+                            "seq": cur_seq,
+                            "old_odds": {"home": prev_h, "draw": prev_d, "away": prev_a},
+                            "new_odds": {"home": cur_h, "draw": cur_d, "away": cur_a},
+                            "win_vote_pct": w_pct,
+                            "draw_vote_pct": d_pct,
+                            "loss_vote_pct": l_pct
+                        })
+
         return {
             'status': 'success',
             'active_gm_ts': active_ts,
             'total_matches': len(grouped),
             'synced_new': synced_count,
-            'updated_existing': updated_count
+            'updated_existing': updated_count,
+            'changed_odds_count': len(changed_matches),
+            'changed_matches': changed_matches
         }
 
     @staticmethod
