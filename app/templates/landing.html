@@ -477,11 +477,12 @@
     /* ⚾ Live Broadcast Monitor Card (Double Size Expansion & Animations) */
     .slim-match-card.card-status-live {
       border: 1.8px solid #f87171 !important;
-      border-top: 3.5px solid #dc2626 !important;
+      border-top: 4px solid #dc2626 !important;
       background: linear-gradient(180deg, #ffffff 0%, #fffbf0 100%) !important;
       box-shadow: 0 4px 16px rgba(220, 38, 38, 0.12) !important;
       border-radius: 10px !important;
-      padding: 10px !important;
+      padding: 13px 14px !important;
+      margin-bottom: 11px !important;
       transition: all 0.25s ease-in-out;
     }
 
@@ -974,9 +975,9 @@
       background: #ffffff;
       border: 1.5px solid #cbd5e1;
       border-left: 5px solid #2563eb; /* 기본 블루 테두리 */
-      border-radius: 8px;
-      padding: 8px 10px;
-      margin-bottom: 8px;
+      border-radius: 9px;
+      padding: 12px 14px;
+      margin-bottom: 11px;
       cursor: pointer;
       transition: all 0.18s ease;
       scroll-margin-top: 115px;
@@ -984,7 +985,7 @@
       max-width: 100%;
       overflow-x: hidden;
       touch-action: pan-y;
-      box-shadow: 0 1.5px 4px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     }
     
     /* 종목별 고유 색상 테두리 구분 */
@@ -1078,7 +1079,7 @@
       position: relative;
     }
     .slim-card-sport-time {
-      font-size: 0.72rem;
+      font-size: 0.82rem;
       font-weight: 700;
       color: #475569;
     }
@@ -1086,14 +1087,14 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 6px;
-      margin: 4px 0;
+      gap: 8px;
+      margin: 8px 0;
     }
     .betman-team-home {
       flex: 1 1 35%;
       min-width: 0;
-      font-size: 0.88rem;
-      font-weight: 700;
+      font-size: 1.02rem;
+      font-weight: 800;
       color: #0f172a;
       text-align: left;
       white-space: nowrap;
@@ -1103,8 +1104,8 @@
     .betman-team-away {
       flex: 1 1 35%;
       min-width: 0;
-      font-size: 0.88rem;
-      font-weight: 700;
+      font-size: 1.02rem;
+      font-weight: 800;
       color: #0f172a;
       text-align: right;
       white-space: nowrap;
@@ -1113,9 +1114,9 @@
     }
     .betman-score-val {
       flex: 0 0 auto;
-      font-size: 1.05rem;
+      font-size: 1.25rem;
       font-weight: 800;
-      min-width: 20px;
+      min-width: 22px;
       text-align: center;
     }
     .betman-score-val.home.live { color: #dc2626; }
@@ -1123,9 +1124,9 @@
     .betman-score-val.finished { color: #1e293b; }
     .betman-inning-badge {
       flex: 0 0 auto;
-      font-size: 0.65rem;
+      font-size: 0.72rem;
       font-weight: 700;
-      padding: 1px 6px;
+      padding: 2px 7px;
       border-radius: 4px;
       background: #f1f5f9;
       color: #475569;
@@ -1141,50 +1142,53 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 3px;
+      gap: 4px;
       flex: 0 0 auto;
     }
     .betman-box {
       display: inline-flex;
       align-items: center;
-      border: 1px solid #cbd5e1;
+      border: 1.2px solid #cbd5e1;
       border-radius: 4px;
       background: #ffffff;
-      font-size: 0.68rem;
+      font-size: 0.76rem;
       overflow: hidden;
       line-height: 1.2;
     }
     .betman-lbl {
       background: #f1f5f9;
       color: #64748b;
-      padding: 2px 4px;
+      padding: 3px 5px;
       font-weight: 700;
-      font-size: 0.60rem;
+      font-size: 0.68rem;
       border-right: 1px solid #e2e8f0;
     }
     .betman-val {
-      padding: 2px 5px;
-      font-weight: 700;
+      padding: 3px 6px;
+      font-weight: 800;
       color: #0f172a;
+      font-size: 0.82rem;
     }
     .slim-card-starter-bar {
-      font-size: 0.70rem;
+      font-size: 0.76rem;
+      padding: 4px 8px !important;
+      margin: 6px 0 !important;
     }
     .slim-card-actions {
       display: flex;
-      gap: 3px;
-      margin-top: 5px;
+      gap: 4px;
+      margin-top: 8px;
     }
     .slim-action-btn {
       flex: 1;
       background: #ffffff;
       color: #334155;
       border: 1px solid #d1d5db;
-      border-radius: 4px;
-      font-size: 0.63rem;
+      border-radius: 5px;
+      font-size: 0.75rem;
       font-weight: 700;
-      padding: 2.5px 2px;
-      letter-spacing: -0.4px;
+      padding: 5px 3px;
+      letter-spacing: -0.3px;
       white-space: nowrap;
       cursor: pointer;
       text-align: center;
@@ -19801,14 +19805,14 @@ function getFullModalMatchList() {
         return `
           <div class="slim-match-card pred-card-compact card-status-live ${sportClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
             <!-- Top Live Header -->
-            <div class="d-flex justify-content-between align-items-center mb-1.5">
-              <div class="d-flex align-items-center gap-1.5">
-                <span class="badge bg-danger text-white py-0.5 px-1.5" style="font-size:0.68rem; font-weight:800; border-radius:4px;">
-                  <span class="pulse-dot me-1" style="display:inline-block; width:5px; height:5px; border-radius:50%; background:#fff;"></span>LIVE ${st.inning_text || '진행중'}
+            <div class="d-flex justify-content-between align-items-center mb-2" style="gap: 6px;">
+              <div class="d-flex align-items-center gap-1.5" style="min-width:0; overflow:hidden; flex:1 1 auto;">
+                <span class="badge bg-danger text-white py-1 px-2" style="font-size:0.75rem; font-weight:800; border-radius:4px; flex-shrink:0; white-space:nowrap;">
+                  <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#fff;"></span>LIVE ${st.inning_text || '진행중'}
                 </span>
-                <span class="slim-card-sport-time fw-bold text-dark">${sportIcon} ${m.league_name || m.sport_code} · ${timeStr}${sweepBadge}</span>
+                <span class="slim-card-sport-time fw-bold text-dark text-truncate" style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${sportIcon} ${m.league_name || m.sport_code} · ${timeStr}${sweepBadge}</span>
               </div>
-              <button type="button" class="btn btn-xs py-0 px-1.5 d-inline-flex align-items-center gap-0.5" style="border-radius:5px; ${cardBellStyle} height:20px; font-size:0.65rem; font-weight:700; line-height:1;" onclick="event.stopPropagation(); toggleMatchScoreAlert(${m.id}, event);" title="실시간 득점 알림">
+              <button type="button" class="btn btn-xs py-1 px-2 d-inline-flex align-items-center justify-content-center gap-1" style="border-radius:5px; ${cardBellStyle} height:24px; font-size:0.72rem; font-weight:700; line-height:1; flex-shrink:0; white-space:nowrap;" onclick="event.stopPropagation(); toggleMatchScoreAlert(${m.id}, event);" title="실시간 득점 알림">
                 <i class="bi ${cardBellIcon}"></i>
                 <span>${isCardSubscribed ? '알림ON' : '알림'}</span>
               </button>
@@ -19876,11 +19880,11 @@ function getFullModalMatchList() {
 
       let scoreLabel = '';
       if (isFinished) {
-        scoreLabel = `<span class="badge bg-secondary text-white py-0.5 px-1.5" style="font-size:0.62rem; font-weight:700; border-radius:4px;">종료</span>`;
+        scoreLabel = `<span class="badge bg-secondary text-white py-1 px-1.5" style="font-size:0.70rem; font-weight:700; border-radius:4px;">종료</span>`;
       } else if (oddsInfo.isImminent) {
-        scoreLabel = `<span style="font-size:0.65rem; color:#dc2626; font-weight:700;">🔥마감임박</span>`;
+        scoreLabel = `<span style="font-size:0.74rem; color:#dc2626; font-weight:700;">🔥마감임박</span>`;
       } else if (oddsInfo.isClosed) {
-        scoreLabel = `<span style="font-size:0.65rem; color:#6b7280; font-weight:600;">🔒마감</span>`;
+        scoreLabel = `<span style="font-size:0.74rem; color:#6b7280; font-weight:600;">🔒마감</span>`;
       }
 
       const startersInfo = getMatchStarters(m);
@@ -19890,16 +19894,16 @@ function getFullModalMatchList() {
         if (startersInfo.homeAnnounced || startersInfo.awayAnnounced) {
           const hEra = startersInfo.homeEra || m.home_starter_era || (m.extra_data && m.extra_data.home_starter_era) || '';
           const aEra = startersInfo.awayEra || m.away_starter_era || (m.extra_data && m.extra_data.away_starter_era) || '';
-          const hEraHtml = (startersInfo.homeAnnounced && hEra) ? `<span class="text-primary fw-bold" style="font-size:0.67rem; margin-left:3px; letter-spacing:-0.2px;">(방어율 ${hEra})</span>` : '';
-          const aEraHtml = (startersInfo.awayAnnounced && aEra) ? `<span class="text-primary fw-bold" style="font-size:0.67rem; margin-left:3px; letter-spacing:-0.2px;">(방어율 ${aEra})</span>` : '';
+          const hEraHtml = (startersInfo.homeAnnounced && hEra) ? `<span class="text-primary fw-bold" style="font-size:0.72rem; margin-left:3px; letter-spacing:-0.2px;">(방어율 ${hEra})</span>` : '';
+          const aEraHtml = (startersInfo.awayAnnounced && aEra) ? `<span class="text-primary fw-bold" style="font-size:0.72rem; margin-left:3px; letter-spacing:-0.2px;">(방어율 ${aEra})</span>` : '';
           subLineHtml = `
-            <div class="slim-card-starter-bar d-flex justify-content-between align-items-center mt-1 px-1.5 py-0.5 rounded" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.71rem;">
+            <div class="slim-card-starter-bar d-flex justify-content-between align-items-center mt-1 px-2 py-1 rounded" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.76rem;">
               <div class="starter-side-home d-flex align-items-center text-truncate" style="flex:1 1 42%; min-width:0;" title="${startersInfo.homeStarter}">
                 <span class="fw-bold text-dark text-truncate">${startersInfo.homeStarter}</span>
                 ${hEraHtml}
               </div>
               <div class="starter-center-badge text-center px-1" style="flex:0 0 auto;">
-                <span class="badge bg-white text-secondary border px-1 py-0.5" style="font-size:0.58rem; font-weight:700;">선발</span>
+                <span class="badge bg-white text-secondary border px-1.5 py-0.5" style="font-size:0.65rem; font-weight:700;">선발</span>
               </div>
               <div class="starter-side-away d-flex align-items-center justify-content-end text-truncate" style="flex:1 1 42%; min-width:0; text-align:right;" title="${startersInfo.awayStarter}">
                 <span class="fw-bold text-dark text-truncate">${startersInfo.awayStarter}</span>
@@ -19909,24 +19913,26 @@ function getFullModalMatchList() {
           `;
         } else {
           subLineHtml = `
-            <div class="slim-card-starter-bar d-flex justify-content-between align-items-center mt-1 px-1.5 py-0.5 rounded" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.68rem; color:#64748b;">
+            <div class="slim-card-starter-bar d-flex justify-content-between align-items-center mt-1 px-2 py-1 rounded" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.74rem; color:#64748b;">
               <span style="flex:1; text-align:left;">선발 미정</span>
-              <span class="badge bg-white text-muted border px-1 py-0.5" style="font-size:0.58rem;">선발</span>
+              <span class="badge bg-white text-muted border px-1.5 py-0.5" style="font-size:0.65rem;">선발</span>
               <span style="flex:1; text-align:right;">선발 미정</span>
             </div>
           `;
         }
       } else if ((m.sport_code === 'SOCCER' || m.sport_code === 'BASKETBALL') && absInfo.text && absInfo.text !== '-') {
-        subLineHtml = `<div class="slim-card-sub mt-1">🚑 ${absInfo.text}</div>`;
+        subLineHtml = `<div class="slim-card-sub mt-1" style="font-size:0.74rem;">🚑 ${absInfo.text}</div>`;
       }
 
       return `
         <div class="slim-match-card pred-card-compact ${sportClass} ${statusClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
-          <div class="d-flex justify-content-between align-items-center mb-1">
-            <span class="slim-card-sport-time">${sportIcon} ${m.league_name || m.sport_code} · ${timeStr}${sweepBadge}</span>
-            <div class="d-flex align-items-center gap-1.5" style="flex-shrink:0;">
+          <div class="d-flex justify-content-between align-items-center mb-1.5" style="gap: 6px;">
+            <div class="d-flex align-items-center gap-1 text-truncate" style="min-width:0; flex:1 1 auto; overflow:hidden;">
+              <span class="slim-card-sport-time text-truncate" style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${sportIcon} ${m.league_name || m.sport_code} · ${timeStr}${sweepBadge}</span>
+            </div>
+            <div class="d-flex align-items-center gap-1.5" style="flex-shrink:0; white-space:nowrap;">
               ${scoreLabel ? `<span>${scoreLabel}</span>` : ''}
-              <button type="button" class="btn btn-xs py-0 px-1.5 d-inline-flex align-items-center gap-0.5" style="border-radius:5px; ${cardBellStyle} height:20px; font-size:0.65rem; font-weight:700; line-height:1;" onclick="event.stopPropagation(); toggleMatchScoreAlert(${m.id}, event);" title="${isCardSubscribed ? '경기 알림 켜짐 (경기종료까지 실시간 알림 수신)' : '경기 알림 켜기 (경기종료까지 알림)'}">
+              <button type="button" class="btn btn-xs py-1 px-2 d-inline-flex align-items-center justify-content-center gap-1" style="border-radius:5px; ${cardBellStyle} height:24px; font-size:0.72rem; font-weight:700; line-height:1; flex-shrink:0; white-space:nowrap;" onclick="event.stopPropagation(); toggleMatchScoreAlert(${m.id}, event);" title="${isCardSubscribed ? '경기 알림 켜짐 (경기종료까지 실시간 알림 수신)' : '경기 알림 켜기 (경기종료까지 알림)'}">
                 <i class="bi ${cardBellIcon}"></i>
                 <span>${isCardSubscribed ? '알림ON' : '알림'}</span>
               </button>
