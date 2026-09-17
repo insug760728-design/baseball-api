@@ -12,6 +12,7 @@ from app.services.team_split_service import TeamSplitService
 from app.services.player_translation import translate_player_name
 from app.schemas.schemas import MatchResponse, MatchUpdate, DateRangeSyncRequest, PlayerMatchStatUpdate
 from app.core.cache import cache_get, cache_set, cache_get_json, cache_set_json, cache_delete
+from app.agents.historical_agent_router import HistoricalAgentRouter
 
 router = APIRouter(prefix="/matches", tags=["야구 경기 일정 및 결과"])
 
@@ -253,7 +254,8 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
         "details": data["details"],
         "events": data["events"],
         "player_stats": data["player_stats"],
-        "matchup_analysis": matchup_analysis
+        "matchup_analysis": matchup_analysis,
+        "history": HistoricalAgentRouter.get_match_history_by_agent(m.id, max_games=10)
     }
     ttl = 10 if (res.get("status") == "LIVE") else (180 if res.get("status") == "SCHEDULED" else 1800)
     cache_set_json(ckey, res, ttl_seconds=ttl)

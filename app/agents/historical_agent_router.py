@@ -66,7 +66,7 @@ class HistoricalAgentRouter:
         return sport_code.upper() if sport_code else 'SOCCER'
 
     @classmethod
-    def get_match_history_by_agent(cls, match_id: int, max_games: int = 5) -> Dict[str, Any]:
+    def get_match_history_by_agent(cls, match_id: int, max_games: int = 10) -> Dict[str, Any]:
         """
         특정 경기(match_id)의 종목과 리그를 판별하여 전담 에이전트를 통해
         직전 경기 및 H2H 전적을 100% 공식 데이터로 생성
@@ -88,12 +88,49 @@ class HistoricalAgentRouter:
             from app.services.live_api_sports_service import TEAM_SYNONYMS as LS
 
             SHORT_ALLOWED = {'nc', 'lg', 'kt', 'ssg', 'kia', 'az', 'psv', 'qpr'}
-            NOISY_TOKENS = {'fc', 'cf', 'sc', 'ac', '축구단', '1995', 'city', 'united', 'ren', 'v', 'la', 'as', 'de', 'sv', 'afc', 'bsc', 'sd', 'cd', 'rc', 'ud', 'bk', 'club', 'town', 'and'}
+            NOISY_TOKENS = {'fc', 'cf', 'sc', 'ac', '축구단', '1995', 'city', 'united', 'ren', 'v', 'la', 'as', 'de', 'sv', 'afc', 'bsc', 'sd', 'cd', 'rc', 'ud', 'bk', 'club', 'town', 'and', '레알', 'real', '아틀레틱', 'athletic', '아틀레티코', 'atletico', '마드리드', 'madrid', '스포르팅', 'sporting'}
+
+            SPAIN_TEAM_ALIASES = {
+                '레알 베티스': ['베티스', 'real betis', 'betis'],
+                '베티스': ['베티스', 'real betis', 'betis'],
+                '헤타페': ['헤타페', 'getafe'],
+                '비야레알': ['비야레알', 'villarreal'],
+                '말라가': ['말라가', 'malaga'],
+                '바르셀로나': ['바르셀로나', 'barcelona', '바르샤'],
+                '레알 마드리드': ['레알 마드리드', '레알마드리드', 'real madrid'],
+                '아틀레티코 마드리드': ['아틀레티코 마드리드', '아틀레티코마드리드', 'atletico madrid', 'at 마드리드', 'at마드리드'],
+                '아틀레틱 빌바오': ['아틀레틱 빌바오', '아틀레틱빌바오', 'athletic club', 'athletic bilbao', '빌바오'],
+                '세비야': ['세비야', 'sevilla'],
+                '발렌시아': ['발렌시아', 'valencia'],
+                '레알 소시에다드': ['소시에다드', 'real sociedad'],
+                '오사수나': ['오사수나', 'osasuna'],
+                'RCD에스파뇰': ['에스파뇰', 'rcd espanyol', 'espanyol'],
+                'RCD마요르카': ['마요르카', 'rcd mallorca', 'mallorca'],
+                '알라베스': ['알라베스', 'alaves', 'deportivo alaves'],
+                '지로나': ['지로나', 'girona'],
+                '셀타 비고': ['셀타 비고', '셀타', 'celta vigo', 'rc celta'],
+                '라요 바예카노': ['라요 바예카노', '라요', 'rayo vallecano'],
+                '라스팔마스': ['라스팔마스', 'ud las palmas', 'las palmas'],
+                '레가네스': ['레가네스', 'cd leganes', 'leganes'],
+                '레알 바야돌리드': ['바야돌리드', 'real valladolid', 'valladolid'],
+                '엘체': ['엘체', 'elche'],
+                '카디스': ['카디스', 'cadiz'],
+                '그라나다': ['그라나다', 'granada'],
+                '알메리아': ['알메리아', 'almeria'],
+                '라싱 산탄데르': ['라싱 산탄데르', 'racing santander', '라싱산탄데르'],
+                '레반테': ['레반테', 'levante'],
+                '데포르티보 아코루냐': ['데포르티보', 'deportivo la coruna']
+            }
 
             def extract_team_tokens(name: str) -> list:
                 if not name: return []
+                clean_name = str(name).strip()
+                for sp_key, aliases in SPAIN_TEAM_ALIASES.items():
+                    if sp_key in clean_name or clean_name in sp_key:
+                        return list(set([sp_key] + aliases))
+
                 tokens = set()
-                raw = str(name).strip()
+                raw = clean_name
                 tokens.add(raw)
                 core = raw.replace(' ', '').replace('·', '').replace('.', '').replace('-', '').lower()
                 if core:
@@ -110,12 +147,13 @@ class HistoricalAgentRouter:
                 # 사전 매칭 (전체 동의어 사전 순회)
                 for key, syns in list(BS.items()) + list(LS.items()):
                     k_norm = key.lower().replace(' ', '')
-                    if k_norm in core or core in k_norm or any(s.lower().replace(' ', '') == core for s in syns):
+                    if k_norm in core or core in k_norm:
                         tokens.add(key)
-                        for s in syns:
-                            s_clean = s.strip().lower()
+                        syn_list = syns if isinstance(syns, list) else [syns]
+                        for s in syn_list:
+                            s_clean = str(s).strip().lower()
                             if s_clean not in NOISY_TOKENS and (len(s_clean) >= 3 or s_clean in SHORT_ALLOWED):
-                                tokens.add(s)
+                                tokens.add(str(s))
 
                 # 유효 토큰 필터링
                 res = []
@@ -142,7 +180,7 @@ class HistoricalAgentRouter:
             elif league_code == 'EPL':
                 league_patterns.extend(['%EPL%', '%프리미어%'])
             elif league_code == 'LALIGA':
-                league_patterns.extend(['%라리가%', '%LALIGA%', '%스페인%'])
+                league_patterns.extend(['%라리가%', '%LALIGA%', '%스페인%', '%Spain%', '%La Liga%', '%Primera%'])
             elif league_code == 'SERIE_A':
                 league_patterns.extend(['%세리에%', '%SERIE%', '%이탈리아%'])
             elif league_code == 'BUNDESLIGA':
