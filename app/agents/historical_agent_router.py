@@ -150,6 +150,58 @@ class HistoricalAgentRouter:
                 '선덜랜드': ['선덜랜드', 'sunderland']
             }
 
+            KLEAGUE_TEAM_ALIASES = {
+                '울산 HD': ['울산', '울산 현대', '울산HD', 'ulsan'],
+                '울산': ['울산', '울산 현대', '울산HD', 'ulsan'],
+                '전북 현대': ['전북', '전북 현대', '전북현대', 'jeonbuk'],
+                '전북': ['전북', '전북 현대', '전북현대', 'jeonbuk'],
+                'FC서울': ['FC서울', '서울', 'fc seoul'],
+                '서울': ['FC서울', '서울', 'fc seoul'],
+                '포항 스틸러스': ['포항', '포항 스틸러스', '포항스틸러스', 'pohang'],
+                '포항': ['포항', '포항 스틸러스', '포항스틸러스', 'pohang'],
+                '광주FC': ['광주', '광주FC', 'gwangju'],
+                '광주': ['광주', '광주FC', 'gwangju'],
+                '강원FC': ['강원', '강원FC', 'gangwon'],
+                '강원': ['강원', '강원FC', 'gangwon'],
+                '김천상무': ['김천상무', '김천', '김천상무 프로축구단', '상무', 'gimcheon'],
+                '김천상무 프로축구단': ['김천상무', '김천', '김천상무 프로축구단', '상무', 'gimcheon'],
+                '대전 하나시티즌': ['대전 하나시티즌', '대전하나시티즌', '대전', 'daejeon'],
+                '대전': ['대전 하나시티즌', '대전하나시티즌', '대전', 'daejeon'],
+                '제주 유나이티드': ['제주', '제주 유나이티드', '제주유나이티드', 'jeju'],
+                '제주': ['제주', '제주 유나이티드', '제주유나이티드', 'jeju'],
+                '인천 유나이티드': ['인천', '인천 유나이티드', '인천유나이티드', 'incheon'],
+                '인천': ['인천', '인천 유나이티드', '인천유나이티드', 'incheon'],
+                '대구FC': ['대구', '대구FC', 'daegu'],
+                '대구': ['대구', '대구FC', 'daegu'],
+                '수원FC': ['수원FC', '수원 FC', 'suwon fc'],
+                '수원 삼성': ['수원 삼성', '수원삼성', 'suwon samsung'],
+                '수원삼성': ['수원 삼성', '수원삼성', 'suwon samsung'],
+                '부산 아이파크': ['부산 아이파크', '부산아이파크', '부산', 'busan'],
+                '부산': ['부산 아이파크', '부산아이파크', '부산', 'busan'],
+                '성남FC': ['성남', '성남FC', 'seongnam'],
+                '성남': ['성남', '성남FC', 'seongnam'],
+                '전남 드래곤즈': ['전남', '전남 드래곤즈', '전남드래곤즈', 'jeonnam'],
+                '전남': ['전남', '전남 드래곤즈', '전남드래곤즈', 'jeonnam'],
+                '경남FC': ['경남', '경남FC', 'gyeongnam'],
+                '경남': ['경남', '경남FC', 'gyeongnam'],
+                'FC안양': ['FC안양', '안양', 'anyang'],
+                '안양': ['FC안양', '안양', 'anyang'],
+                '부천FC': ['부천', '부천FC', '부천FC 1995', '부천FC1995', 'bucheon'],
+                '부천': ['부천', '부천FC', '부천FC 1995', '부천FC1995', 'bucheon'],
+                '서울 이랜드': ['서울 이랜드', '서울이랜드', '이랜드', 'seoul e-land'],
+                '이랜드': ['서울 이랜드', '서울이랜드', '이랜드', 'seoul e-land'],
+                '김포FC': ['김포', '김포FC', 'gimpo'],
+                '김포': ['김포', '김포FC', 'gimpo'],
+                '충남아산': ['충남아산', '충남아산 프로축구단', '아산', 'chungnam asan'],
+                '충남아산 프로축구단': ['충남아산', '충남아산 프로축구단', '아산', 'chungnam asan'],
+                '충북청주': ['충북청주', '충북청주 프로축구단', '청주', 'chungbuk cheongju'],
+                '충북청주 프로축구단': ['충북청주', '충북청주 프로축구단', '청주', 'chungbuk cheongju'],
+                '안산 그리너스': ['안산', '안산 그리너스', '안산그리너스', 'ansan'],
+                '안산': ['안산', '안산 그리너스', '안산그리너스', 'ansan'],
+                '천안 시티FC': ['천안', '천안 시티FC', '천안시티FC', '천안시티', 'cheonan'],
+                '천안': ['천안', '천안 시티FC', '천안시티FC', '천안시티', 'cheonan']
+            }
+
             def extract_team_tokens(name: str) -> list:
                 if not name: return []
                 clean_name = str(name).strip()
@@ -159,6 +211,9 @@ class HistoricalAgentRouter:
                 for ep_key, aliases in EPL_TEAM_ALIASES.items():
                     if ep_key in clean_name or clean_name in ep_key:
                         return list(set([ep_key] + aliases))
+                for kl_key, aliases in KLEAGUE_TEAM_ALIASES.items():
+                    if kl_key in clean_name or clean_name in kl_key:
+                        return list(set([kl_key] + aliases))
 
                 tokens = set()
                 raw = clean_name
@@ -217,7 +272,7 @@ class HistoricalAgentRouter:
             elif league_code == 'BUNDESLIGA':
                 league_patterns.extend(['%분데스%', '%BUNDESLIGA%', '%독일%'])
             elif league_code == 'K_LEAGUE':
-                league_patterns.extend(['%K리그%', '%K-LEAGUE%'])
+                league_patterns.extend(['%K리그%', '%K-LEAGUE%', '%K LEAGUE%', '%K League%', '%Korea%'])
             elif league_code == 'J_LEAGUE':
                 league_patterns.extend(['%J리그%', '%J.LEAGUE%', '%J1%', '%J2%'])
 
