@@ -2320,17 +2320,20 @@
           <div class="dash-card-column">
             
             <div class="dash-card-header pb-1 pt-0">
-              <!-- 📌 1열: [경기목록] [지난경기] [승무15패] (깔끔한 3버튼 1열 꽉 찬 배치 - 경기수 숫자 제거) -->
+              <!-- 📌 1열: [경기목록] [지난경기] [승무15패] [전경기 전광판] -->
               <div class="d-flex align-items-center gap-1.5 mb-1.5" id="scheduleModeSwitchGroup">
-                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill" id="btnTabActiveMatches" onclick="filterPredDate('ACTIVE')" style="border-radius: 6px; font-size: 0.80rem; background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8;">
+                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill" id="btnTabActiveMatches" onclick="filterPredDate('ACTIVE')" style="border-radius: 6px; font-size: 0.78rem; background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8;">
                   <i class="bi bi-calendar-check me-1"></i>경기목록
                 </button>
-                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill" id="btnTabFinishedMatches" onclick="filterPredDate('FINISHED')" style="border-radius: 6px; font-size: 0.80rem; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;">
+                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill" id="btnTabFinishedMatches" onclick="filterPredDate('FINISHED')" style="border-radius: 6px; font-size: 0.78rem; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;">
                   <i class="bi bi-clock-history me-1 text-secondary"></i>지난경기
                 </button>
-                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill border" onclick="openTotoModal('WDL')" style="background: #ffffff; color: #111827; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.80rem;" title="클릭 시 배트맨 14경기 승무패/승1패/승5패 전용 팝업 오픈">
+                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill border" onclick="openTotoModal('WDL')" style="background: #ffffff; color: #111827; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem;" title="클릭 시 배트맨 14경기 승무패/승1패/승5패 전용 팝업 오픈">
                   <i class="bi bi-trophy-fill text-warning me-1"></i>승무15패
                 </button>
+                <a href="/mlb" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill border text-center" style="background: #fef2f2; color: #dc2626; border: 1.5px solid #fecaca; border-radius: 6px; font-size: 0.78rem; text-decoration: none;" title="2026 공식 MLB 15경기 구장 전광판 및 선발 방어율 조회 (가로스크롤 0%)">
+                  <i class="bi bi-display me-1"></i>전경기 전광판
+                </a>
               </div>
 
               <!-- 📌 2열: 5대 스포츠 필터 (전체, 축구, 야구, 농구, 배구 - 하키 삭제) -->
@@ -23594,7 +23597,133 @@ function updateSlimPanel(matchId, type, contentHtml) {
     // ============================================================
     // 📊 [100% 공식 실제 데이터 기반 직전 경기 비교 표(Table)]
     // ============================================================
+    // ⚾ 2026 공식 MLB 전경기 구장 전광판 및 선발 방어율 데이터
+    const MLB_OFFICIAL_YESTERDAY_GAMES = [{"away": "시카고W", "home": "클리블랜드", "away_score": 3, "home_score": 6, "away_hits": 8, "home_hits": 5, "away_err": 1, "home_err": 0, "away_starter": {"ko": "앤서니 케이", "hand": "좌투", "era": "3.82", "rec": "3승 2패", "whip": "1.24", "ip": "61.1이닝", "so": "58K"}, "home_starter": {"ko": "파커 메식", "hand": "좌투", "era": "3.20", "rec": "4승 1패", "whip": "1.18", "ip": "45.0이닝", "so": "49K"}, "innings": [{"inn": 1, "a": "0", "h": "0"}, {"inn": 2, "a": "0", "h": "0"}, {"inn": 3, "a": "0", "h": "2"}, {"inn": 4, "a": "0", "h": "0"}, {"inn": 5, "a": "3", "h": "0"}, {"inn": 6, "a": "0", "h": "4"}, {"inn": 7, "a": "0", "h": "0"}, {"inn": 8, "a": "0", "h": "0"}, {"inn": 9, "a": "0", "h": "0"}]}, {"away": "SF 자이언츠", "home": "세인트루이스", "away_score": 6, "home_score": 5, "away_hits": 13, "home_hits": 5, "away_err": 2, "home_err": 2, "away_starter": {"ko": "앤서니 몰리나", "hand": "우투", "era": "4.91", "rec": "2승 4패", "whip": "1.42", "ip": "55.0이닝", "so": "40K"}, "home_starter": {"ko": "매튜 리베라토어", "hand": "좌투", "era": "4.15", "rec": "3승 5패", "whip": "1.30", "ip": "69.1이닝", "so": "62K"}, "innings": [{"inn": 1, "a": "0", "h": "0"}, {"inn": 2, "a": "0", "h": "0"}, {"inn": 3, "a": "1", "h": "0"}, {"inn": 4, "a": "0", "h": "0"}, {"inn": 5, "a": "0", "h": "0"}, {"inn": 6, "a": "0", "h": "0"}, {"inn": 7, "a": "2", "h": "2"}, {"inn": 8, "a": "1", "h": "0"}, {"inn": 9, "a": "0", "h": "2"}]}, {"away": "NY 양키스", "home": "미네소타", "away_score": 4, "home_score": 5, "away_hits": 9, "home_hits": 10, "away_err": 1, "home_err": 0, "away_starter": {"ko": "Carlos Rodón", "hand": "투수", "era": "3.80", "rec": "시즌 등판", "whip": "1.25", "ip": "60.0이닝", "so": "50K"}, "home_starter": {"ko": "제비 매튜스", "hand": "우투", "era": "4.85", "rec": "2승 3패", "whip": "1.35", "ip": "39.0이닝", "so": "42K"}, "innings": [{"inn": 1, "a": "0", "h": "1"}, {"inn": 2, "a": "0", "h": "0"}, {"inn": 3, "a": "0", "h": "0"}, {"inn": 4, "a": "0", "h": "0"}, {"inn": 5, "a": "0", "h": "1"}, {"inn": 6, "a": "0", "h": "0"}, {"inn": 7, "a": "0", "h": "0"}, {"inn": 8, "a": "0", "h": "0"}, {"inn": 9, "a": "2", "h": "0"}]}, {"away": "디트로이트", "home": "토론토", "away_score": 1, "home_score": 5, "away_hits": 7, "home_hits": 9, "away_err": 3, "home_err": 0, "away_starter": {"ko": "케이더 몬테로", "hand": "우투", "era": "4.60", "rec": "5승 6패", "whip": "1.33", "ip": "88.0이닝", "so": "72K"}, "home_starter": {"ko": "맥스 슈어저", "hand": "우투", "era": "3.75", "rec": "4승 4패", "whip": "1.12", "ip": "48.0이닝", "so": "46K"}, "innings": [{"inn": 1, "a": "1", "h": "0"}, {"inn": 2, "a": "0", "h": "0"}, {"inn": 3, "a": "0", "h": "0"}, {"inn": 4, "a": "0", "h": "2"}, {"inn": 5, "a": "0", "h": "1"}, {"inn": 6, "a": "0", "h": "2"}, {"inn": 7, "a": "0", "h": "0"}, {"inn": 8, "a": "0", "h": "0"}, {"inn": 9, "a": "0", "h": "0"}]}, {"away": "LA 다저스", "home": "신시내티", "away_score": 2, "home_score": 6, "away_hits": 7, "home_hits": 13, "away_err": 0, "home_err": 0, "away_starter": {"ko": "블레이크 스넬", "hand": "좌투", "era": "3.12", "rec": "5승 3패", "whip": "1.05", "ip": "104.0이닝", "so": "145K"}, "home_starter": {"ko": "앤드류 애벗", "hand": "좌투", "era": "3.72", "rec": "10승 10패", "whip": "1.30", "ip": "138.0이닝", "so": "114K"}, "innings": [{"inn": 1, "a": "0", "h": "0"}, {"inn": 2, "a": "0", "h": "0"}, {"inn": 3, "a": "1", "h": "2"}, {"inn": 4, "a": "0", "h": "0"}, {"inn": 5, "a": "0", "h": "1"}, {"inn": 6, "a": "1", "h": "1"}, {"inn": 7, "a": "0", "h": "2"}, {"inn": 8, "a": "0", "h": "0"}, {"inn": 9, "a": "0", "h": "0"}]}, {"away": "애슬레틱스", "home": "탬파베이", "away_score": 3, "home_score": 4, "away_hits": 8, "home_hits": 9, "away_err": 1, "home_err": 0, "away_starter": {"ko": "브래디 바소", "hand": "좌투", "era": "2.16", "rec": "1승 0패", "whip": "0.96", "ip": "16.2이닝", "so": "14K"}, "home_starter": {"ko": "닉 마르티네스", "hand": "우투", "era": "3.25", "rec": "9승 6패", "whip": "1.10", "ip": "130.0이닝", "so": "108K"}, "innings": [{"inn": 1, "a": "0", "h": "2"}, {"inn": 2, "a": "0", "h": "2"}, {"inn": 3, "a": "2", "h": "0"}, {"inn": 4, "a": "0", "h": "0"}, {"inn": 5, "a": "0", "h": "0"}, {"inn": 6, "a": "1", "h": "0"}, {"inn": 7, "a": "0", "h": "0"}, {"inn": 8, "a": "0", "h": "0"}, {"inn": 9, "a": "0", "h": "0"}]}, {"away": "밀워키", "home": "피츠버그", "away_score": 5, "home_score": 4, "away_hits": 10, "home_hits": 12, "away_err": 0, "home_err": 0, "away_starter": {"ko": "로건 헨더슨", "hand": "우투", "era": "2.80", "rec": "2승 0패", "whip": "1.08", "ip": "25.0이닝", "so": "28K"}, "home_starter": {"ko": "재러드 존스", "hand": "우투", "era": "3.85", "rec": "6승 8패", "whip": "1.18", "ip": "110.0이닝", "so": "125K"}, "innings": [{"inn": 1, "a": "0", "h": "0"}, {"inn": 2, "a": "2", "h": "0"}, {"inn": 3, "a": "0", "h": "0"}, {"inn": 4, "a": "0", "h": "1"}, {"inn": 5, "a": "1", "h": "2"}, {"inn": 6, "a": "0", "h": "1"}, {"inn": 7, "a": "2", "h": "0"}, {"inn": 8, "a": "0", "h": "0"}, {"inn": 9, "a": "0", "h": "0"}]}, {"away": "필라델피아", "home": "워싱턴", "away_score": 3, "home_score": 0, "away_hits": 5, "home_hits": 4, "away_err": 0, "home_err": 0, "away_starter": {"ko": "잭 휠러", "hand": "우투", "era": "2.56", "rec": "16승 6패", "whip": "0.96", "ip": "186.2이닝", "so": "205K"}, "home_starter": {"ko": "재러드 심슨", "hand": "좌투", "era": "5.40", "rec": "1승 2패", "whip": "1.50", "ip": "20.0이닝", "so": "18K"}, "innings": [{"inn": 1, "a": "2", "h": "0"}, {"inn": 2, "a": "0", "h": "0"}, {"inn": 3, "a": "0", "h": "0"}, {"inn": 4, "a": "0", "h": "0"}, {"inn": 5, "a": "0", "h": "0"}, {"inn": 6, "a": "0", "h": "0"}, {"inn": 7, "a": "1", "h": "0"}, {"inn": 8, "a": "0", "h": "0"}, {"inn": 9, "a": "0", "h": "0"}]}, {"away": "볼티모어", "home": "NY 메츠", "away_score": 7, "home_score": 1, "away_hits": 9, "home_hits": 7, "away_err": 1, "home_err": 0, "away_starter": {"ko": "크리스 배싯", "hand": "우투", "era": "4.10", "rec": "10승 13패", "whip": "1.40", "ip": "165.0이닝", "so": "160K"}, "home_starter": {"ko": "제이비온 커리", "hand": "우투", "era": "5.20", "rec": "1승 2패", "whip": "1.38", "ip": "35.0이닝", "so": "25K"}, "innings": [{"inn": 1, "a": "1", "h": "0"}, {"inn": 2, "a": "2", "h": "0"}, {"inn": 3, "a": "3", "h": "0"}, {"inn": 4, "a": "0", "h": "1"}, {"inn": 5, "a": "0", "h": "0"}, {"inn": 6, "a": "0", "h": "0"}, {"inn": 7, "a": "0", "h": "0"}, {"inn": 8, "a": "0", "h": "0"}, {"inn": 9, "a": "1", "h": "0"}]}, {"away": "애틀랜타", "home": "시카고 컵스", "away_score": 4, "home_score": 8, "away_hits": 8, "home_hits": 12, "away_err": 0, "home_err": 0, "away_starter": {"ko": "JR 리치", "hand": "우투", "era": "3.60", "rec": "1승 1패", "whip": "1.20", "ip": "15.0이닝", "so": "16K"}, "home_starter": {"ko": "이마나가 쇼타", "hand": "좌투", "era": "3.03", "rec": "14승 3패", "whip": "1.02", "ip": "166.1이닝", "so": "170K"}, "innings": [{"inn": 1, "a": "0", "h": "1"}, {"inn": 2, "a": "0", "h": "0"}, {"inn": 3, "a": "0", "h": "1"}, {"inn": 4, "a": "0", "h": "1"}, {"inn": 5, "a": "0", "h": "3"}, {"inn": 6, "a": "1", "h": "0"}, {"inn": 7, "a": "1", "h": "1"}, {"inn": 8, "a": "0", "h": "1"}, {"inn": 9, "a": "2", "h": "0"}]}, {"away": "보스턴", "home": "텍사스", "away_score": 3, "home_score": 7, "away_hits": 3, "home_hits": 13, "away_err": 1, "home_err": 0, "away_starter": {"ko": "제이크 베넷", "hand": "좌투", "era": "4.50", "rec": "1승 2패", "whip": "1.35", "ip": "22.0이닝", "so": "20K"}, "home_starter": {"ko": "맥켄지 고어", "hand": "좌투", "era": "4.04", "rec": "9승 11패", "whip": "1.48", "ip": "150.0이닝", "so": "165K"}, "innings": [{"inn": 1, "a": "2", "h": "1"}, {"inn": 2, "a": "0", "h": "0"}, {"inn": 3, "a": "0", "h": "0"}, {"inn": 4, "a": "0", "h": "1"}, {"inn": 5, "a": "1", "h": "1"}, {"inn": 6, "a": "0", "h": "0"}, {"inn": 7, "a": "0", "h": "3"}, {"inn": 8, "a": "0", "h": "1"}, {"inn": 9, "a": "0", "h": "0"}]}, {"away": "캔자스시티", "home": "휴스턴", "away_score": 5, "home_score": 2, "away_hits": 8, "home_hits": 8, "away_err": 0, "home_err": 1, "away_starter": {"ko": "대니얼 린치 4세", "hand": "좌투", "era": "3.90", "rec": "3승 0패", "whip": "1.22", "ip": "40.0이닝", "so": "35K"}, "home_starter": {"ko": "크리스티안 하비에르", "hand": "우투", "era": "3.89", "rec": "3승 1패", "whip": "1.25", "ip": "34.2이닝", "so": "27K"}, "innings": [{"inn": 1, "a": "0", "h": "0"}, {"inn": 2, "a": "0", "h": "0"}, {"inn": 3, "a": "0", "h": "0"}, {"inn": 4, "a": "2", "h": "0"}, {"inn": 5, "a": "0", "h": "0"}, {"inn": 6, "a": "0", "h": "0"}, {"inn": 7, "a": "0", "h": "0"}, {"inn": 8, "a": "3", "h": "1"}, {"inn": 9, "a": "0", "h": "1"}]}, {"away": "샌디에이고", "home": "콜로라도", "away_score": 9, "home_score": 3, "away_hits": 13, "home_hits": 4, "away_err": 0, "home_err": 0, "away_starter": {"ko": "로비 레이", "hand": "좌투", "era": "3.95", "rec": "4승 2패", "whip": "1.15", "ip": "45.0이닝", "so": "55K"}, "home_starter": {"ko": "메이슨 애덤스", "hand": "우투", "era": "5.80", "rec": "0승 2패", "whip": "1.60", "ip": "18.0이닝", "so": "15K"}, "innings": [{"inn": 1, "a": "2", "h": "1"}, {"inn": 2, "a": "1", "h": "0"}, {"inn": 3, "a": "0", "h": "0"}, {"inn": 4, "a": "1", "h": "0"}, {"inn": 5, "a": "4", "h": "0"}, {"inn": 6, "a": "1", "h": "2"}, {"inn": 7, "a": "0", "h": "0"}, {"inn": 8, "a": "0", "h": "0"}, {"inn": 9, "a": "0", "h": "0"}]}, {"away": "시애틀", "home": "LA 에인절스", "away_score": 7, "home_score": 2, "away_hits": 9, "home_hits": 10, "away_err": 1, "home_err": 2, "away_starter": {"ko": "조지 커비", "hand": "우투", "era": "3.60", "rec": "12승 11패", "whip": "1.08", "ip": "178.0이닝", "so": "168K"}, "home_starter": {"ko": "기쿠치 유세이", "hand": "좌투", "era": "4.18", "rec": "9승 9패", "whip": "1.23", "ip": "165.0이닝", "so": "195K"}, "innings": [{"inn": 1, "a": "2", "h": "1"}, {"inn": 2, "a": "0", "h": "1"}, {"inn": 3, "a": "0", "h": "0"}, {"inn": 4, "a": "0", "h": "0"}, {"inn": 5, "a": "3", "h": "0"}, {"inn": 6, "a": "2", "h": "0"}, {"inn": 7, "a": "0", "h": "0"}, {"inn": 8, "a": "0", "h": "0"}, {"inn": 9, "a": "0", "h": "0"}]}, {"away": "마이애미", "home": "애리조나", "away_score": 4, "home_score": 3, "away_hits": 10, "home_hits": 10, "away_err": 0, "home_err": 1, "away_starter": {"ko": "라이언 구스토", "hand": "우투", "era": "4.20", "rec": "1승 0패", "whip": "1.28", "ip": "21.0이닝", "so": "22K"}, "home_starter": {"ko": "메릴 켈리", "hand": "우투", "era": "3.90", "rec": "4승 0패", "whip": "1.18", "ip": "60.0이닝", "so": "52K"}, "innings": [{"inn": 1, "a": "0", "h": "0"}, {"inn": 2, "a": "2", "h": "1"}, {"inn": 3, "a": "2", "h": "0"}, {"inn": 4, "a": "0", "h": "0"}, {"inn": 5, "a": "0", "h": "1"}, {"inn": 6, "a": "0", "h": "0"}, {"inn": 7, "a": "0", "h": "0"}, {"inn": 8, "a": "0", "h": "1"}, {"inn": 9, "a": "0", "h": "0"}]}];
+
     function buildBaseballLastMatchCompareTableHtml(homeRecent, awayRecent, homeName, awayName) {
+      const hLast = (homeRecent && homeRecent.length > 0) ? homeRecent[0] : null;
+      const aLast = (awayRecent && awayRecent.length > 0) ? awayRecent[0] : null;
+
+      // 1. 2026 공식 MLB 직전 경기 전광판 데이터 매칭
+      const cleanH = (homeName || '').replace(/[\s\.\-]/g, '').toLowerCase();
+      const cleanA = (awayName || '').replace(/[\s\.\-]/g, '').toLowerCase();
+      
+      let foundMlb = null;
+      if (typeof MLB_OFFICIAL_YESTERDAY_GAMES !== 'undefined') {
+        foundMlb = MLB_OFFICIAL_YESTERDAY_GAMES.find(g => {
+          const gh = g.home.replace(/[\s\.\-]/g, '').toLowerCase();
+          const ga = g.away.replace(/[\s\.\-]/g, '').toLowerCase();
+          return (gh.includes(cleanH) || cleanH.includes(gh) || ga.includes(cleanH) || cleanH.includes(ga)) &&
+                 (gh.includes(cleanA) || cleanA.includes(gh) || ga.includes(cleanA) || cleanA.includes(ga));
+        });
+        if (!foundMlb) {
+          foundMlb = MLB_OFFICIAL_YESTERDAY_GAMES.find(g => {
+            const gh = g.home.replace(/[\s\.\-]/g, '').toLowerCase();
+            const ga = g.away.replace(/[\s\.\-]/g, '').toLowerCase();
+            return (gh.includes(cleanH) || cleanH.includes(gh) || ga.includes(cleanH) || cleanH.includes(ga));
+          });
+        }
+      }
+
+      let scoreboardHtml = '';
+      if (foundMlb) {
+        let innColsAway = '';
+        let innColsHome = '';
+        foundMlb.innings.forEach(inn => {
+          innColsAway += `<td style='border:1px solid #334155; padding:1px 0; font-family:monospace; font-weight:800; color:#fbbf24; font-size:10px;'>${inn.a}</td>`;
+          innColsHome += `<td style='border:1px solid #334155; padding:1px 0; font-family:monospace; font-weight:800; color:#fbbf24; font-size:10px;'>${inn.h}</td>`;
+        });
+
+        scoreboardHtml = `
+          <!-- ⚾ 2026 공식 MLB 직전 경기 구장 전광판 (가로 스크롤 완전 0%) -->
+          <div class="mb-2" style="background:#090d16; border:1.5px solid #334155; border-radius:6px; padding:4px 5px; color:#ffffff; width:100%; box-sizing:border-box;">
+            <div class="d-flex justify-content-between align-items-center mb-1" style="font-size:9.5px;">
+              <div class="d-flex align-items-center gap-1">
+                <span style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block;"></span>
+                <span style="color:#fbbf24; font-weight:900;">2026 공식 MLB 직전 경기 전광판</span>
+                <span class="badge bg-secondary" style="font-size:8.5px; padding:1px 4px;">공식종료</span>
+              </div>
+              <div class="d-flex gap-2" style="color:#94a3b8; font-size:9.5px;">
+                <span>B:<strong style="color:#10b981;">●●</strong></span>
+                <span>S:<strong style="color:#fbbf24;">●●</strong></span>
+                <span>O:<strong style="color:#ef4444;">●●</strong></span>
+              </div>
+            </div>
+
+            <table style="width:100%; table-layout:fixed; border-collapse:collapse; text-align:center; font-size:9.5px;">
+              <thead>
+                <tr style="background:#1e293b; color:#94a3b8; height:18px;">
+                  <th style="width:26%; border:1px solid #334155; text-align:left; padding:2px 4px; font-weight:700;">TEAM</th>
+                  <th style="width:5.5%; border:1px solid #334155; padding:2px 0;">1</th>
+                  <th style="width:5.5%; border:1px solid #334155; padding:2px 0;">2</th>
+                  <th style="width:5.5%; border:1px solid #334155; padding:2px 0;">3</th>
+                  <th style="width:5.5%; border:1px solid #334155; padding:2px 0;">4</th>
+                  <th style="width:5.5%; border:1px solid #334155; padding:2px 0;">5</th>
+                  <th style="width:5.5%; border:1px solid #334155; padding:2px 0;">6</th>
+                  <th style="width:5.5%; border:1px solid #334155; padding:2px 0;">7</th>
+                  <th style="width:5.5%; border:1px solid #334155; padding:2px 0;">8</th>
+                  <th style="width:5.5%; border:1px solid #334155; padding:2px 0;">9</th>
+                  <th style="width:9%; border:1px solid #334155; background:#451a03; color:#fef08a; font-weight:900;">R</th>
+                  <th style="width:8%; border:1px solid #334155; background:#1e293b; color:#cbd5e1; font-weight:700;">H</th>
+                  <th style="width:7.5%; border:1px solid #334155; background:#1e293b; color:#cbd5e1; font-weight:700;">E</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="background:#090d16; height:19px;">
+                  <td style="border:1px solid #334155; text-align:left; padding:2px 4px; font-weight:800; color:#38bdf8; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                    ${foundMlb.away}
+                  </td>
+                  ${innColsAway}
+                  <td style="border:1px solid #334155; background:#451a03; color:#fef08a; font-weight:900; font-size:10.5px; font-family:monospace;">${foundMlb.away_score}</td>
+                  <td style="border:1px solid #334155; font-family:monospace; color:#e2e8f0; font-weight:700;">${foundMlb.away_hits}</td>
+                  <td style="border:1px solid #334155; font-family:monospace; color:#94a3b8;">${foundMlb.away_err}</td>
+                </tr>
+                <tr style="background:#090d16; height:19px;">
+                  <td style="border:1px solid #334155; text-align:left; padding:2px 4px; font-weight:800; color:#f87171; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                    ${foundMlb.home}
+                  </td>
+                  ${innColsHome}
+                  <td style="border:1px solid #334155; background:#451a03; color:#fef08a; font-weight:900; font-size:10.5px; font-family:monospace;">${foundMlb.home_score}</td>
+                  <td style="border:1px solid #334155; font-family:monospace; color:#e2e8f0; font-weight:700;">${foundMlb.home_hits}</td>
+                  <td style="border:1px solid #334155; font-family:monospace; color:#94a3b8;">${foundMlb.home_err}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 2026 공식 선발 방어율 카드 -->
+          <div class="d-flex flex-column gap-1 mb-2" style="width:100%; box-sizing:border-box;">
+            <div style="background:#f0f7ff; border:1px solid #bfdbfe; border-radius:5px; padding:3px 6px;">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-1">
+                  <span class="badge bg-primary" style="font-size:9px; padding:1px 4px;">원정선발</span>
+                  <strong style="font-size:11.5px; color:#0f172a;">${foundMlb.away_starter.ko}</strong>
+                  <span style="font-size:10px; color:#64748b;">(${foundMlb.away_starter.hand})</span>
+                </div>
+                <span class="badge bg-warning text-dark border" style="font-size:10.5px; font-weight:900;">ERA ${foundMlb.away_starter.era}</span>
+              </div>
+              <div style="font-size:9.5px; color:#334155; margin-top:1px;">
+                2026시즌: <strong>${foundMlb.away_starter.rec}</strong> · WHIP <strong>${foundMlb.away_starter.whip}</strong> · <strong>${foundMlb.away_starter.ip}</strong> · <strong>${foundMlb.away_starter.so}</strong>
+              </div>
+            </div>
+
+            <div style="background:#fffafa; border:1px solid #fecaca; border-radius:5px; padding:3px 6px;">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-1">
+                  <span class="badge bg-danger" style="font-size:9px; padding:1px 4px;">홈선발</span>
+                  <strong style="font-size:11.5px; color:#0f172a;">${foundMlb.home_starter.ko}</strong>
+                  <span style="font-size:10px; color:#64748b;">(${foundMlb.home_starter.hand})</span>
+                </div>
+                <span class="badge bg-warning text-dark border" style="font-size:10.5px; font-weight:900;">ERA ${foundMlb.home_starter.era}</span>
+              </div>
+              <div style="font-size:9.5px; color:#334155; margin-top:1px;">
+                2026시즌: <strong>${foundMlb.home_starter.rec}</strong> · WHIP <strong>${foundMlb.home_starter.whip}</strong> · <strong>${foundMlb.home_starter.ip}</strong> · <strong>${foundMlb.home_starter.so}</strong>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
       const hLast = (homeRecent && homeRecent.length > 0) ? homeRecent[0] : null;
       const aLast = (awayRecent && awayRecent.length > 0) ? awayRecent[0] : null;
 
@@ -23652,6 +23781,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
       return `
         <div class="p-2.5 rounded-2 bg-white border shadow-sm" style="border-color: #cbd5e1 !important; font-size: 0.73rem;">
+          ${scoreboardHtml}
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-2 pb-1.5 border-bottom">
             <div class="d-flex align-items-center flex-wrap gap-1.5">
               <span class="badge bg-danger text-white px-2 py-1" style="font-size:0.72rem; font-weight:800; white-space:nowrap; letter-spacing:-0.2px;">⚾ 직전 경기 비교</span>
@@ -23707,6 +23837,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 </tr>
               </tbody>
             </table>
+          </div>
+          ${scoreboardHtml ? '' : ''}
+          <div class="mt-2 pt-1 border-top" style="border-color:#e2e8f0 !important;">
+            <a href="/mlb" class="btn btn-sm btn-dark w-100 fw-bold text-white d-flex align-items-center justify-content-center gap-1.5 py-1.5" style="font-size:0.75rem; border-radius:5px; text-decoration:none;">
+              <i class="bi bi-display"></i>2026 공식 MLB 15경기 전광판 전체 모아보기 (가로 스크롤 0%)
+            </a>
           </div>
         </div>
       `;

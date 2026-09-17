@@ -310,7 +310,7 @@ def health_check():
 @app.get("/app", response_class=HTMLResponse, summary="TOKEON 스포츠 모바일 전용 앱 화면")
 def mobile_portal(request: Request):
     try:
-        target = mlb_dashboard_path if os.path.exists(mlb_dashboard_path) else landing_path
+        target = mobile_path if os.path.exists(mobile_path) else landing_path
         content, etag = get_portal_html(target)
         return HTMLResponse(
             content=content,
@@ -326,11 +326,12 @@ def mobile_portal(request: Request):
 @app.get("/", response_class=HTMLResponse, summary="TOKEON 스포츠 분석 전문 포털 (tokeon.co.kr)")
 def domain_portal(request: Request):
     try:
-        if request.query_params.get("view") == "portal":
-            target = landing_path if os.path.exists(landing_path) else dashboard_path
+        # 모바일 강제 뷰 요청 (?view=mobile) 확인
+        if request.query_params.get("view") == "mobile":
+            target = mobile_path if os.path.exists(mobile_path) else landing_path
         else:
-            # 어제 저녁 완성한 전경기 MLB 전광판 대시보드를 메인에 즉시 표출
-            target = mlb_dashboard_path if os.path.exists(mlb_dashboard_path) else landing_path
+            # 경기목록 메인 포털 (landing.html) 기본 표출
+            target = landing_path if os.path.exists(landing_path) else dashboard_path
 
         content, etag = get_portal_html(target)
         return HTMLResponse(
@@ -343,6 +344,24 @@ def domain_portal(request: Request):
         )
     except Exception as e:
         return HTMLResponse(content=f"<h1>포털 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
+
+@app.get("/mlb", response_class=HTMLResponse, summary="2026 공식 MLB 전경기 전광판 및 선발 방어율 대시보드")
+@app.get("/mlb-dashboard", response_class=HTMLResponse, summary="2026 공식 MLB 전경기 전광판 및 선발 방어율 대시보드")
+@app.get("/history/mlb", response_class=HTMLResponse, summary="2026 공식 MLB 전경기 전광판")
+def mlb_scoreboard_portal(request: Request):
+    try:
+        target = mlb_dashboard_path if os.path.exists(mlb_dashboard_path) else landing_path
+        content, etag = get_portal_html(target)
+        return HTMLResponse(
+            content=content,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
+    except Exception as e:
+        return HTMLResponse(content=f"<h1>MLB 대시보드 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
 
 @app.get("/b2b", response_class=HTMLResponse, summary="TOKEON DATA — B2B 스포츠 데이터 API 전문 포털 (tokeon.kr)")
 @app.get("/api-company", response_class=HTMLResponse)
