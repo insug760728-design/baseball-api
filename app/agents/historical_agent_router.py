@@ -88,7 +88,7 @@ class HistoricalAgentRouter:
             from app.services.live_api_sports_service import TEAM_SYNONYMS as LS
 
             SHORT_ALLOWED = {'nc', 'lg', 'kt', 'ssg', 'kia', 'az', 'psv', 'qpr'}
-            NOISY_TOKENS = {'fc', 'cf', 'sc', 'ac', '축구단', '1995', 'city', 'united', 'ren', 'v', 'la', 'as', 'de', 'sv', 'afc', 'bsc', 'sd', 'cd', 'rc', 'ud', 'bk', 'club', 'town', 'and', '레알', 'real', '아틀레틱', 'athletic', '아틀레티코', 'atletico', '마드리드', 'madrid', '스포르팅', 'sporting'}
+            NOISY_TOKENS = {'fc', 'cf', 'sc', 'ac', '축구단', '1995', 'city', 'united', 'ren', 'v', 'la', 'as', 'de', 'sv', 'afc', 'bsc', 'sd', 'cd', 'rc', 'ud', 'bk', 'club', 'town', 'and', '레알', 'real', '아틀레틱', 'athletic', '아틀레티코', 'atletico', '마드리드', 'madrid', '스포르팅', 'sporting', '맨', 'man', '도쿄', 'tokyo', '오사카', 'osaka'}
 
             SPAIN_TEAM_ALIASES = {
                 '레알 베티스': ['베티스', 'real betis', 'betis'],
@@ -202,6 +202,42 @@ class HistoricalAgentRouter:
                 '천안': ['천안', '천안 시티FC', '천안시티FC', '천안시티', 'cheonan']
             }
 
+            JLEAGUE_TEAM_ALIASES = {
+                '가와사키 프론탈레': ['가와사키 프론탈레', '가와사키', 'kawasaki'],
+                '요코하마 F마리노스': ['요코하마 F마리노스', '요코하마 F.마리노스', '요코하마 마리노스', '요코하마FM', '마리노스'],
+                '요코하마 F.마리노스': ['요코하마 F마리노스', '요코하마 F.마리노스', '요코하마 마리노스', '요코하마FM', '마리노스'],
+                '비셀 고베': ['비셀 고베', '빗셀 고베', '비셀고베', '빗셀고베', '고베', 'vissel kobe'],
+                '빗셀 고베': ['비셀 고베', '빗셀 고베', '비셀고베', '빗셀고베', '고베', 'vissel kobe'],
+                '우라와 레드': ['우라와 레드', '우라와 레즈', '우라와', 'urawa'],
+                '우라와 레즈': ['우라와 레드', '우라와 레즈', '우라와', 'urawa'],
+                '산프레체 히로시마': ['산프레체 히로시마', '산프레체', '히로시마', 'sanfrecce hiroshima'],
+                '가시마 앤틀러스': ['가시마 앤틀러스', '가시마', 'kashima'],
+                '감바 오사카': ['감바 오사카', '감바오사카', '감바', 'gamba osaka'],
+                '세레소 오사카': ['세레소 오사카', '세레소오사카', '세레소', 'cerezo osaka'],
+                'FC도쿄': ['FC도쿄', 'FC 도쿄', 'fc tokyo'],
+                '도쿄 베르디': ['도쿄 베르디', '도쿄베르디', '베르디', 'tokyo verdy'],
+                '나고야 그램퍼스': ['나고야 그램퍼스', '나고야', 'nagoya'],
+                '가시와 레이솔': ['가시와 레이솔', '가시와', 'kashiwa'],
+                '사간 도스': ['사간 도스', '사간도스', '사간', 'sagan tosu'],
+                '쇼난 벨마레': ['쇼난 벨마레', '쇼난벨마레', '쇼난', 'shonan'],
+                '아비스파 후쿠오카': ['아비스파 후쿠오카', '후쿠오카', 'fukuoka'],
+                '알비렉스 니가타': ['알비렉스 니가타', '니가타', 'niigata'],
+                '콘사도레 삿포로': ['콘사도레 삿포로', '콘사도레', '삿포로', 'sapporo'],
+                '교토 상가': ['교토 상가', '교토 상가FC', '교토', 'kyoto'],
+                '교토 상가FC': ['교토 상가', '교토 상가FC', '교토', 'kyoto'],
+                'FC마치다 젤비아': ['FC마치다 젤비아', '마치다 젤비아', '마치다', 'machida'],
+                '주빌로 이와타': ['주빌로 이와타', '이와타', 'iwata'],
+                '베갈타 센다이': ['베갈타 센다이', '센다이', 'sendai'],
+                '반포레 고후': ['반포레 고후', '방포레 고후', '고후', 'kofu'],
+                '방포레 고후': ['반포레 고후', '방포레 고후', '고후', 'kofu'],
+                '오이타 트리니타': ['오이타 트리니타', '오이타', 'oita'],
+                '몬테디오 야마가타': ['몬테디오 야마가타', '야마가타', 'yamagata'],
+                '제프 유나이티드': ['제프 유나이티드', '제프', 'jef united'],
+                '로아소 구마모토': ['로아소 구마모토', '구마모토', 'kumamoto'],
+                'V바렌 나가사키': ['V바렌 나가사키', 'V-나가사키', '나가사키', 'nagasaki'],
+                'V-나가사키': ['V바렌 나가사키', 'V-나가사키', '나가사키', 'nagasaki']
+            }
+
             def extract_team_tokens(name: str) -> list:
                 if not name: return []
                 clean_name = str(name).strip()
@@ -214,6 +250,9 @@ class HistoricalAgentRouter:
                 for kl_key, aliases in KLEAGUE_TEAM_ALIASES.items():
                     if kl_key in clean_name or clean_name in kl_key:
                         return list(set([kl_key] + aliases))
+                for jl_key, aliases in JLEAGUE_TEAM_ALIASES.items():
+                    if jl_key in clean_name or clean_name in jl_key:
+                        return list(set([jl_key] + aliases))
 
                 tokens = set()
                 raw = clean_name
@@ -274,7 +313,7 @@ class HistoricalAgentRouter:
             elif league_code == 'K_LEAGUE':
                 league_patterns.extend(['%K리그%', '%K-LEAGUE%', '%K LEAGUE%', '%K League%', '%Korea%'])
             elif league_code == 'J_LEAGUE':
-                league_patterns.extend(['%J리그%', '%J.LEAGUE%', '%J1%', '%J2%'])
+                league_patterns.extend(['%J리그%', '%J.LEAGUE%', '%J1%', '%J2%', '%Japan%', '%일본%'])
 
             league_filters = [Match.league_name.ilike(p) for p in league_patterns]
 
