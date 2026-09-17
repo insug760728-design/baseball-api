@@ -1549,6 +1549,11 @@ class LiveApiSportsService:
                             best_match = m
 
                 if best_match:
+                    # ⚡ [사용자 엄격 지침] 메이저리그(MLB)는 api-baseball에서 일체 가져오지 않고,
+                    # 오직 공식 메이저리그 사이트(statsapi.mlb.com)에서 100% 공식 데이터로만 연동
+                    if best_match.league_name == "MLB":
+                        continue
+
                     best_match.home_score = h_score
                     best_match.away_score = a_score
                     best_match.status = mapped_status
