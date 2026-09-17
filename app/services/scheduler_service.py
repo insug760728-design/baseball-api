@@ -274,12 +274,13 @@ class SchedulerService:
 
         yesterday_str = (start_time - timedelta(days=1)).strftime("%Y-%m-%d")
         today_str = start_time.strftime("%Y-%m-%d")
+        tomorrow_str = (start_time + timedelta(days=1)).strftime("%Y-%m-%d")
 
         db = SessionLocal()
         summary = {}
 
         try:
-            logger.info(f"[Scheduler] 일일 동기화 시작 (KST): 대상 날짜={yesterday_str} ~ {today_str}")
+            logger.info(f"[Scheduler] 일일 동기화 시작 (KST): 대상 날짜={yesterday_str} ~ {tomorrow_str}")
 
             for league_id in cls._config.get("leagues", ["KBO", "NPB", "MLB"]):
                 try:
@@ -288,7 +289,7 @@ class SchedulerService:
                         db=db,
                         league_id=league_id,
                         start_date=yesterday_str,
-                        end_date=today_str
+                        end_date=tomorrow_str
                     )
                     
                     try:
@@ -297,7 +298,7 @@ class SchedulerService:
                             db=db,
                             league_id=league_id,
                             start_date=yesterday_str,
-                            end_date=today_str
+                            end_date=tomorrow_str
                         )
                         folder_status = "SUCCESS"
                     except Exception as fe:
@@ -315,6 +316,18 @@ class SchedulerService:
                         "status": "ERROR",
                         "error": str(le)
                     }
+
+            # KBO, NPB, MLB 공식 선발투수 발표 실시간 일일 동기화
+            try:
+                starters_res = await asyncio.to_thread(MatchService.sync_announced_starters, db=db)
+                summary["STARTERS_SYNC"] = {
+                    "kbo": starters_res.get("kbo_synced", 0),
+                    "npb": starters_res.get("npb_synced", 0),
+                    "mlb": starters_res.get("mlb_synced", 0)
+                }
+                logger.info(f"[Scheduler Daily] 선발투수 일일 동기화 완료: {summary['STARTERS_SYNC']}")
+            except Exception as se:
+                logger.warning(f"[Scheduler Daily] 선발투수 동기화 경고: {se}")
 
             end_time = get_now_kst()
             duration_sec = round((end_time - start_time).total_seconds(), 1)
@@ -536,14 +549,14 @@ class SchedulerService:
 
     @classmethod
     async def execute_starters_sync_job(cls):
-        """15분 주기 KBO 및 NPB 공식 선발투수 발표 실시간 동기화"""
+        """5분 주기 KBO, NPB 및 MLB 공식 선발투수 발표 실시간 동기화"""
         def _run_starters():
             from app.core.database import SessionLocal
             from app.services.match_service import MatchService
             db = SessionLocal()
             try:
                 res = MatchService.sync_announced_starters(db)
-                logger.info(f"[Scheduler Starters] 선발투수 실시간 동기화 완료: KBO {res.get('kbo_synced')}건, NPB {res.get('npb_synced')}건")
+                logger.info(f"[Scheduler Starters] 선발투수 실시간 동기화 완료: KBO {res.get('kbo_synced')}건, NPB {res.get('npb_synced')}건, MLB {res.get('mlb_synced')}건")
             except Exception as e:
                 logger.error(f"[Scheduler Starters] 선발투수 동기화 오류: {e}")
             finally:

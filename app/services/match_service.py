@@ -840,7 +840,7 @@ class MatchService:
         from app.services.team_split_service import KBO_TEAMS_POOL, NPB_TEAMS_POOL, is_kbo_team_name, is_npb_team_name, is_valid_starter_name
         
         d_ref = target_date or datetime.now().strftime("%Y-%m-%d")
-        results = {"date": d_ref, "kbo_synced": 0, "npb_synced": 0, "matches_updated": []}
+        results = {"date": d_ref, "kbo_synced": 0, "npb_synced": 0, "mlb_synced": 0, "matches_updated": []}
 
         # 1. KBO 공식 선발투수 동기화
         try:
@@ -946,6 +946,74 @@ class MatchService:
                     results["matches_updated"].append({"id": m.id, "league": "NPB", "home": m.home_team_name, "away": m.away_team_name, "starters": st_data})
         except Exception as e:
             logger.error(f"[Sync Announced Starters] NPB error: {e}")
+
+        # 3. MLB 공식 선발투수 동기화
+        try:
+            from app.scrapers.official_mlb_live_scraper import MlbOfficialScraper
+            from app.services.baseball_roster_service import BaseballRosterService
+            mlb_scraper = MlbOfficialScraper()
+            
+            d_next = (datetime.strptime(d_ref, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+            for d_target in [d_ref, d_next]:
+                mlb_games = mlb_scraper.scrape_schedule(d_target)
+                if not mlb_games:
+                    continue
+
+                day_matches = db.query(Match).filter(
+                    Match.match_date.like(f"{d_target}%"),
+                    Match.sport_code == "BASEBALL"
+                ).all()
+
+                for g in mlb_games:
+                    h_name = g.get("home_team_name")
+                    a_name = g.get("away_team_name")
+                    h_starter = g.get("probable_pitcher_home")
+                    a_starter = g.get("probable_pitcher_away")
+                    h_prof = g.get("team_stats", {}).get("starters", {}).get("home") or {}
+                    a_prof = g.get("team_stats", {}).get("starters", {}).get("away") or {}
+
+                    if not h_starter and not a_starter and not h_prof.get("name") and not a_prof.get("name"):
+                        continue
+
+                    for m in day_matches:
+                        is_mlb = (m.official_id and m.official_id.startswith("MLB_")) or ("MLB" in (m.league_name or ""))
+                        if not is_mlb and (is_kbo_team_name(m.home_team_name) or is_npb_team_name(m.home_team_name)):
+                            continue
+
+                        h_match = teams_match(h_name, m.home_team_name) or (BaseballRosterService.match_team_roster(h_name) == BaseballRosterService.match_team_roster(m.home_team_name))
+                        a_match = teams_match(a_name, m.away_team_name) or (BaseballRosterService.match_team_roster(a_name) == BaseballRosterService.match_team_roster(m.away_team_name))
+
+                        if h_match and a_match:
+                            curr_dt = db.query(MatchDetail).filter(MatchDetail.match_id == m.id).first()
+                            curr_ts = {}
+                            if curr_dt and curr_dt.team_stats:
+                                try:
+                                    curr_ts = json.loads(curr_dt.team_stats)
+                                except Exception:
+                                    pass
+                            exist_st = curr_ts.get("starters", {})
+                            exist_h = exist_st.get("home", {}).get("name")
+                            exist_a = exist_st.get("away", {}).get("name")
+
+                            final_h = h_starter if is_valid_starter_name(h_starter) else (exist_h if is_valid_starter_name(exist_h) else None)
+                            final_a = a_starter if is_valid_starter_name(a_starter) else (exist_a if is_valid_starter_name(exist_a) else None)
+
+                            st_h_obj = h_prof if (h_prof and h_prof.get("name") and is_valid_starter_name(h_prof.get("name"))) else {
+                                "name": final_h or "선발 예고", "confirmed": bool(final_h), "throws": "우완"
+                            }
+                            st_a_obj = a_prof if (a_prof and a_prof.get("name") and is_valid_starter_name(a_prof.get("name"))) else {
+                                "name": final_a or "선발 예고", "confirmed": bool(final_a), "throws": "우완"
+                            }
+
+                            st_data = {
+                                "home": st_h_obj,
+                                "away": st_a_obj
+                            }
+                            cls.update_starters(db, m.id, st_data)
+                            results["mlb_synced"] += 1
+                            results["matches_updated"].append({"id": m.id, "league": "MLB", "home": m.home_team_name, "away": m.away_team_name, "starters": st_data})
+        except Exception as e:
+            logger.error(f"[Sync Announced Starters] MLB error: {e}")
 
         return results
 
