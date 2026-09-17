@@ -5640,10 +5640,24 @@ function getFullModalMatchList() {
           const hErr = (tStats && tStats.errors) ? (tStats.errors.home ?? '0') : '0';
           const aErr = (tStats && tStats.errors) ? (tStats.errors.away ?? '0') : '0';
           scoreboardHtml = `
-            <div class="table-responsive mb-2 rounded-2" style="border: 1px solid #e5e7eb; background: #ffffff;">
-              <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.78rem; background: #ffffff;">
-                <thead style="background: #ffffff; color: #111827;">
-                  <tr style="color: #111827; font-weight: 700;"><th>팀명</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>R</th><th>H</th><th>E</th></tr>
+            <div class="mb-2 rounded-2" style="border: 1px solid #e5e7eb; background: #ffffff; width: 100%; overflow: hidden;">
+              <table style="width: 100%; table-layout: fixed; border-collapse: collapse; text-align: center; font-size: 0.70rem; background: #ffffff; margin-bottom: 0;">
+                <thead style="background: #f8fafc; color: #111827;">
+                  <tr style="color: #111827; font-weight: 700; height: 22px;">
+                    <th style="width: 26%; text-align: left; padding: 2px 3px; border: 1px solid #e5e7eb;">팀명</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">1</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">2</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">3</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">4</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">5</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">6</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">7</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">8</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">9</th>
+                    <th style="width: 9%; padding: 2px 0; border: 1px solid #e5e7eb; background: #fef2f2; color: #dc2626; font-weight: 800;">R</th>
+                    <th style="width: 8%; padding: 2px 0; border: 1px solid #e5e7eb;">H</th>
+                    <th style="width: 7.5%; padding: 2px 0; border: 1px solid #e5e7eb;">E</th>
+                  </tr>
                 </thead>
                 <tbody style="background: #ffffff;">
                   <tr>
@@ -16866,117 +16880,125 @@ function getFullModalMatchList() {
         </div>
       ` : `
         <div class="col-12 col-lg-6">
-          <div class="p-2 rounded-2 h-100 bg-white border" style="border-color: #cbd5e1 !important; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-            <!-- Compact Header -->
-            <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom" style="border-color: #f1f5f9 !important;">
-              <div class="d-flex align-items-center gap-1">
-                <span class="badge bg-dark text-white px-1.5 py-0.5" style="font-size: 0.65rem;"><i class="bi bi-person-badge-fill text-warning me-1"></i>선발투수 최근 1:1 맞대결</span>
-                <span class="badge bg-light text-secondary border px-1" style="font-size: 0.60rem;">최근 3G 실측 일지</span>
+          <div class="p-2.5 rounded-2 h-100" style="background: #f9fafb; border: 1px solid #e5e7eb;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold small" style="color: #111827; font-size: 0.82rem;">
+                🎯 <b>선발투수 최근 3경기 등판 비교</b>
+              </span>
+              <span class="badge bg-white border text-secondary" style="font-size: 0.68rem;">
+                선발 3G 누적
+              </span>
+            </div>
+
+            <!-- 선발 이름 및 투타 정보 헤더 -->
+            <div class="d-flex justify-content-between align-items-center p-1.5 mb-2 bg-white rounded border" style="font-size: 0.76rem;">
+              <div class="text-start">
+                <span class="badge me-1" style="background:#fef2f2; color:#dc2626; border:1px solid #dc2626; font-size:0.62rem; padding: 1px 4px; font-weight: 800;">[홈 선발]</span>
+                <b class="text-dark" style="font-size: 0.82rem;">${hNameDisp}</b>
+                <span class="text-muted small">${hThrowsDisp}</span>
+                ${hBadge}
               </div>
-              <div class="small fw-bold" style="font-size: 0.62rem; color: #475569;">
-                모바일 한눈에 보기
+              <div class="text-muted fw-bold small px-1">VS</div>
+              <div class="text-end">
+                ${aBadge}
+                <b class="text-dark" style="font-size: 0.82rem;">${aNameDisp}</b>
+                <span class="text-muted small">${aThrowsDisp}</span>
+                <span class="badge ms-1" style="background:#eff6ff; color:#2563eb; border:1px solid #2563eb; font-size:0.62rem; padding: 1px 4px; font-weight: 800;">[원정 선발]</span>
               </div>
             </div>
 
-            <!-- 2-Column Dense Grid: Left (Away) & Right (Home) -->
-            <div class="row g-1.5">
-              <!-- AWAY STARTER -->
-              <div class="col-6">
-                <div class="p-1.5 rounded-2 border h-100" style="background: #f0f7ff; border-color: #bfdbfe !important;">
-                  <!-- Top: Team badge & Season ERA -->
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="badge bg-primary text-white" style="font-size: 0.58rem; padding: 1px 4px; font-weight: 800;">원정</span>
-                    <span class="badge" style="background: #fef3c7; color: #78350f; border: 1px solid #fde68a; font-size: 0.62rem; padding: 1px 4px; font-weight: 900;">
-                      ${aAnnounced ? `ERA ${aSt.season_era || aStSum.season_era || '3.65'}` : '미정'}
-                    </span>
-                  </div>
-                  <!-- Pitcher Name & Throw -->
-                  <div class="d-flex align-items-baseline gap-1 text-truncate mb-0.5">
-                    <strong class="text-dark" style="font-size: 0.78rem;">${aNameDisp}</strong>
-                    <span class="text-muted" style="font-size: 0.60rem;">${aThrowsDisp}</span>
-                  </div>
-                  <!-- Season Record & WHIP -->
-                  <div class="text-secondary mb-1 pb-1 border-bottom" style="font-size: 0.62rem; line-height: 1.2; border-color: rgba(59,130,246,0.2) !important;">
-                    시즌: <strong class="text-primary">${aSt.season_record || aStSum.record || '-'}</strong> · WHIP <strong class="text-dark">${aSt.whip || '1.15'}</strong>
-                  </div>
-                  <!-- Recent 3G Summary -->
-                  <div class="mb-1 pb-1 border-bottom" style="font-size: 0.62rem; line-height: 1.25; border-color: rgba(59,130,246,0.2) !important;">
-                    <div class="text-primary fw-bold">3G평균: <b>ERA ${aStSum.era_3g || '-'}</b> · <b>${formatIp(aStSum.avg_ip, aAnnounced)}</b></div>
-                    <div class="text-muted">투구: <b>${formatNp(aStSum.avg_np, aAnnounced)}</b> · <b>${formatSoBb(aStSum, aAnnounced)}</b></div>
-                  </div>
-                  <!-- Recent 3-Start Log (Zero-space Compact Lines) -->
-                  <div style="font-size: 0.59rem; line-height: 1.25;">
-                    <div class="text-muted fw-bold mb-0.5" style="font-size: 0.57rem;">최근 등판 일지:</div>
-                    ${(aAnnounced && aStarts.length > 0) ? aStarts.slice(0, 3).map(s => {
-                      const isWin = s.result && (s.result.includes('승') || s.result.includes('W'));
-                      const isLoss = s.result && (s.result.includes('패') || s.result.includes('L'));
-                      const resColor = isWin ? 'text-danger fw-black' : (isLoss ? 'text-primary fw-bold' : 'text-secondary');
-                      const dStr = (s.date || '').replace(/^2026-/, '').replace(/^2025-/, '');
-                      const oppStr = s.opponent ? `vs${s.opponent.slice(0, 3)}` : '';
-                      return `
-                        <div class="d-flex justify-content-between border-bottom py-0.5" style="border-color: rgba(59,130,246,0.15) !important;">
-                          <span class="text-truncate text-secondary" style="max-width: 52%;">${dStr} ${oppStr}</span>
-                          <span class="${resColor}">${s.ip || '6.0'}이닝 ${s.er !== undefined ? s.er : '2'}자책</span>
-                        </div>
-                      `;
-                    }).join('') : '<div class="text-muted py-0.5">공식 등판 기록 없음</div>'}
+            <!-- 1:1 선발 지표 요약 테이블 -->
+            <div class="table-responsive mb-2">
+              <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.74rem; background: #ffffff; border-color: #e5e7eb;">
+                <thead style="background: #f3f4f6; color: #374151;">
+                  <tr style="font-weight: 700;">
+                    <th style="width: 38%;">[홈] ${hNameDisp}</th>
+                    <th style="width: 24%;">선발 3G 지표</th>
+                    <th style="width: 38%;">[원정] ${aNameDisp}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="fw-bold" style="${eraHomeAdv ? 'color: #dc2626; font-weight: 800;' : 'color: #374151;'}">
+                      ${hAnnounced ? `ERA ${hStSum.era_3g || '-'} ${eraHomeAdv ? '▲' : ''}` : '-'}
+                    </td>
+                    <td class="text-muted fw-bold">3G 평균자책</td>
+                    <td class="fw-bold" style="${eraAwayAdv ? 'color: #dc2626; font-weight: 800;' : 'color: #374151;'}">
+                      ${aAnnounced ? `ERA ${aStSum.era_3g || '-'} ${eraAwayAdv ? '▲' : ''}` : '-'}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="fw-bold">${formatIp(hStSum.avg_ip, hAnnounced)}</td>
+                    <td class="text-muted fw-bold">평균 소화이닝</td>
+                    <td class="fw-bold">${formatIp(aStSum.avg_ip, aAnnounced)}</td>
+                  </tr>
+                  <tr>
+                    <td class="fw-bold">${formatNp(hStSum.avg_np, hAnnounced)}</td>
+                    <td class="text-muted fw-bold">평균 투구수</td>
+                    <td class="fw-bold">${formatNp(aStSum.avg_np, aAnnounced)}</td>
+                  </tr>
+                  <tr>
+                    <td class="fw-bold">${formatSoBb(hStSum, hAnnounced)}</td>
+                    <td class="text-muted fw-bold">탈삼진/사사구</td>
+                    <td class="fw-bold">${formatSoBb(aStSum, aAnnounced)}</td>
+                  </tr>
+                  <tr>
+                    <td class="fw-bold">${formatRecord(hStSum.record, hAnnounced)}</td>
+                    <td class="text-muted fw-bold">3G 등판결과</td>
+                    <td class="fw-bold">${formatRecord(aStSum.record, aAnnounced)}</td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <span class="badge ${hAnnounced ? (hStSum.trend === 'UP' ? 'bg-success' : (hStSum.trend === 'DOWN' ? 'bg-danger' : 'bg-secondary')) : 'bg-secondary'}" style="font-size: 0.65rem;">
+                        ${hAnnounced ? (hStSum.trend_label || '최근3G 안정') : '선발 미정 (TBD)'}
+                      </span>
+                    </td>
+                    <td class="text-muted fw-bold">최근 흐름</td>
+                    <td>
+                      <span class="badge ${aAnnounced ? (aStSum.trend === 'UP' ? 'bg-success' : (aStSum.trend === 'DOWN' ? 'bg-danger' : 'bg-secondary')) : 'bg-secondary'}" style="font-size: 0.65rem;">
+                        ${aAnnounced ? (aStSum.trend_label || '최근3G 안정') : '선발 미정 (TBD)'}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- 선발 최근 3경기 미니 등판 로그 -->
+            <div class="accordion" id="accPitcher3G_${m.id || 0}">
+              <div class="accordion-item border-0 bg-transparent">
+                <button class="accordion-button collapsed p-1.5 small text-muted bg-white border rounded" type="button" data-bs-toggle="collapse" data-bs-target="#colPitcher3G_${m.id || 0}" style="font-size: 0.72rem; font-weight: 600;">
+                  <i class="bi bi-list-task me-1"></i>선발 최근 3경기 세부 등판 일지 펼치기
+                </button>
+                <div id="colPitcher3G_${m.id || 0}" class="accordion-collapse collapse mt-1.5" data-bs-parent="#accPitcher3G_${m.id || 0}">
+                  <div class="row g-1.5">
+                    <div class="col-6">
+                      <div class="p-1.5 bg-white border rounded" style="font-size: 0.68rem;">
+                        <div class="fw-bold text-truncate text-danger mb-1">[홈] ${hNameDisp}</div>
+                        ${(hAnnounced && hStarts.length > 0) ? hStarts.slice(0, 3).map(s => `
+                          <div class="d-flex justify-content-between border-bottom py-0.5">
+                            <span>${(s.date||'').slice(5)} vs ${s.opponent||'상대'}</span>
+                            <span class="fw-bold ${s.result && s.result.includes('(W)') ? 'text-danger' : (s.result && s.result.includes('(L)') ? 'text-primary' : 'text-dark')}">${s.ip}이닝 ${s.er}자책 (${s.np}구)</span>
+                          </div>
+                        `).join('') : '<div class="text-muted">공식 등판 기록 없음</div>'}
+                      </div>
+                    </div>
+                    <div class="col-6">
+                      <div class="p-1.5 bg-white border rounded" style="font-size: 0.68rem;">
+                        <div class="fw-bold text-truncate text-primary mb-1">[원정] ${aNameDisp}</div>
+                        ${(aAnnounced && aStarts.length > 0) ? aStarts.slice(0, 3).map(s => `
+                          <div class="d-flex justify-content-between border-bottom py-0.5">
+                            <span>${(s.date||'').slice(5)} vs ${s.opponent||'상대'}</span>
+                            <span class="fw-bold ${s.result && s.result.includes('(W)') ? 'text-danger' : (s.result && s.result.includes('(L)') ? 'text-primary' : 'text-dark')}">${s.ip}이닝 ${s.er}자책 (${s.np}구)</span>
+                          </div>
+                        `).join('') : '<div class="text-muted">공식 등판 기록 없음</div>'}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-
-              <!-- HOME STARTER -->
-              <div class="col-6">
-                <div class="p-1.5 rounded-2 border h-100" style="background: #fffafa; border-color: #fecaca !important;">
-                  <!-- Top: Team badge & Season ERA -->
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="badge bg-danger text-white" style="font-size: 0.58rem; padding: 1px 4px; font-weight: 800;">홈</span>
-                    <span class="badge" style="background: #fef3c7; color: #78350f; border: 1px solid #fde68a; font-size: 0.62rem; padding: 1px 4px; font-weight: 900;">
-                      ${hAnnounced ? `ERA ${hSt.season_era || hStSum.season_era || '3.65'}` : '미정'}
-                    </span>
-                  </div>
-                  <!-- Pitcher Name & Throw -->
-                  <div class="d-flex align-items-baseline gap-1 text-truncate mb-0.5">
-                    <strong class="text-dark" style="font-size: 0.78rem;">${hNameDisp}</strong>
-                    <span class="text-muted" style="font-size: 0.60rem;">${hThrowsDisp}</span>
-                  </div>
-                  <!-- Season Record & WHIP -->
-                  <div class="text-secondary mb-1 pb-1 border-bottom" style="font-size: 0.62rem; line-height: 1.2; border-color: rgba(239,68,68,0.2) !important;">
-                    시즌: <strong class="text-danger">${hSt.season_record || hStSum.record || '-'}</strong> · WHIP <strong class="text-dark">${hSt.whip || '1.15'}</strong>
-                  </div>
-                  <!-- Recent 3G Summary -->
-                  <div class="mb-1 pb-1 border-bottom" style="font-size: 0.62rem; line-height: 1.25; border-color: rgba(239,68,68,0.2) !important;">
-                    <div class="text-danger fw-bold">3G평균: <b>ERA ${hStSum.era_3g || '-'}</b> · <b>${formatIp(hStSum.avg_ip, hAnnounced)}</b></div>
-                    <div class="text-muted">투구: <b>${formatNp(hStSum.avg_np, hAnnounced)}</b> · <b>${formatSoBb(hStSum, hAnnounced)}</b></div>
-                  </div>
-                  <!-- Recent 3-Start Log (Zero-space Compact Lines) -->
-                  <div style="font-size: 0.59rem; line-height: 1.25;">
-                    <div class="text-muted fw-bold mb-0.5" style="font-size: 0.57rem;">최근 등판 일지:</div>
-                    ${(hAnnounced && hStarts.length > 0) ? hStarts.slice(0, 3).map(s => {
-                      const isWin = s.result && (s.result.includes('승') || s.result.includes('W'));
-                      const isLoss = s.result && (s.result.includes('패') || s.result.includes('L'));
-                      const resColor = isWin ? 'text-danger fw-black' : (isLoss ? 'text-primary fw-bold' : 'text-secondary');
-                      const dStr = (s.date || '').replace(/^2026-/, '').replace(/^2025-/, '');
-                      const oppStr = s.opponent ? `vs${s.opponent.slice(0, 3)}` : '';
-                      return `
-                        <div class="d-flex justify-content-between border-bottom py-0.5" style="border-color: rgba(239,68,68,0.15) !important;">
-                          <span class="text-truncate text-secondary" style="max-width: 52%;">${dStr} ${oppStr}</span>
-                          <span class="${resColor}">${s.ip || '6.0'}이닝 ${s.er !== undefined ? s.er : '2'}자책</span>
-                        </div>
-                      `;
-                    }).join('') : '<div class="text-muted py-0.5">공식 등판 기록 없음</div>'}
-                  </div>
-                </div>
-              </div>
             </div>
 
-            <!-- Compact Bottom Summary Bar -->
-            <div class="mt-1.5 p-1 rounded-1 d-flex justify-content-between align-items-center text-center" style="background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.62rem;">
-              <span class="text-secondary">자책 우세: <strong class="${eraHomeAdv ? 'text-danger' : (eraAwayAdv ? 'text-primary' : 'text-dark')}">${eraHomeAdv ? hNameDisp : (eraAwayAdv ? aNameDisp : '호각세')}</strong></span>
-              <span class="text-muted">|</span>
-              <span class="text-secondary">소화이닝: <strong>${hStSum.avg_ip || '6.0'} vs ${aStSum.avg_ip || '5.2'}</strong></span>
-              <span class="text-muted">|</span>
-              <span class="badge ${hStSum.trend === 'UP' ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary'} py-0 px-1" style="font-size: 0.58rem;">${hStSum.trend_label || '최근안정'}</span>
-            </div>
           </div>
         </div>
       `;
@@ -17487,10 +17509,24 @@ function getFullModalMatchList() {
           const errA = aSc > hSc ? 0 : 1;
 
           lineTableHtml = `
-            <div class="table-responsive mb-2">
-              <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.74rem; border-color: #e5e7eb; background: #ffffff;">
-                <thead style="background: #ffffff; color: #111827;">
-                  <tr style="font-weight: 700;"><th>팀명</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>R</th><th>H</th><th>E</th></tr>
+            <div class="mb-2" style="border: 1px solid #e5e7eb; background: #ffffff; width: 100%; overflow: hidden;">
+              <table style="width: 100%; table-layout: fixed; border-collapse: collapse; text-align: center; font-size: 0.70rem; background: #ffffff; margin-bottom: 0;">
+                <thead style="background: #f8fafc; color: #111827;">
+                  <tr style="font-weight: 700; height: 22px;">
+                    <th style="width: 26%; text-align: left; padding: 2px 3px; border: 1px solid #e5e7eb;">팀명</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">1</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">2</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">3</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">4</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">5</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">6</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">7</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">8</th>
+                    <th style="width: 5.5%; padding: 2px 0; border: 1px solid #e5e7eb;">9</th>
+                    <th style="width: 9%; padding: 2px 0; border: 1px solid #e5e7eb; background: #fef2f2; color: #dc2626; font-weight: 800;">R</th>
+                    <th style="width: 8%; padding: 2px 0; border: 1px solid #e5e7eb;">H</th>
+                    <th style="width: 7.5%; padding: 2px 0; border: 1px solid #e5e7eb;">E</th>
+                  </tr>
                 </thead>
                 <tbody>
                   <tr>

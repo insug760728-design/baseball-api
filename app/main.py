@@ -202,6 +202,7 @@ b2b_portal_path = os.path.join(current_dir, "templates", "b2b_api_portal.html")
 dashboard_path = os.path.join(current_dir, "templates", "index.html")
 live_center_path = os.path.join(current_dir, "templates", "live_center.html")
 mobile_path = os.path.join(current_dir, "templates", "mobile.html")
+mlb_dashboard_path = os.path.join(current_dir, "templates", "mlb_dashboard.html")
 
 static_dir = os.path.join(current_dir, "static")
 if os.path.exists(static_dir):
@@ -388,6 +389,16 @@ def live_center_portal(request: Request):
         return HTMLResponse(content=content, headers={"ETag": etag, "Cache-Control": "no-cache, no-store, must-revalidate"})
     except Exception as e:
         return HTMLResponse(content=f"<h1>라이브 센터 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
+
+@app.get("/mlb", response_class=HTMLResponse, summary="2026-09-17 공식 MLB 전경기 전광판 및 선발 방어율 조회 (가로 스크롤 0%)")
+@app.get("/mlb-dashboard", response_class=HTMLResponse)
+@app.get("/20260917", response_class=HTMLResponse)
+def mlb_official_dashboard(request: Request):
+    try:
+        content, etag = get_portal_html(mlb_dashboard_path)
+        return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
+    except Exception as e:
+        return HTMLResponse(content=f"<h1>MLB 대시보드 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
 
 def generate_timeline_widget_html(match_data: dict, events: list) -> str:
     ev_html = ""
