@@ -20,6 +20,7 @@ def get_status():
     return SchedulerService.get_status()
 
 @router.post("/run-now", summary="지금 즉시 전체 리그 자동 수집 1회 실행")
+@router.post("/trigger", summary="지금 즉시 전체 리그 자동 수집 1회 실행 (트리거 별칭)")
 async def run_now():
     """
     대기 시간 없이 지금 즉시 KBO, NPB, MLB의 어제/오늘 경기 결과 및 세이버메트릭스 폴더 갱신 실행
