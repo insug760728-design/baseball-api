@@ -122,12 +122,43 @@ class HistoricalAgentRouter:
                 '데포르티보 아코루냐': ['데포르티보', 'deportivo la coruna']
             }
 
+            EPL_TEAM_ALIASES = {
+                '맨체스터 시티': ['맨체스터 시티', '맨체스터시티', '맨시티', 'manchester city', 'man city'],
+                '맨체스터 유나이티드': ['맨체스터 유나이티드', '맨체스터유나이티드', '맨유', 'manchester united', 'man united'],
+                '토트넘 홋스퍼': ['토트넘 홋스퍼', '토트넘', 'tottenham', 'spurs'],
+                '토트넘': ['토트넘 홋스퍼', '토트넘', 'tottenham', 'spurs'],
+                '아스널': ['아스널', '아스날', 'arsenal'],
+                '리버풀': ['리버풀', 'liverpool'],
+                '첼시': ['첼시', 'chelsea'],
+                '뉴캐슬': ['뉴캐슬', '뉴캐슬 유나이티드', 'newcastle'],
+                '아스톤 빌라': ['아스톤 빌라', '아스톤빌라', '애스턴 빌라', '애스턴빌라', 'aston villa'],
+                '아스톤빌라': ['아스톤 빌라', '아스톤빌라', '애스턴 빌라', '애스턴빌라', 'aston villa'],
+                '브라이튼': ['브라이튼', 'brighton'],
+                '웨스트햄': ['웨스트햄', '웨스트 햄', 'west ham'],
+                '풀럼': ['풀럼', 'fulham'],
+                '브렌트포드': ['브렌트포드', 'brentford'],
+                '크리스탈 팰리스': ['크리스탈 팰리스', '크리스탈팰리스', 'C.팰리스', 'crystal palace'],
+                'C.팰리스': ['크리스탈 팰리스', '크리스탈팰리스', 'C.팰리스', 'crystal palace'],
+                '울버햄튼': ['울버햄튼', '울브스', 'wolverhampton', 'wolves'],
+                '에버턴': ['에버턴', '에버튼', 'everton'],
+                '노팅엄': ['노팅엄', '노팅엄 포레스트', 'nottingham'],
+                '레스터': ['레스터', '레스터 시티', 'leicester'],
+                '본머스': ['본머스', 'bournemouth'],
+                '사우샘프턴': ['사우샘프턴', 'southampton'],
+                '입스위치': ['입스위치', '입스위치 타운', 'ipswich'],
+                '리즈': ['리즈', '리즈 유나이티드', 'leeds'],
+                '선덜랜드': ['선덜랜드', 'sunderland']
+            }
+
             def extract_team_tokens(name: str) -> list:
                 if not name: return []
                 clean_name = str(name).strip()
                 for sp_key, aliases in SPAIN_TEAM_ALIASES.items():
                     if sp_key in clean_name or clean_name in sp_key:
                         return list(set([sp_key] + aliases))
+                for ep_key, aliases in EPL_TEAM_ALIASES.items():
+                    if ep_key in clean_name or clean_name in ep_key:
+                        return list(set([ep_key] + aliases))
 
                 tokens = set()
                 raw = clean_name
@@ -178,7 +209,7 @@ class HistoricalAgentRouter:
             elif league_code == 'NPB':
                 league_patterns.extend(['%NPB%', '%일본%'])
             elif league_code == 'EPL':
-                league_patterns.extend(['%EPL%', '%프리미어%'])
+                league_patterns.extend(['%EPL%', '%프리미어%', '%Premier%', '%잉글랜드%', '%England%'])
             elif league_code == 'LALIGA':
                 league_patterns.extend(['%라리가%', '%LALIGA%', '%스페인%', '%Spain%', '%La Liga%', '%Primera%'])
             elif league_code == 'SERIE_A':
