@@ -2956,14 +2956,10 @@
   <!-- 📊 ApexCharts Interactive Visualization Engine (Deferred for zero-latency initial paint) -->
   <script src="https://cdn.jsdelivr.net/npm/apexcharts" defer></script>
 
-  <!-- 🚀 5대 전담 독립 스포츠 에이전트 (Modular Domain Agents) -->
-  <script src="/static/js/agents/match_list_agent.js"></script>
-  <script src="/static/js/agents/filter_agent.js"></script>
-  <script src="/static/js/agents/detail_modal_agent.js"></script>
-  <script src="/static/js/agents/live_polling_agent.js"></script>
-  <script src="/static/js/agents/toto_odds_agent.js"></script>
-  <script src="/static/data/player_ko_map.js"></script>
-  <script src="/static/data/rosters_master.js"></script>
+  <!-- 🚀 5대 전담 독립 스포츠 에이전트 번들 (Single Bundle for Instant Zero-Latency Load) -->
+  <script src="/static/js/agents_bundle.js"></script>
+  <script src="/static/data/player_ko_map.js" defer></script>
+  <script src="/static/data/rosters_master.js" defer></script>
 
   <!-- Real News & Matches Script -->
   <script>
@@ -6504,13 +6500,14 @@ function getFullModalMatchList() {
 
     function getOfficialTeamRoster(teamName) {
       if (!teamName) return null;
+      const rosters = (typeof OFFICIAL_ROSTERS_MASTER !== 'undefined') ? OFFICIAL_ROSTERS_MASTER : (window.OFFICIAL_ROSTERS_MASTER || {});
       let clean = String(teamName).replace(/\s+/g, ' ').trim();
       const lower = clean.toLowerCase();
       const nospace = clean.replace(/[\s\-_/]+/g, '').toLowerCase();
 
       // 1. Direct exact match (with or without space)
-      if (OFFICIAL_ROSTERS_MASTER[clean]) return OFFICIAL_ROSTERS_MASTER[clean];
-      for (const [k, v] of Object.entries(OFFICIAL_ROSTERS_MASTER)) {
+      if (rosters[clean]) return rosters[clean];
+      for (const [k, v] of Object.entries(rosters)) {
         if (nospace === k.replace(/[\s\-_/]+/g, '').toLowerCase()) return v;
       }
 
@@ -6518,12 +6515,12 @@ function getFullModalMatchList() {
       for (const [kw, target] of DISTINCT_FRANCHISE_MAP) {
         const kwNorm = kw.replace(/[\s\-_/]+/g, '').toLowerCase();
         if (nospace.includes(kwNorm) || lower.includes(kw)) {
-          if (OFFICIAL_ROSTERS_MASTER[target]) return OFFICIAL_ROSTERS_MASTER[target];
+          if (rosters[target]) return rosters[target];
         }
       }
 
       // 3. Aliases in OFFICIAL_ROSTERS_MASTER
-      for (const [k, v] of Object.entries(OFFICIAL_ROSTERS_MASTER)) {
+      for (const [k, v] of Object.entries(rosters)) {
         if (v.aliases && Array.isArray(v.aliases)) {
           for (const a of v.aliases) {
             const aNorm = String(a).replace(/[\s\-_/]+/g, '').toLowerCase();
@@ -6539,14 +6536,16 @@ function getFullModalMatchList() {
       const banned = ["la", "ny", "cws", "chc", "lad", "laa", "뉴욕", "시카고", "로스앤젤레스"];
       const tokens = clean.split(/[\s\-_/]+/).filter(w => w.length >= 2 && !banned.includes(w.toLowerCase()));
       for (const t of tokens) {
-        for (const [k, v] of Object.entries(OFFICIAL_ROSTERS_MASTER)) {
+        for (const [k, v] of Object.entries(rosters)) {
           if (k.includes(t)) return v;
         }
       }
       return null;
     }
     window.getOfficialTeamRoster = getOfficialTeamRoster;
-    window.OFFICIAL_ROSTERS_MASTER = OFFICIAL_ROSTERS_MASTER;
+    if (typeof OFFICIAL_ROSTERS_MASTER !== 'undefined') {
+      window.OFFICIAL_ROSTERS_MASTER = OFFICIAL_ROSTERS_MASTER;
+    }
 
     function generateUniversalTeamRoster(teamName, isHome, m, teamStats) {
       const cleanT = String(teamName || (isHome ? '홈팀' : '원정팀')).trim();
