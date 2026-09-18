@@ -836,23 +836,18 @@ class MatchService:
         """KBO 및 NPB 공식 사이트에서 당일 공식 발표된 선발투수를 실시간 수집하여 DB에 확정 저장"""
         from app.scrapers.official_kbo_live_scraper import KboOfficialScraper
         from app.scrapers.official_npb_live_scraper import NpbOfficialScraper
-        from app.services.team_split_service import KBO_TEAMS_POOL, NPB_TEAMS_POOL, is_kbo_team_name, is_npb_team_name, is_valid_starter_name
+        from app.services.team_split_service import (
+            KBO_TEAMS_POOL, NPB_TEAMS_POOL, is_kbo_team_name, is_npb_team_name,
+            is_valid_starter_name, get_canonical_baseball_code, update_live_pitcher_stats
+        )
         
         d_ref = target_date or datetime.now().strftime("%Y-%m-%d")
         results = {"date": d_ref, "kbo_synced": 0, "npb_synced": 0, "mlb_synced": 0, "matches_updated": []}
 
-        # 1. KBO 공식 선발투수 동기화
+        # 1. KBO 공식 선발투수 동기화 (공식 기록실 실시간 연동)
         try:
             kbo_scraper = KboOfficialScraper()
             kbo_starters = kbo_scraper.scrape_probable_starters(d_ref)
-            kbo_team_starters = {}
-            for ks in kbo_starters:
-                ht = ks.get("home_team_name")
-                at = ks.get("away_team_name")
-                if ht and ks.get("home_starter"):
-                    kbo_team_starters[ht] = ks["home_starter"]
-                if at and ks.get("away_starter"):
-                    kbo_team_starters[at] = ks["away_starter"]
 
             all_kbo = db.query(Match).filter(Match.match_date.like(f"{d_ref}%"), Match.sport_code == "BASEBALL").all()
             for m in all_kbo:
@@ -860,15 +855,26 @@ class MatchService:
                 if not is_kbo or is_npb_team_name(m.home_team_name):
                     continue
 
-                st_h = None
-                st_a = None
-                for t_name, s_name in kbo_team_starters.items():
-                    if teams_match(t_name, m.home_team_name):
-                        st_h = s_name
-                    if teams_match(t_name, m.away_team_name):
-                        st_a = s_name
+                m_h_code = get_canonical_baseball_code(m.home_team_name)
+                m_a_code = get_canonical_baseball_code(m.away_team_name)
 
-                if st_h or st_a:
+                matched_item = None
+                for ks in kbo_starters:
+                    ks_h_code = get_canonical_baseball_code(ks.get("home_team_name"))
+                    ks_a_code = get_canonical_baseball_code(ks.get("away_team_name"))
+                    if m_h_code and ks_h_code and m_h_code == ks_h_code:
+                        matched_item = ks
+                        break
+                    if teams_match(ks.get("home_team_name"), m.home_team_name):
+                        matched_item = ks
+                        break
+
+                if matched_item:
+                    h_det = matched_item.get("home_starter_detail") or {}
+                    a_det = matched_item.get("away_starter_detail") or {}
+                    st_h = matched_item.get("home_starter")
+                    st_a = matched_item.get("away_starter")
+
                     # 기존 저장된 선발투수가 이미 있으면 보존하며 신규 발표분 병합
                     curr_dt = db.query(MatchDetail).filter(MatchDetail.match_id == m.id).first()
                     curr_ts = {}
@@ -878,15 +884,24 @@ class MatchService:
                         except Exception:
                             pass
                     exist_st = curr_ts.get("starters", {})
-                    exist_h = exist_st.get("home", {}).get("name")
-                    exist_a = exist_st.get("away", {}).get("name")
+                    exist_h = exist_st.get("home", {})
+                    exist_a = exist_st.get("away", {})
 
-                    final_h = st_h if is_valid_starter_name(st_h) else (exist_h if is_valid_starter_name(exist_h) else None)
-                    final_a = st_a if is_valid_starter_name(st_a) else (exist_a if is_valid_starter_name(exist_a) else None)
+                    final_h_name = st_h or exist_h.get("name")
+                    final_a_name = st_a or exist_a.get("name")
+
+                    home_dict = dict(h_det) if h_det else dict(exist_h)
+                    away_dict = dict(a_det) if a_det else dict(exist_a)
+                    if final_h_name and is_valid_starter_name(final_h_name):
+                        home_dict["name"] = final_h_name
+                        home_dict["confirmed"] = True
+                    if final_a_name and is_valid_starter_name(final_a_name):
+                        away_dict["name"] = final_a_name
+                        away_dict["confirmed"] = True
 
                     st_data = {
-                        "home": {"name": final_h or "선발 예고", "confirmed": bool(final_h), "throws": "우완"},
-                        "away": {"name": final_a or "선발 예고", "confirmed": bool(final_a), "throws": "우완"}
+                        "home": home_dict if home_dict else {"name": "선발 예고", "confirmed": False, "throws": "우완"},
+                        "away": away_dict if away_dict else {"name": "선발 예고", "confirmed": False, "throws": "우완"}
                     }
                     cls.update_starters(db, m.id, st_data)
                     results["kbo_synced"] += 1
@@ -894,18 +909,10 @@ class MatchService:
         except Exception as e:
             logger.error(f"[Sync Announced Starters] KBO error: {e}")
 
-        # 2. NPB 공식 선발투수 동기화
+        # 2. NPB 공식 선발투수 동기화 (Yahoo Japan 2026 프리뷰 실시간 연동)
         try:
             npb_scraper = NpbOfficialScraper()
             npb_starters = npb_scraper.scrape_probable_starters(d_ref)
-            npb_team_starters = {}
-            for ns in npb_starters:
-                ht = ns.get("home_team_name")
-                at = ns.get("away_team_name")
-                if ht and ns.get("home_starter"):
-                    npb_team_starters[ht] = ns["home_starter"]
-                if at and ns.get("away_starter"):
-                    npb_team_starters[at] = ns["away_starter"]
 
             all_npb = db.query(Match).filter(Match.match_date.like(f"{d_ref}%"), Match.sport_code == "BASEBALL").all()
             for m in all_npb:
@@ -913,15 +920,26 @@ class MatchService:
                 if not is_npb or is_kbo_team_name(m.home_team_name):
                     continue
 
-                st_h = None
-                st_a = None
-                for t_name, s_name in npb_team_starters.items():
-                    if teams_match(t_name, m.home_team_name):
-                        st_h = s_name
-                    if teams_match(t_name, m.away_team_name):
-                        st_a = s_name
+                m_h_code = get_canonical_baseball_code(m.home_team_name)
+                m_a_code = get_canonical_baseball_code(m.away_team_name)
 
-                if st_h or st_a:
+                matched_item = None
+                for ns in npb_starters:
+                    ns_h_code = get_canonical_baseball_code(ns.get("home_team_name"))
+                    ns_a_code = get_canonical_baseball_code(ns.get("away_team_name"))
+                    if m_h_code and ns_h_code and m_h_code == ns_h_code:
+                        matched_item = ns
+                        break
+                    if teams_match(ns.get("home_team_name"), m.home_team_name):
+                        matched_item = ns
+                        break
+
+                if matched_item:
+                    h_det = matched_item.get("home_starter_detail") or {}
+                    a_det = matched_item.get("away_starter_detail") or {}
+                    st_h = matched_item.get("home_starter")
+                    st_a = matched_item.get("away_starter")
+
                     curr_dt = db.query(MatchDetail).filter(MatchDetail.match_id == m.id).first()
                     curr_ts = {}
                     if curr_dt and curr_dt.team_stats:
@@ -930,15 +948,24 @@ class MatchService:
                         except Exception:
                             pass
                     exist_st = curr_ts.get("starters", {})
-                    exist_h = exist_st.get("home", {}).get("name")
-                    exist_a = exist_st.get("away", {}).get("name")
+                    exist_h = exist_st.get("home", {})
+                    exist_a = exist_st.get("away", {})
 
-                    final_h = st_h if is_valid_starter_name(st_h) else (exist_h if is_valid_starter_name(exist_h) else None)
-                    final_a = st_a if is_valid_starter_name(st_a) else (exist_a if is_valid_starter_name(exist_a) else None)
+                    final_h_name = st_h or exist_h.get("name")
+                    final_a_name = st_a or exist_a.get("name")
+
+                    home_dict = dict(h_det) if h_det else dict(exist_h)
+                    away_dict = dict(a_det) if a_det else dict(exist_a)
+                    if final_h_name and is_valid_starter_name(final_h_name):
+                        home_dict["name"] = final_h_name
+                        home_dict["confirmed"] = True
+                    if final_a_name and is_valid_starter_name(final_a_name):
+                        away_dict["name"] = final_a_name
+                        away_dict["confirmed"] = True
 
                     st_data = {
-                        "home": {"name": final_h or "선발 예고", "confirmed": bool(final_h), "throws": "우완"},
-                        "away": {"name": final_a or "선발 예고", "confirmed": bool(final_a), "throws": "우완"}
+                        "home": home_dict if home_dict else {"name": "선발 예고", "confirmed": False, "throws": "우완"},
+                        "away": away_dict if away_dict else {"name": "선발 예고", "confirmed": False, "throws": "우완"}
                     }
                     cls.update_starters(db, m.id, st_data)
                     results["npb_synced"] += 1

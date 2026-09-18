@@ -107,6 +107,66 @@ def is_mlb_team_name(name: str) -> bool:
         return True
     return False
 
+CANONICAL_BASEBALL_TEAMS = {
+    # NPB (12 teams)
+    "NPB_DENA": ["요코하마 dena 베이스타즈", "요코하마 dena", "요코하마dena", "요코하마", "dena 베이스타즈", "dena베이스타즈", "dena", "요코하마 dena베이스타스", "요코하마dena베이스타스", "yokohama", "baystars"],
+    "NPB_YAKULT": ["도쿄 야쿠르트 스왈로스", "도쿄야쿠르트스왈로스", "도쿄 야쿠르트", "야쿠르트 스왈로스", "야쿠르트 스왈로즈", "야쿠르트스왈로스", "야쿠르트스왈로즈", "야쿠르트", "yakult", "swallows"],
+    "NPB_YOMIURI": ["요미우리 자이언츠", "요미우리자이언츠", "요미우리", "yomiuri", "giants", "독수"],
+    "NPB_HANSHIN": ["한신 타이거스", "한신 타이거즈", "한신타이거스", "한신타이거즈", "한신", "hanshin", "tigers"],
+    "NPB_CHUNICHI": ["주니치 드래곤즈", "주니치 드래건스", "주니치드래곤즈", "주니치드래건스", "주니치", "chunichi", "dragons"],
+    "NPB_HIROSHIMA": ["히로시마 도요 카프", "히로시마 도요카프", "히로시마 카프", "히로시마", "도요 카프", "도요카프", "hiroshima", "carp"],
+    "NPB_SOFTBANK": ["후쿠오카 소프트뱅크 호크스", "후쿠오카소프트뱅크호크스", "소프트뱅크 호크스", "소프트뱅크", "소뱅", "softbank", "hawks"],
+    "NPB_ORIX": ["오릭스 버펄로스", "오릭스 버팔로스", "오릭스 버팔로즈", "오릭스버펄로스", "오릭스버팔로스", "오릭스버팔로즈", "오릭스", "orix", "buffaloes"],
+    "NPB_CHIBALOTTE": ["지바 롯데 마린스", "지바롯데 마린스", "지바롯데마린스", "지바 롯데", "지바롯데", "치바 롯데", "치바롯데", "chiba lotte", "chiba", "marines"],
+    "NPB_SEIBU": ["사이타마 세이부 라이온즈", "사이타마세이부라이온즈", "세이부 라이온즈", "세이부라이온즈", "세이부", "seibu", "lions"],
+    "NPB_RAKUTEN": ["도호쿠 라쿠텐 골든이글스", "도호쿠 라쿠텐", "라쿠텐 골든이글스", "라쿠텐 골든이글즈", "라쿠텐", "rakuten", "eagles"],
+    "NPB_NIPPONHAM": ["홋카이도 닛폰햄 파이터즈", "홋카이도 닛폰햄 파이터스", "닛폰햄 파이터즈", "닛폰햄 파이터스", "니혼햄 파이터스", "닛폰햄", "니혼햄", "nipponham", "fighters"],
+
+    # KBO (10 teams)
+    "KBO_KIA": ["kia 타이거즈", "kia타이거즈", "기아 타이거즈", "기아타이거즈", "kia", "기아"],
+    "KBO_LG": ["lg 트윈스", "lg트윈스", "엘지 트윈스", "엘지트윈스", "lg", "엘지"],
+    "KBO_DOOSAN": ["두산 베어스", "두산베어스", "두산", "doosan", "bears"],
+    "KBO_SAMSUNG": ["삼성 라이온즈", "삼성라이온즈", "삼성", "samsung", "lions"],
+    "KBO_SSG": ["ssg 랜더스", "ssg랜더스", "ssg", "sk 와이번스", "sk와이번스", "landers"],
+    "KBO_KT": ["kt 위즈", "kt위즈", "kt wiz", "kt", "케이티"],
+    "KBO_HANWHA": ["한화 이글스", "한화이글스", "한화", "hanwha", "eagles"],
+    "KBO_LOTTE": ["롯데 자이언츠", "롯데자이언츠", "롯데", "lotte giants"],
+    "KBO_NC": ["nc 다이노스", "nc다이노스", "nc", "dinos"],
+    "KBO_KIWOOM": ["키움 히어로즈", "키움히어로즈", "키움", "넥센 히어로즈", "kiwoom", "heroes"]
+}
+
+def get_canonical_baseball_code(team_name: str) -> Optional[str]:
+    if not team_name:
+        return None
+    tn_clean = team_name.lower().replace(" ", "").replace("_", "").replace("-", "")
+    for code, syns in CANONICAL_BASEBALL_TEAMS.items():
+        for syn in syns:
+            s_clean = syn.lower().replace(" ", "").replace("_", "").replace("-", "")
+            if tn_clean == s_clean:
+                return code
+            if len(s_clean) >= 2 and (s_clean in tn_clean or tn_clean in s_clean):
+                # Decoupling protections
+                if "지바" in tn_clean or "치바" in tn_clean or "marines" in tn_clean:
+                    if code == "KBO_LOTTE": continue
+                if ("자이언츠" in tn_clean or "giants" in tn_clean) and "롯데" in tn_clean:
+                    if code == "NPB_CHIBALOTTE": continue
+                if "세이부" in tn_clean:
+                    if code == "KBO_SAMSUNG": continue
+                if "삼성" in tn_clean:
+                    if code == "NPB_SEIBU": continue
+                if "한신" in tn_clean:
+                    if code == "KBO_KIA": continue
+                if "kia" in tn_clean or "기아" in tn_clean:
+                    if code == "NPB_HANSHIN": continue
+                if "한화" in tn_clean:
+                    if code == "NPB_RAKUTEN": continue
+                if "라쿠텐" in tn_clean:
+                    if code == "KBO_HANWHA": continue
+                if "요미우리" in tn_clean:
+                    if code == "KBO_LOTTE": continue
+                return code
+    return None
+
 def get_all_team_aliases(team_name: str) -> list:
     if not team_name:
         return []
@@ -116,6 +176,12 @@ def get_all_team_aliases(team_name: str) -> list:
         aliases.add(norm)
     t_lower = team_name.lower().strip()
     t_clean = t_lower.replace(" ", "")
+
+    # 1. Canonical Baseball Team Aliases
+    code = get_canonical_baseball_code(team_name)
+    if code and code in CANONICAL_BASEBALL_TEAMS:
+        for syn in CANONICAL_BASEBALL_TEAMS[code]:
+            aliases.add(syn)
 
     for k, syn_list in TEAM_SYNONYMS.items():
         k_clean = k.lower().replace(" ", "")
@@ -7163,27 +7229,62 @@ def _get_official_pitchers_dataset() -> dict:
         logger.warning(f"Failed to load official_pitchers_dataset.json: {e}")
     return {}
 
+_LIVE_PITCHER_STATS_CACHE = {}
+
+def update_live_pitcher_stats(name: str, stats: dict) -> None:
+    """실시간 스크래퍼에서 수집된 100% 공식 선발투수 2026 라이브 지표 캐시 등록"""
+    if not name or not isinstance(stats, dict):
+        return
+    clean = str(name).replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
+    _LIVE_PITCHER_STATS_CACHE[clean] = stats
+    _LIVE_PITCHER_STATS_CACHE[str(name).strip()] = stats
+
 def _lookup_official_pitcher(name: str) -> dict:
     if not name:
         return {}
     clean = str(name).replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
     
-    # 1. 348명 메이저리그/KBO/NPB 공식 실데이터셋 우선 조회
+    # 1. 2026 실시간 스크래퍼 연동 최신 공식 성적 우선 조회
+    if clean in _LIVE_PITCHER_STATS_CACHE:
+        return _LIVE_PITCHER_STATS_CACHE[clean]
+    if name in _LIVE_PITCHER_STATS_CACHE:
+        return _LIVE_PITCHER_STATS_CACHE[name]
+
+    # 2. 348명 메이저리그/KBO/NPB 공식 실데이터셋 정확한 일치 조회 (Exact Match Only)
     dataset = _get_official_pitchers_dataset()
     if clean in dataset:
         return dataset[clean]
-    for k, v in dataset.items():
-        if k == clean or k in clean or clean in k:
-            return v
+    if name in dataset:
+        return dataset[name]
 
-    # 2. 로컬 하드코딩 사전 폴백
+    # 3. 로컬 프로필 사전 정확한 일치 (Exact Match Only - 잘못된 타 선수 복사 차단)
     if clean in OFFICIAL_PITCHER_SEASON_PROFILES:
         return OFFICIAL_PITCHER_SEASON_PROFILES[clean]
-    for k, v in OFFICIAL_PITCHER_SEASON_PROFILES.items():
-        if k in clean or clean in k:
-            return v
+    if name in OFFICIAL_PITCHER_SEASON_PROFILES:
+        return OFFICIAL_PITCHER_SEASON_PROFILES[name]
+
     return {}
 
+
+def parse_ip_float(val: Any) -> float:
+    if not val or val == "-":
+        return 0.0
+    s = str(val).strip()
+    try:
+        if " " in s:
+            parts = s.split()
+            whole = float(parts[0])
+            if len(parts) > 1:
+                frac_parts = parts[1].split("/")
+                if len(frac_parts) == 2:
+                    return whole + float(frac_parts[0]) / float(frac_parts[1])
+            return whole
+        elif "/" in s:
+            frac_parts = s.split("/")
+            return float(frac_parts[0]) / float(frac_parts[1])
+        return float(s)
+    except Exception:
+        return 0.0
 
 def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], home_team: str, away_team: str, sport_code: str, team_stats: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     if sport_code != "BASEBALL":
@@ -7309,21 +7410,23 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
     if is_valid_starter_name(home_name):
         home_name_clean = home_name.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
         h_prof = _lookup_official_pitcher(home_name_clean) or _lookup_official_pitcher(home_name)
-        home_name_ko = h_prof.get("name") or translate_player_name(home_name_clean)
-        h_throws = h_prof.get("style") or h_prof.get("throws") or h_st_dict.get("throws") or home_throws or ("좌완" if "(좌)" in home_name or h_prof.get("hand") == "L" else "우완")
+        home_name_ko = translate_player_name(home_name_clean) or h_prof.get("name") or home_name_clean
+        h_throws = h_st_dict.get("throws") or h_prof.get("style") or h_prof.get("throws") or home_throws or ("좌완" if "(좌)" in home_name or h_prof.get("hand") == "L" else "우완")
         h_hand = h_prof.get("hand") or ("L" if h_throws == "좌완" else "R")
-        h_era = str(h_prof.get("season_era") or h_prof.get("era") or h_st_dict.get("season_era") or h_st_dict.get("era") or "-")
-        h_wins = h_prof.get("wins") if h_prof.get("wins") is not None else h_st_dict.get("wins")
-        h_losses = h_prof.get("losses") if h_prof.get("losses") is not None else h_st_dict.get("losses")
-        h_games = h_prof.get("games") if h_prof.get("games") is not None else h_st_dict.get("games")
-        h_jersey = h_prof.get("jersey") or h_st_dict.get("jersey")
-        h_recent_starts = h_prof.get("recent_starts") or h_st_dict.get("recent_starts") or []
-        h_ip = str(h_prof.get("season_ip") or h_st_dict.get("season_ip") or h_st_dict.get("ip") or "-")
-        h_so = h_prof.get("season_so") if h_prof.get("season_so") is not None else h_st_dict.get("season_so")
-        h_bb = h_prof.get("season_bb") if h_prof.get("season_bb") is not None else h_st_dict.get("season_bb")
+        
+        # 실시간 스크래퍼(Yahoo/KBO/MLB) 수집 데이터 최우선 반영
+        h_era = str(h_st_dict.get("season_era") or h_st_dict.get("era") or h_prof.get("season_era") or h_prof.get("era") or "-")
+        h_wins = h_st_dict.get("wins") if h_st_dict.get("wins") is not None else h_prof.get("wins")
+        h_losses = h_st_dict.get("losses") if h_st_dict.get("losses") is not None else h_prof.get("losses")
+        h_games = h_st_dict.get("games") if h_st_dict.get("games") is not None else h_prof.get("games")
+        h_jersey = h_st_dict.get("jersey") or h_prof.get("jersey")
+        h_recent_starts = h_st_dict.get("recent_starts") or h_prof.get("recent_starts") or []
+        h_ip = str(h_st_dict.get("season_ip") or h_st_dict.get("ip") or h_prof.get("season_ip") or "-")
+        h_so = h_st_dict.get("season_so") if h_st_dict.get("season_so") is not None else h_prof.get("season_so")
+        h_bb = h_st_dict.get("season_bb") if h_st_dict.get("season_bb") is not None else h_prof.get("season_bb")
 
         if h_era == "-" and h_wins is None and not h_recent_starts:
-            h_record_str = "시즌 첫 등판"
+            h_record_str = "시즌 첫 등판 (공식 집계 중)"
         elif h_wins is not None and h_losses is not None:
             h_record_str = f"{h_wins}승 {h_losses}패"
         elif h_prof.get("record"):
@@ -7365,7 +7468,7 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
             "summary_detail": {
                 "season_era": h_era,
                 "era_3g": h_era,
-                "avg_ip": f"{round(float(h_ip)/max(1, h_games), 1)}이닝" if (h_ip != '-' and h_games) else "-",
+                "avg_ip": f"{round(parse_ip_float(h_ip)/max(1, h_games), 1)}이닝" if (h_ip != '-' and h_games) else "-",
                 "record": h_record_str,
                 "total_so": h_so or "-",
                 "total_bb": h_bb or "-",
@@ -7413,21 +7516,23 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
     if is_valid_starter_name(away_name):
         away_name_clean = away_name.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
         a_prof = _lookup_official_pitcher(away_name_clean) or _lookup_official_pitcher(away_name)
-        away_name_ko = a_prof.get("name") or translate_player_name(away_name_clean)
-        a_throws = a_prof.get("style") or a_prof.get("throws") or a_st_dict.get("throws") or away_throws or ("좌완" if "(좌)" in away_name or a_prof.get("hand") == "L" else "우완")
+        away_name_ko = translate_player_name(away_name_clean) or a_prof.get("name") or away_name_clean
+        a_throws = a_st_dict.get("throws") or a_prof.get("style") or a_prof.get("throws") or away_throws or ("좌완" if "(좌)" in away_name or a_prof.get("hand") == "L" else "우완")
         a_hand = a_prof.get("hand") or ("L" if a_throws == "좌완" else "R")
-        a_era = str(a_prof.get("season_era") or a_prof.get("era") or a_st_dict.get("season_era") or a_st_dict.get("era") or "-")
-        a_wins = a_prof.get("wins") if a_prof.get("wins") is not None else a_st_dict.get("wins")
-        a_losses = a_prof.get("losses") if a_prof.get("losses") is not None else a_st_dict.get("losses")
-        a_games = a_prof.get("games") if a_prof.get("games") is not None else a_st_dict.get("games")
-        a_jersey = a_prof.get("jersey") or a_st_dict.get("jersey")
-        a_recent_starts = a_prof.get("recent_starts") or a_st_dict.get("recent_starts") or []
-        a_ip = str(a_prof.get("season_ip") or a_st_dict.get("season_ip") or a_st_dict.get("ip") or "-")
-        a_so = a_prof.get("season_so") if a_prof.get("season_so") is not None else a_st_dict.get("season_so")
-        a_bb = a_prof.get("season_bb") if a_prof.get("season_bb") is not None else a_st_dict.get("season_bb")
+
+        # 실시간 스크래퍼(Yahoo/KBO/MLB) 수집 데이터 최우선 반영
+        a_era = str(a_st_dict.get("season_era") or a_st_dict.get("era") or a_prof.get("season_era") or a_prof.get("era") or "-")
+        a_wins = a_st_dict.get("wins") if a_st_dict.get("wins") is not None else a_prof.get("wins")
+        a_losses = a_st_dict.get("losses") if a_st_dict.get("losses") is not None else a_prof.get("losses")
+        a_games = a_st_dict.get("games") if a_st_dict.get("games") is not None else a_prof.get("games")
+        a_jersey = a_st_dict.get("jersey") or a_prof.get("jersey")
+        a_recent_starts = a_st_dict.get("recent_starts") or a_prof.get("recent_starts") or []
+        a_ip = str(a_st_dict.get("season_ip") or a_st_dict.get("ip") or a_prof.get("season_ip") or "-")
+        a_so = a_st_dict.get("season_so") if a_st_dict.get("season_so") is not None else a_prof.get("season_so")
+        a_bb = a_st_dict.get("season_bb") if a_st_dict.get("season_bb") is not None else a_prof.get("season_bb")
 
         if a_era == "-" and a_wins is None and not a_recent_starts:
-            a_record_str = "시즌 첫 등판"
+            a_record_str = "시즌 첫 등판 (공식 집계 중)"
         elif a_wins is not None and a_losses is not None:
             a_record_str = f"{a_wins}승 {a_losses}패"
         elif a_prof.get("record"):
@@ -7469,7 +7574,7 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
             "summary_detail": {
                 "season_era": a_era,
                 "era_3g": a_era,
-                "avg_ip": f"{round(float(a_ip)/max(1, a_games), 1)}이닝" if (a_ip != '-' and a_games) else "-",
+                "avg_ip": f"{round(parse_ip_float(a_ip)/max(1, a_games), 1)}이닝" if (a_ip != '-' and a_games) else "-",
                 "record": a_record_str,
                 "total_so": a_so or "-",
                 "total_bb": a_bb or "-",
@@ -8419,15 +8524,25 @@ class TeamSplitService:
                 team_splits[away_name]["recent_5"].append('D')
                 team_splits[away_name]["recent_10"].append('D')
 
-            # H2H tracking with alias awareness
-            is_h2h_match = (
-                (any(home_name.lower() == x.lower() for x in h_aliases) and any(away_name.lower() == x.lower() for x in a_aliases)) or
-                (any(home_name.lower() == x.lower() for x in a_aliases) and any(away_name.lower() == x.lower() for x in h_aliases))
-            )
+            # H2H tracking with alias & canonical baseball code awareness
+            h_code = get_canonical_baseball_code(home_name)
+            a_code = get_canonical_baseball_code(away_name)
+            h_tgt_code = get_canonical_baseball_code(home_team)
+            a_tgt_code = get_canonical_baseball_code(away_team)
+
+            if h_tgt_code and a_tgt_code and h_code and a_code:
+                is_h2h_match = (h_code == h_tgt_code and a_code == a_tgt_code) or (h_code == a_tgt_code and a_code == h_tgt_code)
+                cur_h_is_home = (h_code == h_tgt_code)
+            else:
+                is_h2h_match = (
+                    (any(home_name.lower() == x.lower() for x in h_aliases) and any(away_name.lower() == x.lower() for x in a_aliases)) or
+                    (any(home_name.lower() == x.lower() for x in a_aliases) and any(away_name.lower() == x.lower() for x in h_aliases))
+                )
+                cur_h_is_home = any(home_name.lower() == x.lower() for x in h_aliases)
+
             if is_h2h_match:
                 sorted_pair = f"{min(home_team, away_team)} vs {max(home_team, away_team)}"
                 h2h[sorted_pair]["total"] += 1
-                cur_h_is_home = any(home_name.lower() == x.lower() for x in h_aliases)
                 h_wins_this = (h_score > a_score and cur_h_is_home) or (a_score > h_score and not cur_h_is_home)
                 a_wins_this = (a_score > h_score and cur_h_is_home) or (h_score > a_score and not cur_h_is_home)
                 if home_team < away_team:

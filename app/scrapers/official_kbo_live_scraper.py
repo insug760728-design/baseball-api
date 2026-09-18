@@ -182,6 +182,126 @@ class KboOfficialScraper:
 
         return games
 
+    def fetch_kbo_pitcher_profile(self, player_name: str, team_hint: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """KBO 공식 사이트에서 선발투수의 공식 최신 성적(ERA, W-L, IP, SO, BB 등) 실시간 크롤링"""
+        if not player_name or not isinstance(player_name, str):
+            return None
+        clean_name = player_name.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
+        if not clean_name:
+            return None
+            
+        global _KBO_PITCHER_PROFILE_CACHE
+        if '_KBO_PITCHER_PROFILE_CACHE' not in globals():
+            _KBO_PITCHER_PROFILE_CACHE = {}
+
+        cache_key = f"{clean_name}:{team_hint or ''}"
+        if cache_key in _KBO_PITCHER_PROFILE_CACHE:
+            return _KBO_PITCHER_PROFILE_CACHE[cache_key]
+        if clean_name in _KBO_PITCHER_PROFILE_CACHE:
+            return _KBO_PITCHER_PROFILE_CACHE[clean_name]
+
+        try:
+            from bs4 import BeautifulSoup
+            from app.services.team_split_service import update_live_pitcher_stats
+
+            q = urllib.parse.quote(clean_name)
+            url = f'https://www.koreabaseball.com/Player/Search.aspx?searchWord={q}'
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+            with urllib.request.urlopen(req, context=self.ctx, timeout=10) as resp:
+                html = resp.read().decode('utf-8', errors='ignore')
+            soup = BeautifulSoup(html, 'html.parser')
+            tbl = soup.find('table', class_='tData') or soup.find('table')
+            if not tbl:
+                return None
+
+            candidates = []
+            for tr in tbl.find_all('tr')[1:]:
+                tds = [td.get_text(strip=True) for td in tr.find_all(['th', 'td'])]
+                a = tr.find('a', href=True)
+                if len(tds) >= 4 and a and 'playerId=' in a['href']:
+                    m = re.search(r'playerId=(\d+)', a['href'])
+                    if m:
+                        jersey, p_name, t_name, pos = tds[0], tds[1], tds[2], tds[3]
+                        if '투수' in pos or 'P' in pos:
+                            candidates.append((m.group(1), p_name, t_name, jersey))
+            if not candidates:
+                return None
+
+            best = candidates[0]
+            if team_hint:
+                for c in candidates:
+                    if team_hint in c[2] or c[2] in team_hint:
+                        best = c
+                        break
+            pid, p_name, t_name, jersey = best
+
+            det_url = f'https://www.koreabaseball.com/Record/Player/PitcherDetail/Basic.aspx?playerId={pid}'
+            req2 = urllib.request.Request(det_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+            with urllib.request.urlopen(req2, context=self.ctx, timeout=10) as resp2:
+                html2 = resp2.read().decode('utf-8', errors='ignore')
+            soup2 = BeautifulSoup(html2, 'html.parser')
+
+            info_div = soup2.find('div', class_='player_basic') or soup2.find('div', class_='player_info')
+            info_text = info_div.get_text() if info_div else ''
+            throws = '좌완' if '좌투' in info_text else ('언더' if '언더' in info_text or '우언' in info_text else '우완')
+
+            tables = soup2.find_all('table')
+            if not tables:
+                return None
+
+            # Table 0: 기본 기록 (ERA, G, W, L, IP, etc.)
+            rows0 = tables[0].find_all('tr')
+            if len(rows0) < 2:
+                return None
+            h0 = [th.get_text(strip=True) for th in rows0[0].find_all(['th', 'td'])]
+            r0 = [td.get_text(strip=True) for td in rows0[-1].find_all(['th', 'td'])]
+            rec0 = dict(zip(h0, r0))
+
+            # Table 1: 세부 기록 (BB, SO, WHIP, etc.)
+            rec1 = {}
+            if len(tables) > 1:
+                rows1 = tables[1].find_all('tr')
+                if len(rows1) >= 2:
+                    h1 = [th.get_text(strip=True) for th in rows1[0].find_all(['th', 'td'])]
+                    r1 = [td.get_text(strip=True) for td in rows1[-1].find_all(['th', 'td'])]
+                    rec1 = dict(zip(h1, r1))
+
+            era = rec0.get('ERA', '-')
+            games = int(rec0['G']) if rec0.get('G', '').isdigit() else None
+            wins = int(rec0['W']) if rec0.get('W', '').isdigit() else None
+            losses = int(rec0['L']) if rec0.get('L', '').isdigit() else None
+            ip = rec0.get('IP', '-')
+            so = int(rec1['SO']) if rec1.get('SO', '').isdigit() else None
+            bb = int(rec1['BB']) if rec1.get('BB', '').isdigit() else None
+
+            res_obj = {
+                'name': clean_name,
+                'name_raw': p_name,
+                'name_en': clean_name,
+                'player_id': pid,
+                'team': t_name,
+                'jersey': jersey if jersey != '#' else None,
+                'throws': throws,
+                'era': era,
+                'season_era': era,
+                'games': games,
+                'wins': wins,
+                'losses': losses,
+                'record': f"{wins}승 {losses}패" if wins is not None and losses is not None else "공식 집계 중",
+                'season_record': f"{wins}승 {losses}패" if wins is not None and losses is not None else "공식 집계 중",
+                'season_ip': ip,
+                'season_so': so,
+                'season_bb': bb,
+                'confirmed': True
+            }
+            _KBO_PITCHER_PROFILE_CACHE[cache_key] = res_obj
+            _KBO_PITCHER_PROFILE_CACHE[clean_name] = res_obj
+            update_live_pitcher_stats(clean_name, res_obj)
+            return res_obj
+        except Exception as e:
+            print(f"[KBO Scraper] Error fetching pitcher profile for {player_name}: {e}")
+            return None
+
     def scrape_probable_starters(self, target_date: Optional[str] = None) -> List[Dict[str, Any]]:
         """KBO 공식 실시간 메인 API(GetKboGameList)에서 당일 공식 발표된 선발투수 목록 수집"""
         d_ref = (target_date or datetime.now().strftime("%Y-%m-%d")).replace("-", "")
@@ -203,6 +323,8 @@ class KboOfficialScraper:
             g_id = g.get('G_ID') or ''
             
             if home_starter or away_starter:
+                h_det = self.fetch_kbo_pitcher_profile(home_starter, home_team) if home_starter else {}
+                a_det = self.fetch_kbo_pitcher_profile(away_starter, away_team) if away_starter else {}
                 starters_list.append({
                     'official_id': f"KBO_{g_id}",
                     'game_id': g_id,
@@ -212,6 +334,8 @@ class KboOfficialScraper:
                     'away_starter': away_starter,
                     'home_starter_confirmed': bool(home_starter),
                     'away_starter_confirmed': bool(away_starter),
+                    'home_starter_detail': h_det or {},
+                    'away_starter_detail': a_det or {},
                     'stadium': g.get('S_NM') or '',
                     'match_date': f"{d_ref[:4]}-{d_ref[4:6]}-{d_ref[6:8]} {g.get('G_TM', '18:30')}"
                 })

@@ -145,8 +145,9 @@ class NpbOfficialScraper:
         """
         starters_dict = {}
 
-        # 1. 야후 재팬 (가장 빠른 예고선발 수집)
+        # 1. 야후 재팬 (가장 빠른 예고선발 및 공식 2026 시즌/상대 성적 상세 수집)
         try:
+            from app.services.team_split_service import update_live_pitcher_stats
             yahoo_url = "https://baseball.yahoo.co.jp/npb/schedule/"
             if target_date:
                 yahoo_url = f"https://baseball.yahoo.co.jp/npb/schedule/?date={target_date}"
@@ -178,6 +179,64 @@ class NpbOfficialScraper:
                 p_h = translate_npb_player_name(clean_p_h)
                 p_a = translate_npb_player_name(clean_p_a)
 
+                # 경기 프리뷰 상세 페이지에서 2026 실시간 공식 선발 방어율 및 성적 크롤링
+                p_h_detail = {}
+                p_a_detail = {}
+                a_link = it.find('a', href=re.compile(r'/npb/game/\d+/index'))
+                if a_link and a_link.get('href'):
+                    try:
+                        game_preview_url = "https://baseball.yahoo.co.jp" + a_link['href']
+                        prev_html = self._fetch_html(game_preview_url)
+                        prev_soup = BeautifulSoup(prev_html, 'html.parser')
+                        splits = prev_soup.find_all('div', class_='bb-splitsPitcher')
+                        parsed_splits = []
+                        for sp in splits:
+                            rows = [[td.get_text(strip=True) for td in tr.find_all(['th', 'td'])] for tr in sp.find_all('tr')]
+                            if len(rows) >= 4:
+                                s_name_raw = rows[1][2] if len(rows[1]) > 2 else ''
+                                s_name_ko = translate_npb_player_name(s_name_raw)
+                                s_jersey = clean_int(rows[1][0]) if len(rows[1]) > 0 else None
+                                s_throws_raw = rows[1][1] if len(rows[1]) > 1 else ''
+                                s_throws = '좌완' if '左' in s_throws_raw else '우완'
+                                s_era = rows[3][1] if len(rows[3]) > 1 else '-'
+                                s_games = clean_int(rows[3][2]) if len(rows[3]) > 2 else None
+                                s_wins = clean_int(rows[3][3]) if len(rows[3]) > 3 else None
+                                s_losses = clean_int(rows[3][4]) if len(rows[3]) > 4 else None
+                                s_opp_era = rows[4][1] if len(rows) > 4 and len(rows[4]) > 1 else None
+                                s_opp_g = clean_int(rows[4][2]) if len(rows) > 4 and len(rows[4]) > 2 else None
+                                s_opp_w = clean_int(rows[4][3]) if len(rows) > 4 and len(rows[4]) > 3 else None
+                                s_opp_l = clean_int(rows[4][4]) if len(rows) > 4 and len(rows[4]) > 4 else None
+                                parsed_splits.append({
+                                    "name": s_name_ko,
+                                    "name_raw": s_name_raw,
+                                    "jersey": s_jersey,
+                                    "throws": s_throws,
+                                    "season_era": s_era,
+                                    "era": s_era,
+                                    "wins": s_wins,
+                                    "losses": s_losses,
+                                    "games": s_games,
+                                    "record": f"{s_wins}승 {s_losses}패" if s_wins is not None and s_losses is not None else "공식 집계 중",
+                                    "vs_opponent": {
+                                        "era": s_opp_era,
+                                        "games": s_opp_g,
+                                        "wins": s_opp_w,
+                                        "losses": s_opp_l
+                                    } if s_opp_era else {},
+                                    "confirmed": True
+                                })
+                        if len(parsed_splits) >= 2:
+                            p_h_detail = parsed_splits[0]
+                            p_a_detail = parsed_splits[1]
+                            p_h = p_h_detail["name"] or p_h
+                            p_a = p_a_detail["name"] or p_a
+                            update_live_pitcher_stats(p_h, p_h_detail)
+                            update_live_pitcher_stats(p_h_detail.get("name_raw"), p_h_detail)
+                            update_live_pitcher_stats(p_a, p_a_detail)
+                            update_live_pitcher_stats(p_a_detail.get("name_raw"), p_a_detail)
+                    except Exception as ex:
+                        print(f"[NPB Scraper] Preview splits fetch error: {ex}")
+
                 if t_home and (p_h or p_a):
                     starters_dict[t_home] = {
                         "league_id": "NPB",
@@ -187,6 +246,8 @@ class NpbOfficialScraper:
                         "away_starter": p_a,
                         "home_starter_confirmed": bool(p_h),
                         "away_starter_confirmed": bool(p_a),
+                        "home_starter_detail": p_h_detail,
+                        "away_starter_detail": p_a_detail,
                         "raw_home_starter": clean_p_h,
                         "raw_away_starter": clean_p_a,
                         "source": "yahoo_japan"
@@ -231,6 +292,8 @@ class NpbOfficialScraper:
                         "away_starter": p_right or existing.get("away_starter", ""),
                         "home_starter_confirmed": bool(p_left) or existing.get("home_starter_confirmed", False),
                         "away_starter_confirmed": bool(p_right) or existing.get("away_starter_confirmed", False),
+                        "home_starter_detail": existing.get("home_starter_detail", {}),
+                        "away_starter_detail": existing.get("away_starter_detail", {}),
                         "stadium_info": stadium_info,
                         "raw_home_starter": p_left_raw or existing.get("raw_home_starter", ""),
                         "raw_away_starter": p_right_raw or existing.get("raw_away_starter", ""),
