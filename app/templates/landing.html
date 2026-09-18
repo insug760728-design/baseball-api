@@ -3695,8 +3695,21 @@
     }
 
     async function loadLiveMatches() {
-      const container = document.getElementById('stripContainer');
-      try {
+        // ⚡ 0순위: 서버에서 직접 주입한 초기 경기 데이터가 있으면 0초 즉시 렌더링!
+        if (window.SERVER_INITIAL_MATCHES && Array.isArray(window.SERVER_INITIAL_MATCHES) && window.SERVER_INITIAL_MATCHES.length > 0) {
+          const cleanMatches = window.SERVER_INITIAL_MATCHES.filter(m => m && !(m.official_id && m.official_id.startsWith('SCHED_')));
+          allMatches = cleanMatches;
+          if (window.matchListAgent) {
+            try { window.matchListAgent.setMatches(cleanMatches); } catch(e) {}
+          }
+          window.matchesLoadedInitial = true;
+          try { updateScheduleTabCounts(); } catch(e) {}
+          try { renderMatchStrip('ALL'); } catch(e) {}
+          try { renderPredMatches(); } catch(e) {}
+          try { renderRightColLiveRelay(); } catch(e) {}
+          try { initRealTimeSportsTicker(); } catch(e) {}
+        }
+
         // ⚡ Phase 1 (초고속 0.05초): 오늘 및 실시간 공식 경기 우선 고속 로드 -> UI 즉시 표출
         try {
           const fastResp = await fetch(`/api/v1/matches?limit=300&order=asc`, { cache: 'no-store' });

@@ -65,11 +65,20 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[WARN] 스케줄러 시작 중 오류: {e}")
 
-    # 서버 시작 즉시 전종목(UCL/UEL 포함) 동기화 — Render 슬립 재시작 후에도 최신 데이터 보장
+    # 🚀 부팅 즉시 초기 경기 캐시 프리로드 (첫 페이지 접속 시 지연 0초)
+    try:
+        refresh_server_matches_cache()
+    except Exception as e:
+        print(f"[WARN] 초기 경기 캐시 프리로드 오류: {e}")
+
+    # 🔄 서버 시작 30초 후 전종목 신속 동기화 (부팅 직후 DB 락 및 512MB RAM 스파이크 완벽 방지)
     try:
         import asyncio
-        asyncio.create_task(SchedulerService.execute_startup_sync())
-        print("[INFO] 서버 시작 즉시 전종목 동기화 태스크 시작 (UCL/UEL 포함).")
+        async def _delayed_startup_sync():
+            await asyncio.sleep(30)
+            await SchedulerService.execute_startup_sync()
+        asyncio.create_task(_delayed_startup_sync())
+        print("[INFO] 30초 지연 백그라운드 동기화 태스크 등록 완료.")
     except Exception as e:
         print(f"[WARN] 시작 동기화 태스크 오류: {e}")
 
@@ -85,16 +94,6 @@ async def lifespan(app: FastAPI):
     try:
         import gc
         gc.collect()
-    except Exception:
-        pass
-
-    # 🚀 부팅 2초 후 초기 경기 캐시 백그라운드 프리로드 (첫 페이지 접속 시 지연 0초)
-    try:
-        import asyncio
-        async def _warmup_cache():
-            await asyncio.sleep(2)
-            await asyncio.to_thread(refresh_server_matches_cache)
-        asyncio.create_task(_warmup_cache())
     except Exception:
         pass
 
