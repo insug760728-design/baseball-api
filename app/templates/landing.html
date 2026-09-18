@@ -3559,17 +3559,13 @@
     let liveSocket = null;
     let pollVotes = { H: 45, D: 20, A: 35 };
 
-    // ⚡ [TOKEON APP CACHE GUARD V104] - NPB 공식 데이터 엄격 검증 및 캐시 최신화
+    // ⚡ [TOKEON APP CACHE GUARD V105] - NPB/KBO 공식 데이터 엄격 검증 및 캐시 최신화
     try {
-      const APP_VERSION = 'v104';
+      const APP_VERSION = 'v105';
       if (localStorage.getItem('tokeon_app_version') !== APP_VERSION) {
+        localStorage.removeItem('OFFICIAL_PITCHER_DATABASE_CACHE_V4');
         localStorage.removeItem('OFFICIAL_PITCHER_DATABASE_CACHE_V3');
         localStorage.removeItem('OFFICIAL_PITCHER_DATABASE_CACHE_V2');
-        localStorage.removeItem('tokeon_matches_cache_v99');
-        localStorage.removeItem('tokeon_matches_cache_v100');
-        localStorage.removeItem('tokeon_matches_cache_v101');
-        localStorage.removeItem('tokeon_matches_cache_v102');
-        localStorage.removeItem('tokeon_matches_cache_v103');
         localStorage.setItem('tokeon_app_version', APP_VERSION);
       }
     } catch(e) {}
@@ -10536,7 +10532,7 @@ function getFullModalMatchList() {
     // ============================================================
     let OFFICIAL_PITCHER_DATABASE = {};
     try {
-      const cached = localStorage.getItem('OFFICIAL_PITCHER_DATABASE_CACHE_V3');
+      const cached = localStorage.getItem('OFFICIAL_PITCHER_DATABASE_CACHE_V4');
       if (cached) OFFICIAL_PITCHER_DATABASE = JSON.parse(cached);
     } catch (e) {}
 
@@ -10548,7 +10544,7 @@ function getFullModalMatchList() {
           if (data && typeof data === 'object' && Object.keys(data).length > 0) {
             OFFICIAL_PITCHER_DATABASE = data;
             try {
-              localStorage.setItem('OFFICIAL_PITCHER_DATABASE_CACHE_V3', JSON.stringify(data));
+              localStorage.setItem('OFFICIAL_PITCHER_DATABASE_CACHE_V4', JSON.stringify(data));
             } catch (e) {}
             if (window._currentOpenDetailMatch && typeof renderNextGenDetail === 'function') {
               try { renderNextGenDetail(window._currentOpenDetailMatch, _ngActiveTab, _ngRosterSelectedTeam); } catch(e) {}
@@ -10569,9 +10565,6 @@ function getFullModalMatchList() {
       if (!name) return null;
       const clean = String(name).replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
       if (OFFICIAL_PITCHER_DATABASE[clean]) return { ...OFFICIAL_PITCHER_DATABASE[clean], cleanName: clean };
-      for (const [k, v] of Object.entries(OFFICIAL_PITCHER_DATABASE)) {
-        if (clean === k || clean.includes(k) || k.includes(clean)) return { ...v, cleanName: k };
-      }
       return null;
     }
 
@@ -10624,7 +10617,7 @@ function getFullModalMatchList() {
         await Promise.all(promises);
         if (updated) {
           try {
-            localStorage.setItem('OFFICIAL_PITCHER_DATABASE_CACHE_V3', JSON.stringify(OFFICIAL_PITCHER_DATABASE));
+            localStorage.setItem('OFFICIAL_PITCHER_DATABASE_CACHE_V4', JSON.stringify(OFFICIAL_PITCHER_DATABASE));
           } catch(e) {}
           if (window._currentOpenDetailMatch && window._currentOpenDetailMatch.id === matchId && typeof renderNextGenDetail === 'function') {
             try { renderNextGenDetail(window._currentOpenDetailMatch, _ngActiveTab, _ngRosterSelectedTeam); } catch(e) {}
@@ -10677,8 +10670,26 @@ function getFullModalMatchList() {
         const hTrend = (hAnnounced && cachedPitchers && cachedPitchers.home && cachedPitchers.home.summary) ? getPitcherFormTrend(cachedPitchers.home) : (hAnnounced && typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: hClean }) : null);
         const aTrend = (aAnnounced && cachedPitchers && cachedPitchers.away && cachedPitchers.away.summary) ? getPitcherFormTrend(cachedPitchers.away) : (aAnnounced && typeof getPitcherFormTrend === 'function' ? getPitcherFormTrend({ name: aClean }) : null);
 
-        const hEra = (hOfficial && hOfficial.era != null) ? hOfficial.era : ((hTrend && (hTrend.seasonEra || hTrend.era3g)) ? (hTrend.seasonEra || hTrend.era3g) : (cachedPitchers && cachedPitchers.home ? (cachedPitchers.home.season_era || cachedPitchers.home.era) : ''));
-        const aEra = (aOfficial && aOfficial.era != null) ? aOfficial.era : ((aTrend && (aTrend.seasonEra || aTrend.era3g)) ? (aTrend.seasonEra || aTrend.era3g) : (cachedPitchers && cachedPitchers.away ? (cachedPitchers.away.season_era || cachedPitchers.away.era) : ''));
+        // 100% 공식 실데이터 최우선 매핑: 경기 실시간 공시 방어율 -> 매치업 캐시 방어율 -> 공식 프로필 DB 순서
+        const hEra = (m.home_starter_era && m.home_starter_era !== '-')
+          ? m.home_starter_era
+          : (cachedPitchers && cachedPitchers.home && (cachedPitchers.home.season_era || cachedPitchers.home.era) && (cachedPitchers.home.season_era || cachedPitchers.home.era) !== '-')
+            ? (cachedPitchers.home.season_era || cachedPitchers.home.era)
+            : (hOfficial && hOfficial.era != null && hOfficial.era !== '-')
+              ? hOfficial.era
+              : ((hTrend && (hTrend.seasonEra || hTrend.era3g) && !String(hTrend.seasonEra || '').includes('등판'))
+                ? (hTrend.seasonEra || hTrend.era3g)
+                : '');
+
+        const aEra = (m.away_starter_era && m.away_starter_era !== '-')
+          ? m.away_starter_era
+          : (cachedPitchers && cachedPitchers.away && (cachedPitchers.away.season_era || cachedPitchers.away.era) && (cachedPitchers.away.season_era || cachedPitchers.away.era) !== '-')
+            ? (cachedPitchers.away.season_era || cachedPitchers.away.era)
+            : (aOfficial && aOfficial.era != null && aOfficial.era !== '-')
+              ? aOfficial.era
+              : ((aTrend && (aTrend.seasonEra || aTrend.era3g) && !String(aTrend.seasonEra || '').includes('등판'))
+                ? (aTrend.seasonEra || aTrend.era3g)
+                : '');
 
         const hEraStr = (hAnnounced && hEra && hEra !== '-') ? `(ERA ${hEra})` : '';
         const aEraStr = (aAnnounced && aEra && aEra !== '-') ? `(ERA ${aEra})` : '';
@@ -14532,19 +14543,25 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
         // 100% 공식 시즌 방어율 (ERA)
         let seasonEra = '-';
-        if (pOfficial && pOfficial.era !== undefined && pOfficial.era !== null && pOfficial.era !== '-') {
-          seasonEra = String(pOfficial.era);
-        } else if (pOfficial && pOfficial.season_era && pOfficial.season_era !== '-') {
-          seasonEra = String(pOfficial.season_era);
-        } else if (cachedPitcherObj && cachedPitcherObj.era && cachedPitcherObj.era !== '-') {
+        if (cachedPitcherObj && cachedPitcherObj.era && cachedPitcherObj.era !== '-') {
           seasonEra = String(cachedPitcherObj.era);
         } else if (cachedPitcherObj && cachedPitcherObj.season_era && cachedPitcherObj.season_era !== '-') {
           seasonEra = String(cachedPitcherObj.season_era);
+        } else if (pOfficial && pOfficial.era !== undefined && pOfficial.era !== null && pOfficial.era !== '-') {
+          seasonEra = String(pOfficial.era);
+        } else if (pOfficial && pOfficial.season_era && pOfficial.season_era !== '-') {
+          seasonEra = String(pOfficial.season_era);
         }
 
         // 100% 공식 시즌 전적 (W승 L패)
         let seasonRecord = '-';
-        if (pOfficial && pOfficial.record && pOfficial.record !== '-') {
+        if (cachedPitcherObj && cachedPitcherObj.record && cachedPitcherObj.record !== '-') {
+          seasonRecord = cachedPitcherObj.record;
+        } else if (cachedPitcherObj && cachedPitcherObj.season_record && cachedPitcherObj.season_record !== '-') {
+          seasonRecord = cachedPitcherObj.season_record;
+        } else if (cachedPitcherObj && cachedPitcherObj.wins !== undefined && cachedPitcherObj.losses !== undefined) {
+          seasonRecord = `${cachedPitcherObj.wins}승 ${cachedPitcherObj.losses}패`;
+        } else if (pOfficial && pOfficial.record && pOfficial.record !== '-') {
           seasonRecord = pOfficial.record;
         } else if (pOfficial && pOfficial.season_record && pOfficial.season_record !== '-') {
           seasonRecord = pOfficial.season_record;
@@ -14552,12 +14569,6 @@ function updateSlimPanel(matchId, type, contentHtml) {
           seasonRecord = `${pOfficial.wins}승 ${pOfficial.losses}패`;
         } else if (pOfficial && pOfficial.w !== undefined && pOfficial.l !== undefined) {
           seasonRecord = `${pOfficial.w}승 ${pOfficial.l}패`;
-        } else if (cachedPitcherObj && cachedPitcherObj.record && cachedPitcherObj.record !== '-') {
-          seasonRecord = cachedPitcherObj.record;
-        } else if (cachedPitcherObj && cachedPitcherObj.season_record && cachedPitcherObj.season_record !== '-') {
-          seasonRecord = cachedPitcherObj.season_record;
-        } else if (cachedPitcherObj && cachedPitcherObj.wins !== undefined && cachedPitcherObj.losses !== undefined) {
-          seasonRecord = `${cachedPitcherObj.wins}승 ${cachedPitcherObj.losses}패`;
         }
 
         // 공식 요약 스탯 (e.g. 172.1이닝 178K 47BB) - [object Object] 절대 방지
@@ -14592,10 +14603,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
 
         let startsList = [];
-        if (pOfficial && pOfficial.recent_starts && Array.isArray(pOfficial.recent_starts) && pOfficial.recent_starts.length > 0) {
-          startsList = pOfficial.recent_starts.slice(0, 10);
-        } else if (cachedPitcherObj && cachedPitcherObj.recent_starts && Array.isArray(cachedPitcherObj.recent_starts) && cachedPitcherObj.recent_starts.length > 0) {
+        if (cachedPitcherObj && cachedPitcherObj.recent_starts && Array.isArray(cachedPitcherObj.recent_starts) && cachedPitcherObj.recent_starts.length > 0) {
           startsList = cachedPitcherObj.recent_starts.slice(0, 10);
+        } else if (pOfficial && pOfficial.recent_starts && Array.isArray(pOfficial.recent_starts) && pOfficial.recent_starts.length > 0) {
+          startsList = pOfficial.recent_starts.slice(0, 10);
         }
 
         let displayRecordEra = '';

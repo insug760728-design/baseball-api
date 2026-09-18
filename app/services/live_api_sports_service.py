@@ -842,9 +842,7 @@ KNOWN_PITCHER_SEASON_ERA: Dict[str, str] = {
     '이시다 유': '3.25', '이시다 유타로': '3.25', '石田裕': '3.25', '이시다': '3.25',
     '쇼지': '3.55', '쇼지 코세이': '3.55', '荘司': '3.55', '荘司 康誠': '3.55',
     '모리': '3.80', '모리 케이토': '3.80', '毛利': '3.80',
-    '모리시타': '3.83', '모리시타 마사토': '3.83', '森下': '3.83', '森下 暢仁': '3.83',
     '마타': '2.95', 'マタ': '2.95',
-    '야마노': '4.20', '야마노 타이키': '4.20', '山野': '4.20',
     '평량': '2.40', '타이라': '2.40', '타이라 카이마': '2.40', '平良': '2.40', '平良 海馬': '2.40',
     'S.젤리': '3.10', '젤리': '3.10', 'ジェリー': '3.10', 'Ｓ．ジェリー': '3.10',
     '이토 히로미': '2.65', '야마사키 사치야': '2.95', '카토 타카유키': '2.80',
@@ -853,14 +851,14 @@ KNOWN_PITCHER_SEASON_ERA: Dict[str, str] = {
     '아리하라 코헤이': '2.45', '모이넬로': '1.88', 'L.모이넬로': '1.88', '리반 모이넬로': '1.88', '오오츠 료스케': '2.90',
     '하야카와 타카히사': '2.52', '키시 타카유키': '3.15', '노리모토 타카히로': '2.10',
     '코지마 카즈야': '2.72', '타네이치 아츠키': '2.85', '사사키 로키': '2.15',
-    '토고 쇼세이': '2.15', '스가노 토모유키': '2.10', '이노우에 하루토': '2.75',
+    '토고 쇼세이': '2.15', '스가노 토모유키': '2.10',
     '사이키 히로토': '1.65', '무라카미 쇼키': '2.40', '니시 유키': '2.95',
     '오오세라 다이치': '2.15', '쿠리바야시 료지': '1.45',
     '아즈마 카츠키': '2.10', '오오누키 신이치': '2.95',
     '타카하시 히로토': '1.28', '야나기 유야': '3.10', '오가사와라 신노스케': '3.05',
     '타카하시 케이지': '3.45', '오가와 야스히로': '3.75', '요시무라 코지로': '3.20',
     '아오야기 코요': '3.20', '카츠노 아키요시': '2.85',
-    '카타야마': '3.60', '카타야마 히로미': '3.60', '카타야마 코신': '3.60', '야마구치': '3.50', '와타나베': '3.65', '마에다 유고': '3.10',
+    '야마구치': '3.50', '와타나베': '3.65', '마에다 유고': '3.10',
     '이시카와 슈타': '3.20', '이시카와': '3.20',
     '타케마루': '3.10', '무라카미': '2.40', '와쿠이': '3.45', '타카나시': '2.60', '오가타': '2.10', '러틀리지': '3.90',
 
@@ -868,9 +866,9 @@ KNOWN_PITCHER_SEASON_ERA: Dict[str, str] = {
     '류현진': '3.80', '원태인': '4.20', '양현종': '4.25', '곽빈': '2.26', '임찬규': '4.14',
     '김광현': '3.85', '고영표': '3.80', '하영민': '3.85', '신민혁': '3.90', '박세웅': '3.70',
     '최원태': '3.75', '소형준': '3.70', '손주영': '3.79', '문동주': '3.95',
-    '김진욱': '3.90', '이재학': '2.25', '황준서': '4.95', '전준표': '4.57', '이준기': '6.00',
-    '페덱': '2.55', '로건': '3.07', '로건 앨런': '3.07', '구창모': '2.80', '후라도': '2.95',
-    '톨허스트': '3.80', '대니엘': '3.50', '네일': '2.53', '알칸타라': '3.20', '잭로그': '3.60',
+    '김진욱': '3.90', '황준서': '4.95', '전준표': '4.57', '이준기': '6.00',
+    '페덱': '2.55', '구창모': '2.80',
+    '대니엘': '3.50', '네일': '2.53',
 
     # MLB 미국 메이저리그 주요 선발 투수 시즌 방어율
     '야마모토': '2.92', '야마모토 요시노부': '2.92', 'Yamamoto': '2.92', 'Yoshinobu Yamamoto': '2.92',
@@ -1076,24 +1074,20 @@ KNOWN_PITCHER_SEASON_ERA: Dict[str, str] = {
 def lookup_pitcher_season_era(name: str) -> Optional[str]:
     if not name:
         return None
-    clean = str(name).strip()
-    if clean in KNOWN_PITCHER_SEASON_ERA:
-        return KNOWN_PITCHER_SEASON_ERA[clean]
-    no_space = clean.replace(' ', '')
-    sorted_keys = sorted(KNOWN_PITCHER_SEASON_ERA.keys(), key=lambda x: len(x), reverse=True)
-    for k in sorted_keys:
-        if k == clean or (len(k) >= 2 and k in clean) or (len(clean) >= 2 and clean in k):
-            return KNOWN_PITCHER_SEASON_ERA[k]
+    clean = str(name).replace('(우)', '').replace('(좌)', '').replace('(언)', '').replace('(양)', '').replace('(예상)', '').strip()
     try:
-        from app.services.team_split_service import VERIFIED_PITCHER_3_STARTS
-        if clean in VERIFIED_PITCHER_3_STARTS:
-            return str(VERIFIED_PITCHER_3_STARTS[clean].get('season_era', ''))
-        for k, v in VERIFIED_PITCHER_3_STARTS.items():
-            if k in clean or clean in k:
-                return str(v.get('season_era', ''))
+        from app.services.team_split_service import _lookup_official_pitcher
+        prof = _lookup_official_pitcher(clean)
+        if prof and (prof.get('season_era') or prof.get('era')):
+            val = prof.get('season_era') or prof.get('era')
+            if val and str(val) != '-':
+                return str(val)
     except Exception:
         pass
+    if clean in KNOWN_PITCHER_SEASON_ERA:
+        return KNOWN_PITCHER_SEASON_ERA[clean]
     return None
+
 
 
 class LiveApiSportsService:

@@ -302,8 +302,8 @@ const MatchFeed = (() => {
         const aStarter = CommonUtils.formatPlayerKorean(m.away_starter_name) || '선발 미정';
         let hEra = m.home_starter_era || '';
         let aEra = m.away_starter_era || '';
-        if (!hEra || hEra === '-') hEra = (m.home_starter_name ? '2.85' : '-');
-        if (!aEra || aEra === '-') aEra = (m.away_starter_name ? '3.42' : '-');
+        if (!hEra || hEra === '-') hEra = '';
+        if (!aEra || aEra === '-') aEra = '';
 
         const hEraDisplay = (hEra && hEra !== '-') ? (hEra.includes('ERA') ? hEra : `ERA ${hEra}`) : '';
         const aEraDisplay = (aEra && aEra !== '-') ? (aEra.includes('ERA') ? aEra : `ERA ${aEra}`) : '';

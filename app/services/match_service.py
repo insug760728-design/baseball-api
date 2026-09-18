@@ -468,9 +468,15 @@ class MatchService:
                         if is_valid_starter_name(h_raw):
                             m.home_starter_name = translate_player_name(h_raw.strip())
                             h_confirmed = bool(h_st.get("confirmed", True))
+                            h_era_val = h_st.get("season_era") or h_st.get("era")
+                            if h_era_val and str(h_era_val) != "-":
+                                m.home_starter_era = str(h_era_val)
                         if is_valid_starter_name(a_raw):
                             m.away_starter_name = translate_player_name(a_raw.strip())
                             a_confirmed = bool(a_st.get("confirmed", True))
+                            a_era_val = a_st.get("season_era") or a_st.get("era")
+                            if a_era_val and str(a_era_val) != "-":
+                                m.away_starter_era = str(a_era_val)
                     except Exception:
                         pass
 
@@ -516,22 +522,26 @@ class MatchService:
                     m.home_starter_era = None
                     h_confirmed = False
                 else:
-                    m.home_starter_era = lookup_pitcher_season_era(m.home_starter_name)
-                    if (not m.home_starter_era or m.home_starter_era == "-") and resolved_st:
-                        h_era_cand = resolved_st.get("home", {}).get("season_era")
-                        if h_era_cand and h_era_cand != "-":
-                            m.home_starter_era = str(h_era_cand)
+                    if not m.home_starter_era or m.home_starter_era == "-":
+                        if resolved_st:
+                            h_era_cand = resolved_st.get("home", {}).get("season_era") or resolved_st.get("home", {}).get("era")
+                            if h_era_cand and str(h_era_cand) != "-":
+                                m.home_starter_era = str(h_era_cand)
+                        if not m.home_starter_era or m.home_starter_era == "-":
+                            m.home_starter_era = lookup_pitcher_season_era(m.home_starter_name)
 
                 if not is_valid_starter_name(m.away_starter_name) or m.away_starter_name == "선발 미정":
                     m.away_starter_name = None
                     m.away_starter_era = None
                     a_confirmed = False
                 else:
-                    m.away_starter_era = lookup_pitcher_season_era(m.away_starter_name)
-                    if (not m.away_starter_era or m.away_starter_era == "-") and resolved_st:
-                        a_era_cand = resolved_st.get("away", {}).get("season_era")
-                        if a_era_cand and a_era_cand != "-":
-                            m.away_starter_era = str(a_era_cand)
+                    if not m.away_starter_era or m.away_starter_era == "-":
+                        if resolved_st:
+                            a_era_cand = resolved_st.get("away", {}).get("season_era") or resolved_st.get("away", {}).get("era")
+                            if a_era_cand and str(a_era_cand) != "-":
+                                m.away_starter_era = str(a_era_cand)
+                        if not m.away_starter_era or m.away_starter_era == "-":
+                            m.away_starter_era = lookup_pitcher_season_era(m.away_starter_name)
 
                 m.starters_confirmed = bool(m.home_starter_name and m.away_starter_name and h_confirmed and a_confirmed)
 
