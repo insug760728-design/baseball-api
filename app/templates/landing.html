@@ -3012,6 +3012,46 @@
     })();
 
     // =============================================================
+    // 🛡️ 핵심 데이터 유틸리티 (escapeHtml, isStarterAnnounced, sanitize)
+    // =============================================================
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+    }
+    window.escapeHtml = escapeHtml;
+
+    function isStarterAnnounced(name) {
+      if (!name || typeof name !== 'string') return false;
+      const n = name.trim().toLowerCase();
+      if (!n || n === 'null' || n === 'undefined' || n === 'tbd' || n === 'tba' || n === 'n/a' || n === 'na' || n === 'none' || n === '느아' || n === '미정' || n === '선발미정' || n === '선발 미정' || n === '미확정' || n === '미확정 (tbd)' || n === '선발 미정 (tbd)' || n === '선발' || n === '선발 투수' || n === '선발투수' || n === '선발 예고' || n === '선발예고' || n === '선발 대기' || n === '선발예고 대기' || n === '선발 예고 대기' || n === '홈 선발' || n === '원정 선발' || n === '홈선발' || n === '원정선발' || n === '예정' || n === '미발표') return false;
+      if (n.endsWith('선발') && (n.includes('팀') || n.includes('구단') || n.includes('베어스') || n.includes('트윈스') || n.includes('라이온즈') || n.includes('타이거즈') || n.includes('이글스') || n.includes('랜더스') || n.includes('위즈') || n.includes('자이언츠') || n.includes('히어로즈') || n.includes('다이노스'))) return false;
+      return true;
+    }
+    window.isStarterAnnounced = isStarterAnnounced;
+
+    function sanitizePlayerName(raw) {
+      if (!raw) return '';
+      let text = String(raw);
+      const entityMap = {
+        '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"',
+        '&#39;': "'", '&apos;': "'", '&#x27;': "'", '&nbsp;': ' ', '&#160;': ' '
+      };
+      text = text.replace(/&(?:amp|lt|gt|quot|#39|apos|#x27|nbsp|#160);/gi, m => entityMap[m.toLowerCase()] || m);
+      text = text.replace(/[\u200B-\u200D\uFEFF\uFFFD\x00-\x1F\x7F]/g, '');
+      text = text.replace(/[\u2018\u2019\u00b4`\u2032]/g, "'");
+      text = text.replace(/[\u2013\u2014\u2212]/g, '-');
+      try { text = text.normalize('NFC'); } catch (e) {}
+      text = text.replace(/[\s\u00a0\u3000]+/g, ' ').trim();
+      return text;
+    }
+    window.sanitizePlayerName = sanitizePlayerName;
+
+    function sanitizeText(raw) {
+      return sanitizePlayerName(raw);
+    }
+    window.sanitizeText = sanitizeText;
+
+    // =============================================================
     // ⚾ MLB / 해외 선수 영문 이름 & NPB 일본어 -> 한국어 완벽 표기 변환기
     // =============================================================
     // ⚡ [초고속 스타 선수 즉시 변환 사전 및 폴백 (player_ko_map.js 비동기 로드 전 0ms 즉시 렌더링 보장)]
