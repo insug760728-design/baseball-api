@@ -181,11 +181,10 @@ def refresh_server_matches_cache() -> str:
     if _SERVER_MATCHES_CACHE.get("is_refreshing"):
         return _SERVER_MATCHES_CACHE.get("json_str", "[]")
     _SERVER_MATCHES_CACHE["is_refreshing"] = True
-    db = None
+    db = SessionLocal()
     try:
         from app.schemas.schemas import MatchResponse
-        db = SessionLocal()
-        matches = MatchService.get_matches(db, limit=250, order='asc')
+        matches = MatchService.get_matches(db, limit=600, order='asc')
         serialized = [MatchResponse.model_validate(m).model_dump(mode="json") for m in matches]
         json_str = json.dumps(serialized, ensure_ascii=False)
         _SERVER_MATCHES_CACHE["json_str"] = json_str

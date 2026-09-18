@@ -4015,7 +4015,7 @@
       if (archiveLoadingPromise) return archiveLoadingPromise;
       archiveLoadingPromise = (async () => {
         try {
-          const resp = await fetch(`/api/v1/matches?limit=120&order=asc`, { cache: 'no-store' });
+          const resp = await fetch(`/api/v1/matches?limit=600&order=asc`, { cache: 'no-store' });
           const rawMatches = resp.ok ? await resp.json() : [];
 
           const seenIds = new Set(allMatches.map(m => m.id));
@@ -4110,7 +4110,7 @@
         // ⚡ Phase 1: 서버 초기 데이터가 없을 때만 즉시 fetch 실행 (초기 데이터가 있으면 불필요한 네트워크 대기 제거)
         if (!hasInitialData) {
           try {
-            const fastResp = await fetch(`/api/v1/matches?limit=250&order=asc`);
+            const fastResp = await fetch(`/api/v1/matches?limit=600&order=asc`);
             if (fastResp.ok) {
               const fastMatches = await fastResp.json();
               if (Array.isArray(fastMatches) && fastMatches.length > 0) {
@@ -12810,6 +12810,72 @@ function updateSlimPanel(matchId, type, contentHtml) {
             isReal: true
           });
         });
+      }
+
+      // 2. Fallback supplementation: Ensure EVERY team has at least 4~5 upcoming matches scheduled
+      if (result.length < 5) {
+        try {
+          const canon = detectCanonicalLeague(match.league_name, match.sport_code, myTeam);
+          let candidates = (getLeagueTeamsFromAllMatches(match.league_name, match.sport_code, myTeam) || []).slice();
+          if (!candidates || candidates.length <= 1) {
+            candidates = (LEAGUE_FALLBACK_POOLS[canon] || LEAGUE_FALLBACK_POOLS.SOCCER_GLOBAL).slice();
+          }
+
+          // Filter out own team
+          const validOpponents = candidates.filter(opp => !isSameTeamName(opp, myTeam, match.sport_code, match.sport_code));
+
+          // Base date from last match or current match
+          let lastDateObj = new Date();
+          const baseDateStr = (result.length > 0 ? result[result.length - 1].dateStr : match.match_date) || '';
+          if (baseDateStr.length >= 10) {
+            const parsed = new Date(baseDateStr.slice(0, 10) + 'T12:00:00');
+            if (!isNaN(parsed.getTime())) {
+              lastDateObj = parsed;
+            }
+          }
+
+          const isBaseball = (match.sport_code === 'BASEBALL' || canon === 'KBO' || canon === 'MLB' || canon === 'NPB');
+          let defaultTime = '19:00';
+          if (canon === 'KBO') defaultTime = '18:30';
+          else if (canon === 'MLB') defaultTime = '08:05';
+          else if (canon === 'NPB') defaultTime = '18:00';
+          else if (canon === 'EPL') defaultTime = '20:30';
+          else if (canon === 'LALIGA') defaultTime = '21:00';
+          else if (canon === 'BUNDESLIGA') defaultTime = '22:30';
+          else if (canon === 'SERIE_A') defaultTime = '22:00';
+          else if (canon === 'K_LEAGUE_1' || canon === 'K_LEAGUE_2') defaultTime = '16:30';
+
+          let nameHash = 0;
+          for (let c = 0; c < myTeam.length; c++) nameHash += myTeam.charCodeAt(c);
+          let oppIdx = nameHash % Math.max(1, validOpponents.length);
+
+          while (result.length < 5 && validOpponents.length > 0) {
+            const daysToAdd = isBaseball ? ((result.length % 3 === 0) ? 2 : 1) : ((result.length % 2 === 0) ? 4 : 3);
+            lastDateObj.setDate(lastDateObj.getDate() + daysToAdd);
+
+            const yyyy = lastDateObj.getFullYear();
+            const mm = String(lastDateObj.getMonth() + 1).padStart(2, '0');
+            const dd = String(lastDateObj.getDate()).padStart(2, '0');
+            const newDateStr = `${yyyy}-${mm}-${dd} ${defaultTime}`;
+
+            const opp = validOpponents[oppIdx % validOpponents.length];
+            if (!isBaseball || result.length % 2 === 0) {
+              oppIdx++;
+            }
+
+            result.push({
+              id: `SCHED_${match.id || 'M'}_${result.length}`,
+              opponent: opp,
+              isHome: (result.length % 2 === 0),
+              dateStr: newDateStr,
+              league: match.league_name || match.sport_code,
+              status: 'SCHEDULED',
+              isReal: false
+            });
+          }
+        } catch (e) {
+          console.warn('[Schedule] Fallback schedule supplementation error:', e);
+        }
       }
 
       return result;
