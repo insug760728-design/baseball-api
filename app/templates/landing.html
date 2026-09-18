@@ -3695,6 +3695,7 @@
     }
 
     async function loadLiveMatches() {
+      try {
         // ⚡ 0순위: 서버에서 직접 주입한 초기 경기 데이터가 있으면 0초 즉시 렌더링!
         if (window.SERVER_INITIAL_MATCHES && Array.isArray(window.SERVER_INITIAL_MATCHES) && window.SERVER_INITIAL_MATCHES.length > 0) {
           const cleanMatches = window.SERVER_INITIAL_MATCHES.filter(m => m && !(m.official_id && m.official_id.startsWith('SCHED_')));
