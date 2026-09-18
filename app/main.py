@@ -81,73 +81,12 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[WARN] AI 채팅 봇 시작 중 오류: {e}")
 
-    # 🚀 백그라운드 사전 워밍업 (TeamSplitService 41,000건 적재 및 주요 경기 1:1 분석)
+    # 메모리 정리 (Render 512MB RAM 안전 최적화)
     try:
-        def _warmup_background():
-            # 1. TeamSplitService 사전 워밍업 (메모리 선적재로 통계 조회 0초화)
-            try:
-                import time
-                from app.services.team_split_service import TeamSplitService
-                t0 = time.time()
-                TeamSplitService.get_all_splits()
-                print(f"[INFO] TeamSplitService 분할 통계 사전 워밍업 완료 ({time.time() - t0:.2f}s).")
-                refresh_server_matches_cache()
-                print("[INFO] Server Matches Cache 초기 선적재 완료.")
-            except Exception as e:
-                print(f"[WARN] TeamSplitService 워밍업 중 오류: {e}")
-
-            # 2. 오늘 주요 경기 1:1 세이버 정밀 분석 사전 워밍업
-            try:
-                from app.core.database import SessionLocal
-                from app.services.match_service import MatchService
-                from app.services.team_split_service import TeamSplitService
-                from app.api.v1.matches import _MATCH_FULL_CACHE
-                import time
-                db = SessionLocal()
-                try:
-                    matches = MatchService.get_matches(db, limit=5, order="asc")
-                    now = time.time()
-                    for m in matches:
-                        if m.id not in _MATCH_FULL_CACHE:
-                            data = MatchService.get_match_full_detail(db, m.id)
-                            if data:
-                                details_ts = data["details"].get("team_stats") if (data.get("details") and isinstance(data["details"], dict)) else {}
-                                matchup_analysis = TeamSplitService.get_matchup_analysis(m.home_team_name, m.away_team_name, m.sport_code, match_id=m.id, team_stats=details_ts)
-                                res = {
-                                    "id": m.id,
-                                    "official_id": m.official_id,
-                                    "sport_code": m.sport_code,
-                                    "league_name": m.league_name,
-                                    "round_name": m.round_name,
-                                    "match_date": m.match_date,
-                                    "stadium": m.stadium,
-                                    "home_team_name": m.home_team_name,
-                                    "away_team_name": m.away_team_name,
-                                    "home_score": m.home_score,
-                                    "away_score": m.away_score,
-                                    "home_starter_name": m.home_starter_name,
-                                    "away_starter_name": m.away_starter_name,
-                                    "status": m.status,
-                                    "is_customized": m.is_customized,
-                                    "custom_notes": m.custom_notes,
-                                    "summary": m.custom_notes,
-                                    "details": data["details"],
-                                    "events": data["events"],
-                                    "player_stats": data["player_stats"],
-                                    "matchup_analysis": matchup_analysis
-                                }
-                                _MATCH_FULL_CACHE[m.id] = (now, res)
-                    print(f"[INFO] 오늘 주요 경기 {len(_MATCH_FULL_CACHE)}건 1:1 세이버 분석 사전 워밍업 완료.")
-                finally:
-                    db.close()
-            except Exception as ex:
-                print(f"[WARN] 경기 분석 사전 워밍업 중 오류: {ex}")
-
-        import threading
-        threading.Thread(target=_warmup_background, daemon=True).start()
-        print("[INFO] 백그라운드 사전 워밍업 스레드 시작 완료 (서버 즉시 서빙 가능).")
-    except Exception as e:
-        print(f"[WARN] 백그라운드 사전 워밍업 스레드 시작 오류: {e}")
+        import gc
+        gc.collect()
+    except Exception:
+        pass
 
     # 🔄 1분 주기 경기 상태 자가 치유(Self-Healing) 데몬
     async def _match_lifecycle_daemon():

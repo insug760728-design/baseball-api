@@ -15,13 +15,12 @@ if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null ; then
     echo "⚠️ Port 8000 is already in use. Please check running processes."
 fi
 
-# Run with Gunicorn + Uvicorn Workers
-# -w 4: 4 worker processes to handle concurrent requests
-# -k uvicorn.workers.UvicornWorker: Async ASGI worker
-# --timeout 120: Long-polling & heavy query protection
-# --graceful-timeout 30: Ensures in-flight requests finish before reload
-exec gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app \
-    --bind 0.0.0.0:8000 \
+# Run with Gunicorn + Uvicorn Workers (Render 512MB RAM Safe: 1 Worker Mode)
+PORT_TO_BIND="${PORT:-8000}"
+exec gunicorn -w 1 -k uvicorn.workers.UvicornWorker app.main:app \
+    --bind 0.0.0.0:${PORT_TO_BIND} \
+    --max-requests 2000 \
+    --max-requests-jitter 200 \
     --timeout 120 \
     --graceful-timeout 30 \
     --access-logfile logs/access.log \

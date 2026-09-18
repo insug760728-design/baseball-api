@@ -185,14 +185,13 @@ class SchedulerService:
         yesterday_str = (start_time - timedelta(days=1)).strftime("%Y-%m-%d")
         tomorrow_str = (start_time + timedelta(days=1)).strftime("%Y-%m-%d")
 
-        # UCL/UEL 경기는 한국 기준 새벽(01:45~04:00)이므로 어제 UTC = 오늘 KST 새벽
-        sync_leagues = ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A",
-                        "LIGUE_1", "MLS", "UCL", "UEL", "CHAMPIONSHIP", "EREDIVISIE",
-                        "LIBERTADORES", "JLEAGUE", "NBA", "KBL"]
+        # 서버 부팅 시 512MB RAM 초과 방지를 위해 오늘 핵심 리그 및 베트맨 프로토만 신속 동기화
+        # (전 종목 및 14일치 전체 일정은 정기 크론 데몬이 수행)
+        sync_leagues = ["KBO", "NPB", "MLB"]
 
         summary = {}
         try:
-            # 1. 베트맨 프로토 발매 경기 및 최신 배당 즉시 강제 수집 (Fix 4: 30초 대기 없이 즉시 배당 sync)
+            # 1. 베트맨 프로토 발매 경기 및 최신 배당 즉시 수집
             try:
                 from app.services.betman_service import BetmanService
                 db_proto = SessionLocal()
@@ -206,7 +205,7 @@ class SchedulerService:
                 logger.warning(f"[Startup Sync] 베트맨 프로토 동기화 경고: {be}")
                 summary["BETMAN_PROTO"] = f"ERR: {str(be)[:60]}"
 
-            # 2. 공식 종목별 경기 일정 동기화 (개별 세션 분리로 DB 락 방지)
+            # 2. 핵심 야구 경기 일정 신속 동기화
             for lid in sync_leagues:
                 try:
                     db_league = SessionLocal()
@@ -224,21 +223,14 @@ class SchedulerService:
                 except Exception as ex:
                     summary[lid] = f"ERR: {str(ex)[:60]}"
 
-            # 일정 관리 전담 에이전트(ScheduleManagerAgent)를 통한 전종목 향후 14일치 공식 일정 자동 동기화
-            try:
-                sched_res = await cls.execute_schedule_manager_sync_job()
-                summary["SCHEDULE_MANAGER"] = sched_res.get("total_added", 0)
-            except Exception as ex:
-                summary["SCHEDULE_MANAGER"] = f"ERR: {str(ex)[:60]}"
-
-            logger.info(f"[Startup Sync] 서버 시작 즉시 동기화 완료: {summary}")
+            logger.info(f"[Startup Sync] 서버 시작 신속 동기화 완료: {summary}")
             try:
                 from app.core.websocket_manager import manager
                 await manager.broadcast({
                     "type": "STARTUP_SYNC_COMPLETE",
                     "timestamp": get_now_kst().isoformat(),
                     "summary": summary,
-                    "message": "서버 시작 시 전종목(챔스·유로파 및 향후 14일 일정 포함) 자동 동기화 완료"
+                    "message": "서버 시작 신속 동기화 완료"
                 })
             except Exception:
                 pass
@@ -246,6 +238,11 @@ class SchedulerService:
             logger.error(f"[Startup Sync] 서버 시작 동기화 오류: {e}")
         finally:
             cls._is_running_task = False
+            try:
+                import gc
+                gc.collect()
+            except Exception:
+                pass
 
     @classmethod
     async def execute_schedule_manager_sync_job(cls):
