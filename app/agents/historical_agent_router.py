@@ -604,6 +604,15 @@ class HistoricalAgentRouter:
             draws = sum(1 for m in formatted_h2h if m['result'] == 'DRAW')
             a_wins = sum(1 for m in formatted_h2h if m['result'] == 'LOSS')
 
+            # 6. 축구/EPL 전담 전술 & 감독성향 & 포메이션 & 점유율 & 카드 분석 결합
+            tactical_analysis = None
+            if sport_code == 'SOCCER':
+                try:
+                    from app.services.epl_tactical_service import EPLTacticalService
+                    tactical_analysis = EPLTacticalService.get_match_tactical_analysis(home_team, away_team, match_id=match_id)
+                except Exception as e:
+                    logger.warning(f"Error building tactical analysis: {e}")
+
             return {
                 'status': 'success',
                 'match_id': match_id,
@@ -623,7 +632,8 @@ class HistoricalAgentRouter:
                     'draws': draws,
                     'away_wins': a_wins,
                     'summary_text': f"{h_wins}승 {draws}무 {a_wins}패" if sport_code == 'SOCCER' else f"{h_wins}승 {a_wins}패"
-                }
+                },
+                'tactical_analysis': tactical_analysis
             }
         finally:
             db.close()
