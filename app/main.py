@@ -98,7 +98,7 @@ async def lifespan(app: FastAPI):
     except Exception:
         pass
 
-    # 🔄 1분 주기 경기 상태 자가 치유(Self-Healing) 데몬
+    # 🔄 1분 주기 경기 상태 자가 치유(Self-Healing) 및 OS 메모리 자동 회수 데몬
     async def _match_lifecycle_daemon():
         while True:
             try:
@@ -110,13 +110,22 @@ async def lifespan(app: FastAPI):
                     MatchService.cleanup_stale_live_matches(db)
                 finally:
                     db.close()
+
+                # 🧹 Render 512MB RAM 안전 최적화: 1분마다 파이썬 힙 및 C 메모리 OS 강제 반환
+                import gc
+                gc.collect()
+                try:
+                    import ctypes
+                    ctypes.CDLL("libc.so.6").malloc_trim(0)
+                except Exception:
+                    pass
             except Exception as e:
                 pass
 
     try:
         import asyncio
         asyncio.create_task(_match_lifecycle_daemon())
-        print("[INFO] 매치 상태 자가 치유 데몬 (1분 주기) 가동 시작.")
+        print("[INFO] 매치 상태 자가 치유 및 OS 메모리 반환 데몬 (1분 주기) 가동 시작.")
     except Exception as e:
         print(f"[WARN] 자가 치유 데몬 시작 오류: {e}")
 

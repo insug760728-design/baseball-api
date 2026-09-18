@@ -81,28 +81,12 @@ class SchedulerService:
                 id="starters_5min_sync_job",
                 replace_existing=True
             )
-            # 1분마다 바탕화면 실시간 접속자 및 시간대별 트래픽 파일 자동 갱신
-            traffic_trigger = CronTrigger(minute="*")
+            # 5분마다 바탕화면 실시간 접속자 및 시간대별 트래픽 파일 자동 갱신
+            traffic_trigger = CronTrigger(minute="*/5")
             scheduler.add_job(
                 cls.execute_traffic_export_job,
                 trigger=traffic_trigger,
                 id="traffic_desktop_export_job",
-                replace_existing=True
-            )
-            # 2분마다 정기 유료 라이브 검증 백업
-            live_api_trigger = CronTrigger(minute="*/2")
-            scheduler.add_job(
-                cls.execute_live_api_sports_job,
-                trigger=live_api_trigger,
-                id="live_api_sports_job",
-                replace_existing=True
-            )
-            # 3분마다 KBO 및 NPB 공식 라이브 스코어보드 고속 동기화 (경기 시간대 13~23시)
-            kbo_live_trigger = CronTrigger(minute="*/3")
-            scheduler.add_job(
-                cls.execute_kbo_npb_live_sync_job,
-                trigger=kbo_live_trigger,
-                id="kbo_npb_live_sync_job",
                 replace_existing=True
             )
             # 매일 06:00, 18:00 KST 전종목(KBO, NPB, MLB, 축구 등) 향후 14일치 공식 일정 자동 갱신
@@ -825,12 +809,27 @@ class SchedulerService:
 
                 # ⚡ KBO/NPB LIVE 진행 중이면 3초 초고속 모드, MLB 및 축구 LIVE면 10초, 시작 직전(Pre-Match) 상태면 15초 대기
                 sleep_sec = 3 if kbo_npb_live else (10 if (mlb_live or soccer_live) else 15)
+
+                # 🧹 Render 512MB RAM 안전 최적화: 매 루프마다 점유 메모리 OS에 즉시 반환
+                try:
+                    import gc
+                    gc.collect()
+                    import ctypes
+                    ctypes.CDLL("libc.so.6").malloc_trim(0)
+                except Exception:
+                    pass
+
                 await asyncio.sleep(sleep_sec)
             except asyncio.CancelledError:
-                logger.info("[Scheduler LiveUltraFast] 1초 루프 종료됨")
+                logger.info("[Scheduler LiveUltraFast] 루프 종료됨")
                 break
             except Exception as e:
                 logger.warning(f"[Scheduler LiveUltraFast] 루프 경고: {e}")
+                try:
+                    import gc
+                    gc.collect()
+                except Exception:
+                    pass
                 await asyncio.sleep(1)
 
 

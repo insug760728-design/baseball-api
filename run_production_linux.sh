@@ -19,8 +19,8 @@ fi
 PORT_TO_BIND="${PORT:-8000}"
 exec gunicorn -w 1 -k uvicorn.workers.UvicornWorker app.main:app \
     --bind 0.0.0.0:${PORT_TO_BIND} \
-    --max-requests 2000 \
-    --max-requests-jitter 200 \
+    --max-requests 500 \
+    --max-requests-jitter 50 \
     --timeout 120 \
     --graceful-timeout 30 \
     --access-logfile logs/access.log \
