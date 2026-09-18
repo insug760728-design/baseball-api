@@ -10318,83 +10318,35 @@ function getFullModalMatchList() {
       const marginDom = 1.145;
 
       if (is3Way) {
-        if (backendOdds && backendOdds.home && backendOdds.draw && backendOdds.away) {
-          oddH = Number(backendOdds.home).toFixed(2);
-          oddD = Number(backendOdds.draw).toFixed(2);
-          oddA = Number(backendOdds.away).toFixed(2);
-          if (backendOdds.domestic_home && backendOdds.domestic_away && backendOdds.domestic_draw) {
-            domH = Number(backendOdds.domestic_home).toFixed(2);
-            domD = Number(backendOdds.domestic_draw).toFixed(2);
-            domA = Number(backendOdds.domestic_away).toFixed(2);
-          } else if (backendOdds.domestic && backendOdds.domestic.home) {
-            domH = Number(backendOdds.domestic.home).toFixed(2);
-            domD = Number(backendOdds.domestic.draw).toFixed(2);
-            domA = Number(backendOdds.domestic.away).toFixed(2);
-          } else {
-            domH = (Number(oddH) * (marginOvs / marginDom)).toFixed(2);
-            domD = (Number(oddD) * (marginOvs / marginDom)).toFixed(2);
-            domA = (Number(oddA) * (marginOvs / marginDom)).toFixed(2);
-          }
-        } else {
-          let pH = 0.40, pD = 0.28, pA = 0.32;
-          if (isDraw) {
-            pD = 0.31; pH = 0.36; pA = 0.33;
-          } else if (isHomeFav) {
-            const hRate = Math.min(0.85, Math.max(0.40, conf / 100));
-            pH = hRate;
-            pD = Math.max(0.12, 0.28 - (hRate - 0.40) * 0.28);
-            pA = Math.max(0.05, 1.0 - pH - pD);
-          } else {
-            const aRate = Math.min(0.85, Math.max(0.40, conf / 100));
-            pA = aRate;
-            pD = Math.max(0.12, 0.28 - (aRate - 0.40) * 0.28);
-            pH = Math.max(0.05, 1.0 - pA - pD);
-          }
-          oddH = (1.0 / (pH * marginOvs)).toFixed(2);
-          oddD = (1.0 / (pD * marginOvs)).toFixed(2);
-          oddA = (1.0 / (pA * marginOvs)).toFixed(2);
-          domH = (1.0 / (pH * marginDom)).toFixed(2);
-          domD = (1.0 / (pD * marginDom)).toFixed(2);
-          domA = (1.0 / (pA * marginDom)).toFixed(2);
-        }
-        ouBase = backendOu ? String(backendOu) : '2.5';
-      } else {
-        // 2WAY: BASEBALL, BASKETBALL, HOCKEY, VOLLEYBALL
         if (backendOdds && backendOdds.home && backendOdds.away) {
           oddH = Number(backendOdds.home).toFixed(2);
+          oddD = (backendOdds.draw && backendOdds.draw !== '-') ? Number(backendOdds.draw).toFixed(2) : '-';
           oddA = Number(backendOdds.away).toFixed(2);
-          if (backendOdds.domestic_home && backendOdds.domestic_away) {
-            domH = Number(backendOdds.domestic_home).toFixed(2);
-            domA = Number(backendOdds.domestic_away).toFixed(2);
-          } else if (backendOdds.domestic && backendOdds.domestic.home) {
-            domH = Number(backendOdds.domestic.home).toFixed(2);
-            domA = Number(backendOdds.domestic.away).toFixed(2);
-          } else {
-            domH = (Number(oddH) * (marginOvs / marginDom)).toFixed(2);
-            domA = (Number(oddA) * (marginOvs / marginDom)).toFixed(2);
-          }
+          domH = Number(backendOdds.domestic_home || backendOdds.home).toFixed(2);
+          domD = (backendOdds.domestic_draw && backendOdds.domestic_draw !== '-') ? Number(backendOdds.domestic_draw).toFixed(2) : (oddD !== '-' ? oddD : '-');
+          domA = Number(backendOdds.domestic_away || backendOdds.away).toFixed(2);
         } else {
-          let pH = 0.50;
-          if (isHomeFav) {
-            pH = Math.min(0.92, Math.max(0.50, conf / 100));
-          } else {
-            pH = Math.max(0.08, Math.min(0.50, 1.0 - conf / 100));
-          }
-          const pA = 1.0 - pH;
-          oddH = (1.0 / (pH * marginOvs)).toFixed(2);
-          oddA = (1.0 / (pA * marginOvs)).toFixed(2);
-          domH = (1.0 / (pH * marginDom)).toFixed(2);
-          domA = (1.0 / (pA * marginDom)).toFixed(2);
+          // 베트맨 미등록 경기는 가짜 배당을 임의 생성하지 않고 정직하게 '-' 처리 (팀명은 절대 변경 없음)
+          oddH = '-'; oddD = '-'; oddA = '-';
+          domH = '-'; domD = '-'; domA = '-';
         }
-        if (backendOu) {
-          ouBase = String(backendOu);
+        ouBase = backendOu ? String(backendOu) : '-';
+      } else {
+        // 2WAY: BASEBALL, BASKETBALL, HOCKEY, VOLLEYBALL
+        const rawH = backendOdds?.general_home || backendOdds?.home;
+        const rawA = backendOdds?.general_away || backendOdds?.away;
+        if (rawH && rawA && rawH !== '-' && rawA !== '-') {
+          oddH = Number(rawH).toFixed(2);
+          oddA = Number(rawA).toFixed(2);
+          domH = Number(backendOdds?.domestic_home || rawH).toFixed(2);
+          domA = Number(backendOdds?.domestic_away || rawA).toFixed(2);
+          oddD = '-'; domD = '-';
         } else {
-          const isNba = m.league_name && m.league_name.includes('NBA');
-          const isKbl = (sport === 'BASKETBALL' && m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('한국') || m.league_name.includes('농구'))) || (m.league_name && m.league_name.includes('KBL'));
-          const isNpb = m.league_name && m.league_name.includes('NPB');
-          const isKbo = m.league_name && m.league_name.includes('KBO');
-          ouBase = (sport === 'BASEBALL') ? (isNpb ? '6.5' : (isKbo ? '9.5' : '8.5')) : (sport === 'BASKETBALL' ? (isNba ? '226.5' : (isKbl ? '162.5' : '158.5')) : (sport === 'HOCKEY' ? '5.5' : '182.5'));
+          // 베트맨 미등록 경기는 가짜 배당을 임의 생성하지 않고 정직하게 '-' 처리 (팀명은 절대 변경 없음)
+          oddH = '-'; oddA = '-'; oddD = '-';
+          domH = '-'; domA = '-'; domD = '-';
         }
+        ouBase = backendOu ? String(backendOu) : '-';
       }
 
       // 3. 마감 및 임박 시각적 스타일링
@@ -13803,8 +13755,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
             <div class="col-12 col-md-7">
               <div class="rounded-2 border p-2 h-100 bg-white d-flex flex-column justify-content-between" style="border-color: #e2e8f0; min-height: 220px;">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                  <span class="small fw-bold text-dark" style="font-size:0.73rem;"><i class="bi bi-graph-up-arrow text-primary me-1"></i>배당률 변동 타임라인 (Odds Trend)</span>
-                  <span class="text-muted" style="font-size:0.64rem;">최근 24시간 추이</span>
+                  <span class="small fw-bold text-dark" style="font-size:0.73rem;"><i class="bi bi-graph-up-arrow text-primary me-1"></i>베트맨 배당률 변동 이력</span>
+                  <span id="oddsTrendStatus_${m.id}" class="text-muted" style="font-size:0.64rem;">실시간 추적</span>
                 </div>
                 <div id="apexOddsTrendChart_${m.id}" style="width: 100%; min-height: 180px;"></div>
               </div>
@@ -13892,102 +13844,168 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
       }
 
-      // Render Odds Trend
+      // Render Real Betman Odds Trend (No fake multipliers, 100% authentic Betman data)
       const trendEl = document.getElementById(`apexOddsTrendChart_${m.id}`);
+      const statusEl = document.getElementById(`oddsTrendStatus_${m.id}`);
       if (trendEl) {
-        const oddsData = (typeof getMatchOdds === 'function') ? getMatchOdds(m) : null;
-        const curOddH = Number(oddsData?.oddH || 1.85);
-        const curOddA = Number(oddsData?.oddA || 1.95);
-        const curOddD = isSoccer ? Number(oddsData?.oddD || 3.20) : null;
+        trendEl.innerHTML = `
+          <div class="d-flex flex-column align-items-center justify-content-center h-100 py-4">
+            <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+            <span class="small text-muted" style="font-size:0.72rem;">베트맨 공식 실시간 배당 이력 조회 중...</span>
+          </div>
+        `;
 
-        const series = [
-          {
-            name: `홈: ${hName}`,
-            data: [
-              Number((curOddH * 1.06).toFixed(2)),
-              Number((curOddH * 1.03).toFixed(2)),
-              Number((curOddH * 0.99).toFixed(2)),
-              Number((curOddH * 1.01).toFixed(2)),
-              curOddH
-            ]
-          },
-          {
-            name: `원정: ${aName}`,
-            data: [
-              Number((curOddA * 0.95).toFixed(2)),
-              Number((curOddA * 0.98).toFixed(2)),
-              Number((curOddA * 1.02).toFixed(2)),
-              Number((curOddA * 0.99).toFixed(2)),
-              curOddA
-            ]
-          }
-        ];
+        fetch(`/api/v1/toto/odds-history/${m.id}`)
+          .then(res => res.json())
+          .then(data => {
+            if (!trendEl) return;
+            const history = Array.isArray(data.history) ? data.history : [];
+            const validHistory = history.filter(h => h.home && h.away && Number(h.home) > 0 && Number(h.away) > 0);
+            
+            const curOdds = data.current_odds || {};
+            const curH = curOdds.general_home || curOdds.home || (validHistory.length > 0 ? validHistory[validHistory.length - 1].home : null);
+            const curA = curOdds.general_away || curOdds.away || (validHistory.length > 0 ? validHistory[validHistory.length - 1].away : null);
+            const curD = isSoccer ? (curOdds.draw || (validHistory.length > 0 ? validHistory[validHistory.length - 1].draw : null)) : null;
 
-        if (isSoccer && curOddD) {
-          series.splice(1, 0, {
-            name: '무승부 (Draw)',
-            data: [
-              Number((curOddD * 1.02).toFixed(2)),
-              Number((curOddD * 1.01).toFixed(2)),
-              Number((curOddD * 0.98).toFixed(2)),
-              Number((curOddD * 1.00).toFixed(2)),
-              curOddD
-            ]
+            // 1. 배당 변동 이력이 2개 이상이고 실제 값이 존재하는 경우 -> 실데이터 ApexCharts 라인 차트 렌더링
+            if (validHistory.length >= 2) {
+              if (statusEl) {
+                const chgCount = validHistory.filter(h => h.is_changed).length;
+                statusEl.innerHTML = chgCount > 0 
+                  ? `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle py-0.5 px-1.5" style="font-size:0.62rem;"><i class="bi bi-arrow-left-right me-1"></i>변동 ${chgCount}회 감지</span>`
+                  : `<span class="badge bg-light text-secondary border py-0.5 px-1.5" style="font-size:0.62rem;">실시간 수집 중</span>`;
+              }
+
+              trendEl.innerHTML = '';
+              const categories = validHistory.map(h => h.time || h.timestamp || '');
+              const series = [
+                {
+                  name: `홈: ${hName}`,
+                  data: validHistory.map(h => Number(h.home).toFixed(2))
+                },
+                {
+                  name: `원정: ${aName}`,
+                  data: validHistory.map(h => Number(h.away).toFixed(2))
+                }
+              ];
+
+              if (isSoccer) {
+                const drawData = validHistory.map(h => h.draw ? Number(h.draw).toFixed(2) : null);
+                if (drawData.some(v => v !== null)) {
+                  series.splice(1, 0, {
+                    name: '무승부',
+                    data: drawData
+                  });
+                }
+              }
+
+              const trendOptions = {
+                series: series,
+                chart: {
+                  height: 180,
+                  type: 'line',
+                  toolbar: { show: false },
+                  zoom: { enabled: false }
+                },
+                colors: isSoccer ? ['#dc2626', '#64748b', '#2563eb'] : ['#dc2626', '#2563eb'],
+                dataLabels: { enabled: false },
+                markers: { size: 4, hover: { size: 6 } },
+                stroke: { curve: 'straight', width: 2.5 },
+                grid: {
+                  borderColor: '#f1f5f9',
+                  strokeDashArray: 3,
+                  padding: { left: 5, right: 5, top: 0, bottom: 0 }
+                },
+                xaxis: {
+                  categories: categories,
+                  labels: {
+                    style: { fontSize: '10px', colors: '#64748b', fontWeight: 600 }
+                  }
+                },
+                yaxis: {
+                  labels: {
+                    formatter: function(val) { return Number(val).toFixed(2); },
+                    style: { fontSize: '10px', colors: '#64748b' }
+                  }
+                },
+                tooltip: {
+                  y: {
+                    formatter: function(val) { return Number(val).toFixed(2) + '배'; }
+                  }
+                },
+                legend: {
+                  position: 'top',
+                  horizontalAlign: 'right',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  offsetY: -5
+                }
+              };
+
+              try {
+                const trendChart = new ApexCharts(trendEl, trendOptions);
+                trendChart.render();
+                _apexInstances['oddsTrend'] = trendChart;
+              } catch(e) {
+                console.warn('Real odds chart error:', e);
+              }
+            } 
+            // 2. 베트맨 발매 경기는 맞으나 아직 배당 변동이 없는 경우 (가짜 그래프 대신 정직한 공식 상태 카드 표시)
+            else if (curH && curA && Number(curH) > 0 && Number(curA) > 0) {
+              if (statusEl) {
+                statusEl.innerHTML = `<span class="badge bg-success-subtle text-success border border-success-subtle py-0.5 px-1.5" style="font-size:0.62rem;"><i class="bi bi-shield-check me-1"></i>공식 배당 유지</span>`;
+              }
+              trendEl.innerHTML = `
+                <div class="d-flex flex-column justify-content-center align-items-center h-100 py-3 text-center">
+                  <div class="badge bg-light text-secondary border mb-2 px-2.5 py-1" style="font-size: 0.72rem;">
+                    <i class="bi bi-check-circle-fill text-success me-1"></i>베트맨 승부식 공식 발매 배당
+                  </div>
+                  <div class="d-flex gap-2 my-2 w-100 justify-content-center">
+                    <div class="p-2 px-3 rounded border text-center" style="background:#f8fafc; min-width: 95px;">
+                      <div class="text-muted fw-semibold" style="font-size:0.65rem;">홈 (${hName})</div>
+                      <div class="fw-bold text-danger fs-6">${Number(curH).toFixed(2)}</div>
+                    </div>
+                    ${isSoccer && curD ? `
+                    <div class="p-2 px-3 rounded border text-center" style="background:#f8fafc; min-width: 80px;">
+                      <div class="text-muted fw-semibold" style="font-size:0.65rem;">무승부</div>
+                      <div class="fw-bold text-secondary fs-6">${Number(curD).toFixed(2)}</div>
+                    </div>` : ''}
+                    <div class="p-2 px-3 rounded border text-center" style="background:#f8fafc; min-width: 95px;">
+                      <div class="text-muted fw-semibold" style="font-size:0.65rem;">원정 (${aName})</div>
+                      <div class="fw-bold text-primary fs-6">${Number(curA).toFixed(2)}</div>
+                    </div>
+                  </div>
+                  <div class="text-muted small mt-1 d-flex align-items-center" style="font-size:0.68rem;">
+                    <span class="spinner-grow spinner-grow-sm text-success me-1.5" style="width: 7px; height: 7px;"></span>
+                    발매 이후 배당 변동 없음 (3분 주기 실시간 변동 감지 중)
+                  </div>
+                </div>
+              `;
+            } 
+            // 3. 베트맨 프로토 미대상 경기인 경우
+            else {
+              if (statusEl) {
+                statusEl.innerHTML = `<span class="badge bg-light text-muted border py-0.5 px-1.5" style="font-size:0.62rem;">미대상</span>`;
+              }
+              trendEl.innerHTML = `
+                <div class="d-flex flex-column justify-content-center align-items-center h-100 py-4 text-center">
+                  <i class="bi bi-dash-circle text-muted fs-4 mb-1"></i>
+                  <div class="fw-semibold text-secondary small" style="font-size:0.75rem;">베트맨 프로토 승부식 미대상 경기</div>
+                  <div class="text-muted mt-1" style="font-size:0.68rem;">본 경기는 현재 베트맨 공식 승부식 발매 대상이 아닙니다.</div>
+                </div>
+              `;
+            }
+          })
+          .catch(err => {
+            console.warn('Failed to fetch odds history:', err);
+            if (trendEl) {
+              trendEl.innerHTML = `
+                <div class="d-flex flex-column justify-content-center align-items-center h-100 py-4 text-center">
+                  <span class="text-muted small" style="font-size:0.70rem;">배당 변동 데이터를 불러오지 못했습니다.</span>
+                </div>
+              `;
+            }
           });
-        }
-
-        const trendOptions = {
-          series: series,
-          chart: {
-            height: 180,
-            type: 'line',
-            toolbar: { show: false },
-            zoom: { enabled: false }
-          },
-          colors: isSoccer ? ['#dc2626', '#64748b', '#2563eb'] : ['#dc2626', '#2563eb'],
-          dataLabels: { enabled: false },
-          stroke: {
-            curve: 'smooth',
-            width: 2.5
-          },
-          grid: {
-            borderColor: '#f1f5f9',
-            strokeDashArray: 3,
-            padding: { left: 5, right: 5, top: 0, bottom: 0 }
-          },
-          xaxis: {
-            categories: ['-24h', '-12h', '-6h', '-2h', '현재'],
-            labels: {
-              style: { fontSize: '10px', colors: '#64748b', fontWeight: 600 }
-            }
-          },
-          yaxis: {
-            labels: {
-              formatter: function(val) { return Number(val).toFixed(2); },
-              style: { fontSize: '10px', colors: '#64748b' }
-            }
-          },
-          tooltip: {
-            y: {
-              formatter: function(val) { return Number(val).toFixed(2) + '배'; }
-            }
-          },
-          legend: {
-            position: 'top',
-            horizontalAlign: 'right',
-            fontSize: '11px',
-            fontWeight: 600,
-            offsetY: -5
-          }
-        };
-
-        try {
-          const trendChart = new ApexCharts(trendEl, trendOptions);
-          trendChart.render();
-          _apexInstances['oddsTrend'] = trendChart;
-        } catch(e) {
-          console.warn('Odds trend chart error:', e);
-        }
       }
     }
 

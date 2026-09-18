@@ -190,30 +190,37 @@ class SchedulerService:
                         "LIGUE_1", "MLS", "UCL", "UEL", "CHAMPIONSHIP", "EREDIVISIE",
                         "LIBERTADORES", "JLEAGUE", "NBA", "KBL"]
 
-        db = SessionLocal()
         summary = {}
         try:
             # 1. 베트맨 프로토 발매 경기 및 최신 배당 즉시 강제 수집 (Fix 4: 30초 대기 없이 즉시 배당 sync)
             try:
                 from app.services.betman_service import BetmanService
-                proto_res = await asyncio.to_thread(BetmanService.sync_betman_proto_matches, db=db)
+                db_proto = SessionLocal()
+                try:
+                    proto_res = await asyncio.to_thread(BetmanService.sync_betman_proto_matches, db=db_proto)
+                finally:
+                    db_proto.close()
                 summary["BETMAN_PROTO"] = proto_res
                 logger.info(f"[Startup Sync] 베트맨 프로토 즉시 배당 동기화 완료: {proto_res}")
             except Exception as be:
                 logger.warning(f"[Startup Sync] 베트맨 프로토 동기화 경고: {be}")
                 summary["BETMAN_PROTO"] = f"ERR: {str(be)[:60]}"
 
-            # 2. 공식 종목별 경기 일정 동기화
+            # 2. 공식 종목별 경기 일정 동기화 (개별 세션 분리로 DB 락 방지)
             for lid in sync_leagues:
                 try:
-                    res = await asyncio.to_thread(
-                        MatchService.sync_from_official_site,
-                        db=db,
-                        league_id=lid,
-                        start_date=yesterday_str,
-                        end_date=tomorrow_str
-                    )
-                    summary[lid] = res.get("synced_matches_count", 0)
+                    db_league = SessionLocal()
+                    try:
+                        res = await asyncio.to_thread(
+                            MatchService.sync_from_official_site,
+                            db=db_league,
+                            league_id=lid,
+                            start_date=yesterday_str,
+                            end_date=tomorrow_str
+                        )
+                        summary[lid] = res.get("synced_matches_count", 0)
+                    finally:
+                        db_league.close()
                 except Exception as ex:
                     summary[lid] = f"ERR: {str(ex)[:60]}"
 

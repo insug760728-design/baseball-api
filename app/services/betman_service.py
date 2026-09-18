@@ -746,9 +746,24 @@ class BetmanService:
         # 야구, 농구, 배구 메인 배당 최종 정립
         for k, v in indexed.items():
             if v['sport_code'] == 'BASEBALL':
-                s1p = v.get('s1p')
                 gen = v.get('general')
-                if s1p:
+                s1p = v.get('s1p')
+                if gen:
+                    v['main_odds'] = {
+                        'home': gen['home'],
+                        'draw': None,
+                        'away': gen['away'],
+                        'general_home': gen['home'],
+                        'general_away': gen['away'],
+                        's1p_home': s1p['home'] if s1p else None,
+                        's1p_draw': s1p['draw'] if s1p else None,
+                        's1p_away': s1p['away'] if s1p else None,
+                        'domestic_home': gen['home'],
+                        'domestic_draw': None,
+                        'domestic_away': gen['away'],
+                        'is_betman_official': True
+                    }
+                elif s1p:
                     v['main_odds'] = {
                         'home': s1p['home'],
                         'draw': s1p['draw'],
@@ -756,14 +771,17 @@ class BetmanService:
                         's1p_home': s1p['home'],
                         's1p_draw': s1p['draw'],
                         's1p_away': s1p['away'],
-                        'general_home': gen['home'] if gen else s1p['home'],
-                        'general_away': gen['away'] if gen else s1p['away'],
+                        'general_home': s1p['home'],
+                        'general_away': s1p['away'],
                         'domestic_home': s1p['home'],
                         'domestic_draw': s1p['draw'],
                         'domestic_away': s1p['away'],
                         'is_betman_official': True
                     }
-                elif gen:
+            elif v['sport_code'] == 'BASKETBALL':
+                gen = v.get('general')
+                s5p = v.get('s5p')
+                if gen:
                     v['main_odds'] = {
                         'home': gen['home'],
                         'draw': None,
@@ -775,10 +793,7 @@ class BetmanService:
                         'domestic_away': gen['away'],
                         'is_betman_official': True
                     }
-            elif v['sport_code'] == 'BASKETBALL':
-                s5p = v.get('s5p')
-                gen = v.get('general')
-                if s5p:
+                elif s5p:
                     v['main_odds'] = {
                         'home': s5p['home'],
                         'draw': s5p['draw'],
@@ -786,16 +801,6 @@ class BetmanService:
                         'domestic_home': s5p['home'],
                         'domestic_draw': s5p['draw'],
                         'domestic_away': s5p['away'],
-                        'is_betman_official': True
-                    }
-                elif gen:
-                    v['main_odds'] = {
-                        'home': gen['home'],
-                        'draw': None,
-                        'away': gen['away'],
-                        'domestic_home': gen['home'],
-                        'domestic_draw': None,
-                        'domestic_away': gen['away'],
                         'is_betman_official': True
                     }
             elif v['sport_code'] == 'VOLLEYBALL':
@@ -848,6 +853,12 @@ class BetmanService:
             a_norm = clean_name(m.away_team_name)
 
             proto_info = indexed_proto.get((h_norm, a_norm))
+            if not proto_info:
+                for (ih, ia), info in indexed_proto.items():
+                    if teams_match(ih, h_norm) and teams_match(ia, a_norm):
+                        proto_info = info
+                        break
+
             if proto_info and proto_info.get('main_odds'):
                 m.odds = proto_info['main_odds']
                 m.all_odds = proto_info.get('all_odds', [])
@@ -915,6 +926,69 @@ class BetmanService:
         }
 
     @staticmethod
+    def get_match_odds_history(match_id: int, db=None) -> dict:
+        """
+        특정 경기의 실제 베트맨 배당 변경 이력(betman_odds_history) 조회
+        """
+        from app.models.models import BetmanOddsHistory, Match
+        own_db = False
+        if db is None:
+            from app.core.database import SessionLocal
+            db = SessionLocal()
+            own_db = True
+        try:
+            match = db.query(Match).filter(Match.id == match_id).first()
+            if not match:
+                return {"status": "error", "message": "Match not found", "history": []}
+
+            records = db.query(BetmanOddsHistory).filter(
+                BetmanOddsHistory.match_id == match_id
+            ).order_by(BetmanOddsHistory.captured_at.asc(), BetmanOddsHistory.id.asc()).all()
+
+            history_items = []
+            for r in records:
+                cap_kst = r.captured_at + timedelta(hours=9) if r.captured_at else None
+                time_str = cap_kst.strftime("%H:%M") if cap_kst else ""
+                h_val = float(r.home_odds) if r.home_odds and r.home_odds != 'None' else None
+                d_val = float(r.draw_odds) if r.draw_odds and r.draw_odds != 'None' and float(r.draw_odds or 0) > 0 else None
+                a_val = float(r.away_odds) if r.away_odds and r.away_odds != 'None' else None
+                history_items.append({
+                    "id": r.id,
+                    "time": time_str,
+                    "timestamp": cap_kst.strftime("%m/%d %H:%M") if cap_kst else "",
+                    "home": h_val,
+                    "draw": d_val,
+                    "away": a_val,
+                    "is_changed": bool(r.is_changed)
+                })
+
+            indexed = BetmanService.get_indexed_proto_matches()
+            h_norm = clean_name(match.home_team_name)
+            a_norm = clean_name(match.away_team_name)
+            p_info = indexed.get((h_norm, a_norm))
+            if not p_info:
+                for (ih, ia), info in indexed.items():
+                    if teams_match(ih, h_norm) and teams_match(ia, a_norm):
+                        p_info = info
+                        break
+
+            cur_odds = p_info.get('main_odds') if p_info else {}
+
+            return {
+                "status": "success",
+                "match_id": match_id,
+                "home_team": match.home_team_name,
+                "away_team": match.away_team_name,
+                "current_odds": cur_odds,
+                "history": history_items,
+                "total_records": len(history_items),
+                "has_changes": any(item.get("is_changed") for item in history_items)
+            }
+        finally:
+            if own_db and db is not None:
+                db.close()
+
+    @staticmethod
     def sync_betman_proto_matches(db) -> dict:
         """
         베트맨 최신 프로토(G101) 전체 경기를 DB에 자동으로 동기화
@@ -954,7 +1028,8 @@ class BetmanService:
             l = d.get('leagueName', '').strip()
             sp = d.get('itemCode', 'BS')
             seq = d.get('matchSeq')
-            m_key = f"{sp}_{l}_{h}_{a}"
+            m_date_day = m_date_str[:10] if m_date_str else ""
+            m_key = f"{sp}_{l}_{h}_{a}_{m_date_day}"
 
             if m_key not in grouped:
                 sport_code = "BASEBALL" if sp == "BS" else ("SOCCER" if sp == "SC" else ("BASKETBALL" if sp == "BK" else "VOLLEYBALL"))
@@ -976,9 +1051,10 @@ class BetmanService:
             l_pct = round(v.get('L_BET_CNT', 0) / tot * 100, 1) if tot else 0.0
             d_pct = round(v.get('D_BET_CNT', 0) / tot * 100, 1) if tot else 0.0
 
+            bet_name = (d.get('betNm') or '').strip()
             odd_item = {
                 'seq': seq,
-                'type': d.get('betTypNm', '일반 승패'),
+                'type': bet_name or d.get('betTypNm', '일반 승패'),
                 'home_odds': float(d.get('winAllot') or 0.0),
                 'draw_odds': float(d.get('drawAllot') or 0.0),
                 'away_odds': float(d.get('loseAllot') or 0.0),
@@ -991,8 +1067,19 @@ class BetmanService:
                 'loss_pct': l_pct
             }
             grouped[m_key]['odds_list'].append(odd_item)
-            if not grouped[m_key]['main_odds'] or '승무패' in d.get('betTypNm', '') or '일반 승패' in d.get('betTypNm', ''):
+            
+            # main_odds 선택: 공식 본경기 승패/승무패 (야구 승패, 축구 승무패, 농구 승패 등) 최우선 채택
+            cur_main = grouped[m_key]['main_odds']
+            is_valid = (odd_item['home_odds'] > 0 and odd_item['away_odds'] > 0)
+            is_gen = bet_name in ('야구 승패', '축구 승무패', '농구 승패', '배구 승패') or ('승패' in bet_name and '승1패' not in bet_name and '전반' not in bet_name)
+
+            if not cur_main:
                 grouped[m_key]['main_odds'] = odd_item
+            elif is_valid:
+                cur_valid = (cur_main.get('home_odds', 0) > 0 and cur_main.get('away_odds', 0) > 0)
+                cur_is_gen = (cur_main.get('type') in ('야구 승패', '축구 승무패', '농구 승패', '배구 승패'))
+                if not cur_valid or (is_gen and not cur_is_gen):
+                    grouped[m_key]['main_odds'] = odd_item
 
         synced_count = 0
         updated_count = 0
@@ -1069,36 +1156,54 @@ class BetmanService:
                 d_pct = str(main_odd.get('draw_pct') or '0.0')
                 l_pct = str(main_odd.get('loss_pct') or '0.0')
 
-                last_hist = db.query(BetmanOddsHistory).filter(
-                    BetmanOddsHistory.match_id == match.id
-                ).order_by(BetmanOddsHistory.captured_at.desc(), BetmanOddsHistory.id.desc()).first()
+                # 유효한 양수 배당(> 0)만 이력으로 관리 (0.0 미발매 데이터는 이력 오염 방지)
+                try:
+                    is_positive_odds = (float(cur_h) > 0 and float(cur_a) > 0)
+                except Exception:
+                    is_positive_odds = False
 
-                if not last_hist:
-                    # 최초 수집 시 초기 레코드 추가 (is_changed=False)
-                    init_hist = BetmanOddsHistory(
-                        match_id=match.id,
-                        seq=cur_seq,
-                        home_odds=cur_h,
-                        draw_odds=cur_d,
-                        away_odds=cur_a,
-                        win_vote_pct=w_pct,
-                        draw_vote_pct=d_pct,
-                        loss_vote_pct=l_pct,
-                        captured_at=datetime.utcnow(),
-                        is_changed=False
-                    )
-                    db.add(init_hist)
-                    db.commit()
-                else:
-                    # 배당값이 이전과 다르면 이력 레코드 추가 (is_changed=True)
-                    prev_h = str(last_hist.home_odds or '0.0')
-                    prev_d = str(last_hist.draw_odds or '0.0')
-                    prev_a = str(last_hist.away_odds or '0.0')
+                if is_positive_odds:
+                    last_hist = db.query(BetmanOddsHistory).filter(
+                        BetmanOddsHistory.match_id == match.id
+                    ).order_by(BetmanOddsHistory.captured_at.desc(), BetmanOddsHistory.id.desc()).first()
 
-                    try:
-                        is_odds_diff = (float(prev_h) != float(cur_h) or float(prev_d) != float(cur_d) or float(prev_a) != float(cur_a))
-                    except Exception:
-                        is_odds_diff = (prev_h != cur_h or prev_d != cur_d or prev_a != cur_a)
+                    # 만약 기존 최초 기록이 0.0 이었으면 유효한 발매 배당으로 갱신
+                    if last_hist and (float(last_hist.home_odds or 0) <= 0 or float(last_hist.away_odds or 0) <= 0):
+                        last_hist.home_odds = cur_h
+                        last_hist.draw_odds = cur_d
+                        last_hist.away_odds = cur_a
+                        last_hist.win_vote_pct = w_pct
+                        last_hist.draw_vote_pct = d_pct
+                        last_hist.loss_vote_pct = l_pct
+                        last_hist.captured_at = datetime.utcnow()
+                        last_hist.is_changed = False
+                        db.commit()
+                    elif not last_hist:
+                        # 최초 수집 시 초기 레코드 추가 (is_changed=False)
+                        init_hist = BetmanOddsHistory(
+                            match_id=match.id,
+                            seq=cur_seq,
+                            home_odds=cur_h,
+                            draw_odds=cur_d,
+                            away_odds=cur_a,
+                            win_vote_pct=w_pct,
+                            draw_vote_pct=d_pct,
+                            loss_vote_pct=l_pct,
+                            captured_at=datetime.utcnow(),
+                            is_changed=False
+                        )
+                        db.add(init_hist)
+                        db.commit()
+                    else:
+                        # 배당값이 이전과 다르면 이력 레코드 추가 (is_changed=True)
+                        prev_h = str(last_hist.home_odds or '0.0')
+                        prev_d = str(last_hist.draw_odds or '0.0')
+                        prev_a = str(last_hist.away_odds or '0.0')
+
+                        try:
+                            is_odds_diff = (float(prev_h) != float(cur_h) or float(prev_d) != float(cur_d) or float(prev_a) != float(cur_a))
+                        except Exception:
+                            is_odds_diff = (prev_h != cur_h or prev_d != cur_d or prev_a != cur_a)
 
                     if is_odds_diff:
                         chg_hist = BetmanOddsHistory(

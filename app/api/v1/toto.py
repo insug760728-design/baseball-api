@@ -68,6 +68,12 @@ def get_match_full_odds(match_id: int):
     return BetmanService.get_match_full_odds(match_id=match_id)
 
 
+@router.get('/odds-history/{match_id}', summary='특정 경기의 실제 베트맨 배당 변경 시계열 이력 조회')
+def get_match_odds_history(match_id: int, db: Session = Depends(get_db)):
+    """특정 경기의 실제 배당 변경 시계열 데이터 반환 (차트 실데이터 바인딩용)"""
+    return BetmanService.get_match_odds_history(match_id=match_id, db=db)
+
+
 @router.post('/sync-proto', summary='베트맨 프로토 배당 및 경기 전체 즉시 동기화')
 def sync_proto_matches(db: Session = Depends(get_db)):
     """베트맨 공식 프로토 경기 및 배당률, 실시간 투표율을 DB에 즉시 동기화"""
