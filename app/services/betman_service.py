@@ -839,7 +839,7 @@ class BetmanService:
     @staticmethod
     def attach_betman_odds_to_matches(matches: list, db=None) -> list:
         """
-        MatchService.get_matches가 반환하는 경기 목록에 실제 베트맨 공식 배당(G101) 및 all_odds 주입 (O(1) 속도)
+        MatchService.get_matches가 반환하는 경기 목록에 실제 베트맨 공식 배당(G101) 및 all_odds 주입 (O(1) 초고속)
         """
         if not matches:
             return matches
@@ -848,16 +848,27 @@ class BetmanService:
         if not indexed_proto:
             return matches
 
+        # O(1) 초고속 조회를 위한 캐노니컬 팀명 인덱스 구축 (최초 1회 생성 후 캐시)
+        canon_index = getattr(BetmanService, '_proto_canon_index', None)
+        canon_ts = getattr(BetmanService, '_proto_canon_ts', 0.0)
+        now_ts = time.time()
+        if canon_index is None or (now_ts - canon_ts > 180.0):
+            canon_index = {}
+            for (ih, ia), info in indexed_proto.items():
+                ck = (get_canonical_team_key(ih), get_canonical_team_key(ia))
+                if ck not in canon_index:
+                    canon_index[ck] = info
+            BetmanService._proto_canon_index = canon_index
+            BetmanService._proto_canon_ts = now_ts
+
         for m in matches:
             h_norm = clean_name(m.home_team_name)
             a_norm = clean_name(m.away_team_name)
 
             proto_info = indexed_proto.get((h_norm, a_norm))
             if not proto_info:
-                for (ih, ia), info in indexed_proto.items():
-                    if teams_match(ih, h_norm) and teams_match(ia, a_norm):
-                        proto_info = info
-                        break
+                ck = (get_canonical_team_key(m.home_team_name), get_canonical_team_key(m.away_team_name))
+                proto_info = canon_index.get(ck)
 
             if proto_info and proto_info.get('main_odds'):
                 m.odds = proto_info['main_odds']
