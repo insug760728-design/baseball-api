@@ -8,7 +8,7 @@ class LivePollingAgent {
   constructor() {
     this._intervalId = null;
     this._isPolling = false;
-    this.intervalSeconds = 5;
+    this.intervalSeconds = 3;
     this._lastSyncTime = null;
     this._listeners = new Set();
   }
@@ -30,7 +30,7 @@ class LivePollingAgent {
     });
   }
 
-  start(intervalSeconds = 5) {
+  start(intervalSeconds = 3) {
     this.intervalSeconds = intervalSeconds;
     if (this._intervalId) clearInterval(this._intervalId);
 
@@ -63,13 +63,13 @@ class LivePollingAgent {
         statusEl.innerText = '⚡ WebSocket 실시간 초고속 동기화 활성 (지연 0ms)';
       }
     } else {
-      // 웹소켓 단절 시 즉각 5초 긴급 HTTP 폴링으로 자가 복구
-      if (this.intervalSeconds !== 5) {
-        this.start(5);
+      // 웹소켓 단절 시 즉각 3초 긴급 HTTP 폴링으로 자가 복구
+      if (this.intervalSeconds !== 3) {
+        this.start(3);
       }
       const statusEl = document.getElementById('hourlySyncStatus');
       if (statusEl) {
-        statusEl.innerText = '실시간 라이브 자동 갱신 (5초 주기 가동 중)';
+        statusEl.innerText = '실시간 라이브 자동 갱신 (3초 주기 가동 중)';
       }
     }
   }

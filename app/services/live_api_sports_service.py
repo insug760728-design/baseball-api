@@ -1195,9 +1195,9 @@ class LiveApiSportsService:
         if not key:
             return None
 
-        # Determine TTL: 축구는 30초, 야구는 10초 기본 캐시
+        # Determine TTL: 축구는 30초, 야구(KBO/NPB)는 3초 초고속 실시간 캐시
         if ttl_seconds is None:
-            ttl_seconds = 30 if sport == "football" else 10
+            ttl_seconds = 30 if sport == "football" else 3
 
         cache_key = f"{sport}:{endpoint}"
         now_ts = time.time()
