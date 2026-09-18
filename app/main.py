@@ -88,6 +88,16 @@ async def lifespan(app: FastAPI):
     except Exception:
         pass
 
+    # 🚀 부팅 2초 후 초기 경기 캐시 백그라운드 프리로드 (첫 페이지 접속 시 지연 0초)
+    try:
+        import asyncio
+        async def _warmup_cache():
+            await asyncio.sleep(2)
+            await asyncio.to_thread(refresh_server_matches_cache)
+        asyncio.create_task(_warmup_cache())
+    except Exception:
+        pass
+
     # 🔄 1분 주기 경기 상태 자가 치유(Self-Healing) 데몬
     async def _match_lifecycle_daemon():
         while True:
@@ -166,7 +176,7 @@ def refresh_server_matches_cache() -> str:
     try:
         from app.schemas.schemas import MatchResponse
         db = SessionLocal()
-        matches = MatchService.get_matches(db, limit=120, order='asc')
+        matches = MatchService.get_matches(db, limit=250, order='asc')
         serialized = [MatchResponse.model_validate(m).model_dump(mode="json") for m in matches]
         json_str = json.dumps(serialized, ensure_ascii=False)
         _SERVER_MATCHES_CACHE["json_str"] = json_str

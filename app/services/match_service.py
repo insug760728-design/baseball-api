@@ -370,12 +370,12 @@ class MatchService:
             elif status == "SCHEDULED":
                 pass  # 모든 등록된 예정 경기 온전히 표출
             else:
-                # 기본 조회: 현재 LIVE 경기 + 모든 미래 SCHEDULED 경기 + 어제/오늘 경기
+                # 기본 조회: 현재 LIVE 경기 + 모든 미래 SCHEDULED 경기 + 오늘(00:00 이후) 경기
                 query = query.filter(
                     or_(
                         Match.status == 'LIVE',
                         Match.status == 'SCHEDULED',
-                        Match.match_date >= f"{yesterday_str} 00:00"
+                        Match.match_date >= f"{today_str} 00:00"
                     )
                 )
 
