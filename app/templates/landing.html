@@ -11055,6 +11055,7 @@ function getFullModalMatchList() {
       let sportIcon = '⚾';
       if (m.sport_code === 'SOCCER') sportIcon = '⚽';
       if (m.sport_code === 'BASKETBALL') sportIcon = '🏀';
+      if (m.sport_code === 'VOLLEYBALL') sportIcon = '🏐';
 
       const rawDate = m.match_date || '';
       const pred = m.prediction || {};
@@ -11332,8 +11333,31 @@ function getFullModalMatchList() {
               </div>
             </div>
           `;
+        } else if (m.sport_code === 'BASKETBALL' || m.sport_code === 'VOLLEYBALL') {
+          // 🏀/🏐 [농구·배구] 경기 시작 후 시간단위 API-Sports 공인 결과 전용 표시
+          const hasOfficialLiveScores = (hScore > 0 || aScore > 0);
+          const periodTxt = (m.sport_code === 'VOLLEYBALL') ? (st.quarter || '세트 진행중') : (st.quarter || '쿼터 진행중');
+          const scoreDisplayHtml = hasOfficialLiveScores
+            ? `<div class="d-flex align-items-center justify-content-between my-1 px-2.5 py-1.5 rounded" style="background:#0f172a; color:#fff; font-family:'Roboto Mono', monospace; font-size:1.15rem; font-weight:800;">
+                 <span class="text-truncate text-end" style="flex:1; font-size:0.85rem; font-family:sans-serif; color:#cbd5e1;">${hName}</span>
+                 <span class="mx-3"><span style="color:#f87171;">${hScore}</span> : <span style="color:#60a5fa;">${aScore}</span></span>
+                 <span class="text-truncate text-start" style="flex:1; font-size:0.85rem; font-family:sans-serif; color:#cbd5e1;">${aName}</span>
+               </div>`
+            : `<div class="p-2 rounded text-center my-1" style="background:#f1f5f9; border:1px solid #cbd5e1; font-size:0.75rem; color:#475569;">
+                 <i class="bi bi-clock-history me-1 text-primary"></i><b>경기 시작됨</b> · API 스포츠 시간단위 공식 결과 집계 대기
+               </div>`;
+
+          liveBroadcastStageHtml = `
+            <div class="p-2 rounded mb-1.5" style="background:#ffffff; border:1.2px solid #cbd5e1; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
+              <div class="d-flex justify-content-between align-items-center mb-1" style="font-size:0.72rem;">
+                <span class="badge bg-primary text-white px-1.5 py-0.5" style="font-size:0.64rem;">공식 결과 집계</span>
+                <span class="fw-bold text-danger">${periodTxt}</span>
+              </div>
+              ${scoreDisplayHtml}
+            </div>
+          `;
         } else {
-          // Basketball / Other live broadcast
+          // Other live broadcast
           liveBroadcastStageHtml = `
             <div class="soccer-live-tracker p-2 rounded mb-1.5" style="background:#ffffff; border:1px solid #e2e8f0; font-size:0.72rem;">
               <div class="d-flex justify-content-between align-items-center text-muted mb-1">
@@ -11403,7 +11427,8 @@ function getFullModalMatchList() {
 
       const hScoreVal = m.home_score ?? (m.scoreboard && m.scoreboard.home_score) ?? (m.team_stats && m.team_stats.home_score) ?? null;
       const aScoreVal = m.away_score ?? (m.scoreboard && m.scoreboard.away_score) ?? (m.team_stats && m.team_stats.away_score) ?? null;
-      const hasScores = (hScoreVal !== null && aScoreVal !== null && (isFinished || isLive || hScoreVal > 0 || aScoreVal > 0 || m.status === 'LIVE' || m.status === 'IN_PLAY'));
+      const isBkOrVb = (m.sport_code === 'BASKETBALL' || m.sport_code === 'VOLLEYBALL');
+      const hasScores = (hScoreVal !== null && aScoreVal !== null && (isFinished || (isLive && (!isBkOrVb || (hScoreVal > 0 || aScoreVal > 0))) || hScoreVal > 0 || aScoreVal > 0));
 
       let innText = isFinished ? '종료' : (isLive ? '진행중' : '예정');
       let centerRowHtml = '';
@@ -11413,6 +11438,12 @@ function getFullModalMatchList() {
           <span class="betman-score-val home finished">${hScoreVal ?? 0}</span>
           <span class="betman-inning-badge ${isFinished ? 'finished' : (isLive ? 'bg-danger text-white' : '')}">${innText}</span>
           <span class="betman-score-val away finished">${aScoreVal ?? 0}</span>
+          <span class="betman-team-away" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</span>
+        `;
+      } else if (isBkOrVb && isLive) {
+        centerRowHtml = `
+          <span class="betman-team-home" title="${m.home_team_name}">${formatTeamName(m.home_team_name)}</span>
+          <span class="badge bg-warning text-dark px-2 py-1" style="font-size:0.72rem; font-weight:700;"><i class="bi bi-clock-history me-1"></i>진행중 (결과 집계 중)</span>
           <span class="betman-team-away" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</span>
         `;
       } else {
@@ -13102,7 +13133,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const headTitle = document.getElementById('ngModalHeadTitle');
       const venueDate = document.getElementById('ngModalVenueDate');
 
-      const spIcon = match.sport_code === 'BASEBALL' ? '⚾' : (match.sport_code === 'BASKETBALL' ? '🏀' : '⚽');
+      const spIcon = match.sport_code === 'BASEBALL' ? '⚾' : (match.sport_code === 'BASKETBALL' ? '🏀' : (match.sport_code === 'VOLLEYBALL' ? '🏐' : '⚽'));
       if (numBadge) numBadge.innerText = `NO. ${match.id}`;
       if (leagueBadge) leagueBadge.innerText = `${spIcon} ${match.league_name || match.sport_code}`;
       if (headTitle) headTitle.innerText = `${formatTeamName(match.home_team_name)} VS ${formatTeamName(match.away_team_name)}`;
@@ -19259,12 +19290,29 @@ function renderPredDetail(m, customDetailData = null) {
             </div>
           </div>
         `;
+      } else if (m.sport_code === 'BASKETBALL' || m.sport_code === 'VOLLEYBALL') {
+        const sportKo = m.sport_code === 'BASKETBALL' ? '🏀 농구' : '🏐 배구';
+        if (isLive && hScore === 0 && aScore === 0) {
+          sportSpecificHtml = `
+            <div class="p-2 rounded mb-1 text-center" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.75rem; color:#475569;">
+              <div class="fw-bold mb-0.5"><i class="bi bi-clock-history me-1 text-warning"></i>${sportKo} 공식 결과 집계 중</div>
+              <div class="text-muted" style="font-size:0.68rem;">경기 시작 후 1시간 단위로 공식 스코어(API-Sports)가 자동 집계·반영됩니다.</div>
+            </div>
+          `;
+        } else {
+          sportSpecificHtml = `
+            <div class="p-2 rounded mb-1 text-center" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.75rem; color:#1e293b;">
+              <span class="badge ${isFin ? 'bg-secondary' : 'bg-success'} text-white me-1">${isFin ? '공식 경기종료' : '진행중'}</span>
+              <span class="fw-bold">${sportKo} API-Sports 공식 기록</span>
+            </div>
+          `;
+        }
       } else {
         sportSpecificHtml = `
           <div class="soccer-live-tracker p-2 rounded mb-1" style="background:#ffffff; border:1px solid #e2e8f0; font-size:0.72rem;">
             <div class="d-flex justify-content-between align-items-center text-muted mb-1">
               <span>진행 상황</span>
-              <span class="fw-bold text-danger">${m.sport_code === 'SOCCER' ? st.match_time : st.quarter}</span>
+              <span class="fw-bold text-danger">${st.match_time || '진행중'}</span>
             </div>
             <div class="progress" style="height:6px;">
               <div class="progress-bar bg-danger progress-bar-striped progress-bar-animated" style="width: 70%;"></div>
@@ -19272,6 +19320,8 @@ function renderPredDetail(m, customDetailData = null) {
           </div>
         `;
       }
+
+      const isBkOrVbPendingFocus = (m.sport_code === 'BASKETBALL' || m.sport_code === 'VOLLEYBALL') && isLive && hScore === 0 && aScore === 0;
 
       return `
         <div class="live-focus-card p-2.5 mb-2 rounded border" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-color: #cbd5e1 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
@@ -19303,14 +19353,23 @@ function renderPredDetail(m, customDetailData = null) {
               <div class="text-muted small" style="font-size:0.65rem;">HOME</div>
             </div>
             <div class="text-center px-2" style="flex:0 0 auto;">
-              <div class="fw-bold" style="font-size:1.30rem; font-family:monospace; color:#0f172a; line-height:1;">
-                <span style="${hScore > aScore ? 'color:#dc2626; font-weight:800;' : ''}">${hScore}</span>
-                <span style="color:#94a3b8; font-weight:300;">:</span>
-                <span style="${aScore > hScore ? 'color:#dc2626; font-weight:800;' : ''}">${aScore}</span>
-              </div>
-              <span class="badge py-0.5 px-1.5 mt-0.5" style="${inningBadgeStyle} font-size:0.65rem; font-weight:800; border-radius:4px;">
-                ${st.inning_text || 'LIVE'}
-              </span>
+              ${isBkOrVbPendingFocus ? `
+                <div class="fw-bold text-muted" style="font-size:1.15rem; font-family:monospace; line-height:1;">
+                  - : -
+                </div>
+                <span class="badge py-0.5 px-1.5 mt-0.5" style="background: #fef9c3; color: #854d0e; border: 1px solid #facc15; font-size:0.65rem; font-weight:800; border-radius:4px;">
+                  집계대기
+                </span>
+              ` : `
+                <div class="fw-bold" style="font-size:1.30rem; font-family:monospace; color:#0f172a; line-height:1;">
+                  <span style="${hScore > aScore ? 'color:#dc2626; font-weight:800;' : ''}">${hScore}</span>
+                  <span style="color:#94a3b8; font-weight:300;">:</span>
+                  <span style="${aScore > hScore ? 'color:#dc2626; font-weight:800;' : ''}">${aScore}</span>
+                </div>
+                <span class="badge py-0.5 px-1.5 mt-0.5" style="${inningBadgeStyle} font-size:0.65rem; font-weight:800; border-radius:4px;">
+                  ${st.inning_text || 'LIVE'}
+                </span>
+              `}
             </div>
             <div class="text-start" style="flex:1 1 38%;">
               <div class="fw-bold text-dark text-truncate" style="font-size:0.90rem;">${aName}</div>
@@ -19331,14 +19390,25 @@ function renderPredDetail(m, customDetailData = null) {
 
       const hScore = Number(m.home_score ?? 0);
       const aScore = Number(m.away_score ?? 0);
-      const hasScore = (m.home_score !== null && m.home_score !== undefined) || isLive || isFin;
+      const isBkOrVb = (m.sport_code === 'BASKETBALL' || m.sport_code === 'VOLLEYBALL');
+      const isPendingResult = isBkOrVb && isLive && hScore === 0 && aScore === 0;
+      const isNotStarted = !isLive && !isFin;
 
-      let hScoreHtml = `<span style="font-weight:700; color:#1e293b;">${hScore}</span>`;
-      let aScoreHtml = `<span style="font-weight:700; color:#1e293b;">${aScore}</span>`;
-      if (hasScore && hScore > aScore) {
-        hScoreHtml = `<span style="font-weight:800; color:#dc2626;">${hScore}</span>`;
-      } else if (hasScore && aScore > hScore) {
-        aScoreHtml = `<span style="font-weight:800; color:#dc2626;">${aScore}</span>`;
+      let scoreContentHtml = '';
+      if (isPendingResult) {
+        scoreContentHtml = `<span style="color:#64748b; font-size:0.75rem; font-weight:600;">집계대기</span>`;
+      } else if (isNotStarted) {
+        scoreContentHtml = `<span style="color:#94a3b8; font-size:0.75rem; font-weight:600;">- : -</span>`;
+      } else {
+        const hasScore = (m.home_score !== null && m.home_score !== undefined) || isLive || isFin;
+        let hScoreHtml = `<span style="font-weight:700; color:#1e293b;">${hScore}</span>`;
+        let aScoreHtml = `<span style="font-weight:700; color:#1e293b;">${aScore}</span>`;
+        if (hasScore && hScore > aScore) {
+          hScoreHtml = `<span style="font-weight:800; color:#dc2626;">${hScore}</span>`;
+        } else if (hasScore && aScore > hScore) {
+          aScoreHtml = `<span style="font-weight:800; color:#dc2626;">${aScore}</span>`;
+        }
+        scoreContentHtml = `${hScoreHtml} <span style="color:#94a3b8; font-weight:400; font-size:0.75rem;">:</span> ${aScoreHtml}`;
       }
 
       let sportIconHtml = '';
@@ -19355,10 +19425,13 @@ function renderPredDetail(m, customDetailData = null) {
       }
 
       let inningText = '';
-      if (isLive) {
+      if (isPendingResult) {
+        inningText = '집계대기';
+      } else if (isLive) {
         if (m.sport_code === 'BASEBALL') inningText = st.inning_text || (m.current_inning || '진행중');
         else if (m.sport_code === 'SOCCER') inningText = st.match_time || '전반';
         else if (m.sport_code === 'BASKETBALL') inningText = st.quarter || '진행중';
+        else if (m.sport_code === 'VOLLEYBALL') inningText = st.set_score || '진행중';
         else inningText = 'LIVE';
       } else if (isFin) {
         inningText = '종료';
@@ -19401,7 +19474,7 @@ function renderPredDetail(m, customDetailData = null) {
           <!-- Score -->
           <td class="text-center py-1.5 px-0.5" style="vertical-align: middle; white-space: nowrap;">
             <span class="px-1 py-0.5 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0; font-size: 0.82rem; font-family: -apple-system, monospace; font-weight: 700;">
-              ${hScoreHtml} <span style="color:#94a3b8; font-weight:400; font-size:0.75rem;">:</span> ${aScoreHtml}
+              ${scoreContentHtml}
             </span>
           </td>
 

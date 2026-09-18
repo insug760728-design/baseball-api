@@ -207,6 +207,15 @@ class SchedulerService:
                 except Exception as ex:
                     summary[lid] = f"ERR: {str(ex)[:60]}"
 
+            # 3. API-Sports 라이브 및 결과 즉시 동기화 (축구·야구·농구·배구)
+            try:
+                from app.services.live_api_sports_service import LiveApiSportsService
+                if LiveApiSportsService.is_configured():
+                    api_res = await asyncio.to_thread(LiveApiSportsService.sync_all)
+                    summary["API_SPORTS_INIT"] = {k: v.get("updated_db_matches", 0) for k, v in api_res.items() if isinstance(v, dict)}
+            except Exception as se:
+                logger.warning(f"[Startup Sync] API-Sports 초기 동기화 예외: {se}")
+
             logger.info(f"[Startup Sync] 서버 시작 신속 동기화 완료: {summary}")
             try:
                 from app.core.websocket_manager import manager
@@ -393,7 +402,9 @@ class SchedulerService:
                 if LiveApiSportsService.is_configured():
                     fb_res = await asyncio.to_thread(LiveApiSportsService.sync_live_football)
                     bb_res = await asyncio.to_thread(LiveApiSportsService.sync_live_baseball)
-                    summary["API_SPORTS_LIVE"] = {"football": fb_res, "baseball": bb_res}
+                    bk_res = await asyncio.to_thread(LiveApiSportsService.sync_live_basketball)
+                    vb_res = await asyncio.to_thread(LiveApiSportsService.sync_live_volleyball)
+                    summary["API_SPORTS_LIVE"] = {"football": fb_res, "baseball": bb_res, "basketball": bk_res, "volleyball": vb_res}
             except Exception as ase:
                 logger.error(f"[Scheduler] API-Sports live sync error: {ase}")
 

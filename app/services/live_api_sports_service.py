@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import re
 import time
 import json
 import urllib.request
@@ -30,6 +31,61 @@ BASEBALL_STATUS_MAP = {
     "IN6": "LIVE", "IN7": "LIVE", "IN8": "LIVE", "IN9": "LIVE", "IN": "LIVE",
     "FT": "FINISHED", "AOT": "FINISHED",
     "NS": "SCHEDULED", "POST": "CANCELLED", "CANC": "CANCELLED"
+}
+
+# Mapping API-Basketball status to our status
+BASKETBALL_STATUS_MAP = {
+    "Q1": "LIVE", "Q2": "LIVE", "Q3": "LIVE", "Q4": "LIVE", "OT": "LIVE", "HT": "LIVE", "BT": "LIVE", "LIVE": "LIVE",
+    "FT": "FINISHED", "AOT": "FINISHED",
+    "NS": "SCHEDULED", "POST": "CANCELLED", "CANC": "CANCELLED"
+}
+
+# Mapping API-Volleyball status to our status
+VOLLEYBALL_STATUS_MAP = {
+    "S1": "LIVE", "S2": "LIVE", "S3": "LIVE", "S4": "LIVE", "S5": "LIVE", "LIVE": "LIVE",
+    "FT": "FINISHED",
+    "NS": "SCHEDULED", "POST": "CANCELLED", "CANC": "CANCELLED"
+}
+
+# National / Asian Games / International Team Mapping (Basketball, Volleyball, etc.)
+NATIONAL_TEAM_MAP = {
+    "korea": "한국", "south korea": "한국", "korea republic": "한국", "republic of korea": "한국",
+    "china": "중국", "pr china": "중국",
+    "japan": "일본",
+    "chinese taipei": "대만", "taiwan": "대만",
+    "mongolia": "몽골",
+    "malaysia": "말레이시아",
+    "kazakhstan": "카자흐스탄",
+    "qatar": "카타르",
+    "hong kong": "홍콩", "hong kong china": "홍콩",
+    "kyrgyzstan": "키르기스스탄",
+    "vietnam": "베트남",
+    "thailand": "태국",
+    "indonesia": "인도네시아",
+    "philippines": "필리핀",
+    "iran": "이란",
+    "nepal": "네팔",
+    "saudi arabia": "사우디", "saudi": "사우디", "saudiarabia": "사우디",
+    "india": "인도",
+    "uzbekistan": "우즈베키스탄",
+    "bahrain": "바레인",
+    "jordan": "요르단",
+    "lebanon": "레바논",
+    "united states": "미국", "usa": "미국",
+    "puerto rico": "푸에르토리코",
+    "cuba": "쿠바",
+    "dominican republic": "도미니카공화국",
+    "brazil": "브라질",
+    "argentina": "아르헨티나",
+    "italy": "이탈리아",
+    "poland": "폴란드",
+    "serbia": "세르비아",
+    "turkey": "튀르키예",
+    "france": "프랑스",
+    "germany": "독일",
+    "canada": "캐나다",
+    "australia": "호주",
+    "spain": "스페인"
 }
 
 # Comprehensive Korean <-> English / International Team Synonyms
@@ -747,6 +803,13 @@ def translate_soccer_team(name: str) -> str:
             return v
     return trimmed
 
+def clean_international_team_name(n: str) -> str:
+    if not n:
+        return ""
+    n = str(n).strip()
+    n = re.sub(r'[\s_]+(여자|남자|w|m|women|men|u23|u20|u18)$', '', n, flags=re.IGNORECASE)
+    return n.strip()
+
 def teams_match(api_name: str, db_name: str) -> bool:
     norm_api = normalize_name(api_name)
     norm_db = normalize_name(db_name)
@@ -755,6 +818,19 @@ def teams_match(api_name: str, db_name: str) -> bool:
         return False
     if norm_api == norm_db:
         return True
+
+    # 0. National / Asian Games Team match (Basketball, Volleyball, Soccer)
+    c_api = clean_international_team_name(api_name).lower()
+    c_db = clean_international_team_name(db_name).lower()
+    if c_api and c_db:
+        if c_api == c_db:
+            return True
+        tr_api = NATIONAL_TEAM_MAP.get(c_api)
+        if tr_api and (tr_api == c_db or tr_api in c_db or c_db in tr_api):
+            return True
+        tr_db = NATIONAL_TEAM_MAP.get(c_db)
+        if tr_db and (tr_db == c_api or tr_db in c_api or c_api in tr_db):
+            return True
 
     # 1. Canonical synonym match
     canon_api = get_canonical(api_name)
@@ -778,6 +854,7 @@ def teams_match(api_name: str, db_name: str) -> bool:
             return True
 
     return False
+
 
 
 def parse_utc_to_kst(utc_str: str) -> tuple[Optional[datetime], str]:
@@ -1206,6 +1283,12 @@ class LiveApiSportsService:
             if sport == "football":
                 base_url = "https://api-football-v1.p.rapidapi.com/v3"
                 headers["x-rapidapi-host"] = "api-football-v1.p.rapidapi.com"
+            elif sport == "basketball":
+                base_url = "https://api-basketball.p.rapidapi.com"
+                headers["x-rapidapi-host"] = "api-basketball.p.rapidapi.com"
+            elif sport == "volleyball":
+                base_url = "https://api-volleyball.p.rapidapi.com"
+                headers["x-rapidapi-host"] = "api-volleyball.p.rapidapi.com"
             else:
                 base_url = "https://api-baseball.p.rapidapi.com"
                 headers["x-rapidapi-host"] = "api-baseball.p.rapidapi.com"
@@ -1213,6 +1296,10 @@ class LiveApiSportsService:
             headers["x-apisports-key"] = key
             if sport == "football":
                 base_url = "https://v3.football.api-sports.io"
+            elif sport == "basketball":
+                base_url = "https://v1.basketball.api-sports.io"
+            elif sport == "volleyball":
+                base_url = "https://v1.volleyball.api-sports.io"
             else:
                 base_url = "https://v1.baseball.api-sports.io"
 
@@ -1617,10 +1704,197 @@ class LiveApiSportsService:
             pass
 
     @classmethod
+    def sync_live_basketball(cls, date_str: Optional[str] = None, include_adjacent: bool = True) -> Dict[str, Any]:
+        """Fetch basketball games from API-Sports and update DB matches with official results (hourly)."""
+        if not cls.is_configured():
+            return {"status": "SKIPPED", "message": "API Key not configured"}
+
+        now_dt = datetime.utcnow() + timedelta(hours=9)
+        d_today = date_str or now_dt.strftime("%Y-%m-%d")
+        d_yesterday = (now_dt - timedelta(days=1)).strftime("%Y-%m-%d")
+
+        # 1. Fetch today's games (and yesterday if include_adjacent)
+        data_today = cls._make_request(f"/games?date={d_today}", sport="basketball", ttl_seconds=120)
+        games = (data_today or {}).get("response", [])
+        if include_adjacent:
+            data_yesterday = cls._make_request(f"/games?date={d_yesterday}", sport="basketball", ttl_seconds=300)
+            games += (data_yesterday or {}).get("response", [])
+
+        # Dedup by game ID
+        games_dict = {g["id"]: g for g in games if g.get("id")}
+        all_games = list(games_dict.values())
+
+        updated = 0
+        db = SessionLocal()
+        try:
+            db_matches = db.query(Match).filter(
+                Match.sport_code == "BASKETBALL",
+                or_(
+                    Match.status == "LIVE",
+                    Match.match_date.like(f"{d_yesterday}%"),
+                    Match.match_date.like(f"{d_today}%")
+                )
+            ).all()
+
+            for g in all_games:
+                status_info = g.get("status", {})
+                teams = g.get("teams", {})
+                scores = g.get("scores", {})
+
+                h_name = teams.get("home", {}).get("name", "")
+                a_name = teams.get("away", {}).get("name", "")
+                status_short = status_info.get("short", "")
+
+                mapped_status = BASKETBALL_STATUS_MAP.get(status_short, "SCHEDULED")
+                h_score = scores.get("home", {}).get("total") if isinstance(scores.get("home"), dict) else None
+                a_score = scores.get("away", {}).get("total") if isinstance(scores.get("away"), dict) else None
+
+                best_match = None
+                for m in db_matches:
+                    if (teams_match(h_name, m.home_team_name) and teams_match(a_name, m.away_team_name)) or \
+                       (teams_match(h_name, m.away_team_name) and teams_match(a_name, m.home_team_name)):
+                        best_match = m
+                        break
+
+                if best_match and (h_score is not None or mapped_status == "FINISHED"):
+                    is_reversed = (teams_match(h_name, best_match.away_team_name) and teams_match(a_name, best_match.home_team_name))
+                    final_h = a_score if is_reversed else h_score
+                    final_a = h_score if is_reversed else a_score
+
+                    if final_h is not None:
+                        best_match.home_score = final_h
+                    if final_a is not None:
+                        best_match.away_score = final_a
+                    best_match.status = mapped_status
+
+                    if not best_match.details:
+                        best_match.details = MatchDetail(match_id=best_match.id)
+                    if best_match.details:
+                        best_match.details.period_scores = json.dumps(scores, ensure_ascii=False)
+                        ts = json.loads(best_match.details.team_stats) if (best_match.details.team_stats and isinstance(best_match.details.team_stats, str)) else (best_match.details.team_stats or {})
+                        if isinstance(ts, dict):
+                            ts["quarter_scores"] = scores
+                            best_match.details.team_stats = json.dumps(ts, ensure_ascii=False)
+
+                    updated += 1
+
+            db.commit()
+            if updated > 0:
+                try:
+                    from app.api.v1.matches import clear_matches_cache
+                    clear_matches_cache()
+                except Exception:
+                    pass
+                cls._broadcast_live_update("BASKETBALL", updated)
+
+        except Exception as e:
+            logger.error(f"[LiveApiSports] Basketball sync error: {e}")
+            db.rollback()
+        finally:
+            db.close()
+
+        return {"status": "SUCCESS", "total_games": len(all_games), "updated_db_matches": updated}
+
+    @classmethod
+    def sync_live_volleyball(cls, date_str: Optional[str] = None, include_adjacent: bool = True) -> Dict[str, Any]:
+        """Fetch volleyball games from API-Sports and update DB matches with official results (hourly)."""
+        if not cls.is_configured():
+            return {"status": "SKIPPED", "message": "API Key not configured"}
+
+        now_dt = datetime.utcnow() + timedelta(hours=9)
+        d_today = date_str or now_dt.strftime("%Y-%m-%d")
+        d_yesterday = (now_dt - timedelta(days=1)).strftime("%Y-%m-%d")
+
+        # 1. Fetch today's games (and yesterday if include_adjacent)
+        data_today = cls._make_request(f"/games?date={d_today}", sport="volleyball", ttl_seconds=120)
+        games = (data_today or {}).get("response", [])
+        if include_adjacent:
+            data_yesterday = cls._make_request(f"/games?date={d_yesterday}", sport="volleyball", ttl_seconds=300)
+            games += (data_yesterday or {}).get("response", [])
+
+        # Dedup by game ID
+        games_dict = {g["id"]: g for g in games if g.get("id")}
+        all_games = list(games_dict.values())
+
+        updated = 0
+        db = SessionLocal()
+        try:
+            db_matches = db.query(Match).filter(
+                Match.sport_code == "VOLLEYBALL",
+                or_(
+                    Match.status == "LIVE",
+                    Match.match_date.like(f"{d_yesterday}%"),
+                    Match.match_date.like(f"{d_today}%")
+                )
+            ).all()
+
+            for g in all_games:
+                status_info = g.get("status", {})
+                teams = g.get("teams", {})
+                scores = g.get("scores", {})
+                periods = g.get("periods", {})
+
+                h_name = teams.get("home", {}).get("name", "")
+                a_name = teams.get("away", {}).get("name", "")
+                status_short = status_info.get("short", "")
+
+                mapped_status = VOLLEYBALL_STATUS_MAP.get(status_short, "SCHEDULED")
+                h_score = scores.get("home")
+                a_score = scores.get("away")
+
+                best_match = None
+                for m in db_matches:
+                    if (teams_match(h_name, m.home_team_name) and teams_match(a_name, m.away_team_name)) or \
+                       (teams_match(h_name, m.away_team_name) and teams_match(a_name, m.home_team_name)):
+                        best_match = m
+                        break
+
+                if best_match and (h_score is not None or mapped_status == "FINISHED"):
+                    is_reversed = (teams_match(h_name, best_match.away_team_name) and teams_match(a_name, best_match.home_team_name))
+                    final_h = a_score if is_reversed else h_score
+                    final_a = h_score if is_reversed else a_score
+
+                    if final_h is not None:
+                        best_match.home_score = final_h
+                    if final_a is not None:
+                        best_match.away_score = final_a
+                    best_match.status = mapped_status
+
+                    if not best_match.details:
+                        best_match.details = MatchDetail(match_id=best_match.id)
+                    if best_match.details:
+                        best_match.details.period_scores = json.dumps(periods, ensure_ascii=False)
+                        ts = json.loads(best_match.details.team_stats) if (best_match.details.team_stats and isinstance(best_match.details.team_stats, str)) else (best_match.details.team_stats or {})
+                        if isinstance(ts, dict):
+                            ts["set_scores"] = periods
+                            best_match.details.team_stats = json.dumps(ts, ensure_ascii=False)
+
+                    updated += 1
+
+            db.commit()
+            if updated > 0:
+                try:
+                    from app.api.v1.matches import clear_matches_cache
+                    clear_matches_cache()
+                except Exception:
+                    pass
+                cls._broadcast_live_update("VOLLEYBALL", updated)
+
+        except Exception as e:
+            logger.error(f"[LiveApiSports] Volleyball sync error: {e}")
+            db.rollback()
+        finally:
+            db.close()
+
+        return {"status": "SUCCESS", "total_games": len(all_games), "updated_db_matches": updated}
+
+    @classmethod
     def sync_all(cls) -> Dict[str, Any]:
         return {
             "football": cls.sync_live_football(),
-            "baseball": cls.sync_live_baseball()
+            "baseball": cls.sync_live_baseball(),
+            "basketball": cls.sync_live_basketball(),
+            "volleyball": cls.sync_live_volleyball()
         }
 
     @classmethod
@@ -1634,16 +1908,30 @@ class LiveApiSportsService:
         return await asyncio.to_thread(cls.sync_live_baseball, date_str)
 
     @classmethod
+    async def sync_live_basketball_async(cls, date_str: Optional[str] = None) -> Dict[str, Any]:
+        import asyncio
+        return await asyncio.to_thread(cls.sync_live_basketball, date_str)
+
+    @classmethod
+    async def sync_live_volleyball_async(cls, date_str: Optional[str] = None) -> Dict[str, Any]:
+        import asyncio
+        return await asyncio.to_thread(cls.sync_live_volleyball, date_str)
+
+    @classmethod
     async def sync_all_async(cls) -> Dict[str, Any]:
         import asyncio
-        fb, bb = await asyncio.gather(
+        fb, bb, bk, vb = await asyncio.gather(
             asyncio.to_thread(cls.sync_live_football),
             asyncio.to_thread(cls.sync_live_baseball),
+            asyncio.to_thread(cls.sync_live_basketball),
+            asyncio.to_thread(cls.sync_live_volleyball),
             return_exceptions=True
         )
         return {
             "football": fb if not isinstance(fb, Exception) else {"status": "ERROR", "error": str(fb)},
-            "baseball": bb if not isinstance(bb, Exception) else {"status": "ERROR", "error": str(bb)}
+            "baseball": bb if not isinstance(bb, Exception) else {"status": "ERROR", "error": str(bb)},
+            "basketball": bk if not isinstance(bk, Exception) else {"status": "ERROR", "error": str(bk)},
+            "volleyball": vb if not isinstance(vb, Exception) else {"status": "ERROR", "error": str(vb)}
         }
 
     @classmethod
