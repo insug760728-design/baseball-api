@@ -2330,9 +2330,6 @@
         <span class="badge fw-bold py-1 px-2 d-none d-md-inline-flex align-items-center ms-2" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.72rem; border-radius: 6px;">
           <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
         </span>
-        <span class="badge bg-success text-white fw-bold py-1 px-2 d-none d-lg-inline-flex align-items-center ms-1" style="font-size: 0.72rem; border-radius: 6px;" id="badgeBuildVersion">
-          <i class="bi bi-check-circle-fill me-1"></i>v9.8 최근경기국대라이벌분리·농구무승부제거
-        </span>
       </div>
 
       <!-- Simple Auth Section, PC/Mobile View Switcher -->
@@ -2843,43 +2840,46 @@
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
       <div class="modal-content" style="border: 1px solid #cbd5e1; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12); border-radius: 12px; overflow: hidden; background: #ffffff;">
         
-        <!-- Ultra-Compact 1-Row Header: Sport Tabs + Scrollable Round Track + Fast Actions + Close (중복 텍스트·발매중 뱃지 삭제 & 1줄 통합) -->
-        <div class="modal-header d-flex justify-content-between align-items-center py-2 px-3" style="background: #ffffff; border-bottom: 1px solid #e2e8f0; color: #1e293b; gap: 8px;">
-          <!-- Left: 3 Simple Sport Tabs -->
-          <div class="d-flex align-items-center gap-1 flex-shrink-0">
-            <button class="btn btn-sm fw-bold px-2 py-1" id="totoModalTabWDL" onclick="switchTotoModalGame('WDL')" style="background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8; border-radius: 6px; font-size: 0.78rem;">
-              ⚽ 축구
-            </button>
-            <button class="btn btn-sm fw-bold px-2 py-1" id="totoModalTabW1L" onclick="switchTotoModalGame('W1L')" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem;">
-              ⚾ 야구
-            </button>
-            <button class="btn btn-sm fw-bold px-2 py-1" id="totoModalTabW5L" onclick="switchTotoModalGame('W5L')" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem;">
-              🏀 농구
-            </button>
-          </div>
-
-          <!-- Center: Scrollable Round Track (< 50회 51회 52회 53회 54회 >) -->
-          <div class="d-flex align-items-center gap-1 overflow-hidden" style="flex: 1; max-width: 480px;">
-            <button class="btn btn-xs p-1 text-secondary" onclick="scrollTotoModalRounds(-1)" title="이전 회차" style="border:1px solid #cbd5e1; border-radius:4px; line-height:1; flex-shrink:0; background:#fff;">
-              <i class="bi bi-chevron-left" style="font-size:0.72rem;"></i>
-            </button>
-            <div id="totoModalRoundScrollTrack" class="d-flex align-items-center gap-1 overflow-auto no-scrollbar py-0.5" style="white-space: nowrap; scroll-behavior: smooth; flex-grow: 1; -webkit-overflow-scrolling: touch;">
-              <!-- Dynamically populated: 50회, 51회, 52회, 53회, 54회... -->
+        <!-- 2-Row Header: Row 1 Sports & Actions, Row 2 100% Width Dedicated Round Track (모바일 51, 52, 53, 54회 완벽 표시 & 터치 스크롤) -->
+        <div class="modal-header d-flex flex-column p-2 px-3" style="background: #ffffff; border-bottom: 1px solid #e2e8f0; color: #1e293b; gap: 6px;">
+          <!-- 1열: 스포츠 종목 탭 (좌측) + 1클릭 액션 & 닫기 (우측) -->
+          <div class="d-flex justify-content-between align-items-center w-100">
+            <!-- 좌측: 3대 토토 종목 탭 -->
+            <div class="d-flex align-items-center gap-1 flex-shrink-0">
+              <button class="btn btn-sm fw-bold px-2 py-1" id="totoModalTabWDL" onclick="switchTotoModalGame('WDL')" style="background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8; border-radius: 6px; font-size: 0.78rem;">
+                ⚽ 축구
+              </button>
+              <button class="btn btn-sm fw-bold px-2 py-1" id="totoModalTabW1L" onclick="switchTotoModalGame('W1L')" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem;">
+                ⚾ 야구
+              </button>
+              <button class="btn btn-sm fw-bold px-2 py-1" id="totoModalTabW5L" onclick="switchTotoModalGame('W5L')" style="background: #ffffff; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem;">
+                🏀 농구
+              </button>
             </div>
-            <button class="btn btn-xs p-1 text-secondary" onclick="scrollTotoModalRounds(1)" title="다음 회차" style="border:1px solid #cbd5e1; border-radius:4px; line-height:1; flex-shrink:0; background:#fff;">
-              <i class="bi bi-chevron-right" style="font-size:0.72rem;"></i>
-            </button>
+
+            <!-- 우측: AI 올픽, 초기화, 닫기 -->
+            <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
+              <button class="btn btn-xs py-1 px-2 fw-bold text-white shadow-sm" onclick="autoMarkTotoAi(currentTotoRound)" style="background: #1d4ed8; border:none; border-radius:4px; font-size:0.74rem;" title="AI 최고 확률 14경기 단통 자동 마킹">
+                <i class="bi bi-lightning-charge-fill me-0.5"></i>AI 올픽
+              </button>
+              <button class="btn btn-xs py-1 px-2 fw-bold text-danger" onclick="resetTotoMarks(currentTotoRound)" style="background:#fef2f2; border:1px solid #fca5a5; border-radius:4px; font-size:0.74rem;" title="마킹 초기화">
+                <i class="bi bi-arrow-counterclockwise me-0.5"></i>초기화
+              </button>
+              <button type="button" class="btn-close ms-1" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
           </div>
 
-          <!-- Right: 1-Click Fast Actions & Close -->
-          <div class="d-flex align-items-center gap-1.5 flex-shrink-0">
-            <button class="btn btn-xs py-1 px-2 fw-bold text-white" onclick="autoMarkTotoAi(currentTotoRound)" style="background: #1d4ed8; border:none; border-radius:4px; font-size:0.74rem;" title="AI 최고 확률 14경기 단통 자동 마킹">
-              <i class="bi bi-lightning-charge-fill me-0.5"></i>AI 올픽
+          <!-- 2열: 회차 선택 트랙 (< 51회 52회 53회 54회 55회 >) - 모바일 가로 100% 확보 -->
+          <div class="d-flex align-items-center gap-1 w-100 p-1 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+            <button class="btn btn-xs p-1 text-secondary d-flex align-items-center justify-content-center" onclick="scrollTotoModalRounds(-1)" title="이전 회차" style="border:1px solid #cbd5e1; border-radius:4px; line-height:1; flex-shrink:0; background:#fff; width:26px; height:26px;">
+              <i class="bi bi-chevron-left" style="font-size:0.74rem;"></i>
             </button>
-            <button class="btn btn-xs py-1 px-2 fw-bold text-danger" onclick="resetTotoMarks(currentTotoRound)" style="background:#fef2f2; border:1px solid #fca5a5; border-radius:4px; font-size:0.74rem;" title="마킹 초기화">
-              <i class="bi bi-arrow-counterclockwise me-0.5"></i>초기화
+            <div id="totoModalRoundScrollTrack" class="d-flex align-items-center gap-1.5 overflow-auto no-scrollbar py-0.5" style="white-space: nowrap; scroll-behavior: smooth; flex-grow: 1; -webkit-overflow-scrolling: touch;">
+              <!-- Dynamically populated: 51회, 52회, 53회, 54회... -->
+            </div>
+            <button class="btn btn-xs p-1 text-secondary d-flex align-items-center justify-content-center" onclick="scrollTotoModalRounds(1)" title="다음 회차" style="border:1px solid #cbd5e1; border-radius:4px; line-height:1; flex-shrink:0; background:#fff; width:26px; height:26px;">
+              <i class="bi bi-chevron-right" style="font-size:0.74rem;"></i>
             </button>
-            <button type="button" class="btn-close ms-1" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
         </div>
 
@@ -3289,15 +3289,14 @@
       }
     }
 
-    // 📝 2. 신규 회원가입 (별명 + 나이 + 비밀번호)
+    // 📝 2. 신규 회원가입 (별명 + 비밀번호 초간단 가입)
     async function handleUserRegister(e) {
       if (e) e.preventDefault();
       const nickEl = document.getElementById('regNicknameInput');
-      const ageEl = document.getElementById('regAgeInput');
       const passEl = document.getElementById('regPasswordInput');
 
       const nickname = nickEl ? nickEl.value.trim() : '';
-      const age = ageEl ? parseInt(ageEl.value.trim(), 10) : 0;
+      const age = 30; // 간편 가입 기본 나이
       const password = passEl ? passEl.value.trim() : '';
 
       if (!nickname) {
@@ -3308,11 +3307,6 @@
       if (nickname.length > 12) {
         alert('별명은 최대 12자까지 입력할 수 있습니다.');
         if (nickEl) nickEl.focus();
-        return;
-      }
-      if (!age || isNaN(age) || age < 1 || age > 120) {
-        alert('올바른 나이를 숫자로 입력해주세요. (예: 28)');
-        if (ageEl) ageEl.focus();
         return;
       }
       if (!password || password.length < 4) {
@@ -3353,7 +3347,7 @@
 
         renderAuthUI();
         if (passEl) passEl.value = '';
-        alert(`🎉 [${nickname}]님 (${age}세) 환영합니다!\n회원가입 및 로그인이 완료되었습니다.`);
+        alert(`🎉 [${nickname}]님 환영합니다!\n회원가입 및 로그인이 완료되었습니다.`);
       } catch (err) {
         console.error('Register error:', err);
         alert('회원가입 처리 중 통신 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
@@ -3363,6 +3357,7 @@
     // 🚪 3. 로그아웃 처리 (일반 로그아웃 및 비활동 자동 로그아웃 공용)
     function handleLogout(isAuto = false) {
       currentUser = null;
+      stopSessionHeartbeat();
       try {
         localStorage.removeItem('tokeon_simple_user');
         localStorage.removeItem('tokeon_last_activity');
@@ -3373,6 +3368,251 @@
       } else {
         alert('로그아웃되었습니다.');
       }
+    }
+
+    // =============================================================
+    // 👑 운영자(whathehas) 판별 및 실시간 세션 핑 (Session Heartbeat)
+    // =============================================================
+    function isCurrentUserAdmin() {
+      if (!currentUser || !currentUser.nickname) return false;
+      if (currentUser.is_admin === true || currentUser.isAdmin === true) return true;
+      const nick = String(currentUser.nickname).trim().toLowerCase();
+      return ['whathehas', 'admin', '운영자', '관리자', 'master', 'root', 'tokeon'].includes(nick);
+    }
+
+    let sessionPingTimer = null;
+    function startSessionHeartbeat() {
+      stopSessionHeartbeat();
+      if (!currentUser || !currentUser.nickname) return;
+      pingSession();
+      sessionPingTimer = setInterval(pingSession, 30000); // 30초마다 세션 갱신
+    }
+
+    function stopSessionHeartbeat() {
+      if (sessionPingTimer) {
+        clearInterval(sessionPingTimer);
+        sessionPingTimer = null;
+      }
+    }
+
+    function pingSession() {
+      if (!currentUser || !currentUser.nickname) return;
+      fetch('/api/v1/auth/ping-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname: currentUser.nickname })
+      }).catch(e => {});
+    }
+
+    // =============================================================
+    // 👑 운영자 전용 실시간 접속자 모달 컨트롤러 (whathehas 전용)
+    // =============================================================
+    function openAdminVisitorsModal() {
+      if (!isCurrentUserAdmin()) {
+        alert('⛔ 관리자 및 운영자만 접근할 수 있는 페이지입니다.');
+        return;
+      }
+      const modalEl = document.getElementById('adminVisitorsModal');
+      if (modalEl) {
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+        fetchAdminLiveVisitors();
+      }
+    }
+
+    let currentAdminVisitorTab = 'online';
+    function switchAdminVisitorTab(tab) {
+      currentAdminVisitorTab = tab;
+      const tabs = ['online', 'logs', 'members'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('tabAdmin' + t.charAt(0).toUpperCase() + t.slice(1) + (t === 'members' ? 'AllMembersBtn' : 'Btn'));
+        const pane = document.getElementById('adminTab' + t.charAt(0).toUpperCase() + t.slice(1) + 'Content');
+        if (btn) {
+          if (t === tab) {
+            btn.classList.add('active');
+            btn.classList.remove('text-secondary');
+          } else {
+            btn.classList.remove('active');
+            btn.classList.add('text-secondary');
+          }
+        }
+        if (pane) {
+          if (t === tab) pane.classList.remove('d-none');
+          else pane.classList.add('d-none');
+        }
+      });
+    }
+
+    async function fetchAdminLiveVisitors() {
+      if (!isCurrentUserAdmin()) return;
+      const callerNick = currentUser ? currentUser.nickname : 'whathehas';
+      try {
+        const resp = await fetch(`/api/v1/auth/admin/live-visitors?admin_nick=${encodeURIComponent(callerNick)}&nickname=${encodeURIComponent(callerNick)}`, {
+          headers: { 'x-user-nickname': callerNick }
+        });
+        if (!resp.ok) {
+          if (resp.status === 403) {
+            alert('⛔ 최고 운영자(whathehas) 권한이 확인되지 않았습니다.');
+          }
+          return;
+        }
+        const data = await resp.json();
+
+        // 4대 통계 갱신
+        const onlineEl = document.getElementById('adminStatOnlineUsers');
+        const totalEl = document.getElementById('adminStatTotalUsers');
+        const todayEl = document.getElementById('adminStatTodayVisitors');
+        const loginsEl = document.getElementById('adminStatTotalLogins');
+        const tabCountEl = document.getElementById('adminTabOnlineCount');
+
+        if (onlineEl) onlineEl.innerHTML = `${data.current_online_count || 0}<span class="fs-6 text-muted fw-normal ms-0.5">명</span>`;
+        if (totalEl) totalEl.innerHTML = `${data.total_registered_users || 0}<span class="fs-6 text-muted fw-normal ms-0.5">명</span>`;
+        if (todayEl) todayEl.innerHTML = `${data.today_unique_visitors || 0}<span class="fs-6 text-muted fw-normal ms-0.5">명</span>`;
+        if (loginsEl) loginsEl.innerHTML = `${data.total_logins || 0}<span class="fs-6 text-muted fw-normal ms-0.5">회</span>`;
+        if (tabCountEl) tabCountEl.innerText = `${data.current_online_count || 0}`;
+
+        // 1. 실시간 온라인 목록 렌더링
+        renderAdminOnlineList(data.online_users || []);
+
+        // 2. 최근 접속 로그 렌더링
+        renderAdminLogsList(data.recent_logs || []);
+
+        // 3. 전체 회원 목록 렌더링
+        renderAdminMembersList(data.all_members || []);
+      } catch (err) {
+        console.error('Fetch live visitors error:', err);
+      }
+    }
+
+    function renderAdminOnlineList(users) {
+      const container = document.getElementById('adminOnlineListContainer');
+      if (!container) return;
+      if (!users || users.length === 0) {
+        container.innerHTML = `<div class="text-center py-4 text-muted small"><i class="bi bi-info-circle me-1"></i>현재 실시간 접속 중인 회원이 없습니다.</div>`;
+        return;
+      }
+      let html = `
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0" style="font-size:0.82rem;">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 25%;">활동 닉네임</th>
+                <th style="width: 15%;">상태</th>
+                <th style="width: 22%;">접속 IP</th>
+                <th style="width: 20%;">기기/브라우저</th>
+                <th style="width: 18%; text-align:right;">최근 활동</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      users.forEach(u => {
+        const isOperator = isNicknameAdmin(u.nickname);
+        const idleText = u.idle_sec < 60 ? `${u.idle_sec}초 전` : `${Math.floor(u.idle_sec / 60)}분 전`;
+        html += `
+          <tr>
+            <td>
+              <span class="fw-bold text-dark">${u.nickname}</span>
+              ${isOperator ? '<span class="badge bg-warning text-dark fw-bold ms-1" style="font-size:0.65rem;">👑 운영자</span>' : ''}
+            </td>
+            <td>
+              <span class="badge bg-success-subtle text-success border border-success-subtle px-1.5 py-0.5" style="font-size:0.72rem;">
+                <span class="pulse-dot me-1" style="display:inline-block; width:5px; height:5px; border-radius:50%; background:#10b981;"></span>접속중
+              </span>
+            </td>
+            <td><span class="font-monospace text-secondary">${u.ip || '-'}</span></td>
+            <td><span class="text-muted small">${(u.device || '웹').slice(0, 20)}</span></td>
+            <td style="text-align:right;"><span class="badge bg-light text-secondary border font-monospace">${idleText}</span></td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+    }
+
+    function renderAdminLogsList(logs) {
+      const container = document.getElementById('adminLogsListContainer');
+      if (!container) return;
+      if (!logs || logs.length === 0) {
+        container.innerHTML = `<div class="text-center py-4 text-muted small">기록된 접속 로그가 없습니다.</div>`;
+        return;
+      }
+      let html = `
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0" style="font-size:0.80rem;">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 24%;">접속 일시</th>
+                <th style="width: 24%;">회원 닉네임</th>
+                <th style="width: 24%;">접속 IP</th>
+                <th style="width: 28%;">로그 내용 / 기기</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      logs.slice(0, 50).forEach(l => {
+        html += `
+          <tr>
+            <td class="font-monospace text-secondary small">${l.timestamp || '-'}</td>
+            <td><span class="fw-bold text-dark">${l.nickname || '-'}</span></td>
+            <td><span class="font-monospace text-muted small">${l.ip || '-'}</span></td>
+            <td><span class="text-muted small">${(l.action || l.user_agent || '-').slice(0, 25)}</span></td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+    }
+
+    function renderAdminMembersList(members) {
+      const container = document.getElementById('adminMembersListContainer');
+      if (!container) return;
+      if (!members || members.length === 0) {
+        container.innerHTML = `<div class="text-center py-4 text-muted small">등록된 회원이 없습니다.</div>`;
+        return;
+      }
+      let html = `
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0" style="font-size:0.80rem;">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 8%; text-align:center;">번호</th>
+                <th style="width: 25%;">별명 (닉네임)</th>
+                <th style="width: 15%; text-align:center;">상태</th>
+                <th style="width: 14%; text-align:center;">총 접속</th>
+                <th style="width: 19%;">최근 접속일시</th>
+                <th style="width: 19%;">가입일시</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      members.forEach(m => {
+        const isOperator = isNicknameAdmin(m.nickname);
+        html += `
+          <tr>
+            <td style="text-align:center;" class="font-monospace text-muted small">${m.id}</td>
+            <td>
+              <span class="fw-bold text-dark">${m.nickname}</span>
+              ${isOperator ? '<span class="badge bg-warning text-dark fw-bold ms-1" style="font-size:0.62rem;">👑 운영자</span>' : ''}
+            </td>
+            <td style="text-align:center;">
+              ${m.is_online 
+                ? '<span class="badge bg-success text-white px-1 py-0.5" style="font-size:0.68rem;">온라인</span>' 
+                : '<span class="badge bg-light text-muted border px-1 py-0.5" style="font-size:0.68rem;">오프라인</span>'}
+            </td>
+            <td style="text-align:center;"><span class="fw-bold text-primary font-monospace">${m.login_count || 1}회</span></td>
+            <td class="font-monospace text-secondary small">${m.last_login_at || '-'}</td>
+            <td class="font-monospace text-muted small">${m.registered_at || '-'}</td>
+          </tr>
+        `;
+      });
+      html += `</tbody></table></div>`;
+      container.innerHTML = html;
+    }
+
+    function isNicknameAdmin(nick) {
+      if (!nick) return false;
+      const clean = String(nick).trim().toLowerCase();
+      return ['whathehas', 'admin', '운영자', '관리자', 'master', 'root', 'tokeon'].includes(clean);
     }
 
     // =============================================================
@@ -3413,7 +3653,7 @@
     function initInactivityTracker() {
       recordUserActivity();
 
-      // 마우스, 키보드, 터치, 스크롤 등 사용자 조작 이벤트 감지 (2초 쓰로틀링)
+      // 사용자 조작 이벤트 감지 (2초 쓰로틀링)
       const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
       let lastThrottle = 0;
       events.forEach(evt => {
@@ -3426,7 +3666,7 @@
         }, { passive: true });
       });
 
-      // 브라우저 탭 복귀 또는 스마트폰 화면 켜질 때 즉시 검사
+      // 브라우저 탭 복귀 시 검사
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden) checkInactivity();
       });
@@ -3444,11 +3684,19 @@
       const subDisplay = document.getElementById('subBarAuthDisplay');
       const chatAuthorEl = document.getElementById('chatAuthorInput');
 
-      // 기존 차단 오버레이 제거 (화면 클릭 100% 허용)
+      // 기존 차단 오버레이 제거
       const existingOverlay = document.getElementById('authBlockOverlay');
       if (existingOverlay) existingOverlay.remove();
 
       if (currentUser && currentUser.nickname) {
+        currentUser.isLoggedIn = true;
+        const isAdmin = isCurrentUserAdmin();
+        const adminBtnHtml = isAdmin ? `
+          <button type="button" class="btn btn-sm btn-warning text-dark fw-bold px-2 py-1 shadow-sm d-flex align-items-center" onclick="openAdminVisitorsModal()" title="👑 운영자 whathehas 전용 실시간 접속자 현황" style="border-radius:6px; font-size:0.75rem; border:1px solid #d97706; background:linear-gradient(135deg, #fef08a, #f59e0b);">
+            <i class="bi bi-shield-lock-fill me-1 text-danger"></i><span>👑 접속자 현황</span>
+          </button>
+        ` : '';
+
         if (navContainer) {
           navContainer.innerHTML = `
             <div class="btn-group btn-group-sm" role="group" id="viewModeToggleGroup" style="border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden;">
@@ -3459,26 +3707,28 @@
                 <i class="bi bi-phone me-1"></i><span class="d-none d-sm-inline">핸드폰</span>앱
               </button>
             </div>
+            ${adminBtnHtml}
             <div class="d-flex align-items-center bg-dark border border-secondary px-2 py-1 rounded-2">
-              <i class="bi bi-person-circle text-info me-1"></i>
+              <i class="bi bi-person-circle ${isAdmin ? 'text-warning' : 'text-info'} me-1"></i>
               <span class="text-white fw-bold" style="font-size: 0.78rem;">${currentUser.nickname}</span>
-              <span class="text-info small fw-bold ms-1 d-none d-sm-inline" style="font-size: 0.70rem;">(${currentUser.age}세)</span>
+              ${isAdmin ? '<span class="badge bg-warning text-dark fw-bold ms-1" style="font-size:0.65rem;">운영자</span>' : ''}
               <button class="btn btn-xs btn-danger py-0 px-1.5 ms-1.5 text-white fw-bold" onclick="handleLogout()" style="font-size: 0.68rem;" title="로그아웃">로그아웃</button>
             </div>
           `;
         }
         if (subDisplay) {
           subDisplay.innerHTML = `
-            <span class="badge me-1" style="background: #eff6ff; color: #38bdf8; border: 1px solid #eff6ff; font-size: 0.74rem;">
-              <i class="bi bi-person-check-fill text-info me-1"></i>${currentUser.nickname} (${currentUser.age}세)
+            <span class="badge me-1" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.74rem;">
+              <i class="bi bi-person-check-fill ${isAdmin ? 'text-warning' : 'text-info'} me-1"></i>${currentUser.nickname} ${isAdmin ? '👑' : ''}
             </span>
           `;
         }
         if (chatAuthorEl) {
-          chatAuthorEl.value = `${currentUser.nickname} (${currentUser.age}세)`;
+          chatAuthorEl.value = `${currentUser.nickname}`;
           chatAuthorEl.readOnly = true;
           chatAuthorEl.title = "간편 로그인된 별명입니다.";
         }
+        startSessionHeartbeat();
       } else {
         if (navContainer) {
           navContainer.innerHTML = `
@@ -3501,8 +3751,51 @@
           chatAuthorEl.readOnly = false;
           chatAuthorEl.placeholder = '로그인 후 이용 가능합니다.';
         }
+        stopSessionHeartbeat();
       }
     }
+
+    // =============================================================
+    // 🔒 로그인 안 하면 모든 클릭 차단 & 간편 로그인 팝업 호출
+    // =============================================================
+    let authToastTimeout = null;
+    function showAuthRequiredNotice() {
+      let noticeEl = document.getElementById('authRequiredToastNotice');
+      if (!noticeEl) {
+        noticeEl = document.createElement('div');
+        noticeEl.id = 'authRequiredToastNotice';
+        noticeEl.style.cssText = 'position:fixed; bottom:28px; left:50%; transform:translateX(-50%); z-index:99999; background:rgba(15, 23, 42, 0.95); color:#ffffff; padding:10px 22px; border-radius:50px; font-size:0.88rem; font-weight:700; box-shadow:0 10px 25px rgba(0,0,0,0.35); border:1.5px solid #3b82f6; display:flex; align-items:center; gap:8px; pointer-events:none; transition:all 0.3s ease;';
+        document.body.appendChild(noticeEl);
+      }
+      noticeEl.innerHTML = '<i class="bi bi-lock-fill text-warning fs-5"></i> <span>로그인 후 모든 경기 분석과 기능을 이용하실 수 있습니다.</span>';
+      noticeEl.style.opacity = '1';
+      noticeEl.style.transform = 'translateX(-50%) translateY(0)';
+      if (authToastTimeout) clearTimeout(authToastTimeout);
+      authToastTimeout = setTimeout(() => {
+        if (noticeEl) {
+          noticeEl.style.opacity = '0';
+          noticeEl.style.transform = 'translateX(-50%) translateY(10px)';
+        }
+      }, 2500);
+    }
+
+    document.addEventListener('click', function(e) {
+      if (currentUser && currentUser.nickname && (currentUser.isLoggedIn !== false)) {
+        return; // 로그인된 사용자: 모든 클릭 100% 정상 작동
+      }
+      // 예외: 간편 로그인 모달 내부, 로그인 버튼, 백드롭
+      const loginModal = document.getElementById('simpleLoginModal');
+      if (loginModal && loginModal.contains(e.target)) return;
+      if (e.target.closest('#btnNavLogin') || e.target.closest('.allow-unauth') || e.target.closest('.modal-backdrop')) return;
+
+      // 클릭 차단 & 로그인 창 띄우기
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      showAuthRequiredNotice();
+      openLoginModal('login');
+    }, true);
 
     let isVipUser = false; // Free by default, toggleable to PRO VIP
 
@@ -9514,8 +9807,8 @@ function getFullModalMatchList() {
     let syncIntervalId = null;
 
     let currentCenterMode = 'DETAIL'; // Always 'DETAIL' (Match Studio)
-    let currentTotoRound = 'W1L'; // 'W1L' (야구), 'WDL' (축구), 'W5L' (농구)
-    let currentBetmanTs = 260051; // Current active Betman round: 51회차 (축구 승무패 오늘 23:00 마감🔥)
+    let currentTotoRound = 'WDL'; // 'WDL' (축구 승무패), 'W1L' (야구), 'W5L' (농구)
+    let currentBetmanTs = 260054; // Current active Betman round: 54회차 (축구 승무패 실시간 발매중🔥)
     let userTotoMarks = {}; // key: `${totoKey}_${seq}`, value: ['W', 'D', 'L']
 
     // ------------------------------------------------------------------
@@ -16194,16 +16487,17 @@ function updateSlimPanel(matchId, type, contentHtml) {
       'WDL': [
         { gmTs: 260051, roundNo: 51, label: '51회', fullLabel: '축구 승무패 51회차 (종료결과)', status: 'Finished', tag: '종료' },
         { gmTs: 260052, roundNo: 52, label: '52회', fullLabel: '⚽ 축구 승무패 52회차 (종료결과)', status: 'Finished', tag: '종료' },
-        { gmTs: 260053, roundNo: 53, label: '53회', fullLabel: '🔥 축구 승무패 53회차 (발매중 · 5.5억 이월🔥)', status: 'SaleProgress', tag: '🔥발매중' },
-        { gmTs: 260054, roundNo: 54, label: '54회', fullLabel: '축구 승무패 54회차 (발매예정)', status: 'SaleBefore', tag: '예정' },
-        { gmTs: 260055, roundNo: 55, label: '55회', fullLabel: '축구 승무패 55회차 (발매예정)', status: 'SaleBefore', tag: '예정' }
+        { gmTs: 260053, roundNo: 53, label: '53회', fullLabel: '축구 승무패 53회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260054, roundNo: 54, label: '54회', fullLabel: '🔥 축구 승무패 54회차 (발매중 · 11.2억 이월🔥)', status: 'SaleProgress', tag: '🔥발매중' },
+        { gmTs: 260055, roundNo: 55, label: '55회', fullLabel: '축구 승무패 55회차 (발매예정)', status: 'SaleBefore', tag: '예정' },
+        { gmTs: 260056, roundNo: 56, label: '56회', fullLabel: '축구 승무패 56회차 (발매예정)', status: 'SaleBefore', tag: '예정' }
       ],
       'W1L': [
-        { gmTs: 260068, roundNo: 68, label: '68회', fullLabel: '야구 승1패 68회차 (종료결과)', status: 'Finished', tag: '종료' },
         { gmTs: 260069, roundNo: 69, label: '69회', fullLabel: '야구 승1패 69회차 (종료결과)', status: 'Finished', tag: '종료' },
-        { gmTs: 260070, roundNo: 70, label: '70회', fullLabel: '🔥 야구 승1패 70회차 (발매중 · 4,591만 이월🔥)', status: 'SaleProgress', tag: '🔥발매중' },
-        { gmTs: 260071, roundNo: 71, label: '71회', fullLabel: '야구 승1패 71회차 (발매예정)', status: 'SaleBefore', tag: '예정' },
-        { gmTs: 260072, roundNo: 72, label: '72회', fullLabel: '야구 승1패 72회차 (발매예정)', status: 'SaleBefore', tag: '예정' }
+        { gmTs: 260070, roundNo: 70, label: '70회', fullLabel: '야구 승1패 70회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260071, roundNo: 71, label: '71회', fullLabel: '🔥 야구 승1패 71회차 (발매중 · 1.8억 이월🔥)', status: 'SaleProgress', tag: '🔥발매중' },
+        { gmTs: 260072, roundNo: 72, label: '72회', fullLabel: '야구 승1패 72회차 (발매예정)', status: 'SaleBefore', tag: '예정' },
+        { gmTs: 260073, roundNo: 73, label: '73회', fullLabel: '야구 승1패 73회차 (발매예정)', status: 'SaleBefore', tag: '예정' }
       ],
       'W5L': [
         { gmTs: 260027, roundNo: 27, label: '27회', fullLabel: '🏀 농구 승5패 27회차 (종료결과 · 5,232만)', status: 'Finished', tag: '종료' },
@@ -16211,6 +16505,15 @@ function updateSlimPanel(matchId, type, contentHtml) {
         { gmTs: 260001, roundNo: 1, label: '01회', fullLabel: '🔥 농구 승5패 01회차 (발매중)', status: 'SaleProgress', tag: '🔥발매중' }
       ]
     };
+
+    // ⚡ 현재 발매중인 이번회차를 자동으로 탐색하여 반환 (고정 회차 버그 방지)
+    function getActiveTotoRoundTs(roundKey) {
+      const rounds = TOTO_ROUNDS[roundKey] || [];
+      const active = rounds.find(r => r.status === 'SaleProgress' || (r.tag && r.tag.includes('발매중')));
+      if (active) return active.gmTs;
+      if (rounds.length > 0) return rounds[rounds.length - 1].gmTs;
+      return (roundKey === 'WDL') ? 260054 : ((roundKey === 'W1L') ? 260071 : 260001);
+    }
 
     function renderTotoRoundScrollBar(roundKey, activeTs) {
       const track = document.getElementById('totoRoundScrollTrack');
@@ -16272,17 +16575,15 @@ function updateSlimPanel(matchId, type, contentHtml) {
       }
       currentTotoRound = roundKey;
       let gmId = 'G011';
-      let defaultTs = 260053;
-      let sportTitle = '축구 승무패 53회차';
+      let defaultTs = getActiveTotoRoundTs(roundKey);
+      let sportTitle = '축구 승무패 ' + (defaultTs % 1000) + '회차';
 
       if (roundKey === 'W1L') {
         gmId = 'G024';
-        defaultTs = 260070;
-        sportTitle = '야구 승1패 70회차';
+        sportTitle = '야구 승1패 ' + (defaultTs % 1000) + '회차';
       } else if (roundKey === 'W5L') {
         gmId = 'G027';
-        defaultTs = 260001;
-        sportTitle = '농구 승5패 01회차';
+        sportTitle = '농구 승5패 ' + (defaultTs % 1000) + '회차';
       }
 
       const targetTs = gmTs || (currentBetmanTs && (TOTO_ROUNDS[roundKey] || []).some(r => r.gmTs === currentBetmanTs) ? currentBetmanTs : defaultTs);
@@ -16445,7 +16746,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
       currentCenterMode = 'TOTO';
       updateCenterTabs();
 
-      const defaultTs = (roundKey === 'WDL') ? 260053 : ((roundKey === 'W1L') ? 260070 : 260001);
+      const defaultTs = getActiveTotoRoundTs(roundKey);
       const targetTs = gmTs || (currentBetmanTs && (TOTO_ROUNDS[roundKey] || []).some(r => r.gmTs === currentBetmanTs) ? currentBetmanTs : defaultTs);
       currentBetmanTs = targetTs;
 
@@ -16600,11 +16901,13 @@ function updateSlimPanel(matchId, type, contentHtml) {
     // ------------------------------------------------------------------
     function openTotoModal(roundKey = null, gmTs = null) {
       if (roundKey) currentTotoRound = roundKey;
-      const defaultTs = (currentTotoRound === 'WDL') ? 260053 : ((currentTotoRound === 'W1L') ? 260070 : 260001);
+      if (!currentTotoRound) currentTotoRound = 'WDL';
+      const activeDefaultTs = getActiveTotoRoundTs(currentTotoRound);
       if (gmTs) {
         currentBetmanTs = gmTs;
-      } else if (!currentBetmanTs || !(TOTO_ROUNDS[currentTotoRound] || []).some(r => r.gmTs === currentBetmanTs)) {
-        currentBetmanTs = defaultTs;
+      } else {
+        // 🔥 항상 이번 회차(발매중인 최신 회차)를 자동 우선 선택
+        currentBetmanTs = activeDefaultTs;
       }
       selectTotoRound(currentTotoRound, currentBetmanTs);
       renderBetmanModalSheet(currentTotoRound);
@@ -16634,7 +16937,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
     function switchTotoModalGame(gameKey) {
       currentTotoRound = gameKey;
-      const defaultTs = (gameKey === 'WDL') ? 260053 : ((gameKey === 'W1L') ? 260070 : 260001);
+      const defaultTs = getActiveTotoRoundTs(gameKey);
       currentBetmanTs = defaultTs;
       selectTotoRound(gameKey, currentBetmanTs);
       renderBetmanModalSheet(gameKey);
@@ -19977,12 +20280,6 @@ function renderPredDetail(m, customDetailData = null) {
             </div>
 
             <div class="mb-3">
-              <label class="form-label text-dark fw-bold small"><i class="bi bi-calendar-event text-info me-1"></i>나이 (연령)</label>
-              <input type="number" class="form-control bg-white text-dark border py-2" id="regAgeInput" placeholder="예: 28" min="10" max="100" required autocomplete="off" style="font-size: 0.9rem;">
-              <div class="form-text text-muted" style="font-size: 0.72rem;">맞춤형 스포츠 승부예측 분석 추천에 활용됩니다.</div>
-            </div>
-
-            <div class="mb-3">
               <label class="form-label text-dark fw-bold small"><i class="bi bi-lock-fill text-warning me-1"></i>비밀번호 설정</label>
               <input type="password" class="form-control bg-white text-dark border py-2" id="regPasswordInput" placeholder="비밀번호 설정 (최소 4자리 이상)" minlength="4" required autocomplete="new-password" style="font-size: 0.9rem;">
               <div class="form-text text-muted" style="font-size: 0.72rem;">다음에 접속할 때 별명과 함께 사용됩니다.</div>
@@ -20092,6 +20389,112 @@ function renderPredDetail(m, customDetailData = null) {
             <i class="bi bi-file-earmark-text text-info me-1"></i>로컬 폴더(data/members/)에 실시간 자동 영구 저장됩니다.
           </div>
           <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 👑 Modal: [운영자 whathehas 전용] 실시간 접속자 및 회원 현황 모달 -->
+  <div class="modal fade" id="adminVisitorsModal" tabindex="-1" aria-hidden="true" style="z-index: 1065;">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content" style="background: #ffffff; border: 2px solid #d97706; border-radius: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.35);">
+        <div class="modal-header d-flex justify-content-between align-items-center py-2.5 px-3" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; border-bottom: 1px solid #334155;">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; font-weight: 800; font-size: 0.82rem; padding: 4px 8px;">
+              👑 OPERATOR ONLY
+            </span>
+            <div>
+              <h5 class="modal-title fw-bold mb-0 text-white" style="font-size: 1.05rem;">
+                운영자 실시간 접속자 및 회원 현황
+              </h5>
+              <div class="text-warning small" style="font-size: 0.72rem;">접속 계정: whathehas (최고 관리자 전용)</div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-xs btn-outline-warning fw-bold px-2 py-1" onclick="fetchAdminLiveVisitors()" title="실시간 데이터 새로고침">
+              <i class="bi bi-arrow-repeat me-1"></i>새로고침
+            </button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+        </div>
+
+        <div class="modal-body p-3" style="background: #f8fafc;">
+          <!-- 4대 핵심 지표 요약 카드 -->
+          <div class="row g-2 mb-3">
+            <div class="col-6 col-md-3">
+              <div class="p-2.5 rounded-3 bg-white border text-center shadow-sm" style="border-left: 4px solid #10b981 !important;">
+                <div class="text-muted small" style="font-size: 0.74rem;">🟢 실시간 온라인</div>
+                <div class="fs-4 fw-bold text-success" id="adminStatOnlineUsers">0<span class="fs-6 text-muted fw-normal ms-0.5">명</span></div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="p-2.5 rounded-3 bg-white border text-center shadow-sm" style="border-left: 4px solid #3b82f6 !important;">
+                <div class="text-muted small" style="font-size: 0.74rem;">👤 전체 등록 회원</div>
+                <div class="fs-4 fw-bold text-primary" id="adminStatTotalUsers">0<span class="fs-6 text-muted fw-normal ms-0.5">명</span></div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="p-2.5 rounded-3 bg-white border text-center shadow-sm" style="border-left: 4px solid #f59e0b !important;">
+                <div class="text-muted small" style="font-size: 0.74rem;">📅 오늘 순방문자</div>
+                <div class="fs-4 fw-bold text-warning" id="adminStatTodayVisitors">0<span class="fs-6 text-muted fw-normal ms-0.5">명</span></div>
+              </div>
+            </div>
+            <div class="col-6 col-md-3">
+              <div class="p-2.5 rounded-3 bg-white border text-center shadow-sm" style="border-left: 4px solid #8b5cf6 !important;">
+                <div class="text-muted small" style="font-size: 0.74rem;">📈 총 누적 로그인</div>
+                <div class="fs-4 fw-bold" style="color:#8b5cf6;" id="adminStatTotalLogins">0<span class="fs-6 text-muted fw-normal ms-0.5">회</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 서브 탭 -->
+          <ul class="nav nav-pills mb-2.5 p-1 rounded-2 bg-white border" id="adminVisitorsNavTabs" role="tablist">
+            <li class="nav-item flex-fill" role="presentation">
+              <button class="nav-link active w-100 py-1.5 fw-bold" id="tabAdminOnlineBtn" onclick="switchAdminVisitorTab('online')" type="button" style="font-size: 0.82rem;">
+                <i class="bi bi-person-check-fill text-success me-1"></i>실시간 온라인 (<span id="adminTabOnlineCount">0</span>)
+              </button>
+            </li>
+            <li class="nav-item flex-fill" role="presentation">
+              <button class="nav-link w-100 py-1.5 fw-bold text-secondary" id="tabAdminLogsBtn" onclick="switchAdminVisitorTab('logs')" type="button" style="font-size: 0.82rem;">
+                <i class="bi bi-clock-history text-primary me-1"></i>최근 접속 로그
+              </button>
+            </li>
+            <li class="nav-item flex-fill" role="presentation">
+              <button class="nav-link w-100 py-1.5 fw-bold text-secondary" id="tabAdminAllMembersBtn" onclick="switchAdminVisitorTab('members')" type="button" style="font-size: 0.82rem;">
+                <i class="bi bi-people-fill text-warning me-1"></i>전체 회원 명부
+              </button>
+            </li>
+          </ul>
+
+          <!-- 탭 콘텐츠 -->
+          <!-- 1. 실시간 접속 회원 -->
+          <div id="adminTabOnlineContent" class="admin-tab-pane bg-white rounded-3 border p-2 shadow-sm" style="min-height: 280px; max-height: 380px; overflow-y: auto;">
+            <div id="adminOnlineListContainer">
+              <div class="text-center py-4 text-muted small">접속자 현황을 조회하는 중입니다...</div>
+            </div>
+          </div>
+
+          <!-- 2. 최근 접속 로그 -->
+          <div id="adminTabLogsContent" class="admin-tab-pane d-none bg-white rounded-3 border p-2 shadow-sm" style="min-height: 280px; max-height: 380px; overflow-y: auto;">
+            <div id="adminLogsListContainer">
+              <div class="text-center py-4 text-muted small">로그를 불러오는 중입니다...</div>
+            </div>
+          </div>
+
+          <!-- 3. 전체 회원 명부 -->
+          <div id="adminTabMembersContent" class="admin-tab-pane d-none bg-white rounded-3 border p-2 shadow-sm" style="min-height: 280px; max-height: 380px; overflow-y: auto;">
+            <div id="adminMembersListContainer">
+              <div class="text-center py-4 text-muted small">회원 목록을 불러오는 중입니다...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer py-2 px-3 d-flex justify-content-between align-items-center" style="background: #f1f5f9; border-top: 1px solid #e2e8f0;">
+          <div class="text-muted small" style="font-size: 0.74rem;">
+            <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>
+            실시간 30초 주기 자동 세션 핑 연동 중 (기준: 최근 10분 내 활동)
+          </div>
+          <button type="button" class="btn btn-sm btn-secondary fw-bold px-3 py-1" data-bs-dismiss="modal">닫기</button>
         </div>
       </div>
     </div>

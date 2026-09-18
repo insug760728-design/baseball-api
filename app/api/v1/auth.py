@@ -21,6 +21,29 @@ import hashlib
 
 SALT = "tokeon_secure_auth_salt_2026"
 
+ADMIN_NICKNAMES = {"whathehas", "운영자", "admin", "관리자", "master", "root", "tokeon"}
+
+def _is_admin(nickname: str) -> bool:
+    if not nickname:
+        return False
+    nick = nickname.strip().lower()
+    return nick in {n.lower() for n in ADMIN_NICKNAMES} or "whathehas" in nick or "운영자" in nick or "admin" in nick
+
+# 실시간 접속 세션 메모리 보관: nickname -> {nickname, ip, last_active, last_active_ts, device}
+_ACTIVE_SESSIONS = {}
+
+def _record_session_activity(nickname: str, ip: str = "127.0.0.1", device: str = "웹"):
+    if not nickname:
+        return
+    now = datetime.now()
+    _ACTIVE_SESSIONS[nickname] = {
+        "nickname": nickname,
+        "ip": ip,
+        "last_active": now.strftime("%Y-%m-%d %H:%M:%S"),
+        "last_active_ts": now.timestamp(),
+        "device": device
+    }
+
 def _hash_password(pw: str) -> str:
     if not pw:
         return ""
@@ -28,13 +51,16 @@ def _hash_password(pw: str) -> str:
 
 class UserLoginPayload(BaseModel):
     nickname: str
-    age: Optional[int] = 30
     password: str
+    age: Optional[int] = 30
 
 class UserRegisterPayload(BaseModel):
     nickname: str
-    age: Optional[int] = 30
     password: str
+    age: Optional[int] = 30
+
+class SessionPingPayload(BaseModel):
+    nickname: str
 
 def _ensure_dir():
     os.makedirs(MEMBERS_DIR, exist_ok=True)
@@ -168,10 +194,14 @@ def login_user(payload: UserLoginPayload, request: Request):
             "login_count": 1,
             "last_login_at": now_str
         }
+        is_admin = _is_admin(nickname)
+        target_user["is_admin"] = is_admin
+        target_user["role"] = "admin" if is_admin else "user"
         members.insert(0, target_user)
         _save_members(members)
         _record_access_log(target_user, client_ip)
-        logger.info(f"[Member Auto-Registered on Login] Nickname: {nickname}, Age: {age}")
+        _record_session_activity(nickname, client_ip, request.headers.get("user-agent", "웹")[:40])
+        logger.info(f"[Member Auto-Registered on Login] Nickname: {nickname}, Age: {age}, IsAdmin: {is_admin}")
 
         user_info = {
             "id": new_id,
@@ -179,7 +209,9 @@ def login_user(payload: UserLoginPayload, request: Request):
             "age": age,
             "registered_at": now_str,
             "login_count": 1,
-            "last_login_at": now_str
+            "last_login_at": now_str,
+            "is_admin": is_admin,
+            "role": "admin" if is_admin else "user"
         }
         return {
             "status": "success",
@@ -203,8 +235,13 @@ def login_user(payload: UserLoginPayload, request: Request):
     if len(clean_digits) >= 10 and not existing.get("phone"):
         existing["phone"] = clean_digits
 
+    is_admin = _is_admin(existing["nickname"])
+    existing["is_admin"] = is_admin
+    existing["role"] = "admin" if is_admin else "user"
+
     _save_members(members)
     _record_access_log(existing, client_ip)
+    _record_session_activity(existing["nickname"], client_ip, request.headers.get("user-agent", "웹")[:40])
 
     user_info = {
         "id": existing["id"],
@@ -212,16 +249,18 @@ def login_user(payload: UserLoginPayload, request: Request):
         "age": existing.get("age", age),
         "registered_at": existing.get("registered_at", now_str),
         "login_count": existing["login_count"],
-        "last_login_at": existing["last_login_at"]
+        "last_login_at": existing["last_login_at"],
+        "is_admin": is_admin,
+        "role": "admin" if is_admin else "user"
     }
-    logger.info(f"[Member Login Success] Nickname: {existing['nickname']}, Logins: {existing['login_count']}")
+    logger.info(f"[Member Login Success] Nickname: {existing['nickname']}, Logins: {existing['login_count']}, IsAdmin: {is_admin}")
     return {
         "status": "success",
         "message": f"'{existing['nickname']}'님 환영합니다! (누적 {existing['login_count']}회 접속)",
         "user": user_info
     }
 
-@router.post("/register-user", summary="별명 + 나이 + 비밀번호 신규 가입")
+@router.post("/register-user", summary="별명 + 비밀번호 신규 가입")
 def register_user(payload: UserRegisterPayload, request: Request):
     nickname = payload.nickname.strip()
     age = payload.age if (payload.age and payload.age > 0) else 30
@@ -240,21 +279,28 @@ def register_user(payload: UserRegisterPayload, request: Request):
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     client_ip = request.client.host if request.client else "127.0.0.1"
 
+    is_admin = _is_admin(nickname)
+
     existing = _find_member(members, nickname)
     if existing:
         existing["password_hash"] = _hash_password(password)
         existing["last_login_at"] = now_str
         existing["login_count"] = existing.get("login_count", 1) + 1
         existing["age"] = age
+        existing["is_admin"] = is_admin
+        existing["role"] = "admin" if is_admin else "user"
         _save_members(members)
         _record_access_log(existing, client_ip)
+        _record_session_activity(existing["nickname"], client_ip, request.headers.get("user-agent", "웹")[:40])
         user_info = {
             "id": existing["id"],
             "nickname": existing["nickname"],
             "age": existing.get("age", age),
             "registered_at": existing.get("registered_at", now_str),
             "login_count": existing["login_count"],
-            "last_login_at": existing["last_login_at"]
+            "last_login_at": existing["last_login_at"],
+            "is_admin": is_admin,
+            "role": "admin" if is_admin else "user"
         }
         return {
             "status": "success",
@@ -274,13 +320,16 @@ def register_user(payload: UserRegisterPayload, request: Request):
         "password_hash": _hash_password(password),
         "registered_at": now_str,
         "login_count": 1,
-        "last_login_at": now_str
+        "last_login_at": now_str,
+        "is_admin": is_admin,
+        "role": "admin" if is_admin else "user"
     }
     members.insert(0, target_user)
 
     _save_members(members)
     _record_access_log(target_user, client_ip)
-    logger.info(f"[Member Registered] Nickname: {nickname}, Total: {len(members)}")
+    _record_session_activity(nickname, client_ip, request.headers.get("user-agent", "웹")[:40])
+    logger.info(f"[Member Registered] Nickname: {nickname}, Total: {len(members)}, IsAdmin: {is_admin}")
 
     user_info = {
         "id": new_id,
@@ -288,13 +337,90 @@ def register_user(payload: UserRegisterPayload, request: Request):
         "age": age,
         "registered_at": now_str,
         "login_count": 1,
-        "last_login_at": now_str
+        "last_login_at": now_str,
+        "is_admin": is_admin,
+        "role": "admin" if is_admin else "user"
     }
 
     return {
         "status": "success",
         "message": f"'{nickname}'님 회원가입이 완료되었습니다!",
         "user": user_info
+    }
+
+@router.post("/ping-session", summary="로그인 회원 실시간 접속 유지 핑 (Heartbeat)")
+def ping_session(payload: SessionPingPayload, request: Request):
+    nickname = payload.nickname.strip()
+    if nickname:
+        client_ip = request.client.host if request.client else "127.0.0.1"
+        ua = request.headers.get("user-agent", "")
+        device = "모바일" if any(k in ua.lower() for k in ["mobi", "android", "iphone"]) else "PC"
+        _record_session_activity(nickname, client_ip, device)
+    return {"status": "ok"}
+
+@router.get("/admin/live-visitors", summary="[운영자 전용] 실시간 접속자 및 회원 현황")
+def get_admin_live_visitors(request: Request, admin_nick: Optional[str] = None, nickname: Optional[str] = None):
+    # Operator validation: check admin_nick, nickname parameter, or custom header
+    caller_nick = admin_nick or nickname or request.headers.get("x-user-nickname", "")
+    if not caller_nick or not _is_admin(caller_nick):
+        raise HTTPException(status_code=403, detail="운영자(whathehas)만 접근할 수 있는 페이지입니다.")
+
+    now_ts = datetime.now().timestamp()
+    # Filter sessions active within last 10 minutes (600 seconds)
+    online_members = []
+    for nick, sess in list(_ACTIVE_SESSIONS.items()):
+        diff_sec = now_ts - sess.get("last_active_ts", 0)
+        if diff_sec <= 600:
+            online_members.append({
+                "nickname": nick,
+                "ip": sess.get("ip", "-"),
+                "last_active": sess.get("last_active"),
+                "device": sess.get("device", "웹"),
+                "is_online": True,
+                "idle_sec": int(diff_sec)
+            })
+
+    online_members.sort(key=lambda x: x["idle_sec"])
+
+    members = _load_members()
+    logs = _load_access_logs()
+
+    online_nick_set = {m["nickname"].lower() for m in online_members}
+    all_members_with_status = []
+    total_logins = 0
+    for m in members:
+        is_on = m["nickname"].lower() in online_nick_set
+        safe_m = {
+            "id": m["id"],
+            "nickname": m["nickname"],
+            "age": m.get("age", 30),
+            "login_count": m.get("login_count", 1),
+            "registered_at": m.get("registered_at", "-"),
+            "last_login_at": m.get("last_login_at", "-"),
+            "is_online": is_on,
+            "is_admin": _is_admin(m.get("nickname", ""))
+        }
+        total_logins += safe_m["login_count"]
+        all_members_with_status.append(safe_m)
+
+    all_members_with_status.sort(key=lambda x: (not x["is_online"], -x.get("login_count", 0)))
+
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    today_visitors = set()
+    for l in logs:
+        if l.get("timestamp", "").startswith(today_str):
+            today_visitors.add(l.get("nickname"))
+
+    return {
+        "status": "success",
+        "current_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "total_registered_users": len(members),
+        "today_unique_visitors": len(today_visitors),
+        "current_online_count": len(online_members),
+        "total_logins": total_logins,
+        "online_users": online_members,
+        "all_members": all_members_with_status,
+        "recent_logs": logs[:100]
     }
 
 @router.get("/admin/access-stats", summary="[관리자 전용] 회원별 접속 통계 및 실시간 로그인 이력 조회")
@@ -311,12 +437,12 @@ def get_admin_access_stats():
             "age": m.get("age", 30),
             "login_count": m.get("login_count", 1),
             "registered_at": m.get("registered_at", "-"),
-            "last_login_at": m.get("last_login_at", "-")
+            "last_login_at": m.get("last_login_at", "-"),
+            "is_admin": _is_admin(m.get("nickname", ""))
         }
         total_logins += safe_m["login_count"]
         safe_members.append(safe_m)
 
-    # Sort members by login_count desc (most active first)
     safe_members.sort(key=lambda x: x.get("login_count", 0), reverse=True)
 
     return {
