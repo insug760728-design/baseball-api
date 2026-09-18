@@ -656,7 +656,7 @@ class SchedulerService:
                     def _sync_mlb():
                         d_db = SessionLocal()
                         try:
-                            res = MatchService.sync_from_official_site(d_db, league_id="MLB", start_date=yesterday_str, end_date=today_str, sync_boxscore=False)
+                            res = MatchService.sync_from_official_site(d_db, league_id="MLB", target_date=today_str, sync_boxscore=False)
                             return res.get("synced_matches_count", 0)
                         except Exception as e:
                             logger.warning(f"[Scheduler Live MLB] 동기화 경고: {e}")
@@ -682,9 +682,9 @@ class SchedulerService:
                             d_db.close()
                     sync_tasks.append(asyncio.to_thread(_sync_domestic))
 
-                # (C) 축구 공식 무료 실시간 동기화 (ESPN 무료 무제한 연동: LIVE 10초 / 시작전 30초 주기)
+                # (C) 축구 공식 무료 실시간 동기화 (ESPN 무료 무제한 연동: LIVE 15초 / 시작전 45초 주기)
                 if soccer_live or soccer_imminent:
-                    soccer_interval = 10.0 if soccer_live else 30.0
+                    soccer_interval = 15.0 if soccer_live else 45.0
                     if now_epoch - cls._last_football_sync_ts >= soccer_interval:
                         cls._last_football_sync_ts = now_epoch
                         def _sync_free_soccer():
@@ -693,7 +693,7 @@ class SchedulerService:
                             leagues_to_sync = active_soccer_leagues or {"LALIGA", "SERIE_A", "LIGUE_1", "EPL", "BUNDESLIGA"}
                             try:
                                 for lid in leagues_to_sync:
-                                    res = MatchService.sync_from_official_site(d_db, league_id=lid, start_date=yesterday_str, end_date=today_str, sync_boxscore=False)
+                                    res = MatchService.sync_from_official_site(d_db, league_id=lid, target_date=today_str, sync_boxscore=False)
                                     cnt += res.get("synced_matches_count", 0)
                                 return cnt
                             except Exception as e:
@@ -703,11 +703,11 @@ class SchedulerService:
                                 d_db.close()
                         sync_tasks.append(asyncio.to_thread(_sync_free_soccer))
 
-                # (D) 유료 LiveApiSports 스마트 동적 수집 (한국/일본 야구 3초 초고속 실시간 수집)
+                # (D) 유료 LiveApiSports 스마트 동적 수집 (한국/일본 야구 초고속 실시간 수집)
                 from app.services.live_api_sports_service import LiveApiSportsService
                 if LiveApiSportsService.is_configured():
                     # ⚡ MLB는 공식 사이트로 수집하므로 유료 API-Baseball 호출 대상에서 완전 제외 (KBO/NPB만 연동)
-                    bb_interval = 3.0 if kbo_npb_live else 15.0
+                    bb_interval = 5.0 if kbo_npb_live else 30.0
                     should_sync_bb = (kbo_npb_live or kbo_npb_imminent) and (now_epoch - cls._last_baseball_sync_ts >= bb_interval)
 
                     if should_sync_bb:
@@ -730,8 +730,10 @@ class SchedulerService:
                 else:
                     updated_total = 0
 
-                from app.api.v1.matches import clear_matches_cache
-                clear_matches_cache()
+                # ⚡ 실제로 스코어나 데이터가 변경되었을 때만 캐시를 초기화하여 초고속 API 응답 보장
+                if updated_total > 0:
+                    from app.api.v1.matches import clear_matches_cache
+                    clear_matches_cache()
                 
                 # 활성 LIVE 경기 상태 목록 추출하여 WebSocket에 직접 전송
                 def _extract_live_items():
@@ -807,8 +809,8 @@ class SchedulerService:
                     except Exception:
                         pass
 
-                # ⚡ KBO/NPB LIVE 진행 중이면 3초 초고속 모드, MLB 및 축구 LIVE면 10초, 시작 직전(Pre-Match) 상태면 15초 대기
-                sleep_sec = 3 if kbo_npb_live else (10 if (mlb_live or soccer_live) else 15)
+                # ⚡ KBO/NPB LIVE 진행 중이면 10초 주기, MLB 및 축구 LIVE면 15초, 시작 직전(Pre-Match) 상태면 45초 대기 (CPU 부하 완화)
+                sleep_sec = 10 if kbo_npb_live else (15 if (mlb_live or soccer_live) else 45)
 
                 # 🧹 Render 512MB RAM 안전 최적화: 매 루프마다 점유 메모리 OS에 즉시 반환
                 try:

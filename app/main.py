@@ -173,10 +173,11 @@ if os.path.exists(static_dir):
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 _PORTAL_HTML_CACHE = {}
+_PORTAL_COMBINED_CACHE = {}
 _SERVER_MATCHES_CACHE = {"json_str": "[]", "updated_at": 0.0, "is_refreshing": False}
 
 def refresh_server_matches_cache() -> str:
-    global _SERVER_MATCHES_CACHE
+    global _SERVER_MATCHES_CACHE, _PORTAL_COMBINED_CACHE
     if _SERVER_MATCHES_CACHE.get("is_refreshing"):
         return _SERVER_MATCHES_CACHE.get("json_str", "[]")
     _SERVER_MATCHES_CACHE["is_refreshing"] = True
@@ -189,6 +190,7 @@ def refresh_server_matches_cache() -> str:
         json_str = json.dumps(serialized, ensure_ascii=False)
         _SERVER_MATCHES_CACHE["json_str"] = json_str
         _SERVER_MATCHES_CACHE["updated_at"] = time.time()
+        _PORTAL_COMBINED_CACHE.clear()
         return json_str
     except Exception as e:
         print(f"[WARN] Failed to refresh server matches cache: {e}")
@@ -205,8 +207,8 @@ def get_server_initial_matches_json() -> str:
     global _SERVER_MATCHES_CACHE
     now = time.time()
     if _SERVER_MATCHES_CACHE["json_str"] != "[]":
-        # If cache is older than 20 seconds, trigger async background refresh without blocking current request
-        if (now - _SERVER_MATCHES_CACHE["updated_at"] > 20.0) and not _SERVER_MATCHES_CACHE.get("is_refreshing"):
+        # If cache is older than 30 seconds, trigger async background refresh without blocking current request
+        if (now - _SERVER_MATCHES_CACHE["updated_at"] > 30.0) and not _SERVER_MATCHES_CACHE.get("is_refreshing"):
             import threading
             threading.Thread(target=refresh_server_matches_cache, daemon=True).start()
         return _SERVER_MATCHES_CACHE["json_str"]
@@ -218,6 +220,10 @@ def get_portal_html(target_path: str):
         return "", ""
     
     mtime = os.path.getmtime(target_path)
+    combined = _PORTAL_COMBINED_CACHE.get(target_path)
+    if combined and combined.get("mtime") == mtime and combined.get("matches_updated_at") == _SERVER_MATCHES_CACHE["updated_at"]:
+        return combined["content"], combined["etag"]
+
     if target_path not in _PORTAL_HTML_CACHE or _PORTAL_HTML_CACHE[target_path].get("mtime") != mtime:
         with open(target_path, "r", encoding="utf-8") as f:
             raw_content = f.read()
@@ -237,6 +243,12 @@ def get_portal_html(target_path: str):
 
     import hashlib
     etag = f'"{hashlib.md5(content.encode("utf-8")).hexdigest()}"'
+    _PORTAL_COMBINED_CACHE[target_path] = {
+        "mtime": mtime,
+        "matches_updated_at": _SERVER_MATCHES_CACHE["updated_at"],
+        "content": content,
+        "etag": etag
+    }
     return content, etag
 
 def is_b2b_domain(request: Request) -> bool:
@@ -276,12 +288,13 @@ def mobile_portal(request: Request):
     try:
         target = mobile_path if os.path.exists(mobile_path) else landing_path
         content, etag = get_portal_html(target)
+        if request.headers.get("if-none-match") == etag:
+            return Response(status_code=304)
         return HTMLResponse(
             content=content,
             headers={
-                "Cache-Control": "no-cache, no-store, must-revalidate",
-                "Pragma": "no-cache",
-                "Expires": "0"
+                "Cache-Control": "public, max-age=5, stale-while-revalidate=15",
+                "ETag": etag
             }
         )
     except Exception as e:
@@ -298,12 +311,13 @@ def domain_portal(request: Request):
             target = landing_path if os.path.exists(landing_path) else dashboard_path
 
         content, etag = get_portal_html(target)
+        if request.headers.get("if-none-match") == etag:
+            return Response(status_code=304)
         return HTMLResponse(
             content=content, 
             headers={
-                "Cache-Control": "no-cache, no-store, must-revalidate",
-                "Pragma": "no-cache",
-                "Expires": "0"
+                "Cache-Control": "public, max-age=5, stale-while-revalidate=15",
+                "ETag": etag
             }
         )
     except Exception as e:

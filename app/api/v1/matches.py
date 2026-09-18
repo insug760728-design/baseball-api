@@ -121,18 +121,23 @@ def list_matches(
         if not end_date:
             end_date = date
 
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
     cache_key = f"matches:{sport_code}:{league_name}:{status}:{start_date}:{end_date}:{limit}:{order}"
     cached_str = cache_get(cache_key)
     if cached_str:
-        return Response(content=cached_str.encode("utf-8"), media_type="application/json")
+        return Response(
+            content=cached_str.encode("utf-8"),
+            media_type="application/json",
+            headers={"Cache-Control": "public, max-age=5, stale-while-revalidate=15"}
+        )
     now = time.time()
     if cache_key in _MATCHES_JSON_CACHE:
         cache_time, cached_bytes = _MATCHES_JSON_CACHE[cache_key]
-        if now - cache_time < 10: # 10초 메모리 고속 서빙 (0.1ms 응답)
-            return Response(content=cached_bytes, media_type="application/json")
+        if now - cache_time < 20: # 20초 메모리 초고속 서빙 (0.1ms 응답)
+            return Response(
+                content=cached_bytes,
+                media_type="application/json",
+                headers={"Cache-Control": "public, max-age=5, stale-while-revalidate=15"}
+            )
 
     res = MatchService.get_matches(
         db,
@@ -148,8 +153,12 @@ def list_matches(
     json_str = json.dumps(serialized, ensure_ascii=False)
     json_bytes = json_str.encode("utf-8")
     _MATCHES_JSON_CACHE[cache_key] = (now, json_bytes)
-    cache_set(cache_key, json_str, ttl_seconds=10)
-    return Response(content=json_bytes, media_type="application/json")
+    cache_set(cache_key, json_str, ttl_seconds=20)
+    return Response(
+        content=json_bytes,
+        media_type="application/json",
+        headers={"Cache-Control": "public, max-age=5, stale-while-revalidate=15"}
+    )
 
 @router.get("/live-boards", summary="실시간 라이브 전광판 전용 종합 데이터 (구장/주자/볼카운트/이닝/스코어)")
 def get_live_boards(

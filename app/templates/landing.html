@@ -3696,6 +3696,7 @@
 
     async function loadLiveMatches() {
       try {
+        let hasInitialData = false;
         // ⚡ 0순위: 서버에서 직접 주입한 초기 경기 데이터가 있으면 0초 즉시 렌더링!
         if (window.SERVER_INITIAL_MATCHES && Array.isArray(window.SERVER_INITIAL_MATCHES) && window.SERVER_INITIAL_MATCHES.length > 0) {
           const cleanMatches = window.SERVER_INITIAL_MATCHES.filter(m => m && !(m.official_id && m.official_id.startsWith('SCHED_')));
@@ -3704,6 +3705,7 @@
             try { window.matchListAgent.setMatches(cleanMatches); } catch(e) {}
           }
           window.matchesLoadedInitial = true;
+          hasInitialData = true;
           try { updateScheduleTabCounts(); } catch(e) {}
           try { renderMatchStrip('ALL'); } catch(e) {}
           try { renderPredMatches(); } catch(e) {}
@@ -3711,32 +3713,34 @@
           try { initRealTimeSportsTicker(); } catch(e) {}
         }
 
-        // ⚡ Phase 1 (초고속 0.05초): 오늘 및 실시간 공식 경기 우선 고속 로드 -> UI 즉시 표출
-        try {
-          const fastResp = await fetch(`/api/v1/matches?limit=300&order=asc`, { cache: 'no-store' });
-          if (fastResp.ok) {
-            const fastMatches = await fastResp.json();
-            if (Array.isArray(fastMatches) && fastMatches.length > 0) {
-              // 공식 경기만 엄격 필터링 (가짜/합성 일정 배제)
-              const cleanMatches = fastMatches.filter(m => m && !(m.official_id && m.official_id.startsWith('SCHED_')));
-              allMatches = cleanMatches;
-              if (window.matchListAgent) {
-                try { window.matchListAgent.setMatches(cleanMatches); } catch(e) {}
+        // ⚡ Phase 1: 서버 초기 데이터가 없을 때만 즉시 fetch 실행 (초기 데이터가 있으면 불필요한 네트워크 대기 제거)
+        if (!hasInitialData) {
+          try {
+            const fastResp = await fetch(`/api/v1/matches?limit=250&order=asc`);
+            if (fastResp.ok) {
+              const fastMatches = await fastResp.json();
+              if (Array.isArray(fastMatches) && fastMatches.length > 0) {
+                // 공식 경기만 엄격 필터링 (가짜/합성 일정 배제)
+                const cleanMatches = fastMatches.filter(m => m && !(m.official_id && m.official_id.startsWith('SCHED_')));
+                allMatches = cleanMatches;
+                if (window.matchListAgent) {
+                  try { window.matchListAgent.setMatches(cleanMatches); } catch(e) {}
+                }
+                try { checkScoreChangesAndNotify(allMatches); } catch(e) { console.warn('checkScoreChanges error:', e); }
+                window.matchesLoadedInitial = true;
+                try { updateScheduleTabCounts(); } catch(e) { console.warn('updateScheduleTabCounts error:', e); }
+                try { renderMatchStrip('ALL'); } catch(e) { console.warn('renderMatchStrip error:', e); }
+                try { renderPredMatches(); } catch(e) { console.warn('renderPredMatches error:', e); }
+                try { renderRightColLiveRelay(); } catch(e) { console.warn('renderRightColLiveRelay error:', e); }
+                try { initRealTimeSportsTicker(); } catch(e) { console.warn('initRealTimeSportsTicker error:', e); }
+                try {
+                  localStorage.setItem('tokeon_matches_cache_v99', JSON.stringify(allMatches));
+                } catch(e) {}
               }
-              try { checkScoreChangesAndNotify(allMatches); } catch(e) { console.warn('checkScoreChanges error:', e); }
-              window.matchesLoadedInitial = true;
-              try { updateScheduleTabCounts(); } catch(e) { console.warn('updateScheduleTabCounts error:', e); }
-              try { renderMatchStrip('ALL'); } catch(e) { console.warn('renderMatchStrip error:', e); }
-              try { renderPredMatches(); } catch(e) { console.warn('renderPredMatches error:', e); }
-              try { renderRightColLiveRelay(); } catch(e) { console.warn('renderRightColLiveRelay error:', e); }
-              try { initRealTimeSportsTicker(); } catch(e) { console.warn('initRealTimeSportsTicker error:', e); }
-              try {
-                localStorage.setItem('tokeon_matches_cache_v99', JSON.stringify(allMatches));
-              } catch(e) {}
             }
+          } catch(e) {
+            console.warn('[Fast Phase 1] Error:', e);
           }
-        } catch(e) {
-          console.warn('[Fast Phase 1] Error:', e);
         }
 
         // Fallback: If still empty, load from localStorage
