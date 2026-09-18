@@ -46,3 +46,52 @@ def get_cache_status():
     """
     from app.core.cache import get_cache_stats
     return get_cache_stats()
+
+@router.get("/storage")
+def get_system_storage():
+    """
+    서버 디스크 저장공간 및 컨테이너 리소스 상태 조회
+    """
+    import shutil
+    import os
+    from app.core.config import settings
+    
+    total, used, free = shutil.disk_usage("/")
+    
+    db_info = {}
+    if "sqlite" in settings.DATABASE_URL:
+        db_path = settings.DATABASE_URL.replace("sqlite:///", "").split("?")[0]
+        if os.path.exists(db_path):
+            db_info["path"] = db_path
+            db_info["size_mb"] = round(os.path.getsize(db_path) / (1024 * 1024), 2)
+        else:
+            db_info["path"] = db_path
+            db_info["exists"] = False
+    else:
+        db_info["type"] = "External Database"
+        
+    mem_info = {}
+    if os.path.exists("/proc/meminfo"):
+        try:
+            with open("/proc/meminfo", "r") as f:
+                for line in f:
+                    parts = line.split(":")
+                    if len(parts) == 2:
+                        k = parts[0].strip()
+                        if k in ["MemTotal", "MemFree", "MemAvailable"]:
+                            mem_info[k] = round(int(parts[1].strip().split()[0]) / 1024, 1)
+        except Exception:
+            pass
+
+    return {
+        "status": "ok",
+        "disk": {
+            "total_gb": round(total / (1024 ** 3), 2),
+            "used_gb": round(used / (1024 ** 3), 2),
+            "free_gb": round(free / (1024 ** 3), 2),
+            "free_percent": round((free / total) * 100, 1) if total else 0
+        },
+        "database": db_info,
+        "memory_mb": mem_info
+    }
+
