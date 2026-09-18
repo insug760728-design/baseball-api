@@ -383,12 +383,12 @@ class BetmanService:
         # Fallback cached for 60s so failed outbound connections don't block subsequent requests
         res_map = {
             'toto': {
-                'G011': {'gmId': 'G011', 'gmTs': 260052, 'gmOsidTsYear': 2026, 'gameName': '축구토토 승무패'},
-                'G024': {'gmId': 'G024', 'gmTs': 260068, 'gmOsidTsYear': 2026, 'gameName': '야구토토 승1패'},
-                'G027': {'gmId': 'G027', 'gmTs': 260028, 'gmOsidTsYear': 2026, 'gameName': '농구토토 승5패'}
+                'G011': {'gmId': 'G011', 'gmTs': 260054, 'gmOsidTsYear': 2026, 'gameName': '축구토토 승무패'},
+                'G024': {'gmId': 'G024', 'gmTs': 260071, 'gmOsidTsYear': 2026, 'gameName': '야구토토 승1패'},
+                'G027': {'gmId': 'G027', 'gmTs': 260027, 'gmOsidTsYear': 2026, 'gameName': '농구토토 승5패'}
             },
             'proto': {
-                'G101': {'gmId': 'G101', 'gmTs': 260093, 'gmOsidTsYear': 2026, 'gameName': '프로토 승부식'}
+                'G101': {'gmId': 'G101', 'gmTs': 260111, 'gmOsidTsYear': 2026, 'gameName': '프로토 승부식'}
             }
         }
         _CACHE[cache_key] = (now, res_map)
@@ -402,10 +402,10 @@ class BetmanService:
             return rounds_map['toto'][gm_id].get('gmTs')
         if gm_id in rounds_map.get('proto', {}):
             return rounds_map['proto'][gm_id].get('gmTs')
-        if gm_id == 'G011': return 260053
-        if gm_id == 'G024': return 260070
-        if gm_id == 'G027': return 260001
-        if gm_id == 'G101': return 260093
+        if gm_id == 'G011': return 260054
+        if gm_id == 'G024': return 260071
+        if gm_id == 'G027': return 260027
+        if gm_id == 'G101': return 260111
         return 260001
 
     @staticmethod
@@ -574,19 +574,12 @@ class BetmanService:
                 except Exception:
                     pass
 
-        # Fix 1: 스냅샷의 gmTs ≠ active_ts이면 무조건 실시간 fetch 실행
-        mismatch_round = False
-        if snapshot_data:
-            snap_ts = snapshot_data.get('gmTs')
-            if snap_ts and str(snap_ts) != str(active_ts):
-                # 회차 불일치 감지 -> 무조건 실시간 fetch 실행
-                mismatch_round = True
-                force_refresh = True
-            elif not force_refresh:
-                _CACHE[cache_key] = (now, snapshot_data)
-                return snapshot_data
+        # 1. 스냅샷 데이터가 있으면 즉시 반환 (Render 해외 IP 블로킹 및 요청 지연 원천 차단)
+        if snapshot_data and not force_refresh:
+            _CACHE[cache_key] = (now, snapshot_data)
+            return snapshot_data
 
-        if not force_refresh and not mismatch_round:
+        if not force_refresh:
             if snapshot_data:
                 return snapshot_data
             return {'gmTs': active_ts, 'total_lines': 0, 'keys': [], 'datas': [], 'votes': {}}
