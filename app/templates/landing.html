@@ -588,39 +588,43 @@
     /* 💥 홈런: 1루2루3루 ↔ 중계 '왕복 2번' 비행 애니메이션 (1회 재생 후 완료) */
     @keyframes homerunTwoTripsBallAnim {
       0% {
-        left: 4px;
+        left: 6px;
         transform: translateY(0px) rotate(0deg) scale(0.95);
         filter: drop-shadow(0 0 4px #f59e0b);
       }
       12.5% {
+        left: calc(50% - 16px);
         transform: translateY(-8px) rotate(180deg) scale(1.35);
       }
       25% {
         left: calc(100% - 36px);
-        transform: translateY(0px) rotate(360deg) scale(1.1);
-        filter: drop-shadow(0 0 8px #ef4444);
+        transform: translateY(0px) rotate(360deg) scale(1.15);
+        filter: drop-shadow(0 0 10px #ef4444);
       }
       37.5% {
+        left: calc(50% - 16px);
         transform: translateY(-8px) rotate(540deg) scale(1.35);
       }
       50% {
-        left: 4px;
+        left: 6px;
         transform: translateY(0px) rotate(720deg) scale(0.95);
         filter: drop-shadow(0 0 4px #f59e0b);
       }
       62.5% {
+        left: calc(50% - 16px);
         transform: translateY(-8px) rotate(900deg) scale(1.35);
       }
       75% {
         left: calc(100% - 36px);
-        transform: translateY(0px) rotate(1080deg) scale(1.1);
-        filter: drop-shadow(0 0 8px #ef4444);
+        transform: translateY(0px) rotate(1080deg) scale(1.15);
+        filter: drop-shadow(0 0 10px #ef4444);
       }
       87.5% {
+        left: calc(50% - 16px);
         transform: translateY(-8px) rotate(1260deg) scale(1.35);
       }
       100% {
-        left: 4px;
+        left: 6px;
         transform: translateY(0px) rotate(1440deg) scale(0.95);
         filter: drop-shadow(0 0 4px #f59e0b);
       }
@@ -909,12 +913,14 @@
 
     .live-anim-soccer-goal-zigzag {
       position: absolute !important;
-      left: 4px !important;
-      top: 50% !important;
+      left: 4px;
+      top: 50%;
       width: auto !important;
       height: 28px !important;
       z-index: 15 !important;
       pointer-events: none !important;
+      display: inline-flex !important;
+      align-items: center !important;
       animation: soccerGoalZigzagBallAnim 4.8s 1 cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
     }
     .live-anim-goal-text-burst {
@@ -930,12 +936,14 @@
 
     .live-anim-homerun-two-trips {
       position: absolute !important;
-      top: 3px !important;
-      left: 4px !important;
+      top: 3px;
+      left: 6px;
       width: auto !important;
       height: 24px !important;
       z-index: 15 !important;
       pointer-events: none !important;
+      display: inline-flex !important;
+      align-items: center !important;
       animation: homerunTwoTripsBallAnim 4.8s 1 ease-in-out forwards !important;
     }
     .live-anim-homerun-text-burst {
@@ -943,12 +951,14 @@
     }
     .live-anim-hit-one-trip {
       position: absolute !important;
-      top: 3px !important;
-      left: 4px !important;
+      top: 3px;
+      left: 6px;
       width: auto !important;
       height: 24px !important;
       z-index: 15 !important;
       pointer-events: none !important;
+      display: inline-flex !important;
+      align-items: center !important;
       animation: hitOneTripBallAnim 3.2s 1 ease-in-out forwards !important;
     }
     .live-anim-hit-text-burst {
@@ -956,12 +966,14 @@
     }
     .live-anim-walk-one-trip {
       position: absolute !important;
-      top: 3px !important;
-      left: 4px !important;
+      top: 3px;
+      left: 6px;
       width: auto !important;
       height: 24px !important;
       z-index: 15 !important;
       pointer-events: none !important;
+      display: inline-flex !important;
+      align-items: center !important;
       animation: walkOneTripRunnerAnim 3.0s 1 linear forwards !important;
     }
     .live-anim-3out-flash {
@@ -11318,6 +11330,34 @@ function getFullModalMatchList() {
       }, 5400);
     };
 
+    // ⚾ 야구 실시간 이벤트 트리거 (HOMERUN: 2회 왕복, HIT: 1회 전진, BB: 포볼/사사구, OUT: 아웃/삼진)
+    window.triggerBaseballEvent = function(matchId, type, details) {
+      if (!window._activeLivePlayEvents) window._activeLivePlayEvents = {};
+      const t = (type || 'HIT').toUpperCase();
+      let subtext = '';
+      let outs = null;
+      if (typeof details === 'string') {
+        subtext = details;
+      } else if (details && typeof details === 'object') {
+        subtext = details.subtext || '';
+        outs = details.outs;
+      }
+      window._activeLivePlayEvents[matchId] = {
+        type: t,
+        subtext: subtext,
+        outs: outs,
+        time: Date.now()
+      };
+      if (typeof renderPredMatches === 'function') renderPredMatches();
+      const dismissDuration = (t === 'HOMERUN') ? 5200 : (t === 'HIT' ? 3800 : 3400);
+      setTimeout(() => {
+        if (window._activeLivePlayEvents && window._activeLivePlayEvents[matchId]) {
+          delete window._activeLivePlayEvents[matchId];
+          if (typeof renderPredMatches === 'function') renderPredMatches();
+        }
+      }, dismissDuration);
+    };
+
     // ⚡ 전역 실시간 라이브 경기 판단 헬퍼 (공수교대/팀체인지/시간대 완벽 대응)
     function isRealTimeLive(m) {
       if (!m) return false;
@@ -11493,6 +11533,61 @@ function getFullModalMatchList() {
                 </div>
               </div>
             `;
+          } else if (activeEv && (activeEv.type === 'BB' || activeEv.type === 'WALK')) {
+            // 🚶‍♂️ 포볼/볼넷 (BB) - 1루로 천천히 진루하는 모션 ➡️ 약 3.4초 후 자동 꺼짐
+            const bbText = activeEv.subtext || '볼넷 출루! 차분한 선구안으로 1루 진루!';
+            eventBannerHtml = `
+              <div class="live-baseball-track-container live-track-dismiss-general p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #1e3a5f 0%, #0f172a 50%, #1e3a5f 100%); border:1.5px solid #38bdf8; box-shadow:0 3px 8px rgba(56,189,248,0.35); position:relative; overflow:hidden;">
+                <!-- Caption Bar -->
+                <div class="d-flex justify-content-between align-items-center mb-1 text-white" style="font-size:0.72rem;">
+                  <div class="d-flex align-items-center gap-1.5">
+                    <span class="badge bg-info text-dark fw-bold px-1.5 py-0.5" style="font-size:0.64rem;"><i class="bi bi-person-walking me-0.5"></i>FOUR BALL</span>
+                    <span class="fw-bold" style="color:#bae6fd; font-size:0.75rem; letter-spacing:-0.2px;">🚶‍♂️ ${bbText}</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-1">
+                    <span class="badge bg-primary text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">1루 진루</span>
+                    <button type="button" class="btn-close btn-close-white" style="font-size:0.50rem; opacity:0.8;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>
+                  </div>
+                </div>
+                <!-- Motion Track (타석 ➡️ 1루 진루) -->
+                <div class="live-baseball-motion-rail">
+                  <div class="d-flex align-items-center gap-0.5" style="position:absolute; left:6px; top:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#38bdf8; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
+                    <span>⚾ 타석</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-0.5" style="position:absolute; right:6px; top:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#38bdf8; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
+                    <span>🟡 1루 진루</span>
+                  </div>
+                  <div class="live-anim-walk-one-trip">
+                    <span style="font-size:1.15rem; filter:drop-shadow(0 0 6px #38bdf8);">🏃‍♂️</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          } else if (activeEv && (activeEv.type === 'OUT' || activeEv.type === 'SO')) {
+            // 🔴 아웃/삼진 (OUT) - 아웃 카운트 증가 및 경고 점멸 ➡️ 약 3.4초 후 자동 꺼짐
+            const outText = activeEv.subtext || (activeEv.type === 'SO' ? '탈삼진 아웃! 날카로운 결정구로 타자 제압!' : '아웃 카운트 추가!');
+            const outNum = (activeEv.outs !== undefined && activeEv.outs !== null) ? activeEv.outs : (st.outs || 1);
+            eventBannerHtml = `
+              <div class="live-baseball-track-container live-track-dismiss-general p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #450a0a 0%, #1e1b4b 50%, #450a0a 100%); border:1.5px solid #f87171; box-shadow:0 3px 8px rgba(239,68,68,0.35); position:relative; overflow:hidden;">
+                <!-- Caption Bar -->
+                <div class="d-flex justify-content-between align-items-center mb-1 text-white" style="font-size:0.72rem;">
+                  <div class="d-flex align-items-center gap-1.5">
+                    <span class="badge bg-danger text-white fw-bold px-1.5 py-0.5" style="font-size:0.64rem;"><i class="bi bi-x-octagon-fill me-0.5"></i>OUT</span>
+                    <span class="fw-bold" style="color:#fecaca; font-size:0.75rem; letter-spacing:-0.2px;">⚡ ${outText}</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-1">
+                    <span class="badge bg-danger text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">[${outNum}아웃]</span>
+                    <button type="button" class="btn-close btn-close-white" style="font-size:0.50rem; opacity:0.8;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>
+                  </div>
+                </div>
+                <!-- Motion Track (OUT 카운트 점멸) -->
+                <div class="live-baseball-motion-rail d-flex align-items-center justify-content-center">
+                  <span class="fw-bold live-anim-3out-flash" style="color:#ef4444; font-size:0.82rem; letter-spacing:0.8px; text-shadow:0 0 6px rgba(239,68,68,0.8);">
+                    🔴 OUT! [${outNum}아웃] 경기 흐름 제압
+                  </span>
+                </div>
+              </div>
+            `;
           }
 
           liveBroadcastStageHtml = `
@@ -11540,6 +11635,20 @@ function getFullModalMatchList() {
                     </div>
                     <div class="text-secondary text-truncate" style="max-width:125px;" title="${st.pitcher}">
                       ⚾ 투: <b class="text-dark">${st.pitcher || '선발투수'}</b>
+                    </div>
+                    <div class="mt-1 d-flex align-items-center gap-1 justify-content-end flex-wrap">
+                      <button type="button" class="btn btn-xs px-1.5 py-0.5 fw-bold text-danger border border-danger border-opacity-40 bg-white shadow-xs" style="font-size:0.60rem; border-radius:4px;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'HOMERUN', '💥 쾅! 초대형 홈런 작렬!');" title="홈런 왕복 2회 애니메이션 실행">
+                        💥 홈런(왕복)
+                      </button>
+                      <button type="button" class="btn btn-xs px-1.5 py-0.5 fw-bold text-success border border-success border-opacity-40 bg-white shadow-xs" style="font-size:0.60rem; border-radius:4px;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'HIT', '⚾ 1타점 적시타!');" title="안타 1회 전진 애니메이션 실행">
+                        ⚾ 안타
+                      </button>
+                      <button type="button" class="btn btn-xs px-1.5 py-0.5 fw-bold text-primary border border-primary border-opacity-40 bg-white shadow-xs" style="font-size:0.60rem; border-radius:4px;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'BB', '🚶‍♂️ 볼넷 출루!');" title="포볼 1루 진루 애니메이션 실행">
+                        🚶‍♂️ 포볼
+                      </button>
+                      <button type="button" class="btn btn-xs px-1.5 py-0.5 fw-bold text-dark border border-secondary border-opacity-40 bg-white shadow-xs" style="font-size:0.60rem; border-radius:4px;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'OUT', { outs: ${st.outs >= 2 ? 3 : (st.outs + 1)}, subtext: '탈삼진 아웃 제압!' });" title="아웃 점멸 실행">
+                        🔴 아웃
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -18835,13 +18944,50 @@ function renderPredDetail(m, customDetailData = null) {
           else if (item.base_2 !== undefined) target.base2 = item.base_2;
           if (item.base3 !== undefined) target.base3 = item.base3;
           else if (item.base_3 !== undefined) target.base3 = item.base_3;
+          // ⚾ 야구/축구 실시간 모션 애니메이션 트리거 연동
+          const isBaseball = (target.sport_code === 'BASEBALL' || item.sport_code === 'BASEBALL');
+          const isSoccer = (target.sport_code === 'SOCCER' || item.sport_code === 'SOCCER');
+
+          // 명시적 이벤트 타입 수신 시
+          if (item.event_type) {
+            const evType = String(item.event_type).toUpperCase();
+            if (isBaseball && typeof window.triggerBaseballEvent === 'function') {
+              if (evType.includes('HOMERUN') || evType.includes('HR')) {
+                window.triggerBaseballEvent(item.id, 'HOMERUN', item.event_text || '홈런 작렬!');
+              } else if (evType.includes('HIT')) {
+                window.triggerBaseballEvent(item.id, 'HIT', item.event_text || '적시타!');
+              } else if (evType.includes('BB') || evType.includes('WALK')) {
+                window.triggerBaseballEvent(item.id, 'BB', item.event_text || '볼넷 출루!');
+              } else if (evType.includes('OUT') || evType.includes('SO')) {
+                window.triggerBaseballEvent(item.id, 'OUT', { outs: item.outs, subtext: item.event_text });
+              }
+            } else if (isSoccer && (evType === 'GOAL' || evType === 'SCORE') && typeof window.triggerSoccerGoalEvent === 'function') {
+              window.triggerSoccerGoalEvent(item.id, item.event_text || '골');
+            }
+          } else if (isBaseball && typeof window.triggerBaseballEvent === 'function') {
+            // 점수 상승 시 홈런/안타 자동 판단
+            const oldSum = (Number(target.home_score) || 0) + (Number(target.away_score) || 0);
+            const newSum = (Number(itemHScore ?? target.home_score) || 0) + (Number(itemAScore ?? target.away_score) || 0);
+            if (newSum > oldSum) {
+              const diff = newSum - oldSum;
+              if (diff >= 2) {
+                window.triggerBaseballEvent(item.id, 'HOMERUN', `💥 ${diff}점 홈런 작렬!`);
+              } else {
+                window.triggerBaseballEvent(item.id, 'HIT', '⚾ 1타점 적시타!');
+              }
+            } else if (item.outs !== undefined && target.outs !== undefined && item.outs > target.outs) {
+              window.triggerBaseballEvent(item.id, 'OUT', { outs: item.outs, subtext: `${item.outs}아웃 카운트!` });
+            }
+          }
+
           if (item.details) target.details = item.details;
           if (item.scoreboard) target.scoreboard = item.scoreboard;
         }
       }
 
-      // 2. 화면 리렌더링 (깜빡임 없이 즉시 스코어 반영)
-      if (hasChanges || liveItems.length > 0) {
+      // 2. 화면 리렌더링 (점수/상태 변경 시 즉시 반영, 진행 중인 애니메이션 방해 방지)
+      const hasActiveAnimation = (typeof window._activeLivePlayEvents !== 'undefined' && Object.keys(window._activeLivePlayEvents).length > 0);
+      if (hasChanges || (!hasActiveAnimation && liveItems.length > 0)) {
         renderMatchStrip('ALL');
         renderPredMatches();
         renderRightColLiveRelay();

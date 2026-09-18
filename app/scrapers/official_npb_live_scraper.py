@@ -732,65 +732,120 @@ class NpbOfficialScraper:
             'left_on_base': {'home': 0, 'away': 0}
         }
 
-        player_stats = []
-        if soup:
-            for sec in soup.find_all('section'):
-                h = sec.find(['h1', 'h2', 'h3'])
-                sec_title = h.get_text(strip=True) if h else ''
-                t_name = map_npb_team(sec_title)
-                if t_name not in [away_name, home_name]:
-                    continue
-                for t in sec.find_all('table'):
-                    for tr in t.find_all('tr'):
-                        cells = [c.get_text(strip=True) for c in tr.find_all(['th', 'td'])]
-                        if len(cells) >= 5 and cells[0].isdigit():
-                            order = cells[0]
-                            pos_raw = cells[1]
-                            p_raw = cells[2]
-                            hand = cells[3]
-                            avg = cells[4]
-                            p_clean = sanitize_player_name(p_raw)
-                            p_ko = translate_npb_player_name(p_clean)
-                            pos_ko = translate_npb_position(pos_raw)
-                            player_stats.append({
-                                'team_name': t_name,
-                                'player_name': p_ko,
-                                'position': f'{order}번 {pos_ko}',
-                                'extra_stats': {
-                                    'type': 'HITTER',
-                                    'player_type': 'HITTER',
-                                    'name_raw': p_clean,
-                                    'avg': avg,
-                                    'hits': 0,
-                                    'runs': 0,
-                                    'rbi': 0
-                                }
-                            })
+        stats_url = f"https://baseball.yahoo.co.jp/npb/game/{game_id}/stats"
 
-        if top_soup:
-            for sec in top_soup.find_all('section'):
-                h = sec.find(['h1', 'h2', 'h3'])
-                sec_title = h.get_text(strip=True) if h else ''
-                t_name = map_npb_team(sec_title)
-                if t_name not in [away_name, home_name]:
-                    continue
+        try:
+            stats_html = self._fetch_html(stats_url)
+        except Exception as e:
+            print(f"[NPB Scraper] Failed to fetch Yahoo stats ({stats_url}): {e}")
+            stats_html = ""
+
+        stats_soup = BeautifulSoup(stats_html, 'html.parser') if stats_html else None
+
+        player_stats = []
+
+        # (1) /stats 페이지에서 타자 및 투수 전체 정밀 기록 추출
+        if stats_soup:
+            curr_team_name = away_name
+            for sec in stats_soup.find_all('section'):
+                h = sec.find(['h1', 'h2', 'h3', 'h4'])
+                sec_text = sec.get_text()
+                h_text = h.get_text(strip=True) if h else ''
+
+                # 구단 섹션 감지
+                mapped_sec_team = map_npb_team(h_text)
+                if mapped_sec_team in [away_name, home_name]:
+                    curr_team_name = mapped_sec_team
+
                 for t in sec.find_all('table'):
                     txt = t.get_text()
-                    if '投手' in txt and '防御率' in txt:
-                        p_order = 0
-                        for tr in t.find_all('tr'):
+                    rows = t.find_all('tr')
+                    if not rows:
+                        continue
+                    header_cells = [c.get_text(strip=True) for c in rows[0].find_all(['th', 'td'])]
+
+                    # A. 타자 성적 테이블
+                    if '安打' in header_cells and '打数' in header_cells:
+                        for tr in rows[1:]:
                             cells = [c.get_text(strip=True) for c in tr.find_all(['th', 'td'])]
-                            if len(cells) >= 4 and any(ch in cells[0] for ch in ['先発', '投', '1', '2', '3', '4']):
-                                p_order += 1
-                                is_starter = (p_order == 1 or '先発' in cells[0])
-                                p_raw = cells[2] if len(cells) > 2 else cells[1]
-                                era_val = cells[4] if len(cells) > 4 else '-'
+                            if len(cells) >= 14 and cells[1]:
+                                pos_raw = cells[0]
+                                p_raw = cells[1]
+                                avg_val = cells[2]
+                                ab_val = clean_int(cells[3])
+                                r_val = clean_int(cells[4])
+                                h_val = clean_int(cells[5])
+                                rbi_val = clean_int(cells[6])
+                                so_val = clean_int(cells[7])
+                                bb_val = clean_int(cells[8])
+                                hbp_val = clean_int(cells[9]) if len(cells) > 9 else 0
+                                hr_val = clean_int(cells[13]) if len(cells) > 13 else 0
+
                                 p_clean = sanitize_player_name(p_raw)
                                 p_ko = translate_npb_player_name(p_clean)
+                                pos_ko = translate_npb_position(pos_raw)
+
                                 player_stats.append({
-                                    'team_name': t_name,
+                                    'team_name': curr_team_name,
+                                    'player_name': p_ko,
+                                    'position': pos_ko,
+                                    'minutes_played': 0,
+                                    'points': rbi_val,
+                                    'shots': ab_val,
+                                    'assists': 0,
+                                    'extra_stats': {
+                                        'type': 'HITTER',
+                                        'player_type': 'HITTER',
+                                        'name_raw': p_clean,
+                                        'ab': ab_val,
+                                        'r': r_val,
+                                        'h': h_val,
+                                        'hits': h_val,
+                                        'rbi': rbi_val,
+                                        'hr': hr_val,
+                                        'homeruns': hr_val,
+                                        'bb': bb_val + hbp_val,
+                                        'walks': bb_val + hbp_val,
+                                        'so': so_val,
+                                        'strikeouts': so_val,
+                                        'avg': avg_val
+                                    }
+                                })
+
+                    # B. 투수 성적 테이블
+                    elif '投球回' in header_cells and '自責点' in header_cells:
+                        p_order = 0
+                        for tr in rows[1:]:
+                            cells = [c.get_text(strip=True) for c in tr.find_all(['th', 'td'])]
+                            if len(cells) >= 14 and cells[1]:
+                                p_order += 1
+                                is_starter = (p_order == 1)
+                                dec_raw = cells[0]  # 勝, 敗, H, Ｓ
+                                dec_label = '승리투수 (W)' if '勝' in dec_raw else ('패전투수 (L)' if '敗' in dec_raw else ('세이브 (SV)' if 'Ｓ' in dec_raw or 'S' in dec_raw else ('홀드 (HD)' if 'H' in dec_raw else '')))
+                                p_raw = cells[1]
+                                era_val = cells[2]
+                                ip_val = cells[3]
+                                np_val = clean_int(cells[4])
+                                bf_val = clean_int(cells[5])
+                                h_val = clean_int(cells[6])
+                                hr_val = clean_int(cells[7])
+                                so_val = clean_int(cells[8])
+                                bb_val = clean_int(cells[9])
+                                hbp_val = clean_int(cells[10]) if len(cells) > 10 else 0
+                                r_val = clean_int(cells[12]) if len(cells) > 12 else 0
+                                er_val = clean_int(cells[13]) if len(cells) > 13 else 0
+
+                                p_clean = sanitize_player_name(p_raw)
+                                p_ko = translate_npb_player_name(p_clean)
+
+                                player_stats.append({
+                                    'team_name': curr_team_name,
                                     'player_name': p_ko,
                                     'position': '선발투수' if is_starter else '구원투수',
+                                    'minutes_played': 0,
+                                    'points': so_val,
+                                    'shots': clean_int(ip_val),
+                                    'assists': 0,
                                     'extra_stats': {
                                         'type': 'PITCHER',
                                         'player_type': 'PITCHER',
@@ -798,9 +853,21 @@ class NpbOfficialScraper:
                                         'starter': is_starter,
                                         'pitcher_order': p_order,
                                         'name_raw': p_clean,
+                                        'ip': ip_val,
+                                        'np': np_val,
+                                        'bf': bf_val,
+                                        'h': h_val,
+                                        'hits': h_val,
+                                        'hr': hr_val,
+                                        'so': so_val,
+                                        'strikeouts': so_val,
+                                        'bb': bb_val + hbp_val,
+                                        'walks': bb_val + hbp_val,
+                                        'r': r_val,
+                                        'er': er_val,
                                         'era': era_val,
                                         'season_era': era_val,
-                                        'decision': ''
+                                        'decision': dec_label
                                     }
                                 })
 
@@ -819,6 +886,11 @@ class NpbOfficialScraper:
                 "throws": "우완",
                 "season_era": ex.get("era", "-"),
                 "era": ex.get("era", "-"),
+                "ip": ex.get("ip", "6.0"),
+                "er": ex.get("er", 0),
+                "so": ex.get("so", 0),
+                "bb": ex.get("bb", 0),
+                "h": ex.get("h", 0),
                 "is_confirmed": True
             }
 
@@ -830,7 +902,7 @@ class NpbOfficialScraper:
         return {
             "period_scores": period_scores,
             "team_stats": team_stats,
-            "source_url": score_url,
+            "source_url": stats_url,
             "events": [],
             "player_stats": player_stats
         }

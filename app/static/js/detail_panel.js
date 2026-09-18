@@ -705,7 +705,7 @@ const DetailPanel = (() => {
                   <div class="d-flex align-items-center mb-1 text-dark">
                     <span class="badge bg-secondary text-white me-1 px-1 py-0.5" style="font-size: 0.62rem;">선발</span>
                     <span class="fw-bold text-truncate me-1">${CommonUtils.formatPlayerKorean(st.name)}</span>
-                    <span class="text-muted ms-auto font-monospace">${st.ip ? `${st.ip}이닝 ${st.er ?? 0}자책 ${st.so ?? 0}K ${st.bb ?? 0}사사구 ${st.np ? `(${st.np}구)` : ''}` : (st.era && st.era !== '-' ? `시즌 ERA ${st.era}` : '선발 등판')} ${st.decision ? `<span class="badge bg-light text-dark border ms-1">${st.decision}</span>` : ''}</span>
+                    <span class="text-muted ms-auto font-monospace">${st.ip ? `${st.ip}이닝 ${st.h !== undefined && st.h !== null ? `${st.h}피안타 ` : ''}${st.er ?? 0}자책 ${st.so ?? 0}K ${st.bb ?? 0}사사구 ${st.np ? `(${st.np}구)` : ''}` : (st.era && st.era !== '-' ? `시즌 ERA ${st.era}` : '선발 등판')} ${st.decision ? `<span class="badge bg-light text-dark border ms-1">${st.decision}</span>` : ''}</span>
                   </div>
                 ` : ''}
                 ${hasBp ? `
