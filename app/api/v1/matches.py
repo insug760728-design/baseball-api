@@ -121,6 +121,20 @@ def list_matches(
         if not end_date:
             end_date = date
 
+    # ⚡ 0초 초고속 서빙: 기본 경기 목록 조회인 경우 서버 사전 직렬화 캐시 즉시 반환
+    if not sport_code and not league_name and not status and not start_date and not end_date and (order or 'asc').lower() == 'asc':
+        try:
+            from app.main import get_server_initial_matches_json
+            cached_initial = get_server_initial_matches_json()
+            if cached_initial and cached_initial != "[]":
+                return Response(
+                    content=cached_initial.encode("utf-8"),
+                    media_type="application/json",
+                    headers={"Cache-Control": "public, max-age=5, stale-while-revalidate=15"}
+                )
+        except Exception:
+            pass
+
     cache_key = f"matches:{sport_code}:{league_name}:{status}:{start_date}:{end_date}:{limit}:{order}"
     cached_str = cache_get(cache_key)
     if cached_str:
