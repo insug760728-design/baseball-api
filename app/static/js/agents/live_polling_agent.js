@@ -79,7 +79,7 @@ class LivePollingAgent {
    */
   async poll() {
     try {
-      const resp = await fetch(`/api/v1/matches?start_date=ALL&order=asc&limit=800&_t=${Date.now()}`, { cache: 'no-store' });
+      const resp = await fetch(`/api/v1/matches?limit=80&order=asc&_t=${Date.now()}`, { cache: 'no-store' });
       if (!resp.ok) return;
 
       const rawList = await resp.json();

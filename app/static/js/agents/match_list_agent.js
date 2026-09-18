@@ -107,7 +107,7 @@ class MatchListAgent {
     this._isLoading = true;
 
     try {
-      const resp = await fetch('/api/v1/matches?start_date=ALL&limit=1000&order=asc', { cache: 'no-store' });
+      const resp = await fetch('/api/v1/matches?limit=100&order=asc', { cache: 'no-store' });
       if (resp.ok) {
         const rawList = await resp.json();
         if (Array.isArray(rawList)) {

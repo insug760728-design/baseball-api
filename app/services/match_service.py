@@ -275,8 +275,7 @@ class MatchService:
 
     @classmethod
     def get_matches(cls, db: Session, sport_code: Optional[str] = None, league_name: Optional[str] = None, status: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None, limit: Optional[int] = None, order: Optional[str] = "asc"):
-        # 🛡️ 쿼리 즉시 자가 치유(Query-Time Self-Healing): 과거 경기가 예정/라이브로 조회되는 것을 원천 차단
-        cls.cleanup_stale_live_matches(db)
+        # 읽기 전용 쿼리: DB 쓰기 락 방지를 위해 자가 치유(cleanup_stale_live_matches)는 백그라운드 데몬(_match_lifecycle_daemon)에서만 비동기 수행
         query = db.query(Match).options(joinedload(Match.details))
 
         # 리그명에 따라 sport_code 자동 감지

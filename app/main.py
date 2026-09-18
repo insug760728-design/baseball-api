@@ -195,6 +195,13 @@ app.add_middleware(
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+@app.middleware("http")
+async def add_cache_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "public, max-age=604800"
+    return response
+
 from fastapi.staticfiles import StaticFiles
 
 landing_path = os.path.join(current_dir, "templates", "landing.html")
@@ -220,7 +227,7 @@ def refresh_server_matches_cache() -> str:
     try:
         from app.schemas.schemas import MatchResponse
         db = SessionLocal()
-        matches = MatchService.get_matches(db, limit=400, order='asc')
+        matches = MatchService.get_matches(db, limit=120, order='asc')
         serialized = [MatchResponse.model_validate(m).model_dump(mode="json") for m in matches]
         json_str = json.dumps(serialized, ensure_ascii=False)
         _SERVER_MATCHES_CACHE["json_str"] = json_str
