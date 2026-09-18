@@ -245,7 +245,6 @@ class SchedulerService:
         except Exception as e:
             logger.error(f"[Startup Sync] 서버 시작 동기화 오류: {e}")
         finally:
-            db.close()
             cls._is_running_task = False
 
     @classmethod
@@ -726,8 +725,9 @@ class SchedulerService:
                 # (D) 유료 LiveApiSports 스마트 동적 수집 (한국/일본 야구 3초 초고속 실시간 수집)
                 from app.services.live_api_sports_service import LiveApiSportsService
                 if LiveApiSportsService.is_configured():
-                    bb_interval = 3.0 if (mlb_live or kbo_npb_live) else 15.0
-                    should_sync_bb = (mlb_live or mlb_imminent or kbo_npb_live or kbo_npb_imminent) and (now_epoch - cls._last_baseball_sync_ts >= bb_interval)
+                    # ⚡ MLB는 공식 사이트로 수집하므로 유료 API-Baseball 호출 대상에서 완전 제외 (KBO/NPB만 연동)
+                    bb_interval = 3.0 if kbo_npb_live else 15.0
+                    should_sync_bb = (kbo_npb_live or kbo_npb_imminent) and (now_epoch - cls._last_baseball_sync_ts >= bb_interval)
 
                     if should_sync_bb:
                         def _sync_smart_live_api():
@@ -826,8 +826,8 @@ class SchedulerService:
                     except Exception:
                         pass
 
-                # ⚡ 야구 LIVE 진행 중이면 3초 초고속 실시간 모드, 축구 LIVE면 10초, 시작 직전(Pre-Match) 상태면 15초 대기
-                sleep_sec = 3 if (mlb_live or kbo_npb_live) else (10 if soccer_live else 15)
+                # ⚡ KBO/NPB LIVE 진행 중이면 3초 초고속 모드, MLB 및 축구 LIVE면 10초, 시작 직전(Pre-Match) 상태면 15초 대기
+                sleep_sec = 3 if kbo_npb_live else (10 if (mlb_live or soccer_live) else 15)
                 await asyncio.sleep(sleep_sec)
             except asyncio.CancelledError:
                 logger.info("[Scheduler LiveUltraFast] 1초 루프 종료됨")
