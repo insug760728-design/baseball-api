@@ -22,56 +22,68 @@ class ChatMessagePayload(BaseModel):
     content: str
     sport_tag: Optional[str] = "일반"
 
-# In-memory community storage seeded strictly with 100% verified Baseball & Soccer facts
-INITIAL_MESSAGES = [
-    {
-        "id": 1,
-        "author": "MLB세이버팩트",
-        "channel": "BASEBALL",
-        "sport_tag": "MLB",
-        "content": "[오피셜 팩트] LA 다저스 오타니 쇼헤이는 MLB 역사상 최초 50홈런-50도루 클럽 달성자입니다. 득점권 타율 .320에 장타율 .646은 공식 기록입니다.",
-        "created_at": (datetime.now(KST) - timedelta(minutes=18)).strftime("%H:%M"),
-        "likes": 16
-    },
-    {
-        "id": 2,
-        "author": "EPL공식데이터",
-        "channel": "SOCCER",
-        "sport_tag": "EPL",
-        "content": "[오피셜 팩트] 토트넘 손흥민은 EPL 통산 123골로 역대 득점 14위에 랭크되어 있습니다. 지난 노팅엄전에서도 78분 결승골을 터뜨려 2-1 승리를 확정했습니다.",
-        "created_at": (datetime.now(KST) - timedelta(minutes=14)).strftime("%H:%M"),
-        "likes": 21
-    },
-    {
-        "id": 3,
-        "author": "KBO기록연구소",
-        "channel": "BASEBALL",
-        "sport_tag": "KBO",
-        "content": "[오피셜 팩트] KIA 타이거즈는 이번 시즌 팀 타율 1위(.295)와 득점권 타율 .312를 기록 중이며, LG 트윈스는 잠실 홈 경기 팀 평균자책점 3.82로 1위입니다.",
-        "created_at": (datetime.now(KST) - timedelta(minutes=10)).strftime("%H:%M"),
-        "likes": 12
-    },
-    {
-        "id": 4,
-        "author": "세리에A팩트체크",
-        "channel": "SOCCER",
-        "sport_tag": "세리에A",
-        "content": "[오피셜 팩트] AS로마는 홈 올림피코 경기당 유효슈팅 허용률 2.8개로 세리에A 최소 3위입니다. 아탈란타전 실시간 1-1 접전도 철벽 수비 지표와 정확히 일치합니다.",
-        "created_at": (datetime.now(KST) - timedelta(minutes=6)).strftime("%H:%M"),
-        "likes": 14
-    },
-    {
-        "id": 5,
-        "author": "맨시티전력분석",
-        "channel": "SOCCER",
-        "sport_tag": "EPL",
-        "content": "[오피셜 팩트] 맨체스터 시티는 홈 경기 평균 점유율 67.2%에 경기당 기대득점(xG) 2.45골을 기록하고 있으며, 코번트리전에서도 3-0 완승을 거두었습니다.",
-        "created_at": (datetime.now(KST) - timedelta(minutes=2)).strftime("%H:%M"),
-        "likes": 18
-    }
-]
+def load_recent_finished_messages() -> List[dict]:
+    """로컬 DB에서 어제/오늘 종료된 실제 공식 경기 결과를 가볍고 산뜻하게 추출하여 커뮤니티 피드 초기화"""
+    from app.core.database import SessionLocal
+    from app.models.models import Match
+    import random
 
-COMMUNITY_MESSAGES = list(INITIAL_MESSAGES)
+    msgs = []
+    db = SessionLocal()
+    try:
+        now = datetime.now(KST)
+        since_date = (now - timedelta(days=2)).strftime("%Y-%m-%d 00:00")
+        matches = db.query(Match).filter(
+            Match.status == "FINISHED",
+            Match.match_date >= since_date
+        ).order_by(Match.match_date.desc()).limit(8).all()
+
+        sport_icons = {'BASEBALL': '⚾', 'SOCCER': '⚽', 'BASKETBALL': '🏀', 'VOLLEYBALL': '🏐'}
+        author_pool = ['전일경기알리미', '스코어브리핑', '스포츠결과센터', '실시간결과알림', '경기요약봇']
+
+        for idx, m in enumerate(matches, 1):
+            icon = sport_icons.get(m.sport_code, '🏆')
+            league = (m.league_name or '').split('(')[0].strip() or m.sport_code
+            h_score = m.home_score if m.home_score is not None else '-'
+            a_score = m.away_score if m.away_score is not None else '-'
+            m_date = (m.match_date or '')[:10]
+            today_str = now.strftime('%Y-%m-%d')
+            prefix = '[오늘 경기결과]' if m_date == today_str else '[전일 경기결과]'
+            content = f"{prefix} {icon} {league} | {m.home_team_name} {h_score} : {a_score} {m.away_team_name} (종료)"
+
+            post_time = (now - timedelta(minutes=5 + idx * 4)).strftime("%H:%M")
+            sport_tag = "MLB" if "MLB" in (m.league_name or "") else ("KBO" if "KBO" in (m.league_name or "") else m.sport_code[:6])
+
+            msgs.append({
+                "id": idx,
+                "author": author_pool[idx % len(author_pool)],
+                "channel": m.sport_code if m.sport_code in ["BASEBALL", "SOCCER"] else "ALL",
+                "sport_tag": sport_tag,
+                "content": content,
+                "created_at": post_time,
+                "likes": random.randint(6, 18)
+            })
+    except Exception as e:
+        logger.warning(f"Failed to load initial match results for community: {e}")
+    finally:
+        db.close()
+
+    if not msgs:
+        msgs = [
+            {
+                "id": 1,
+                "author": "스포츠결과센터",
+                "channel": "ALL",
+                "sport_tag": "종합",
+                "content": "[경기 알림] 어제 및 오늘 경기 결과가 순차적으로 실시간 등록됩니다.",
+                "created_at": get_kst_time_str(),
+                "likes": 10
+            }
+        ]
+    msgs.reverse()
+    return msgs
+
+COMMUNITY_MESSAGES = load_recent_finished_messages()
 _msg_id_counter = len(COMMUNITY_MESSAGES) + 1
 
 @router.get("/community/messages", summary="실시간 커뮤니티 대화 및 토론 피드 목록")
