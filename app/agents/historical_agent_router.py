@@ -8,6 +8,7 @@ HistoricalAgentRouter
 """
 import logging
 import json
+import time
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from sqlalchemy import or_, and_, desc
@@ -20,6 +21,10 @@ logger = logging.getLogger("HistoricalAgentRouter")
 logger.setLevel(logging.INFO)
 
 class HistoricalAgentRouter:
+
+    # 초고속 5분 인메모리 캐시 (Render 512MB RAM 및 CPU 과부하 원천 방지)
+    _MATCH_HISTORY_CACHE: Dict[str, Any] = {}
+    _CACHE_TTL = 300  # 5분
 
     # 종목별/리그별 대표 카테고리 매핑
     LEAGUE_CATEGORY_MAP = {
@@ -69,8 +74,15 @@ class HistoricalAgentRouter:
     def get_match_history_by_agent(cls, match_id: int, max_games: int = 10) -> Dict[str, Any]:
         """
         특정 경기(match_id)의 종목과 리그를 판별하여 전담 에이전트를 통해
-        직전 경기 및 H2H 전적을 100% 공식 데이터로 생성
+        직전 경기 및 H2H 전적을 100% 공식 데이터로 생성 (5분 인메모리 캐시 적용)
         """
+        cache_key = f"{match_id}_{max_games}"
+        now_ts = time.time()
+        if cache_key in cls._MATCH_HISTORY_CACHE:
+            cached_time, cached_val = cls._MATCH_HISTORY_CACHE[cache_key]
+            if (now_ts - cached_time) < cls._CACHE_TTL:
+                return cached_val
+
         db = SessionLocal()
         try:
             target = db.query(Match).filter(Match.id == match_id).first()
@@ -855,7 +867,7 @@ class HistoricalAgentRouter:
                 except Exception as e:
                     logger.warning(f"Error building tactical analysis: {e}")
 
-            return {
+            res_data = {
                 'status': 'success',
                 'match_id': match_id,
                 'sport_code': sport_code,
@@ -877,5 +889,7 @@ class HistoricalAgentRouter:
                 },
                 'tactical_analysis': tactical_analysis
             }
+            cls._MATCH_HISTORY_CACHE[cache_key] = (now_ts, res_data)
+            return res_data
         finally:
             db.close()
