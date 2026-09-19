@@ -5,7 +5,7 @@ import logging
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
 
 router = APIRouter(prefix="/auth", tags=["Member Auth & Registry"])
 
@@ -33,6 +33,10 @@ def _is_admin(nickname: str) -> bool:
 
 # 실시간 접속 세션 메모리 보관: nickname -> {nickname, ip, last_active, last_active_ts, device}
 _ACTIVE_SESSIONS = {}
+
+# ⚡ [초고속 0ms 로그인/인증] 인메모리 회원 캐시 및 해시 맵
+_MEMBERS_CACHE: Optional[List[dict]] = None
+_MEMBERS_MAP: dict = {}
 
 def _record_session_activity(nickname: str, ip: str = "127.0.0.1", device: str = "웹"):
     if not nickname:
@@ -67,16 +71,37 @@ class SessionPingPayload(BaseModel):
 def _ensure_dir():
     os.makedirs(MEMBERS_DIR, exist_ok=True)
 
+def _rebuild_members_map():
+    global _MEMBERS_MAP
+    _MEMBERS_MAP = {}
+    if not _MEMBERS_CACHE:
+        return
+    for m in _MEMBERS_CACHE:
+        nick = str(m.get("nickname", "")).strip().lower()
+        if nick:
+            _MEMBERS_MAP[nick] = m
+        phone = str(m.get("phone", "")).strip()
+        if phone:
+            _MEMBERS_MAP[phone] = m
+
 def _load_members() -> List[dict]:
+    global _MEMBERS_CACHE
+    if _MEMBERS_CACHE is not None:
+        return _MEMBERS_CACHE
     with _AUTH_FILE_LOCK:
+        if _MEMBERS_CACHE is not None:
+            return _MEMBERS_CACHE
         _ensure_dir()
         if os.path.exists(JSON_PATH):
             try:
                 with open(JSON_PATH, "r", encoding="utf-8") as f:
-                    return json.load(f)
+                    _MEMBERS_CACHE = json.load(f)
             except Exception:
-                return []
-        return []
+                _MEMBERS_CACHE = []
+        else:
+            _MEMBERS_CACHE = []
+        _rebuild_members_map()
+        return _MEMBERS_CACHE
 
 def _load_access_logs() -> List[dict]:
     with _AUTH_FILE_LOCK:
@@ -89,38 +114,6 @@ def _load_access_logs() -> List[dict]:
                 return []
         return []
 
-def _record_access_log(user_dict: dict, ip: str = "127.0.0.1"):
-    with _AUTH_FILE_LOCK:
-        _ensure_dir()
-        logs = []
-        if os.path.exists(LOGS_PATH):
-            try:
-                with open(LOGS_PATH, "r", encoding="utf-8") as f:
-                    logs = json.load(f)
-            except Exception:
-                logs = []
-        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        entry = {
-            "timestamp": now_str,
-            "user_id": user_dict.get("id"),
-            "nickname": user_dict.get("nickname"),
-            "age": user_dict.get("age", 30),
-            "login_count": user_dict.get("login_count", 1),
-            "ip": ip
-        }
-        logs.insert(0, entry)
-        if len(logs) > 500:
-            logs = logs[:500]
-
-        try:
-            with open(LOGS_PATH, "w", encoding="utf-8") as f:
-                json.dump(logs, f, ensure_ascii=False, indent=2)
-
-            with open(LOGS_TXT_PATH, "a", encoding="utf-8") as f:
-                f.write(f"[{now_str}] '{user_dict.get('nickname')}' ({user_dict.get('age', 30)}세) 로그인 접속 (누적 {user_dict.get('login_count', 1)}회차) | IP: {ip}\n")
-        except Exception as e:
-            logger.warning(f"Failed to record access log: {e}")
-
 def _clean_phone_digits(val: str) -> str:
     if not val:
         return ""
@@ -131,8 +124,16 @@ def _find_member(members: List[dict], identifier: str) -> Optional[dict]:
         return None
     raw = identifier.strip()
     raw_lower = raw.lower()
-    digits = _clean_phone_digits(raw)
 
+    # 1. 0.001ms O(1) 초고속 인메모리 맵 조회
+    if raw_lower in _MEMBERS_MAP:
+        return _MEMBERS_MAP[raw_lower]
+
+    digits = _clean_phone_digits(raw)
+    if digits and digits in _MEMBERS_MAP:
+        return _MEMBERS_MAP[digits]
+
+    # 2. 리스트 순회 폴백
     for m in members:
         if m.get("nickname", "").strip().lower() == raw_lower:
             return m
@@ -158,27 +159,52 @@ def _find_member(members: List[dict], identifier: str) -> Optional[dict]:
 
     return None
 
-def _save_members(members: List[dict]):
-    with _AUTH_FILE_LOCK:
-        _ensure_dir()
-        try:
+def _async_persist_members_and_logs(members_snapshot: list, log_entry: Optional[dict] = None, client_ip: str = "127.0.0.1"):
+    """사용자 로그인 응답을 지연시키지 않고 백그라운드 스레드에서 안전하게 디스크에 저장"""
+    try:
+        with _AUTH_FILE_LOCK:
+            _ensure_dir()
             with open(JSON_PATH, "w", encoding="utf-8") as f:
-                json.dump(members, f, ensure_ascii=False, indent=2)
+                json.dump(members_snapshot, f, ensure_ascii=False, indent=2)
 
             with open(TXT_PATH, "w", encoding="utf-8") as f:
                 f.write("======================================================================\n")
                 f.write("  TOKEON ANALYTICS 회원 접속 & 가입 현황 목록 (실시간 자동 기록 관리자 전용)\n")
-                f.write(f"  총 등록 회원 수: {len(members)}명\n")
+                f.write(f"  총 등록 회원 수: {len(members_snapshot)}명\n")
                 f.write(f"  최종 갱신 일시: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
                 f.write("======================================================================\n")
                 f.write(f"{'번호':<6} {'별명(닉네임)':<22} {'나이':<10} {'총접속횟수':<12} {'가입일시':<22} {'최근접속일시':<22}\n")
                 f.write("-" * 96 + "\n")
-                for m in members:
+                for m in members_snapshot:
                     display_name = m.get('nickname', '')
                     f.write(f"{m['id']:<6} {display_name:<22} {str(m.get('age', 30)) + '세':<10} {str(m.get('login_count', 1)) + '회':<12} {m.get('registered_at', '-'):<22} {m.get('last_login_at', '-'):<22}\n")
                 f.write("=" * 96 + "\n")
-        except Exception as e:
-            logger.warning(f"Failed to save members: {e}")
+
+            if log_entry:
+                logs = []
+                if os.path.exists(LOGS_PATH):
+                    try:
+                        with open(LOGS_PATH, "r", encoding="utf-8") as f:
+                            logs = json.load(f)
+                    except Exception:
+                        logs = []
+                logs.insert(0, log_entry)
+                if len(logs) > 500:
+                    logs = logs[:500]
+                with open(LOGS_PATH, "w", encoding="utf-8") as f:
+                    json.dump(logs, f, ensure_ascii=False, indent=2)
+
+                now_str = log_entry.get("timestamp", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                with open(LOGS_TXT_PATH, "a", encoding="utf-8") as f:
+                    f.write(f"[{now_str}] '{log_entry.get('nickname')}' ({log_entry.get('age', 30)}세) 로그인 접속 (누적 {log_entry.get('login_count', 1)}회차) | IP: {client_ip}\n")
+    except Exception as e:
+        logger.warning(f"Failed to persist members & logs in background: {e}")
+
+def _save_members(members: List[dict]):
+    global _MEMBERS_CACHE
+    _MEMBERS_CACHE = members
+    _rebuild_members_map()
+    _async_persist_members_and_logs(members)
 
 @router.post("/login", summary="별명 + 나이 + 비밀번호 간편 로그인 & 접속 기록")
 def login_user(payload: UserLoginPayload, request: Request):
