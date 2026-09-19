@@ -18,8 +18,10 @@ LOGS_PATH = os.path.join(MEMBERS_DIR, "access_logs.json")
 LOGS_TXT_PATH = os.path.join(MEMBERS_DIR, "access_history.txt")
 
 import hashlib
+import threading
 
 SALT = "tokeon_secure_auth_salt_2026"
+_AUTH_FILE_LOCK = threading.Lock()
 
 ADMIN_NICKNAMES = {"whathehas", "운영자", "admin", "관리자", "master", "root", "tokeon"}
 
@@ -66,46 +68,58 @@ def _ensure_dir():
     os.makedirs(MEMBERS_DIR, exist_ok=True)
 
 def _load_members() -> List[dict]:
-    _ensure_dir()
-    if os.path.exists(JSON_PATH):
-        try:
-            with open(JSON_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return []
-    return []
+    with _AUTH_FILE_LOCK:
+        _ensure_dir()
+        if os.path.exists(JSON_PATH):
+            try:
+                with open(JSON_PATH, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                return []
+        return []
 
 def _load_access_logs() -> List[dict]:
-    _ensure_dir()
-    if os.path.exists(LOGS_PATH):
-        try:
-            with open(LOGS_PATH, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return []
-    return []
+    with _AUTH_FILE_LOCK:
+        _ensure_dir()
+        if os.path.exists(LOGS_PATH):
+            try:
+                with open(LOGS_PATH, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                return []
+        return []
 
 def _record_access_log(user_dict: dict, ip: str = "127.0.0.1"):
-    _ensure_dir()
-    logs = _load_access_logs()
-    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    entry = {
-        "timestamp": now_str,
-        "user_id": user_dict.get("id"),
-        "nickname": user_dict.get("nickname"),
-        "age": user_dict.get("age", 30),
-        "login_count": user_dict.get("login_count", 1),
-        "ip": ip
-    }
-    logs.insert(0, entry)
-    if len(logs) > 500:
-        logs = logs[:500]
+    with _AUTH_FILE_LOCK:
+        _ensure_dir()
+        logs = []
+        if os.path.exists(LOGS_PATH):
+            try:
+                with open(LOGS_PATH, "r", encoding="utf-8") as f:
+                    logs = json.load(f)
+            except Exception:
+                logs = []
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        entry = {
+            "timestamp": now_str,
+            "user_id": user_dict.get("id"),
+            "nickname": user_dict.get("nickname"),
+            "age": user_dict.get("age", 30),
+            "login_count": user_dict.get("login_count", 1),
+            "ip": ip
+        }
+        logs.insert(0, entry)
+        if len(logs) > 500:
+            logs = logs[:500]
 
-    with open(LOGS_PATH, "w", encoding="utf-8") as f:
-        json.dump(logs, f, ensure_ascii=False, indent=2)
+        try:
+            with open(LOGS_PATH, "w", encoding="utf-8") as f:
+                json.dump(logs, f, ensure_ascii=False, indent=2)
 
-    with open(LOGS_TXT_PATH, "a", encoding="utf-8") as f:
-        f.write(f"[{now_str}] '{user_dict.get('nickname')}' ({user_dict.get('age', 30)}세) 로그인 접속 (누적 {user_dict.get('login_count', 1)}회차) | IP: {ip}\n")
+            with open(LOGS_TXT_PATH, "a", encoding="utf-8") as f:
+                f.write(f"[{now_str}] '{user_dict.get('nickname')}' ({user_dict.get('age', 30)}세) 로그인 접속 (누적 {user_dict.get('login_count', 1)}회차) | IP: {ip}\n")
+        except Exception as e:
+            logger.warning(f"Failed to record access log: {e}")
 
 def _clean_phone_digits(val: str) -> str:
     if not val:
@@ -145,22 +159,26 @@ def _find_member(members: List[dict], identifier: str) -> Optional[dict]:
     return None
 
 def _save_members(members: List[dict]):
-    _ensure_dir()
-    with open(JSON_PATH, "w", encoding="utf-8") as f:
-        json.dump(members, f, ensure_ascii=False, indent=2)
+    with _AUTH_FILE_LOCK:
+        _ensure_dir()
+        try:
+            with open(JSON_PATH, "w", encoding="utf-8") as f:
+                json.dump(members, f, ensure_ascii=False, indent=2)
 
-    with open(TXT_PATH, "w", encoding="utf-8") as f:
-        f.write("======================================================================\n")
-        f.write("  TOKEON ANALYTICS 회원 접속 & 가입 현황 목록 (실시간 자동 기록 관리자 전용)\n")
-        f.write(f"  총 등록 회원 수: {len(members)}명\n")
-        f.write(f"  최종 갱신 일시: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        f.write("======================================================================\n")
-        f.write(f"{'번호':<6} {'별명(닉네임)':<22} {'나이':<10} {'총접속횟수':<12} {'가입일시':<22} {'최근접속일시':<22}\n")
-        f.write("-" * 96 + "\n")
-        for m in members:
-            display_name = m.get('nickname', '')
-            f.write(f"{m['id']:<6} {display_name:<22} {str(m.get('age', 30)) + '세':<10} {str(m.get('login_count', 1)) + '회':<12} {m.get('registered_at', '-'):<22} {m.get('last_login_at', '-'):<22}\n")
-        f.write("=" * 96 + "\n")
+            with open(TXT_PATH, "w", encoding="utf-8") as f:
+                f.write("======================================================================\n")
+                f.write("  TOKEON ANALYTICS 회원 접속 & 가입 현황 목록 (실시간 자동 기록 관리자 전용)\n")
+                f.write(f"  총 등록 회원 수: {len(members)}명\n")
+                f.write(f"  최종 갱신 일시: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("======================================================================\n")
+                f.write(f"{'번호':<6} {'별명(닉네임)':<22} {'나이':<10} {'총접속횟수':<12} {'가입일시':<22} {'최근접속일시':<22}\n")
+                f.write("-" * 96 + "\n")
+                for m in members:
+                    display_name = m.get('nickname', '')
+                    f.write(f"{m['id']:<6} {display_name:<22} {str(m.get('age', 30)) + '세':<10} {str(m.get('login_count', 1)) + '회':<12} {m.get('registered_at', '-'):<22} {m.get('last_login_at', '-'):<22}\n")
+                f.write("=" * 96 + "\n")
+        except Exception as e:
+            logger.warning(f"Failed to save members: {e}")
 
 @router.post("/login", summary="별명 + 나이 + 비밀번호 간편 로그인 & 접속 기록")
 def login_user(payload: UserLoginPayload, request: Request):

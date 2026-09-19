@@ -3249,13 +3249,64 @@
       }
     }
 
+    let _isAuthSubmitting = false;
+    let _welcomeToastTimer = null;
+
+    function showWelcomeToast(nickname, isNew = false) {
+      let toastEl = document.getElementById('welcomeToastNotice');
+      if (!toastEl) {
+        toastEl = document.createElement('div');
+        toastEl.id = 'welcomeToastNotice';
+        toastEl.style.cssText = 'position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-20px); z-index:999999; background:linear-gradient(135deg, #0284c7, #1d4ed8); color:#ffffff; padding:12px 28px; border-radius:50px; font-size:0.95rem; font-weight:800; box-shadow:0 12px 35px rgba(2, 132, 199, 0.45); border:2px solid #ffffff; display:flex; align-items:center; gap:10px; opacity:0; transition:all 0.3s cubic-bezier(0.16, 1, 0.3, 1); pointer-events:none;';
+        document.body.appendChild(toastEl);
+      }
+      const actionText = isNew ? '회원가입 및 로그인이 완료되었습니다!' : '로그인이 완료되었습니다!';
+      toastEl.innerHTML = `<span style="font-size:1.3rem;">🎉</span> <span>[<strong>${nickname}</strong>]님 환영합니다! ${actionText}</span>`;
+      
+      requestAnimationFrame(() => {
+        toastEl.style.opacity = '1';
+        toastEl.style.transform = 'translateX(-50%) translateY(0)';
+      });
+      
+      if (_welcomeToastTimer) clearTimeout(_welcomeToastTimer);
+      _welcomeToastTimer = setTimeout(() => {
+        if (toastEl) {
+          toastEl.style.opacity = '0';
+          toastEl.style.transform = 'translateX(-50%) translateY(-20px)';
+        }
+      }, 3200);
+    }
+
+    function closeLoginModalImmediately() {
+      const modalEl = document.getElementById('simpleLoginModal');
+      if (modalEl) {
+        try {
+          const bsModal = (typeof bootstrap !== 'undefined' && bootstrap.Modal)
+            ? (bootstrap.Modal.getInstance(modalEl) || bootstrap.Modal.getOrCreateInstance(modalEl))
+            : null;
+          if (bsModal) bsModal.hide();
+        } catch(e) {}
+        modalEl.classList.remove('show');
+        modalEl.style.display = 'none';
+        modalEl.setAttribute('aria-hidden', 'true');
+        modalEl.removeAttribute('aria-modal');
+      }
+      document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+      document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('overflow');
+      document.body.style.removeProperty('padding-right');
+    }
+
     // 🔑 1. 간편 로그인 (별명 + 비밀번호)
     async function handleUserLogin(e) {
       if (e) e.preventDefault();
+      if (_isAuthSubmitting) return; // 중복 제출 원천 차단
+
       const nickEl = document.getElementById('loginNicknameInput');
       const passEl = document.getElementById('loginPasswordInput');
       const nickname = nickEl ? nickEl.value.trim() : '';
       const password = passEl ? passEl.value.trim() : '';
+      const submitBtn = document.querySelector('#authLoginForm button[type="submit"]');
 
       if (!nickname) {
         alert('활동하실 별명(닉네임)을 입력해주세요.');
@@ -3266,6 +3317,12 @@
         alert('비밀번호를 입력해주세요.');
         if (passEl) passEl.focus();
         return;
+      }
+
+      _isAuthSubmitting = true;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1.5" role="status"></span>접속 중...';
       }
 
       try {
@@ -3288,7 +3345,7 @@
           return;
         }
 
-        // 로그인 성공 처리
+        // 로그인 성공 처리: 즉각 모달 닫기 & 0ms 화면 반영
         currentUser = data.user;
         currentUser.isLoggedIn = true;
         currentUser.loginAt = new Date().toISOString();
@@ -3296,28 +3353,33 @@
         localStorage.setItem('tokeon_simple_user', JSON.stringify(currentUser));
         recordUserActivity();
 
-        const modalEl = document.getElementById('simpleLoginModal');
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
-
+        closeLoginModalImmediately();
         renderAuthUI();
         if (passEl) passEl.value = '';
-        alert(`🎉 [${currentUser.nickname}]님 환영합니다!\n로그인이 완료되었습니다.`);
+        showWelcomeToast(currentUser.nickname, false);
       } catch (err) {
         console.error('Login error:', err);
         alert('로그인 처리 중 통신 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      } finally {
+        _isAuthSubmitting = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i>로그인하기';
+        }
       }
     }
 
     // 📝 2. 신규 회원가입 (별명 + 비밀번호 초간단 가입)
     async function handleUserRegister(e) {
       if (e) e.preventDefault();
+      if (_isAuthSubmitting) return; // 중복 제출 원천 차단
+
       const nickEl = document.getElementById('regNicknameInput');
       const passEl = document.getElementById('regPasswordInput');
-
       const nickname = nickEl ? nickEl.value.trim() : '';
       const age = 30; // 간편 가입 기본 나이
       const password = passEl ? passEl.value.trim() : '';
+      const submitBtn = document.querySelector('#authRegisterForm button[type="submit"]');
 
       if (!nickname) {
         alert('활동하실 별명(닉네임)을 입력해주세요.');
@@ -3333,6 +3395,12 @@
         alert('비밀번호는 최소 4자리 이상 입력해주세요.');
         if (passEl) passEl.focus();
         return;
+      }
+
+      _isAuthSubmitting = true;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1.5" role="status"></span>가입 처리 중...';
       }
 
       try {
@@ -3361,16 +3429,19 @@
         localStorage.setItem('tokeon_simple_user', JSON.stringify(currentUser));
         recordUserActivity();
 
-        const modalEl = document.getElementById('simpleLoginModal');
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
-
+        closeLoginModalImmediately();
         renderAuthUI();
         if (passEl) passEl.value = '';
-        alert(`🎉 [${nickname}]님 환영합니다!\n회원가입 및 로그인이 완료되었습니다.`);
+        showWelcomeToast(nickname, true);
       } catch (err) {
         console.error('Register error:', err);
         alert('회원가입 처리 중 통신 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      } finally {
+        _isAuthSubmitting = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="bi bi-person-check-fill me-1"></i>회원가입 & 즉시 접속';
+        }
       }
     }
 
