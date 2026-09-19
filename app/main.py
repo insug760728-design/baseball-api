@@ -204,8 +204,13 @@ def refresh_server_matches_cache() -> str:
     db = SessionLocal()
     try:
         from app.schemas.schemas import MatchResponse
-        # Initial payload focuses on active/upcoming matches (~100 matches) for instant First Paint & fast mobile transfer
-        matches = MatchService.get_matches(db, limit=100, order='asc')
+        from datetime import datetime, timedelta
+        # Initial payload focuses on today's active/upcoming matches (~140 matches) for instant 0ms First Paint
+        now_kst = datetime.utcnow() + timedelta(hours=9)
+        today_str = (now_kst - timedelta(days=1)).strftime("%Y-%m-%d")
+        matches = MatchService.get_matches(db, start_date=today_str, limit=140, order='asc')
+        if not matches:
+            matches = MatchService.get_matches(db, limit=100, order='desc')
         serialized = [MatchResponse.model_validate(m).model_dump(mode="json") for m in matches]
         json_str = json.dumps(serialized, ensure_ascii=False)
         _SERVER_MATCHES_CACHE["json_str"] = json_str
