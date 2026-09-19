@@ -387,8 +387,8 @@ class MatchService:
         else:
             q = query.order_by(Match.match_date.asc(), Match.id.asc())
 
-        # Render 512MB RAM 안전: 최대 150경기로 제한하여 힙 메모리 스파이크 및 OOM 원천 방지
-        target_limit = min(limit if (limit and limit > 0) else 150, 150)
+        # Render 안전: 최대 350경기로 확장하여 당일 및 향후 전체 예정 경기 온전히 표출
+        target_limit = min(limit if (limit and limit > 0) else 350, 400)
         matches = q.limit(target_limit).all()
         
         # High-Speed O(N) Deduplicate matches by canonical fixture key (sport, home, away, date)
