@@ -1,4 +1,6 @@
 import os
+os.environ["MALLOC_ARENA_MAX"] = "2"
+os.environ["PYTHONOPTIMIZE"] = "1"
 import sys
 import json
 import time
@@ -91,14 +93,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[WARN] Keep-Alive 데몬 등록 오류: {e}")
 
-    # 🔄 서버 시작 30초 후 전종목 신속 동기화 (부팅 직후 DB 락 및 512MB RAM 스파이크 완벽 방지)
+    # 🔄 서버 시작 90초 후 전종목 신속 동기화 (부팅 직후 DB 락 및 512MB RAM 스파이크 완벽 방지)
     try:
         import asyncio
         async def _delayed_startup_sync():
-            await asyncio.sleep(30)
+            await asyncio.sleep(90)
             await SchedulerService.execute_startup_sync()
         asyncio.create_task(_delayed_startup_sync())
-        print("[INFO] 30초 지연 백그라운드 동기화 태스크 등록 완료.")
+        print("[INFO] 90초 지연 백그라운드 동기화 태스크 등록 완료.")
     except Exception as e:
         print(f"[WARN] 시작 동기화 태스크 오류: {e}")
 

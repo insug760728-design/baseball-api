@@ -15,6 +15,10 @@ if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null ; then
     echo "⚠️ Port 8000 is already in use. Please check running processes."
 fi
 
+# Extreme Memory Optimization for 512MB RAM Linux Containers
+export MALLOC_ARENA_MAX=2
+export PYTHONOPTIMIZE=1
+
 # Run with Gunicorn + Uvicorn Workers (Render 512MB RAM Safe: 1 Worker Mode)
 PORT_TO_BIND="${PORT:-8000}"
 exec gunicorn -w 1 -k uvicorn.workers.UvicornWorker app.main:app \

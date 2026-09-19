@@ -4089,10 +4089,14 @@
 
     async function loadFullMatchesArchive() {
       if (archiveLoaded) return;
+      if (allMatches && allMatches.length >= 25) {
+        archiveLoaded = true;
+        return;
+      }
       if (archiveLoadingPromise) return archiveLoadingPromise;
       archiveLoadingPromise = (async () => {
         try {
-          const resp = await fetch(`/api/v1/matches?limit=600&order=asc`, { cache: 'no-store' });
+          const resp = await fetch(`/api/v1/matches?limit=120&order=asc`);
           const rawMatches = resp.ok ? await resp.json() : [];
 
           const seenIds = new Set(allMatches.map(m => m.id));
@@ -4187,7 +4191,7 @@
         // ⚡ Phase 1: 서버 초기 데이터가 없을 때만 즉시 fetch 실행 (초기 데이터가 있으면 불필요한 네트워크 대기 제거)
         if (!hasInitialData) {
           try {
-            const fastResp = await fetch(`/api/v1/matches?limit=600&order=asc`);
+            const fastResp = await fetch(`/api/v1/matches?limit=120&order=asc`);
             if (fastResp.ok) {
               const fastMatches = await fastResp.json();
               if (Array.isArray(fastMatches) && fastMatches.length > 0) {

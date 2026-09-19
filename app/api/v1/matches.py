@@ -324,6 +324,11 @@ def list_matches(
     json_bytes = json_str.encode("utf-8")
     _MATCHES_JSON_CACHE[cache_key] = (now, json_bytes)
     cache_set(cache_key, json_str, ttl_seconds=20)
+    del serialized
+    del res
+    del json_str
+    import gc
+    gc.collect()
     return Response(
         content=json_bytes,
         media_type="application/json",

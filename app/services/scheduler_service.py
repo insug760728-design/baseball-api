@@ -207,14 +207,15 @@ class SchedulerService:
                 except Exception as ex:
                     summary[lid] = f"ERR: {str(ex)[:60]}"
 
-            # 3. API-Sports 라이브 및 결과 즉시 동기화 (축구·야구·농구·배구)
+            # 3. 🧹 Render 512MB RAM 안전: 부팅 시 전체 종목 API-Sports 동기화는 배제하고 정기 크론/라이브루프로 분산
+            # 메모리 정리 (파이썬 GC 및 OS malloc_trim 강제 반환)
             try:
-                from app.services.live_api_sports_service import LiveApiSportsService
-                if LiveApiSportsService.is_configured():
-                    api_res = await asyncio.to_thread(LiveApiSportsService.sync_all)
-                    summary["API_SPORTS_INIT"] = {k: v.get("updated_db_matches", 0) for k, v in api_res.items() if isinstance(v, dict)}
-            except Exception as se:
-                logger.warning(f"[Startup Sync] API-Sports 초기 동기화 예외: {se}")
+                import gc
+                gc.collect()
+                import ctypes
+                ctypes.CDLL("libc.so.6").malloc_trim(0)
+            except Exception:
+                pass
 
             logger.info(f"[Startup Sync] 서버 시작 신속 동기화 완료: {summary}")
             try:
@@ -234,6 +235,8 @@ class SchedulerService:
             try:
                 import gc
                 gc.collect()
+                import ctypes
+                ctypes.CDLL("libc.so.6").malloc_trim(0)
             except Exception:
                 pass
 

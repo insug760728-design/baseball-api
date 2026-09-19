@@ -36,9 +36,10 @@ if 'sqlite' in settings.DATABASE_URL:
             cursor.execute("PRAGMA journal_mode=WAL")
             cursor.execute("PRAGMA busy_timeout=10000")
             cursor.execute("PRAGMA synchronous=NORMAL")
-            cursor.execute("PRAGMA cache_size=-1000")
+            cursor.execute("PRAGMA cache_size=-2000")
             cursor.execute("PRAGMA mmap_size=0")
-            cursor.execute("PRAGMA temp_store=MEMORY")
+            cursor.execute("PRAGMA temp_store=FILE")
+            cursor.execute("PRAGMA wal_autocheckpoint=100")
             cursor.close()
         except Exception as e:
             print(f"[WARN] SQLite PRAGMA 설정 오류 무시: {e}")
