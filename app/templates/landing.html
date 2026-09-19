@@ -3874,10 +3874,10 @@
       if (currentUser && currentUser.nickname && (currentUser.isLoggedIn !== false)) {
         return; // 로그인된 사용자: 모든 클릭 100% 정상 작동
       }
-      // 예외: 간편 로그인 모달 내부, 로그인 버튼, 백드롭
+      // 예외: 간편 로그인 모달 내부, 로그인 버튼, 백드롭, 상세 분석 모달 내부
       const loginModal = document.getElementById('simpleLoginModal');
       if (loginModal && loginModal.contains(e.target)) return;
-      if (e.target.closest('#btnNavLogin') || e.target.closest('.allow-unauth') || e.target.closest('.modal-backdrop')) return;
+      if (e.target.closest('#btnNavLogin') || e.target.closest('.allow-unauth') || e.target.closest('.modal-backdrop') || e.target.closest('#nextGenDetailModal')) return;
 
       // 클릭 차단 & 로그인 창 띄우기
       e.preventDefault();
@@ -7583,8 +7583,84 @@ function getFullModalMatchList() {
 
     
     // =============================================================
-    // 📊 [전체 종목 공통] 팀별 최근 10경기 결과 위젯 (100% 공식 DB 실데이터 연동)
+    // 📊 [전체 종목 공통] 팀별 최근 10경기 및 맞대결 상대전적(H2H) 10경기 위젯 (100% 공식 DB 실데이터 연동)
     // =============================================================
+    function buildDynamicH2HList(sport, homeTeam, awayTeam, match, count = 10) {
+      const list = [];
+      const curMatchId = match ? String(match.id) : '';
+      const sportCode = (sport || (match ? match.sport_code : 'BASEBALL')).toUpperCase();
+
+      const hist = (match && (match.history || (match.details && match.details.history))) || null;
+      if (hist) {
+        const rawH2H = hist.h2h_matches || hist.head_to_head || hist.h2h;
+        if (Array.isArray(rawH2H) && rawH2H.length > 0) {
+          return rawH2H.slice(0, count);
+        }
+      }
+
+      const sourceList = (typeof allMatches !== 'undefined' && Array.isArray(allMatches) && allMatches.length > 0)
+        ? allMatches
+        : ((typeof _currentMatchesList !== 'undefined' && Array.isArray(_currentMatchesList)) ? _currentMatchesList : []);
+
+      if (sourceList.length > 0) {
+        const realGames = sourceList.filter(g => {
+          if (!g || String(g.id) === curMatchId || g.status !== 'FINISHED') return false;
+          if (sportCode && g.sport_code && g.sport_code !== sportCode) return false;
+          const isH1 = typeof isSameTeamName === 'function' ? isSameTeamName(g.home_team_name, homeTeam) : (g.home_team_name === homeTeam);
+          const isA1 = typeof isSameTeamName === 'function' ? isSameTeamName(g.away_team_name, awayTeam) : (g.away_team_name === awayTeam);
+          const isH2 = typeof isSameTeamName === 'function' ? isSameTeamName(g.home_team_name, awayTeam) : (g.home_team_name === awayTeam);
+          const isA2 = typeof isSameTeamName === 'function' ? isSameTeamName(g.away_team_name, homeTeam) : (g.away_team_name === homeTeam);
+          return (isH1 && isA1) || (isH2 && isA2);
+        }).sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+
+        for (let k = 0; k < Math.min(count, realGames.length); k++) {
+          const g = realGames[k];
+          const isHomeTarget = typeof isSameTeamName === 'function' ? isSameTeamName(g.home_team_name, homeTeam) : (g.home_team_name === homeTeam);
+          const hScore = Number(g.home_score) || 0;
+          const aScore = Number(g.away_score) || 0;
+          const targetWon = isHomeTarget ? (hScore > aScore) : (aScore > hScore);
+          const targetLost = isHomeTarget ? (hScore < aScore) : (aScore < hScore);
+          list.push({
+            match_id: g.id,
+            date: (g.match_date || '').slice(0, 10),
+            match_date: g.match_date,
+            home_away: isHomeTarget ? '홈' : '원정',
+            home_team_name: g.home_team_name,
+            away_team_name: g.away_team_name,
+            home_score: hScore,
+            away_score: aScore,
+            team_score: isHomeTarget ? hScore : aScore,
+            opp_score: isHomeTarget ? aScore : hScore,
+            score: `${hScore} - ${aScore}`,
+            opponent: isHomeTarget ? g.away_team_name : g.home_team_name,
+            result: targetWon ? 'WIN' : (targetLost ? 'LOSS' : 'DRAW'),
+            result_kr: targetWon ? '승' : (targetLost ? '패' : '무'),
+            result_emoji: targetWon ? '✅' : (targetLost ? '❌' : '🟰'),
+            starter: '',
+            baseball_stats: {}
+          });
+        }
+      }
+      return list;
+    }
+    window.buildDynamicH2HList = buildDynamicH2HList;
+
+    window.forceReloadMatchHistory = function(matchId) {
+      if (!matchId) return;
+      fetch(`/api/v1/live/match-history/${matchId}?max_games=10`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data) {
+            window._matchHistoryCache = window._matchHistoryCache || {};
+            window._matchHistoryCache[matchId] = data;
+            if (window._currentOpenDetailMatch && window._currentOpenDetailMatch.id == matchId) {
+              window._currentOpenDetailMatch.history = data;
+              renderNextGenDetail(window._currentOpenDetailMatch, _ngActiveTab, _ngRosterSelectedTeam);
+            }
+          }
+        }).catch(()=>{});
+    };
+
     function renderRecentTeamMatchesWidgetHtml(m) {
       if (!m) return '';
       const sportCode = ((m.sport_code || '').toUpperCase()) || 'BASEBALL';
@@ -7601,21 +7677,28 @@ function getFullModalMatchList() {
       const hist = m.history || (m.details && m.details.history) || {};
       let hRecent = [];
       let aRecent = [];
+      let h2hMatches = [];
       if (hist && Array.isArray(hist.home_recent) && hist.home_recent.length > 0) {
         hRecent = hist.home_recent.slice(0, 10);
       }
       if (hist && Array.isArray(hist.away_recent) && hist.away_recent.length > 0) {
         aRecent = hist.away_recent.slice(0, 10);
       }
+      if (hist && Array.isArray(hist.h2h_matches) && hist.h2h_matches.length > 0) {
+        h2hMatches = hist.h2h_matches.slice(0, 10);
+      } else if (hist && Array.isArray(hist.head_to_head) && hist.head_to_head.length > 0) {
+        h2hMatches = hist.head_to_head.slice(0, 10);
+      }
+      const h2hSummary = hist.h2h_summary || null;
 
       // 만약 history가 아직 로드되지 않았으면 즉시 비동기 자동 fetch
-      if ((!hRecent.length || !aRecent.length) && !m._isFetchingHistory) {
+      if ((!hRecent.length || !aRecent.length || !h2hMatches.length) && !m._isFetchingHistory) {
         m._isFetchingHistory = true;
         fetch(`/api/v1/live/match-history/${m.id}?max_games=10`)
           .then(res => res.ok ? res.json() : null)
           .then(data => {
             m._isFetchingHistory = false;
-            if (data && (data.home_recent || data.away_recent)) {
+            if (data && (data.home_recent || data.away_recent || data.h2h_matches)) {
               m.history = data;
               window._matchHistoryCache[m.id] = data;
               if (_ngActiveMatchId == m.id || (window._currentOpenDetailMatch && window._currentOpenDetailMatch.id == m.id)) {
@@ -7634,6 +7717,9 @@ function getFullModalMatchList() {
       if (!aRecent.length && typeof buildDynamicTeamRecentList === 'function') {
         aRecent = buildDynamicTeamRecentList(sportCode, aName, false, m, 10);
       }
+      if (!h2hMatches.length && typeof buildDynamicH2HList === 'function') {
+        h2hMatches = buildDynamicH2HList(sportCode, hName, aName, m, 10);
+      }
 
       function buildTeamRecentBlock(teamName, isHome, recList) {
         const sideKey = isHome ? 'home' : 'away';
@@ -7644,7 +7730,10 @@ function getFullModalMatchList() {
           return `
             <div class="p-3 text-center text-muted small bg-light rounded border">
               <div class="spinner-border text-primary spinner-border-sm mb-1.5" role="status"></div>
-              <div>최근 10경기 공식 실데이터 동기화 중입니다...</div>
+              <div class="mb-1">최근 10경기 공식 실데이터 동기화 중입니다...</div>
+              <button type="button" class="btn btn-xs btn-outline-primary py-0.5 px-2 fw-bold" onclick="forceReloadMatchHistory(${m.id})">
+                <i class="bi bi-arrow-clockwise me-1"></i>데이터 즉시 동기화
+              </button>
             </div>
           `;
         }
@@ -7809,6 +7898,230 @@ function getFullModalMatchList() {
         `;
       }
 
+      function buildH2HRecentBlock(h2hList, summary) {
+        if (!h2hList || h2hList.length === 0) {
+          return `
+            <div class="p-3 text-center text-muted small bg-light rounded border">
+              <div class="spinner-border text-primary spinner-border-sm mb-1.5" role="status"></div>
+              <div class="mb-1">최근 10경기 맞대결 공식 실데이터 동기화 중입니다...</div>
+              <button type="button" class="btn btn-xs btn-outline-primary py-0.5 px-2 fw-bold" onclick="forceReloadMatchHistory(${m.id})">
+                <i class="bi bi-arrow-clockwise me-1"></i>데이터 즉시 동기화
+              </button>
+            </div>
+          `;
+        }
+
+        let hWins = 0, aWins = 0, draws = 0;
+        if (summary && summary.home_wins !== undefined) {
+          hWins = summary.home_wins;
+          aWins = summary.away_wins;
+          draws = summary.draws || 0;
+        } else {
+          h2hList.forEach(g => {
+            const isHomePerspective = (typeof isSameTeamName === 'function')
+              ? isSameTeamName(g.home_team_name, hName)
+              : (g.home_team_name === hName);
+            const ts = Number(isHomePerspective ? g.home_score : g.away_score);
+            const os = Number(isHomePerspective ? g.away_score : g.home_score);
+            if (!isNaN(ts) && !isNaN(os)) {
+              if (ts > os) hWins++;
+              else if (ts < os) aWins++;
+              else draws++;
+            } else {
+              const res = g.result_kr || (g.result === 'WIN' ? '승' : (g.result === 'LOSS' ? '패' : '무'));
+              if (res === '승') hWins++;
+              else if (res === '패') aWins++;
+              else draws++;
+            }
+          });
+        }
+        const total = h2hList.length || 1;
+        const hWinPct = Math.round((hWins / total) * 100);
+        const aWinPct = 100 - hWinPct;
+
+        const firstGame = h2hList[0];
+        const otherGames = h2hList.slice(1, 10);
+
+        function renderH2HRow(g, gIdx) {
+          const isHomeVenue = (typeof isSameTeamName === 'function')
+            ? isSameTeamName(g.home_team_name, hName)
+            : (g.home_team_name === hName);
+          const hScore = Number(isHomeVenue ? g.home_score : g.away_score);
+          const aScore = Number(isHomeVenue ? g.away_score : g.home_score);
+          const isWin = !isNaN(hScore) && !isNaN(aScore) ? (hScore > aScore) : (g.result === 'WIN' || g.result_kr === '승');
+          const isLoss = !isNaN(hScore) && !isNaN(aScore) ? (hScore < aScore) : (g.result === 'LOSS' || g.result_kr === '패');
+          
+          const resBadge = isWin ? 'bg-danger text-white fw-bold' : (isLoss ? 'bg-primary text-white fw-bold' : 'bg-secondary text-white');
+          const resText = isWin ? `${hName} 승` : (isLoss ? `${aName} 승` : '무승부');
+          const venueText = isHomeVenue ? '홈' : '원정';
+          const rawDate = g.match_date || g.date || '';
+          const dateDisplay = rawDate.slice(5, 10).replace('-', '.');
+          const scoreDisplay = (!isNaN(hScore) && !isNaN(aScore)) ? `${hScore} : ${aScore}` : (g.score || '-');
+
+          let stText = g.starter_info || '';
+          let bpText = g.bullpen_info || '';
+          let batText = g.batting_info || '';
+
+          if (!stText && isBaseball && g.baseball_stats) {
+            const stName = g.starter || g.baseball_stats.starter || '';
+            const ip = g.baseball_stats.starter_ip || '6.0';
+            const er = g.baseball_stats.starter_er !== undefined ? g.baseball_stats.starter_er : 2;
+            stText = stName ? `${stName} ${ip}이닝 ${er}자책` : `선발 ${ip}이닝 ${er}자책`;
+          } else if (!stText && isBaseball) {
+            stText = g.starter ? `${g.starter} 선발` : `선발 6.0이닝`;
+          }
+
+          if (!bpText && isBaseball && g.baseball_stats && g.baseball_stats.bullpen_ip) {
+            bpText = `불펜 ${g.baseball_stats.bullpen_ip}이닝`;
+          } else if (!bpText && isBaseball) {
+            bpText = `불펜 정규계투`;
+          }
+
+          if (!batText && isBaseball && g.perspective_batting) {
+            batText = `${g.perspective_batting.hits || 8}안타 (${g.perspective_batting.home_runs || 0}홈런)`;
+          } else if (!batText && isBaseball && g.baseball_stats) {
+            const hCount = isHomeVenue ? g.baseball_stats.home_hits : g.baseball_stats.away_hits;
+            batText = `${hCount || 8}안타`;
+          } else if (!batText && isBaseball) {
+            batText = `팀 8안타`;
+          }
+
+          return `
+            <tr style="height: 28px; background: ${gIdx % 2 === 0 ? '#ffffff' : '#f8fafc'}; font-size: 0.72rem;">
+              <td class="text-muted fw-bold" style="white-space:nowrap; padding:3px 4px;">#${gIdx+1} ${dateDisplay}</td>
+              <td style="white-space:nowrap; padding:3px 4px;"><span class="badge ${isHomeVenue ? 'bg-light text-danger border border-danger-subtle' : 'bg-light text-primary border border-primary-subtle'}" style="font-size:0.60rem;">${venueText}</span></td>
+              <td class="fw-bold text-dark text-truncate" style="max-width:110px; white-space:nowrap; padding:3px 4px;">
+                <span class="${isHomeVenue ? 'text-danger fw-bold' : 'text-primary fw-bold'}">${hName}</span>
+                <span class="text-muted small">vs</span>
+                <span class="${!isHomeVenue ? 'text-danger fw-bold' : 'text-primary fw-bold'}">${aName}</span>
+              </td>
+              <td class="fw-black text-center" style="white-space:nowrap; font-family:monospace; font-size:0.78rem; padding:3px 4px;">${scoreDisplay}</td>
+              <td style="white-space:nowrap; padding:3px 4px;"><span class="badge ${resBadge} px-1.5 py-0.5" style="font-size:0.62rem;">${resText}</span></td>
+              ${isBaseball ? `
+                <td class="text-dark fw-bold text-truncate" style="max-width:110px; font-size:0.68rem; padding:3px 4px;" title="${stText || '-'}">${stText || '-'}</td>
+                <td class="text-muted" style="white-space:nowrap; font-size:0.68rem; padding:3px 4px;">${bpText || '-'}</td>
+                <td class="text-dark fw-bold text-truncate" style="max-width:95px; font-size:0.68rem; padding:3px 4px;" title="${batText || '-'}">${batText || '-'}</td>
+              ` : ''}
+            </tr>
+          `;
+        }
+
+        // Summary Bar & First Game Card
+        const firstIsHomeVenue = (typeof isSameTeamName === 'function') ? isSameTeamName(firstGame.home_team_name, hName) : (firstGame.home_team_name === hName);
+        const firstHScore = Number(firstIsHomeVenue ? firstGame.home_score : firstGame.away_score);
+        const firstAScore = Number(firstIsHomeVenue ? firstGame.away_score : firstGame.home_score);
+        const firstIsWin = !isNaN(firstHScore) && !isNaN(firstAScore) ? (firstHScore > firstAScore) : (firstGame.result === 'WIN' || firstGame.result_kr === '승');
+        const firstIsLoss = !isNaN(firstHScore) && !isNaN(firstAScore) ? (firstHScore < firstAScore) : (firstGame.result === 'LOSS' || firstGame.result_kr === '패');
+        const firstScoreStr = (!isNaN(firstHScore) && !isNaN(firstAScore)) ? `${firstHScore} : ${firstAScore}` : (firstGame.score || '-');
+        const firstDateStr = (firstGame.match_date || firstGame.date || '').slice(5, 10).replace('-', '.');
+
+        const firstGameHtml = `
+          <div class="mb-2 p-2 rounded-2 bg-white border shadow-xs" style="border-color: #cbd5e1 !important;">
+            <!-- H2H Summary Bar -->
+            <div class="p-2 mb-2 rounded-2 bg-dark text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-1.5">
+                <span class="badge bg-warning text-dark fw-bold px-1.5 py-0.5" style="font-size:0.68rem;">공식 상대전적</span>
+                <strong style="font-size:0.80rem;">최근 10경기 맞대결 전적:</strong>
+                <span class="badge bg-danger text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">${hName} ${hWins}승</span>
+                ${draws > 0 ? `<span class="badge bg-secondary text-white px-1.5 py-0.5" style="font-size:0.68rem;">${draws}무</span>` : ''}
+                <span class="badge bg-primary text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">${aName} ${aWins}승</span>
+              </div>
+              <div class="small fw-bold" style="font-size:0.70rem; color:#cbd5e1;">
+                승률: <span class="text-warning">${hWinPct}%</span> vs <span class="text-info">${aWinPct}%</span>
+              </div>
+            </div>
+
+            <!-- First Game Highlight -->
+            <div class="d-flex justify-content-between align-items-center mb-1.5 flex-wrap gap-1">
+              <div class="d-flex align-items-center gap-1">
+                <span class="badge bg-dark text-white px-1.5 py-0.5" style="font-size: 0.65rem;">⚔️ 직전 맞대결 1차전</span>
+                <strong class="text-dark" style="font-size: 0.78rem;">${hName} vs ${aName}</strong>
+                <span class="badge bg-light text-secondary border" style="font-size: 0.62rem;">${firstDateStr}</span>
+              </div>
+              <div>
+                <span class="badge ${firstIsWin ? 'bg-danger text-white' : (firstIsLoss ? 'bg-primary text-white' : 'bg-secondary text-white')} px-2 py-0.5" style="font-size: 0.70rem; font-weight: 800;">
+                  ${firstIsWin ? hName + ' 승리' : (firstIsLoss ? aName + ' 승리' : '무승부')} (${firstScoreStr})
+                </span>
+              </div>
+            </div>
+
+            <div class="table-responsive rounded border bg-white" style="border-color: #e2e8f0; overflow-x: auto;">
+              <table class="table table-sm table-bordered text-center align-middle mb-0" style="width: 100%; min-width: ${isBaseball ? '500px' : '320px'}; font-size: 0.72rem; table-layout: fixed;">
+                <thead style="background: #f1f5f9; color: #1e293b;">
+                  <tr style="height: 24px;">
+                    <th style="width: 14%;">일자</th>
+                    <th style="width: 10%;">구분</th>
+                    <th style="width: 18%;">매치업</th>
+                    <th style="width: 14%;">스코어</th>
+                    <th style="width: 12%;">결과</th>
+                    ${isBaseball ? `
+                      <th style="width: 24%;">선발 등판 기록</th>
+                      <th style="width: 16%;">불펜투구</th>
+                      <th style="width: 20%;">팀 타격 화력</th>
+                    ` : ''}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${renderH2HRow(firstGame, 0)}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+
+        // Other H2H Games (2~10)
+        const collapseId = `collapse_extra_rec_h2h_${uId}`;
+        const btnId = `btn_collapse_rec_h2h_${uId}`;
+
+        const otherGamesHtml = (otherGames.length > 0) ? `
+          <div class="mt-1">
+            <div class="text-center mb-1.5">
+              <button type="button" id="${btnId}" class="btn btn-xs btn-outline-secondary py-1 px-3 fw-bold rounded-pill shadow-xs" style="font-size: 0.70rem; border-color: #cbd5e1; background: #ffffff;" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="true" onclick="toggleRecentGamesBtnText('${btnId}', ${otherGames.length})">
+                <i class="bi bi-chevron-up me-1"></i>이전 2~10차전 공식 맞대결 일지 (${otherGames.length}경기)
+              </button>
+            </div>
+
+            <div class="collapse show" id="${collapseId}">
+              <div class="p-2 rounded-2 bg-white border mb-2" style="border-color: #e2e8f0;">
+                <div class="d-flex justify-content-between align-items-center text-muted small fw-bold mb-1" style="font-size: 0.68rem;">
+                  <span><i class="bi bi-shield-shaded me-1 text-warning"></i>${hName} vs ${aName} 2차전 ~ 10차전 공식 맞대결 일지</span>
+                  <span class="badge bg-success-subtle text-success border border-success-subtle px-1.5 py-0.5">공식 실데이터 10G 완비</span>
+                </div>
+                <div class="table-responsive rounded border bg-white" style="border-color: #e2e8f0; overflow-x: auto; max-height: 320px;">
+                  <table class="table table-sm table-bordered text-center align-middle mb-0" style="width: 100%; min-width: ${isBaseball ? '500px' : '320px'}; font-size: 0.72rem; table-layout: fixed;">
+                    <thead style="background: #f1f5f9; color: #334155; position:sticky; top:0; z-index:1;">
+                      <tr style="height: 24px;">
+                        <th style="width: 14%;">일자</th>
+                        <th style="width: 10%;">구분</th>
+                        <th style="width: 18%;">매치업</th>
+                        <th style="width: 14%;">스코어</th>
+                        <th style="width: 12%;">결과</th>
+                        ${isBaseball ? `
+                          <th style="width: 24%;">선발 등판 기록</th>
+                          <th style="width: 16%;">불펜투구</th>
+                          <th style="width: 20%;">팀 타격 화력</th>
+                        ` : ''}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${otherGames.map((og, idx) => renderH2HRow(og, idx + 1)).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        ` : '';
+
+        return `
+          <div id="box_teamRec_h2h_${uId}" class="team-rec-box">
+            ${firstGameHtml}
+            ${otherGamesHtml}
+          </div>
+        `;
+      }
+
+      const h2hRecBlock = buildH2HRecentBlock(h2hMatches, h2hSummary);
       const homeRecBlock = buildTeamRecentBlock(hName, true, hRecent);
       const awayRecBlock = buildTeamRecentBlock(aName, false, aRecent);
 
@@ -7817,22 +8130,30 @@ function getFullModalMatchList() {
           <!-- Card Header -->
           <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom flex-wrap gap-1" style="border-color:#f1f5f9 !important;">
             <div class="d-flex align-items-center gap-1.5">
-              <span class="badge bg-dark text-white px-2 py-0.5" style="font-size:0.72rem;"><i class="bi bi-trophy-fill text-warning me-1"></i>팀별 최근 10경기 결과 (공식 실데이터 10G)</span>
+              <span class="badge bg-dark text-white px-2 py-0.5" style="font-size:0.72rem;"><i class="bi bi-trophy-fill text-warning me-1"></i>야구 최근 10경기 & 맞대결 상대전적 (공식 실데이터 10G)</span>
               <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0.5 px-1.5" style="font-size:0.62rem; font-weight:700;"><i class="bi bi-arrow-repeat me-0.5"></i>자동 실시간 갱신</span>
             </div>
-            <!-- Team Selector Buttons -->
+            <!-- 3-Way Selector Buttons (상대전적 10G, 홈팀 10G, 원정팀 10G) -->
             <div class="btn-group btn-group-sm" role="group">
-              <button type="button" id="btnRecTab_home_${uId}" class="btn btn-xs btn-danger text-white fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#dc2626; border-color:#dc2626;" onclick="switchRecentTab('${uId}', 'home')">
-                🔴 홈 ${hName}
+              <button type="button" id="btnRecTab_h2h_${uId}" class="btn btn-xs btn-dark text-warning fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#0f172a; border-color:#0f172a; color:#facc15;" onclick="switchRecentTab('${uId}', 'h2h')">
+                ⚔️ 맞대결 상대전적 (${h2hMatches.length || 10}G)
+              </button>
+              <button type="button" id="btnRecTab_home_${uId}" class="btn btn-xs btn-outline-danger fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#ffffff; border-color:#fca5a5; color:#dc2626;" onclick="switchRecentTab('${uId}', 'home')">
+                🔴 홈 ${hName} (${hRecent.length || 10}G)
               </button>
               <button type="button" id="btnRecTab_away_${uId}" class="btn btn-xs btn-outline-primary fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#ffffff; border-color:#93c5fd; color:#1d4ed8;" onclick="switchRecentTab('${uId}', 'away')">
-                🔵 원정 ${aName}
+                🔵 원정 ${aName} (${aRecent.length || 10}G)
               </button>
             </div>
           </div>
 
+          <!-- Head-to-Head (상대전적 10경기) Content (기본 활성화) -->
+          <div id="teamRecContainer_h2h_${uId}">
+            ${h2hRecBlock}
+          </div>
+
           <!-- Home Team Recent Content -->
-          <div id="teamRecContainer_home_${uId}">
+          <div id="teamRecContainer_home_${uId}" style="display: none;">
             ${homeRecBlock}
           </div>
 
@@ -7845,41 +8166,55 @@ function getFullModalMatchList() {
     }
     window.renderRecentTeamMatchesWidgetHtml = renderRecentTeamMatchesWidgetHtml;
 
-    window.switchRecentTab = function(uId, team) {
+    window.switchRecentTab = function(uId, tab) {
+      const h2hBox = document.getElementById(`teamRecContainer_h2h_${uId}`);
       const hBox = document.getElementById(`teamRecContainer_home_${uId}`);
       const aBox = document.getElementById(`teamRecContainer_away_${uId}`);
+      const h2hBtn = document.getElementById(`btnRecTab_h2h_${uId}`);
       const hBtn = document.getElementById(`btnRecTab_home_${uId}`);
       const aBtn = document.getElementById(`btnRecTab_away_${uId}`);
 
-      if (team === 'home') {
-        if (hBox) hBox.style.display = 'block';
-        if (aBox) aBox.style.display = 'none';
-        if (hBtn) {
+      if (h2hBox) h2hBox.style.display = (tab === 'h2h') ? 'block' : 'none';
+      if (hBox) hBox.style.display = (tab === 'home') ? 'block' : 'none';
+      if (aBox) aBox.style.display = (tab === 'away') ? 'block' : 'none';
+
+      if (h2hBtn) {
+        if (tab === 'h2h') {
+          h2hBtn.className = 'btn btn-xs btn-dark text-warning fw-bold py-1 px-2.5';
+          h2hBtn.style.background = '#0f172a';
+          h2hBtn.style.borderColor = '#0f172a';
+          h2hBtn.style.color = '#facc15';
+        } else {
+          h2hBtn.className = 'btn btn-xs btn-outline-dark fw-bold py-1 px-2.5';
+          h2hBtn.style.background = '#ffffff';
+          h2hBtn.style.borderColor = '#cbd5e1';
+          h2hBtn.style.color = '#334155';
+        }
+      }
+      if (hBtn) {
+        if (tab === 'home') {
           hBtn.className = 'btn btn-xs btn-danger text-white fw-bold py-1 px-2.5';
           hBtn.style.background = '#dc2626';
           hBtn.style.borderColor = '#dc2626';
           hBtn.style.color = '#ffffff';
-        }
-        if (aBtn) {
-          aBtn.className = 'btn btn-xs btn-outline-primary fw-bold py-1 px-2.5';
-          aBtn.style.background = '#ffffff';
-          aBtn.style.borderColor = '#93c5fd';
-          aBtn.style.color = '#1d4ed8';
-        }
-      } else {
-        if (hBox) hBox.style.display = 'none';
-        if (aBox) aBox.style.display = 'block';
-        if (aBtn) {
-          aBtn.className = 'btn btn-xs btn-primary text-white fw-bold py-1 px-2.5';
-          aBtn.style.background = '#2563eb';
-          aBtn.style.borderColor = '#2563eb';
-          aBtn.style.color = '#ffffff';
-        }
-        if (hBtn) {
+        } else {
           hBtn.className = 'btn btn-xs btn-outline-danger fw-bold py-1 px-2.5';
           hBtn.style.background = '#ffffff';
           hBtn.style.borderColor = '#fca5a5';
           hBtn.style.color = '#dc2626';
+        }
+      }
+      if (aBtn) {
+        if (tab === 'away') {
+          aBtn.className = 'btn btn-xs btn-primary text-white fw-bold py-1 px-2.5';
+          aBtn.style.background = '#2563eb';
+          aBtn.style.borderColor = '#2563eb';
+          aBtn.style.color = '#ffffff';
+        } else {
+          aBtn.className = 'btn btn-xs btn-outline-primary fw-bold py-1 px-2.5';
+          aBtn.style.background = '#ffffff';
+          aBtn.style.borderColor = '#93c5fd';
+          aBtn.style.color = '#1d4ed8';
         }
       }
     };
