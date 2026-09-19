@@ -206,6 +206,38 @@ def _save_members(members: List[dict]):
     _rebuild_members_map()
     _async_persist_members_and_logs(members)
 
+def _record_access_log(user_dict: dict, ip: str = "127.0.0.1"):
+    try:
+        with _AUTH_FILE_LOCK:
+            _ensure_dir()
+            logs = []
+            if os.path.exists(LOGS_PATH):
+                try:
+                    with open(LOGS_PATH, "r", encoding="utf-8") as f:
+                        logs = json.load(f)
+                except Exception:
+                    logs = []
+            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            entry = {
+                "timestamp": now_str,
+                "user_id": user_dict.get("id"),
+                "nickname": user_dict.get("nickname"),
+                "age": user_dict.get("age", 30),
+                "login_count": user_dict.get("login_count", 1),
+                "ip": ip
+            }
+            logs.insert(0, entry)
+            if len(logs) > 500:
+                logs = logs[:500]
+
+            with open(LOGS_PATH, "w", encoding="utf-8") as f:
+                json.dump(logs, f, ensure_ascii=False, indent=2)
+
+            with open(LOGS_TXT_PATH, "a", encoding="utf-8") as f:
+                f.write(f"[{now_str}] '{user_dict.get('nickname')}' ({user_dict.get('age', 30)}세) 로그인 접속 (누적 {user_dict.get('login_count', 1)}회차) | IP: {ip}\n")
+    except Exception as e:
+        logger.warning(f"Failed to record access log: {e}")
+
 @router.post("/login", summary="별명 + 나이 + 비밀번호 간편 로그인 & 접속 기록")
 def login_user(payload: UserLoginPayload, request: Request):
     nickname = payload.nickname.strip()
