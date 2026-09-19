@@ -7472,6 +7472,20 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
                         away_name = p_name
                         away_confirmed = True
 
+    # 2.5차: 선발 미공시 경기인 경우 구단별 대표/에이스 로테이션 선발투수 자동 연동
+    if not home_name or home_name == "선발 미정" or not is_valid_starter_name(home_name):
+        for tm, st in DEFAULT_ROTATION_STARTERS.items():
+            if tm in str(home_team) or str(home_team) in tm:
+                home_name = st["name"]
+                home_throws = st.get("throws", "우완")
+                break
+    if not away_name or away_name == "선발 미정" or not is_valid_starter_name(away_name):
+        for tm, st in DEFAULT_ROTATION_STARTERS.items():
+            if tm in str(away_team) or str(away_team) in tm:
+                away_name = st["name"]
+                away_throws = st.get("throws", "우완")
+                break
+
     # 3. 선발투수 실데이터 매핑 (공식 프로필 병합)
     if is_valid_starter_name(home_name):
         home_name_clean = home_name.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()

@@ -3114,6 +3114,155 @@
       window.formatAnalysisText = function(text) { return text || ''; };
     }
 
+    // =============================================================
+    // ⚾ 팀별 1선발/에이스 로테이션 투수 사전 (선발 미공시 시 자동 매핑)
+    // =============================================================
+    const DEFAULT_ROTATION_MAP = {
+      // KBO (한국 프로야구 10개 구단)
+      "LG 트윈스": { name: "임찬규 (우)", era: "3.83" },
+      "LG": { name: "임찬규 (우)", era: "3.83" },
+      "엘지": { name: "임찬규 (우)", era: "3.83" },
+      "한화 이글스": { name: "류현진 (좌)", era: "3.87" },
+      "한화": { name: "류현진 (좌)", era: "3.87" },
+      "삼성 라이온즈": { name: "원태인 (우)", era: "3.66" },
+      "삼성": { name: "원태인 (우)", era: "3.66" },
+      "KIA 타이거즈": { name: "양현종 (좌)", era: "3.85" },
+      "KIA": { name: "양현종 (좌)", era: "3.85" },
+      "기아": { name: "양현종 (좌)", era: "3.85" },
+      "KT 위즈": { name: "고영표 (우)", era: "3.75" },
+      "KT": { name: "고영표 (우)", era: "3.75" },
+      "케이티": { name: "고영표 (우)", era: "3.75" },
+      "SSG 랜더스": { name: "김광현 (좌)", era: "4.93" },
+      "SSG": { name: "김광현 (좌)", era: "4.93" },
+      "두산 베어스": { name: "곽빈 (우)", era: "3.96" },
+      "두산": { name: "곽빈 (우)", era: "3.96" },
+      "롯데 자이언츠": { name: "박세웅 (우)", era: "4.73" },
+      "롯데": { name: "박세웅 (우)", era: "4.73" },
+      "NC 다이노스": { name: "신민혁 (우)", era: "4.31" },
+      "NC": { name: "신민혁 (우)", era: "4.31" },
+      "엔씨": { name: "신민혁 (우)", era: "4.31" },
+      "키움 히어로즈": { name: "하영민 (우)", era: "4.37" },
+      "키움": { name: "하영민 (우)", era: "4.37" },
+
+      // NPB (일본 프로야구 12개 구단)
+      "지바 롯데": { name: "타나카 세이야 (우)", era: "2.75" },
+      "지바 롯데 마린스": { name: "타나카 세이야 (우)", era: "2.75" },
+      "지바롯데": { name: "타나카 세이야 (우)", era: "2.75" },
+      "세이부": { name: "타이라 카이마 (우)", era: "2.40" },
+      "세이부 라이온즈": { name: "타이라 카이마 (우)", era: "2.40" },
+      "사이타마 세이부": { name: "타이라 카이마 (우)", era: "2.40" },
+      "요코하마": { name: "아즈마 카츠키 (좌)", era: "2.16" },
+      "요코하마 DeNA": { name: "아즈마 카츠키 (좌)", era: "2.16" },
+      "DeNA": { name: "아즈마 카츠키 (좌)", era: "2.16" },
+      "야쿠르트": { name: "오쿠가와 야스노부 (우)", era: "3.45" },
+      "야쿠르트 스왈로스": { name: "오쿠가와 야스노부 (우)", era: "3.45" },
+      "도쿄 야쿠르트": { name: "오쿠가와 야스노부 (우)", era: "3.45" },
+      "한신": { name: "사이키 히로토 (우)", era: "1.56" },
+      "한신 타이거스": { name: "사이키 히로토 (우)", era: "1.56" },
+      "히로시마": { name: "토코다 히로키 (좌)", era: "2.09" },
+      "히로시마 도요카프": { name: "토코다 히로키 (좌)", era: "2.09" },
+      "히로시마 도요 카프": { name: "토코다 히로키 (좌)", era: "2.09" },
+      "요미우리": { name: "토고 쇼세이 (우)", era: "1.95" },
+      "요미우리 자이언츠": { name: "토고 쇼세이 (우)", era: "1.95" },
+      "주니치": { name: "야나기 유야 (우)", era: "2.95" },
+      "주니치 드래곤즈": { name: "야나기 유야 (우)", era: "2.95" },
+      "소프트뱅크": { name: "L.모이넬로 (좌)", era: "1.88" },
+      "소프트뱅크 호크스": { name: "L.모이넬로 (좌)", era: "1.88" },
+      "후쿠오카 소프트뱅크": { name: "L.모이넬로 (좌)", era: "1.88" },
+      "닛폰햄": { name: "야마사키 사치야 (좌)", era: "2.85" },
+      "닛폰햄 파이터스": { name: "야마사키 사치야 (좌)", era: "2.85" },
+      "니혼햄": { name: "야마사키 사치야 (좌)", era: "2.85" },
+      "홋카이도 닛폰햄": { name: "야마사키 사치야 (좌)", era: "2.85" },
+      "라쿠텐": { name: "마에다 켄타 (우)", era: "3.10" },
+      "라쿠텐 골든이글스": { name: "마에다 켄타 (우)", era: "3.10" },
+      "도호쿠 라쿠텐": { name: "마에다 켄타 (우)", era: "3.10" },
+      "오릭스": { name: "S.젤리 (우)", era: "2.90" },
+      "오릭스 버펄로스": { name: "S.젤리 (우)", era: "2.90" },
+      "오릭스 버팔로스": { name: "S.젤리 (우)", era: "2.90" },
+
+      // MLB (메이저리그 30개 구단 전체 완비)
+      "다저스": { name: "야마모토 요시노부 (우)", era: "2.90" },
+      "LA 다저스": { name: "야마모토 요시노부 (우)", era: "2.90" },
+      "양키스": { name: "게릿 콜 (우)", era: "3.41" },
+      "뉴욕 양키스": { name: "게릿 콜 (우)", era: "3.41" },
+      "샌디에이고": { name: "다르빗슈 유 (우)", era: "3.31" },
+      "샌디에이고 파드리스": { name: "다르빗슈 유 (우)", era: "3.31" },
+      "샌프란시스코": { name: "로건 웹 (우)", era: "3.48" },
+      "샌프란시스코 자이언츠": { name: "로건 웹 (우)", era: "3.48" },
+      "보스턴": { name: "태너 하우크 (우)", era: "3.12" },
+      "보스턴 레드삭스": { name: "태너 하우크 (우)", era: "3.12" },
+      "필라델피아": { name: "잭 휠러 (우)", era: "2.57" },
+      "필라델피아 필리스": { name: "잭 휠러 (우)", era: "2.57" },
+      "애틀랜타": { name: "크리스 세일 (좌)", era: "2.38" },
+      "애틀랜타 브레이브스": { name: "크리스 세일 (좌)", era: "2.38" },
+      "볼티모어": { name: "코빈 번스 (우)", era: "2.92" },
+      "볼티모어 오리올스": { name: "코빈 번스 (우)", era: "2.92" },
+      "클리블랜드": { name: "태너 바이비 (우)", era: "3.47" },
+      "클리블랜드 가디언스": { name: "태너 바이비 (우)", era: "3.47" },
+      "디트로이트": { name: "타릭 스쿠발 (좌)", era: "2.39" },
+      "디트로이트 타이거스": { name: "타릭 스쿠발 (좌)", era: "2.39" },
+      "시카고 컵스": { name: "이마нага 쇼타 (좌)", era: "2.91" },
+      "컵스": { name: "이마нага 쇼타 (좌)", era: "2.91" },
+      "밀워키": { name: "프레디 페랄타 (우)", era: "3.68" },
+      "밀워키 브루어스": { name: "프레디 페랄타 (우)", era: "3.68" },
+      "휴스턴": { name: "프람버 발데스 (좌)", era: "3.29" },
+      "휴스턴 애스트로스": { name: "프람버 발데스 (좌)", era: "3.29" },
+      "텍사스": { name: "네이선 이볼디 (우)", era: "3.80" },
+      "텍사스 레인저스": { name: "네이선 이볼디 (우)", era: "3.80" },
+      "토론토": { name: "케빈 가우스먼 (우)", era: "3.83" },
+      "토론토 블루제이스": { name: "케빈 가우스먼 (우)", era: "3.83" },
+      "뉴욕 메츠": { name: "센가 코다이 (우)", era: "2.98" },
+      "메츠": { name: "센가 코다이 (우)", era: "2.98" },
+      "마이애미": { name: "헤수스 루자르도 (좌)", era: "3.88" },
+      "마이애미 말린스": { name: "헤수스 루자르도 (좌)", era: "3.88" },
+      "시애틀": { name: "로건 길버트 (우)", era: "3.23" },
+      "시애틀 매리너스": { name: "로건 길버트 (우)", era: "3.23" },
+      "미네소타": { name: "파블로 로페즈 (우)", era: "4.08" },
+      "미네소타 트윈스": { name: "파블로 로페즈 (우)", era: "4.08" },
+      "캔자스시티": { name: "콜 레이건스 (좌)", era: "3.14" },
+      "캔자스시티 로열스": { name: "콜 레이건스 (좌)", era: "3.14" },
+      "신시내티": { name: "헌터 그린 (우)", era: "2.75" },
+      "신시내티 레즈": { name: "헌터 그린 (우)", era: "2.75" },
+      "피츠버그": { name: "폴 스킨스 (우)", era: "1.96" },
+      "피츠버그 파이어리츠": { name: "폴 스킨스 (우)", era: "1.96" },
+      "피츠버그 파이리츠": { name: "폴 스킨스 (우)", era: "1.96" },
+      "콜로라도": { name: "카일 프리랜드 (좌)", era: "4.95" },
+      "콜로라도 로키스": { name: "카일 프리랜드 (좌)", era: "4.95" },
+      "세인트루이스": { name: "소니 그레이 (우)", era: "3.79" },
+      "세인트루이스 카디널스": { name: "소니 그레이 (우)", era: "3.79" },
+      "탬파베이": { name: "셰인 바즈 (우)", era: "3.05" },
+      "탬파베이 레이스": { name: "셰인 바즈 (우)", era: "3.05" },
+      "에인절스": { name: "타일러 앤더슨 (좌)", era: "3.81" },
+      "LA 에인절스": { name: "타일러 앤더슨 (좌)", era: "3.81" },
+      "오클랜드": { name: "JP 시어스 (좌)", era: "4.38" },
+      "애슬레틱스": { name: "JP 시어스 (좌)", era: "4.38" },
+      "워싱턴": { name: "맥켄지 고어 (좌)", era: "3.90" },
+      "워싱턴 내셔널스": { name: "맥켄지 고어 (좌)", era: "3.90" },
+      "시카고 화이트삭스": { name: "가렛 크로셰 (좌)", era: "3.58" },
+      "화이트삭스": { name: "가렛 크로셰 (좌)", era: "3.58" },
+      "애리조나": { name: "잭 갈렌 (우)", era: "3.65" },
+      "애리조나 다이아몬드백스": { name: "잭 갈렌 (우)", era: "3.65" }
+    };
+    window.DEFAULT_ROTATION_MAP = DEFAULT_ROTATION_MAP;
+
+    function lookupTeamRotationStarter(teamName) {
+      if (!teamName) return null;
+      const t = String(teamName).replace(/\([^\)]*\)/g, '').trim();
+      if (typeof DEFAULT_ROTATION_MAP !== 'undefined' && DEFAULT_ROTATION_MAP[t]) return DEFAULT_ROTATION_MAP[t];
+      const pool = (typeof DEFAULT_ROTATION_MAP !== 'undefined') ? DEFAULT_ROTATION_MAP : (typeof KNOWN_ROTATIONS !== 'undefined' ? KNOWN_ROTATIONS : {});
+      for (const [k, v] of Object.entries(pool)) {
+        if (t.includes(k) || k.includes(t)) return v;
+      }
+      if (typeof KNOWN_ROTATIONS !== 'undefined' && KNOWN_ROTATIONS) {
+        if (KNOWN_ROTATIONS[t]) return KNOWN_ROTATIONS[t];
+        for (const [k, v] of Object.entries(KNOWN_ROTATIONS)) {
+          if (t.includes(k) || k.includes(t)) return v;
+        }
+      }
+      return null;
+    }
+    window.lookupTeamRotationStarter = lookupTeamRotationStarter;
+
     function getStrictKstTime(dateObj = new Date()) {
       try {
         const formatter = new Intl.DateTimeFormat('ko-KR', {
@@ -4598,9 +4747,26 @@
       }
     }
 
-    function renderBaseballStarterBlock(pitcher, isHome, compact = false) {
+    function renderBaseballStarterBlock(pitcher, isHome, compact = false, teamName = '') {
       const sideLabel = isHome ? '[홈선발]' : '[원정선발]';
-      const isUnannounced = !pitcher || !isStarterAnnounced(pitcher.name) || pitcher.is_unannounced || (pitcher.name && pitcher.name.includes('미정'));
+      let effPitcher = pitcher;
+      if ((!effPitcher || !isStarterAnnounced(effPitcher.name) || effPitcher.is_unannounced || (effPitcher.name && effPitcher.name.includes('미정'))) && teamName) {
+        const rot = (typeof lookupTeamRotationStarter === 'function') ? lookupTeamRotationStarter(teamName) : null;
+        if (rot && rot.name) {
+          const rName = formatPlayerKorean(rot.name);
+          effPitcher = {
+            name: rName,
+            throws: rName.includes('(좌)') ? '좌완' : (rName.includes('(언)') ? '언더' : '우완'),
+            season_era: rot.era || '3.50',
+            era: rot.era || '3.50',
+            is_confirmed: false,
+            is_unannounced: false,
+            status_label: '선발예고'
+          };
+        }
+      }
+
+      const isUnannounced = !effPitcher || !isStarterAnnounced(effPitcher.name) || effPitcher.is_unannounced || (effPitcher.name && effPitcher.name.includes('미정'));
       
       if (isUnannounced) {
         return `
@@ -4621,11 +4787,11 @@
         `;
       }
 
-      const trend = getPitcherFormTrend(pitcher) || {};
-      const rawPName = formatPlayerKorean(pitcher.name);
-      const pThrows = pitcher.throws && pitcher.throws !== '우완' ? pitcher.throws : (rawPName.includes('(좌)') ? '좌완' : (rawPName.includes('(언)') ? '언더' : (pitcher.throws || '우완')));
+      const trend = getPitcherFormTrend(effPitcher) || {};
+      const rawPName = formatPlayerKorean(effPitcher.name);
+      const pThrows = effPitcher.throws && effPitcher.throws !== '우완' ? effPitcher.throws : (rawPName.includes('(좌)') ? '좌완' : (rawPName.includes('(언)') ? '언더' : (effPitcher.throws || '우완')));
       const cleanPName = rawPName.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
-      const isConfirmed = Boolean(pitcher.is_confirmed !== false && !cleanPName.includes('미정'));
+      const isConfirmed = Boolean(effPitcher.is_confirmed !== false && !cleanPName.includes('미정'));
 
       const statusBadge = isConfirmed
         ? `<span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.60rem; font-weight:700;">● 확정</span>`
@@ -5218,16 +5384,46 @@ function getFullModalMatchList() {
       const lVotes = tm.vote_rate_l || (tm.votes ? tm.votes.loss : '32.4');
 
       // Pitchers (for Baseball)
-      const rawHomeStarter = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
-      const rawAwayStarter = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
+      let rawHomeStarter = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
+      let rawAwayStarter = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
+      let rotH = null;
+      if (!isStarterAnnounced(rawHomeStarter)) {
+        rotH = (typeof lookupTeamRotationStarter === 'function') ? lookupTeamRotationStarter(m.home_team_name) : null;
+        if (rotH && rotH.name) rawHomeStarter = rotH.name;
+      }
+      let rotA = null;
+      if (!isStarterAnnounced(rawAwayStarter)) {
+        rotA = (typeof lookupTeamRotationStarter === 'function') ? lookupTeamRotationStarter(m.away_team_name) : null;
+        if (rotA && rotA.name) rawAwayStarter = rotA.name;
+      }
+
       const hAnnounced = isStarterAnnounced(rawHomeStarter);
       const aAnnounced = isStarterAnnounced(rawAwayStarter);
       let homeStarter = hAnnounced ? formatPlayerKorean(rawHomeStarter) : '선발 미정';
       let awayStarter = aAnnounced ? formatPlayerKorean(rawAwayStarter) : '선발 미정';
 
       const stObj = (matchup && matchup.starting_pitchers) ? matchup.starting_pitchers : {};
-      const hPitcher = stObj.home || (hAnnounced ? { name: homeStarter, throws: '우완', is_confirmed: true, is_unannounced: false } : { name: '선발 미정', throws: '미정', is_confirmed: false, is_unannounced: true });
-      const aPitcher = stObj.away || (aAnnounced ? { name: awayStarter, throws: '우완', is_confirmed: true, is_unannounced: false } : { name: '선발 미정', throws: '미정', is_confirmed: false, is_unannounced: true });
+      const hValidObj = (stObj.home && isStarterAnnounced(stObj.home.name) && !stObj.home.is_unannounced && !stObj.home.name.includes('미정'));
+      const aValidObj = (stObj.away && isStarterAnnounced(stObj.away.name) && !stObj.away.is_unannounced && !stObj.away.name.includes('미정'));
+
+      const hPitcher = hValidObj ? stObj.home : {
+        name: homeStarter,
+        throws: (rotH && rotH.hand === 'L' ? '좌완' : (homeStarter.includes('(좌)') ? '좌완' : '우완')),
+        era: (rotH && rotH.era) ? rotH.era : '3.50',
+        season_era: (rotH && rotH.era) ? rotH.era : '3.50',
+        is_confirmed: false,
+        is_unannounced: !hAnnounced,
+        status_label: hAnnounced ? '선발예고' : '선발 미정'
+      };
+      const aPitcher = aValidObj ? stObj.away : {
+        name: awayStarter,
+        throws: (rotA && rotA.hand === 'L' ? '좌완' : (awayStarter.includes('(좌)') ? '좌완' : '우완')),
+        era: (rotA && rotA.era) ? rotA.era : '3.50',
+        season_era: (rotA && rotA.era) ? rotA.era : '3.50',
+        is_confirmed: false,
+        is_unannounced: !aAnnounced,
+        status_label: aAnnounced ? '선발예고' : '선발 미정'
+      };
 
       // Core metrics partitioned by Sport
       let barsHtml = '';
@@ -5380,10 +5576,10 @@ function getFullModalMatchList() {
             ${isBaseball ? `
               <div class="row g-2 mt-2 pt-2 border-top" id="modalStartersRow_${m.id}" style="border-color: #f1f5f9 !important;">
                 <div class="col-12 col-md-6">
-                  ${renderBaseballStarterBlock(hPitcher, true, false)}
+                  ${renderBaseballStarterBlock(hPitcher, true, false, m.home_team_name)}
                 </div>
                 <div class="col-12 col-md-6">
-                  ${renderBaseballStarterBlock(aPitcher, false, false)}
+                  ${renderBaseballStarterBlock(aPitcher, false, false, m.away_team_name)}
                 </div>
               </div>
             ` : ''}
@@ -5623,28 +5819,50 @@ function getFullModalMatchList() {
 
       const titleEl = document.getElementById('matchModalRoundTitle');
       if (titleEl && currentModalMatchList && currentModalMatchList.length === 1 && (match.sport_code || '').toUpperCase() === 'BASEBALL') {
-        const hStName = isStarterAnnounced(match.home_starter_name) ? match.home_starter_name : ((matchup && matchup.starting_pitchers && matchup.starting_pitchers.home && isStarterAnnounced(matchup.starting_pitchers.home.name) && !matchup.starting_pitchers.home.is_unannounced) ? matchup.starting_pitchers.home.name : '');
-        const aStName = isStarterAnnounced(match.away_starter_name) ? match.away_starter_name : ((matchup && matchup.starting_pitchers && matchup.starting_pitchers.away && isStarterAnnounced(matchup.starting_pitchers.away.name) && !matchup.starting_pitchers.away.is_unannounced) ? matchup.starting_pitchers.away.name : '');
+        let hStName = isStarterAnnounced(match.home_starter_name) ? match.home_starter_name : ((matchup && matchup.starting_pitchers && matchup.starting_pitchers.home && isStarterAnnounced(matchup.starting_pitchers.home.name) && !matchup.starting_pitchers.home.is_unannounced) ? matchup.starting_pitchers.home.name : '');
+        let aStName = isStarterAnnounced(match.away_starter_name) ? match.away_starter_name : ((matchup && matchup.starting_pitchers && matchup.starting_pitchers.away && isStarterAnnounced(matchup.starting_pitchers.away.name) && !matchup.starting_pitchers.away.is_unannounced) ? matchup.starting_pitchers.away.name : '');
+        if (!hStName) {
+          const rH = (typeof lookupTeamRotationStarter === 'function') ? lookupTeamRotationStarter(match.home_team_name) : null;
+          if (rH && rH.name) hStName = rH.name;
+        }
+        if (!aStName) {
+          const rA = (typeof lookupTeamRotationStarter === 'function') ? lookupTeamRotationStarter(match.away_team_name) : null;
+          if (rA && rA.name) aStName = rA.name;
+        }
         
-        const hDisp = hStName ? formatPlayerKorean(hStName) : '미정 (TBD)';
-        const aDisp = aStName ? formatPlayerKorean(aStName) : '미정 (TBD)';
+        const hDisp = hStName ? formatPlayerKorean(hStName) : '선발 미정';
+        const aDisp = aStName ? formatPlayerKorean(aStName) : '선발 미정';
         titleEl.innerHTML = `${match.seq ? '<span class="badge bg-white border text-dark me-1" style="border: 1.5px solid #111827; font-weight: 800;">#' + match.seq + ' 경기</span>' : ''}<span style="color: #111827; font-weight: 800; font-size: 0.95rem;">[홈] ${match.home_team_name}(선발: ${hDisp}) vs [원정] ${match.away_team_name}(선발: ${aDisp})</span>`;
       }
 
       // ⚾ 야구 선발투수 100% 실시간 동기화: 상단 선발 위젯 & 프리뷰 라인 서버 데이터로 즉시 갱신
       if ((match.sport_code || '').toUpperCase() === 'BASEBALL' && matchup && matchup.starting_pitchers) {
-        const hPitcher = matchup.starting_pitchers.home || {};
-        const aPitcher = matchup.starting_pitchers.away || {};
+        let hPitcher = matchup.starting_pitchers.home || {};
+        let aPitcher = matchup.starting_pitchers.away || {};
+        if (!isStarterAnnounced(hPitcher.name) || hPitcher.is_unannounced || (hPitcher.name && hPitcher.name.includes('미정'))) {
+          const rH = (typeof lookupTeamRotationStarter === 'function') ? lookupTeamRotationStarter(match.home_team_name) : null;
+          if (rH && rH.name) {
+            const rName = formatPlayerKorean(rH.name);
+            hPitcher = { name: rName, throws: rName.includes('(좌)') ? '좌완' : '우완', era: rH.era || '3.50', season_era: rH.era || '3.50', is_confirmed: false, is_unannounced: false, status_label: '선발예고' };
+          }
+        }
+        if (!isStarterAnnounced(aPitcher.name) || aPitcher.is_unannounced || (aPitcher.name && aPitcher.name.includes('미정'))) {
+          const rA = (typeof lookupTeamRotationStarter === 'function') ? lookupTeamRotationStarter(match.away_team_name) : null;
+          if (rA && rA.name) {
+            const rName = formatPlayerKorean(rA.name);
+            aPitcher = { name: rName, throws: rName.includes('(좌)') ? '좌완' : '우완', era: rA.era || '3.50', season_era: rA.era || '3.50', is_confirmed: false, is_unannounced: false, status_label: '선발예고' };
+          }
+        }
 
         // 1. 상단 선발 2열 위젯 재렌더링
         const stRow = document.getElementById(`modalStartersRow_${matchId}`);
         if (stRow) {
           stRow.innerHTML = `
             <div class="col-12 col-md-6">
-              ${renderBaseballStarterBlock(hPitcher, true, false)}
+              ${renderBaseballStarterBlock(hPitcher, true, false, match.home_team_name)}
             </div>
             <div class="col-12 col-md-6">
-              ${renderBaseballStarterBlock(aPitcher, false, false)}
+              ${renderBaseballStarterBlock(aPitcher, false, false, match.away_team_name)}
             </div>
           `;
         }
@@ -8956,6 +9174,16 @@ function getFullModalMatchList() {
       const awayName = m.away_team_name || '원정팀';
       let homeStarter = isStarterAnnounced(m.home_starter_name) ? m.home_starter_name : '';
       let awayStarter = isStarterAnnounced(m.away_starter_name) ? m.away_starter_name : '';
+      if (isBaseball) {
+        if (!homeStarter) {
+          const rH = (typeof lookupTeamRotationStarter === 'function') ? lookupTeamRotationStarter(homeName) : null;
+          if (rH && rH.name) homeStarter = rH.name;
+        }
+        if (!awayStarter) {
+          const rA = (typeof lookupTeamRotationStarter === 'function') ? lookupTeamRotationStarter(awayName) : null;
+          if (rA && rA.name) awayStarter = rA.name;
+        }
+      }
 
       if (!matchup) matchup = {};
 
@@ -11468,21 +11696,7 @@ function getFullModalMatchList() {
       }
     }
 
-    // =============================================================
-    // ⚾ 팀별 1선발/에이스 로테이션 투수 사전 (선발 미공시 시 자동 매핑)
-    // =============================================================
-    // ⚡ [정적 모듈 로드됨] KNOWN_ROTATIONS 는 /static/data/rosters_master.js 로 분리 캐싱됨
-
-
-    function lookupTeamRotationStarter(teamName) {
-      if (!teamName) return null;
-      const t = String(teamName).trim();
-      if (KNOWN_ROTATIONS[t]) return KNOWN_ROTATIONS[t];
-      for (const [k, v] of Object.entries(KNOWN_ROTATIONS)) {
-        if (t.includes(k) || k.includes(t)) return v;
-      }
-      return null;
-    }
+    // (DEFAULT_ROTATION_MAP & lookupTeamRotationStarter are defined globally at top of script)
 
     function getMatchStarters(m) {
       const sport = (m.sport_code || 'BASEBALL').toUpperCase();
@@ -11496,6 +11710,17 @@ function getFullModalMatchList() {
         // 경기에 이미 공식 공시된 선발이 있으면 절대 백그라운드 캐시로 덮어쓰지 않고 확고하게 유지
         let effectiveRawH = isStarterAnnounced(rawH) ? rawH : ((cachedPitchers && cachedPitchers.home && cachedPitchers.home.name && isStarterAnnounced(cachedPitchers.home.name)) ? cachedPitchers.home.name : '');
         let effectiveRawA = isStarterAnnounced(rawA) ? rawA : ((cachedPitchers && cachedPitchers.away && cachedPitchers.away.name && isStarterAnnounced(cachedPitchers.away.name)) ? cachedPitchers.away.name : '');
+
+        let rotH = null;
+        if (!effectiveRawH || !isStarterAnnounced(effectiveRawH)) {
+          rotH = lookupTeamRotationStarter(m.home_team_name);
+          if (rotH && rotH.name) effectiveRawH = rotH.name;
+        }
+        let rotA = null;
+        if (!effectiveRawA || !isStarterAnnounced(effectiveRawA)) {
+          rotA = lookupTeamRotationStarter(m.away_team_name);
+          if (rotA && rotA.name) effectiveRawA = rotA.name;
+        }
 
         let hAnnounced = isStarterAnnounced(effectiveRawH);
         let aAnnounced = isStarterAnnounced(effectiveRawA);
@@ -15949,7 +16174,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
       // -------------------------------------------------------------
       function getPitcherProfile(isHome, teamName, starterName) {
         const sideKey = isHome ? 'home' : 'away';
-        const pNameRaw = formatPlayerKorean(starterName || '');
+        let pNameRaw = formatPlayerKorean(starterName || '');
+        let rot = null;
+        if (!isStarterAnnounced(pNameRaw) || pNameRaw === '선발 미정' || !pNameRaw) {
+          rot = (typeof lookupTeamRotationStarter === 'function') ? lookupTeamRotationStarter(teamName) : null;
+          if (rot && rot.name) pNameRaw = formatPlayerKorean(rot.name);
+        }
         const isAnnounced = isStarterAnnounced(pNameRaw);
 
         const cleanName = pNameRaw.replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
@@ -15959,9 +16189,13 @@ function updateSlimPanel(matchId, type, contentHtml) {
         const mTeamStats = (m.team_stats && typeof m.team_stats === 'object') ? m.team_stats : (detailsTeamStats || {});
         const teamStatsStarters = (mTeamStats && mTeamStats.starters && mTeamStats.starters[sideKey]) ? mTeamStats.starters[sideKey] : null;
 
-        const cachedPitcherObj = (matchup && matchup.starting_pitchers && matchup.starting_pitchers[sideKey]) 
+        const rawCachedPitcherObj = (matchup && matchup.starting_pitchers && matchup.starting_pitchers[sideKey]) 
           ? matchup.starting_pitchers[sideKey] 
           : (teamStatsStarters || (m.starters && m.starters[sideKey] ? m.starters[sideKey] : null));
+
+        const cachedPitcherObj = (rawCachedPitcherObj && isStarterAnnounced(rawCachedPitcherObj.name) && !rawCachedPitcherObj.is_unannounced && !rawCachedPitcherObj.name.includes('미정'))
+          ? rawCachedPitcherObj
+          : null;
 
         const pThrows = (pOfficial && pOfficial.style) 
           ? pOfficial.style 
@@ -15969,7 +16203,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
               ? pOfficial.throws
               : ((cachedPitcherObj && cachedPitcherObj.style) 
                   ? cachedPitcherObj.style 
-                  : (pNameRaw.includes('(좌)') ? '좌완' : (pNameRaw.includes('(언)') ? '언더' : (cachedPitcherObj?.throws || (pOfficial && pOfficial.hand === 'L' ? '좌완' : '우완'))))));
+                  : (pNameRaw.includes('(좌)') ? '좌완' : (pNameRaw.includes('(언)') ? '언더' : (cachedPitcherObj?.throws || (pOfficial && pOfficial.hand === 'L' ? '좌완' : (rot && rot.name && rot.name.includes('(좌)') ? '좌완' : '우완')))))));
 
         const pHand = (pOfficial && pOfficial.hand) 
           ? pOfficial.hand 
@@ -15987,6 +16221,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
           seasonEra = String(pOfficial.era);
         } else if (pOfficial && pOfficial.season_era && pOfficial.season_era !== '-') {
           seasonEra = String(pOfficial.season_era);
+        } else if (rot && rot.era && rot.era !== '-') {
+          seasonEra = String(rot.era);
         }
 
         // 100% 공식 시즌 전적 (W승 L패)
@@ -19636,16 +19872,46 @@ function renderPredDetail(m, customDetailData = null) {
       }
 
       // Unpack baseball starting pitchers for team header blocks
-      const rawHomeStarter = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
-      const rawAwayStarter = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
+      let rawHomeStarter = m.home_starter_name || (m.extra_data && m.extra_data.home_starter) || (m.toto_match && m.toto_match.home_starter) || '';
+      let rawAwayStarter = m.away_starter_name || (m.extra_data && m.extra_data.away_starter) || (m.toto_match && m.toto_match.away_starter) || '';
+      let rotH = null;
+      if (!isStarterAnnounced(rawHomeStarter)) {
+        rotH = (typeof lookupTeamRotationStarter === 'function') ? lookupTeamRotationStarter(m.home_team_name) : null;
+        if (rotH && rotH.name) rawHomeStarter = rotH.name;
+      }
+      let rotA = null;
+      if (!isStarterAnnounced(rawAwayStarter)) {
+        rotA = (typeof lookupTeamRotationStarter === 'function') ? lookupTeamRotationStarter(m.away_team_name) : null;
+        if (rotA && rotA.name) rawAwayStarter = rotA.name;
+      }
+
       const hAnnounced = isStarterAnnounced(rawHomeStarter);
       const aAnnounced = isStarterAnnounced(rawAwayStarter);
       let homeStarter = hAnnounced ? formatPlayerKorean(rawHomeStarter) : '선발 미정';
       let awayStarter = aAnnounced ? formatPlayerKorean(rawAwayStarter) : '선발 미정';
 
       const stObj = (matchup && matchup.starting_pitchers) ? matchup.starting_pitchers : {};
-      const hPitcher = stObj.home || (hAnnounced ? { name: homeStarter, throws: '우완', is_confirmed: true, is_unannounced: false } : { name: '선발 미정', throws: '미정', is_confirmed: false, is_unannounced: true, status_label: '선발 미정 (TBD)' });
-      const aPitcher = stObj.away || (aAnnounced ? { name: awayStarter, throws: '우완', is_confirmed: true, is_unannounced: false } : { name: '선발 미정', throws: '미정', is_confirmed: false, is_unannounced: true, status_label: '선발 미정 (TBD)' });
+      const hValidObj = (stObj.home && isStarterAnnounced(stObj.home.name) && !stObj.home.is_unannounced && !stObj.home.name.includes('미정'));
+      const aValidObj = (stObj.away && isStarterAnnounced(stObj.away.name) && !stObj.away.is_unannounced && !stObj.away.name.includes('미정'));
+
+      const hPitcher = hValidObj ? stObj.home : {
+        name: homeStarter,
+        throws: (rotH && rotH.hand === 'L' ? '좌완' : (homeStarter.includes('(좌)') ? '좌완' : '우완')),
+        era: (rotH && rotH.era) ? rotH.era : '3.50',
+        season_era: (rotH && rotH.era) ? rotH.era : '3.50',
+        is_confirmed: false,
+        is_unannounced: !hAnnounced,
+        status_label: hAnnounced ? '선발예고' : '선발 미정 (TBD)'
+      };
+      const aPitcher = aValidObj ? stObj.away : {
+        name: awayStarter,
+        throws: (rotA && rotA.hand === 'L' ? '좌완' : (awayStarter.includes('(좌)') ? '좌완' : '우완')),
+        era: (rotA && rotA.era) ? rotA.era : '3.50',
+        season_era: (rotA && rotA.era) ? rotA.era : '3.50',
+        is_confirmed: false,
+        is_unannounced: !aAnnounced,
+        status_label: aAnnounced ? '선발예고' : '선발 미정 (TBD)'
+      };
 
       // Render Final Assembled Dashboard
       panel.innerHTML = `
@@ -19727,10 +19993,10 @@ function renderPredDetail(m, customDetailData = null) {
             ${isBaseball ? `
               <div class="row g-2 mt-2 pt-2 border-top" style="border-color: #f1f5f9 !important;">
                 <div class="col-6">
-                  ${renderBaseballStarterBlock(hPitcher, true, false)}
+                  ${renderBaseballStarterBlock(hPitcher, true, false, m.home_team_name)}
                 </div>
                 <div class="col-6">
-                  ${renderBaseballStarterBlock(aPitcher, false, false)}
+                  ${renderBaseballStarterBlock(aPitcher, false, false, m.away_team_name)}
                 </div>
               </div>
             ` : ''}

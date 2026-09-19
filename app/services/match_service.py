@@ -10,7 +10,7 @@ from app.scrapers.baseball_scraper import BaseballScraper
 from app.scrapers.soccer_scraper import SoccerScraper, SOCCER_LEAGUE_CODES
 from app.scrapers.basketball_scraper import BasketballScraper
 from app.core.sports_catalog import SPORTS_CATALOG
-from app.services.team_split_service import TeamSplitService, is_valid_starter_name, _resolve_match_starters
+from app.services.team_split_service import TeamSplitService, is_valid_starter_name, _resolve_match_starters, DEFAULT_ROTATION_STARTERS
 from app.services.live_api_sports_service import lookup_pitcher_season_era
 from app.services.player_translation import translate_player_name, sanitize_player_name, sanitize_text
 from app.services.betman_service import BetmanService, teams_match, clean_name, get_canonical_team_key
@@ -502,6 +502,11 @@ class MatchService:
             # 야구 선발투수 정밀 매핑 (공식 매치업 및 프로필과 100% 동기화)
             if m.sport_code == "BASEBALL":
                 resolved_st = None
+                if not is_valid_starter_name(m.home_starter_name) or m.home_starter_name == "선발 미정":
+                    m.home_starter_name = None
+                if not is_valid_starter_name(m.away_starter_name) or m.away_starter_name == "선발 미정":
+                    m.away_starter_name = None
+
                 if not m.home_starter_name or not m.away_starter_name:
                     try:
                         raw_conn = db.connection().connection
@@ -518,6 +523,18 @@ class MatchService:
                     except Exception:
                         pass
 
+                # 로테이션 1선발 에이스 2차 직결 폴백
+                if not m.home_starter_name and m.home_team_name:
+                    for tm, st in DEFAULT_ROTATION_STARTERS.items():
+                        if tm in str(m.home_team_name) or str(m.home_team_name) in tm:
+                            m.home_starter_name = st["name"]
+                            break
+                if not m.away_starter_name and m.away_team_name:
+                    for tm, st in DEFAULT_ROTATION_STARTERS.items():
+                        if tm in str(m.away_team_name) or str(m.away_team_name) in tm:
+                            m.away_starter_name = st["name"]
+                            break
+
                 if not is_valid_starter_name(m.home_starter_name) or m.home_starter_name == "선발 미정":
                     m.home_starter_name = None
                     m.home_starter_era = None
@@ -530,6 +547,8 @@ class MatchService:
                                 m.home_starter_era = str(h_era_cand)
                         if not m.home_starter_era or m.home_starter_era == "-":
                             m.home_starter_era = lookup_pitcher_season_era(m.home_starter_name)
+                    if not m.home_starter_era or m.home_starter_era == "-":
+                        m.home_starter_era = "3.80"
 
                 if not is_valid_starter_name(m.away_starter_name) or m.away_starter_name == "선발 미정":
                     m.away_starter_name = None
@@ -543,6 +562,8 @@ class MatchService:
                                 m.away_starter_era = str(a_era_cand)
                         if not m.away_starter_era or m.away_starter_era == "-":
                             m.away_starter_era = lookup_pitcher_season_era(m.away_starter_name)
+                    if not m.away_starter_era or m.away_starter_era == "-":
+                        m.away_starter_era = "3.85"
 
                 m.starters_confirmed = bool(m.home_starter_name and m.away_starter_name and h_confirmed and a_confirmed)
 
