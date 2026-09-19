@@ -76,7 +76,8 @@ def get_mobile_today_matches(
             "home_starter": m.home_starter_name,
             "away_starter": m.away_starter_name,
             "status": m.status,
-            "odds": odds
+            "odds": odds,
+            "audit_status": m.audit_status
         })
         
     return {

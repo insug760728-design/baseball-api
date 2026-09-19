@@ -408,13 +408,28 @@ class SchedulerService:
             except Exception as ase:
                 logger.error(f"[Scheduler] API-Sports live sync error: {ase}")
 
+            # 원천 API 대조 데이터 검증 엔진(PASS/FAIL/UNKNOWN) 및 자동 보정 일괄 실행
+            try:
+                from app.agents.data_audit_verification_agent import DataAuditVerificationAgent
+                audit_res = await asyncio.to_thread(DataAuditVerificationAgent.run_full_audit, auto_fix=True, limit=500)
+                summary["DATA_AUDIT"] = {
+                    "pass_rate": audit_res.get("pass_rate"),
+                    "pass_count": audit_res.get("pass_count"),
+                    "fail_count": audit_res.get("fail_count"),
+                    "unknown_count": audit_res.get("unknown_count"),
+                    "remediated_count": audit_res.get("remediated_count")
+                }
+                logger.info(f"[Scheduler Hourly] 데이터 검증 엔진 완료: 패스율 {audit_res.get('pass_rate')}%, 보정 {audit_res.get('remediated_count')}건")
+            except Exception as ade:
+                logger.error(f"[Scheduler] 데이터 검증 엔진 실행 오류: {ade}")
+
             try:
                 from app.core.websocket_manager import manager
                 await manager.broadcast({
                     "type": "HOURLY_SYNC_COMPLETE",
                     "timestamp": datetime.now().isoformat(),
                     "summary": summary,
-                    "message": "1시간 주기 전 종목(5대리그·MLB·KBO·K리그·NPB·J리그·NBA) 자동 동기화 완료"
+                    "message": "1시간 주기 전 종목 자동 동기화 및 데이터 검증 완료"
                 })
             except Exception as be:
                 logger.warning(f"[Scheduler] WebSocket 브로드캐스트 오류: {be}")

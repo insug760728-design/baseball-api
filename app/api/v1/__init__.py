@@ -15,6 +15,7 @@ from app.api.v1.traffic import router as traffic_router
 from app.api.v1.mobile_api import router as mobile_api_router
 from app.api.v1.soccer_agent_router import router as soccer_agent_router
 from app.api.v1.system import router as system_router
+from app.api.v1.audit import router as audit_router
 
 api_v1_router = APIRouter()
 api_v1_router.include_router(matches_router)
@@ -33,3 +34,4 @@ api_v1_router.include_router(traffic_router)
 api_v1_router.include_router(mobile_api_router)
 api_v1_router.include_router(soccer_agent_router)
 api_v1_router.include_router(system_router)
+api_v1_router.include_router(audit_router)

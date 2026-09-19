@@ -114,6 +114,7 @@ class MatchResponse(MatchBase):
     base_2: Optional[bool] = False
     base_3: Optional[bool] = False
     all_odds: Optional[List[Dict[str, Any]]] = None
+    audit_status: Optional[Dict[str, Any]] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

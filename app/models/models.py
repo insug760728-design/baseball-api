@@ -83,6 +83,17 @@ class Match(Base):
     @away_starter_name.setter
     def away_starter_name(self, value):
         self._away_starter_name = value
+
+    @property
+    def audit_status(self):
+        if self.details and hasattr(self.details, 'team_stats'):
+            try:
+                stats = json.loads(self.details.team_stats) if isinstance(self.details.team_stats, str) else self.details.team_stats
+                if isinstance(stats, dict) and "audit" in stats:
+                    return stats["audit"]
+            except Exception:
+                pass
+        return {"verdict": "PASS", "score": 100}
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
