@@ -11654,23 +11654,14 @@ function getFullModalMatchList() {
         const outText = activeEv ? (activeEv.subtext || '탈삼진 아웃! 날카로운 결정구로 타자 제압!') : '⚡ 삼진 아웃! 날카로운 결정구로 타자 제압!';
         const outNum = (activeEv && activeEv.outs !== undefined && activeEv.outs !== null) ? activeEv.outs : (st.outs || 1);
         eventBannerHtml = `
-          <div class="live-baseball-track-container ${dismissClass} p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #450a0a 0%, #1e1b4b 50%, #450a0a 100%); border:1.5px solid #f87171; box-shadow:0 3px 8px rgba(239,68,68,0.35); position:relative; overflow:hidden;">
-            <!-- Caption Bar -->
-            <div class="d-flex justify-content-between align-items-center mb-1 text-white" style="font-size:0.72rem;">
-              <div class="d-flex align-items-center gap-1.5">
-                <span class="badge bg-danger text-white fw-bold px-1.5 py-0.5" style="font-size:0.64rem;"><i class="bi bi-x-octagon-fill me-0.5"></i>OUT</span>
-                <span class="fw-bold" style="color:#fecaca; font-size:0.75rem; letter-spacing:-0.2px;">${outText}</span>
-              </div>
-              <div class="d-flex align-items-center gap-1">
-                <span class="badge bg-danger text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">[${outNum}아웃]</span>
-                ${closeBtnHtml}
-              </div>
+          <div class="live-baseball-track-container ${dismissClass} px-2 py-1 rounded mb-1.5 d-flex justify-content-between align-items-center text-white" style="background:linear-gradient(90deg, #991b1b 0%, #1e1b4b 100%); border:1.2px solid #ef4444; box-shadow:0 2px 6px rgba(239,68,68,0.25);">
+            <div class="d-flex align-items-center gap-1.5 text-truncate">
+              <span class="badge bg-danger text-white fw-bold px-1.5 py-0.5" style="font-size:0.65rem;"><i class="bi bi-x-octagon-fill me-0.5"></i>OUT</span>
+              <span class="fw-bold text-truncate" style="color:#fef2f2; font-size:0.75rem;">${outText}</span>
             </div>
-            <!-- Motion Track (OUT 카운트 점멸) -->
-            <div class="live-baseball-motion-rail d-flex align-items-center justify-content-center">
-              <span class="fw-bold live-anim-3out-flash" style="color:#ef4444; font-size:0.82rem; letter-spacing:0.8px; text-shadow:0 0 6px rgba(239,68,68,0.8);">
-                🔴 OUT! [${outNum}아웃] 경기 흐름 제압
-              </span>
+            <div class="d-flex align-items-center gap-1" style="flex-shrink:0;">
+              <span class="badge bg-danger text-white py-0.5 px-1.5 fw-bold" style="font-size:0.65rem;">[${outNum}아웃]</span>
+              ${closeBtnHtml}
             </div>
           </div>
         `;
@@ -11773,44 +11764,44 @@ function getFullModalMatchList() {
 
               <!-- 2. 기본 실시간 스코어보드 & 다이아몬드 경기판 (Default Live Scoreboard & Diamond Board) -->
               <div class="live-default-scoreboard p-2 rounded" style="background:#ffffff; border:1.4px solid #cbd5e1; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-                <!-- Big Team Score Row -->
+                <!-- Big Team Score Row with Inning Above -->
                 <div class="d-flex align-items-center justify-content-between mb-1.5">
                   <div class="fw-bold text-dark text-truncate text-end" style="flex:1 1 38%; font-size:0.92rem;" title="${m.home_team_name}">${hName}</div>
                   <div class="px-2 text-center" style="flex:0 0 auto;">
-                    <span class="px-3 py-1 rounded-2 fw-bold d-inline-flex align-items-center gap-1.5" style="background:#0f172a; border:1.5px solid #334155; color:#ffffff; font-size:1.20rem; font-family:'Roboto Mono', monospace; letter-spacing:1px; box-shadow:0 2px 6px rgba(0,0,0,0.35);">
-                      ${hScoreHtml} <span style="color:#94a3b8; font-weight:300; font-size:1.0rem;">:</span> ${aScoreHtml}
+                    <!-- Inning Display ABOVE Score -->
+                    <div class="mb-0.5">
+                      <span class="badge bg-danger text-white py-0.5 px-2 fw-bold" style="font-size:0.65rem; letter-spacing:0.2px;">
+                        ${st.inning_text || '진행중'}
+                      </span>
+                    </div>
+                    <!-- Score: Clean Light Sports Background -->
+                    <span class="px-3 py-0.5 rounded-2 fw-bold d-inline-flex align-items-center gap-1.5" style="background:#f8fafc; border:1.5px solid #cbd5e1; font-size:1.20rem; font-family:'Roboto Mono', monospace; letter-spacing:1px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                      <span style="color:#dc2626; font-weight:800;">${hScore}</span>
+                      <span style="color:#94a3b8; font-weight:300; font-size:1.0rem;">:</span>
+                      <span style="color:#2563eb; font-weight:800;">${aScore}</span>
                     </span>
                   </div>
                   <div class="fw-bold text-dark text-truncate text-start" style="flex:1 1 38%; font-size:0.92rem;" title="${m.away_team_name}">${aName}</div>
                 </div>
 
-                <!-- Stadium Diamond & BSO & Matchup -->
+                <!-- Stadium Diamond & Matchup (Clean, no clutter) -->
                 <div class="d-flex justify-content-between align-items-center pt-1 border-top" style="border-color:#f1f5f9 !important;">
                   <!-- Left: Diamond & Out LEDs -->
                   <div class="d-flex align-items-center gap-1.5">
                     ${buildMiniDiamondSvg(st.base1, st.base2, st.base3, st.outs || 0)}
-                    <div class="d-flex flex-column" style="line-height:1.2;">
-                      <div class="d-flex align-items-center gap-1">
-                        <span class="fw-bold text-dark" style="font-size:0.72rem;">${st.outs_text || (st.outs + '아웃')}</span>
-                        <span style="font-size:0.62rem; letter-spacing:0.5px;">${outDots}</span>
-                      </div>
-                      <div class="d-flex gap-1 mt-0.5" style="font-size:0.56rem;">
-                        <span class="badge px-1 py-0.5" style="${st.base1 ? 'background:#facc15; color:#78350f; border:1px solid #b45309; font-weight:800;' : 'background:#f1f5f9; color:#94a3b8; border:1px solid #cbd5e1;'}">1루 ${st.base1 ? 'ON 🟡' : 'OFF ⚪'}</span>
-                        <span class="badge px-1 py-0.5" style="${st.base2 ? 'background:#facc15; color:#78350f; border:1px solid #b45309; font-weight:800;' : 'background:#f1f5f9; color:#94a3b8; border:1px solid #cbd5e1;'}">2루 ${st.base2 ? 'ON 🟡' : 'OFF ⚪'}</span>
-                        <span class="badge px-1 py-0.5" style="${st.base3 ? 'background:#facc15; color:#78350f; border:1px solid #b45309; font-weight:800;' : 'background:#f1f5f9; color:#94a3b8; border:1px solid #cbd5e1;'}">3루 ${st.base3 ? 'ON 🟡' : 'OFF ⚪'}</span>
-                      </div>
+                    <div class="d-flex align-items-center gap-1">
+                      <span class="badge bg-danger text-white py-0.5 px-1.5 fw-bold" style="font-size:0.68rem;">${st.outs_text || (st.outs + '아웃')}</span>
+                      <span style="font-size:0.62rem; letter-spacing:0.5px;">${outDots}</span>
                     </div>
                   </div>
 
-                  <!-- Right: BSO Board & Pitcher vs Batter -->
-                  <div class="text-end" style="font-size:0.66rem; line-height:1.3;">
-                    <div class="p-0.5 px-1.5 rounded mb-0.5 d-inline-flex gap-1.5 fw-bold" style="background:#0f172a; font-family:monospace; font-size:0.68rem;">
-                      <span style="color:#22c55e;">B:${st.balls ?? 0}</span>
-                      <span style="color:#facc15;">S:${st.strikes ?? 0}</span>
-                      <span style="color:#ef4444;">O:${st.outs ?? 0}</span>
-                    </div>
-                    <div class="text-secondary text-truncate" style="max-width:125px;" title="${st.pitcher}">
+                  <!-- Right: Pitcher vs Batter (Clean and readable) -->
+                  <div class="text-end" style="font-size:0.70rem; line-height:1.3;">
+                    <div class="text-secondary text-truncate" style="max-width:140px;" title="${st.pitcher}">
                       ⚾ 투: <b class="text-dark">${st.pitcher || '선발투수'}</b>
+                    </div>
+                    <div class="text-secondary text-truncate" style="max-width:140px;" title="${st.batter}">
+                      🏏 타: <b class="text-dark">${st.batter || '타자'}</b>
                     </div>
                     <div class="mt-1 d-flex align-items-center gap-1 justify-content-end flex-wrap">
                       <button type="button" class="btn btn-xs px-1.5 py-0.5 fw-bold text-danger border border-danger border-opacity-40 bg-white shadow-xs" style="font-size:0.60rem; border-radius:4px;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'HOMERUN', '💥 쾅! 초대형 홈런 작렬!');" title="홈런 왕복 2회 애니메이션 실행">
@@ -11885,12 +11876,19 @@ function getFullModalMatchList() {
 
               <!-- 2. 기본 실시간 축구 스코어보드 & 진행 현황판 -->
               <div class="live-default-scoreboard p-2 rounded" style="background:#ffffff; border:1.4px solid #cbd5e1; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-                <!-- Big Team Score Row -->
+                <!-- Big Team Score Row with Time Above -->
                 <div class="d-flex align-items-center justify-content-between mb-1.5">
                   <div class="fw-bold text-dark text-truncate text-end" style="flex:1 1 38%; font-size:0.92rem;" title="${m.home_team_name}">${hName}</div>
                   <div class="px-2 text-center" style="flex:0 0 auto;">
-                    <span class="px-3 py-1 rounded-2 fw-bold d-inline-flex align-items-center gap-1.5" style="background:#0f172a; border:1.5px solid #334155; color:#ffffff; font-size:1.20rem; font-family:'Roboto Mono', monospace; letter-spacing:1px; box-shadow:0 2px 6px rgba(0,0,0,0.35);">
-                      ${hScoreHtml} <span style="color:#94a3b8; font-weight:300; font-size:1.0rem;">:</span> ${aScoreHtml}
+                    <div class="mb-0.5">
+                      <span class="badge bg-danger text-white py-0.5 px-2 fw-bold" style="font-size:0.65rem; letter-spacing:0.2px;">
+                        ${st.match_time || '전반'}
+                      </span>
+                    </div>
+                    <span class="px-3 py-0.5 rounded-2 fw-bold d-inline-flex align-items-center gap-1.5" style="background:#f8fafc; border:1.5px solid #cbd5e1; font-size:1.20rem; font-family:'Roboto Mono', monospace; letter-spacing:1px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                      <span style="color:#dc2626; font-weight:800;">${hScore}</span>
+                      <span style="color:#94a3b8; font-weight:300; font-size:1.0rem;">:</span>
+                      <span style="color:#2563eb; font-weight:800;">${aScore}</span>
                     </span>
                   </div>
                   <div class="fw-bold text-dark text-truncate text-start" style="flex:1 1 38%; font-size:0.92rem;" title="${m.away_team_name}">${aName}</div>
@@ -11916,10 +11914,10 @@ function getFullModalMatchList() {
           const hasOfficialLiveScores = (hScore > 0 || aScore > 0);
           const periodTxt = (m.sport_code === 'VOLLEYBALL') ? (st.quarter || '세트 진행중') : (st.quarter || '쿼터 진행중');
           const scoreDisplayHtml = hasOfficialLiveScores
-            ? `<div class="d-flex align-items-center justify-content-between my-1 px-2.5 py-1.5 rounded" style="background:#0f172a; color:#fff; font-family:'Roboto Mono', monospace; font-size:1.15rem; font-weight:800;">
-                 <span class="text-truncate text-end" style="flex:1; font-size:0.85rem; font-family:sans-serif; color:#cbd5e1;">${hName}</span>
-                 <span class="mx-3"><span style="color:#f87171;">${hScore}</span> : <span style="color:#60a5fa;">${aScore}</span></span>
-                 <span class="text-truncate text-start" style="flex:1; font-size:0.85rem; font-family:sans-serif; color:#cbd5e1;">${aName}</span>
+            ? `<div class="d-flex align-items-center justify-content-between my-1 px-2.5 py-1.5 rounded" style="background:#f8fafc; border:1.5px solid #cbd5e1; color:#0f172a; font-family:'Roboto Mono', monospace; font-size:1.15rem; font-weight:800; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                 <span class="text-truncate text-end" style="flex:1; font-size:0.85rem; font-family:sans-serif; color:#1e293b;">${hName}</span>
+                 <span class="mx-3"><span style="color:#dc2626;">${hScore}</span> <span style="color:#94a3b8; font-weight:300;">:</span> <span style="color:#2563eb;">${aScore}</span></span>
+                 <span class="text-truncate text-start" style="flex:1; font-size:0.85rem; font-family:sans-serif; color:#1e293b;">${aName}</span>
                </div>`
             : `<div class="p-2 rounded text-center my-1" style="background:#f1f5f9; border:1px solid #cbd5e1; font-size:0.75rem; color:#475569;">
                  <i class="bi bi-clock-history me-1 text-primary"></i><b>경기 시작됨</b> · API 스포츠 시간단위 공식 결과 집계 대기
@@ -19690,19 +19688,15 @@ function renderPredDetail(m, customDetailData = null) {
             
             <!-- Home Plate (bottom) -->
             <polygon points="37,66 41.5,61.5 41.5,58.5 32.5,58.5 32.5,61.5" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2" />
-            <text x="37" y="72" font-size="6.5" font-weight="900" fill="#94a3b8" text-anchor="middle">HP</text>
             
             <!-- 2nd Base (top) -->
             <polygon points="37,3 45,11 37,19 29,11" fill="${f_b2}" stroke="${c_b2}" stroke-width="1.8" style="${glow2}" />
-            <text x="37" y="13.5" font-size="7.5" font-weight="900" fill="${b2?'#78350f':'#94a3b8'}" text-anchor="middle">2B</text>
             
             <!-- 3rd Base (left) -->
             <polygon points="10,29 18,37 10,45 2,37" fill="${f_b3}" stroke="${c_b3}" stroke-width="1.8" style="${glow3}" />
-            <text x="10" y="39.5" font-size="7.5" font-weight="900" fill="${b3?'#78350f':'#94a3b8'}" text-anchor="middle">3B</text>
             
             <!-- 1st Base (right) -->
             <polygon points="64,29 72,37 64,45 56,37" fill="${f_b1}" stroke="${c_b1}" stroke-width="1.8" style="${glow1}" />
-            <text x="64" y="39.5" font-size="7.5" font-weight="900" fill="${b1?'#78350f':'#94a3b8'}" text-anchor="middle">1B</text>
           </svg>
         </div>
       `;
@@ -20252,60 +20246,59 @@ function renderPredDetail(m, customDetailData = null) {
           <div class="baseball-live-center-box p-2 rounded mb-1" style="background:#ffffff; border:1px solid #e2e8f0;">
             ${eventBannerHtml}
             <div class="d-flex align-items-center gap-2">
-              <!-- Left: SVG Diamond + Out LED -->
+              <!-- Left: SVG Diamond (Lights up when runner on base) + Out LED -->
               <div class="text-center" style="flex:0 0 auto;">
                 ${buildLargeDiamondSvg(st.base1, st.base2, st.base3, st.outs)}
-                <div class="mt-0.5 d-flex justify-content-center align-items-center gap-1">
-                  <span class="badge bg-danger text-white py-0.5 px-1.5" style="font-size:0.62rem; font-weight:800;">${st.outs_text}</span>
-                  <span style="font-size:0.62rem;">${st.outs >= 2 ? '🔴🔴' : (st.outs === 1 ? '🔴⚪' : '⚪⚪')}</span>
+                <div class="mt-1 d-flex justify-content-center align-items-center gap-1">
+                  <span class="badge bg-danger text-white py-0.5 px-1.5 fw-bold" style="font-size:0.68rem;">${st.outs_text || (st.outs + '아웃')}</span>
+                  <span style="font-size:0.62rem; letter-spacing:0.5px;">${st.outs >= 2 ? '🔴🔴' : (st.outs === 1 ? '🔴⚪' : '⚪⚪')}</span>
                 </div>
               </div>
-              <!-- Right: Base Status, BSO Board, Pitcher & Batter -->
+              <!-- Right: Pitcher & Batter Info (Clean and spacious, no clutter) -->
               <div style="flex:1 1 auto; min-width:0;">
-                <!-- Runner Status Badges -->
-                <div class="d-flex gap-1 mb-1.5 flex-wrap">
-                  <span class="badge ${st.base1 ? 'bg-warning text-dark' : 'bg-light text-muted border'}" style="font-size:0.65rem; font-weight:700; padding:2px 5px;">
-                    1루 ${st.base1 ? '주자ON' : '비움'}
-                  </span>
-                  <span class="badge ${st.base2 ? 'bg-warning text-dark' : 'bg-light text-muted border'}" style="font-size:0.65rem; font-weight:700; padding:2px 5px;">
-                    2루 ${st.base2 ? '주자ON' : '비움'}
-                  </span>
-                  <span class="badge ${st.base3 ? 'bg-warning text-dark' : 'bg-light text-muted border'}" style="font-size:0.65rem; font-weight:700; padding:2px 5px;">
-                    3루 ${st.base3 ? '주자ON' : '비움'}
-                  </span>
-                </div>
-                
-                <!-- BSO LED Count Board -->
-                <div class="p-1 rounded mb-1 d-flex justify-content-around align-items-center" style="background:#0f172a; color:#ffffff; font-family:monospace; font-size:0.72rem;">
-                  <div class="d-flex align-items-center gap-0.5">
-                    <b style="color:#38bdf8;">B</b>
-                    <span>${'●'.repeat(st.balls)}${'○'.repeat(Math.max(0, 3 - st.balls))}</span>
+                <div class="p-2 rounded bg-light border d-flex flex-column gap-1.5" style="border-color:#e2e8f0;">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <span class="text-secondary fw-bold small" style="font-size:0.75rem;">
+                      <i class="bi bi-person-badge me-1 text-primary"></i>선발 투수
+                    </span>
+                    <strong class="text-dark fs-6" style="font-size:0.86rem;">${st.pitcher || '선발 투수'}</strong>
                   </div>
-                  <div class="d-flex align-items-center gap-0.5">
-                    <b style="color:#fbbf24;">S</b>
-                    <span>${'●'.repeat(st.strikes)}${'○'.repeat(Math.max(0, 2 - st.strikes))}</span>
+                  <div class="d-flex align-items-center justify-content-between border-top pt-1" style="border-color:#e2e8f0 !important;">
+                    <span class="text-secondary fw-bold small" style="font-size:0.75rem;">
+                      <i class="bi bi-crosshair me-1 text-danger"></i>현재 타자
+                    </span>
+                    <strong class="text-dark fs-6" style="font-size:0.86rem;">${st.batter || '타자'}</strong>
                   </div>
-                  <div class="d-flex align-items-center gap-0.5">
-                    <b style="color:#ef4444;">O</b>
-                    <span>${'●'.repeat(st.outs)}${'○'.repeat(Math.max(0, 2 - st.outs))}</span>
-                  </div>
-                </div>
-
-                <!-- Current Pitcher & Batter -->
-                <div class="small d-flex justify-content-between text-muted" style="font-size:0.65rem; line-height:1.2;">
-                  <span class="text-truncate me-1" title="${st.pitcher}">⚾ 투: <b class="text-dark">${st.pitcher}</b></span>
-                  <span class="text-truncate" title="${st.batter}">🏏 타: <b class="text-dark">${st.batter}</b></span>
                 </div>
               </div>
             </div>
 
+            <!-- Inning Header Title ABOVE 1~9 Scoreboard Table -->
+            <div class="d-flex justify-content-between align-items-center mt-2 mb-1 px-1">
+              <div class="d-flex align-items-center gap-1.5">
+                <span class="badge ${isFin ? 'bg-secondary' : 'bg-danger'} text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem; letter-spacing:0.2px;">
+                  <i class="bi bi-broadcast me-1"></i>${isFin ? '경기종료' : (st.inning_text || '진행중')}
+                </span>
+                <strong class="text-dark" style="font-size:0.76rem;">이닝별 득점 전광판</strong>
+              </div>
+              <span class="text-muted small" style="font-size:0.62rem;">(R:득점 / H:안타 / E:실책 / B:볼넷)</span>
+            </div>
+
             <!-- 1~9 Inning Line Scoreboard Table -->
-            <div class="table-responsive mt-1.5" style="border-radius:4px; overflow:hidden;">
+            <div class="table-responsive" style="border-radius:4px; overflow:hidden; border:1px solid #e2e8f0;">
               <table class="table table-bordered table-sm text-center m-0" style="font-size:0.66rem; background:#fff;">
                 <thead style="background:#f8fafc; font-size:0.62rem;">
                   <tr>
                     <th style="width:26%;">팀</th>
-                    <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
+                    <th style="${(st.inning_text || '').includes('1회') && !isFin ? 'background:#fef08a; font-weight:800; color:#854d0e;' : ''}">1</th>
+                    <th style="${(st.inning_text || '').includes('2회') && !isFin ? 'background:#fef08a; font-weight:800; color:#854d0e;' : ''}">2</th>
+                    <th style="${(st.inning_text || '').includes('3회') && !isFin ? 'background:#fef08a; font-weight:800; color:#854d0e;' : ''}">3</th>
+                    <th style="${(st.inning_text || '').includes('4회') && !isFin ? 'background:#fef08a; font-weight:800; color:#854d0e;' : ''}">4</th>
+                    <th style="${(st.inning_text || '').includes('5회') && !isFin ? 'background:#fef08a; font-weight:800; color:#854d0e;' : ''}">5</th>
+                    <th style="${(st.inning_text || '').includes('6회') && !isFin ? 'background:#fef08a; font-weight:800; color:#854d0e;' : ''}">6</th>
+                    <th style="${(st.inning_text || '').includes('7회') && !isFin ? 'background:#fef08a; font-weight:800; color:#854d0e;' : ''}">7</th>
+                    <th style="${(st.inning_text || '').includes('8회') && !isFin ? 'background:#fef08a; font-weight:800; color:#854d0e;' : ''}">8</th>
+                    <th style="${(st.inning_text || '').includes('9회') && !isFin ? 'background:#fef08a; font-weight:800; color:#854d0e;' : ''}">9</th>
                     <th style="background:#f1f5f9; font-weight:800;">R</th>
                     <th style="font-weight:700;">H</th>
                     <th style="font-weight:700;">E</th>
@@ -20383,21 +20376,25 @@ function renderPredDetail(m, customDetailData = null) {
             </div>
             <div class="text-center px-2" style="flex:0 0 auto;">
               ${isBkOrVbPendingFocus ? `
-                <div class="fw-bold text-muted" style="font-size:1.15rem; font-family:monospace; line-height:1;">
+                <div class="mb-0.5">
+                  <span class="badge py-0.5 px-1.5" style="background: #fef9c3; color: #854d0e; border: 1px solid #facc15; font-size:0.65rem; font-weight:800; border-radius:4px;">
+                    집계대기
+                  </span>
+                </div>
+                <div class="fw-bold text-muted px-2.5 py-0.5 rounded" style="background:#ffffff; border:1px solid #cbd5e1; font-size:1.15rem; font-family:monospace; line-height:1;">
                   - : -
                 </div>
-                <span class="badge py-0.5 px-1.5 mt-0.5" style="background: #fef9c3; color: #854d0e; border: 1px solid #facc15; font-size:0.65rem; font-weight:800; border-radius:4px;">
-                  집계대기
-                </span>
               ` : `
-                <div class="fw-bold" style="font-size:1.30rem; font-family:monospace; color:#0f172a; line-height:1;">
-                  <span style="${hScore > aScore ? 'color:#dc2626; font-weight:800;' : ''}">${hScore}</span>
-                  <span style="color:#94a3b8; font-weight:300;">:</span>
-                  <span style="${aScore > hScore ? 'color:#dc2626; font-weight:800;' : ''}">${aScore}</span>
+                <div class="mb-0.5">
+                  <span class="badge py-0.5 px-2" style="${inningBadgeStyle} font-size:0.68rem; font-weight:800; border-radius:4px; letter-spacing:0.2px;">
+                    ${st.inning_text || 'LIVE'}
+                  </span>
                 </div>
-                <span class="badge py-0.5 px-1.5 mt-0.5" style="${inningBadgeStyle} font-size:0.65rem; font-weight:800; border-radius:4px;">
-                  ${st.inning_text || 'LIVE'}
-                </span>
+                <div class="fw-bold px-2.5 py-0.5 rounded d-inline-flex align-items-center gap-1.5" style="background:#ffffff; border:1.5px solid #cbd5e1; font-size:1.25rem; font-family:'Roboto Mono', monospace; line-height:1; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                  <span style="color:#dc2626; font-weight:800;">${hScore}</span>
+                  <span style="color:#94a3b8; font-weight:300; font-size:1.0rem;">:</span>
+                  <span style="color:#2563eb; font-weight:800;">${aScore}</span>
+                </div>
               `}
             </div>
             <div class="text-start" style="flex:1 1 38%;">
