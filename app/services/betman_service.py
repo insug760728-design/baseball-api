@@ -161,6 +161,8 @@ TEAM_SYNONYMS = {
     "ac밀란": ["ac milan", "milan", "ac 밀란"],
     "나폴리": ["napoli", "ssc napoli", "ssc 나폴리"],
     "파리생제": ["psg", "paris saint-germain", "파리 생제르맹", "파리생제르맹"],
+    "사수올로": ["sassuolo", "us sassuolo", "us사수올로", "us 사수올로", "사수올로"],
+    "브레스트": ["brest", "stade brestois 29", "브레스트", "스타드 브레스투아29", "스타드브레스투아29", "스타드 브레스투아", "스타드브레스투아", "브레스투아"],
     "플라멩구": ["flamengo", "cr flamengo", "cr플라멩구", "cr 플라멩구", "플라멩고", "플라멩구 rj"],
     "인디델바": ["independiente del valle", "인디펜디엔테 델바예", "인디펜디엔테 델 바예", "인디펜디엔테델바예", "델 바예", "델바예", "인디델바"],
 
@@ -269,7 +271,7 @@ TEAM_SYNONYMS = {
     "스토크시티": ["스토크 시티", "스토크", "stoke city", "stoke"],
 
     # Soccer (Europe / Latin America)
-    "브레스트": ["브레스트", "스타드 브레스트 29", "스타드 브레스트", "스타드브레스트29", "stade brestois 29", "brest"],
+    "브레스트": ["브레스트", "스타드 브레스트 29", "스타드 브레스트", "스타드브레스트29", "stade brestois 29", "brest", "스타드 브레스투아29", "스타드브레스투아29", "스타드 브레스투아", "스타드브레스투아", "브레스투아"],
     "파리생제": ["psg", "paris saint-germain", "파리 생제르맹", "파리생제르맹", "파리 생제르망", "파리생제르망"],
     "르망": ["르망", "르망fc", "르망 fc", "le mans", "le mans fc"],
     "랑스": ["랑스", "rc 랑스", "rc랑스", "rc lens", "lens"],

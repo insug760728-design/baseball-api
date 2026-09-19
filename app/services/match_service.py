@@ -58,28 +58,28 @@ class MatchService:
         for current_d in dates_to_scrape:
             scraped_matches = scraper.scrape_matches(current_d)
             for m_data in scraped_matches:
-                match = db.query(Match).filter(Match.official_id == m_data["official_id"]).first()
-                if not match:
-                    # Also check by home/away teams and date to prevent duplicates from differing official_id prefixes
-                    m_date_part = (m_data.get("match_date") or "")[:10]
-                    target_dates = {current_d}
-                    if m_date_part:
-                        target_dates.add(m_date_part)
-                    
-                    date_filters = [Match.match_date.like(f"{d}%") for d in target_dates]
-                    day_matches = db.query(Match).filter(
-                        Match.sport_code == m_data.get("sport_code", scraper.get_sport_code()),
-                        or_(*date_filters)
-                    ).all()
-                    for dm in day_matches:
-                        if teams_match(dm.home_team_name, m_data["home_team_name"]) and teams_match(dm.away_team_name, m_data["away_team_name"]):
-                            match = dm
-                            break
+                matching_targets = []
+                by_off = db.query(Match).filter(Match.official_id == m_data["official_id"]).all()
+                matching_targets.extend(by_off)
 
-                if not match:
-                    # 베트맨 등록 경기 외 임의 외부 경기 중복 추가 차단
+                m_date_part = (m_data.get("match_date") or "")[:10]
+                target_dates = {current_d}
+                if m_date_part:
+                    target_dates.add(m_date_part)
+                
+                date_filters = [Match.match_date.like(f"{d}%") for d in target_dates]
+                day_matches = db.query(Match).filter(
+                    Match.sport_code == m_data.get("sport_code", scraper.get_sport_code()),
+                    or_(*date_filters)
+                ).all()
+                for dm in day_matches:
+                    if dm not in matching_targets and teams_match(dm.home_team_name, m_data["home_team_name"]) and teams_match(dm.away_team_name, m_data["away_team_name"]):
+                        matching_targets.append(dm)
+
+                if not matching_targets:
                     continue
-                else:
+
+                for match in matching_targets:
                     if not match.is_customized:
                         match.stadium = m_data.get("stadium") or match.stadium
                         match.home_score = m_data["home_score"]
@@ -87,52 +87,50 @@ class MatchService:
                         match.status = m_data["status"]
                         db.commit()
 
-                # 선발 예고 투수(probablePitcher) 및 라이브 이닝/스코어보드 자동 등록 및 최신화
-                if m_data.get("probable_pitcher_home") or m_data.get("probable_pitcher_away") or m_data.get("period_scores") or m_data.get("scoreboard") or m_data.get("current_inning"):
-                    detail = db.query(MatchDetail).filter(MatchDetail.match_id == match.id).first()
-                    if not detail:
-                        detail = MatchDetail(match_id=match.id, period_scores="{}", team_stats="{}", source_url=None)
-                        db.add(detail)
+                    if m_data.get("probable_pitcher_home") or m_data.get("probable_pitcher_away") or m_data.get("period_scores") or m_data.get("scoreboard") or m_data.get("current_inning"):
+                        detail = db.query(MatchDetail).filter(MatchDetail.match_id == match.id).first()
+                        if not detail:
+                            detail = MatchDetail(match_id=match.id, period_scores="{}", team_stats="{}", source_url=None)
+                            db.add(detail)
+                            db.commit()
+                            db.refresh(detail)
+                        ts = {}
+                        if detail.team_stats:
+                            try:
+                                ts = json.loads(detail.team_stats)
+                            except Exception:
+                                ts = {}
+                        
+                        h_p = sanitize_player_name(m_data.get("probable_pitcher_home") or "") or None
+                        a_p = sanitize_player_name(m_data.get("probable_pitcher_away") or "") or None
+                        if h_p or a_p:
+                            curr_st = ts.get("starters", {})
+                            curr_h = curr_st.get("home", {}).get("name")
+                            curr_a = curr_st.get("away", {}).get("name")
+                            
+                            final_h = h_p if is_valid_starter_name(h_p) else (curr_h if is_valid_starter_name(curr_h) else None)
+                            final_a = a_p if is_valid_starter_name(a_p) else (curr_a if is_valid_starter_name(curr_a) else None)
+                            
+                            ts["starters"] = {
+                                "home": {"name": final_h or "선발 예고", "confirmed": bool(final_h), "throws": "우완"},
+                                "away": {"name": final_a or "선발 예고", "confirmed": bool(final_a), "throws": "우완"}
+                            }
+
+                        if m_data.get("scoreboard"):
+                            ts["scoreboard"] = m_data["scoreboard"]
+                        if m_data.get("current_inning"):
+                            ts["current_inning"] = m_data["current_inning"]
+
+                        detail.team_stats = json.dumps(ts, ensure_ascii=False)
+                        if m_data.get("period_scores") and not detail.is_customized:
+                            detail.period_scores = json.dumps(m_data["period_scores"], ensure_ascii=False)
                         db.commit()
-                        db.refresh(detail)
-                    ts = {}
-                    if detail.team_stats:
                         try:
-                            ts = json.loads(detail.team_stats)
+                            from app.api.v1.matches import clear_matches_cache, clear_match_full_cache
+                            clear_matches_cache(match.id)
+                            clear_match_full_cache(match.id)
                         except Exception:
-                            ts = {}
-                    
-                    h_p = sanitize_player_name(m_data.get("probable_pitcher_home") or "") or None
-                    a_p = sanitize_player_name(m_data.get("probable_pitcher_away") or "") or None
-                    if h_p or a_p:
-                        curr_st = ts.get("starters", {})
-                        curr_h = curr_st.get("home", {}).get("name")
-                        curr_a = curr_st.get("away", {}).get("name")
-                        
-                        # 기존에 '미정/예정'이었거나 새로 확정된 선발투수가 유효한 경우 최신 확정 이름으로 즉시 갱신
-                        final_h = h_p if is_valid_starter_name(h_p) else (curr_h if is_valid_starter_name(curr_h) else None)
-                        final_a = a_p if is_valid_starter_name(a_p) else (curr_a if is_valid_starter_name(curr_a) else None)
-                        
-                        ts["starters"] = {
-                            "home": {"name": final_h or "선발 예고", "confirmed": bool(final_h), "throws": "우완"},
-                            "away": {"name": final_a or "선발 예고", "confirmed": bool(final_a), "throws": "우완"}
-                        }
-
-                    if m_data.get("scoreboard"):
-                        ts["scoreboard"] = m_data["scoreboard"]
-                    if m_data.get("current_inning"):
-                        ts["current_inning"] = m_data["current_inning"]
-
-                    detail.team_stats = json.dumps(ts, ensure_ascii=False)
-                    if m_data.get("period_scores") and not detail.is_customized:
-                        detail.period_scores = json.dumps(m_data["period_scores"], ensure_ascii=False)
-                    db.commit()
-                    try:
-                        from app.api.v1.matches import clear_matches_cache, clear_match_full_cache
-                        clear_matches_cache(match.id)
-                        clear_match_full_cache(match.id)
-                    except Exception:
-                        pass
+                            pass
 
                 # 상세 박스스코어 및 선수 지표 동기화
                 if sync_boxscore:

@@ -397,6 +397,18 @@ class SchedulerService:
                     logger.info(f"[Scheduler Hourly] 과거 8시간 경과 경기 {len(past_sched)}건 안전 상태 정리 완료")
             except Exception as pe:
                 logger.warning(f"[Scheduler Hourly] 과거 경기 정리 중 경고: {pe}")
+
+            try:
+                start_d = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
+                end_d = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+                for lid in ["LALIGA", "SERIE_A", "LIGUE_1", "EPL", "BUNDESLIGA"]:
+                    try:
+                        MatchService.sync_from_official_site(db, league_id=lid, start_date=start_d, end_date=end_d)
+                    except Exception as se:
+                        logger.warning(f"[Scheduler Hourly] {lid} 동기화 경고: {se}")
+            except Exception as e:
+                logger.warning(f"[Scheduler Hourly] 축구 최근 결과 동기화 중 오류: {e}")
+
             try:
                 from app.services.live_api_sports_service import LiveApiSportsService
                 if LiveApiSportsService.is_configured():
@@ -733,6 +745,20 @@ class SchedulerService:
                                 logger.warning(f"[Scheduler Smart LiveApi] 경고: {e}")
                                 return 0
                         sync_tasks.append(asyncio.to_thread(_sync_smart_live_api))
+
+                    # ⚡ 축구(세리에A·라리가·리그1·EPL·분데스리가) LIVE 경기 초고속 10초 실시간 API 연동
+                    fb_interval = 10.0 if soccer_live else 30.0
+                    should_sync_fb = (soccer_live or soccer_imminent) and (now_epoch - cls._last_football_sync_ts >= fb_interval)
+                    if should_sync_fb:
+                        def _sync_smart_live_football():
+                            try:
+                                cls._last_football_sync_ts = time.time()
+                                fb_res = LiveApiSportsService.sync_live_football(live_only=True)
+                                return fb_res.get('updated_db_matches', 0) or 0
+                            except Exception as e:
+                                logger.warning(f"[Scheduler Smart Live Football] 경고: {e}")
+                                return 0
+                        sync_tasks.append(asyncio.to_thread(_sync_smart_live_football))
 
                 # 병렬 실행
                 if sync_tasks:
