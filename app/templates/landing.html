@@ -14442,41 +14442,23 @@ function updateSlimPanel(matchId, type, contentHtml) {
           <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom flex-wrap gap-1" style="border-color:#f1f5f9 !important;">
             <div class="d-flex align-items-center gap-1.5">
               <span class="badge bg-dark text-white px-2 py-0.5" style="font-size:0.72rem;">
-                <i class="bi bi-pie-chart-fill text-warning me-1"></i>정밀 시각화 분석
+                <i class="bi bi-graph-up-arrow text-warning me-1"></i>정밀 배당률 분석
               </span>
               <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0.5 px-1.5" style="font-size:0.62rem; font-weight:700;">
-                <i class="bi bi-cpu-fill me-0.5"></i>AI 승률 & 실시간 배당률 트렌드 (ApexCharts)
+                <i class="bi bi-cpu-fill me-0.5"></i>베트맨 공식 실시간 배당률 변동 트렌드 (ApexCharts)
               </span>
             </div>
-            <span class="text-muted small" style="font-size:0.68rem;">
-              예측 우세: <strong style="color:${favColor};">${favTeam} (${Math.max(homeProb, awayProb)}%)</strong>
-            </span>
           </div>
 
           <div class="row g-2">
-            <!-- Left: Win Probability Radial Gauge -->
-            <div class="col-12 col-md-5">
-              <div class="rounded-2 border p-2 h-100 bg-light-subtle d-flex flex-column align-items-center justify-content-between" style="border-color: #e2e8f0; min-height: 220px;">
-                <div class="w-100 d-flex justify-content-between align-items-center">
-                  <span class="small fw-bold text-dark" style="font-size:0.73rem;"><i class="bi bi-speedometer2 text-danger me-1"></i>AI 승리 확률 게이지</span>
-                  <span class="badge bg-danger text-white py-0.2 px-1" style="font-size:0.60rem;">실시간</span>
-                </div>
-                <div id="apexWinProbChart_${m.id}" style="width: 100%; min-height: 165px;" class="d-flex justify-content-center"></div>
-                <div class="d-flex justify-content-between w-100 px-2 pt-1 border-top" style="border-color: #e2e8f0 !important; font-size: 0.70rem;">
-                  <span class="fw-bold text-danger">🔴 홈 ${hName} (${homeProb}%)</span>
-                  <span class="fw-bold text-primary">🔵 원정 ${aName} (${awayProb}%)</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Right: Odds Fluctuation Timeline -->
-            <div class="col-12 col-md-7">
-              <div class="rounded-2 border p-2 h-100 bg-white d-flex flex-column justify-content-between" style="border-color: #e2e8f0; min-height: 220px;">
+            <!-- Full Width: Odds Fluctuation Timeline -->
+            <div class="col-12">
+              <div class="rounded-2 border p-2 bg-white d-flex flex-column justify-content-between" style="border-color: #e2e8f0; min-height: 220px;">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                  <span class="small fw-bold text-dark" style="font-size:0.73rem;"><i class="bi bi-graph-up-arrow text-primary me-1"></i>베트맨 배당률 변동 이력</span>
+                  <span class="small fw-bold text-dark" style="font-size:0.75rem;"><i class="bi bi-graph-up-arrow text-primary me-1"></i>베트맨 배당률 변동 이력</span>
                   <span id="oddsTrendStatus_${m.id}" class="text-muted" style="font-size:0.64rem;">실시간 추적</span>
                 </div>
-                <div id="apexOddsTrendChart_${m.id}" style="width: 100%; min-height: 180px;"></div>
+                <div id="apexOddsTrendChart_${m.id}" style="width: 100%; min-height: 190px;"></div>
               </div>
             </div>
           </div>
@@ -14491,76 +14473,6 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const hName = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : (m.home_team_name || '홈팀');
       const aName = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : (m.away_team_name || '원정팀');
       const isSoccer = (m.sport_code === 'SOCCER');
-
-      // 1. Calculate win prob
-      let homeProb = 50;
-      const pred = m.prediction || {};
-      if (pred && pred.confidence) {
-        const conf = Number(pred.confidence);
-        const isHFav = pred.favored_team ? (pred.favored_team === m.home_team_name) : (pred.pick_type === 'HOME_WIN');
-        homeProb = isHFav ? conf : (100 - conf);
-      } else {
-        const oddsData = (typeof getMatchOdds === 'function') ? getMatchOdds(m) : null;
-        if (oddsData && oddsData.oddH && oddsData.oddA) {
-          const rH = 1 / Number(oddsData.oddH);
-          const rA = 1 / Number(oddsData.oddA);
-          homeProb = Math.round((rH / (rH + rA)) * 100);
-        }
-      }
-      homeProb = Math.max(15, Math.min(85, homeProb));
-      const awayProb = 100 - homeProb;
-
-      // Render Gauge
-      const gaugeEl = document.getElementById(`apexWinProbChart_${m.id}`);
-      if (gaugeEl) {
-        const gaugeOptions = {
-          series: [homeProb],
-          chart: {
-            type: 'radialBar',
-            height: 175,
-            offsetY: -10,
-            sparkline: { enabled: true }
-          },
-          plotOptions: {
-            radialBar: {
-              startAngle: -90,
-              endAngle: 90,
-              hollow: { size: '62%' },
-              track: {
-                background: '#e2e8f0',
-                strokeWidth: '100%',
-                margin: 4
-              },
-              dataLabels: {
-                name: {
-                  show: true,
-                  text: `${hName}`,
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: '#475569',
-                  offsetY: -18
-                },
-                value: {
-                  offsetY: -12,
-                  fontSize: '20px',
-                  fontWeight: 800,
-                  color: homeProb >= 50 ? '#dc2626' : '#2563eb',
-                  formatter: function(val) { return val + '%'; }
-                }
-              }
-            }
-          },
-          colors: [homeProb >= 50 ? '#dc2626' : '#2563eb'],
-          stroke: { lineCap: 'round' }
-        };
-        try {
-          const gaugeChart = new ApexCharts(gaugeEl, gaugeOptions);
-          gaugeChart.render();
-          _apexInstances['winProb'] = gaugeChart;
-        } catch(e) {
-          console.warn('Win prob chart error:', e);
-        }
-      }
 
       // Render Real Betman Odds Trend (No fake multipliers, 100% authentic Betman data)
       const trendEl = document.getElementById(`apexOddsTrendChart_${m.id}`);

@@ -65,11 +65,31 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[WARN] 스케줄러 시작 중 오류: {e}")
 
-    # 🚀 부팅 즉시 초기 경기 캐시 프리로드 (첫 페이지 접속 시 지연 0초)
+    # 🚀 부팅 즉시 초기 경기 캐시 비동기 프리로드 (Uvicorn 기동 지연 0초)
     try:
-        refresh_server_matches_cache()
+        import threading
+        threading.Thread(target=refresh_server_matches_cache, daemon=True).start()
     except Exception as e:
         print(f"[WARN] 초기 경기 캐시 프리로드 오류: {e}")
+
+    # ⏱️ 9분 주기 Keep-Alive 셀프 핑 데몬 (Render 15분 절전 및 1분 콜드스타트 지연 원천 차단)
+    async def _keep_alive_daemon():
+        import urllib.request
+        while True:
+            try:
+                await asyncio.sleep(540)  # 9분 주기
+                ext_url = os.getenv("RENDER_EXTERNAL_URL") or os.getenv("SERVER_PUBLIC_URL")
+                ping_url = f"{ext_url.rstrip('/')}/health" if ext_url else "http://127.0.0.1:8000/health"
+                req = urllib.request.Request(ping_url, headers={"User-Agent": "TOKEON-KeepAlive/1.0"})
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    pass
+            except Exception:
+                pass
+    try:
+        import asyncio
+        asyncio.create_task(_keep_alive_daemon())
+    except Exception as e:
+        print(f"[WARN] Keep-Alive 데몬 등록 오류: {e}")
 
     # 🔄 서버 시작 30초 후 전종목 신속 동기화 (부팅 직후 DB 락 및 512MB RAM 스파이크 완벽 방지)
     try:
@@ -184,7 +204,8 @@ def refresh_server_matches_cache() -> str:
     db = SessionLocal()
     try:
         from app.schemas.schemas import MatchResponse
-        matches = MatchService.get_matches(db, limit=600, order='asc')
+        # Initial payload focuses on active/upcoming matches (~100 matches) for instant First Paint & fast mobile transfer
+        matches = MatchService.get_matches(db, limit=100, order='asc')
         serialized = [MatchResponse.model_validate(m).model_dump(mode="json") for m in matches]
         json_str = json.dumps(serialized, ensure_ascii=False)
         _SERVER_MATCHES_CACHE["json_str"] = json_str
@@ -212,7 +233,11 @@ def get_server_initial_matches_json() -> str:
             threading.Thread(target=refresh_server_matches_cache, daemon=True).start()
         return _SERVER_MATCHES_CACHE["json_str"]
     
-    return refresh_server_matches_cache()
+    # Non-blocking initial return: trigger background preload and return "[]" so first request never stalls
+    if not _SERVER_MATCHES_CACHE.get("is_refreshing"):
+        import threading
+        threading.Thread(target=refresh_server_matches_cache, daemon=True).start()
+    return "[]"
 
 def get_portal_html(target_path: str):
     if not os.path.exists(target_path):
@@ -230,13 +255,15 @@ def get_portal_html(target_path: str):
     else:
         raw_content = _PORTAL_HTML_CACHE[target_path]["raw_content"]
 
-    # Pre-inject SERVER_INITIAL_MATCHES into <head> for zero-latency initial screen
+    # Pre-inject SERVER_INITIAL_MATCHES after DOM markup (before scripts) for instant 0ms First Paint
     initial_matches_json = get_server_initial_matches_json()
     injection_script = f"<script id=\"serverInitialData\">window.SERVER_INITIAL_MATCHES = {initial_matches_json};</script>"
-    if "</head>" in raw_content:
+    if '<script src="https://cdn.jsdelivr.net/npm/bootstrap' in raw_content:
+        content = raw_content.replace('<script src="https://cdn.jsdelivr.net/npm/bootstrap', f'{injection_script}\n  <script src="https://cdn.jsdelivr.net/npm/bootstrap', 1)
+    elif "</body>" in raw_content:
+        content = raw_content.replace("</body>", f"{injection_script}\n</body>", 1)
+    elif "</head>" in raw_content:
         content = raw_content.replace("</head>", f"{injection_script}\n</head>", 1)
-    elif "<body" in raw_content:
-        content = raw_content.replace("<body", f"{injection_script}\n<body", 1)
     else:
         content = f"{injection_script}\n{raw_content}"
 
