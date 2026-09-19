@@ -14989,7 +14989,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const favColor = homeProb >= 50 ? '#dc2626' : '#2563eb';
 
       return `
-        <div class="p-2.5 mb-2.5 rounded-3 bg-white border shadow-sm" style="border-color: #cbd5e1 !important;">
+        <div id="ngSection_oddsTrend" class="p-2.5 mb-2.5 rounded-3 bg-white border shadow-sm" style="border-color: #cbd5e1 !important;">
           <!-- Card Header -->
           <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom flex-wrap gap-1" style="border-color:#f1f5f9 !important;">
             <div class="d-flex align-items-center gap-1.5">
@@ -14997,12 +14997,17 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 <i class="bi bi-graph-up-arrow text-warning me-1"></i>정밀 배당률 분석
               </span>
               <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0.5 px-1.5" style="font-size:0.62rem; font-weight:700;">
-                <i class="bi bi-cpu-fill me-0.5"></i>베트맨 공식 실시간 배당률 변동 트렌드 (ApexCharts)
+                <i class="bi bi-cpu-fill me-0.5"></i>베트맨 공식 실시간 배당률 변동 트렌드
               </span>
+            </div>
+            <div>
+              <button type="button" class="btn btn-xs btn-outline-secondary py-0.5 px-2" style="font-size:0.68rem; font-weight:600;" onclick="toggleOddsTrendBody(${m.id})">
+                <i class="bi bi-chevron-up me-1" id="oddsToggleIcon_${m.id}"></i>접기 / 펼치기
+              </button>
             </div>
           </div>
 
-          <div class="row g-2">
+          <div id="oddsTrendContent_${m.id}" class="row g-2">
             <!-- Full Width: Odds Fluctuation Timeline -->
             <div class="col-12">
               <div class="rounded-2 border p-2 bg-white d-flex flex-column justify-content-between" style="border-color: #e2e8f0; min-height: 220px;">
@@ -15017,6 +15022,20 @@ function updateSlimPanel(matchId, type, contentHtml) {
         </div>
       `;
     }
+
+    window.toggleOddsTrendBody = function(matchId) {
+      const el = document.getElementById(`oddsTrendContent_${matchId}`);
+      const icon = document.getElementById(`oddsToggleIcon_${matchId}`);
+      if (!el) return;
+      const isHidden = (el.style.display === 'none');
+      if (isHidden) {
+        el.style.display = '';
+        if (icon) { icon.classList.remove('bi-chevron-down'); icon.classList.add('bi-chevron-up'); }
+      } else {
+        el.style.display = 'none';
+        if (icon) { icon.classList.remove('bi-chevron-up'); icon.classList.add('bi-chevron-down'); }
+      }
+    };
 
     function initApexChartsForMatch(m) {
       if (typeof ApexCharts === 'undefined') return;
@@ -16436,20 +16455,20 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
       container.innerHTML = `
         ${isBaseball ? startersSectionHtml : (isSoccer ? soccerAnalyticsHtml : nonBaseballHtml)}
-        ${apexChartsSectionHtml}
         ${pitchingBattingSectionHtml}
         ${recentMatchesSectionHtml}
         ${chatSectionHtml}
+        ${apexChartsSectionHtml}
       `;
 
-      // Mount interactive ApexCharts
+      // Mount interactive ApexCharts (상세 맨 아래로 이동 & 150ms 지연 마운트로 초기 렌더링 렉 100% 제거)
       setTimeout(() => {
         try {
           initApexChartsForMatch(m);
         } catch(e) {
           console.warn('initApexCharts error:', e);
         }
-      }, 50);
+      }, 150);
       } catch (err) {
         console.error('renderNextGenDetail caught error:', err);
         if (window.__reportClientError) {
@@ -19719,7 +19738,6 @@ function renderPredDetail(m, customDetailData = null) {
 
           <!-- Dual Odds Card (해외 공식 배당 vs 국내 공식 배당) -->
           ${dualOddsBoxHtml}
-        ${(typeof renderApexAnalyticsCardHtml === "function") ? renderApexAnalyticsCardHtml(m) : ""}
 
           <!-- Win Probability Visual Comparison Bar -->
           ${isSoccer && probs.draw ? `
@@ -19779,18 +19797,7 @@ function renderPredDetail(m, customDetailData = null) {
       `;
 
       if (prevScrollTop > 0) {
-        
-      setTimeout(() => {
-        try {
-          if (typeof initApexChartsForMatch === 'function') {
-            initApexChartsForMatch(m);
-          }
-        } catch(e) {
-          console.warn('initApexCharts error:', e);
-        }
-      }, 50);
-
-      panel.scrollTop = prevScrollTop;
+        panel.scrollTop = prevScrollTop;
       }
     }
 
