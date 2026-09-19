@@ -10787,6 +10787,30 @@ function getFullModalMatchList() {
         scrollToCurrentTimeMatch(false);
         initialScheduleAutoScrollDone = true;
       }
+      initPredScrollGuard();
+    }
+
+    // 🛡️ 스크롤 보호기: 사용자가 경기 목록을 읽거나 스크롤 중일 때 백그라운드 갱신으로 인한 스크롤 튐 완벽 차단
+    let _isUserInteractingWithPredList = false;
+    let _predInteractionTimer = null;
+
+    function initPredScrollGuard() {
+      const container = document.getElementById('predMatchList');
+      if (!container || container._scrollGuardInitialized) return;
+      container._scrollGuardInitialized = true;
+
+      const markInteracting = () => {
+        _isUserInteractingWithPredList = true;
+        if (_predInteractionTimer) clearTimeout(_predInteractionTimer);
+        _predInteractionTimer = setTimeout(() => {
+          _isUserInteractingWithPredList = false;
+        }, 1200);
+      };
+
+      container.addEventListener('scroll', markInteracting, { passive: true });
+      container.addEventListener('wheel', markInteracting, { passive: true });
+      container.addEventListener('touchstart', markInteracting, { passive: true });
+      container.addEventListener('touchmove', markInteracting, { passive: true });
     }
 
     // 5초 실시간 자동 업데이트 타이머
@@ -10829,6 +10853,69 @@ function getFullModalMatchList() {
       }
     }
 
+    // ⚡ 경기 목록 5초 주기 스마트 제자리(In-Place) 업데이트:
+    // 전체 DOM을 날리고 다시 그리지 않고, 변경된 카드의 점수/상태만 제자리에서 교체하여 스크롤 튐 100% 방지
+    function updatePredMatchesLive(matches) {
+      const container = document.getElementById('predMatchList');
+      if (!container) return;
+
+      const existingCards = container.querySelectorAll('.pred-card-compact');
+      if (existingCards.length === 0) {
+        renderPredMatches();
+        return;
+      }
+
+      // 사용자가 현재 스크롤 중이거나 터치 중이면 이번 틱은 건너뛰어 스크롤 끊김 및 튐 방지
+      if (_isUserInteractingWithPredList) {
+        return;
+      }
+
+      const filtered = getFilteredPredMatches();
+      const currentRenderedIds = Array.from(existingCards).map(c => Number(c.id.replace('predMatchCard_', ''))).filter(Boolean);
+      const newFilteredIds = filtered.map(m => m.id);
+
+      // 경기 목록의 개수나 순서가 변경된 경우(경기 종료로 이동 등)에만 앵커 보존 렌더링 실행
+      const idsMatch = currentRenderedIds.length === newFilteredIds.length &&
+                       currentRenderedIds.every((id, idx) => id === newFilteredIds[idx]);
+
+      if (!idsMatch) {
+        renderPredMatches();
+        return;
+      }
+
+      // 경기 ID 일치 시: 점수/상태/시간이 바뀐 카드만 외과수술식(In-Place) 교체
+      const now = new Date();
+      const d0Str = getKSTDateString(now);
+      const d1Str = getKSTDateString(new Date(now.getTime() + 86400000));
+
+      for (const m of filtered) {
+        const cardEl = document.getElementById('predMatchCard_' + m.id);
+        if (!cardEl) continue;
+
+        const prevStatus = cardEl.getAttribute('data-match-status') || '';
+        const prevScore = cardEl.getAttribute('data-match-score') || '';
+        const currentScore = `${m.home_score ?? 0}-${m.away_score ?? 0}`;
+        const prevTime = cardEl.getAttribute('data-match-time') || '';
+        const st = (typeof getLiveMatchState === 'function') ? getLiveMatchState(m) : {};
+        const currentTime = (st.match_time || st.quarter || st.inning_text || '') + '';
+
+        if (prevStatus !== m.status || prevScore !== currentScore || prevTime !== currentTime) {
+          const isSel = (currentCenterMode === 'DETAIL' && m.id === selectedPredMatchId);
+          const oddsInfo = getMatchOdds(m);
+          const newCardHtml = buildPredMatchCardHtml(m, isSel, oddsInfo, now, d0Str, d1Str);
+
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = newCardHtml.trim();
+          const newCardEl = tempDiv.firstElementChild;
+          if (newCardEl) {
+            newCardEl.setAttribute('data-match-score', currentScore);
+            newCardEl.setAttribute('data-match-time', currentTime);
+            cardEl.replaceWith(newCardEl);
+          }
+        }
+      }
+    }
+
     async function silentLiveRefresh() {
       try {
         const resp = await fetch(`/api/v1/matches?limit=350&order=asc&_t=${Date.now()}`, { cache: 'no-store' });
@@ -10846,7 +10933,7 @@ function getFullModalMatchList() {
         checkScoreChangesAndNotify(allMatches);
 
         renderMatchStrip('ALL');
-        renderPredMatches();
+        updatePredMatchesLive(allMatches);
         renderRightColLiveRelay();
         if (currentCenterMode === 'DETAIL' && selectedPredMatchId) {
           const currentTarget = allMatches.find(m => m.id === selectedPredMatchId);
@@ -12596,7 +12683,7 @@ function getFullModalMatchList() {
         }
 
         return `
-          <div class="slim-match-card pred-card-compact card-status-live ${sportClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
+          <div class="slim-match-card pred-card-compact card-status-live ${sportClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" data-match-score="${m.home_score ?? 0}-${m.away_score ?? 0}" data-match-time="${(st.match_time || st.quarter || st.inning_text || '')}" onclick="selectPredMatch(${m.id}, true)">
             <!-- Top Live Header -->
             <div class="d-flex justify-content-between align-items-center mb-2" style="gap: 6px;">
               <div class="d-flex align-items-center gap-1.5" style="min-width:0; overflow:hidden; flex:1 1 auto;">
@@ -12739,7 +12826,7 @@ function getFullModalMatchList() {
       }
 
       return `
-        <div class="slim-match-card pred-card-compact ${sportClass} ${statusClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" onclick="selectPredMatch(${m.id}, true)">
+        <div class="slim-match-card pred-card-compact ${sportClass} ${statusClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" data-match-score="${m.home_score ?? 0}-${m.away_score ?? 0}" data-match-time="" onclick="selectPredMatch(${m.id}, true)">
           <div class="d-flex justify-content-between align-items-center mb-1.5" style="gap: 6px;">
             <div class="d-flex align-items-center gap-1 text-truncate" style="min-width:0; flex:1 1 auto; overflow:hidden;">
               <span class="slim-card-sport-time text-truncate" style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${sportIcon} ${m.league_name || m.sport_code} · ${timeStr}${sweepBadge}</span>
@@ -13005,10 +13092,33 @@ function getFullModalMatchList() {
       const prevContainerScrollTop = container ? (container.scrollTop || 0) : 0;
       const prevWindowScrollY = (typeof window !== 'undefined' ? (window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0) || (document.body ? document.body.scrollTop : 0)) : 0) || 0;
 
-      // Phase 1: Render first 40 matches immediately (sub-10ms)
-      const firstChunkHtml = headerHtml + renderBatch(0, INITIAL_CHUNK_SIZE);
-      container.innerHTML = firstChunkHtml;
+      // 📌 1. Card Anchor: 사용자가 보고 있던 최상단 카드 및 픽셀 오프셋 정밀 기록
+      let anchorCardId = null;
+      let anchorCardOffset = 0;
+      if (container && prevContainerScrollTop > 0) {
+        const cards = container.querySelectorAll('.pred-card-compact');
+        const containerTop = container.getBoundingClientRect().top;
+        for (const card of cards) {
+          const rect = card.getBoundingClientRect();
+          if (rect.bottom > containerTop + 5) {
+            anchorCardId = card.id;
+            anchorCardOffset = rect.top - containerTop;
+            break;
+          }
+        }
+      }
 
+      // 📌 2. 전체 필터 경기를 한 번에 렌더링 (단일 문자열 생성 ~2ms 소요)
+      // 분할 청크 렌더링으로 인한 scrollHeight 축소 및 브라우저 강제 스크롤 클램핑(위로 튕김) 완벽 제거
+      const fullHtml = headerHtml + renderBatch(0, filtered.length);
+      container.innerHTML = fullHtml;
+
+      // 스크롤 가드 재연결
+      if (typeof initPredScrollGuard === 'function') {
+        initPredScrollGuard();
+      }
+
+      // 📌 3. 선택된 경기가 없을 때 기본 경기 선택 (화면 스크롤 방해 없음)
       if (!selectedPredMatchId && filtered.length > 0) {
         const bestCard = findCurrentOrNextMatchCard(Array.from(container.querySelectorAll('.pred-card-compact')));
         const matchId = bestCard ? bestCard.id.replace('predMatchCard_', '') : filtered[0].id;
@@ -13017,36 +13127,27 @@ function getFullModalMatchList() {
         }
       }
 
+      // 📌 4. 최초 페이지 로딩 시에만 단 1회 현재시간 경기로 자동 정렬
       if (!initialScheduleAutoScrollDone && currentPredDate !== 'FINISHED') {
         initialScheduleAutoScrollDone = true;
         scrollToCurrentTimeMatch(false);
       } else {
-        if (container.scrollHeight > prevContainerScrollTop) {
+        // 📌 5. 100% 정밀 스크롤 복원: 앵커 카드가 있으면 동일 위치로 복원, 없으면 이전 scrollTop 유지
+        if (anchorCardId) {
+          const newAnchorCard = document.getElementById(anchorCardId);
+          if (newAnchorCard) {
+            const newTop = newAnchorCard.getBoundingClientRect().top - container.getBoundingClientRect().top;
+            container.scrollTop += (newTop - anchorCardOffset);
+          } else if (prevContainerScrollTop > 0) {
+            container.scrollTop = prevContainerScrollTop;
+          }
+        } else if (prevContainerScrollTop > 0) {
           container.scrollTop = prevContainerScrollTop;
         }
-        if (window.innerWidth <= 768) {
+
+        if (window.innerWidth <= 768 && prevWindowScrollY > 0) {
           window.scrollTo(0, prevWindowScrollY);
         }
-      }
-
-      // Phase 2: Asynchronously append remaining matches in smooth chunks (no mobile UI freeze)
-      if (filtered.length > INITIAL_CHUNK_SIZE) {
-        let currentRenderIdx = INITIAL_CHUNK_SIZE;
-        const CHUNK_STEP = 60;
-
-        function processNextBatch() {
-          if (currentToken !== _activeRenderToken) return;
-          const nextEnd = Math.min(currentRenderIdx + CHUNK_STEP, filtered.length);
-          const nextChunkHtml = renderBatch(currentRenderIdx, nextEnd);
-          if (nextChunkHtml) {
-            container.insertAdjacentHTML('beforeend', nextChunkHtml);
-          }
-          currentRenderIdx = nextEnd;
-          if (currentRenderIdx < filtered.length) {
-            _renderChunkTimer = setTimeout(processNextBatch, 8);
-          }
-        }
-        _renderChunkTimer = setTimeout(processNextBatch, 16);
       }
     }
 function updateSlimPanel(matchId, type, contentHtml) {
@@ -17900,6 +18001,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
     }
 
     function scrollToCurrentTimeMatch(isManual = false) {
+      if (!isManual && initialScheduleAutoScrollDone) return;
       const container = document.getElementById('predMatchList');
       if (!container) return;
 
