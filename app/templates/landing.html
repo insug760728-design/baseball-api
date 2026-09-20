@@ -12464,23 +12464,40 @@ function getFullModalMatchList() {
     }
     window.dismissLiveEventTrack = dismissLiveEventTrack;
 
-    // ⚽ 축구 골 애니메이션 트리거 & 자동 소멸 (화려한 상하 지그재그 비행)
+    // ⚽ 축구 골 애니메이션 트리거 & 자동 소멸 (1~4번 골 이미지 순환 🔄)
     window.triggerSoccerGoalEvent = function(matchId, scoringTeam) {
       if (!window._activeLivePlayEvents) window._activeLivePlayEvents = {};
-      window._activeLivePlayEvents[matchId] = { type: 'GOAL', scorer: scoringTeam || '골', time: Date.now() };
+      if (!window._soccerGoalSeq) window._soccerGoalSeq = 0;
+      window._soccerGoalSeq = (window._soccerGoalSeq % 4) + 1;
+      const subtexts = [
+        '골망을 찢는 강력한 탑코너 슛 작렬!',
+        '무릎 슬라이딩 포효 세리머니!',
+        '그림 같은 공중 바이시클 킥 골!',
+        '전 선수단 코너플래그 단체 포옹!'
+      ];
+      window._activeLivePlayEvents[matchId] = { 
+        type: 'GOAL', 
+        scorer: scoringTeam || '골', 
+        imgIdx: window._soccerGoalSeq,
+        subtext: subtexts[window._soccerGoalSeq - 1],
+        time: Date.now() 
+      };
       if (typeof renderPredMatches === 'function') renderPredMatches();
       setTimeout(() => {
         if (window._activeLivePlayEvents && window._activeLivePlayEvents[matchId]) {
           delete window._activeLivePlayEvents[matchId];
           if (typeof renderPredMatches === 'function') renderPredMatches();
         }
-      }, 5400);
+      }, 6000);
     };
 
-    // ⚾ 야구 실시간 이벤트 트리거 (HOMERUN: 2회 왕복, HIT: 1회 전진, BB: 포볼/사사구, OUT: 아웃/삼진)
+    // ⚾ 야구 실시간 이벤트 트리거 (1~4번 홈런/안타/볼넷/아웃 이미지 순환 🔄)
     window.triggerBaseballEvent = function(matchId, type, details) {
       if (!window._activeLivePlayEvents) window._activeLivePlayEvents = {};
       const t = (type || 'HIT').toUpperCase();
+      if (!window._baseballEvSeq) window._baseballEvSeq = {};
+      window._baseballEvSeq[t] = ((window._baseballEvSeq[t] || 0) % 4) + 1;
+      const seqIdx = window._baseballEvSeq[t];
       let subtext = '';
       let outs = null;
       if (typeof details === 'string') {
@@ -12489,14 +12506,24 @@ function getFullModalMatchList() {
         subtext = details.subtext || '';
         outs = details.outs;
       }
+      if (!subtext) {
+        if (t === 'HOMERUN') {
+          const hrTexts = ['배트플립과 함께 담장 넘기는 투런포!', '결정적 스리런 홈런 포효!', '더그아웃 동료들과의 하이파이브!', '외야 관중석 상단 직격 초대형 문샷!'];
+          subtext = hrTexts[seqIdx - 1];
+        } else if (t === 'HIT') {
+          const hitTexts = ['총알 같은 우중간 1타점 적시타!', '헤드퍼스트 슬라이딩 2루 안착!', '1루를 향한 필사의 전력 질주!', '우익선상 날카로운 클러치 2루타!'];
+          subtext = hitTexts[seqIdx - 1];
+        }
+      }
       window._activeLivePlayEvents[matchId] = {
         type: t,
         subtext: subtext,
         outs: outs,
+        imgIdx: seqIdx,
         time: Date.now()
       };
       if (typeof renderPredMatches === 'function') renderPredMatches();
-      const dismissDuration = (t === 'HOMERUN') ? 5200 : (t === 'HIT' ? 3800 : 3400);
+      const dismissDuration = (t === 'HOMERUN') ? 5500 : (t === 'HIT' ? 4000 : 3500);
       setTimeout(() => {
         if (window._activeLivePlayEvents && window._activeLivePlayEvents[matchId]) {
           delete window._activeLivePlayEvents[matchId];
@@ -12509,12 +12536,6 @@ function getFullModalMatchList() {
     function isRealTimeLive(m) {
       if (!m) return false;
       if (m.status === 'LIVE' || m.status === 'IN_PLAY' || m.status === '1H' || m.status === '2H' || m.status === 'HT') {
-        if (m.match_date) {
-          try {
-            const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
-            if ((Date.now() - mTime) / (1000 * 60 * 60) > 4.5) return false;
-          } catch(e) {}
-        }
         return true;
       }
       if (m.status === 'SCHEDULED' && m.match_date) {
@@ -12653,7 +12674,7 @@ function getFullModalMatchList() {
         try {
           const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
           diffMin = (now.getTime() - mTime) / (1000 * 60);
-          if (m.status === 'LIVE' && diffMin > 270) {
+          if (m.status === 'LIVE' && diffMin > 1440) {
             isCardStaleLive = true;
           }
         } catch(e) {}
@@ -12770,8 +12791,13 @@ function getFullModalMatchList() {
                     </svg>
                   </div>
 
-                  <div style="font-size:0.60rem; color:rgba(255,255,255,0.65); letter-spacing:0.5px; font-weight:700;">
-                    LIVE MATCH RELAY
+                  <div style="pointer-events:auto; display:flex; gap:4px; align-items:center;">
+                    <button type="button" class="btn btn-xs px-2 py-0.5 fw-bold text-dark border border-warning border-opacity-60 bg-warning bg-opacity-75 rounded-pill shadow-sm" style="font-size:0.62rem; backdrop-filter:blur(6px); font-weight:800;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'HOMERUN');" title="누를 때마다 1~4번 홈런 사진이 순환하여 바뀝니다!">
+                      💥 홈런 (1~4번 🔄)
+                    </button>
+                    <button type="button" class="btn btn-xs px-2 py-0.5 fw-bold text-white border border-success border-opacity-60 bg-success bg-opacity-75 rounded-pill shadow-sm" style="font-size:0.62rem; backdrop-filter:blur(6px);" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'HIT');" title="누를 때마다 1~4번 안타 사진이 순환하여 바뀝니다!">
+                      ⚾ 안타 (1~4번 🔄)
+                    </button>
                   </div>
                 </div>
 
@@ -12799,18 +12825,18 @@ function getFullModalMatchList() {
           let eventBannerHtml = '';
           const activeEv = (typeof window._activeLivePlayEvents !== 'undefined' && window._activeLivePlayEvents) ? window._activeLivePlayEvents[m.id] : null;
           if (activeEv && (activeEv.type === 'GOAL' || activeEv.type === 'SCORE')) {
-            if (!activeEv.imgIdx) {
-              activeEv.imgIdx = Math.floor(Math.random() * 4) + 1;
-            }
-            const goalImgUrl = `/static/images/soccer_goal_epic_${activeEv.imgIdx}.jpg`;
+            const goalImgIdx = activeEv.imgIdx || 1;
+            const goalImgUrl = `/static/images/soccer_goal_epic_${goalImgIdx}.jpg`;
             const scorerText = activeEv.scorer ? `[${activeEv.scorer}] 득점!` : '원더골 작렬!';
+            const goalSub = activeEv.subtext || '골망을 흔드는 환상적인 골!';
             eventBannerHtml = `
               <div class="live-soccer-event-overlay position-absolute d-flex flex-column justify-content-center align-items-center text-center px-3" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(6,78,59,0.70) 0%, rgba(15,23,42,0.92) 100%), url('${goalImgUrl}') center 40%/cover no-repeat; border-radius:8px; border:1.5px solid #22c55e; box-shadow:0 0 20px rgba(34,197,94,0.6); pointer-events:auto;">
                 <button type="button" class="btn-close btn-close-white position-absolute top-2 end-2" style="font-size:0.55rem; opacity:0.9; z-index:15;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>
-                <div class="d-flex align-items-center gap-2 mb-1.5 live-anim-goal-text-burst">
-                  <span class="badge bg-danger text-white fw-black px-2.5 py-1" style="font-size:0.80rem; font-weight:900; letter-spacing:0.5px; box-shadow:0 0 12px #ef4444;"><i class="bi bi-fire me-1"></i>GOAL!!</span>
-                  <span class="fw-bold text-white" style="font-size:0.88rem; text-shadow:0 2px 10px rgba(0,0,0,0.95);">⚽ 골!! ${scorerText}</span>
+                <div class="d-flex align-items-center gap-2 mb-1 live-anim-goal-text-burst">
+                  <span class="badge bg-danger text-white fw-black px-2.5 py-1" style="font-size:0.80rem; font-weight:900; letter-spacing:0.5px; box-shadow:0 0 12px #ef4444;"><i class="bi bi-fire me-1"></i>GOAL #${goalImgIdx}</span>
+                  <span class="fw-bold text-white" style="font-size:0.88rem; text-shadow:0 2px 10px rgba(0,0,0,0.95);">⚽ ${scorerText}</span>
                 </div>
+                <div style="font-size:0.75rem; color:#86efac; font-weight:700; margin-bottom:4px; text-shadow:0 1px 4px rgba(0,0,0,0.9);">${goalSub}</div>
                 <!-- 상하 지그재그 골인 애니메이션 트랙 -->
                 <div class="w-100 position-relative" style="height:22px; overflow:hidden;">
                   <div class="live-anim-soccer-goal-zigzag">
@@ -12884,9 +12910,9 @@ function getFullModalMatchList() {
                   </div>
 
                   <!-- Bottom: Action Buttons -->
-                  <div style="pointer-events:auto;">
-                    <button type="button" class="btn btn-xs px-2 py-0.5 fw-bold text-success border border-success border-opacity-40 bg-dark bg-opacity-75 rounded-pill" style="font-size:0.62rem; backdrop-filter:blur(4px);" onclick="event.stopPropagation(); triggerSoccerGoalEvent(${m.id}, '${hScore >= aScore ? hName : aName}')" title="골 세리머니 애니메이션 테스트">
-                      ⚽ 골 세리머니 테스트
+                  <div style="pointer-events:auto; display:flex; gap:4px; align-items:center;">
+                    <button type="button" class="btn btn-xs px-2.5 py-0.5 fw-bold text-white border border-success border-opacity-60 bg-success bg-opacity-75 rounded-pill shadow-sm" style="font-size:0.65rem; backdrop-filter:blur(6px);" onclick="event.stopPropagation(); triggerSoccerGoalEvent(${m.id}, '${hScore >= aScore ? hName : aName}')" title="누를 때마다 1~4번 골 세리머니 사진이 순환하여 바뀝니다!">
+                      ⚽ 골 세리머니 (1~4번 순환 🔄)
                     </button>
                   </div>
                 </div>

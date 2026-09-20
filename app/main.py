@@ -189,6 +189,7 @@ dashboard_path = os.path.join(current_dir, "templates", "index.html")
 live_center_path = os.path.join(current_dir, "templates", "live_center.html")
 mobile_path = os.path.join(current_dir, "templates", "mobile.html")
 mlb_dashboard_path = os.path.join(current_dir, "templates", "mlb_dashboard.html")
+gallery_path = os.path.join(current_dir, "../baseball_gallery.html")
 
 static_dir = os.path.join(current_dir, "static")
 if os.path.exists(static_dir):
@@ -420,6 +421,18 @@ def live_center_portal(request: Request):
         return HTMLResponse(content=content, headers={"ETag": etag, "Cache-Control": "no-cache, no-store, must-revalidate"})
     except Exception as e:
         return HTMLResponse(content=f"<h1>라이브 센터 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
+
+@app.get("/gallery", response_class=HTMLResponse, summary="야구 및 축구 라이브 중계 스테이지 & 8K 비주얼 전광판 갤러리 쇼룸")
+@app.get("/stage-gallery", response_class=HTMLResponse)
+def stage_gallery_portal():
+    try:
+        if os.path.exists(gallery_path):
+            with open(gallery_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
+        return HTMLResponse(content="<h1>갤러리 파일을 찾을 수 없습니다.</h1>", status_code=404)
+    except Exception as e:
+        return HTMLResponse(content=f"<h1>갤러리 로딩 오류: {str(e)}</h1>", status_code=500)
 
 
 def generate_timeline_widget_html(match_data: dict, events: list) -> str:
