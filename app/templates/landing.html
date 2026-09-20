@@ -12515,120 +12515,69 @@ function getFullModalMatchList() {
 
     function buildLiveBaseballEventTrackHtml(m, st = {}, diffMin = 0) {
       if (!m || m.sport_code !== 'BASEBALL') return '';
-      if (!st || Object.keys(st).length === 0) {
-        if (typeof getLiveMatchState === 'function') st = getLiveMatchState(m);
-      }
-      if (diffMin === 0 && m.match_date) {
-        try {
-          const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
-          diffMin = Math.max(0, (Date.now() - mTime) / (1000 * 60));
-        } catch(e) {}
-      }
-      const eventSeed = ((Number(m.id) || 1) * 7 + Math.floor(diffMin / 2)) % 4;
       const activeEv = (typeof window._activeLivePlayEvents !== 'undefined' && window._activeLivePlayEvents) ? window._activeLivePlayEvents[m.id] : null;
-      const evType = activeEv ? String(activeEv.type).toUpperCase() : (eventSeed === 0 ? 'HOMERUN' : (eventSeed === 1 ? 'HIT' : (eventSeed === 2 ? 'OUT' : 'BB')));
-      const isTriggered = !!activeEv;
-      const dismissClass = isTriggered ? (evType === 'HOMERUN' ? 'live-track-dismiss-homerun' : (evType === 'HIT' ? 'live-track-dismiss-hit' : 'live-track-dismiss-general')) : '';
-      const closeBtnHtml = isTriggered ? `<button type="button" class="btn-close btn-close-white" style="font-size:0.50rem; opacity:0.8;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>` : '';
+      if (!activeEv) return '';
 
-      let eventBannerHtml = '';
-      if (evType === 'HOMERUN') {
-        const hrSub = activeEv ? (activeEv.subtext || '💥 쾅! 홈런!! 백스크린 넘기는 초대형 아치!') : '💥 쾅! 홈런 작렬!! 백스크린 넘기는 대형 아치!';
-        eventBannerHtml = `
-          <div class="live-baseball-track-container ${dismissClass} p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #451a03 0%, #78350f 50%, #451a03 100%); border:1.5px solid #f59e0b; box-shadow:0 3px 8px rgba(180,83,9,0.35); position:relative; overflow:hidden;">
-            <!-- Caption Bar -->
-            <div class="d-flex justify-content-between align-items-center mb-1 text-white" style="font-size:0.72rem;">
-              <div class="d-flex align-items-center gap-1.5 live-anim-homerun-text-burst">
-                <span class="badge bg-warning text-dark fw-bold px-1.5 py-0.5" style="font-size:0.64rem;"><i class="bi bi-fire me-0.5"></i>HOMERUN</span>
-                <span class="fw-bold" style="color:#fef08a; font-size:0.75rem; letter-spacing:-0.2px;">${hrSub}</span>
-              </div>
-              <div class="d-flex align-items-center gap-1">
-                <span class="badge bg-danger text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">왕복 2회</span>
-                ${closeBtnHtml}
-              </div>
+      const evType = String(activeEv.type).toUpperCase();
+      const closeBtnHtml = `<button type="button" class="btn-close btn-close-white position-absolute top-2 end-2" style="font-size:0.55rem; opacity:0.9; z-index:15;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>`;
+
+      if (evType === 'HOMERUN' || evType === 'HR') {
+        const hrSub = activeEv.subtext || '💥 쾅! 홈런 작렬!! 백스크린 넘기는 초대형 아치!';
+        return `
+          <div class="live-baseball-event-overlay position-absolute d-flex flex-column justify-content-center align-items-center text-center px-3" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(15,23,42,0.68) 0%, rgba(45,15,5,0.88) 100%), url('/static/images/baseball_homerun_epic.jpg') center 40%/cover no-repeat; border-radius:8px; border:1.5px solid #f59e0b; box-shadow:0 0 20px rgba(245,158,11,0.6); pointer-events:auto;">
+            ${closeBtnHtml}
+            <div class="d-flex align-items-center gap-2 mb-1.5 live-anim-homerun-text-burst">
+              <span class="badge bg-warning text-dark fw-black px-2.5 py-1" style="font-size:0.80rem; font-weight:900; letter-spacing:0.5px; box-shadow:0 0 12px #f59e0b;"><i class="bi bi-fire me-1"></i>HOMERUN!</span>
+              <span class="fw-bold text-white" style="font-size:0.88rem; text-shadow:0 2px 10px rgba(0,0,0,0.95);">${hrSub}</span>
             </div>
-            <!-- Motion Track (1·2·3루 ↔ 📡중계) -->
-            <div class="live-baseball-motion-rail">
-              <div class="d-flex align-items-center gap-0.5" style="position:absolute; left:6px; top:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#facc15; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
-                <span>⚾ 1·2·3루</span>
-              </div>
-              <div class="d-flex align-items-center gap-0.5" style="position:absolute; right:6px; top:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#f87171; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
-                <span>📡 중계석</span>
-              </div>
-              <!-- 진한 야구공 (왕복 2번 비행) -->
+            <!-- Flying ball effect inside overlay -->
+            <div class="w-100 position-relative" style="height:22px; overflow:hidden;">
               <div class="live-anim-homerun-two-trips">
-                <div class="vivid-baseball-ball">
-                  <svg width="18" height="18" viewBox="0 0 24 24">
+                <div class="vivid-baseball-ball" style="display:inline-block;">
+                  <svg width="20" height="20" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10" fill="#ffffff" />
                     <path d="M 5,7 Q 11,12 5,17" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="2,1.2" stroke-linecap="round" />
                     <path d="M 19,7 Q 13,12 19,17" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="2,1.2" stroke-linecap="round" />
                   </svg>
                 </div>
-                <span style="font-size:0.95rem; margin-left:-2px; filter:drop-shadow(0 0 4px #ef4444);">🔥</span>
+                <span style="font-size:1.0rem; margin-left:-2px; filter:drop-shadow(0 0 6px #ef4444);">🔥</span>
               </div>
             </div>
           </div>
         `;
       } else if (evType === 'HIT') {
-        const hitSub = activeEv ? (activeEv.subtext || '⚾ 탕! 안타!! 좌중간 가르는 1타점 적시타!') : '⚾ 탕! 안타!! 좌중간을 가르는 적시타!';
-        eventBannerHtml = `
-          <div class="live-baseball-track-container ${dismissClass} p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #064e3b 0%, #047857 50%, #064e3b 100%); border:1.5px solid #34d399; box-shadow:0 3px 8px rgba(4,120,87,0.35); position:relative; overflow:hidden;">
-            <!-- Caption Bar -->
-            <div class="d-flex justify-content-between align-items-center mb-1 text-white" style="font-size:0.72rem;">
-              <div class="d-flex align-items-center gap-1.5 live-anim-hit-text-burst">
-                <span class="badge bg-success text-white fw-bold px-1.5 py-0.5" style="font-size:0.64rem;"><i class="bi bi-lightning-fill me-0.5"></i>HIT!</span>
-                <span class="fw-bold" style="color:#a7f3d0; font-size:0.75rem; letter-spacing:-0.2px;">${hitSub}</span>
-              </div>
-              <div class="d-flex align-items-center gap-1">
-                <span class="badge bg-success text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">1회 전진</span>
-                ${closeBtnHtml}
-              </div>
+        const hitSub = activeEv.subtext || '⚾ 탕! 안타!! 좌중간을 가르는 1타점 적시타!';
+        return `
+          <div class="live-baseball-event-overlay position-absolute d-flex flex-column justify-content-center align-items-center text-center px-3" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(6,78,59,0.88) 0%, rgba(6,16,26,0.94) 100%), url('/static/images/baseball_diamond_dark.jpg') center/cover no-repeat; border-radius:8px; border:1.5px solid #34d399; box-shadow:0 0 16px rgba(52,211,153,0.4); pointer-events:auto;">
+            ${closeBtnHtml}
+            <div class="d-flex align-items-center gap-2 mb-1.5 live-anim-hit-text-burst">
+              <span class="badge bg-success text-white fw-bold px-2.5 py-1" style="font-size:0.78rem;"><i class="bi bi-lightning-fill me-1"></i>HIT!</span>
+              <span class="fw-bold text-white" style="font-size:0.85rem; text-shadow:0 2px 8px rgba(0,0,0,0.9);">${hitSub}</span>
             </div>
-            <!-- Motion Track (1·2·3루 ➡️ 📡중계) -->
-            <div class="live-baseball-motion-rail">
-              <div class="d-flex align-items-center gap-0.5" style="position:absolute; left:6px; top:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#6ee7b7; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
-                <span>⚾ 1·2·3루</span>
-              </div>
-              <div class="d-flex align-items-center gap-0.5" style="position:absolute; right:6px; top:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#6ee7b7; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
-                <span>📡 중계석</span>
-              </div>
-              <!-- 진한 야구공 (1번만 전진 이동) -->
+            <div class="w-100 position-relative" style="height:20px; overflow:hidden;">
               <div class="live-anim-hit-one-trip">
-                <div class="vivid-baseball-ball">
+                <div class="vivid-baseball-ball" style="display:inline-block;">
                   <svg width="18" height="18" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="10" fill="#ffffff" />
                     <path d="M 5,7 Q 11,12 5,17" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="2,1.2" stroke-linecap="round" />
                     <path d="M 19,7 Q 13,12 19,17" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="2,1.2" stroke-linecap="round" />
                   </svg>
                 </div>
-                <span style="font-size:0.85rem; margin-left:-1px; filter:drop-shadow(0 0 4px #34d399);">✨</span>
+                <span style="font-size:0.9rem; margin-left:-1px; filter:drop-shadow(0 0 4px #34d399);">✨</span>
               </div>
             </div>
           </div>
         `;
       } else if (evType === 'BB' || evType === 'WALK') {
-        const bbText = activeEv ? (activeEv.subtext || '볼넷 출루! 차분한 선구안으로 1루 진루!') : '🚶‍♂️ 볼넷 출루! 풀카운트 승부 끝 1루 진루!';
-        eventBannerHtml = `
-          <div class="live-baseball-track-container ${dismissClass} p-1.5 rounded mb-1.5" style="background:linear-gradient(90deg, #1e3a5f 0%, #0f172a 50%, #1e3a5f 100%); border:1.5px solid #38bdf8; box-shadow:0 3px 8px rgba(56,189,248,0.35); position:relative; overflow:hidden;">
-            <!-- Caption Bar -->
-            <div class="d-flex justify-content-between align-items-center mb-1 text-white" style="font-size:0.72rem;">
-              <div class="d-flex align-items-center gap-1.5">
-                <span class="badge bg-info text-dark fw-bold px-1.5 py-0.5" style="font-size:0.64rem;"><i class="bi bi-person-walking me-0.5"></i>FOUR BALL</span>
-                <span class="fw-bold" style="color:#bae6fd; font-size:0.75rem; letter-spacing:-0.2px;">${bbText}</span>
-              </div>
-              <div class="d-flex align-items-center gap-1">
-                <span class="badge bg-primary text-white py-0.5 px-1" style="font-size:0.58rem; font-weight:800;">1루 진루</span>
-                ${closeBtnHtml}
-              </div>
+        const bbText = activeEv.subtext || '🚶‍♂️ 볼넷 출루! 풀카운트 끝 1루 진루!';
+        return `
+          <div class="live-baseball-event-overlay position-absolute d-flex flex-column justify-content-center align-items-center text-center px-3" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(30,58,95,0.90) 0%, rgba(8,15,30,0.95) 100%), url('/static/images/baseball_diamond_dark.jpg') center/cover no-repeat; border-radius:8px; border:1.5px solid #38bdf8; box-shadow:0 0 16px rgba(56,189,248,0.4); pointer-events:auto;">
+            ${closeBtnHtml}
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <span class="badge bg-info text-dark fw-bold px-2 py-0.5" style="font-size:0.75rem;"><i class="bi bi-person-walking me-1"></i>FOUR BALL</span>
+              <span class="fw-bold text-white" style="font-size:0.82rem;">${bbText}</span>
             </div>
-            <!-- Motion Track (타석 ➡️ 1루 진루) -->
-            <div class="live-baseball-motion-rail">
-              <div class="d-flex align-items-center gap-0.5" style="position:absolute; left:6px; top:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#38bdf8; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
-                <span>⚾ 타석</span>
-              </div>
-              <div class="d-flex align-items-center gap-0.5" style="position:absolute; right:6px; top:6px; z-index:2; pointer-events:none; font-size:0.62rem; font-weight:800; color:#38bdf8; text-shadow:0 1px 3px rgba(0,0,0,0.9);">
-                <span>🟡 1루 진루</span>
-              </div>
+            <div class="w-100 position-relative" style="height:18px;">
               <div class="live-anim-walk-one-trip">
                 <span style="font-size:1.15rem; filter:drop-shadow(0 0 6px #38bdf8);">🏃‍♂️</span>
               </div>
@@ -12636,22 +12585,22 @@ function getFullModalMatchList() {
           </div>
         `;
       } else if (evType === 'OUT' || evType === 'SO') {
-        const outText = activeEv ? (activeEv.subtext || '탈삼진 아웃! 날카로운 결정구로 타자 제압!') : '⚡ 삼진 아웃! 날카로운 결정구로 타자 제압!';
-        const outNum = (activeEv && activeEv.outs !== undefined && activeEv.outs !== null) ? activeEv.outs : (st.outs || 1);
-        eventBannerHtml = `
-          <div class="live-baseball-track-container ${dismissClass} px-2 py-1 rounded mb-1.5 d-flex justify-content-between align-items-center text-white" style="background:linear-gradient(90deg, #991b1b 0%, #1e1b4b 100%); border:1.2px solid #ef4444; box-shadow:0 2px 6px rgba(239,68,68,0.25);">
-            <div class="d-flex align-items-center gap-1.5 text-truncate">
-              <span class="badge bg-danger text-white fw-bold px-1.5 py-0.5" style="font-size:0.65rem;"><i class="bi bi-x-octagon-fill me-0.5"></i>OUT</span>
-              <span class="fw-bold text-truncate" style="color:#fef2f2; font-size:0.75rem;">${outText}</span>
+        const outText = activeEv.subtext || '⚡ 삼진 아웃! 날카로운 결정구로 타자 제압!';
+        const outNum = (activeEv.outs !== undefined && activeEv.outs !== null) ? activeEv.outs : (st.outs || 1);
+        return `
+          <div class="live-baseball-event-overlay position-absolute d-flex align-items-center justify-content-between px-3" style="inset:0; z-index:12; background: linear-gradient(90deg, rgba(153,27,27,0.92) 0%, rgba(30,27,75,0.94) 100%), url('/static/images/baseball_diamond_dark.jpg') center/cover no-repeat; border-radius:8px; border:1.5px solid #ef4444; box-shadow:0 0 16px rgba(239,68,68,0.4); pointer-events:auto;">
+            <div class="d-flex align-items-center gap-2 text-truncate">
+              <span class="badge bg-danger text-white fw-bold px-2 py-1" style="font-size:0.75rem;"><i class="bi bi-x-octagon-fill me-1"></i>OUT</span>
+              <span class="fw-bold text-white text-truncate" style="font-size:0.84rem;">${outText}</span>
             </div>
-            <div class="d-flex align-items-center gap-1" style="flex-shrink:0;">
-              <span class="badge bg-danger text-white py-0.5 px-1.5 fw-bold" style="font-size:0.65rem;">[${outNum}아웃]</span>
+            <div class="d-flex align-items-center gap-1 text-nowrap">
+              <span class="badge bg-danger text-white py-1 px-2 fw-bold" style="font-size:0.72rem;">[${outNum}아웃]</span>
               ${closeBtnHtml}
             </div>
           </div>
         `;
       }
-      return eventBannerHtml;
+      return '';
     }
 
     function getAuditBadgeHtml(m) {
@@ -12730,72 +12679,56 @@ function getFullModalMatchList() {
         let liveBroadcastStageHtml = '';
         if (m.sport_code === 'BASEBALL') {
           const outDots = (st.outs >= 2) ? '🔴🔴' : (st.outs === 1 ? '🔴⚪' : '⚪⚪');
-          
           const eventBannerHtml = buildLiveBaseballEventTrackHtml(m, st, diffMin);
 
           liveBroadcastStageHtml = `
-            <div class="live-baseball-stage-wrapper position-relative mb-1.5" style="border-radius:8px; overflow:hidden;">
-              <!-- 1. 실시간 이벤트 발생 시 나타났다가 비행 완료 후 자동 꺼지는 중계 애니메이션 오버레이 -->
-              ${eventBannerHtml}
+            <div class="live-baseball-stage-wrapper position-relative mb-1.5" style="height: 106px; min-height: 106px; max-height: 106px; border-radius: 8px; overflow: hidden; border: 1.2px solid rgba(255,255,255,0.14); box-shadow: 0 4px 16px rgba(0,0,0,0.28);">
+              <!-- 1. Luxury Stadium Panoramic Background -->
+              <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(8,14,30,0.72) 0%, rgba(5,9,20,0.88) 100%), url('/static/images/baseball_stadium_live.jpg') center 35%/cover no-repeat; z-index:1;"></div>
 
-              <!-- 2. 기본 실시간 스코어보드 & 다이아몬드 경기판 (Default Live Scoreboard & Diamond Board) -->
-              <div class="live-default-scoreboard p-2 rounded" style="background:#ffffff; border:1.4px solid #cbd5e1; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+              <!-- 2. Interactive Scoreboard & Diamond HUD -->
+              <div class="position-relative p-2 d-flex flex-column justify-content-between h-100" style="z-index:2;">
                 <!-- Big Team Score Row with Inning Above -->
-                <div class="d-flex align-items-center justify-content-between mb-1.5">
-                  <div class="fw-bold text-dark text-truncate text-end" style="flex:1 1 38%; font-size:0.92rem;" title="${m.home_team_name}">${hName}</div>
-                  <div class="px-2 text-center" style="flex:0 0 auto;">
-                    <!-- Inning Display ABOVE Score -->
-                    <div class="mb-0.5">
-                      <span class="badge bg-danger text-white py-0.5 px-2 fw-bold" style="font-size:0.65rem; letter-spacing:0.2px;">
-                        ${st.inning_text || '진행중'}
-                      </span>
-                    </div>
-                    <!-- Score: Clean Light Sports Background -->
-                    <span class="px-3 py-0.5 rounded-2 fw-bold d-inline-flex align-items-center gap-1.5" style="background:#f8fafc; border:1.5px solid #cbd5e1; font-size:1.20rem; font-family:'Roboto Mono', monospace; letter-spacing:1px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-                      <span style="color:#dc2626; font-weight:800;">${hScore}</span>
-                      <span style="color:#94a3b8; font-weight:300; font-size:1.0rem;">:</span>
-                      <span style="color:#2563eb; font-weight:800;">${aScore}</span>
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="fw-bold text-white text-truncate text-end pe-2" style="flex:1 1 38%; font-size:0.95rem; text-shadow:0 2px 4px rgba(0,0,0,0.9);" title="${m.home_team_name}">${hName}</div>
+                  <div class="text-center" style="flex:0 0 auto;">
+                    <span class="badge bg-danger text-white py-0.5 px-2 fw-black mb-0.5" style="font-size:0.62rem; letter-spacing:0.3px; box-shadow:0 0 6px rgba(220,38,38,0.7);">
+                      ${st.inning_text || '진행중'}
                     </span>
+                    <div class="d-inline-flex align-items-center justify-content-center px-2.5 py-0.5 rounded" style="background:rgba(0,0,0,0.72); border:1px solid rgba(255,255,255,0.22); backdrop-filter:blur(6px); box-shadow:inset 0 0 10px rgba(0,0,0,0.9);">
+                      <span style="color:#ef4444; font-weight:900; font-size:1.18rem; font-family:'Roboto Mono', monospace; text-shadow:0 0 8px rgba(239,68,68,0.7);">${hScore}</span>
+                      <span style="color:#64748b; font-weight:300; font-size:0.95rem; margin:0 5px;">:</span>
+                      <span style="color:#38bdf8; font-weight:900; font-size:1.18rem; font-family:'Roboto Mono', monospace; text-shadow:0 0 8px rgba(56,189,248,0.7);">${aScore}</span>
+                    </div>
                   </div>
-                  <div class="fw-bold text-dark text-truncate text-start" style="flex:1 1 38%; font-size:0.92rem;" title="${m.away_team_name}">${aName}</div>
+                  <div class="fw-bold text-white text-truncate text-start ps-2" style="flex:1 1 38%; font-size:0.95rem; text-shadow:0 2px 4px rgba(0,0,0,0.9);" title="${m.away_team_name}">${aName}</div>
                 </div>
 
-                <!-- Stadium Diamond & Matchup (Clean, no clutter) -->
-                <div class="d-flex justify-content-between align-items-center pt-1 border-top" style="border-color:#f1f5f9 !important;">
+                <!-- Stadium Diamond & Matchup HUD -->
+                <div class="d-flex justify-content-between align-items-center pt-1" style="border-top: 1px solid rgba(255,255,255,0.12);">
                   <!-- Left: Diamond & Out LEDs -->
                   <div class="d-flex align-items-center gap-1.5">
                     ${buildMiniDiamondSvg(st.base1, st.base2, st.base3, st.outs || 0)}
                     <div class="d-flex align-items-center gap-1">
-                      <span class="badge bg-danger text-white py-0.5 px-1.5 fw-bold" style="font-size:0.68rem;">${st.outs_text || (st.outs + '아웃')}</span>
+                      <span class="badge bg-danger text-white py-0.5 px-1.5 fw-bold" style="font-size:0.65rem;">${st.outs_text || (st.outs + '아웃')}</span>
                       <span style="font-size:0.62rem; letter-spacing:0.5px;">${outDots}</span>
                     </div>
                   </div>
 
-                  <!-- Right: Pitcher vs Batter (Clean and readable) -->
-                  <div class="text-end" style="font-size:0.70rem; line-height:1.3;">
-                    <div class="text-secondary text-truncate" style="max-width:140px;" title="${st.pitcher}">
-                      ⚾ 투: <b class="text-dark">${st.pitcher || '선발투수'}</b>
+                  <!-- Right: Pitcher vs Batter -->
+                  <div class="text-end" style="font-size:0.68rem; line-height:1.25; color:rgba(255,255,255,0.9);">
+                    <div class="text-truncate" style="max-width:160px;" title="${st.pitcher}">
+                      ⚾ <span style="color:#94a3b8;">투:</span> <b class="text-white">${st.pitcher || '선발투수'}</b>
                     </div>
-                    <div class="text-secondary text-truncate" style="max-width:140px;" title="${st.batter}">
-                      🏏 타: <b class="text-dark">${st.batter || '타자'}</b>
-                    </div>
-                    <div class="mt-1 d-flex align-items-center gap-1 justify-content-end flex-wrap">
-                      <button type="button" class="btn btn-xs px-1.5 py-0.5 fw-bold text-danger border border-danger border-opacity-40 bg-white shadow-xs" style="font-size:0.60rem; border-radius:4px;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'HOMERUN', '💥 쾅! 초대형 홈런 작렬!');" title="홈런 왕복 2회 애니메이션 실행">
-                        💥 홈런(왕복)
-                      </button>
-                      <button type="button" class="btn btn-xs px-1.5 py-0.5 fw-bold text-success border border-success border-opacity-40 bg-white shadow-xs" style="font-size:0.60rem; border-radius:4px;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'HIT', '⚾ 1타점 적시타!');" title="안타 1회 전진 애니메이션 실행">
-                        ⚾ 안타
-                      </button>
-                      <button type="button" class="btn btn-xs px-1.5 py-0.5 fw-bold text-primary border border-primary border-opacity-40 bg-white shadow-xs" style="font-size:0.60rem; border-radius:4px;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'BB', '🚶‍♂️ 볼넷 출루!');" title="포볼 1루 진루 애니메이션 실행">
-                        🚶‍♂️ 포볼
-                      </button>
-                      <button type="button" class="btn btn-xs px-1.5 py-0.5 fw-bold text-dark border border-secondary border-opacity-40 bg-white shadow-xs" style="font-size:0.60rem; border-radius:4px;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'OUT', { outs: ${st.outs >= 2 ? 3 : (st.outs + 1)}, subtext: '탈삼진 아웃 제압!' });" title="아웃 점멸 실행">
-                        🔴 아웃
-                      </button>
+                    <div class="text-truncate" style="max-width:160px;" title="${st.batter}">
+                      🏏 <span style="color:#94a3b8;">타:</span> <b class="text-white">${st.batter || '타자'}</b>
                     </div>
                   </div>
                 </div>
               </div>
+
+              <!-- 3. Absolute Event Overlay (HOMERUN, HIT, etc.) - Floating inside the 106px box! Zero height change! -->
+              ${eventBannerHtml}
             </div>
           `;
         } else if (m.sport_code === 'SOCCER') {
