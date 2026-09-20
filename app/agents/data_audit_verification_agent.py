@@ -126,8 +126,10 @@ class DataAuditVerificationAgent:
             h_era = starters_data.get("home", {}).get("era")
             a_era = starters_data.get("away", {}).get("era")
 
-            # 경기 당일 또는 1일 전 예정/진행/종료 경기인 경우 선발투수 확인
-            is_near_game = m_date[:10] <= (get_now_kst() + timedelta(days=1)).strftime("%Y-%m-%d")
+            # 경기 당일 또는 전후 1일 예정/진행/종료 경기인 경우 선발투수 확인
+            yesterday_str = (get_now_kst() - timedelta(days=1)).strftime("%Y-%m-%d")
+            tomorrow_str = (get_now_kst() + timedelta(days=1)).strftime("%Y-%m-%d")
+            is_near_game = yesterday_str <= m_date[:10] <= tomorrow_str
             
             if is_near_game:
                 if not h_starter or not a_starter or h_starter in ["미정", "선발 예고", "예정", None] or a_starter in ["미정", "선발 예고", "예정", None]:
@@ -259,49 +261,42 @@ class DataAuditVerificationAgent:
         sport = (match.sport_code or "").upper()
         m_date_day = (match.match_date or "")[:10]
         
-        # 1. 축구 오류 보정: ESPN 및 API-Football 실시간 스코어 조회
+        # 1. 축구 오류 보정: LiveApiSportsService 공식 스코어 수집 연동
         if sport == "SOCCER":
-            from app.scrapers.soccer_scraper import SoccerScraper
-            lname = (match.league_name or "").upper()
-            code = "EPL"
-            if "라리가" in lname or "LALIGA" in lname: code = "LALIGA"
-            elif "세리에" in lname or "SERIE" in lname: code = "SERIE_A"
-            elif "리그1" in lname or "LIGUE" in lname or "리그앙" in lname: code = "LIGUE_1"
-            elif "분데스" in lname or "BUNDES" in lname: code = "BUNDESLIGA"
-            
-            scraper = SoccerScraper(league_id=code)
-            matches = scraper.scrape_matches(m_date_day)
-            for sm in matches:
-                if teams_match(match.home_team_name, sm.get("home_team_name")) and teams_match(match.away_team_name, sm.get("away_team_name")):
-                    match.home_score = sm.get("home_score", match.home_score)
-                    match.away_score = sm.get("away_score", match.away_score)
-                    match.status = sm.get("status", match.status)
-                    db.commit()
-                    logger.info(f"[DataAudit AutoFix] Soccer Match {match.id} remediated with score {match.home_score}:{match.away_score}")
+            try:
+                res = LiveApiSportsService.sync_live_football(date_str=m_date_day, live_only=False)
+                if res and res.get("updated_db_matches", 0) > 0:
+                    logger.info(f"[DataAudit AutoFix] Soccer Match {match.id} remediated via LiveApiSportsService")
                     return True
+            except Exception as e:
+                logger.warning(f"[DataAudit AutoFix] Soccer remediation error: {e}")
 
         # 2. 야구 오류 보정: 선발투수 및 방어율 최신 공식 동기화
         elif sport == "BASEBALL":
             from app.services.team_split_service import _resolve_match_starters
-            starters = _resolve_match_starters(match, m_date_day)
-            if starters and (starters.get("home_starter") or starters.get("away_starter")):
-                if not match.details:
-                    match.details = MatchDetail(match_id=match.id, period_scores="{}", team_stats="{}")
-                    db.add(match.details)
-                ts = {}
-                if match.details.team_stats:
-                    try:
-                        ts = json.loads(match.details.team_stats)
-                    except Exception:
-                        ts = {}
-                ts["starters"] = {
-                    "home": {"name": starters.get("home_starter"), "confirmed": True, "era": starters.get("home_era")},
-                    "away": {"name": starters.get("away_starter"), "confirmed": True, "era": starters.get("away_era")}
-                }
-                match.details.team_stats = json.dumps(ts, ensure_ascii=False)
-                db.commit()
-                logger.info(f"[DataAudit AutoFix] Baseball Match {match.id} starters remediated")
-                return True
+            try:
+                raw_conn = db.connection().connection
+                starters = _resolve_match_starters(raw_conn, match.id, match.home_team_name, match.away_team_name, match.sport_code)
+                if starters and (starters.get("home_starter") or starters.get("away_starter")):
+                    if not match.details:
+                        match.details = MatchDetail(match_id=match.id, period_scores="{}", team_stats="{}")
+                        db.add(match.details)
+                    ts = {}
+                    if match.details.team_stats:
+                        try:
+                            ts = json.loads(match.details.team_stats)
+                        except Exception:
+                            ts = {}
+                    ts["starters"] = {
+                        "home": {"name": starters.get("home_starter"), "confirmed": True, "era": starters.get("home_era")},
+                        "away": {"name": starters.get("away_starter"), "confirmed": True, "era": starters.get("away_era")}
+                    }
+                    match.details.team_stats = json.dumps(ts, ensure_ascii=False)
+                    db.commit()
+                    logger.info(f"[DataAudit AutoFix] Baseball Match {match.id} starters remediated")
+                    return True
+            except Exception as b_err:
+                logger.warning(f"[DataAudit AutoFix] Baseball remediation error: {b_err}")
 
         # 3. 농구 오류 보정: LiveApiSportsService 농구 공식 스코어 수집 연동
         elif sport == "BASKETBALL":
@@ -323,10 +318,13 @@ class DataAuditVerificationAgent:
         db = SessionLocal()
         start_ts = time.time()
         try:
-            start_date_str = (get_now_kst() - timedelta(days=7)).strftime("%Y-%m-%d")
+            # 최근 활성 경기 구간(과거 3일 ~ 향후 3일)을 우선으로 최신순(DESC) 정밀 검수
+            start_date_str = (get_now_kst() - timedelta(days=3)).strftime("%Y-%m-%d")
+            end_date_str = (get_now_kst() + timedelta(days=3)).strftime("%Y-%m-%d 23:59")
             matches = db.query(Match).filter(
-                Match.match_date >= start_date_str
-            ).order_by(Match.match_date.asc()).limit(limit).all()
+                Match.match_date >= start_date_str,
+                Match.match_date <= end_date_str
+            ).order_by(Match.match_date.desc()).limit(limit).all()
 
             total = len(matches)
             pass_cnt = 0
