@@ -12548,11 +12548,11 @@ function getFullModalMatchList() {
       } else if (evType === 'HIT') {
         const hitSub = activeEv.subtext || '⚾ 탕! 안타!! 좌중간을 가르는 1타점 적시타!';
         return `
-          <div class="live-baseball-event-overlay position-absolute d-flex flex-column justify-content-center align-items-center text-center px-3" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(6,78,59,0.88) 0%, rgba(6,16,26,0.94) 100%), url('/static/images/baseball_diamond_dark.jpg') center/cover no-repeat; border-radius:8px; border:1.5px solid #34d399; box-shadow:0 0 16px rgba(52,211,153,0.4); pointer-events:auto;">
+          <div class="live-baseball-event-overlay position-absolute d-flex flex-column justify-content-center align-items-center text-center px-3" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(6,78,59,0.72) 0%, rgba(6,16,26,0.90) 100%), url('/static/images/baseball_hit_epic.jpg') center 40%/cover no-repeat; border-radius:8px; border:1.5px solid #34d399; box-shadow:0 0 20px rgba(52,211,153,0.5); pointer-events:auto;">
             ${closeBtnHtml}
             <div class="d-flex align-items-center gap-2 mb-1.5 live-anim-hit-text-burst">
-              <span class="badge bg-success text-white fw-bold px-2.5 py-1" style="font-size:0.78rem;"><i class="bi bi-lightning-fill me-1"></i>HIT!</span>
-              <span class="fw-bold text-white" style="font-size:0.85rem; text-shadow:0 2px 8px rgba(0,0,0,0.9);">${hitSub}</span>
+              <span class="badge bg-success text-white fw-bold px-2.5 py-1" style="font-size:0.78rem; box-shadow:0 0 10px rgba(52,211,153,0.6);"><i class="bi bi-lightning-fill me-1"></i>HIT!</span>
+              <span class="fw-bold text-white" style="font-size:0.85rem; text-shadow:0 2px 8px rgba(0,0,0,0.95);">${hitSub}</span>
             </div>
             <div class="w-100 position-relative" style="height:20px; overflow:hidden;">
               <div class="live-anim-hit-one-trip">
@@ -12571,11 +12571,11 @@ function getFullModalMatchList() {
       } else if (evType === 'BB' || evType === 'WALK') {
         const bbText = activeEv.subtext || '🚶‍♂️ 볼넷 출루! 풀카운트 끝 1루 진루!';
         return `
-          <div class="live-baseball-event-overlay position-absolute d-flex flex-column justify-content-center align-items-center text-center px-3" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(30,58,95,0.90) 0%, rgba(8,15,30,0.95) 100%), url('/static/images/baseball_diamond_dark.jpg') center/cover no-repeat; border-radius:8px; border:1.5px solid #38bdf8; box-shadow:0 0 16px rgba(56,189,248,0.4); pointer-events:auto;">
+          <div class="live-baseball-event-overlay position-absolute d-flex flex-column justify-content-center align-items-center text-center px-3" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(30,58,95,0.78) 0%, rgba(8,15,30,0.92) 100%), url('/static/images/baseball_walk_epic.jpg') center 35%/cover no-repeat; border-radius:8px; border:1.5px solid #38bdf8; box-shadow:0 0 20px rgba(56,189,248,0.5); pointer-events:auto;">
             ${closeBtnHtml}
             <div class="d-flex align-items-center gap-2 mb-1">
-              <span class="badge bg-info text-dark fw-bold px-2 py-0.5" style="font-size:0.75rem;"><i class="bi bi-person-walking me-1"></i>FOUR BALL</span>
-              <span class="fw-bold text-white" style="font-size:0.82rem;">${bbText}</span>
+              <span class="badge bg-info text-dark fw-bold px-2 py-0.5" style="font-size:0.75rem; box-shadow:0 0 10px rgba(56,189,248,0.6);"><i class="bi bi-person-walking me-1"></i>FOUR BALL</span>
+              <span class="fw-bold text-white" style="font-size:0.82rem; text-shadow:0 2px 6px rgba(0,0,0,0.95);">${bbText}</span>
             </div>
             <div class="w-100 position-relative" style="height:18px;">
               <div class="live-anim-walk-one-trip">
@@ -12588,10 +12588,10 @@ function getFullModalMatchList() {
         const outText = activeEv.subtext || '⚡ 삼진 아웃! 날카로운 결정구로 타자 제압!';
         const outNum = (activeEv.outs !== undefined && activeEv.outs !== null) ? activeEv.outs : (st.outs || 1);
         return `
-          <div class="live-baseball-event-overlay position-absolute d-flex align-items-center justify-content-between px-3" style="inset:0; z-index:12; background: linear-gradient(90deg, rgba(153,27,27,0.92) 0%, rgba(30,27,75,0.94) 100%), url('/static/images/baseball_diamond_dark.jpg') center/cover no-repeat; border-radius:8px; border:1.5px solid #ef4444; box-shadow:0 0 16px rgba(239,68,68,0.4); pointer-events:auto;">
+          <div class="live-baseball-event-overlay position-absolute d-flex align-items-center justify-content-between px-3" style="inset:0; z-index:12; background: linear-gradient(90deg, rgba(153,27,27,0.80) 0%, rgba(30,27,75,0.88) 100%), url('/static/images/baseball_out_epic.jpg') center 40%/cover no-repeat; border-radius:8px; border:1.5px solid #ef4444; box-shadow:0 0 20px rgba(239,68,68,0.5); pointer-events:auto;">
             <div class="d-flex align-items-center gap-2 text-truncate">
-              <span class="badge bg-danger text-white fw-bold px-2 py-1" style="font-size:0.75rem;"><i class="bi bi-x-octagon-fill me-1"></i>OUT</span>
-              <span class="fw-bold text-white text-truncate" style="font-size:0.84rem;">${outText}</span>
+              <span class="badge bg-danger text-white fw-bold px-2 py-1" style="font-size:0.75rem; box-shadow:0 0 10px rgba(239,68,68,0.6);"><i class="bi bi-x-octagon-fill me-1"></i>OUT</span>
+              <span class="fw-bold text-white text-truncate" style="font-size:0.84rem; text-shadow:0 2px 6px rgba(0,0,0,0.95);">${outText}</span>
             </div>
             <div class="d-flex align-items-center gap-1 text-nowrap">
               <span class="badge bg-danger text-white py-1 px-2 fw-bold" style="font-size:0.72rem;">[${outNum}아웃]</span>
