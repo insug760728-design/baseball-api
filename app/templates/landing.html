@@ -12705,88 +12705,97 @@ function getFullModalMatchList() {
           const eventBannerHtml = buildLiveBaseballEventTrackHtml(m, st, diffMin);
 
           liveBroadcastStageHtml = `
-            <div class="live-baseball-stage-wrapper position-relative mb-1.5" style="height: 106px; min-height: 106px; max-height: 106px; border-radius: 8px; overflow: hidden; border: 1.2px solid rgba(255,255,255,0.14); box-shadow: 0 4px 16px rgba(0,0,0,0.28);">
+            <div class="live-baseball-stage-wrapper position-relative mb-1.5" style="height: 130px; min-height: 130px; max-height: 130px; border-radius: 8px; overflow: hidden; border: 1.2px solid rgba(255,255,255,0.14); box-shadow: 0 4px 16px rgba(0,0,0,0.28);">
               <!-- 1. Luxury Stadium Panoramic Background -->
               <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(8,14,30,0.65) 0%, rgba(5,9,20,0.85) 100%), url('/static/images/baseball_stadium_live.jpg') center 35%/cover no-repeat; z-index:1;"></div>
 
-              <!-- 2. Main Live Stage Content: 3-Column Broadcast Split Layout (팀명 양사이드 분리 + 중앙 아웃/스코어 전광판) -->
-              <div class="position-relative p-2 d-flex justify-content-between align-items-stretch h-100" style="z-index:3;">
+              <!-- 2. Main Live Stage Content: Absolute 3-Column Split (팀명 좌우 기둥 완전 분리 + 정중앙 데드센터 HUD & 다이아몬드) -->
+              <div class="position-relative h-100" style="z-index:3;">
                 
                 <!-- [FAR LEFT] Home Team Side Pillar: Team Name & Starter Pitcher -->
-                <div class="d-flex flex-column justify-content-between text-start" style="width:26%; max-width:130px; min-width:85px; z-index:4;">
+                <div class="position-absolute d-flex flex-column justify-content-between text-start" style="left:12px; top:10px; bottom:10px; width:115px; z-index:4;">
                   <div>
                     <span class="badge bg-danger bg-opacity-75 text-white py-0.5 px-1.5 fw-bold mb-1 d-inline-block" style="font-size:0.55rem; letter-spacing:0.3px;">HOME</span>
-                    <div class="fw-black text-white text-truncate" style="font-size:0.92rem; text-shadow:0 1px 4px rgba(0,0,0,0.95); line-height:1.2;" title="${m.home_team_name}">
+                    <div class="fw-black text-white text-truncate" style="font-size:0.95rem; text-shadow:0 1px 4px rgba(0,0,0,0.95); line-height:1.2;" title="${m.home_team_name}">
                       ${hName}
                     </div>
                   </div>
-                  <div class="text-truncate" style="font-size:0.65rem; color:#cbd5e1; line-height:1.2;" title="${st.pitcher}">
+                  <div class="text-truncate" style="font-size:0.68rem; color:#cbd5e1; line-height:1.2;" title="${st.pitcher}">
                     ⚾ <span style="color:#94a3b8;">투:</span> <b class="text-white">${st.pitcher || '선발'}</b>
                   </div>
                 </div>
 
-                <!-- [CENTER] Stadium Field: Out-Scoreboard on Top & Big Illuminated Diamond -->
-                <div class="d-flex flex-column align-items-center justify-content-between flex-grow-1 px-1 h-100" style="z-index:4;">
-                  <!-- Top: Integrated Out & Score HUD (전광판 스코어 & 아웃 카운트 보드) -->
-                  <div class="d-inline-flex align-items-center gap-1.5 px-2.5 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.80); border:1px solid rgba(255,255,255,0.22); backdrop-filter:blur(6px); box-shadow:0 2px 8px rgba(0,0,0,0.6);">
-                    <span class="badge bg-danger text-white py-0.5 px-1.5 fw-black" style="font-size:0.58rem; letter-spacing:0.2px;">${st.inning_text || '진행중'}</span>
-                    <span style="color:#ef4444; font-weight:900; font-size:1.18rem; font-family:'Roboto Mono', monospace; text-shadow:0 0 8px rgba(239,68,68,0.7);">${hScore}</span>
-                    <span style="color:#64748b; font-weight:300; font-size:0.85rem; margin:0 1px;">:</span>
-                    <span style="color:#38bdf8; font-weight:900; font-size:1.18rem; font-family:'Roboto Mono', monospace; text-shadow:0 0 8px rgba(56,189,248,0.7);">${aScore}</span>
-                    <span class="badge bg-danger bg-opacity-75 text-white py-0.5 px-1 fw-bold ms-1" style="font-size:0.58rem;">${st.outs_text || (st.outs + '아웃')}</span>
-                    <span style="font-size:0.55rem; letter-spacing:0.5px;">${outDots}</span>
+                <!-- [CENTER] Stadium Field: Out-Scoreboard on Top & Big Illuminated Diamond (DEAD CENTER GUARANTEED!) -->
+                <div class="position-absolute d-flex flex-column align-items-center justify-content-between h-100" style="left:50%; top:0; bottom:0; transform:translateX(-50%); width:240px; padding:10px 0 8px 0; z-index:4; pointer-events:none;">
+                  <!-- Top: Symmetrically Balanced Out & Score HUD (정중앙 스코어 완벽 정렬 전광판) -->
+                  <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.25); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:26px; pointer-events:auto;">
+                    <!-- 좌측: 이닝 (너비 46px 고정 대칭) -->
+                    <span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center" style="font-size:0.60rem; min-width:46px; border-radius:10px;">${st.inning_text || '진행중'}</span>
+                    
+                    <!-- 중앙: 스코어 (정중앙 완벽 정렬) -->
+                    <div class="d-flex align-items-center justify-content-center px-2" style="font-family:'Roboto Mono', monospace; font-size:1.18rem; font-weight:900; line-height:1;">
+                      <span style="color:#ef4444; min-width:14px; text-align:right; text-shadow:0 0 8px rgba(239,68,68,0.7);">${hScore}</span>
+                      <span style="color:rgba(255,255,255,0.4); font-size:0.85rem; font-weight:400; margin:0 4px;">:</span>
+                      <span style="color:#38bdf8; min-width:14px; text-align:left; text-shadow:0 0 8px rgba(56,189,248,0.7);">${aScore}</span>
+                    </div>
+
+                    <!-- 우측: 아웃 카운트 & LED (너비 46px 고정 대칭) -->
+                    <div class="d-flex align-items-center justify-content-center gap-1 bg-dark bg-opacity-75 px-1.5 py-0.5 rounded-pill border border-secondary border-opacity-50" style="height:19px; min-width:46px;">
+                      <span class="fw-bold text-white" style="font-size:0.58rem; letter-spacing:-0.2px;">${st.outs_text || (st.outs + '아웃')}</span>
+                      <span style="font-size:0.50rem; letter-spacing:0.5px; line-height:1;">${outDots}</span>
+                    </div>
                   </div>
 
                   <!-- Middle/Center: Pure Open Field with Big Glowing 1·2·3루 Diamond -->
-                  <div class="position-relative my-auto" style="cursor:pointer;" onclick="event.stopPropagation(); toggleLiveBaseSim(${m.id});" title="클릭하여 1·2·3루 베이스 점등 테스트">
-                    <svg width="150" height="48" viewBox="0 0 150 48">
+                  <div class="position-relative my-auto" style="cursor:pointer; pointer-events:auto;" onclick="event.stopPropagation(); toggleLiveBaseSim(${m.id});" title="클릭하여 1·2·3루 베이스 점등 테스트">
+                    <svg width="156" height="50" viewBox="0 0 156 50">
                       <!-- Infield Diamond Baseline -->
-                      <polygon points="75,4 122,24 75,44 28,24" fill="rgba(6,78,59,0.40)" stroke="rgba(255,255,255,0.30)" stroke-width="1.2" stroke-dasharray="3,2" />
+                      <polygon points="78,4 127,25 78,46 29,25" fill="rgba(6,78,59,0.40)" stroke="rgba(255,255,255,0.30)" stroke-width="1.2" stroke-dasharray="3,2" />
                       <!-- Pitcher's Mound -->
-                      <ellipse cx="75" cy="24" rx="7" ry="3.5" fill="rgba(180,83,9,0.55)" stroke="rgba(255,255,255,0.3)" stroke-width="0.8" />
+                      <ellipse cx="78" cy="25" rx="7.5" ry="3.8" fill="rgba(180,83,9,0.55)" stroke="rgba(255,255,255,0.3)" stroke-width="0.8" />
                       
                       <!-- 2루 Base (상단) -->
-                      <polygon points="75,1 81,5 75,9 69,5" class="${st.base2 ? 'live-base-neon-lit' : 'live-base-unlit'}" />
+                      <polygon points="78,1 84,5 78,9 72,5" class="${st.base2 ? 'live-base-neon-lit' : 'live-base-unlit'}" />
                       <!-- 1루 Base (우측) -->
-                      <polygon points="122,20 128,24 122,28 116,24" class="${st.base1 ? 'live-base-neon-lit' : 'live-base-unlit'}" />
+                      <polygon points="127,21 133,25 127,29 121,25" class="${st.base1 ? 'live-base-neon-lit' : 'live-base-unlit'}" />
                       <!-- 3루 Base (좌측) -->
-                      <polygon points="28,20 34,24 28,28 22,24" class="${st.base3 ? 'live-base-neon-lit' : 'live-base-unlit'}" />
+                      <polygon points="29,21 35,25 29,29 23,25" class="${st.base3 ? 'live-base-neon-lit' : 'live-base-unlit'}" />
                       <!-- Home Plate (하단) -->
-                      <polygon points="75,45 77.5,42.5 77.5,40.5 72.5,40.5 72.5,42.5" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.8" />
+                      <polygon points="78,47 80.5,44.5 80.5,42.5 75.5,42.5 75.5,44.5" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.8" />
 
                       <!-- 베이스 라벨 텍스트 -->
-                      <text x="75" y="14" text-anchor="middle" font-size="7.5" font-weight="900" fill="${st.base2 ? '#facc15' : 'rgba(255,255,255,0.6)'}" style="${st.base2 ? 'filter:drop-shadow(0 0 4px #facc15);' : ''}">2루${st.base2 ? ' ON' : ''}</text>
-                      <text x="134" y="27" text-anchor="start" font-size="7.5" font-weight="900" fill="${st.base1 ? '#facc15' : 'rgba(255,255,255,0.6)'}" style="${st.base1 ? 'filter:drop-shadow(0 0 4px #facc15);' : ''}">1루${st.base1 ? ' ON' : ''}</text>
-                      <text x="16" y="27" text-anchor="end" font-size="7.5" font-weight="900" fill="${st.base3 ? '#facc15' : 'rgba(255,255,255,0.6)'}" style="${st.base3 ? 'filter:drop-shadow(0 0 4px #facc15);' : ''}">3루${st.base3 ? ' ON' : ''}</text>
+                      <text x="78" y="14" text-anchor="middle" font-size="7.5" font-weight="900" fill="${st.base2 ? '#facc15' : 'rgba(255,255,255,0.6)'}" style="${st.base2 ? 'filter:drop-shadow(0 0 4px #facc15);' : ''}">2루${st.base2 ? ' ON' : ''}</text>
+                      <text x="138" y="28" text-anchor="start" font-size="7.5" font-weight="900" fill="${st.base1 ? '#facc15' : 'rgba(255,255,255,0.6)'}" style="${st.base1 ? 'filter:drop-shadow(0 0 4px #facc15);' : ''}">1루${st.base1 ? ' ON' : ''}</text>
+                      <text x="18" y="28" text-anchor="end" font-size="7.5" font-weight="900" fill="${st.base3 ? '#facc15' : 'rgba(255,255,255,0.6)'}" style="${st.base3 ? 'filter:drop-shadow(0 0 4px #facc15);' : ''}">3루${st.base3 ? ' ON' : ''}</text>
                     </svg>
                   </div>
 
-                  <div style="font-size:0.58rem; color:rgba(255,255,255,0.6); letter-spacing:0.3px;">
+                  <div style="font-size:0.60rem; color:rgba(255,255,255,0.65); letter-spacing:0.5px; font-weight:700;">
                     LIVE MATCH RELAY
                   </div>
                 </div>
 
                 <!-- [FAR RIGHT] Away Team Side Pillar: Team Name & Batter -->
-                <div class="d-flex flex-column justify-content-between text-end" style="width:26%; max-width:130px; min-width:85px; z-index:4;">
+                <div class="position-absolute d-flex flex-column justify-content-between text-end" style="right:12px; top:10px; bottom:10px; width:115px; z-index:4;">
                   <div>
                     <span class="badge bg-primary bg-opacity-75 text-white py-0.5 px-1.5 fw-bold mb-1 d-inline-block" style="font-size:0.55rem; letter-spacing:0.3px;">AWAY</span>
-                    <div class="fw-black text-white text-truncate" style="font-size:0.92rem; text-shadow:0 1px 4px rgba(0,0,0,0.95); line-height:1.2;" title="${m.away_team_name}">
+                    <div class="fw-black text-white text-truncate" style="font-size:0.95rem; text-shadow:0 1px 4px rgba(0,0,0,0.95); line-height:1.2;" title="${m.away_team_name}">
                       ${aName}
                     </div>
                   </div>
-                  <div class="text-truncate" style="font-size:0.65rem; color:#cbd5e1; line-height:1.2;" title="${st.batter}">
+                  <div class="text-truncate" style="font-size:0.68rem; color:#cbd5e1; line-height:1.2;" title="${st.batter}">
                     🏏 <span style="color:#94a3b8;">타:</span> <b class="text-white">${st.batter || '타자'}</b>
                   </div>
                 </div>
 
               </div>
 
-              <!-- 3. Absolute Event Overlay (HOMERUN, HIT, etc.) - Floating inside the 106px box! Zero height change! -->
+              <!-- 3. Absolute Event Overlay (HOMERUN, HIT, etc.) - Floating inside the 130px box! Zero height change! -->
               ${eventBannerHtml}
             </div>
           `;
         } else if (m.sport_code === 'SOCCER') {
-          // ⚽ [축구 LIVE] 4대 전용 시네마틱 골 비주얼 + 106px 플로팅 골인 오버레이
+          // ⚽ [축구 LIVE] 130px 대형 럭셔리 유럽 챔피언스리그급 스타디움 메인 배경 + 4대 골 비주얼 오버레이
           let eventBannerHtml = '';
           const activeEv = (typeof window._activeLivePlayEvents !== 'undefined' && window._activeLivePlayEvents) ? window._activeLivePlayEvents[m.id] : null;
           if (activeEv && (activeEv.type === 'GOAL' || activeEv.type === 'SCORE')) {
@@ -12824,43 +12833,80 @@ function getFullModalMatchList() {
           }
 
           liveBroadcastStageHtml = `
-            <div class="live-soccer-stage-wrapper position-relative mb-1.5" style="border-radius:8px; overflow:hidden;">
-              <!-- 1. 골 발생 시 나타나는 106px 내부 고정 플로팅 오버레이 -->
-              ${eventBannerHtml}
+            <div class="live-soccer-stage-wrapper position-relative mb-1.5" style="height: 130px; min-height: 130px; max-height: 130px; border-radius: 8px; overflow: hidden; border: 1.2px solid rgba(255,255,255,0.14); box-shadow: 0 4px 16px rgba(0,0,0,0.28);">
+              <!-- 1. Luxury Soccer Stadium Panoramic Background -->
+              <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(8,14,30,0.60) 0%, rgba(5,9,20,0.85) 100%), url('/static/images/soccer_stadium_live.jpg') center 45%/cover no-repeat; z-index:1;"></div>
 
-              <!-- 2. 기본 실시간 축구 스코어보드 & 진행 현황판 -->
-              <div class="live-default-scoreboard p-2 rounded" style="background:#ffffff; border:1.4px solid #cbd5e1; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
-                <!-- Big Team Score Row with Time Above -->
-                <div class="d-flex align-items-center justify-content-between mb-1.5">
-                  <div class="fw-bold text-dark text-truncate text-end" style="flex:1 1 38%; font-size:0.92rem;" title="${m.home_team_name}">${hName}</div>
-                  <div class="px-2 text-center" style="flex:0 0 auto;">
-                    <div class="mb-0.5">
-                      <span class="badge bg-danger text-white py-0.5 px-2 fw-bold" style="font-size:0.65rem; letter-spacing:0.2px;">
-                        ${st.match_time || '전반'}
-                      </span>
+              <!-- 2. Main Live Soccer Stage Content: Absolute 3-Column Split -->
+              <div class="position-relative h-100" style="z-index:3;">
+                <!-- Left: Home Team -->
+                <div class="position-absolute d-flex flex-column justify-content-between text-start" style="left:12px; top:10px; bottom:10px; width:115px; z-index:4;">
+                  <div>
+                    <span class="badge bg-danger bg-opacity-75 text-white py-0.5 px-1.5 fw-bold mb-1 d-inline-block" style="font-size:0.55rem; letter-spacing:0.3px;">HOME</span>
+                    <div class="fw-black text-white text-truncate" style="font-size:0.95rem; text-shadow:0 1px 4px rgba(0,0,0,0.95); line-height:1.2;" title="${m.home_team_name}">
+                      ${hName}
                     </div>
-                    <span class="px-3 py-0.5 rounded-2 fw-bold d-inline-flex align-items-center gap-1.5" style="background:#f8fafc; border:1.5px solid #cbd5e1; font-size:1.20rem; font-family:'Roboto Mono', monospace; letter-spacing:1px; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-                      <span style="color:#dc2626; font-weight:800;">${hScore}</span>
-                      <span style="color:#94a3b8; font-weight:300; font-size:1.0rem;">:</span>
-                      <span style="color:#2563eb; font-weight:800;">${aScore}</span>
-                    </span>
                   </div>
-                  <div class="fw-bold text-dark text-truncate text-start" style="flex:1 1 38%; font-size:0.92rem;" title="${m.away_team_name}">${aName}</div>
+                  <div class="text-truncate" style="font-size:0.68rem; color:#cbd5e1; line-height:1.2;">
+                    ⚽ <span style="color:#94a3b8;">포메이션:</span> <b class="text-white">4-3-3</b>
+                  </div>
                 </div>
 
-                <!-- Match Time & Live Progress Track -->
-                <div class="d-flex justify-content-between align-items-center pt-1 border-top" style="border-color:#f1f5f9 !important;">
-                  <div class="d-flex align-items-center gap-1.5 text-muted" style="font-size:0.72rem;">
-                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-1.5 py-0.5 fw-bold"><i class="bi bi-stopwatch me-0.5"></i>${st.match_time || '전반 진행중'}</span>
-                    <span class="text-secondary fw-semibold">${st.possession ? `점유율 ${st.possession}` : '실시간 공방전'}</span>
+                <!-- Center: Scoreboard HUD & Stadium Pitch Graphic -->
+                <div class="position-absolute d-flex flex-column align-items-center justify-content-between h-100" style="left:50%; top:0; bottom:0; transform:translateX(-50%); width:240px; padding:10px 0 8px 0; z-index:4; pointer-events:none;">
+                  <!-- Top: Symmetrical Soccer Scoreboard Pill -->
+                  <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.25); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:26px; pointer-events:auto;">
+                    <span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center" style="font-size:0.60rem; min-width:48px; border-radius:10px;">${st.match_time || '전반'}</span>
+                    <div class="d-flex align-items-center justify-content-center px-2" style="font-family:'Roboto Mono', monospace; font-size:1.18rem; font-weight:900; line-height:1;">
+                      <span style="color:#ef4444; min-width:14px; text-align:right; text-shadow:0 0 8px rgba(239,68,68,0.7);">${hScore}</span>
+                      <span style="color:rgba(255,255,255,0.4); font-size:0.85rem; font-weight:400; margin:0 4px;">:</span>
+                      <span style="color:#38bdf8; min-width:14px; text-align:left; text-shadow:0 0 8px rgba(56,189,248,0.7);">${aScore}</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-center bg-dark bg-opacity-75 px-1.5 py-0.5 rounded-pill border border-secondary border-opacity-50" style="height:19px; min-width:48px;">
+                      <span class="fw-bold text-warning" style="font-size:0.56rem; letter-spacing:-0.2px;">${st.possession ? `점유 ${st.possession}` : '공방전'}</span>
+                    </div>
                   </div>
-                  <div class="d-flex align-items-center gap-1">
-                    <button type="button" class="btn btn-xs px-1.5 py-0.5 fw-bold text-success border border-success border-opacity-30 bg-white" style="font-size:0.62rem; border-radius:4px;" onclick="event.stopPropagation(); triggerSoccerGoalEvent(${m.id}, '${hScore >= aScore ? hName : aName}')" title="골 세리머니 애니메이션 테스트">
-                      ⚽ 골 세리머니
+
+                  <!-- Middle: Soccer Pitch Center Graphic -->
+                  <div class="position-relative my-auto" style="pointer-events:auto;">
+                    <svg width="140" height="40" viewBox="0 0 140 40">
+                      <!-- Pitch Halves & Touchlines -->
+                      <rect x="10" y="2" width="120" height="36" rx="3" fill="rgba(6,78,59,0.35)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2" />
+                      <line x1="70" y1="2" x2="70" y2="38" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-dasharray="2,2" />
+                      <!-- Center Circle -->
+                      <ellipse cx="70" cy="20" rx="15" ry="11" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.2" />
+                      <circle cx="70" cy="20" r="2.2" fill="#ffffff" />
+                      <!-- Penalty Boxes -->
+                      <rect x="10" y="8" width="16" height="24" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.3)" stroke-width="1" />
+                      <rect x="114" y="8" width="16" height="24" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.3)" stroke-width="1" />
+                      <text x="70" y="34" text-anchor="middle" font-size="6.5" font-weight="800" fill="rgba(255,255,255,0.6)" letter-spacing="0.5">LIVE STADIUM MATCH</text>
+                    </svg>
+                  </div>
+
+                  <!-- Bottom: Action Buttons -->
+                  <div style="pointer-events:auto;">
+                    <button type="button" class="btn btn-xs px-2 py-0.5 fw-bold text-success border border-success border-opacity-40 bg-dark bg-opacity-75 rounded-pill" style="font-size:0.62rem; backdrop-filter:blur(4px);" onclick="event.stopPropagation(); triggerSoccerGoalEvent(${m.id}, '${hScore >= aScore ? hName : aName}')" title="골 세리머니 애니메이션 테스트">
+                      ⚽ 골 세리머니 테스트
                     </button>
                   </div>
                 </div>
+
+                <!-- Right: Away Team -->
+                <div class="position-absolute d-flex flex-column justify-content-between text-end" style="right:12px; top:10px; bottom:10px; width:115px; z-index:4;">
+                  <div>
+                    <span class="badge bg-primary bg-opacity-75 text-white py-0.5 px-1.5 fw-bold mb-1 d-inline-block" style="font-size:0.55rem; letter-spacing:0.3px;">AWAY</span>
+                    <div class="fw-black text-white text-truncate" style="font-size:0.95rem; text-shadow:0 1px 4px rgba(0,0,0,0.95); line-height:1.2;" title="${m.away_team_name}">
+                      ${aName}
+                    </div>
+                  </div>
+                  <div class="text-truncate" style="font-size:0.68rem; color:#cbd5e1; line-height:1.2;">
+                    ⚽ <span style="color:#94a3b8;">포메이션:</span> <b class="text-white">4-2-3-1</b>
+                  </div>
+                </div>
               </div>
+
+              <!-- 3. Absolute Event Overlay (GOAL!) -->
+              ${eventBannerHtml}
             </div>
           `;
         } else if (m.sport_code === 'BASKETBALL' || m.sport_code === 'VOLLEYBALL') {

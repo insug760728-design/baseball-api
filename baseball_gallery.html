@@ -86,9 +86,9 @@
 
     /* Simulation Card */
     .sim-box {
-      max-width: 620px;
+      max-width: 660px;
       margin: 0 auto;
-      height: 106px;
+      height: 130px;
       border-radius: 8px;
       position: relative;
       overflow: hidden;
@@ -134,81 +134,201 @@
       </div>
     </div>
 
-    <!-- 실제 106px 카드 시뮬레이터 -->
-    <div class="sim-box" id="demoLiveCard">
+    <!-- 실제 130px 야구 카드 시뮬레이터 (데드센터 완벽 대칭 스코어보드) -->
+    <div class="sim-box mb-4" id="demoLiveCard">
       <!-- 1. 메인 스타디움 배경 -->
       <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(8,14,30,0.65) 0%, rgba(5,9,20,0.85) 100%), url('./app/static/images/baseball_stadium_live.jpg') center 35%/cover no-repeat; z-index:1;"></div>
 
-      <!-- 2. Main Live Stage Content: 3-Column Broadcast Split Layout (팀명 양사이드 분리 + 중앙 아웃/스코어 전광판) -->
-      <div class="position-relative p-2 d-flex justify-content-between align-items-stretch h-100" style="z-index:3;">
+      <!-- 2. Main Live Stage Content: Absolute 3-Column Split -->
+      <div class="position-relative h-100" style="z-index:3;">
         
-        <!-- [FAR LEFT] Home Team Side Pillar: Team Name & Starter Pitcher -->
-        <div class="d-flex flex-column justify-content-between text-start" style="width:26%; max-width:130px; min-width:85px; z-index:4;">
+        <!-- [FAR LEFT] Home Team Side Pillar -->
+        <div class="position-absolute d-flex flex-column justify-content-between text-start" style="left:14px; top:10px; bottom:10px; width:120px; z-index:4;">
           <div>
             <span class="badge bg-danger bg-opacity-75 text-white py-0.5 px-1.5 fw-bold mb-1 d-inline-block" style="font-size:0.55rem; letter-spacing:0.3px;">HOME</span>
-            <div class="fw-black text-white text-truncate" style="font-size:0.92rem; text-shadow:0 1px 4px rgba(0,0,0,0.95); line-height:1.2;" title="SSG 랜더스">
+            <div class="fw-black text-white text-truncate" style="font-size:0.95rem; text-shadow:0 1px 4px rgba(0,0,0,0.95); line-height:1.2;" title="SSG 랜더스">
               SSG 랜더스
             </div>
           </div>
-          <div class="text-truncate" style="font-size:0.65rem; color:#cbd5e1; line-height:1.2;" title="김광현">
+          <div class="text-truncate" style="font-size:0.68rem; color:#cbd5e1; line-height:1.2;" title="김광현">
             ⚾ <span style="color:#94a3b8;">투:</span> <b class="text-white">김광현</b>
           </div>
         </div>
 
-        <!-- [CENTER] Stadium Field: Out-Scoreboard on Top & Big Illuminated Diamond -->
-        <div class="d-flex flex-column align-items-center justify-content-between flex-grow-1 px-1 h-100" style="z-index:4;">
-          <!-- Top: Integrated Out & Score HUD (전광판 스코어 & 아웃 카운트 보드) -->
-          <div class="d-inline-flex align-items-center gap-1.5 px-2.5 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.80); border:1px solid rgba(255,255,255,0.22); backdrop-filter:blur(6px); box-shadow:0 2px 8px rgba(0,0,0,0.6);">
-            <span class="badge bg-danger text-white py-0.5 px-1.5 fw-black" style="font-size:0.58rem; letter-spacing:0.2px;">7회말</span>
-            <span style="color:#ef4444; font-weight:900; font-size:1.18rem; font-family:'Roboto Mono', monospace; text-shadow:0 0 8px rgba(239,68,68,0.7);">5</span>
-            <span style="color:#64748b; font-weight:300; font-size:0.85rem; margin:0 1px;">:</span>
-            <span style="color:#38bdf8; font-weight:900; font-size:1.18rem; font-family:'Roboto Mono', monospace; text-shadow:0 0 8px rgba(56,189,248,0.7);">4</span>
-            <span class="badge bg-danger bg-opacity-75 text-white py-0.5 px-1 fw-bold ms-1" style="font-size:0.58rem;">1아웃</span>
-            <span style="font-size:0.55rem; letter-spacing:0.5px;">🔴⚪</span>
+        <!-- [CENTER] Stadium Field: Out-Scoreboard on Top & Big Illuminated Diamond (DEAD CENTER GUARANTEED!) -->
+        <div class="position-absolute d-flex flex-column align-items-center justify-content-between h-100" style="left:50%; top:0; bottom:0; transform:translateX(-50%); width:240px; padding:10px 0 8px 0; z-index:4; pointer-events:none;">
+          <!-- Top: Symmetrically Balanced Out & Score HUD (정중앙 스코어 완벽 정렬 전광판) -->
+          <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.25); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:26px; pointer-events:auto;">
+            <!-- 좌측: 이닝 (너비 46px 고정 대칭) -->
+            <span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center" style="font-size:0.60rem; min-width:46px; border-radius:10px;">7회말</span>
+            
+            <!-- 중앙: 스코어 (정중앙 완벽 정렬) -->
+            <div class="d-flex align-items-center justify-content-center px-2" style="font-family:'Roboto Mono', monospace; font-size:1.18rem; font-weight:900; line-height:1;">
+              <span style="color:#ef4444; min-width:14px; text-align:right; text-shadow:0 0 8px rgba(239,68,68,0.7);">5</span>
+              <span style="color:rgba(255,255,255,0.4); font-size:0.85rem; font-weight:400; margin:0 4px;">:</span>
+              <span style="color:#38bdf8; min-width:14px; text-align:left; text-shadow:0 0 8px rgba(56,189,248,0.7);">4</span>
+            </div>
+
+            <!-- 우측: 아웃 카운트 & LED (너비 46px 고정 대칭) -->
+            <div class="d-flex align-items-center justify-content-center gap-1 bg-dark bg-opacity-75 px-1.5 py-0.5 rounded-pill border border-secondary border-opacity-50" style="height:19px; min-width:46px;">
+              <span class="fw-bold text-white" style="font-size:0.58rem; letter-spacing:-0.2px;">1아웃</span>
+              <span style="font-size:0.50rem; letter-spacing:0.5px; line-height:1;">🔴⚪</span>
+            </div>
           </div>
 
           <!-- Middle/Center: Pure Open Field with Big Glowing 1·2·3루 Diamond -->
-          <div class="position-relative my-auto" style="cursor:pointer;" onclick="toggleSimDemo()" title="클릭하여 1·2·3루 베이스 점등 테스트">
-            <svg width="150" height="48" viewBox="0 0 150 48">
+          <div class="position-relative my-auto" style="cursor:pointer; pointer-events:auto;" onclick="toggleSimDemo()" title="클릭하여 1·2·3루 베이스 점등 테스트">
+            <svg width="156" height="50" viewBox="0 0 156 50">
               <!-- Infield Diamond Baseline -->
-              <polygon points="75,4 122,24 75,44 28,24" fill="rgba(6,78,59,0.40)" stroke="rgba(255,255,255,0.30)" stroke-width="1.2" stroke-dasharray="3,2" />
+              <polygon points="78,4 127,25 78,46 29,25" fill="rgba(6,78,59,0.40)" stroke="rgba(255,255,255,0.30)" stroke-width="1.2" stroke-dasharray="3,2" />
               <!-- Pitcher's Mound -->
-              <ellipse cx="75" cy="24" rx="7" ry="3.5" fill="rgba(180,83,9,0.55)" stroke="rgba(255,255,255,0.3)" stroke-width="0.8" />
+              <ellipse cx="78" cy="25" rx="7.5" ry="3.8" fill="rgba(180,83,9,0.55)" stroke="rgba(255,255,255,0.3)" stroke-width="0.8" />
               
               <!-- 2루 Base (상단) -->
-              <polygon id="fieldBase2" points="75,1 81,5 75,9 69,5" class="live-base-unlit" />
+              <polygon id="fieldBase2" points="78,1 84,5 78,9 72,5" class="live-base-unlit" />
               <!-- 1루 Base (우측) -->
-              <polygon id="fieldBase1" points="122,20 128,24 122,28 116,24" class="live-base-neon-lit" />
+              <polygon id="fieldBase1" points="127,21 133,25 127,29 121,25" class="live-base-neon-lit" />
               <!-- 3루 Base (좌측) -->
-              <polygon id="fieldBase3" points="28,20 34,24 28,28 22,24" class="live-base-unlit" />
+              <polygon id="fieldBase3" points="29,21 35,25 29,29 23,25" class="live-base-unlit" />
               <!-- Home Plate (하단) -->
-              <polygon points="75,45 77.5,42.5 77.5,40.5 72.5,40.5 72.5,42.5" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.8" />
+              <polygon points="78,47 80.5,44.5 80.5,42.5 75.5,42.5 75.5,44.5" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.8" />
 
               <!-- 베이스 라벨 텍스트 -->
-              <text id="lblBase2" x="75" y="14" text-anchor="middle" font-size="7.5" font-weight="900" fill="rgba(255,255,255,0.6)">2루</text>
-              <text id="lblBase1" x="134" y="27" text-anchor="start" font-size="7.5" font-weight="900" fill="#facc15" style="filter:drop-shadow(0 0 4px #facc15);">1루 ON</text>
-              <text id="lblBase3" x="16" y="27" text-anchor="end" font-size="7.5" font-weight="900" fill="rgba(255,255,255,0.6)">3루</text>
+              <text id="lblBase2" x="78" y="14" text-anchor="middle" font-size="7.5" font-weight="900" fill="rgba(255,255,255,0.6)">2루</text>
+              <text id="lblBase1" x="138" y="28" text-anchor="start" font-size="7.5" font-weight="900" fill="#facc15" style="filter:drop-shadow(0 0 4px #facc15);">1루 ON</text>
+              <text id="lblBase3" x="18" y="28" text-anchor="end" font-size="7.5" font-weight="900" fill="rgba(255,255,255,0.6)">3루</text>
             </svg>
           </div>
 
-          <div style="font-size:0.58rem; color:rgba(255,255,255,0.6); letter-spacing:0.3px;">
+          <div style="font-size:0.60rem; color:rgba(255,255,255,0.65); letter-spacing:0.5px; font-weight:700;">
             LIVE MATCH RELAY
           </div>
         </div>
 
-        <!-- [FAR RIGHT] Away Team Side Pillar: Team Name & Batter -->
-        <div class="d-flex flex-column justify-content-between text-end" style="width:26%; max-width:130px; min-width:85px; z-index:4;">
+        <!-- [FAR RIGHT] Away Team Side Pillar -->
+        <div class="position-absolute d-flex flex-column justify-content-between text-end" style="right:14px; top:10px; bottom:10px; width:120px; z-index:4;">
           <div>
             <span class="badge bg-primary bg-opacity-75 text-white py-0.5 px-1.5 fw-bold mb-1 d-inline-block" style="font-size:0.55rem; letter-spacing:0.3px;">AWAY</span>
-            <div class="fw-black text-white text-truncate" style="font-size:0.92rem; text-shadow:0 1px 4px rgba(0,0,0,0.95); line-height:1.2;" title="LG 트윈스">
+            <div class="fw-black text-white text-truncate" style="font-size:0.95rem; text-shadow:0 1px 4px rgba(0,0,0,0.95); line-height:1.2;" title="LG 트윈스">
               LG 트윈스
             </div>
           </div>
-          <div class="text-truncate" style="font-size:0.65rem; color:#cbd5e1; line-height:1.2;" title="오지환">
+          <div class="text-truncate" style="font-size:0.68rem; color:#cbd5e1; line-height:1.2;" title="오지환">
             🏏 <span style="color:#94a3b8;">타:</span> <b class="text-white">오지환</b>
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- ⚽ 신규 130px 축구 라이브 카드 시뮬레이터 (유럽 챔피언스리그급 스타디움 메인 배경) -->
+    <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <h4 class="fw-black text-white mb-0">⚽ 축구 130px 대형 스타디움 라이브 스테이지</h4>
+          <p class="text-secondary small mb-0">새로 제작된 축구 메인 스타디움 배경과 대칭형 전광판, 피치 그래픽이 적용된 실시간 화면입니다.</p>
+        </div>
+        <button class="btn btn-sm btn-success px-3 fw-bold" onclick="testSoccerGoalDemo()">
+          ⚽ 골 세리머니 테스트 (클릭 시 4종 순환)
+        </button>
+      </div>
+
+      <div class="sim-box position-relative" id="demoSoccerCard">
+        <!-- 스타디움 배경 -->
+        <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(8,14,30,0.60) 0%, rgba(5,9,20,0.85) 100%), url('./app/static/images/soccer_stadium_live.jpg') center 45%/cover no-repeat; z-index:1;"></div>
+
+        <!-- 메인 콘텐츠 -->
+        <div class="position-relative h-100" style="z-index:3;">
+          <!-- 좌측: 홈팀 -->
+          <div class="position-absolute d-flex flex-column justify-content-between text-start" style="left:14px; top:10px; bottom:10px; width:120px; z-index:4;">
+            <div>
+              <span class="badge bg-danger bg-opacity-75 text-white py-0.5 px-1.5 fw-bold mb-1 d-inline-block" style="font-size:0.55rem; letter-spacing:0.3px;">HOME</span>
+              <div class="fw-black text-white text-truncate" style="font-size:0.95rem; text-shadow:0 1px 4px rgba(0,0,0,0.95); line-height:1.2;">
+                토트넘 홋스퍼
+              </div>
+            </div>
+            <div class="text-truncate" style="font-size:0.68rem; color:#cbd5e1; line-height:1.2;">
+              ⚽ <span style="color:#94a3b8;">포메이션:</span> <b class="text-white">4-3-3</b>
+            </div>
+          </div>
+
+          <!-- 중앙: 스코어보드 & 피치 그래픽 -->
+          <div class="position-absolute d-flex flex-column align-items-center justify-content-between h-100" style="left:50%; top:0; bottom:0; transform:translateX(-50%); width:240px; padding:10px 0 8px 0; z-index:4; pointer-events:none;">
+            <!-- 대칭형 스코어보드 -->
+            <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.25); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:26px; pointer-events:auto;">
+              <span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center" style="font-size:0.60rem; min-width:48px; border-radius:10px;">전반 34'</span>
+              <div class="d-flex align-items-center justify-content-center px-2" style="font-family:'Roboto Mono', monospace; font-size:1.18rem; font-weight:900; line-height:1;">
+                <span style="color:#ef4444; min-width:14px; text-align:right; text-shadow:0 0 8px rgba(239,68,68,0.7);">2</span>
+                <span style="color:rgba(255,255,255,0.4); font-size:0.85rem; font-weight:400; margin:0 4px;">:</span>
+                <span style="color:#38bdf8; min-width:14px; text-align:left; text-shadow:0 0 8px rgba(56,189,248,0.7);">1</span>
+              </div>
+              <div class="d-flex align-items-center justify-content-center bg-dark bg-opacity-75 px-1.5 py-0.5 rounded-pill border border-secondary border-opacity-50" style="height:19px; min-width:48px;">
+                <span class="fw-bold text-warning" style="font-size:0.56rem; letter-spacing:-0.2px;">점유 58%</span>
+              </div>
+            </div>
+
+            <!-- 축구 피치 그래픽 -->
+            <div class="position-relative my-auto" style="pointer-events:auto;">
+              <svg width="140" height="40" viewBox="0 0 140 40">
+                <rect x="10" y="2" width="120" height="36" rx="3" fill="rgba(6,78,59,0.35)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2" />
+                <line x1="70" y1="2" x2="70" y2="38" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-dasharray="2,2" />
+                <ellipse cx="70" cy="20" rx="15" ry="11" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.2" />
+                <circle cx="70" cy="20" r="2.2" fill="#ffffff" />
+                <rect x="10" y="8" width="16" height="24" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.3)" stroke-width="1" />
+                <rect x="114" y="8" width="16" height="24" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.3)" stroke-width="1" />
+                <text x="70" y="34" text-anchor="middle" font-size="6.5" font-weight="800" fill="rgba(255,255,255,0.6)" letter-spacing="0.5">LIVE STADIUM MATCH</text>
+              </svg>
+            </div>
+
+            <!-- 하단 텍스트 -->
+            <div style="font-size:0.60rem; color:rgba(255,255,255,0.65); letter-spacing:0.5px; font-weight:700;">
+              REAL-TIME BROADCAST
+            </div>
+          </div>
+
+          <!-- 우측: 원정팀 -->
+          <div class="position-absolute d-flex flex-column justify-content-between text-end" style="right:14px; top:10px; bottom:10px; width:120px; z-index:4;">
+            <div>
+              <span class="badge bg-primary bg-opacity-75 text-white py-0.5 px-1.5 fw-bold mb-1 d-inline-block" style="font-size:0.55rem; letter-spacing:0.3px;">AWAY</span>
+              <div class="fw-black text-white text-truncate" style="font-size:0.95rem; text-shadow:0 1px 4px rgba(0,0,0,0.95); line-height:1.2;">
+                아스날 FC
+              </div>
+            </div>
+            <div class="text-truncate" style="font-size:0.68rem; color:#cbd5e1; line-height:1.2;">
+              ⚽ <span style="color:#94a3b8;">포메이션:</span> <b class="text-white">4-2-3-1</b>
+            </div>
+          </div>
+        </div>
+
+        <!-- 인터랙티브 골 오버레이 슬롯 -->
+        <div id="soccerGoalOverlaySlot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🏟️ [신규] 축구 메인 스타디움 배경 비주얼 쇼룸 -->
+  <div class="section-title text-primary">
+    <i class="bi bi-shield-shaded"></i> 🏟️ 축구 메인(기본 배경) 8K 스타디움 비주얼 2종
+  </div>
+  <div class="row g-4 mb-5">
+    <div class="col-md-6">
+      <div class="gallery-card" style="border-color:rgba(59,130,246,0.5);">
+        <div class="img-container"><img src="./app/static/images/soccer_stadium_live.jpg" alt="유럽 챔피언스리그급 스타디움 야간 메인"></div>
+        <div class="card-body-custom">
+          <span class="badge badge-event bg-primary text-white mb-2">MAIN TYPE A • 챔피언스리그 스타디움</span>
+          <h5 class="text-white fw-bold mb-1">풀관중 만석 & 고휘도 야간 조명탑 피치</h5>
+          <p class="text-secondary small mb-0">유럽 최고 권위의 결승전 스타디움을 연상시키는 에메랄드 잔디와 관중석, 서치라이트가 완벽히 조화된 메인 배경입니다.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="gallery-card" style="border-color:rgba(59,130,246,0.5);">
+        <div class="img-container"><img src="./app/static/images/soccer_stadium_arena.jpg" alt="최첨단 돔 아레나 야간 조명탑 메인"></div>
+        <div class="card-body-custom">
+          <span class="badge badge-event bg-info text-dark mb-2">MAIN TYPE B • 최첨단 돔 아레나</span>
+          <h5 class="text-white fw-bold mb-1">미래지향적 캐노피 구조 & 센터서클 뷰</h5>
+          <p class="text-secondary small mb-0">웅장한 돔 경기장 아치형 지붕과 야간 경기 안개 속을 가르는 서치라이트 빔이 시선을 압도하는 아레나 배경입니다.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -359,6 +479,51 @@
       lblElem.style.filter = 'none';
       lblElem.textContent = label;
     }
+  }
+
+  let soccerGoalIdx = 1;
+  const goalSubtexts = [
+    '탑 코너 그물망 폭격 원더골 작렬!!',
+    '환상적인 무릎 슬라이딩 세레머니 폭발!!',
+    '환상적인 바이시클 킥 탑코너 꽂힘!!',
+    '팀 동료들과의 격정적인 우승 허들 셀레브레이션!!'
+  ];
+  function testSoccerGoalDemo() {
+    const slot = document.getElementById('soccerGoalOverlaySlot');
+    if (!slot) return;
+    const imgUrl = `./app/static/images/soccer_goal_epic_${soccerGoalIdx}.jpg`;
+    const sub = goalSubtexts[soccerGoalIdx - 1];
+    slot.innerHTML = `
+      <div class="position-absolute d-flex flex-column justify-content-center align-items-center text-center px-3" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(6,78,59,0.70) 0%, rgba(15,23,42,0.92) 100%), url('${imgUrl}') center 40%/cover no-repeat; border-radius:8px; border:1.5px solid #22c55e; box-shadow:0 0 20px rgba(34,197,94,0.6); pointer-events:auto;">
+        <button type="button" class="btn-close btn-close-white position-absolute top-2 end-2" style="font-size:0.55rem; opacity:0.9; z-index:15;" onclick="dismissSoccerDemoGoal()" title="닫기"></button>
+        <div class="d-flex align-items-center gap-2 mb-1.5 live-anim-goal-text-burst">
+          <span class="badge bg-danger text-white fw-black px-2.5 py-1" style="font-size:0.80rem; font-weight:900; letter-spacing:0.5px; box-shadow:0 0 12px #ef4444;"><i class="bi bi-fire me-1"></i>GOAL!!</span>
+          <span class="fw-bold text-white" style="font-size:0.88rem; text-shadow:0 2px 10px rgba(0,0,0,0.95);">⚽ [GOAL #${soccerGoalIdx}] ${sub}</span>
+        </div>
+        <div class="w-100 position-relative" style="height:22px; overflow:hidden;">
+          <div class="live-anim-soccer-goal-zigzag">
+            <div class="vivid-soccer-ball" style="display:inline-block;">
+              <svg width="20" height="20" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="#ffffff" stroke="#0f172a" stroke-width="1.5" />
+                <polygon points="12,8 15,10.2 13.8,13.8 10.2,13.8 9,10.2" fill="#0f172a" />
+                <line x1="12" y1="2" x2="12" y2="8" stroke="#0f172a" stroke-width="1.2" />
+                <line x1="21" y1="9" x2="15" y2="10.2" stroke="#0f172a" stroke-width="1.2" />
+                <line x1="18" y1="20" x2="13.8" y2="13.8" stroke="#0f172a" stroke-width="1.2" />
+                <line x1="6" y1="20" x2="10.2" y2="13.8" stroke="#0f172a" stroke-width="1.2" />
+                <line x1="3" y1="9" x2="9" y2="10.2" stroke="#0f172a" stroke-width="1.2" />
+              </svg>
+            </div>
+            <span style="font-size:1.0rem; margin-left:-2px; filter:drop-shadow(0 0 6px #f59e0b);">🔥</span>
+          </div>
+        </div>
+      </div>
+    `;
+    soccerGoalIdx = (soccerGoalIdx % 4) + 1;
+  }
+
+  function dismissSoccerDemoGoal() {
+    const slot = document.getElementById('soccerGoalOverlaySlot');
+    if (slot) slot.innerHTML = '';
   }
 </script>
 
