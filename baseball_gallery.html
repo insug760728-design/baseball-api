@@ -139,51 +139,76 @@
       <!-- 1. 메인 스타디움 배경 -->
       <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(8,14,30,0.65) 0%, rgba(5,9,20,0.85) 100%), url('./app/static/images/baseball_stadium_live.jpg') center 35%/cover no-repeat; z-index:1;"></div>
 
-      <!-- 1.5 메인 1·2·3루 점등 베이스 - 팀명과 겹치지 않게 오픈 필드 중앙 배치 -->
-      <div class="position-absolute" style="left:50%; top:30px; transform:translateX(-50%); z-index:2;">
-        <svg width="150" height="50" viewBox="0 0 150 50">
-          <polygon points="75,4 122,24 75,44 28,24" fill="rgba(6,78,59,0.40)" stroke="rgba(255,255,255,0.30)" stroke-width="1.2" stroke-dasharray="3,2" />
-          <ellipse cx="75" cy="24" rx="7" ry="3.5" fill="rgba(180,83,9,0.55)" stroke="rgba(255,255,255,0.3)" stroke-width="0.8" />
-          <!-- 2루 (상단) -->
-          <polygon id="fieldBase2" points="75,1 81,5 75,9 69,5" class="live-base-unlit" />
-          <!-- 1루 (우측) -->
-          <polygon id="fieldBase1" points="122,20 128,24 122,28 116,24" class="live-base-neon-lit" />
-          <!-- 3루 (좌측) -->
-          <polygon id="fieldBase3" points="28,20 34,24 28,28 22,24" class="live-base-unlit" />
-          <!-- 홈 플레이트 -->
-          <polygon points="75,45 77.5,42.5 77.5,40.5 72.5,40.5 72.5,42.5" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.8" />
-
-          <!-- 베이스 라벨 텍스트 -->
-          <text id="lblBase2" x="75" y="14" text-anchor="middle" font-size="7.5" font-weight="900" fill="rgba(255,255,255,0.6)">2루</text>
-          <text id="lblBase1" x="134" y="27" text-anchor="start" font-size="7.5" font-weight="900" fill="#facc15" style="filter:drop-shadow(0 0 4px #facc15);">1루 ON</text>
-          <text id="lblBase3" x="16" y="27" text-anchor="end" font-size="7.5" font-weight="900" fill="rgba(255,255,255,0.6)">3루</text>
-        </svg>
-      </div>
-
-      <!-- 2. 스코어보드 & HUD -->
-      <div class="position-relative p-2 d-flex flex-column justify-content-between h-100" style="z-index:3;">
-        <div class="d-flex align-items-center justify-content-between" style="height:26px;">
-          <div class="fw-bold text-white text-truncate text-end pe-2" style="flex:1 1 38%; font-size:0.92rem; text-shadow:0 1px 4px rgba(0,0,0,0.95);">SSG 랜더스</div>
-          <div class="d-flex align-items-center gap-1.5 px-2 py-0.5 rounded" style="flex:0 0 auto; background:rgba(0,0,0,0.78); border:1px solid rgba(255,255,255,0.20); backdrop-filter:blur(6px); box-shadow:0 2px 8px rgba(0,0,0,0.5);">
-            <span class="badge bg-danger text-white py-0.5 px-1.5 fw-black" style="font-size:0.60rem; letter-spacing:0.2px;">7회말</span>
-            <span style="color:#ef4444; font-weight:900; font-size:1.15rem; font-family:'Roboto Mono', monospace; text-shadow:0 0 8px rgba(239,68,68,0.7);">5</span>
-            <span style="color:#64748b; font-weight:300; font-size:0.85rem; margin:0 2px;">:</span>
-            <span style="color:#38bdf8; font-weight:900; font-size:1.15rem; font-family:'Roboto Mono', monospace; text-shadow:0 0 8px rgba(56,189,248,0.7);">4</span>
+      <!-- 2. Main Live Stage Content: 3-Column Broadcast Split Layout (팀명 양사이드 분리 + 중앙 아웃/스코어 전광판) -->
+      <div class="position-relative p-2 d-flex justify-content-between align-items-stretch h-100" style="z-index:3;">
+        
+        <!-- [FAR LEFT] Home Team Side Pillar: Team Name & Starter Pitcher -->
+        <div class="d-flex flex-column justify-content-between text-start" style="width:26%; max-width:130px; min-width:85px; z-index:4;">
+          <div>
+            <span class="badge bg-danger bg-opacity-75 text-white py-0.5 px-1.5 fw-bold mb-1 d-inline-block" style="font-size:0.55rem; letter-spacing:0.3px;">HOME</span>
+            <div class="fw-black text-white text-truncate" style="font-size:0.92rem; text-shadow:0 1px 4px rgba(0,0,0,0.95); line-height:1.2;" title="SSG 랜더스">
+              SSG 랜더스
+            </div>
           </div>
-          <div class="fw-bold text-white text-truncate text-start ps-2" style="flex:1 1 38%; font-size:0.92rem; text-shadow:0 1px 4px rgba(0,0,0,0.95);">LG 트윈스</div>
-        </div>
-
-        <!-- 하단: 왼쪽 복잡한 베이스 제거, 클린 아웃카운트 & 선수 정보 -->
-        <div class="d-flex justify-content-between align-items-center pt-1" style="border-top: 1px solid rgba(255,255,255,0.12); font-size:0.68rem; line-height:1.25;">
-          <div class="d-flex align-items-center gap-1.5">
-            <span class="badge bg-danger text-white py-0.5 px-1.5 fw-bold" style="font-size:0.62rem; box-shadow:0 0 6px rgba(220,38,38,0.5);">1아웃</span>
-            <span style="font-size:0.58rem; letter-spacing:0.5px;">🔴⚪</span>
-            <span class="ms-1 text-truncate" style="max-width:130px; color:#cbd5e1;">⚾ <b class="text-white">김광현</b></span>
-          </div>
-          <div class="text-end text-truncate" style="max-width:150px; color:#cbd5e1;">
-            🏏 <b class="text-white">오지환</b>
+          <div class="text-truncate" style="font-size:0.65rem; color:#cbd5e1; line-height:1.2;" title="김광현">
+            ⚾ <span style="color:#94a3b8;">투:</span> <b class="text-white">김광현</b>
           </div>
         </div>
+
+        <!-- [CENTER] Stadium Field: Out-Scoreboard on Top & Big Illuminated Diamond -->
+        <div class="d-flex flex-column align-items-center justify-content-between flex-grow-1 px-1 h-100" style="z-index:4;">
+          <!-- Top: Integrated Out & Score HUD (전광판 스코어 & 아웃 카운트 보드) -->
+          <div class="d-inline-flex align-items-center gap-1.5 px-2.5 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.80); border:1px solid rgba(255,255,255,0.22); backdrop-filter:blur(6px); box-shadow:0 2px 8px rgba(0,0,0,0.6);">
+            <span class="badge bg-danger text-white py-0.5 px-1.5 fw-black" style="font-size:0.58rem; letter-spacing:0.2px;">7회말</span>
+            <span style="color:#ef4444; font-weight:900; font-size:1.18rem; font-family:'Roboto Mono', monospace; text-shadow:0 0 8px rgba(239,68,68,0.7);">5</span>
+            <span style="color:#64748b; font-weight:300; font-size:0.85rem; margin:0 1px;">:</span>
+            <span style="color:#38bdf8; font-weight:900; font-size:1.18rem; font-family:'Roboto Mono', monospace; text-shadow:0 0 8px rgba(56,189,248,0.7);">4</span>
+            <span class="badge bg-danger bg-opacity-75 text-white py-0.5 px-1 fw-bold ms-1" style="font-size:0.58rem;">1아웃</span>
+            <span style="font-size:0.55rem; letter-spacing:0.5px;">🔴⚪</span>
+          </div>
+
+          <!-- Middle/Center: Pure Open Field with Big Glowing 1·2·3루 Diamond -->
+          <div class="position-relative my-auto" style="cursor:pointer;" onclick="toggleSimDemo()" title="클릭하여 1·2·3루 베이스 점등 테스트">
+            <svg width="150" height="48" viewBox="0 0 150 48">
+              <!-- Infield Diamond Baseline -->
+              <polygon points="75,4 122,24 75,44 28,24" fill="rgba(6,78,59,0.40)" stroke="rgba(255,255,255,0.30)" stroke-width="1.2" stroke-dasharray="3,2" />
+              <!-- Pitcher's Mound -->
+              <ellipse cx="75" cy="24" rx="7" ry="3.5" fill="rgba(180,83,9,0.55)" stroke="rgba(255,255,255,0.3)" stroke-width="0.8" />
+              
+              <!-- 2루 Base (상단) -->
+              <polygon id="fieldBase2" points="75,1 81,5 75,9 69,5" class="live-base-unlit" />
+              <!-- 1루 Base (우측) -->
+              <polygon id="fieldBase1" points="122,20 128,24 122,28 116,24" class="live-base-neon-lit" />
+              <!-- 3루 Base (좌측) -->
+              <polygon id="fieldBase3" points="28,20 34,24 28,28 22,24" class="live-base-unlit" />
+              <!-- Home Plate (하단) -->
+              <polygon points="75,45 77.5,42.5 77.5,40.5 72.5,40.5 72.5,42.5" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.8" />
+
+              <!-- 베이스 라벨 텍스트 -->
+              <text id="lblBase2" x="75" y="14" text-anchor="middle" font-size="7.5" font-weight="900" fill="rgba(255,255,255,0.6)">2루</text>
+              <text id="lblBase1" x="134" y="27" text-anchor="start" font-size="7.5" font-weight="900" fill="#facc15" style="filter:drop-shadow(0 0 4px #facc15);">1루 ON</text>
+              <text id="lblBase3" x="16" y="27" text-anchor="end" font-size="7.5" font-weight="900" fill="rgba(255,255,255,0.6)">3루</text>
+            </svg>
+          </div>
+
+          <div style="font-size:0.58rem; color:rgba(255,255,255,0.6); letter-spacing:0.3px;">
+            LIVE MATCH RELAY
+          </div>
+        </div>
+
+        <!-- [FAR RIGHT] Away Team Side Pillar: Team Name & Batter -->
+        <div class="d-flex flex-column justify-content-between text-end" style="width:26%; max-width:130px; min-width:85px; z-index:4;">
+          <div>
+            <span class="badge bg-primary bg-opacity-75 text-white py-0.5 px-1.5 fw-bold mb-1 d-inline-block" style="font-size:0.55rem; letter-spacing:0.3px;">AWAY</span>
+            <div class="fw-black text-white text-truncate" style="font-size:0.92rem; text-shadow:0 1px 4px rgba(0,0,0,0.95); line-height:1.2;" title="LG 트윈스">
+              LG 트윈스
+            </div>
+          </div>
+          <div class="text-truncate" style="font-size:0.65rem; color:#cbd5e1; line-height:1.2;" title="오지환">
+            🏏 <span style="color:#94a3b8;">타:</span> <b class="text-white">오지환</b>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -305,6 +330,21 @@
     applyBase(f1, l1, b1, '1루');
     applyBase(f2, l2, b2, '2루');
     applyBase(f3, l3, b3, '3루');
+  }
+
+  let demoStateIdx = 1;
+  const demoStates = [
+    [false, false, false],
+    [true, false, false],
+    [true, true, false],
+    [true, true, true],
+    [false, true, false],
+    [false, false, true]
+  ];
+  function toggleSimDemo() {
+    demoStateIdx = (demoStateIdx + 1) % demoStates.length;
+    const [b1, b2, b3] = demoStates[demoStateIdx];
+    setBases(b1, b2, b3);
   }
 
   function applyBase(fieldElem, lblElem, isLit, label) {
