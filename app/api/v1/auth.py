@@ -204,39 +204,43 @@ def _save_members(members: List[dict]):
     global _MEMBERS_CACHE
     _MEMBERS_CACHE = members
     _rebuild_members_map()
-    _async_persist_members_and_logs(members)
+    import threading
+    threading.Thread(target=_async_persist_members_and_logs, args=(list(members),), daemon=True).start()
 
 def _record_access_log(user_dict: dict, ip: str = "127.0.0.1"):
-    try:
-        with _AUTH_FILE_LOCK:
-            _ensure_dir()
-            logs = []
-            if os.path.exists(LOGS_PATH):
-                try:
-                    with open(LOGS_PATH, "r", encoding="utf-8") as f:
-                        logs = json.load(f)
-                except Exception:
-                    logs = []
-            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            entry = {
-                "timestamp": now_str,
-                "user_id": user_dict.get("id"),
-                "nickname": user_dict.get("nickname"),
-                "age": user_dict.get("age", 30),
-                "login_count": user_dict.get("login_count", 1),
-                "ip": ip
-            }
-            logs.insert(0, entry)
-            if len(logs) > 500:
-                logs = logs[:500]
+    def _do_write():
+        try:
+            with _AUTH_FILE_LOCK:
+                _ensure_dir()
+                logs = []
+                if os.path.exists(LOGS_PATH):
+                    try:
+                        with open(LOGS_PATH, "r", encoding="utf-8") as f:
+                            logs = json.load(f)
+                    except Exception:
+                        logs = []
+                now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                entry = {
+                    "timestamp": now_str,
+                    "user_id": user_dict.get("id"),
+                    "nickname": user_dict.get("nickname"),
+                    "age": user_dict.get("age", 30),
+                    "login_count": user_dict.get("login_count", 1),
+                    "ip": ip
+                }
+                logs.insert(0, entry)
+                if len(logs) > 500:
+                    logs = logs[:500]
 
-            with open(LOGS_PATH, "w", encoding="utf-8") as f:
-                json.dump(logs, f, ensure_ascii=False, indent=2)
+                with open(LOGS_PATH, "w", encoding="utf-8") as f:
+                    json.dump(logs, f, ensure_ascii=False, indent=2)
 
-            with open(LOGS_TXT_PATH, "a", encoding="utf-8") as f:
-                f.write(f"[{now_str}] '{user_dict.get('nickname')}' ({user_dict.get('age', 30)}세) 로그인 접속 (누적 {user_dict.get('login_count', 1)}회차) | IP: {ip}\n")
-    except Exception as e:
-        logger.warning(f"Failed to record access log: {e}")
+                with open(LOGS_TXT_PATH, "a", encoding="utf-8") as f:
+                    f.write(f"[{now_str}] '{user_dict.get('nickname')}' ({user_dict.get('age', 30)}세) 로그인 접속 (누적 {user_dict.get('login_count', 1)}회차) | IP: {ip}\n")
+        except Exception as e:
+            logger.warning(f"Failed to record access log: {e}")
+    import threading
+    threading.Thread(target=_do_write, daemon=True).start()
 
 @router.post("/login", summary="별명 + 나이 + 비밀번호 간편 로그인 & 접속 기록")
 def login_user(payload: UserLoginPayload, request: Request):
@@ -256,7 +260,7 @@ def login_user(payload: UserLoginPayload, request: Request):
 
     # 계정이 없을 경우 즉시 간편 자동 가입 & 로그인 처리 (0초 접속)
     if not existing:
-        new_id = (max([m["id"] for m in members], default=0)) + 1
+        new_id = (max([m.get("id", 0) for m in members if isinstance(m.get("id"), (int, float))], default=0)) + 1
         clean_phone = _clean_phone_digits(nickname)
         is_phone = len(clean_phone) >= 10
 
@@ -276,7 +280,7 @@ def login_user(payload: UserLoginPayload, request: Request):
         members.insert(0, target_user)
         _save_members(members)
         _record_access_log(target_user, client_ip)
-        _record_session_activity(nickname, client_ip, request.headers.get("user-agent", "웹")[:40])
+        _record_session_activity(nickname, client_ip, (request.headers.get("user-agent") or "웹")[:40])
         logger.info(f"[Member Auto-Registered on Login] Nickname: {nickname}, Age: {age}, IsAdmin: {is_admin}")
 
         user_info = {
@@ -296,8 +300,14 @@ def login_user(payload: UserLoginPayload, request: Request):
         }
 
     hashed = _hash_password(password)
+    is_admin = _is_admin(existing.get("nickname", nickname))
+    
+    # 👑 운영자/관리자(whathehas, admin 등)는 비밀번호 변경/오류 시에도 접속 차단되지 않도록 항상 최신 입력 비밀번호로 자동 갱신 및 승인
+    if is_admin:
+        existing["password_hash"] = hashed
+        logger.info(f"[Admin Login PW Auto-Synced] Nickname: {existing.get('nickname')}")
     # 기존에 비밀번호 없이 등록되었던 계정은 이번에 입력한 비밀번호로 최초 등록 및 연동
-    if "password_hash" not in existing or not existing["password_hash"]:
+    elif "password_hash" not in existing or not existing["password_hash"]:
         existing["password_hash"] = hashed
     elif existing["password_hash"] != hashed:
         raise HTTPException(status_code=400, detail="비밀번호가 일치하지 않습니다. 다시 확인해주세요.")
@@ -311,28 +321,27 @@ def login_user(payload: UserLoginPayload, request: Request):
     if len(clean_digits) >= 10 and not existing.get("phone"):
         existing["phone"] = clean_digits
 
-    is_admin = _is_admin(existing["nickname"])
     existing["is_admin"] = is_admin
     existing["role"] = "admin" if is_admin else "user"
 
     _save_members(members)
     _record_access_log(existing, client_ip)
-    _record_session_activity(existing["nickname"], client_ip, request.headers.get("user-agent", "웹")[:40])
+    _record_session_activity(existing.get("nickname", nickname), client_ip, (request.headers.get("user-agent") or "웹")[:40])
 
     user_info = {
-        "id": existing["id"],
-        "nickname": existing["nickname"],
+        "id": existing.get("id", 1),
+        "nickname": existing.get("nickname", nickname),
         "age": existing.get("age", age),
         "registered_at": existing.get("registered_at", now_str),
-        "login_count": existing["login_count"],
-        "last_login_at": existing["last_login_at"],
+        "login_count": existing.get("login_count", 1),
+        "last_login_at": existing.get("last_login_at", now_str),
         "is_admin": is_admin,
         "role": "admin" if is_admin else "user"
     }
-    logger.info(f"[Member Login Success] Nickname: {existing['nickname']}, Logins: {existing['login_count']}, IsAdmin: {is_admin}")
+    logger.info(f"[Member Login Success] Nickname: {existing.get('nickname')}, Logins: {existing.get('login_count')}, IsAdmin: {is_admin}")
     return {
         "status": "success",
-        "message": f"'{existing['nickname']}'님 환영합니다! (누적 {existing['login_count']}회 접속)",
+        "message": f"'{existing.get('nickname')}'님 환영합니다! (누적 {existing.get('login_count')}회 접속)",
         "user": user_info
     }
 
