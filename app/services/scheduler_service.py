@@ -38,6 +38,7 @@ class SchedulerService:
     _is_running_task: bool = False
     _live_loop_task: Optional[asyncio.Task] = None
     _last_football_sync_ts: float = 0.0
+    _last_football_live_api_sync_ts: float = 0.0
     _last_baseball_sync_ts: float = 0.0
 
     @classmethod
@@ -644,6 +645,7 @@ class SchedulerService:
                                 elif "챔피언스" in lname or "UCL" in lname.upper(): active_soccer_leagues.add("UCL")
                                 elif "유로파" in lname or "UEL" in lname.upper(): active_soccer_leagues.add("UEL")
                                 elif "챔피언십" in lname or "CHAMPIONSHIP" in lname.upper(): active_soccer_leagues.add("CHAMPIONSHIP")
+                                elif "메이저" in lname or "MLS" in lname.upper(): active_soccer_leagues.add("MLS")
 
                     # 2. 🟡 시작 직전(15분 전) 또는 최근 3.5시간 내 시작한 SCHEDULED 경기 확인
                     sched_imminent = db.query(Match).filter(
@@ -669,6 +671,7 @@ class SchedulerService:
                                 elif "챔피언스" in lname or "UCL" in lname.upper(): active_soccer_leagues.add("UCL")
                                 elif "유로파" in lname or "UEL" in lname.upper(): active_soccer_leagues.add("UEL")
                                 elif "챔피언십" in lname or "CHAMPIONSHIP" in lname.upper(): active_soccer_leagues.add("CHAMPIONSHIP")
+                                elif "메이저" in lname or "MLS" in lname.upper(): active_soccer_leagues.add("MLS")
                 finally:
                     db.close()
 
@@ -732,7 +735,7 @@ class SchedulerService:
                                 d_db.close()
                         sync_tasks.append(asyncio.to_thread(_sync_free_soccer))
 
-                # (D) 유료 LiveApiSports 스마트 동적 수집 (한국/일본 야구 초고속 실시간 수집)
+                # (D) 유료 LiveApiSports 스마트 동적 수집 (한국/일본 야구 및 축구 실시간 수집)
                 from app.services.live_api_sports_service import LiveApiSportsService
                 if LiveApiSportsService.is_configured():
                     # ⚡ MLB는 공식 사이트로 수집하므로 유료 API-Baseball 호출 대상에서 완전 제외 (KBO/NPB만 연동)
@@ -748,9 +751,25 @@ class SchedulerService:
                                 total_up += (bb_res.get('updated_db_matches', 0) or 0)
                                 return total_up
                             except Exception as e:
-                                logger.warning(f"[Scheduler Smart LiveApi] 경고: {e}")
+                                logger.warning(f"[Scheduler Smart LiveApi Baseball] 경고: {e}")
                                 return 0
                         sync_tasks.append(asyncio.to_thread(_sync_smart_live_api))
+
+                    # ⚡ 축구(MLS, 해외 축구 등) 유료 LiveApiSports 실시간 수집 (LIVE 경기 10초 / 시작전후 30초 주기)
+                    fb_interval = 10.0 if soccer_live else 30.0
+                    should_sync_fb = (soccer_live or soccer_imminent) and (now_epoch - cls._last_football_live_api_sync_ts >= fb_interval)
+                    if should_sync_fb:
+                        def _sync_smart_live_football():
+                            total_up = 0
+                            try:
+                                cls._last_football_live_api_sync_ts = time.time()
+                                fb_res = LiveApiSportsService.sync_live_football(live_only=True)
+                                total_up += (fb_res.get('updated_db_matches', 0) or 0)
+                                return total_up
+                            except Exception as e:
+                                logger.warning(f"[Scheduler Smart LiveApi Football] 경고: {e}")
+                                return 0
+                        sync_tasks.append(asyncio.to_thread(_sync_smart_live_football))
 
                 # 병렬 실행
                 if sync_tasks:

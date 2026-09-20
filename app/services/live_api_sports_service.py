@@ -345,7 +345,39 @@ TEAM_SYNONYMS = {
     "우니온베를린": ["1. fc union berlin", "union berlin", "유니온베", "우니온 베를린", "유니온 베를린", "우니온베"],
     "빌레펠트": ["arminia bielefeld", "bielefeld", "아르미니아 빌레펠트"],
     "렉섬": ["wrexham", "wrexham afc", "렉섬 afc"],
-    "웨스트햄": ["west ham", "west ham united", "웨스트햄 유나이티드"]
+    "웨스트햄": ["west ham", "west ham united", "웨스트햄 유나이티드"],
+
+    # Soccer (USA - MLS)
+    "DC유나이티드": ["dc united", "d.c. united", "dc united fc", "dc유나이티드", "dc 유나이티드", "디씨유나이티드", "디씨 유나이티드"],
+    "샬럿": ["charlotte", "charlotte fc", "샬럿", "샬럿fc", "샬럿 fc"],
+    "몬트리올": ["cf montreal", "cf montréal", "montreal", "cf 몬트리올", "cf몽레알", "cf몬트리올", "몬트리올", "몽레알", "montreal impact"],
+    "콜럼버스크루": ["columbus crew", "columbus", "콜럼버스 크루", "콜럼버스크루", "콜럼버스"],
+    "뉴잉글랜드": ["new england revolution", "new england", "뉴잉글랜드 레벌루션", "뉴잉글랜드 레볼루션", "뉴잉글랜드레벌루션", "뉴잉글랜드레볼루션", "뉴잉글랜드"],
+    "올랜도시티": ["orlando city sc", "orlando city", "orlando", "올랜도 시티sc", "올랜도시티sc", "올랜도 시티 sc", "올랜도 시티", "올랜도시티"],
+    "새너제이": ["san jose earthquakes", "san jose", "earthquakes", "새너제이 어스퀘이크스", "새너제이어스퀘이크스", "산호세 어스퀘이크스", "산호세어스퀘이크스", "새너제이", "산호세"],
+    "LAFC": ["los angeles fc", "lafc", "la fc", "로스앤젤레스 fc", "로스앤젤레스 fc (lafc)", "로스앤젤레스fc"],
+    "댈러스": ["fc dallas", "dallas", "fc 댈러스", "fc댈러스", "댈러스"],
+    "오스틴": ["austin", "austin fc", "오스틴 fc", "오스틴fc", "오스틴"],
+    "휴스턴다이너모": ["houston dynamo", "houston dynamo fc", "휴스턴 다이너모 fc", "휴스턴 다이너모fc", "휴스턴다이너모fc", "휴스턴 다이너모", "휴스턴다이너모", "휴스턴 다이나모", "휴스턴다이나모"],
+    "신시내티": ["fc cincinnati", "cincinnati", "fc 신시내티", "fc신시내티", "신시내티"],
+    "캔자스시티": ["sporting kansas city", "sporting kc", "스포팅 캔자스시티", "스포팅캔자스시티", "스포팅 캔자스 시티", "캔자스시티"],
+    "필라델피아유니언": ["philadelphia union", "philadelphia", "필라델피아 유니언", "필라델피아유니언", "필라델피아 유니온", "필라델피아유니온", "필라델피아"],
+    "미네소타U": ["minnesota united fc", "minnesota united", "미네소타 유나이티드 fc", "미네소타 유나이티드fc", "미네소타유나이티드fc", "미네소타 유나이티드", "미네소타유나이티드", "미네소타u", "미네소타"],
+    "LA갤럭시": ["los angeles galaxy", "la galaxy", "la 갤럭시", "la갤럭시", "로스앤젤레스 갤럭시"],
+    "세인트루이스시티": ["st. louis city", "st louis city", "st. louis city sc", "st louis city sc", "세인트루이스 시티 sc", "세인트루이스 시티sc", "세인트루이스시티sc", "세인트루이스 시티", "세인트루이스시티", "세인트루이스c", "세인트루이스"],
+    "토론토": ["toronto fc", "toronto", "토론토 fc", "토론토fc", "토론토"],
+    "콜로라도래피즈": ["colorado rapids", "colorado", "콜로라도 래피즈", "콜로라도래피즈", "콜로라도"],
+    "시애틀사운더스": ["seattle sounders", "seattle sounders fc", "시애틀 사운더스 fc", "시애틀 사운더스fc", "시애틀사운더스fc", "시애틀 사운더스", "시애틀사운더스", "시애틀"],
+    "내슈빌": ["nashville sc", "nashville", "내슈빌 sc", "내슈빌sc", "내슈빌"],
+    "시카고파이어": ["chicago fire", "chicago fire fc", "시카고 파이어 fc", "시카고 파이어fc", "시카고파이어fc", "시카고 파이어", "시카고파이어", "시카고"],
+    "솔트레이크": ["real salt lake", "salt lake", "레알 솔트레이크", "레알솔트레이크", "솔트레이크"],
+    "밴쿠버": ["vancouver whitecaps", "vancouver whitecaps fc", "밴쿠버 화이트캡스 fc", "밴쿠버 화이트캡스fc", "밴쿠버화이트캡스fc", "밴쿠버 화이트캡스", "밴쿠버화이트캡스", "밴쿠버"],
+    "포틀랜드": ["portland timbers", "portland timbers fc", "포틀랜드 팀버스", "포틀랜드팀버스", "포틀랜드 팀버즈", "포틀랜드팀버즈", "포틀랜드"],
+    "애틀랜타U": ["atlanta united fc", "atlanta united", "애틀랜타 유나이티드 fc", "애틀랜타 유나이티드fc", "애틀랜타유나이티드fc", "애틀랜타 유나이티드", "애틀랜타유나이티드", "애틀랜타u", "애틀랜타"],
+    "마이애미": ["inter miami", "inter miami cf", "인터 마이애미 cf", "인터 마이애미cf", "인터마이애미cf", "인터 마이애미", "인터마이애미", "마이애미"],
+    "NY레드불스": ["new york red bulls", "ny red bulls", "new york red bull", "뉴욕 레드불스", "뉴욕레드불스", "뉴욕 레드 불스", "ny레드불스"],
+    "NY시티": ["new york city fc", "new york city", "ny city fc", "nycfc", "뉴욕 시티 fc", "뉴욕 시티fc", "뉴욕시티fc", "뉴욕 시티", "뉴욕시티", "ny시티fc"],
+    "샌디에이고": ["san diego fc", "san diego", "샌디에이고 fc", "샌디에이고fc", "샌디에이고"]
 }
 
 def normalize_name(n: str) -> str:
@@ -358,6 +390,9 @@ for _k, _aliases in TEAM_SYNONYMS.items():
     _CANONICAL_LOOKUP[_k_norm] = _k
     for _a in _aliases:
         _CANONICAL_LOOKUP[normalize_name(_a)] = _k
+
+# Sort canonical keys by length descending so specific full names match before short ambiguous substrings
+_CANONICAL_KEYS_SORTED: List[str] = sorted(_CANONICAL_LOOKUP.keys(), key=len, reverse=True)
 
 def clean_team_tokens(n: str) -> str:
     s = normalize_name(n)
@@ -374,9 +409,14 @@ def get_canonical(n: str) -> str:
         return ""
     if norm in _CANONICAL_LOOKUP:
         return _CANONICAL_LOOKUP[norm]
-    for k, canon in _CANONICAL_LOOKUP.items():
-        if len(k) >= 3 and (k in norm or norm in k):
-            return canon
+    clean = clean_team_tokens(norm)
+    if clean and clean in _CANONICAL_LOOKUP:
+        return _CANONICAL_LOOKUP[clean]
+    for k in _CANONICAL_KEYS_SORTED:
+        if len(k) >= 4 and k in norm:
+            return _CANONICAL_LOOKUP[k]
+        elif len(k) >= 2 and any('\uac00' <= ch <= '\ud7a3' for ch in k) and k in norm:
+            return _CANONICAL_LOOKUP[k]
     return norm
 
 
@@ -785,7 +825,57 @@ SOCCER_TEAM_KO_MAP = {
     "Celtic": "셀틱",
     "Rangers": "레인저스",
     "Galatasaray": "갈라타사라이",
-    "Besiktas": "베식타스"
+    "Besiktas": "베식타스",
+
+    # USA MLS
+    "DC United": "DC유나이티드",
+    "D.C. United": "DC유나이티드",
+    "Charlotte": "샬럿FC",
+    "Charlotte FC": "샬럿FC",
+    "CF Montreal": "CF몽레알",
+    "CF Montréal": "CF몽레알",
+    "Columbus Crew": "콜럼버스 크루",
+    "New England Revolution": "뉴잉글랜드 레벌루션",
+    "Orlando City SC": "올랜도 시티SC",
+    "Orlando City": "올랜도 시티SC",
+    "San Jose Earthquakes": "새너제이 어스퀘이크스",
+    "Los Angeles FC": "LAFC",
+    "LAFC": "LAFC",
+    "FC Dallas": "FC댈러스",
+    "Austin": "오스틴FC",
+    "Austin FC": "오스틴FC",
+    "Houston Dynamo": "휴스턴 다이너모FC",
+    "Houston Dynamo FC": "휴스턴 다이너모FC",
+    "FC Cincinnati": "FC신시내티",
+    "Sporting Kansas City": "스포팅 캔자스시티",
+    "Philadelphia Union": "필라델피아 유니언",
+    "Minnesota United FC": "미네소타 유나이티드FC",
+    "Minnesota United": "미네소타 유나이티드FC",
+    "Los Angeles Galaxy": "LA 갤럭시",
+    "LA Galaxy": "LA 갤럭시",
+    "St. Louis City": "세인트루이스 시티SC",
+    "St. Louis City SC": "세인트루이스 시티SC",
+    "Toronto FC": "토론토FC",
+    "Colorado Rapids": "콜로라도 래피즈",
+    "Seattle Sounders": "시애틀 사운더스FC",
+    "Seattle Sounders FC": "시애틀 사운더스FC",
+    "Nashville SC": "내슈빌SC",
+    "Chicago Fire": "시카고 파이어FC",
+    "Chicago Fire FC": "시카고 파이어FC",
+    "Real Salt Lake": "레알 솔트레이크",
+    "Vancouver Whitecaps": "밴쿠버 화이트캡스FC",
+    "Vancouver Whitecaps FC": "밴쿠버 화이트캡스FC",
+    "Portland Timbers": "포틀랜드 팀버스",
+    "Portland Timbers FC": "포틀랜드 팀버스",
+    "Atlanta United FC": "애틀랜타 유나이티드FC",
+    "Atlanta United": "애틀랜타 유나이티드FC",
+    "Inter Miami": "인터 마이애미CF",
+    "Inter Miami CF": "인터 마이애미CF",
+    "New York Red Bulls": "뉴욕 레드불스",
+    "NY Red Bulls": "뉴욕 레드불스",
+    "New York City FC": "뉴욕 시티FC",
+    "San Diego": "샌디에이고FC",
+    "San Diego FC": "샌디에이고FC"
 }
 
 def translate_soccer_team(name: str) -> str:
@@ -837,6 +927,15 @@ def teams_match(api_name: str, db_name: str) -> bool:
     canon_db = get_canonical(db_name)
     if canon_api and canon_db and canon_api == canon_db:
         return True
+
+    # 1.5. SOCCER_TEAM_KO_MAP translation match
+    tr_api = translate_soccer_team(api_name)
+    if tr_api:
+        if tr_api == db_name or normalize_name(tr_api) == norm_db:
+            return True
+        c_tr = get_canonical(tr_api)
+        if c_tr and canon_db and c_tr == canon_db:
+            return True
 
     # 2. Clean tokens match (e.g. Wolverhampton Wanderers vs Wolverhampton, Brighton & Hove Albion vs Brighton)
     clean_api = clean_team_tokens(api_name)
