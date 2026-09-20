@@ -255,9 +255,33 @@ class HistoricalAgentRouter:
                     return False
                 s1 = str(t1).strip().lower().replace(' ', '').replace('·', '').replace('.', '').replace('-', '')
                 s2 = str(t2).strip().lower().replace(' ', '').replace('·', '').replace('.', '').replace('-', '')
-                if s1 == s2 or s1 in s2 or s2 in s1:
+                if s1 == s2:
                     return True
-                for sfx in ['프로축구단', '축구단', '1995', '블루윙즈', '모터스', '스틸러스', '시티', 'fc']:
+
+                # 🛡️ 맨체스터 시티(맨시티) vs 맨체스터 유나이티드(맨유) 절대 상호 오매칭 방지
+                is_manc_1 = ('맨시티' in s1 or '맨체스터시티' in s1 or 'mancity' in s1 or 'manchestercity' in s1)
+                is_manc_2 = ('맨시티' in s2 or '맨체스터시티' in s2 or 'mancity' in s2 or 'manchestercity' in s2)
+                is_manu_1 = ('맨유' in s1 or '맨체스터유' in s1 or 'manutd' in s1 or 'manchesterunited' in s1)
+                is_manu_2 = ('맨유' in s2 or '맨체스터유' in s2 or 'manutd' in s2 or 'manchesterunited' in s2)
+                if (is_manc_1 and is_manu_2) or (is_manu_1 and is_manc_2):
+                    return False
+
+                # LiveApiSports canonical lookup 우선 확인
+                try:
+                    from app.services.live_api_sports_service import get_canonical
+                    c1 = get_canonical(t1)
+                    c2 = get_canonical(t2)
+                    if c1 and c2:
+                        return c1 == c2
+                except Exception:
+                    pass
+
+                if s1 in s2 or s2 in s1:
+                    # 도시는 같지만 구단이 다른 경우 추가 방어 (예: 뉴욕시티 vs 뉴욕레드불스)
+                    if ('시티' in s1 and '레드불' in s2) or ('레드불' in s1 and '시티' in s2):
+                        return False
+                    return True
+                for sfx in ['프로축구단', '축구단', '1995', '블루윙즈', '모터스', '스틸러스', 'fc']:
                     s1 = s1.replace(sfx, '')
                     s2 = s2.replace(sfx, '')
                 return len(s1) >= 2 and len(s2) >= 2 and (s1 in s2 or s2 in s1)
@@ -642,8 +666,33 @@ class HistoricalAgentRouter:
 
             # 4. 일관된 표준 DTO로 변환
             def format_match_dto(m: Match, perspective_team: str) -> Dict[str, Any]:
-                is_home = (m.home_team_name == perspective_team or teams_match(m.home_team_name, perspective_team))
+                h_match = (m.home_team_name == perspective_team or teams_match(m.home_team_name, perspective_team))
+                a_match = (m.away_team_name == perspective_team or teams_match(m.away_team_name, perspective_team))
+                if h_match and not a_match:
+                    is_home = True
+                elif a_match and not h_match:
+                    is_home = False
+                else:
+                    try:
+                        from app.services.live_api_sports_service import get_canonical
+                        p_c = get_canonical(perspective_team)
+                        h_c = get_canonical(m.home_team_name)
+                        a_c = get_canonical(m.away_team_name)
+                        if h_c == p_c and a_c != p_c:
+                            is_home = True
+                        elif a_c == p_c and h_c != p_c:
+                            is_home = False
+                        else:
+                            is_home = (m.home_team_name == perspective_team)
+                    except Exception:
+                        is_home = (m.home_team_name == perspective_team)
+
                 opp_team = m.away_team_name if is_home else m.home_team_name
+                # 🛡️ 절대 상대팀이 기준팀(perspective_team)과 동일하게 표기되지 않도록 완벽 방어
+                if teams_match(opp_team, perspective_team) or opp_team == perspective_team:
+                    opp_team = m.home_team_name if is_home else m.away_team_name
+                    is_home = not is_home
+
                 my_score = m.home_score if is_home else m.away_score
                 opp_score = m.away_score if is_home else m.home_score
 

@@ -6,6 +6,7 @@ import json
 import urllib.request
 import logging
 from typing import Dict, Any, List, Optional
+from functools import lru_cache
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import or_
@@ -380,6 +381,7 @@ TEAM_SYNONYMS = {
     "샌디에이고": ["san diego fc", "san diego", "샌디에이고 fc", "샌디에이고fc", "샌디에이고"]
 }
 
+@lru_cache(maxsize=8192)
 def normalize_name(n: str) -> str:
     if not n: return ""
     return str(n).replace(" ", "").replace("·", "").replace(".", "").replace("-", "").replace("/", "").lower()
@@ -394,6 +396,7 @@ for _k, _aliases in TEAM_SYNONYMS.items():
 # Sort canonical keys by length descending so specific full names match before short ambiguous substrings
 _CANONICAL_KEYS_SORTED: List[str] = sorted(_CANONICAL_LOOKUP.keys(), key=len, reverse=True)
 
+@lru_cache(maxsize=8192)
 def clean_team_tokens(n: str) -> str:
     s = normalize_name(n)
     for stop in ["footballclub", "football", "club", "city", "united", "town", "athletic", "rovers", "wanderers", "hotspur", "albion", "자이언츠", "베어스", "트윈스", "라이온즈", "타이거즈", "이글스", "랜더스", "히어로즈", "다이노스", "위즈", "fc", "cf", "sc", "ac"]:
@@ -403,6 +406,7 @@ def clean_team_tokens(n: str) -> str:
             s = s[len(stop):]
     return s
 
+@lru_cache(maxsize=8192)
 def get_canonical(n: str) -> str:
     norm = normalize_name(n)
     if not norm:
@@ -878,6 +882,15 @@ SOCCER_TEAM_KO_MAP = {
     "San Diego FC": "샌디에이고FC"
 }
 
+_NORM_SOCCER_TEAM_KO_MAP: Dict[str, str] = {}
+for _k, _v in SOCCER_TEAM_KO_MAP.items():
+    _n = normalize_name(_k)
+    if _n not in _NORM_SOCCER_TEAM_KO_MAP:
+        _NORM_SOCCER_TEAM_KO_MAP[_n] = _v
+
+_SOCCER_KO_SUBSTR_KEYS: List[str] = sorted([k for k in SOCCER_TEAM_KO_MAP.keys() if len(k) >= 4], key=len, reverse=True)
+
+@lru_cache(maxsize=4096)
 def translate_soccer_team(name: str) -> str:
     if not name:
         return ""
@@ -885,14 +898,15 @@ def translate_soccer_team(name: str) -> str:
     if trimmed in SOCCER_TEAM_KO_MAP:
         return SOCCER_TEAM_KO_MAP[trimmed]
     norm = normalize_name(trimmed)
-    for k, v in SOCCER_TEAM_KO_MAP.items():
-        if normalize_name(k) == norm:
-            return v
-    for k, v in SOCCER_TEAM_KO_MAP.items():
-        if len(k) >= 4 and k.lower() in trimmed.lower():
-            return v
+    if norm in _NORM_SOCCER_TEAM_KO_MAP:
+        return _NORM_SOCCER_TEAM_KO_MAP[norm]
+    trimmed_lower = trimmed.lower()
+    for k in _SOCCER_KO_SUBSTR_KEYS:
+        if k.lower() in trimmed_lower:
+            return SOCCER_TEAM_KO_MAP[k]
     return trimmed
 
+@lru_cache(maxsize=4096)
 def clean_international_team_name(n: str) -> str:
     if not n:
         return ""
@@ -900,6 +914,7 @@ def clean_international_team_name(n: str) -> str:
     n = re.sub(r'[\s_]+(여자|남자|w|m|women|men|u23|u20|u18)$', '', n, flags=re.IGNORECASE)
     return n.strip()
 
+@lru_cache(maxsize=32768)
 def teams_match(api_name: str, db_name: str) -> bool:
     norm_api = normalize_name(api_name)
     norm_db = normalize_name(db_name)
@@ -1449,10 +1464,9 @@ class LiveApiSportsService:
                 fixtures_day_after = (data_day_after or {}).get("response", [])
 
             fixtures_yesterday = []
-            if include_adjacent or now_dt.hour < 12:
-                # 새벽/오전에는 어제 유럽 경기 결과 최신화
-                data_yesterday = cls._make_request(f"/fixtures?date={d_yesterday}", sport="football")
-                fixtures_yesterday = (data_yesterday or {}).get("response", [])
+            # ⚡ 미국 MLS 및 야간/시차 경기는 UTC 기준 어제(d_yesterday)에 편성되므로 항시 수집 보장
+            data_yesterday = cls._make_request(f"/fixtures?date={d_yesterday}", sport="football")
+            fixtures_yesterday = (data_yesterday or {}).get("response", [])
 
             all_fixtures_dict = {}
             for f in (fixtures_today + fixtures_yesterday + fixtures_tomorrow + fixtures_day_after + fixtures_live):
@@ -1489,13 +1503,19 @@ class LiveApiSportsService:
 
             # Auto-resolve stale LIVE matches older than 4.5 hours to FINISHED
             stale_cutoff = (now_dt - timedelta(hours=4, minutes=30)).strftime("%Y-%m-%d %H:%M")
-            stale_live = db.query(Match).filter(Match.sport_code == "SOCCER", Match.status == "LIVE", Match.match_date < stale_cutoff).all()
+            stale_live = [m for m in db_matches if m.status == "LIVE" and m.match_date and m.match_date < stale_cutoff]
             for sm in stale_live:
                 sm.status = "FINISHED"
 
             db_by_home = defaultdict(list)
+            db_by_official_id = {}
+            db_by_day = defaultdict(list)
             for m in db_matches:
                 db_by_home[get_canonical(m.home_team_name)].append(m)
+                if m.official_id:
+                    db_by_official_id[str(m.official_id)] = m
+                if m.match_date:
+                    db_by_day[m.match_date[:10]].append(m)
 
             for f in all_fixtures:
                 fixture_info = f.get("fixture", {})
@@ -1508,6 +1528,11 @@ class LiveApiSportsService:
                 a_name = teams.get("away", {}).get("name", "")
                 status_short = fixture_info.get("status", {}).get("short", "")
                 country = league.get("country", "") or ""
+                # 🚀 95%의 비대상 해외 하부/비인기 리그 즉시 필터링 (불필요한 80만 회 teams_match 루프 원천 제거)
+                if country not in {"England", "Spain", "Germany", "Italy", "France", "Netherlands", "Japan", "South-Korea", "USA", "World"}:
+                    raw_lname_l = (league.get("name") or "").lower()
+                    if not any(k in raw_lname_l for k in ["champions", "europa", "conference", "premier", "mls", "major league soccer"]):
+                        continue
 
                 mapped_status = FOOTBALL_STATUS_MAP.get(status_short, "SCHEDULED")
                 h_score = goals.get("home") if goals.get("home") is not None else 0
@@ -1517,7 +1542,7 @@ class LiveApiSportsService:
                 canon_h = get_canonical(h_name)
                 candidate_matches = db_by_home.get(canon_h, [])
                 if not candidate_matches:
-                    # 유연한 2차 검색 (동의어 사전 미등록 팀도 teams_match로 전체 DB 매칭)
+                    # 유연한 2차 검색 (관련 국가 경기만 대상으로 초고속 매칭)
                     candidate_matches = [m for m in db_matches if teams_match(h_name, m.home_team_name)]
 
                 # Pick the match candidate with the closest scheduled time
@@ -1555,52 +1580,6 @@ class LiveApiSportsService:
                     }
                     best_match.details.period_scores = json.dumps(period_dict)
                     updated += 1
-                elif mapped_status == "SCHEDULED" and kst_dt:
-                    raw_lname = league.get("name", "")
-                    # DB에 없는 신규 예정 경기 자동 등록 (사우디리그 및 독일 2부리그 등 비대상 리그 제외)
-                    # 배트맨 프로토/토토 및 주요 공식 리그만 엄격 허용
-                    allowed_major_leagues = [
-                        "Premier League", "Championship", "FA Cup", "EFL Cup", "Carabao Cup",
-                        "La Liga", "Copa del Rey",
-                        "Bundesliga", "DFB Pokal",
-                        "Serie A", "Coppa Italia",
-                        "Ligue 1", "Coupe de France",
-                        "Eredivisie",
-                        "K League 1", "K League 2", "FA Cup",
-                        "J1 League", "J2 League", "J.League",
-                        "Major League Soccer", "MLS",
-                        "UEFA Champions League", "UEFA Europa League", "UEFA Conference League", "UCL", "UEL",
-                        "AFC Champions League", "Club World Cup", "World Cup", "Euro"
-                    ]
-                    # 하부/아마추어/청소년/비인기 리그 제외
-                    lower_name = raw_lname.lower()
-                    if any(bad in lower_name for bad in ["amateur", "reserve", "u18", "u19", "u20", "u21", "oberliga", "serie c", "serie d", "national league", "isthmian", "southern", "northern", "women", "frauen", "feminine", "2. bundesliga", "2.bundesliga", "3. liga", "regionalliga", "primavera", "derde", "tweede", "eerste", "challenger", "next pro", "usl", "friendlies", "trophy"]):
-                        continue
-                    if not any(good.lower() in lower_name for good in allowed_major_leagues):
-                        continue
-
-                    if country in ["England", "Spain", "Germany", "Italy", "France", "Netherlands", "Japan", "South-Korea", "USA", "World"]:
-                        fix_id_str = str(fixture_info.get("id", ""))
-                        m_date_str = kst_dt.strftime("%Y-%m-%d %H:%M")
-                        d_str = m_date_str[:10]
-                        h_trans = translate_soccer_team(h_name)
-                        a_trans = translate_soccer_team(a_name)
-
-                        existing_m = db.query(Match).filter(Match.official_id == fix_id_str).first() if fix_id_str else None
-                        if not existing_m:
-                            day_m = db.query(Match).filter(
-                                Match.sport_code == "SOCCER",
-                                Match.match_date.like(f"{d_str}%")
-                            ).all()
-                            for dm in day_m:
-                                if teams_match(dm.home_team_name, h_trans) and teams_match(dm.away_team_name, a_trans):
-                                    existing_m = dm
-                                    break
-
-                        # Only update existing DB matches to maintain strict alignment with Betman
-                        if existing_m and existing_m.status != "FINISHED":
-                            existing_m.status = mapped_status
-                            updated += 1
             db.commit()
 
             # Broadcast real-time update via WebSocket & clear cache if any scores changed

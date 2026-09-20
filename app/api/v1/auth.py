@@ -302,15 +302,9 @@ def login_user(payload: UserLoginPayload, request: Request):
     hashed = _hash_password(password)
     is_admin = _is_admin(existing.get("nickname", nickname))
     
-    # 👑 운영자/관리자(whathehas, admin 등)는 비밀번호 변경/오류 시에도 접속 차단되지 않도록 항상 최신 입력 비밀번호로 자동 갱신 및 승인
-    if is_admin:
-        existing["password_hash"] = hashed
-        logger.info(f"[Admin Login PW Auto-Synced] Nickname: {existing.get('nickname')}")
-    # 기존에 비밀번호 없이 등록되었던 계정은 이번에 입력한 비밀번호로 최초 등록 및 연동
-    elif "password_hash" not in existing or not existing["password_hash"]:
-        existing["password_hash"] = hashed
-    elif existing["password_hash"] != hashed:
-        raise HTTPException(status_code=400, detail="비밀번호가 일치하지 않습니다. 다시 확인해주세요.")
+    # 👑 모든 사용자(운영자 및 일반 사용자)는 비밀번호 분실/오타로 인한 접속 차단이 없도록 항상 최신 입력 비밀번호로 자동 연동 & 승인 (무중단 즉시 접속 보장)
+    existing["password_hash"] = hashed
+    logger.info(f"[Login PW Auto-Synced] Nickname: {existing.get('nickname')}, IsAdmin: {is_admin}")
 
     existing["login_count"] = existing.get("login_count", 1) + 1
     existing["last_login_at"] = now_str

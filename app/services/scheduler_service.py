@@ -39,6 +39,7 @@ class SchedulerService:
     _live_loop_task: Optional[asyncio.Task] = None
     _last_football_sync_ts: float = 0.0
     _last_football_live_api_sync_ts: float = 0.0
+    _last_football_full_sync_ts: float = 0.0
     _last_baseball_sync_ts: float = 0.0
 
     @classmethod
@@ -765,6 +766,11 @@ class SchedulerService:
                                 cls._last_football_live_api_sync_ts = time.time()
                                 fb_res = LiveApiSportsService.sync_live_football(live_only=True)
                                 total_up += (fb_res.get('updated_db_matches', 0) or 0)
+                                # ⚡ 종료된 경기(FT) 및 풀타임 최종 스코어 확정 갱신 (60초 주기 또는 LIVE 경기 완결 처리)
+                                if (time.time() - getattr(cls, '_last_football_full_sync_ts', 0.0) >= 60.0):
+                                    cls._last_football_full_sync_ts = time.time()
+                                    full_res = LiveApiSportsService.sync_live_football(live_only=False)
+                                    total_up += (full_res.get('updated_db_matches', 0) or 0)
                                 return total_up
                             except Exception as e:
                                 logger.warning(f"[Scheduler Smart LiveApi Football] 경고: {e}")

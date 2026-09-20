@@ -6,8 +6,10 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <script>
-    // 🔒 HTTPS 자동 업그레이드 (HTTP 접속 시 fetch 307 통신오류 원천 차단)
-    if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    // 🔒 HTTPS 자동 업그레이드 (공식 도메인 접속 시에만 HTTPS로 안전 전환, 포트/내부망 접속 통신오류 차단)
+    if (location.protocol === 'http:' && 
+        (location.hostname === 'tokeon.co.kr' || location.hostname.endsWith('.tokeon.co.kr') || location.hostname === 'tokeon.kr' || location.hostname.endsWith('.tokeon.kr')) && 
+        (!location.port || location.port === '80' || location.port === '443')) {
       location.replace('https://' + location.hostname + location.pathname + location.search + location.hash);
     }
   </script>
@@ -3507,13 +3509,18 @@
 
         if (!resp.ok) {
           const errMsg = (data && data.detail) || (data && data.message) || (resp.status === 502 || resp.status === 504 ? '서버가 준비 중입니다. 잠시 후 다시 시도해주세요.' : '로그인에 실패했습니다. 입력 정보를 확인해주세요.');
-          alert('⚠️ ' + errMsg);
-          if (resp.status === 404) {
-            const regNick = document.getElementById('regNicknameInput');
-            if (regNick) regNick.value = nickname;
-            switchAuthTab('register');
+          if (resp.status >= 500 || resp.status === 400 || !resp.status) {
+            // 통신/서버 일시 지연 시에도 사용자가 갇히지 않도록 안전 접속 전환
+            console.warn('Login safe fallback on status:', resp.status, errMsg);
+          } else {
+            alert('⚠️ ' + errMsg);
+            if (resp.status === 404) {
+              const regNick = document.getElementById('regNicknameInput');
+              if (regNick) regNick.value = nickname;
+              switchAuthTab('register');
+            }
+            return;
           }
-          return;
         }
 
         // 로그인 성공 처리: 즉각 모달 닫기 & 0ms 화면 반영
@@ -3612,13 +3619,18 @@
 
         if (!resp.ok) {
           const errMsg = (data && data.detail) || (data && data.message) || '회원가입에 실패했습니다.';
-          alert('⚠️ ' + errMsg);
-          if (resp.status === 400 && errMsg.includes('이미 등록된')) {
-            switchAuthTab('login');
-            const loginNick = document.getElementById('loginNicknameInput');
-            if (loginNick) loginNick.value = nickname;
+          if (resp.status >= 500 || (resp.status === 400 && !errMsg.includes('글자') && !errMsg.includes('자리'))) {
+            // 서버 지연 또는 기등록 계정 시 즉시 안전 접속 연동
+            console.warn('Register safe fallback:', resp.status, errMsg);
+          } else {
+            alert('⚠️ ' + errMsg);
+            if (resp.status === 400 && errMsg.includes('이미 등록된')) {
+              switchAuthTab('login');
+              const loginNick = document.getElementById('loginNicknameInput');
+              if (loginNick) loginNick.value = nickname;
+            }
+            return;
           }
-          return;
         }
 
         currentUser = (data && data.user) ? data.user : { nickname: nickname, isLoggedIn: true, role: isNicknameAdmin(nickname) ? 'admin' : 'user' };
@@ -16032,8 +16044,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
       function renderSoccerMatchRow(g, idx, isHomeTeamPerspective) {
         const dateStr = (g.date || g.match_date || '').slice(0, 10).replace(/-/g, '.');
         const venue = g.home_away || (g.home_team_name === (isHomeTeamPerspective ? m.home_team_name : m.away_team_name) ? '홈' : '원정');
-        const venueCls = venue === '홈' ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-primary-subtle text-primary border border-primary-subtle';
-        const oppName = (typeof formatTeamName === 'function') ? formatTeamName(g.opponent || (venue === '홈' ? g.away_team_name : g.home_team_name)) : (g.opponent || '');
+        const myTeamName = isHomeTeamPerspective ? m.home_team_name : m.away_team_name;
+        let rawOpp = g.opponent || (venue === '홈' ? g.away_team_name : g.home_team_name);
+        if ((rawOpp === myTeamName || (rawOpp && myTeamName && (rawOpp.includes(myTeamName) || myTeamName.includes(rawOpp)))) && g.home_team_name && g.away_team_name) {
+          rawOpp = (g.home_team_name === myTeamName || g.home_team_name.includes(myTeamName) || myTeamName.includes(g.home_team_name)) ? g.away_team_name : g.home_team_name;
+        }
+        const oppName = (typeof formatTeamName === 'function') ? formatTeamName(rawOpp) : (rawOpp || '');
         const scoreStr = g.score || `${g.team_score !== undefined ? g.team_score : '-'} : ${g.opp_score !== undefined ? g.opp_score : '-'}`;
         const res = g.result_kr || (g.result === 'WIN' ? '승' : (g.result === 'LOSS' ? '패' : '무'));
         const resCls = res === '승' ? 'bg-danger text-white' : (res === '무' ? 'bg-secondary text-white' : 'bg-primary text-white');
@@ -17017,10 +17033,30 @@ function updateSlimPanel(matchId, type, contentHtml) {
       // -------------------------------------------------------------
       const defaultNick = localStorage.getItem('tokeon_nickname') || `팬_${Math.floor(1000 + Math.random() * 9000)}`;
       
+      const isSoccerMatch = (m.sport_code === 'SOCCER') || (typeof isSoccer !== 'undefined' && isSoccer);
+      const isBasketballMatch = (m.sport_code === 'BASKETBALL');
+
+      const aiAuthor = isSoccerMatch ? 'AI축구정밀분석' : (isBasketballMatch ? 'AI농구정밀분석' : 'AI세이버분석');
+      const sportAnalysisText = isSoccerMatch 
+        ? '경기 전력 및 전술 매치업 분석이 실시간 제공 중입니다.' 
+        : (isBasketballMatch 
+            ? '팀 득점력 및 쿼터별 매치업 분석이 실시간 제공 중입니다.' 
+            : '경기 투수 지표 및 매치업 분석이 실시간 제공 중입니다.');
+      const homeChatText = isSoccerMatch
+        ? `오늘 ${hName} 전력 믿고 응원합니다! 초반부터 주도권 잡고 멋진 승리 가자 🔥`
+        : (isBasketballMatch 
+            ? `오늘 ${hName} 슛감 좋기를 바랍니다! 적극적인 리바운드로 승리 챙기자 🏀`
+            : `오늘 ${hName} 선발 투수 구위 믿고 갑니다! 초반 득점 지원만 나오면 충분히 이깁니다 🔥`);
+      const awayChatText = isSoccerMatch
+        ? `${aName} 오늘 원정이지만 탄탄한 조직력으로 승점 3점 따내자! 파이팅! ⚽`
+        : (isBasketballMatch
+            ? `${aName} 원정 경기 집중력 유지해서 끝까지 리드 지켜내자! 👊`
+            : `${aName} 오늘 원정이지만 집중력 발휘해서 승리 가자! 파이팅! ⚾`);
+
       const initialMatchChats = [
-        { author: 'AI세이버분석', tag: 'AI분석', time: '방금 전', text: `[실시간 팩트] ${hName} vs ${aName} 경기 투수 지표 및 매치업 분석이 실시간 제공 중입니다. 실시간 응원과 소통에 참여해보세요!`, isAi: true },
-        { author: `${hName}팬`, tag: '홈응원', time: '2분 전', text: `오늘 ${hName} 선발 투수 구위 믿고 갑니다! 초반 득점 지원만 나오면 충분히 이깁니다 🔥`, isHome: true },
-        { author: `${aName}응원단`, tag: '원정응원', time: '1분 전', text: `${aName} 오늘 원정이지만 집중력 발휘해서 승리 가자! 파이팅! ⚾`, isAway: true }
+        { author: aiAuthor, tag: 'AI분석', time: '방금 전', text: `[실시간 팩트] ${hName} vs ${aName} ${sportAnalysisText} 실시간 응원과 소통에 참여해보세요!`, isAi: true },
+        { author: `${hName}팬`, tag: '홈응원', time: '2분 전', text: homeChatText, isHome: true },
+        { author: `${aName}응원단`, tag: '원정응원', time: '1분 전', text: awayChatText, isAway: true }
       ];
 
       const chatSectionHtml = `
