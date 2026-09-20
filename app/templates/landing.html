@@ -12568,23 +12568,22 @@ function getFullModalMatchList() {
       if (evType === 'HOMERUN' || evType === 'HR') {
         const hrSub = activeEv.subtext || '💥 쾅! 홈런 작렬!! 백스크린 넘기는 초대형 아치!';
         return `
-          <div class="live-baseball-event-overlay position-absolute d-flex flex-column justify-content-center align-items-center text-center px-3" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(15,23,42,0.68) 0%, rgba(45,15,5,0.88) 100%), url('/static/images/baseball_homerun_epic_${evImgIdx}.jpg') center 40%/cover no-repeat; border-radius:8px; border:1.5px solid #f59e0b; box-shadow:0 0 20px rgba(245,158,11,0.6); pointer-events:auto;">
-            ${closeBtnHtml}
-            <div class="d-flex align-items-center gap-2 mb-1.5 live-anim-homerun-text-burst">
-              <span class="badge bg-warning text-dark fw-black px-2.5 py-1" style="font-size:0.80rem; font-weight:900; letter-spacing:0.5px; box-shadow:0 0 12px #f59e0b;"><i class="bi bi-fire me-1"></i>HOMERUN!</span>
-              <span class="fw-bold text-white" style="font-size:0.88rem; text-shadow:0 2px 10px rgba(0,0,0,0.95);">${hrSub}</span>
+          <div class="live-baseball-event-overlay position-absolute d-flex flex-column justify-content-between p-2.5" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.08) 35%, rgba(0,0,0,0.08) 65%, rgba(0,0,0,0.85) 100%), url('/static/images/baseball_homerun_epic_${evImgIdx}.jpg') center center / cover no-repeat; border-radius:8px; border:1.8px solid #f59e0b; box-shadow:0 0 25px rgba(245,158,11,0.7); pointer-events:auto;">
+            <div class="d-flex justify-content-between align-items-center w-100">
+              <div class="d-flex align-items-center gap-1.5">
+                <span class="badge bg-warning text-dark fw-black px-2 py-0.5" style="font-size:0.75rem; font-weight:900; letter-spacing:0.5px; box-shadow:0 0 10px #f59e0b;">
+                  <i class="bi bi-fire me-1"></i>HOMERUN #${evImgIdx}
+                </span>
+                <span class="badge bg-dark bg-opacity-75 text-white border border-secondary border-opacity-50 px-2 py-0.5" style="font-size:0.72rem; font-weight:800;">
+                  💥 홈런 작렬!
+                </span>
+              </div>
+              ${closeBtnHtml}
             </div>
-            <!-- Flying ball effect inside overlay -->
-            <div class="w-100 position-relative" style="height:22px; overflow:hidden;">
-              <div class="live-anim-homerun-two-trips">
-                <div class="vivid-baseball-ball" style="display:inline-block;">
-                  <svg width="20" height="20" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" fill="#ffffff" />
-                    <path d="M 5,7 Q 11,12 5,17" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="2,1.2" stroke-linecap="round" />
-                    <path d="M 19,7 Q 13,12 19,17" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="2,1.2" stroke-linecap="round" />
-                  </svg>
-                </div>
-                <span style="font-size:1.0rem; margin-left:-2px; filter:drop-shadow(0 0 6px #ef4444);">🔥</span>
+            <div class="flex-grow-1"></div>
+            <div class="w-100 text-center">
+              <div class="d-inline-block bg-dark bg-opacity-80 text-white px-3 py-1 rounded-pill border border-warning border-opacity-50" style="font-size:0.78rem; font-weight:800; backdrop-filter:blur(6px); text-shadow:0 1px 4px rgba(0,0,0,0.9); box-shadow:0 2px 8px rgba(0,0,0,0.6);">
+                ${hrSub}
               </div>
             </div>
           </div>
@@ -12592,22 +12591,22 @@ function getFullModalMatchList() {
       } else if (evType === 'HIT') {
         const hitSub = activeEv.subtext || '⚾ 탕! 안타!! 좌중간을 가르는 1타점 적시타!';
         return `
-          <div class="live-baseball-event-overlay position-absolute d-flex flex-column justify-content-center align-items-center text-center px-3" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(6,78,59,0.72) 0%, rgba(6,16,26,0.90) 100%), url('/static/images/baseball_hit_epic_${evImgIdx}.jpg') center 40%/cover no-repeat; border-radius:8px; border:1.5px solid #34d399; box-shadow:0 0 20px rgba(52,211,153,0.5); pointer-events:auto;">
-            ${closeBtnHtml}
-            <div class="d-flex align-items-center gap-2 mb-1.5 live-anim-hit-text-burst">
-              <span class="badge bg-success text-white fw-bold px-2.5 py-1" style="font-size:0.78rem; box-shadow:0 0 10px rgba(52,211,153,0.6);"><i class="bi bi-lightning-fill me-1"></i>HIT!</span>
-              <span class="fw-bold text-white" style="font-size:0.85rem; text-shadow:0 2px 8px rgba(0,0,0,0.95);">${hitSub}</span>
+          <div class="live-baseball-event-overlay position-absolute d-flex flex-column justify-content-between p-2.5" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.08) 35%, rgba(0,0,0,0.08) 65%, rgba(0,0,0,0.85) 100%), url('/static/images/baseball_hit_epic_${evImgIdx}.jpg') center center / cover no-repeat; border-radius:8px; border:1.8px solid #34d399; box-shadow:0 0 25px rgba(52,211,153,0.6); pointer-events:auto;">
+            <div class="d-flex justify-content-between align-items-center w-100">
+              <div class="d-flex align-items-center gap-1.5">
+                <span class="badge bg-success text-white fw-black px-2 py-0.5" style="font-size:0.75rem; font-weight:900; letter-spacing:0.5px; box-shadow:0 0 10px #10b981;">
+                  <i class="bi bi-lightning-fill me-1"></i>HIT #${evImgIdx}
+                </span>
+                <span class="badge bg-dark bg-opacity-75 text-white border border-secondary border-opacity-50 px-2 py-0.5" style="font-size:0.72rem; font-weight:800;">
+                  ⚾ 적시타!
+                </span>
+              </div>
+              ${closeBtnHtml}
             </div>
-            <div class="w-100 position-relative" style="height:20px; overflow:hidden;">
-              <div class="live-anim-hit-one-trip">
-                <div class="vivid-baseball-ball" style="display:inline-block;">
-                  <svg width="18" height="18" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" fill="#ffffff" />
-                    <path d="M 5,7 Q 11,12 5,17" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="2,1.2" stroke-linecap="round" />
-                    <path d="M 19,7 Q 13,12 19,17" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="2,1.2" stroke-linecap="round" />
-                  </svg>
-                </div>
-                <span style="font-size:0.9rem; margin-left:-1px; filter:drop-shadow(0 0 4px #34d399);">✨</span>
+            <div class="flex-grow-1"></div>
+            <div class="w-100 text-center">
+              <div class="d-inline-block bg-dark bg-opacity-80 text-white px-3 py-1 rounded-pill border border-success border-opacity-50" style="font-size:0.78rem; font-weight:800; backdrop-filter:blur(6px); text-shadow:0 1px 4px rgba(0,0,0,0.9); box-shadow:0 2px 8px rgba(0,0,0,0.6);">
+                ${hitSub}
               </div>
             </div>
           </div>
@@ -12615,15 +12614,22 @@ function getFullModalMatchList() {
       } else if (evType === 'BB' || evType === 'WALK') {
         const bbText = activeEv.subtext || '🚶‍♂️ 볼넷 출루! 풀카운트 끝 1루 진루!';
         return `
-          <div class="live-baseball-event-overlay position-absolute d-flex flex-column justify-content-center align-items-center text-center px-3" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(30,58,95,0.78) 0%, rgba(8,15,30,0.92) 100%), url('/static/images/baseball_walk_epic_${evImgIdx}.jpg') center 35%/cover no-repeat; border-radius:8px; border:1.5px solid #38bdf8; box-shadow:0 0 20px rgba(56,189,248,0.5); pointer-events:auto;">
-            ${closeBtnHtml}
-            <div class="d-flex align-items-center gap-2 mb-1">
-              <span class="badge bg-info text-dark fw-bold px-2 py-0.5" style="font-size:0.75rem; box-shadow:0 0 10px rgba(56,189,248,0.6);"><i class="bi bi-person-walking me-1"></i>FOUR BALL</span>
-              <span class="fw-bold text-white" style="font-size:0.82rem; text-shadow:0 2px 6px rgba(0,0,0,0.95);">${bbText}</span>
+          <div class="live-baseball-event-overlay position-absolute d-flex flex-column justify-content-between p-2.5" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.08) 35%, rgba(0,0,0,0.08) 65%, rgba(0,0,0,0.85) 100%), url('/static/images/baseball_walk_epic_${evImgIdx}.jpg') center center / cover no-repeat; border-radius:8px; border:1.8px solid #38bdf8; box-shadow:0 0 25px rgba(56,189,248,0.6); pointer-events:auto;">
+            <div class="d-flex justify-content-between align-items-center w-100">
+              <div class="d-flex align-items-center gap-1.5">
+                <span class="badge bg-info text-dark fw-black px-2 py-0.5" style="font-size:0.75rem; font-weight:900; letter-spacing:0.5px;">
+                  <i class="bi bi-person-walking me-1"></i>WALK #${evImgIdx}
+                </span>
+                <span class="badge bg-dark bg-opacity-75 text-white border border-secondary border-opacity-50 px-2 py-0.5" style="font-size:0.72rem; font-weight:800;">
+                  🚶‍♂️ 볼넷 출루!
+                </span>
+              </div>
+              ${closeBtnHtml}
             </div>
-            <div class="w-100 position-relative" style="height:18px;">
-              <div class="live-anim-walk-one-trip">
-                <span style="font-size:1.15rem; filter:drop-shadow(0 0 6px #38bdf8);">🏃‍♂️</span>
+            <div class="flex-grow-1"></div>
+            <div class="w-100 text-center">
+              <div class="d-inline-block bg-dark bg-opacity-80 text-white px-3 py-1 rounded-pill border border-info border-opacity-50" style="font-size:0.78rem; font-weight:800; backdrop-filter:blur(6px); text-shadow:0 1px 4px rgba(0,0,0,0.9); box-shadow:0 2px 8px rgba(0,0,0,0.6);">
+                ${bbText}
               </div>
             </div>
           </div>
@@ -12632,14 +12638,23 @@ function getFullModalMatchList() {
         const outText = activeEv.subtext || '⚡ 삼진 아웃! 날카로운 결정구로 타자 제압!';
         const outNum = (activeEv.outs !== undefined && activeEv.outs !== null) ? activeEv.outs : (st.outs || 1);
         return `
-          <div class="live-baseball-event-overlay position-absolute d-flex align-items-center justify-content-between px-3" style="inset:0; z-index:12; background: linear-gradient(90deg, rgba(153,27,27,0.80) 0%, rgba(30,27,75,0.88) 100%), url('/static/images/baseball_out_epic_${evImgIdx}.jpg') center 40%/cover no-repeat; border-radius:8px; border:1.5px solid #ef4444; box-shadow:0 0 20px rgba(239,68,68,0.5); pointer-events:auto;">
-            <div class="d-flex align-items-center gap-2 text-truncate">
-              <span class="badge bg-danger text-white fw-bold px-2 py-1" style="font-size:0.75rem; box-shadow:0 0 10px rgba(239,68,68,0.6);"><i class="bi bi-x-octagon-fill me-1"></i>OUT</span>
-              <span class="fw-bold text-white text-truncate" style="font-size:0.84rem; text-shadow:0 2px 6px rgba(0,0,0,0.95);">${outText}</span>
-            </div>
-            <div class="d-flex align-items-center gap-1 text-nowrap">
-              <span class="badge bg-danger text-white py-1 px-2 fw-bold" style="font-size:0.72rem;">[${outNum}아웃]</span>
+          <div class="live-baseball-event-overlay position-absolute d-flex flex-column justify-content-between p-2.5" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.08) 35%, rgba(0,0,0,0.08) 65%, rgba(0,0,0,0.85) 100%), url('/static/images/baseball_out_epic_${evImgIdx}.jpg') center center / cover no-repeat; border-radius:8px; border:1.8px solid #ef4444; box-shadow:0 0 25px rgba(239,68,68,0.6); pointer-events:auto;">
+            <div class="d-flex justify-content-between align-items-center w-100">
+              <div class="d-flex align-items-center gap-1.5">
+                <span class="badge bg-danger text-white fw-black px-2 py-0.5" style="font-size:0.75rem; font-weight:900; letter-spacing:0.5px;">
+                  <i class="bi bi-x-octagon-fill me-1"></i>OUT #${evImgIdx}
+                </span>
+                <span class="badge bg-dark bg-opacity-75 text-white border border-secondary border-opacity-50 px-2 py-0.5" style="font-size:0.72rem; font-weight:800;">
+                  [${outNum}아웃]
+                </span>
+              </div>
               ${closeBtnHtml}
+            </div>
+            <div class="flex-grow-1"></div>
+            <div class="w-100 text-center">
+              <div class="d-inline-block bg-dark bg-opacity-80 text-white px-3 py-1 rounded-pill border border-danger border-opacity-50" style="font-size:0.78rem; font-weight:800; backdrop-filter:blur(6px); text-shadow:0 1px 4px rgba(0,0,0,0.9); box-shadow:0 2px 8px rgba(0,0,0,0.6);">
+                ${outText}
+              </div>
             </div>
           </div>
         `;
@@ -12830,28 +12845,18 @@ function getFullModalMatchList() {
             const scorerText = activeEv.scorer ? `[${activeEv.scorer}] 득점!` : '원더골 작렬!';
             const goalSub = activeEv.subtext || '골망을 흔드는 환상적인 골!';
             eventBannerHtml = `
-              <div class="live-soccer-event-overlay position-absolute d-flex flex-column justify-content-center align-items-center text-center px-3" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(6,78,59,0.70) 0%, rgba(15,23,42,0.92) 100%), url('${goalImgUrl}') center 40%/cover no-repeat; border-radius:8px; border:1.5px solid #22c55e; box-shadow:0 0 20px rgba(34,197,94,0.6); pointer-events:auto;">
-                <button type="button" class="btn-close btn-close-white position-absolute top-2 end-2" style="font-size:0.55rem; opacity:0.9; z-index:15;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>
-                <div class="d-flex align-items-center gap-2 mb-1 live-anim-goal-text-burst">
-                  <span class="badge bg-danger text-white fw-black px-2.5 py-1" style="font-size:0.80rem; font-weight:900; letter-spacing:0.5px; box-shadow:0 0 12px #ef4444;"><i class="bi bi-fire me-1"></i>GOAL #${goalImgIdx}</span>
-                  <span class="fw-bold text-white" style="font-size:0.88rem; text-shadow:0 2px 10px rgba(0,0,0,0.95);">⚽ ${scorerText}</span>
+              <div class="live-soccer-event-overlay position-absolute d-flex flex-column justify-content-between p-2.5" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.08) 35%, rgba(0,0,0,0.08) 65%, rgba(0,0,0,0.85) 100%), url('${goalImgUrl}') center center / cover no-repeat; border-radius:8px; border:1.8px solid #22c55e; box-shadow:0 0 25px rgba(34,197,94,0.7); pointer-events:auto;">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                  <div class="d-flex align-items-center gap-1.5 live-anim-goal-text-burst">
+                    <span class="badge bg-danger text-white fw-black px-2 py-0.5" style="font-size:0.75rem; font-weight:900; letter-spacing:0.5px; box-shadow:0 0 12px #ef4444;"><i class="bi bi-fire me-1"></i>GOAL #${goalImgIdx}</span>
+                    <span class="badge bg-dark bg-opacity-75 text-white border border-success border-opacity-50 px-2 py-0.5" style="font-size:0.72rem; font-weight:800; text-shadow:0 1px 4px rgba(0,0,0,0.9);">⚽ ${scorerText}</span>
+                  </div>
+                  <button type="button" class="btn-close btn-close-white" style="font-size:0.6rem; opacity:0.9; z-index:15;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>
                 </div>
-                <div style="font-size:0.75rem; color:#86efac; font-weight:700; margin-bottom:4px; text-shadow:0 1px 4px rgba(0,0,0,0.9);">${goalSub}</div>
-                <!-- 상하 지그재그 골인 애니메이션 트랙 -->
-                <div class="w-100 position-relative" style="height:22px; overflow:hidden;">
-                  <div class="live-anim-soccer-goal-zigzag">
-                    <div class="vivid-soccer-ball" style="display:inline-block;">
-                      <svg width="20" height="20" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" fill="#ffffff" stroke="#0f172a" stroke-width="1.5" />
-                        <polygon points="12,8 15,10.2 13.8,13.8 10.2,13.8 9,10.2" fill="#0f172a" />
-                        <line x1="12" y1="2" x2="12" y2="8" stroke="#0f172a" stroke-width="1.2" />
-                        <line x1="21" y1="9" x2="15" y2="10.2" stroke="#0f172a" stroke-width="1.2" />
-                        <line x1="18" y1="20" x2="13.8" y2="13.8" stroke="#0f172a" stroke-width="1.2" />
-                        <line x1="6" y1="20" x2="10.2" y2="13.8" stroke="#0f172a" stroke-width="1.2" />
-                        <line x1="3" y1="9" x2="9" y2="10.2" stroke="#0f172a" stroke-width="1.2" />
-                      </svg>
-                    </div>
-                    <span style="font-size:1.0rem; margin-left:-2px; filter:drop-shadow(0 0 6px #f59e0b);">🔥</span>
+                <div class="flex-grow-1"></div>
+                <div class="w-100 text-center">
+                  <div class="d-inline-block bg-dark bg-opacity-80 text-white px-3 py-1 rounded-pill border border-success border-opacity-50" style="font-size:0.78rem; font-weight:800; backdrop-filter:blur(6px); text-shadow:0 1px 4px rgba(0,0,0,0.9); box-shadow:0 2px 8px rgba(0,0,0,0.6); color:#86efac;">
+                    ⚽ ${goalSub}
                   </div>
                 </div>
               </div>

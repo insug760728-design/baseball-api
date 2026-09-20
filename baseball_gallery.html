@@ -494,26 +494,18 @@
     const imgUrl = `./app/static/images/soccer_goal_epic_${soccerGoalIdx}.jpg`;
     const sub = goalSubtexts[soccerGoalIdx - 1];
     slot.innerHTML = `
-      <div class="position-absolute d-flex flex-column justify-content-center align-items-center text-center px-3" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(6,78,59,0.70) 0%, rgba(15,23,42,0.92) 100%), url('${imgUrl}') center 40%/cover no-repeat; border-radius:8px; border:1.5px solid #22c55e; box-shadow:0 0 20px rgba(34,197,94,0.6); pointer-events:auto;">
-        <button type="button" class="btn-close btn-close-white position-absolute top-2 end-2" style="font-size:0.55rem; opacity:0.9; z-index:15;" onclick="dismissSoccerDemoGoal()" title="닫기"></button>
-        <div class="d-flex align-items-center gap-2 mb-1.5 live-anim-goal-text-burst">
-          <span class="badge bg-danger text-white fw-black px-2.5 py-1" style="font-size:0.80rem; font-weight:900; letter-spacing:0.5px; box-shadow:0 0 12px #ef4444;"><i class="bi bi-fire me-1"></i>GOAL!!</span>
-          <span class="fw-bold text-white" style="font-size:0.88rem; text-shadow:0 2px 10px rgba(0,0,0,0.95);">⚽ [GOAL #${soccerGoalIdx}] ${sub}</span>
+      <div class="position-absolute d-flex flex-column justify-content-between p-2.5" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.08) 35%, rgba(0,0,0,0.08) 65%, rgba(0,0,0,0.85) 100%), url('${imgUrl}') center center / cover no-repeat; border-radius:8px; border:1.8px solid #22c55e; box-shadow:0 0 25px rgba(34,197,94,0.7); pointer-events:auto;">
+        <div class="d-flex justify-content-between align-items-center w-100">
+          <div class="d-flex align-items-center gap-1.5 live-anim-goal-text-burst">
+            <span class="badge bg-danger text-white fw-black px-2 py-0.5" style="font-size:0.75rem; font-weight:900; letter-spacing:0.5px; box-shadow:0 0 12px #ef4444;"><i class="bi bi-fire me-1"></i>GOAL #${soccerGoalIdx}</span>
+            <span class="badge bg-dark bg-opacity-75 text-white border border-success border-opacity-50 px-2 py-0.5" style="font-size:0.72rem; font-weight:800; text-shadow:0 1px 4px rgba(0,0,0,0.9);">⚽ 원더골 작렬!</span>
+          </div>
+          <button type="button" class="btn-close btn-close-white" style="font-size:0.6rem; opacity:0.9; z-index:15;" onclick="dismissSoccerDemoGoal()" title="닫기"></button>
         </div>
-        <div class="w-100 position-relative" style="height:22px; overflow:hidden;">
-          <div class="live-anim-soccer-goal-zigzag">
-            <div class="vivid-soccer-ball" style="display:inline-block;">
-              <svg width="20" height="20" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" fill="#ffffff" stroke="#0f172a" stroke-width="1.5" />
-                <polygon points="12,8 15,10.2 13.8,13.8 10.2,13.8 9,10.2" fill="#0f172a" />
-                <line x1="12" y1="2" x2="12" y2="8" stroke="#0f172a" stroke-width="1.2" />
-                <line x1="21" y1="9" x2="15" y2="10.2" stroke="#0f172a" stroke-width="1.2" />
-                <line x1="18" y1="20" x2="13.8" y2="13.8" stroke="#0f172a" stroke-width="1.2" />
-                <line x1="6" y1="20" x2="10.2" y2="13.8" stroke="#0f172a" stroke-width="1.2" />
-                <line x1="3" y1="9" x2="9" y2="10.2" stroke="#0f172a" stroke-width="1.2" />
-              </svg>
-            </div>
-            <span style="font-size:1.0rem; margin-left:-2px; filter:drop-shadow(0 0 6px #f59e0b);">🔥</span>
+        <div class="flex-grow-1"></div>
+        <div class="w-100 text-center">
+          <div class="d-inline-block bg-dark bg-opacity-80 text-white px-3 py-1 rounded-pill border border-success border-opacity-50" style="font-size:0.78rem; font-weight:800; backdrop-filter:blur(6px); text-shadow:0 1px 4px rgba(0,0,0,0.9); box-shadow:0 2px 8px rgba(0,0,0,0.6); color:#86efac;">
+            ⚽ ${sub}
           </div>
         </div>
       </div>
