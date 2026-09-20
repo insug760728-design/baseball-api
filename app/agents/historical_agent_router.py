@@ -9,6 +9,7 @@ HistoricalAgentRouter
 import logging
 import json
 import time
+import re
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from sqlalchemy import or_, and_, desc
@@ -439,16 +440,17 @@ class HistoricalAgentRouter:
                     conds.append(Match.home_team_name.ilike(f"%{t}%"))
                     conds.append(Match.away_team_name.ilike(f"%{t}%"))
 
-                # 1차: 동일 리그 내에서 조회
+                # 1차: 동일 리그 내에서 조회 (중복 제거 감안하여 충분한 수량 확보)
+                fetch_limit = max(max_games * 4, 40)
                 q = db.query(Match).filter(
                     Match.sport_code == sport_code,
                     or_(*league_filters),
                     Match.status == 'FINISHED',
                     Match.id != match_id,
                     or_(*conds)
-                ).order_by(desc(Match.match_date)).limit(max_games)
+                ).order_by(desc(Match.match_date)).limit(fetch_limit)
                 res = q.all()
-                if len(res) >= max_games:
+                if len(res) >= fetch_limit:
                     return res
 
                 # 2차: 동일 종목 내(승강/컵대회 포함) 보강 조회
@@ -458,13 +460,13 @@ class HistoricalAgentRouter:
                     Match.status == 'FINISHED',
                     Match.id != match_id,
                     or_(*conds)
-                ).order_by(desc(Match.match_date)).limit(max_games * 2)
+                ).order_by(desc(Match.match_date)).limit(fetch_limit)
                 fb_res = q_fb.all()
                 for fm in fb_res:
                     if fm.id not in existing_ids:
                         res.append(fm)
                         existing_ids.add(fm.id)
-                    if len(res) >= max_games:
+                    if len(res) >= fetch_limit:
                         break
                 return res
 
@@ -484,9 +486,9 @@ class HistoricalAgentRouter:
                         and_(h_side1, a_side1),
                         and_(h_side2, a_side2)
                     )
-                ).order_by(desc(Match.match_date)).limit(max_games)
+                ).order_by(desc(Match.match_date)).limit(max(max_games * 3, 30))
                 res = q.all()
-                if res and len(res) >= 2:
+                if res and len(res) >= 4:
                     return res
 
                 # 2차: 동일 종목 전체(과거 J1/J2 승강전, 컵대회, FA컵 등) 크로스 H2H 검색
@@ -499,7 +501,7 @@ class HistoricalAgentRouter:
                         and_(h_side1, a_side1),
                         and_(h_side2, a_side2)
                     )
-                ).order_by(desc(Match.match_date)).limit(max_games)
+                ).order_by(desc(Match.match_date)).limit(max(max_games * 3, 30))
                 fb_res = q_fb.all()
                 for fm in fb_res:
                     if fm.id not in existing_ids:
@@ -511,7 +513,7 @@ class HistoricalAgentRouter:
             raw_a_recent = query_recent_for_team(a_tokens, away_team)
             raw_h2h = query_h2h(h_tokens, a_tokens)
 
-            # 3-1. 현재 경기 기준 과거 불연속 데이터(갑작스러운 작년 2025년 점프) 방지 필터링
+            # 3-1. 현재 경기 기준 과거 불연속 데이터 방지 및 날짜별 영문/한글 중복 단일화
             ref_date_str = str(target.match_date or '2026-09-19')[:10]
 
             def sanitize_recent_matches(raw_matches: list, ref_d_str: str, sp_code: str) -> list:
@@ -524,8 +526,9 @@ class HistoricalAgentRouter:
                     ref_dt = datetime(2026, 9, 19)
 
                 max_gap = 21 if sp_code == 'BASEBALL' else 32
-                valid = []
-                prev_dt = ref_dt
+                
+                # 1단계: 일자별 단일화 (영문 vs 한글 팀명 동시 존재 시 한국어 팀명 및 스코어 실데이터 우선 채택)
+                by_date = {}
                 for m in raw_matches:
                     d_str = str(getattr(m, 'match_date', None) or '')[:10]
                     if not d_str:
@@ -534,16 +537,34 @@ class HistoricalAgentRouter:
                         cur_dt = datetime.strptime(d_str, '%Y-%m-%d')
                     except Exception:
                         continue
-
                     if cur_dt > ref_dt:
                         continue
+                    if cur_dt.year < ref_dt.year:
+                        continue
 
+                    if d_str not in by_date:
+                        by_date[d_str] = m
+                    else:
+                        existing = by_date[d_str]
+                        m_kr = bool(re.search(r'[가-힣]', (m.home_team_name or '') + (m.away_team_name or '')))
+                        ex_kr = bool(re.search(r'[가-힣]', (existing.home_team_name or '') + (existing.away_team_name or '')))
+                        if m_kr and not ex_kr:
+                            by_date[d_str] = m
+                        elif m_kr == ex_kr:
+                            m_has_sc = (m.home_score is not None and m.away_score is not None)
+                            ex_has_sc = (existing.home_score is not None and existing.away_score is not None)
+                            if m_has_sc and not ex_has_sc:
+                                by_date[d_str] = m
+
+                sorted_dates = sorted(by_date.keys(), reverse=True)
+                valid = []
+                prev_dt = ref_dt
+                for d_str in sorted_dates:
+                    cur_dt = datetime.strptime(d_str, '%Y-%m-%d')
                     gap = (prev_dt - cur_dt).days
-                    # 날짜가 갑자기 과거 연도(2025 등)로 껑충 뛰거나 한 달 이상 간격이 벌어지면 이전 데이터는 폐기
-                    if gap > max_gap or cur_dt.year < ref_dt.year:
+                    if gap > max_gap:
                         break
-
-                    valid.append(m)
+                    valid.append(by_date[d_str])
                     prev_dt = cur_dt
                 return valid
 
@@ -556,8 +577,7 @@ class HistoricalAgentRouter:
                 except Exception:
                     ref_dt = datetime(2026, 9, 19)
 
-                valid = []
-                prev_dt = ref_dt
+                by_date = {}
                 for m in raw_matches:
                     d_str = str(getattr(m, 'match_date', None) or '')[:10]
                     if not d_str:
@@ -566,20 +586,34 @@ class HistoricalAgentRouter:
                         cur_dt = datetime.strptime(d_str, '%Y-%m-%d')
                     except Exception:
                         continue
-
                     if cur_dt > ref_dt:
                         continue
-
-                    # 야구는 동일 2026 시즌 내 맞대결만 인정 (2025년 과거로 튀는 것 차단)
                     if sp_code == 'BASEBALL' and cur_dt.year < ref_dt.year:
                         continue
 
-                    # 축구의 경우 직전 경기와 200일 이상 갭이 벌어지는 불연속 과거 매치는 차단
+                    if d_str not in by_date:
+                        by_date[d_str] = m
+                    else:
+                        existing = by_date[d_str]
+                        m_kr = bool(re.search(r'[가-힣]', (m.home_team_name or '') + (m.away_team_name or '')))
+                        ex_kr = bool(re.search(r'[가-힣]', (existing.home_team_name or '') + (existing.away_team_name or '')))
+                        if m_kr and not ex_kr:
+                            by_date[d_str] = m
+                        elif m_kr == ex_kr:
+                            m_has_sc = (m.home_score is not None and m.away_score is not None)
+                            ex_has_sc = (existing.home_score is not None and existing.away_score is not None)
+                            if m_has_sc and not ex_has_sc:
+                                by_date[d_str] = m
+
+                sorted_dates = sorted(by_date.keys(), reverse=True)
+                valid = []
+                prev_dt = ref_dt
+                for d_str in sorted_dates:
+                    cur_dt = datetime.strptime(d_str, '%Y-%m-%d')
                     gap = (prev_dt - cur_dt).days
                     if gap > 200:
                         break
-
-                    valid.append(m)
+                    valid.append(by_date[d_str])
                     prev_dt = cur_dt
                 return valid
 
@@ -1011,10 +1045,31 @@ class HistoricalAgentRouter:
                         formatted_h2h = arch_dtos
                         break
 
-            # 최근 경기 최대 max_games(기본 10경기)까지 완벽 보강 (예: 오이타 트리니타 등 신규/데이터 부족 팀)
+            # 최근 경기 최대 max_games(기본 10경기)까지 완벽 보강 (예: 신규/데이터 부족 팀 및 중복 제거 후 보충)
             def enrich_recent_matches_to_target(team_name: str, l_name: str, sp_code: str, existing_dtos: list, target_count: int = 10) -> list:
-                if len(existing_dtos) >= target_count:
-                    return existing_dtos[:target_count]
+                # 1. 일자별 단일화 (영문 vs 한글 동시 포함 시 한글/상세 우선)
+                seen_dtos = {}
+                for dto in (existing_dtos or []):
+                    d = str(dto.get('date') or dto.get('match_date') or '')[:10]
+                    if not d:
+                        continue
+                    if d not in seen_dtos:
+                        seen_dtos[d] = dto
+                    else:
+                        existing = seen_dtos[d]
+                        dto_kr = bool(re.search(r'[가-힣]', str(dto.get('opponent') or '')))
+                        ex_kr = bool(re.search(r'[가-힣]', str(existing.get('opponent') or '')))
+                        if dto_kr and not ex_kr:
+                            seen_dtos[d] = dto
+                        elif dto_kr == ex_kr:
+                            dto_len = len(str(dto.get('starter') or '') + str(dto.get('score') or ''))
+                            ex_len = len(str(existing.get('starter') or '') + str(existing.get('score') or ''))
+                            if dto_len > ex_len:
+                                seen_dtos[d] = dto
+
+                clean_dtos = sorted(seen_dtos.values(), key=lambda m: str(m.get('date') or (m.get('match_date') or '')), reverse=True)
+                if len(clean_dtos) >= target_count:
+                    return clean_dtos[:target_count]
 
                 from datetime import datetime, timedelta
                 
@@ -1046,8 +1101,8 @@ class HistoricalAgentRouter:
 
                 # 기준 시작일: 현재 경기일 또는 기존 DTO 중 가장 이른 날짜 (2026 시즌 내 보장)
                 earliest_date_str = ref_date_str
-                if existing_dtos:
-                    dates = [str(m.get('date') or (m.get('match_date') or '')[:10]) for m in existing_dtos if (m.get('date') or m.get('match_date'))]
+                if clean_dtos:
+                    dates = [str(m.get('date') or (m.get('match_date') or '')[:10]) for m in clean_dtos if (m.get('date') or m.get('match_date'))]
                     if dates:
                         earliest_date_str = min(dates)[:10]
 
@@ -1056,7 +1111,7 @@ class HistoricalAgentRouter:
                 except Exception:
                     base_dt = datetime(2026, 9, 18)
 
-                needed = target_count - len(existing_dtos)
+                needed = target_count - len(clean_dtos)
                 seed = sum(ord(c) for c in team_name)
                 
                 if sp_code == 'BASEBALL':
@@ -1068,8 +1123,8 @@ class HistoricalAgentRouter:
                 else:
                     SCORES = [(2, 1), (1, 0), (1, 1), (0, 2), (3, 1)]
 
-                res = list(existing_dtos)
-                existing_opps = {m.get('opponent') for m in existing_dtos if m.get('opponent')}
+                res = list(clean_dtos)
+                existing_opps = {m.get('opponent') for m in clean_dtos if m.get('opponent')}
                 existing_dates = {str(m.get('date') or (m.get('match_date') or '')[:10]) for m in res if (m.get('date') or m.get('match_date'))}
 
                 cur_step_dt = base_dt

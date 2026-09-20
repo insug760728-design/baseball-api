@@ -9327,7 +9327,7 @@ class TeamSplitService:
                     away_team_name COLLATE NOCASE IN ({placeholders_h})
                 )
                 ORDER BY match_date DESC
-                LIMIT 25
+                LIMIT 40
             """, [sport_code] + list(h_aliases) + list(h_aliases))
             h_rows = c_cur.fetchall()
             for row in h_rows:
@@ -9375,7 +9375,19 @@ class TeamSplitService:
                     h_rec_item = _enrich_basketball_match_events(c_cur, h_rec_item, home_team, opp, gf, ga, match_id=m_id, date_str=m_date)
                 else:
                     h_rec_item["odds"] = _generate_match_odds(gf, ga, f"{home_team}_{opp}_{m_id}")
-                home_recent_matches.append(h_rec_item)
+
+                d_key = (m_date or "")[:10]
+                is_dup = False
+                for idx_h, existing in enumerate(home_recent_matches):
+                    if existing.get("date") == d_key:
+                        is_dup = True
+                        opp_kr = any('\uac00' <= ch <= '\ud7a3' for ch in str(opp or ''))
+                        ex_kr = any('\uac00' <= ch <= '\ud7a3' for ch in str(existing.get('opponent', '')))
+                        if opp_kr and not ex_kr:
+                            home_recent_matches[idx_h] = h_rec_item
+                        break
+                if not is_dup:
+                    home_recent_matches.append(h_rec_item)
                 if len(home_recent_matches) >= 10:
                     break
 
@@ -9392,7 +9404,7 @@ class TeamSplitService:
                     away_team_name COLLATE NOCASE IN ({placeholders_a})
                 )
                 ORDER BY match_date DESC
-                LIMIT 25
+                LIMIT 40
             """, [sport_code] + list(a_aliases) + list(a_aliases))
             a_rows = c_cur.fetchall()
             for row in a_rows:
@@ -9440,7 +9452,19 @@ class TeamSplitService:
                     a_rec_item = _enrich_basketball_match_events(c_cur, a_rec_item, away_team, opp, gf, ga, match_id=m_id, date_str=m_date)
                 else:
                     a_rec_item["odds"] = _generate_match_odds(gf, ga, f"{away_team}_{opp}_{m_id}")
-                away_recent_matches.append(a_rec_item)
+
+                d_key = (m_date or "")[:10]
+                is_dup = False
+                for idx_a, existing in enumerate(away_recent_matches):
+                    if existing.get("date") == d_key:
+                        is_dup = True
+                        opp_kr = any('\uac00' <= ch <= '\ud7a3' for ch in str(opp or ''))
+                        ex_kr = any('\uac00' <= ch <= '\ud7a3' for ch in str(existing.get('opponent', '')))
+                        if opp_kr and not ex_kr:
+                            away_recent_matches[idx_a] = a_rec_item
+                        break
+                if not is_dup:
+                    away_recent_matches.append(a_rec_item)
                 if len(away_recent_matches) >= 10:
                     break
 

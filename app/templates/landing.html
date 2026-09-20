@@ -7899,7 +7899,68 @@ function getFullModalMatchList() {
       }
     };
 
-    
+    // 🛡️ 날짜별/영문-한글 중복 경기 100% 통합 및 제거 헬퍼 (동일 일자 영문/한글 팀명 경기 단일화)
+    window.dedupeRecentMatches = function(list) {
+      if (!Array.isArray(list) || list.length === 0) return [];
+      const result = [];
+      
+      for (const g of list) {
+        if (!g) continue;
+        const d = (g.match_date || g.date || '').slice(0, 10);
+        if (!d) {
+          result.push(g);
+          continue;
+        }
+        
+        const gOpp = String(g.opponent || g.away_team_name || g.home_team_name || '');
+        const gScore = (g.team_score !== undefined && g.opp_score !== undefined) ? `${g.team_score}:${g.opp_score}` : (g.score || '');
+        const gScoreNorm = gScore.replace(/\s+/g, '');
+        
+        let dupIdx = -1;
+        for (let i = 0; i < result.length; i++) {
+          const ex = result[i];
+          const exD = (ex.match_date || ex.date || '').slice(0, 10);
+          if (exD === d) {
+            const exOpp = String(ex.opponent || ex.away_team_name || ex.home_team_name || '');
+            const exScore = (ex.team_score !== undefined && ex.opp_score !== undefined) ? `${ex.team_score}:${ex.opp_score}` : (ex.score || '');
+            const exScoreNorm = exScore.replace(/\s+/g, '');
+            
+            const oppMatched = (typeof isSameTeamName === 'function') ? isSameTeamName(gOpp, exOpp) : (gOpp.includes(exOpp) || exOpp.includes(gOpp));
+            if (gScoreNorm === exScoreNorm || !gScoreNorm || !exScoreNorm || oppMatched) {
+              dupIdx = i;
+              break;
+            }
+            dupIdx = i;
+            break;
+          }
+        }
+        
+        if (dupIdx >= 0) {
+          const ex = result[dupIdx];
+          const exOpp = String(ex.opponent || ex.away_team_name || ex.home_team_name || '');
+          const gHasKr = /[가-힣]/.test(gOpp);
+          const exHasKr = /[가-힣]/.test(exOpp);
+          if (gHasKr && !exHasKr) {
+            result[dupIdx] = g;
+          } else if (gHasKr === exHasKr) {
+            const gLen = (String(g.starter_info || '') + String(g.starter || '') + String(g.score || '')).length;
+            const exLen = (String(ex.starter_info || '') + String(ex.starter || '') + String(ex.score || '')).length;
+            if (gLen > exLen) {
+              result[dupIdx] = g;
+            }
+          }
+        } else {
+          result.push(g);
+        }
+      }
+      
+      return result.sort((a, b) => {
+        const da = (a.match_date || a.date || '').slice(0, 10);
+        const db = (b.match_date || b.date || '').slice(0, 10);
+        return db.localeCompare(da);
+      });
+    };
+
     // =============================================================
     // =============================================================
     // 📊 [전체 종목 공통] 팀별 최근 10경기 및 맞대결 상대전적(H2H) 10경기 위젯 (100% 공식 DB 실데이터 연동)
@@ -7914,7 +7975,7 @@ function getFullModalMatchList() {
       if (hist) {
         const rawH2H = hist.h2h_matches || hist.head_to_head || hist.h2h;
         if (Array.isArray(rawH2H) && rawH2H.length > 0) {
-          return rawH2H.slice(0, count);
+          return window.dedupeRecentMatches(rawH2H).slice(0, count);
         }
       }
 
@@ -8073,15 +8134,15 @@ function getFullModalMatchList() {
       let aRecent = [];
       let h2hMatches = [];
       if (hist && Array.isArray(hist.home_recent) && hist.home_recent.length > 0) {
-        hRecent = hist.home_recent.slice(0, 10);
+        hRecent = window.dedupeRecentMatches(hist.home_recent).slice(0, 10);
       }
       if (hist && Array.isArray(hist.away_recent) && hist.away_recent.length > 0) {
-        aRecent = hist.away_recent.slice(0, 10);
+        aRecent = window.dedupeRecentMatches(hist.away_recent).slice(0, 10);
       }
       if (hist && Array.isArray(hist.h2h_matches) && hist.h2h_matches.length > 0) {
-        h2hMatches = hist.h2h_matches.slice(0, 10);
+        h2hMatches = window.dedupeRecentMatches(hist.h2h_matches).slice(0, 10);
       } else if (hist && Array.isArray(hist.head_to_head) && hist.head_to_head.length > 0) {
-        h2hMatches = hist.head_to_head.slice(0, 10);
+        h2hMatches = window.dedupeRecentMatches(hist.head_to_head).slice(0, 10);
       }
       const h2hSummary = hist.h2h_summary || null;
 
@@ -8120,7 +8181,8 @@ function getFullModalMatchList() {
         const sideBadge = isHome ? 'bg-danger text-white' : 'bg-primary text-white';
         const sidePrefix = isHome ? '🔴 [홈]' : '🔵 [원정]';
 
-        if (!recList || recList.length === 0) {
+        const cleanList = window.dedupeRecentMatches(recList);
+        if (!cleanList || cleanList.length === 0) {
           return `
             <div class="p-3 text-center text-muted small bg-light rounded border">
               <div class="spinner-border text-primary spinner-border-sm mb-1.5" role="status"></div>
@@ -8132,8 +8194,23 @@ function getFullModalMatchList() {
           `;
         }
 
-        const firstGame = recList[0];
-        const otherGames = recList.slice(1, 10); // 2차전부터 10차전까지 전체 10경기!
+        // 중복 제거 후 10경기 미만일 때 보강하여 항상 온전한 10경기 일지 유지
+        let fullList = [...cleanList];
+        if (fullList.length < 10 && typeof buildDynamicTeamRecentList === 'function') {
+          const fallbackList = buildDynamicTeamRecentList(sportCode, teamName, isHome, m, 10);
+          const seenDates = new Set(fullList.map(g => (g.match_date || g.date || '').slice(0, 10)));
+          for (const fg of fallbackList) {
+            const d = (fg.match_date || fg.date || '').slice(0, 10);
+            if (!seenDates.has(d)) {
+              fullList.push(fg);
+              seenDates.add(d);
+            }
+            if (fullList.length >= 10) break;
+          }
+        }
+
+        const firstGame = fullList[0];
+        const otherGames = fullList.slice(1, 10); // 2차전부터 10차전까지 전체 10경기!
 
         function renderGameTableRow(g, gIdx) {
           const isWin = g.result === 'W' || g.result === '승' || g.result === 'WIN' || g.result_kr === '승';
@@ -15916,10 +15993,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
       }
       const hist = m.history || (m.details && m.details.history) || {};
       const tactical = hist.tactical_analysis || (m.details && m.details.tactical_analysis) || null;
-      let h2hMatches = Array.isArray(hist.h2h_matches) ? [...hist.h2h_matches] : [];
+      let h2hMatches = Array.isArray(hist.h2h_matches) ? window.dedupeRecentMatches(hist.h2h_matches) : [];
       const h2hSummary = hist.h2h_summary || null;
-      const homeRecent = Array.isArray(hist.home_recent) ? hist.home_recent : [];
-      const awayRecent = Array.isArray(hist.away_recent) ? hist.away_recent : [];
+      const homeRecent = Array.isArray(hist.home_recent) ? window.dedupeRecentMatches(hist.home_recent) : [];
+      const awayRecent = Array.isArray(hist.away_recent) ? window.dedupeRecentMatches(hist.away_recent) : [];
       const hName = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : (m.home_team_name || '홈팀');
       const aName = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : (m.away_team_name || '원정팀');
       const leagueTitle = m.league_name || '축구 분석';
@@ -16102,6 +16179,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
       function renderSoccerMatchRow(g, idx, isHomeTeamPerspective) {
         const dateStr = (g.date || g.match_date || '').slice(0, 10).replace(/-/g, '.');
         const venue = g.home_away || (g.home_team_name === (isHomeTeamPerspective ? m.home_team_name : m.away_team_name) ? '홈' : '원정');
+        const venueCls = (venue === '홈') ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-primary-subtle text-primary border border-primary-subtle';
         const myTeamName = isHomeTeamPerspective ? m.home_team_name : m.away_team_name;
         let rawOpp = g.opponent || (venue === '홈' ? g.away_team_name : g.home_team_name);
         if ((rawOpp === myTeamName || (rawOpp && myTeamName && (rawOpp.includes(myTeamName) || myTeamName.includes(rawOpp)))) && g.home_team_name && g.away_team_name) {
@@ -16134,7 +16212,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
         const scoreStr = g.score || `${g.home_score} : ${g.away_score}`;
         const res = g.result_kr || (g.result === 'WIN' ? '승' : (g.result === 'LOSS' ? '패' : '무'));
         const resCls = res === '승' ? 'bg-danger text-white' : (res === '무' ? 'bg-secondary text-white' : 'bg-primary text-white');
-        const resText = res === '승' ? `${hName} 승` : (res === '무' ? '무승부' : `${aName} 승`);
+        let resText = res === '승' ? `${hName} 승` : (res === '무' ? '무승부' : `${aName} 승`);
+        if (g.home_score !== undefined && g.away_score !== undefined && g.home_score !== null && g.away_score !== null) {
+          if (Number(g.home_score) > Number(g.away_score)) resText = `${hClub} 승`;
+          else if (Number(g.home_score) < Number(g.away_score)) resText = `${aClub} 승`;
+          else resText = '무승부';
+        }
         const league = (g.league_name || '').replace('잉글랜드 프리미어리그', 'EPL').replace('스페인 라리가 (La Liga)', '라리가') || 'EPL';
 
         return `
@@ -17206,7 +17289,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
         container.innerHTML = `
           <div class="p-4 my-4 text-center bg-white rounded-3 border shadow-sm" style="border-color: #fed7aa !important;">
-            <div style="font-size: 2.4rem; color: #f97316; margin-bottom: 8px;">⚾</div>
+            <div style="font-size: 2.4rem; color: #f97316; margin-bottom: 8px;">${(m?.sport_code === 'SOCCER') ? '⚽' : ((m?.sport_code === 'BASKETBALL') ? '🏀' : ((m?.sport_code === 'VOLLEYBALL') ? '🏐' : '⚾'))}</div>
             <h5 class="fw-bold text-dark mb-1">상세 분석 화면 렌더링 중 오류가 발생했습니다</h5>
             <p class="text-muted small mb-3">일시적인 데이터 포맷 오류입니다. 아래 버튼을 눌러 다시 로드해 주세요.</p>
             <div class="d-flex justify-content-center gap-2">
