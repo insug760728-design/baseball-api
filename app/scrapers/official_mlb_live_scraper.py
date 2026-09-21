@@ -7,10 +7,13 @@
 """
 import urllib.request
 import json
+import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 
 from app.services.player_translation import sanitize_player_name, sanitize_text
+
+logger = logging.getLogger("MlbOfficialScraper")
 
 MLB_API_BASE = "https://statsapi.mlb.com/api/v1"
 
@@ -279,7 +282,7 @@ class MlbOfficialScraper:
 
     def get_latest_available_date(self) -> str:
         """가장 최근에 공식 MLB 경기가 있었던 날짜 확인"""
-        url = f"{MLB_API_BASE}/schedule?sportId=1"
+        url = f"{MLB_API_BASE}/schedule?sportId=1&season=2026"
         try:
             data = self._fetch_json(url)
             dates = data.get("dates", [])
@@ -287,41 +290,26 @@ class MlbOfficialScraper:
                 return dates[0]["date"]
         except Exception:
             pass
-        return "2026-09-04"
+        return datetime.now().strftime("%Y-%m-%d")
 
     def scrape_schedule(self, target_date: Optional[str] = None, fast_live: bool = False) -> List[Dict[str, Any]]:
-        """지정일의 공식 MLB 경기 목록 (스코어 및 라인스코어 포함) - 한국 표준시(KST) 완벽 지원
+        """지정일의 공식 MLB 경기 목록 (스코어 및 라인스코어 포함) - 2026 시즌 실데이터 전용
         fast_live=True: 초고속 0.7초 라이브 전용 (투수 프로필 심층 통계 API 호출 생략)"""
         d = target_date or datetime.now().strftime("%Y-%m-%d")
-        
-        try:
-            d_obj = datetime.strptime(d, "%Y-%m-%d")
-            d_prev = (d_obj - timedelta(days=1)).strftime("%Y-%m-%d")
-            d_next = (d_obj + timedelta(days=1)).strftime("%Y-%m-%d")
-        except Exception:
-            d_prev = d
-            d_next = d
 
-        # ⚡ 한국 시차(KST UTC+9 vs 미국 ET UTC-4, 13~16시간 시차):
-        # 한국 오전 경기는 미국 전일(d_prev) 날짜이므로 fast_live에서도 d_prev~d_next 범위를 조회해야 누락 없이 실시간 수집됨 (단일 호출 0.8초)
-        url = f"{MLB_API_BASE}/schedule?sportId=1&startDate={d_prev}&endDate={d_next}&hydrate=probablePitcher,linescore,team"
+        # 1. API 요청 시 season=2026 및 date={d} 파라미터를 명시적으로 포함
+        url = f"{MLB_API_BASE}/schedule?sportId=1&season=2026&date={d}&hydrate=probablePitcher,linescore,team"
+        logger.info(f"[MLB Scraper] Requesting official schedule for date: {d} (season=2026) -> {url}")
         
         try:
             data = self._fetch_json(url)
         except Exception as e:
-            print(f"[MLB API Error] {e}")
+            logger.error(f"[MLB API Error] {e}")
             return []
 
         dates = data.get("dates", [])
         if not dates:
-            # 해당 날짜에 경기가 없으면 가장 최근 유효 일자로 재조회
-            latest_d = self.get_latest_available_date()
-            if latest_d != d:
-                url = f"{MLB_API_BASE}/schedule?sportId=1&date={latest_d}&hydrate=probablePitcher,linescore,team"
-                data = self._fetch_json(url)
-                dates = data.get("dates", [])
-
-        if not dates:
+            logger.info(f"[MLB Scraper] No official games scheduled for date: {d} (season=2026)")
             return []
 
         # 투수 프로필 일괄 비동기 병렬 프리페치 (fast_live 모드일 때는 라이브 초저지연을 위해 생략)
@@ -348,9 +336,34 @@ class MlbOfficialScraper:
 
         results = []
         for date_obj in dates:
+            api_resp_date = date_obj.get("date", "")
             games = date_obj.get("games", [])
             for g in games:
-                game_pk = g["gamePk"]
+                game_pk = str(g.get("gamePk", ""))
+                season_str = str(g.get("season", ""))
+                official_date = g.get("officialDate", "")
+                game_date_raw = g.get("gameDate", "")
+                actual_game_date = official_date or api_resp_date or (game_date_raw[:10] if game_date_raw else "")
+
+                # 5. 디버그 로그에는 요청 날짜, API 응답 날짜, 시즌, game ID를 다 출력하여 검증
+                logger.info(
+                    f"[MLB 검증] 요청 날짜: {d} | API 응답 날짜: {actual_game_date} | 시즌: {season_str} | game ID: {game_pk}"
+                )
+
+                # 4. 2024년이나 2025년 데이터가 섞이지 않게 하고, 항상 2026 시즌 기준으로 필터링
+                if season_str != "2026":
+                    logger.warning(
+                        f"[MLB 제외] 시즌 불일치 (2026 시즌만 허용) -> 요청 날짜: {d} | API 응답 날짜: {actual_game_date} | 시즌: {season_str} | game ID: {game_pk}"
+                    )
+                    continue
+
+                # 3. 응답 받은 뒤에는 각 경기의 실제 game_date를 확인해서, 요청 날짜와 다르면 그 경기는 버림
+                if actual_game_date != d:
+                    logger.warning(
+                        f"[MLB 제외] 날짜 불일치 -> 요청 날짜: {d} | API 응답 날짜: {actual_game_date} | 시즌: {season_str} | game ID: {game_pk}"
+                    )
+                    continue
+
                 away_team_raw = g["teams"]["away"]["team"]["name"]
                 home_team_raw = g["teams"]["home"]["team"]["name"]
                 away_team_ko = get_team_name_ko(away_team_raw)
@@ -382,25 +395,18 @@ class MlbOfficialScraper:
                 status = "FINISHED" if raw_state == "Final" else ("LIVE" if raw_state == "Live" else "SCHEDULED")
 
                 venue_name = g.get("venue", {}).get("name", "MLB Stadium")
-                game_time_raw = g.get("gameDate", "")
                 
                 # 100% 한국 표준시 (KST = UTC + 9시간) 변환
-                match_kst_date_str = d
-                if game_time_raw:
+                if game_date_raw:
                     try:
-                        clean = game_time_raw.replace("Z", "+00:00")
+                        clean = game_date_raw.replace("Z", "+00:00")
                         dt = datetime.fromisoformat(clean)
                         kst_dt = dt + timedelta(hours=9)
                         match_time_display = kst_dt.strftime("%Y-%m-%d %H:%M")
-                        match_kst_date_str = kst_dt.strftime("%Y-%m-%d")
                     except Exception:
                         match_time_display = f"{d} 10:00"
                 else:
                     match_time_display = f"{d} 10:00"
-
-                # target_date가 지정된 경우 한국 시간(KST) 기준 해당 날짜의 경기만 필터링
-                if target_date and match_kst_date_str != target_date:
-                    continue
 
                 # 이닝 및 라이브 상황 추출 (linescore)
                 ls = g.get("linescore", {})
@@ -483,8 +489,9 @@ class MlbOfficialScraper:
                     "official_id": f"MLB_{game_pk}",
                     "sport_code": "BASEBALL",
                     "league_name": "미국 메이저리그 (MLB)",
-                    "season": str(g.get("season", "2026")),
+                    "season": season_str,
                     "round_name": "정규시즌",
+                    "game_date": actual_game_date,
                     "match_date": match_time_display,
                     "stadium": venue_name,
                     "home_team_name": home_team_ko,
@@ -492,7 +499,7 @@ class MlbOfficialScraper:
                     "home_score": home_score,
                     "away_score": away_score,
                     "status": status,
-                    "game_pk": game_pk,
+                    "game_pk": int(game_pk) if game_pk.isdigit() else game_pk,
                     "raw_away_team": away_team_raw,
                     "raw_home_team": home_team_raw,
                     "probable_pitcher_home": h_prob_p,
