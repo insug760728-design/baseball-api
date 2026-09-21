@@ -12571,6 +12571,7 @@ function getFullModalMatchList() {
     // ⚾ 야구 실시간 이벤트 트리거 (1~4번 홈런/안타/볼넷/아웃 이미지 순환 🔄)
     window.triggerBaseballEvent = function(matchId, type, details) {
       if (!window._activeLivePlayEvents) window._activeLivePlayEvents = {};
+      if (!window._matchLastStateImage) window._matchLastStateImage = {};
       const t = (type || 'HIT').toUpperCase();
       if (!window._baseballEvSeq) window._baseballEvSeq = {};
       window._baseballEvSeq[t] = ((window._baseballEvSeq[t] || 0) % 4) + 1;
@@ -12584,14 +12585,36 @@ function getFullModalMatchList() {
         outs = details.outs;
       }
       if (!subtext) {
-        if (t === 'HOMERUN') {
+        if (t === 'HOMERUN' || t === 'HR') {
           const hrTexts = ['배트플립과 함께 담장 넘기는 투런포!', '결정적 스리런 홈런 포효!', '더그아웃 동료들과의 하이파이브!', '외야 관중석 상단 직격 초대형 문샷!'];
           subtext = hrTexts[seqIdx - 1];
         } else if (t === 'HIT') {
           const hitTexts = ['총알 같은 우중간 1타점 적시타!', '헤드퍼스트 슬라이딩 2루 안착!', '1루를 향한 필사의 전력 질주!', '우익선상 날카로운 클러치 2루타!'];
           subtext = hitTexts[seqIdx - 1];
+        } else if (t === 'OUT' || t === 'SO') {
+          const outTexts = [
+            '루킹 삼진 아웃! 꼼짝 못하는 바깥쪽 결정구!',
+            '외야 플라이 다이빙 캐치 호수비!',
+            '더그아웃으로 발걸음을 돌리는 타자',
+            '헛스윙 삼진 아웃! 포효하는 선발 투수!'
+          ];
+          subtext = outTexts[seqIdx - 1];
+        } else if (t === 'BB' || t === 'WALK') {
+          subtext = '침착한 선구안! 풀카운트 끝 1루 볼넷 진루!';
         }
       }
+
+      // 🖼️ 경기 카드 배경 지속 반영 (오버레이가 끝나도 아웃/안타/홈런 이미지가 계속 유지됨)
+      if (t === 'OUT' || t === 'SO') {
+        window._matchLastStateImage[matchId] = `/static/images/baseball_out_epic_${seqIdx}.jpg`;
+      } else if (t === 'HIT') {
+        window._matchLastStateImage[matchId] = `/static/images/baseball_hit_epic_${seqIdx}.jpg`;
+      } else if (t === 'HOMERUN' || t === 'HR') {
+        window._matchLastStateImage[matchId] = `/static/images/baseball_homerun_epic_${seqIdx}.jpg`;
+      } else if (t === 'BB' || t === 'WALK') {
+        window._matchLastStateImage[matchId] = `/static/images/baseball_walk_epic_${seqIdx}.jpg`;
+      }
+
       window._activeLivePlayEvents[matchId] = {
         type: t,
         subtext: subtext,
@@ -12817,10 +12840,35 @@ function getFullModalMatchList() {
           const outDots = (st.outs >= 2) ? '🔴🔴' : (st.outs === 1 ? '🔴⚪' : '⚪⚪');
           const eventBannerHtml = buildLiveBaseballEventTrackHtml(m, st, diffMin);
 
+          // ⚾ 역동적 실시간 야구 배경 이미지 (아웃, 안타, 홈런, 볼넷, 주자 상황 및 수동 트리거 즉각 반영)
+          let baseballBgImg = '/static/images/baseball_stadium_live.jpg';
+          const activeEv = (typeof window._activeLivePlayEvents !== 'undefined' && window._activeLivePlayEvents) ? window._activeLivePlayEvents[m.id] : null;
+          if (activeEv) {
+            const evImgIdx = activeEv.imgIdx || 1;
+            const evT = String(activeEv.type).toUpperCase();
+            if (evT === 'OUT' || evT === 'SO') {
+              baseballBgImg = `/static/images/baseball_out_epic_${evImgIdx}.jpg`;
+            } else if (evT === 'HIT') {
+              baseballBgImg = `/static/images/baseball_hit_epic_${evImgIdx}.jpg`;
+            } else if (evT === 'HOMERUN' || evT === 'HR') {
+              baseballBgImg = `/static/images/baseball_homerun_epic_${evImgIdx}.jpg`;
+            } else if (evT === 'BB' || evT === 'WALK') {
+              baseballBgImg = `/static/images/baseball_walk_epic_${evImgIdx}.jpg`;
+            }
+          } else if (window._matchLastStateImage && window._matchLastStateImage[m.id]) {
+            baseballBgImg = window._matchLastStateImage[m.id];
+          } else if (st.base1 || st.base2 || st.base3) {
+            const hitIdx = (((Number(m.id) || 1) + (st.outs || 0)) % 4) + 1;
+            baseballBgImg = `/static/images/baseball_hit_epic_${hitIdx}.jpg`;
+          } else if (st.outs >= 1) {
+            const outIdx = (st.outs % 4) + 1;
+            baseballBgImg = `/static/images/baseball_out_epic_${outIdx}.jpg`;
+          }
+
           liveBroadcastStageHtml = `
             <div class="live-baseball-stage-wrapper position-relative" style="height: 220px; min-height: 220px; max-height: 220px; border-radius: 10px 10px 0 0; overflow: hidden; border: 1.5px solid rgba(255,255,255,0.18); box-shadow: 0 4px 18px rgba(0,0,0,0.35);">
               <!-- 1. Luxury Stadium Panoramic Background (Ultra Clear & Bright - Zero dark haze!) -->
-              <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.02) 28%, rgba(0,0,0,0.02) 70%, rgba(0,0,0,0.70) 100%), url('/static/images/baseball_stadium_live.jpg') center 35%/cover no-repeat; z-index:1;"></div>
+              <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.02) 28%, rgba(0,0,0,0.02) 70%, rgba(0,0,0,0.70) 100%), url('${baseballBgImg}') center 35%/cover no-repeat; z-index:1; transition: background 0.4s ease-in-out;"></div>
 
               <!-- Top Integrated HUD (LIVE Status, League, Bell Alert, Audit) -->
               <div class="position-absolute d-flex justify-content-between align-items-center w-100 px-3" style="top: 10px; left: 0; right: 0; z-index: 5;">
@@ -12860,7 +12908,7 @@ function getFullModalMatchList() {
                 </div>
 
                 <!-- Center: Scoreboard HUD & Diamond -->
-                <div class="position-absolute d-flex flex-column align-items-center justify-content-between h-100" style="left:50%; top:46px; bottom:10px; transform:translateX(-50%); width:220px; z-index:4; pointer-events:none;">
+                <div class="position-absolute d-flex flex-column align-items-center justify-content-between" style="left:50%; top:44px; bottom:10px; transform:translateX(-50%); width:230px; z-index:4; pointer-events:none;">
                   <!-- Top: Score HUD -->
                   <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.3); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:28px; pointer-events:auto;">
                     <span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center" style="font-size:0.62rem; min-width:46px; border-radius:10px;">${st.inning_text || '진행중'}</span>
@@ -12876,7 +12924,7 @@ function getFullModalMatchList() {
                   </div>
 
                   <!-- Middle: Diamond Graphic -->
-                  <div class="position-relative my-auto" style="cursor:pointer; pointer-events:auto;" onclick="event.stopPropagation(); toggleLiveBaseSim(${m.id});" title="클릭하여 1·2·3루 베이스 점등 테스트">
+                  <div class="position-relative my-auto" style="cursor:pointer; pointer-events:auto;" onclick="event.stopPropagation(); toggleLiveBaseSim(${m.id});" title="클릭하여 1·2·3루 베이스 점등 및 아웃/안타 테스트">
                     <svg width="156" height="48" viewBox="0 0 156 48">
                       <polygon points="78,4 127,24 78,44 29,24" fill="rgba(6,78,59,0.35)" stroke="rgba(255,255,255,0.30)" stroke-width="1.2" stroke-dasharray="3,2" />
                       <ellipse cx="78" cy="24" rx="7.5" ry="3.8" fill="rgba(180,83,9,0.55)" stroke="rgba(255,255,255,0.3)" stroke-width="0.8" />
@@ -12890,13 +12938,16 @@ function getFullModalMatchList() {
                     </svg>
                   </div>
 
-                  <!-- Bottom: Action Buttons -->
-                  <div style="pointer-events:auto; display:flex; gap:6px; align-items:center;">
-                    <button type="button" class="btn btn-xs px-2.5 py-1 fw-bold text-dark border border-warning bg-warning rounded-pill shadow-sm" style="font-size:0.65rem; font-weight:800;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'HOMERUN');" title="누를 때마다 1~4번 홈런 사진이 순환하여 바뀝니다!">
-                      💥 홈런 (1~4번 🔄)
+                  <!-- Bottom: Action Buttons (홈런, 안타, 아웃 1~4번 사진 즉시 순환 변경) -->
+                  <div style="pointer-events:auto; display:flex; gap:4px; align-items:center; justify-content:center; width:100%;">
+                    <button type="button" class="btn btn-xs px-2 py-0.5 fw-bold text-dark border border-warning bg-warning rounded-pill shadow-sm" style="font-size:0.62rem; font-weight:800;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'HOMERUN');" title="누를 때마다 1~4번 홈런 사진이 순환하여 바뀝니다!">
+                      💥 홈런 (1~4 🔄)
                     </button>
-                    <button type="button" class="btn btn-xs px-2.5 py-1 fw-bold text-white border border-success bg-success rounded-pill shadow-sm" style="font-size:0.65rem; font-weight:800;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'HIT');" title="누를 때마다 1~4번 안타 사진이 순환하여 바뀝니다!">
-                      ⚾ 안타 (1~4번 🔄)
+                    <button type="button" class="btn btn-xs px-2 py-0.5 fw-bold text-white border border-success bg-success rounded-pill shadow-sm" style="font-size:0.62rem; font-weight:800;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'HIT');" title="누를 때마다 1~4번 안타 사진이 순환하여 바뀝니다!">
+                      ⚾ 안타 (1~4 🔄)
+                    </button>
+                    <button type="button" class="btn btn-xs px-2 py-0.5 fw-bold text-white border border-danger bg-danger rounded-pill shadow-sm" style="font-size:0.62rem; font-weight:800;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'OUT');" title="누를 때마다 1~4번 아웃 사진이 순환하여 바뀝니다!">
+                      ⚡ 아웃 (1~4 🔄)
                     </button>
                   </div>
                 </div>
@@ -12947,10 +12998,22 @@ function getFullModalMatchList() {
             `;
           }
 
+          // ⚽ 축구 라이브 배경 이미지 (골 세리머니 1~4번 및 경기장 배경 지속 반영)
+          let soccerBgImg = '/static/images/soccer_stadium_live.jpg';
+          if (activeEv && (activeEv.type === 'GOAL' || activeEv.type === 'SCORE')) {
+            const goalImgIdx = activeEv.imgIdx || 1;
+            soccerBgImg = `/static/images/soccer_goal_epic_${goalImgIdx}.jpg`;
+          } else if (window._matchLastStateImage && window._matchLastStateImage[m.id]) {
+            soccerBgImg = window._matchLastStateImage[m.id];
+          } else if ((hScore + aScore) > 0) {
+            const goalIdx = (((Number(m.id) || 1) + hScore + aScore) % 4) + 1;
+            soccerBgImg = `/static/images/soccer_goal_epic_${goalIdx}.jpg`;
+          }
+
           liveBroadcastStageHtml = `
             <div class="live-soccer-stage-wrapper position-relative" style="height: 220px; min-height: 220px; max-height: 220px; border-radius: 10px 10px 0 0; overflow: hidden; border: 1.5px solid rgba(255,255,255,0.18); box-shadow: 0 4px 18px rgba(0,0,0,0.35);">
               <!-- 1. Luxury Soccer Stadium Panoramic Background (Ultra Clear & Bright - Zero dark haze!) -->
-              <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.02) 28%, rgba(0,0,0,0.02) 70%, rgba(0,0,0,0.70) 100%), url('/static/images/soccer_stadium_live.jpg') center 45%/cover no-repeat; z-index:1;"></div>
+              <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.02) 28%, rgba(0,0,0,0.02) 70%, rgba(0,0,0,0.70) 100%), url('${soccerBgImg}') center 45%/cover no-repeat; z-index:1; transition: background 0.4s ease-in-out;"></div>
 
               <!-- Top Integrated HUD (LIVE Status, League, Bell Alert, Audit) -->
               <div class="position-absolute d-flex justify-content-between align-items-center w-100 px-3" style="top: 10px; left: 0; right: 0; z-index: 5;">
@@ -12990,7 +13053,7 @@ function getFullModalMatchList() {
                 </div>
 
                 <!-- Center: Scoreboard HUD & Pitch Graphic -->
-                <div class="position-absolute d-flex flex-column align-items-center justify-content-between h-100" style="left:50%; top:46px; bottom:10px; transform:translateX(-50%); width:220px; z-index:4; pointer-events:none;">
+                <div class="position-absolute d-flex flex-column align-items-center justify-content-between" style="left:50%; top:44px; bottom:10px; transform:translateX(-50%); width:220px; z-index:4; pointer-events:none;">
                   <!-- Top: Symmetrical Soccer Scoreboard Pill -->
                   <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.3); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:28px; pointer-events:auto;">
                     <span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center" style="font-size:0.62rem; min-width:48px; border-radius:10px;">${st.match_time || '전반'}</span>
@@ -13018,7 +13081,7 @@ function getFullModalMatchList() {
                   </div>
 
                   <!-- Bottom: Action Buttons -->
-                  <div style="pointer-events:auto; display:flex; gap:6px; align-items:center;">
+                  <div style="pointer-events:auto; display:flex; gap:6px; align-items:center; justify-content:center; width:100%;">
                     <button type="button" class="btn btn-xs px-3 py-1 fw-bold text-white border border-success bg-success rounded-pill shadow-sm" style="font-size:0.68rem; font-weight:800;" onclick="event.stopPropagation(); triggerSoccerGoalEvent(${m.id}, '${hScore >= aScore ? hName : aName}')" title="누를 때마다 1~4번 골 세리머니 사진이 순환하여 바뀝니다!">
                       ⚽ 골 세리머니 (1~4번 순환 🔄)
                     </button>
@@ -20872,6 +20935,13 @@ function renderPredDetail(m, customDetailData = null) {
           const itemHScore = (item.home_score !== undefined && item.home_score !== null) ? item.home_score : ((item.scoreboard && item.scoreboard.home_score !== undefined && item.scoreboard.home_score !== null) ? item.scoreboard.home_score : null);
           const itemAScore = (item.away_score !== undefined && item.away_score !== null) ? item.away_score : ((item.scoreboard && item.scoreboard.away_score !== undefined && item.scoreboard.away_score !== null) ? item.scoreboard.away_score : null);
 
+          const prevHScore = target.home_score;
+          const prevAScore = target.away_score;
+          const prevOuts = target.outs;
+          const prevB1 = target.base1;
+          const prevB2 = target.base2;
+          const prevB3 = target.base3;
+
           if ((itemHScore !== null && target.home_score !== itemHScore) || (itemAScore !== null && target.away_score !== itemAScore) || (item.status && target.status !== item.status)) {
             hasChanges = true;
           }
@@ -20911,9 +20981,12 @@ function renderPredDetail(m, customDetailData = null) {
               window.triggerSoccerGoalEvent(item.id, item.event_text || '골');
             }
           } else if (isBaseball && typeof window.triggerBaseballEvent === 'function') {
-            // 점수 상승 시 홈런/안타 자동 판단
-            const oldSum = (Number(target.home_score) || 0) + (Number(target.away_score) || 0);
-            const newSum = (Number(itemHScore ?? target.home_score) || 0) + (Number(itemAScore ?? target.away_score) || 0);
+            // 점수 상승 시 홈런/안타 자동 판단 (prevHScore, prevAScore 기반)
+            const oldSum = (Number(prevHScore) || 0) + (Number(prevAScore) || 0);
+            const newSum = (Number(target.home_score) || 0) + (Number(target.away_score) || 0);
+            const newOuts = (item.outs !== undefined && item.outs !== null) ? Number(item.outs) : (Number(target.outs) || 0);
+            const oldOuts = Number(prevOuts) || 0;
+
             if (newSum > oldSum) {
               const diff = newSum - oldSum;
               if (diff >= 2) {
@@ -20921,8 +20994,10 @@ function renderPredDetail(m, customDetailData = null) {
               } else {
                 window.triggerBaseballEvent(item.id, 'HIT', '⚾ 1타점 적시타!');
               }
-            } else if (item.outs !== undefined && target.outs !== undefined && item.outs > target.outs) {
-              window.triggerBaseballEvent(item.id, 'OUT', { outs: item.outs, subtext: `${item.outs}아웃 카운트!` });
+            } else if (newOuts > oldOuts) {
+              window.triggerBaseballEvent(item.id, 'OUT', { outs: newOuts, subtext: `${newOuts}아웃 카운트!` });
+            } else if ((!prevB1 && target.base1) || (!prevB2 && target.base2) || (!prevB3 && target.base3)) {
+              window.triggerBaseballEvent(item.id, 'HIT', '안타 출루 진루 성공!');
             }
           }
 
@@ -21030,17 +21105,41 @@ function renderPredDetail(m, customDetailData = null) {
       const next = (current + 1) % 4; // 0: 주자없음, 1: 1루, 2: 1·2루, 3: 만루(1·2·3루)
       window._liveSimBases[matchId] = next;
       
-      const m = (window._cachedMatches || []).find(x => Number(x.id) === Number(matchId));
+      let matchPool = [];
+      if (typeof allMatches !== 'undefined' && Array.isArray(allMatches) && allMatches.length > 0) {
+        matchPool = allMatches;
+      } else if (window.matchListAgent && Array.isArray(window.matchListAgent.matches)) {
+        matchPool = window.matchListAgent.matches;
+      } else if (window._cachedMatches) {
+        matchPool = window._cachedMatches;
+      }
+
+      const m = matchPool.find(x => Number(x.id) === Number(matchId));
       if (m) {
         if (next === 1) { m.base1 = true; m.base2 = false; m.base3 = false; }
         else if (next === 2) { m.base1 = true; m.base2 = true; m.base3 = false; }
         else if (next === 3) { m.base1 = true; m.base2 = true; m.base3 = true; }
-        else { m.base1 = false; m.base2 = false; m.base3 = false; }
-        
-        if (typeof renderAllMatchViews === 'function') {
-          renderAllMatchViews();
+        else { 
+          m.base1 = false; m.base2 = false; m.base3 = false; 
+          m.outs = ((Number(m.outs) || 0) + 1) % 3;
         }
       }
+
+      if (typeof triggerBaseballEvent === 'function') {
+        if (next === 1) {
+          triggerBaseballEvent(matchId, 'HIT', '1루 진루 안타!');
+        } else if (next === 2) {
+          triggerBaseballEvent(matchId, 'HIT', '득점권 찬스! 1·2루 주자 진루!');
+        } else if (next === 3) {
+          triggerBaseballEvent(matchId, 'HIT', '만루 찬스! 1·2·3루 풀베이스!');
+        } else {
+          const outCnt = (m && m.outs) ? m.outs : 1;
+          triggerBaseballEvent(matchId, 'OUT', { outs: outCnt, subtext: `${outCnt}아웃! 타자 범타 처리!` });
+        }
+      }
+
+      if (typeof renderPredMatches === 'function') renderPredMatches();
+      if (typeof renderAllMatchViews === 'function') renderAllMatchViews();
     };
 
     function buildLargeDiamondSvg(b1, b2, b3, outs) {
