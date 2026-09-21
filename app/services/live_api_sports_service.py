@@ -92,62 +92,62 @@ NATIONAL_TEAM_MAP = {
 # Comprehensive Korean <-> English / International Team Synonyms
 TEAM_SYNONYMS = {
     # Baseball (KBO)
-    "키움": ["kiwoom", "kiwoom heroes", "키움 히어로즈", "히어로즈"],
-    "NC": ["nc", "nc dinos", "nc 다이노스", "다이노스"],
-    "KIA": ["kia", "kia tigers", "기아", "kia 타이거즈", "기아 타이거즈", "타이거즈"],
-    "KT": ["kt", "kt wiz", "kt wiz suwon", "kt 위즈", "위즈"],
-    "LG": ["lg", "lg twins", "lg 트윈스", "트윈스"],
-    "삼성": ["samsung", "samsung lions", "삼성 라이온즈", "삼성라이온즈"],
-    "롯데": ["lotte", "lotte giants", "롯데 자이언츠", "롯데자이언츠"],
-    "한화": ["hanwha", "hanwha eagles", "한화 이글스", "이글스"],
-    "SSG": ["ssg", "ssg landers", "ssg 랜더스", "랜더스", "sk"],
-    "두산": ["doosan", "doosan bears", "두산 베어스", "베어스"],
+    "키움": ["kiwoom", "kiwoom heroes", "키움", "키움히어로즈", "키움 히어로즈", "히어로즈"],
+    "NC": ["nc", "nc dinos", "nc 다이노스", "nc다이노스", "다이노스", "엔씨"],
+    "KIA": ["kia", "kia tigers", "기아", "kia 타이거즈", "kia타이거즈", "기아 타이거즈", "기아타이거즈", "타이거즈"],
+    "KT": ["kt", "kt wiz", "kt wiz suwon", "kt 위즈", "kt위즈", "위즈", "케이티"],
+    "LG": ["lg", "lg twins", "lg 트윈스", "lg트윈스", "트윈스", "엘지"],
+    "삼성": ["samsung", "samsung lions", "삼성", "삼성 라이온즈", "삼성라이온즈", "라이온즈"],
+    "롯데": ["lotte", "lotte giants", "롯데", "롯데 자이언츠", "롯데자이언츠", "자이언츠"],
+    "한화": ["hanwha", "hanwha eagles", "한화", "한화 이글스", "한화이글스", "이글스"],
+    "SSG": ["ssg", "ssg landers", "ssg", "ssg 랜더스", "ssg랜더스", "랜더스", "sk"],
+    "두산": ["doosan", "doosan bears", "두산", "두산 베어스", "두산베어스", "베어스"],
 
     # Baseball (NPB)
-    "요미우리": ["yomiuri", "yomiuri giants", "요미우리 자이언츠"],
-    "한신": ["hanshin", "hanshin tigers", "한신 타이거스"],
-    "주니치": ["chunichi", "chunichi dragons", "주니치 드래곤즈"],
-    "야쿠르트": ["yakult", "yakult swallows", "도쿄 야쿠르트", "도쿄 야쿠르트 스왈로스"],
-    "히로시마": ["hiroshima", "hiroshima carp", "히로시마 도요 카프"],
-    "요코하마": ["yokohama", "yokohama baystars", "요코하마 dena 베이스타즈"],
-    "소프트뱅크": ["softbank", "fukuoka softbank", "fukuoka s. hawks", "후쿠오카 소프트뱅크"],
-    "오릭스": ["orix", "orix buffaloes", "오릭스 버펄로스"],
-    "지바롯데": ["chiba lotte", "chiba lotte marines", "지바 롯데", "지바 롯데 마린스"],
-    "라쿠텐": ["rakuten", "rakuten gold. eagles", "도호쿠 라쿠텐", "도호쿠 라쿠텐 골든이글스"],
-    "세이부": ["seibu", "seibu lions", "사이타마 세이부 라이온즈"],
-    "닛폰햄": ["nippon ham", "nippon ham fighters", "홋카이도 닛폰햄"],
+    "요미우리": ["yomiuri", "yomiuri giants", "요미우리", "요미우리 자이언츠", "요미우리자이언츠", "요미자이"],
+    "한신": ["hanshin", "hanshin tigers", "한신", "한신 타이거스", "한신타이거스", "한신 타이거즈", "한신타이거즈", "한신타이"],
+    "주니치": ["chunichi", "chunichi dragons", "주니치", "주니치 드래곤즈", "주니치드래곤즈", "주니치 드래건스", "주니드래"],
+    "야쿠르트": ["yakult", "yakult swallows", "야쿠르트", "도쿄 야쿠르트", "도쿄야쿠르트", "야쿠르트 스왈로스", "야쿠르트스왈로스", "야쿠르트 스왈로즈", "야쿠스왈"],
+    "히로시마": ["hiroshima", "hiroshima carp", "히로시마", "히로시마 도요 카프", "히로시마도요카프", "도요카프", "히로카프", "카프"],
+    "요코하마": ["yokohama", "yokohama baystars", "요코하마", "요코하마 dena", "요코하마dena", "요코하마 dena 베이스타즈", "요코하마dena베이스타즈", "요코베이", "베이스타즈"],
+    "소프트뱅크": ["softbank", "fukuoka softbank", "fukuoka s. hawks", "소프트뱅크", "소프트뱅크 호크스", "소프트뱅크호크스", "소프트뱅크 호크즈", "후쿠오카 소프트뱅크", "후쿠오카소프트뱅크", "소프호크"],
+    "오릭스": ["orix", "orix buffaloes", "오릭스", "오릭스 버펄로스", "오릭스버펄로스", "오릭스 버팔로스", "오릭스버팔로스", "오릭버펄", "버펄로스", "버팔로스"],
+    "지바롯데": ["chiba lotte", "chiba lotte marines", "지바롯데", "지바 롯데", "지바 롯데 마린스", "지바롯데마린스", "지바마린", "마린스"],
+    "라쿠텐": ["rakuten", "rakuten gold. eagles", "라쿠텐", "라쿠텐 골든이글스", "라쿠텐골든이글스", "도호쿠 라쿠텐", "도호쿠라쿠텐", "라쿠골든"],
+    "세이부": ["seibu", "seibu lions", "세이부", "세이부 라이온즈", "세이부라이온즈", "사이타마 세이부", "사이타마세이부", "세이라이"],
+    "닛폰햄": ["nippon ham", "nippon ham fighters", "닛폰햄", "닛폰햄 파이터스", "닛폰햄파이터스", "닛폰햄 파이터즈", "홋카이도 닛폰햄", "홋카이도닛폰햄", "닛폰파이", "파이터스"],
 
     # Baseball (MLB)
-    "다저스": ["dodgers", "los angeles dodgers", "la dodgers", "la다저스", "la 다저스", "다저스"],
-    "파드리스": ["padres", "san diego padres", "샌디에이고", "파드리스"],
-    "자이언츠": ["giants", "san francisco giants", "샌프란시스코", "자이언츠"],
-    "양키스": ["yankees", "new york yankees", "ny yankees", "ny양키스", "뉴욕양키스", "뉴욕 양키스", "뉴욕y"],
-    "메츠": ["mets", "new york mets", "ny mets", "ny메츠", "뉴욕메츠", "뉴욕 메츠", "뉴욕m"],
-    "레드삭스": ["red sox", "boston red sox", "보스턴", "레드삭스"],
-    "오리올스": ["orioles", "baltimore orioles", "볼티모어", "오리올스"],
-    "블루제이스": ["blue jays", "toronto blue jays", "토론토", "블루제이스"],
-    "레이스": ["rays", "tampa bay rays", "탬파베이", "레이스"],
-    "화이트삭스": ["white sox", "chicago white sox", "시카고화이트삭스", "시카고 화이트삭스", "시카고w", "시카고 w", "시카고화이트"],
-    "가디언스": ["guardians", "cleveland guardians", "클리블랜드", "가디언스"],
-    "타이거스": ["tigers", "detroit tigers", "디트로이트", "타이거스"],
-    "로열스": ["royals", "kansas city royals", "캔자스시티", "로열스"],
-    "트윈스": ["twins", "minnesota twins", "미네소타", "트윈스"],
-    "애스트로스": ["astros", "houston astros", "휴스턴", "애스트로스"],
-    "에인절스": ["angels", "los angeles angels", "la angels", "la에인절스", "la 에인절스", "에인절스"],
-    "애슬레틱스": ["athletics", "oakland athletics", "오클랜드", "애슬레틱스"],
-    "매리너스": ["mariners", "seattle mariners", "시애틀", "매리너스"],
-    "레인저스": ["rangers", "texas rangers", "텍사스", "레인저스"],
-    "브레이브스": ["braves", "atlanta braves", "애틀랜타", "브레이브스"],
-    "말린스": ["marlins", "miami marlins", "마이애미", "말린스"],
-    "필리스": ["phillies", "philadelphia phillies", "필라델피아", "필리스"],
-    "내셔널스": ["nationals", "washington nationals", "워싱턴", "내셔널스"],
-    "컵스": ["cubs", "chicago cubs", "시카고컵스", "시카고 컵스", "시카고c", "시카고 c"],
-    "레즈": ["reds", "cincinnati reds", "신시내티", "레즈"],
-    "브루어스": ["brewers", "milwaukee brewers", "밀워키", "브루어스"],
-    "파이리츠": ["pirates", "pittsburgh pirates", "피츠버그", "파이리츠"],
-    "카디널스": ["cardinals", "st louis cardinals", "st. louis cardinals", "세인트루이스", "카디널스"],
-    "다이아몬드백스": ["diamondbacks", "arizona diamondbacks", "d-backs", "애리조나", "다이아몬드백스"],
-    "로키스": ["rockies", "colorado rockies", "콜로라도", "로키스"],
+    "다저스": ["dodgers", "los angeles dodgers", "la dodgers", "la다저스", "la 다저스", "l다저스", "다저스"],
+    "파드리스": ["padres", "san diego padres", "샌디에이고", "샌디에이고 파드리스", "샌디에이고파드리스", "샌디파드", "샌디에고", "파드리스"],
+    "자이언츠": ["giants", "san francisco giants", "sf giants", "샌프란시스코", "샌프란시스코 자이언츠", "샌프란시스코자이언츠", "샌프자이", "sf자이언츠", "자이언츠"],
+    "양키스": ["yankees", "new york yankees", "ny yankees", "ny양키스", "뉴욕양키스", "뉴욕 양키스", "뉴욕양키", "뉴욕y", "양키스"],
+    "메츠": ["mets", "new york mets", "ny mets", "ny메츠", "뉴욕메츠", "뉴욕 메츠", "뉴욕m", "메츠"],
+    "레드삭스": ["red sox", "boston red sox", "보스턴", "보스턴 레드삭스", "보스턴레드삭스", "보스레드", "레드삭스"],
+    "오리올스": ["orioles", "baltimore orioles", "볼티모어", "볼티모어 오리올스", "볼티모어오리올스", "볼티모어 오리올즈", "볼티오리", "오리올스", "오리올즈"],
+    "블루제이스": ["blue jays", "toronto blue jays", "토론토", "토론토 블루제이스", "토론토블루제이스", "토론블루", "블루제이스"],
+    "레이스": ["rays", "tampa bay rays", "탬파베이", "탬파베이 레이스", "탬파베이레이스", "탬파레이", "템파베이", "템파레이", "레이스"],
+    "화이트삭스": ["white sox", "chicago white sox", "시카고화이트삭스", "시카고 화이트삭스", "시카고w", "시카고 w", "시카고W", "시카화삭", "시카화이", "시카고화이", "시카고화이트", "화이트삭스"],
+    "가디언스": ["guardians", "cleveland guardians", "클리블랜드", "클리블랜드 가디언스", "클리블랜드가디언스", "클리블랜드 가디언즈", "클리가디", "클리블랜", "가디언스", "가디언즈"],
+    "타이거스": ["tigers", "detroit tigers", "디트로이트", "디트로이트 타이거스", "디트로이트타이거스", "디트로이트 타이거즈", "디트타이", "디트로타", "타이거스", "타이거즈"],
+    "로열스": ["royals", "kansas city royals", "캔자스시티", "캔자스시티 로열스", "캔자스시티로열스", "캔자스시티 로얄스", "캔자로열", "캔자로얄", "로열스", "로얄스"],
+    "트윈스": ["twins", "minnesota twins", "미네소타", "미네소타 트윈스", "미네소타트윈스", "미네트윈", "트윈스"],
+    "애스트로스": ["astros", "houston astros", "휴스턴", "휴스턴 애스트로스", "휴스턴애스트로스", "휴스애스", "애스트로스"],
+    "에인절스": ["angels", "los angeles angels", "la angels", "la에인절스", "la 에인절스", "la에인절", "l에인절", "에인절스"],
+    "애슬레틱스": ["athletics", "oakland athletics", "오클랜드", "오클랜드 애슬레틱스", "오클랜드애슬레틱스", "오클애슬", "애슬레틱스", "애슬레틱"],
+    "매리너스": ["mariners", "seattle mariners", "시애틀", "시애틀 매리너스", "시애틀매리너스", "시애매리", "매리너스"],
+    "레인저스": ["rangers", "texas rangers", "텍사스", "텍사스 레인저스", "텍사스레인저스", "텍사레인", "텍사스 레인져스", "레인저스", "레인져스"],
+    "브레이브스": ["braves", "atlanta braves", "애틀랜타", "애틀랜타 브레이브스", "애틀랜타브레이브스", "애틀브레", "애틀란타", "애틀란타 브레이브스", "브레이브스", "브레이브즈"],
+    "말린스": ["marlins", "miami marlins", "마이애미", "마이애미 말린스", "마이애미말린스", "마이말린", "말린스"],
+    "필리스": ["phillies", "philadelphia phillies", "필라델피아", "필라델피아 필리스", "필라델피아필리스", "필라필리", "필리스"],
+    "내셔널스": ["nationals", "washington nationals", "워싱턴", "워싱턴 내셔널스", "워싱턴내셔널스", "워싱내셔", "내셔널스"],
+    "컵스": ["cubs", "chicago cubs", "시카고컵스", "시카고 컵스", "시카고c", "시카고 c", "시카고C", "시카컵스", "컵스"],
+    "레즈": ["reds", "cincinnati reds", "신시내티", "신시내티 레즈", "신시내티레즈", "신시레즈", "신시네티", "레즈"],
+    "브루어스": ["brewers", "milwaukee brewers", "밀워키", "밀워키 브루어스", "밀워키브루어스", "밀워키 브루어즈", "밀워브루", "브루어스", "브루어즈"],
+    "파이리츠": ["pirates", "pittsburgh pirates", "피츠버그", "피츠버그 파이리츠", "피츠버그파이리츠", "피츠버그 파이어리츠", "피츠파이", "파이리츠", "파이어리츠"],
+    "카디널스": ["cardinals", "st louis cardinals", "st. louis cardinals", "세인트루이스", "세인트루이스 카디널스", "세인트루이스카디널스", "세인트루이스 카디널즈", "세인카디", "카디널스", "카디널즈"],
+    "다이아몬드백스": ["diamondbacks", "arizona diamondbacks", "d-backs", "애리조나", "애리조나 다이아몬드백스", "애리조나다이아몬드백스", "애리다이", "애리디백", "디백스", "다이아몬드백스"],
+    "로키스": ["rockies", "colorado rockies", "콜로라도", "콜로라도 로키스", "콜로라도로키스", "콜로로키", "로키스"],
 
     # Soccer (EPL / La Liga / Serie A / Bundesliga / Ligue 1)
     "에버턴": ["everton", "에버튼"],
@@ -422,6 +422,157 @@ def get_canonical(n: str) -> str:
         elif len(k) >= 2 and any('\uac00' <= ch <= '\ud7a3' for ch in k) and k in norm:
             return _CANONICAL_LOOKUP[k]
     return norm
+
+
+# =============================================================
+# ⚾ 간결 팀명 매핑 및 베트맨 4글자 축약/약칭 정규화 사전
+# =============================================================
+FRONT_TEAM_MAP = {
+    # MLB (30개 구단 + 베트맨 4글자 코드 + 영문명)
+    '볼티모어 오리올스': '볼티모어', '볼티모어': '볼티모어', '볼티오리': '볼티모어', 'baltimore orioles': '볼티모어', 'baltimore': '볼티모어',
+    '토론토 블루제이스': '토론토', '토론토': '토론토', '토론블루': '토론토', 'toronto blue jays': '토론토', 'toronto': '토론토',
+    '밀워키 브루어스': '밀워키', '밀워키': '밀워키', '밀워브루': '밀워키', '밀워키 브루어즈': '밀워키', 'milwaukee brewers': '밀워키', 'milwaukee': '밀워키',
+    '애리조나 다이아몬드백스': '애리조나', '애리조나': '애리조나', '애리다이': '애리조나', '애리디백': '애리조나', 'arizona diamondbacks': '애리조나', 'arizona': '애리조나',
+    '뉴욕 양키스': '양키스', '뉴욕양키스': '양키스', 'NY양키스': '양키스', '뉴욕양키': '양키스', '양키스': '양키스', 'new york yankees': '양키스', 'yankees': '양키스',
+    '뉴욕 메츠': '메츠', '뉴욕메츠': '메츠', 'NY메츠': '메츠', '메츠': '메츠', 'new york mets': '메츠', 'mets': '메츠',
+    '보스턴 레드삭스': '보스턴', '보스턴': '보스턴', '보스레드': '보스턴', 'boston red sox': '보스턴', 'red sox': '보스턴',
+    'LA 다저스': '다저스', 'LA다저스': '다저스', '로스앤젤레스 다저스': '다저스', '다저스': '다저스', 'los angeles dodgers': '다저스', 'dodgers': '다저스',
+    'LA 에인절스': '에인절스', 'LA에인절스': '에인절스', '로스앤젤레스 에인절스': '에인절스', '에인절스': '에인절스', 'los angeles angels': '에인절스', 'angels': '에인절스',
+    '샌디에이고 파드리스': '샌디에이고', '샌디에이고': '샌디에이고', '샌디파드': '샌디에이고', 'san diego padres': '샌디에이고', 'san diego': '샌디에이고',
+    '샌프란시스코 자이언츠': '샌프란시스코', '샌프란시스코': '샌프란시스코', '샌프자이': '샌프란시스코', 'san francisco giants': '샌프란시스코', 'san francisco': '샌프란시스코',
+    '텍사스 레인저스': '텍사스', '텍사스': '텍사스', '텍사레인': '텍사스', 'texas rangers': '텍사스', 'texas': '텍사스',
+    '디트로이트 타이거스': '디트로이트', '디트로이트 타이거즈': '디트로이트', '디트로이트': '디트로이트', '디트타이': '디트로이트', '디트로타': '디트로이트', 'detroit tigers': '디트로이트', 'detroit': '디트로이트',
+    '클리블랜드 가디언스': '클리블랜드', '클리블랜드 가디언즈': '클리블랜드', '클리블랜드': '클리블랜드', '클리가디': '클리블랜드', 'cleveland guardians': '클리블랜드', 'cleveland': '클리블랜드',
+    '시애틀 매리너스': '시애틀', '시애틀': '시애틀', '시애매리': '시애틀', 'seattle mariners': '시애틀', 'seattle': '시애틀',
+    '필라델피아 필리스': '필라델피아', '필라델피아': '필라델피아', '필라필리': '필라델피아', 'philadelphia phillies': '필라델피아', 'philadelphia': '필라델피아',
+    '애틀랜타 브레이브스': '애틀랜타', '애틀랜타': '애틀랜타', '애틀란타': '애틀랜타', '애틀브레': '애틀랜타', 'atlanta braves': '애틀랜타', 'atlanta': '애틀랜타',
+    '휴스턴 애스트로스': '휴스턴', '휴스턴': '휴스턴', '휴스애스': '휴스턴', 'houston astros': '휴스턴', 'houston': '휴스턴',
+    '시카고 컵스': '시카고C', '시카고컵스': '시카고C', '시카컵스': '시카고C', '시카고C': '시카고C', 'chicago cubs': '시카고C', 'cubs': '시카고C',
+    '시카고 화이트삭스': '시카고W', '시카고화이트삭스': '시카고W', '시카화삭': '시카고W', '시카화이': '시카고W', '화이트삭스': '시카고W', '화삭': '시카고W', '시카고W': '시카고W', 'chicago white sox': '시카고W', 'white sox': '시카고W',
+    '미네소타 트윈스': '미네소타', '미네소타': '미네소타', '미네트윈': '미네소타', 'minnesota twins': '미네소타', 'minnesota': '미네소타',
+    '세인트루이스 카디널스': '세인트루이스', '세인트루이스 카디널즈': '세인트루이스', '세인트루이스': '세인트루이스', '세인카디': '세인트루이스', 'st louis cardinals': '세인트루이스', 'st. louis cardinals': '세인트루이스',
+    '콜로라도 로키스': '콜로라도', '콜로라도': '콜로라도', '콜로로키': '콜로라도', 'colorado rockies': '콜로라도', 'colorado': '콜로라도',
+    '캔자스시티 로열스': '캔자스시티', '캔자스시티 로얄스': '캔자스시티', '캔자스시티': '캔자스시티', '캔자로열': '캔자스시티', '캔자로얄': '캔자스시티', 'kansas city royals': '캔자스시티', 'kansas city': '캔자스시티',
+    '오클랜드 애슬레틱스': '애슬레틱스', '오클랜드 애슬레틱': '애슬레틱스', '오클랜드': '애슬레틱스', '오클애슬': '애슬레틱스', '애슬레틱스': '애슬레틱스', '애슬레틱': '애슬레틱스', 'oakland athletics': '애슬레틱스', 'athletics': '애슬레틱스',
+    '워싱턴 내셔널스': '워싱턴', '워싱턴': '워싱턴', '워싱내셔': '워싱턴', 'washington nationals': '워싱턴', 'washington': '워싱턴',
+    '신시내티 레즈': '신시내티', '신시내티': '신시내티', '신시레즈': '신시내티', '신시네티': '신시내티', 'cincinnati reds': '신시내티', 'cincinnati': '신시내티',
+    '피츠버그 파이리츠': '피츠버그', '피츠버그 파이어리츠': '피츠버그', '피츠버그': '피츠버그', '피츠파이': '피츠버그', 'pittsburgh pirates': '피츠버그', 'pittsburgh': '피츠버그',
+    '탬파베이 레이스': '탬파베이', '탬파베이': '탬파베이', '탬파레이': '탬파베이', '템파베이': '탬파베이', '템파레이': '탬파베이', 'tampa bay rays': '탬파베이', 'tampa bay': '탬파베이',
+    '마이애미 말린스': '마이애미', '마이애미': '마이애미', '마이말린': '마이애미', 'miami marlins': '마이애미', 'miami': '마이애미',
+
+    # NPB (12개 구단 + 베트맨 4글자 코드)
+    '한신 타이거스': '한신', '한신 타이거즈': '한신', '한신': '한신', '한신타이': '한신', 'hanshin tigers': '한신', 'hanshin': '한신',
+    '요코하마 DeNA 베이스타즈': '요코하마', '요코하마 DeNA': '요코하마', '요코하마': '요코하마', '요코베이': '요코하마', 'dena': '요코하마', 'yokohama dena baystars': '요코하마',
+    '요미우리 자이언츠': '요미우리', '요미우리': '요미우리', '요미자이': '요미우리', '요미': '요미우리', 'yomiuri giants': '요미우리',
+    '도쿄 야쿠르트 스왈로스': '야쿠르트', '야쿠르트 스왈로스': '야쿠르트', '야쿠르트': '야쿠르트', '도쿄야쿠르트': '야쿠르트', '야쿠스왈': '야쿠르트', 'tokyo yakult swallows': '야쿠르트', 'yakult': '야쿠르트',
+    '주니치 드래곤즈': '주니치', '주니치 드래건스': '주니치', '주니치': '주니치', '주니드래': '주니치', 'chunichi dragons': '주니치',
+    '히로시마 도요 카프': '히로시마', '히로시마 도요카프': '히로시마', '히로시마': '히로시마', '히로카프': '히로시마', '도요카프': '히로시마', 'hiroshima toyo carp': '히로시마',
+    '후쿠오카 소프트뱅크 호크스': '소프트뱅크', '소프트뱅크 호크스': '소프트뱅크', '소프트뱅크': '소프트뱅크', '소뱅': '소프트뱅크', '소프호크': '소프트뱅크', 'softbank hawks': '소프트뱅크',
+    '오릭스 버펄로스': '오릭스', '오릭스 버팔로스': '오릭스', '오릭스': '오릭스', '오릭버팔': '오릭스', 'orix buffaloes': '오릭스',
+    '지바 롯데 마린스': '지바롯데', '지바 롯데': '지바롯데', '지바롯데': '지바롯데', '지바마린': '지바롯데', 'chiba lotte marines': '지바롯데',
+    '도호쿠 라쿠텐 골든이글스': '라쿠텐', '라쿠텐 골든이글스': '라쿠텐', '라쿠텐': '라쿠텐', '라쿠이글': '라쿠텐', 'rakuten golden eagles': '라쿠텐',
+    '사이타마 세이부 라이온즈': '세이부', '세이부 라이온즈': '세이부', '세이부': '세이부', '세이라이': '세이부', 'seibu lions': '세이부',
+    '홋카이도 닛폰햄 파이터스': '닛폰햄', '닛폰햄 파이터스': '닛폰햄', '닛폰햄': '닛폰햄', '니혼햄': '닛폰햄', '닛폰파이': '닛폰햄', 'nippon-ham fighters': '닛폰햄',
+
+    # KBO (10개 구단)
+    'KIA 타이거즈': 'KIA', '기아 타이거즈': 'KIA', '기아': 'KIA', 'KIA': 'KIA', 'kia': 'KIA',
+    '삼성 라이온즈': '삼성', '삼성': '삼성', '삼성라이온즈': '삼성',
+    'LG 트윈스': 'LG', 'LG': 'LG', '엘지': 'LG', 'lg': 'LG',
+    '두산 베어스': '두산', '두산': '두산', '두산베어스': '두산',
+    'KT 위즈': 'KT', 'KT': 'KT', '케이티': 'KT', 'kt': 'KT',
+    'SSG 랜더스': 'SSG', 'SSG': 'SSG', '에스에스지': 'SSG', '랜더스': 'SSG', 'ssg': 'SSG',
+    'NC 다이노스': 'NC', 'NC': 'NC', '엔씨': 'NC', 'nc': 'NC',
+    '한화 이글스': '한화', '한화': '한화', '한화이글스': '한화',
+    '롯데 자이언츠': '롯데', '롯데': '롯데', '롯데자이언츠': '롯데',
+    '키움 히어로즈': '키움', '키움': '키움', '키움히어로즈': '키움',
+}
+
+_NORM_FRONT_TEAM_MAP = {}
+for _k, _v in FRONT_TEAM_MAP.items():
+    _NORM_FRONT_TEAM_MAP[normalize_name(_k)] = _v
+
+@lru_cache(maxsize=8192)
+def get_front_team_name(raw_name: str) -> str:
+    """축약/줄임 팀명 및 풀네임을 프론트/DB 표준 앞자리 대표명으로 단일 정규화"""
+    if not raw_name:
+        return ""
+    s = str(raw_name).strip()
+    s = re.sub(r'\[.*?\]|\(.*?\)', '', s).strip()
+    if not s:
+        return ""
+    norm = normalize_name(s)
+    if norm in _NORM_FRONT_TEAM_MAP:
+        return _NORM_FRONT_TEAM_MAP[norm]
+    # 긴 키부터 부분 일치 검사
+    for k, v in _NORM_FRONT_TEAM_MAP.items():
+        if len(k) >= 4 and (k in norm or norm in k):
+            return v
+    # 띄어쓰기 첫 단어 추출
+    parts = s.split()
+    if len(parts) > 1:
+        p0 = parts[0]
+        p0_norm = normalize_name(p0)
+        if p0_norm in _NORM_FRONT_TEAM_MAP:
+            return _NORM_FRONT_TEAM_MAP[p0_norm]
+        return p0
+    return s
+
+def are_city_rivals(s1: str, s2: str) -> bool:
+    """동일 연고지 라이벌 구단 간의 상호 오매칭 방지 (양키스 vs 메츠, 컵스 vs 화이트삭스 등)"""
+    if not s1 or not s2:
+        return False
+    n1 = normalize_name(s1)
+    n2 = normalize_name(s2)
+
+    # 1. NY 야구: 양키스 vs 메츠
+    is_yankee_1 = any(x in n1 for x in ['양키', 'yankee', 'nyy'])
+    is_yankee_2 = any(x in n2 for x in ['양키', 'yankee', 'nyy'])
+    is_mets_1 = any(x in n1 for x in ['메츠', 'mets', 'nym'])
+    is_mets_2 = any(x in n2 for x in ['메츠', 'mets', 'nym'])
+    if (is_yankee_1 and is_mets_2) or (is_mets_1 and is_yankee_2):
+        return True
+
+    # 2. 시카고 야구: 컵스 vs 화이트삭스
+    is_cubs_1 = any(x in n1 for x in ['시카컵', '시카고c', '시카고컵', 'cubs', 'chc']) or (n1 == '컵스')
+    is_cubs_2 = any(x in n2 for x in ['시카컵', '시카고c', '시카고컵', 'cubs', 'chc']) or (n2 == '컵스')
+    is_sox_1 = any(x in n1 for x in ['화이트삭스', '화삭', '시카화', 'whitesox', 'cws'])
+    is_sox_2 = any(x in n2 for x in ['화이트삭스', '화삭', '시카화', 'whitesox', 'cws'])
+    if (is_cubs_1 and is_sox_2) or (is_sox_1 and is_cubs_2):
+        return True
+
+    # 3. LA 야구: 다저스 vs 에인절스
+    is_dodger_1 = any(x in n1 for x in ['다저스', 'dodger', 'lad'])
+    is_dodger_2 = any(x in n2 for x in ['다저스', 'dodger', 'lad'])
+    is_angel_1 = any(x in n1 for x in ['에인절스', 'angel', 'laa'])
+    is_angel_2 = any(x in n2 for x in ['에인절스', 'angel', 'laa'])
+    if (is_dodger_1 and is_angel_2) or (is_angel_1 and is_dodger_2):
+        return True
+
+    # 4. 맨체스터 축구: 맨시티 vs 맨유
+    is_manc_1 = any(x in n1 for x in ['맨시티', '맨체스터시티', 'mancity', 'manchestercity'])
+    is_manc_2 = any(x in n2 for x in ['맨시티', '맨체스터시티', 'mancity', 'manchestercity'])
+    is_manu_1 = any(x in n1 for x in ['맨유', '맨체스터유', 'manutd', 'manchesterunited'])
+    is_manu_2 = any(x in n2 for x in ['맨유', '맨체스터유', 'manutd', 'manchesterunited'])
+    if (is_manc_1 and is_manu_2) or (is_manu_1 and is_manc_2):
+        return True
+
+    # 5. 마드리드 축구: 레알 마드리드 vs 아틀레티코 마드리드
+    is_real_1 = ('레알마드' in n1 or 'realmadrid' in n1)
+    is_real_2 = ('레알마드' in n2 or 'realmadrid' in n2)
+    is_atm_1 = ('아틀레티코' in n1 or 'atletico' in n1)
+    is_atm_2 = ('아틀레티코' in n2 or 'atletico' in n2)
+    if (is_real_1 and is_atm_2) or (is_atm_1 and is_real_2):
+        return True
+
+    # 6. 밀라노 축구: 인터밀란 vs AC밀란
+    is_inter_1 = ('인터밀란' in n1 or '인테르' in n1 or 'intermilan' in n1)
+    is_inter_2 = ('인터밀란' in n2 or '인테르' in n2 or 'intermilan' in n2)
+    is_acm_1 = ('ac밀란' in n1 or 'acmilan' in n1)
+    is_acm_2 = ('ac밀란' in n2 or 'acmilan' in n2)
+    if (is_inter_1 and is_acm_2) or (is_inter_1 and is_acm_2):
+        return True
+
+    return False
 
 
 # =============================================================
@@ -924,6 +1075,16 @@ def teams_match(api_name: str, db_name: str) -> bool:
     if norm_api == norm_db:
         return True
 
+    # 🛡️ 동일 연고지 라이벌 구단 상호 오매칭 방지 (양키스 vs 메츠, 컵스 vs 화이트삭스, 다저스 vs 에인절스 등)
+    if are_city_rivals(norm_api, norm_db):
+        return False
+
+    # 🎯 간결/축약 팀명 매핑 일치 확인 (볼티모어 오리올스 == 볼티모어 == 볼티오리)
+    front_api = get_front_team_name(api_name)
+    front_db = get_front_team_name(db_name)
+    if front_api and front_db and front_api == front_db:
+        return True
+
     # 0. National / Asian Games Team match (Basketball, Volleyball, Soccer)
     c_api = clean_international_team_name(api_name).lower()
     c_db = clean_international_team_name(db_name).lower()
@@ -962,10 +1123,14 @@ def teams_match(api_name: str, db_name: str) -> bool:
             if clean_api in clean_db or clean_db in clean_api:
                 return True
 
-    # 3. Substring match
-    if len(norm_api) >= 3 and len(norm_db) >= 3:
+    # 3. Substring match (한글 2글자 이상 삼성, 두산, 한화, 롯데, 키움 등 지원)
+    has_ko = any('\uac00' <= ch <= '\ud7a3' for ch in (norm_api + norm_db))
+    min_len = 2 if has_ko else 3
+    if len(norm_api) >= min_len and len(norm_db) >= min_len:
         if norm_api in norm_db or norm_db in norm_api:
-            return True
+            generic_words = {"축구", "야구", "농구", "배구", "프로", "구단", "클럽", "유나이티드", "시티", "자이언츠", "베어스", "트윈스", "라이온즈", "타이거즈"}
+            if norm_api not in generic_words and norm_db not in generic_words:
+                return True
 
     return False
 

@@ -316,14 +316,29 @@ def teams_match(api_name: str, db_name: str) -> bool:
 
     if not norm_api or not norm_db:
         return False
-    if norm_api == norm_db or norm_api in norm_db or norm_db in norm_api:
+    if norm_api == norm_db:
         return True
+
+    # 🛡️ 동일 연고지 라이벌 구단 상호 오매칭 방지 및 간결/축약 매핑
+    try:
+        from app.services.live_api_sports_service import are_city_rivals, get_front_team_name
+        if are_city_rivals(norm_api, norm_db):
+            return False
+        f_api = get_front_team_name(api_name)
+        f_db = get_front_team_name(db_name)
+        if f_api and f_db and f_api == f_db:
+            return True
+    except Exception:
+        pass
 
     for grp in _PRECOMPUTED_SYNONYM_GROUPS:
         if not any(g in norm_api or norm_api in g for g in grp):
             continue
         if any(g in norm_db or norm_db in g for g in grp):
             return True
+
+    if (len(norm_api) >= 2 and len(norm_db) >= 2) and (norm_api in norm_db or norm_db in norm_api):
+        return True
 
     return False
 

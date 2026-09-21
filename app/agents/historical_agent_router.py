@@ -254,6 +254,15 @@ class HistoricalAgentRouter:
             def teams_match(t1: str, t2: str) -> bool:
                 if not t1 or not t2:
                     return False
+
+                # 🎯 LiveApiSports core_teams_match 우선 호출 (약칭, 축약어, 베트맨 4글자, 라이벌 방어 완벽 지원)
+                try:
+                    from app.services.live_api_sports_service import teams_match as core_teams_match
+                    if core_teams_match(t1, t2):
+                        return True
+                except Exception:
+                    pass
+
                 s1 = str(t1).strip().lower().replace(' ', '').replace('·', '').replace('.', '').replace('-', '')
                 s2 = str(t2).strip().lower().replace(' ', '').replace('·', '').replace('.', '').replace('-', '')
                 if s1 == s2:
@@ -274,16 +283,6 @@ class HistoricalAgentRouter:
                     return False
                 if ('다저스' in s1 and '에인절스' in s2) or ('에인절스' in s1 and '다저스' in s2) or ('dodger' in s1 and 'angel' in s2) or ('angel' in s1 and 'dodger' in s2):
                     return False
-
-                # LiveApiSports canonical lookup 우선 확인
-                try:
-                    from app.services.live_api_sports_service import get_canonical
-                    c1 = get_canonical(t1)
-                    c2 = get_canonical(t2)
-                    if c1 and c2:
-                        return c1 == c2
-                except Exception:
-                    pass
 
                 if s1 in s2 or s2 in s1:
                     # 도시는 같지만 구단이 다른 경우 추가 방어 (예: 뉴욕시티 vs 뉴욕레드불스)
