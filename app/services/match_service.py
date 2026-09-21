@@ -56,7 +56,10 @@ class MatchService:
 
         total_synced_matches = 0
         for current_d in dates_to_scrape:
-            scraped_matches = scraper.scrape_matches(current_d)
+            try:
+                scraped_matches = scraper.scrape_matches(current_d, fast_live=(not sync_boxscore))
+            except TypeError:
+                scraped_matches = scraper.scrape_matches(current_d)
             for m_data in scraped_matches:
                 match = db.query(Match).filter(Match.official_id == m_data["official_id"]).first()
                 if not match:

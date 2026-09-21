@@ -10954,8 +10954,8 @@ function getFullModalMatchList() {
     let currentPredSport = 'ALL'; // 'ALL', 'KBO', 'MLB', 'NPB', 'SOCCER'
     let currentPredLeague = 'ALL'; // 'ALL', 'UCL', 'CHAMPIONSHIP', 'EPL', 'LALIGA', etc.
     let currentPredConfidence = 'ALL'; // 'ALL', '80', '70', '50'
-    let syncIntervalSeconds = 10; // 10초 실시간 자동 갱신
-    let nextSyncSeconds = 10;
+    let syncIntervalSeconds = 2; // ⚡ 2초 초고속 실시간 자동 갱신
+    let nextSyncSeconds = 2;
     let syncIntervalId = null;
 
     let currentCenterMode = 'DETAIL'; // Always 'DETAIL' (Match Studio)
@@ -11173,7 +11173,7 @@ function getFullModalMatchList() {
 
     function startLiveAutoSync(seconds) {
       if (seconds) syncIntervalSeconds = seconds;
-      else syncIntervalSeconds = 5;
+      else syncIntervalSeconds = 2; // ⚡ 2초 초저지연 실시간 갱신
       nextSyncSeconds = syncIntervalSeconds;
       if (syncIntervalId) clearInterval(syncIntervalId);
       syncIntervalId = setInterval(() => {
@@ -21909,10 +21909,11 @@ function renderPredDetail(m, customDetailData = null) {
         });
       });
 
-      if (hasActiveSubscribedLive && syncIntervalSeconds !== 5) {
-        startLiveAutoSync(5);
-      } else if (!hasActiveSubscribedLive && syncIntervalSeconds === 5) {
-        startLiveAutoSync(15);
+      const anyLiveMatches = (allMatches || []).some(m => m && (m.status === 'LIVE' || isRealTimeLive(m)));
+      if (anyLiveMatches && syncIntervalSeconds !== 2) {
+        startLiveAutoSync(2);
+      } else if (!anyLiveMatches && syncIntervalSeconds !== 10) {
+        startLiveAutoSync(10);
       }
     }
 

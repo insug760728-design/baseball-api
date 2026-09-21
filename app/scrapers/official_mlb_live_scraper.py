@@ -289,8 +289,9 @@ class MlbOfficialScraper:
             pass
         return "2026-09-04"
 
-    def scrape_schedule(self, target_date: Optional[str] = None) -> List[Dict[str, Any]]:
-        """지정일의 공식 MLB 경기 목록 (스코어 및 라인스코어 포함) - 한국 표준시(KST) 완벽 지원"""
+    def scrape_schedule(self, target_date: Optional[str] = None, fast_live: bool = False) -> List[Dict[str, Any]]:
+        """지정일의 공식 MLB 경기 목록 (스코어 및 라인스코어 포함) - 한국 표준시(KST) 완벽 지원
+        fast_live=True: 초고속 0.7초 라이브 전용 (투수 프로필 심층 통계 API 호출 생략)"""
         d = target_date or datetime.now().strftime("%Y-%m-%d")
         
         try:
@@ -301,7 +302,11 @@ class MlbOfficialScraper:
             d_prev = d
             d_next = d
 
-        url = f"{MLB_API_BASE}/schedule?sportId=1&startDate={d_prev}&endDate={d_next}&hydrate=probablePitcher,linescore,team"
+        if fast_live:
+            # ⚡ 초고속 라이브 전용: 당일 경기만 linescore, team, probablePitcher와 함께 단일 호출 (0.7초)
+            url = f"{MLB_API_BASE}/schedule?sportId=1&date={d}&hydrate=probablePitcher,linescore,team"
+        else:
+            url = f"{MLB_API_BASE}/schedule?sportId=1&startDate={d_prev}&endDate={d_next}&hydrate=probablePitcher,linescore,team"
         
         try:
             data = self._fetch_json(url)
@@ -321,24 +326,25 @@ class MlbOfficialScraper:
         if not dates:
             return []
 
-        # 투수 프로필 일괄 비동기 병렬 프리페치 (수집 속도 10배 향상)
-        pitcher_tasks = []
-        for date_obj in dates:
-            for g in date_obj.get("games", []):
-                for side in ["home", "away"]:
-                    prob = g.get("teams", {}).get(side, {}).get("probablePitcher", {})
-                    pid = prob.get("id")
-                    pname = prob.get("fullName")
-                    if pid and pname and pid not in self._pitcher_cache:
-                        pitcher_tasks.append((pid, pname))
-        
-        if pitcher_tasks:
-            import concurrent.futures
-            try:
-                with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
-                    list(ex.map(lambda pair: self.fetch_pitcher_profile(pair[0], pair[1]), pitcher_tasks))
-            except Exception as pe:
-                print(f"[MLB Scraper] Pitcher prefetch warning: {pe}")
+        # 투수 프로필 일괄 비동기 병렬 프리페치 (fast_live 모드일 때는 라이브 초저지연을 위해 생략)
+        if not fast_live:
+            pitcher_tasks = []
+            for date_obj in dates:
+                for g in date_obj.get("games", []):
+                    for side in ["home", "away"]:
+                        prob = g.get("teams", {}).get(side, {}).get("probablePitcher", {})
+                        pid = prob.get("id")
+                        pname = prob.get("fullName")
+                        if pid and pname and pid not in self._pitcher_cache:
+                            pitcher_tasks.append((pid, pname))
+            
+            if pitcher_tasks:
+                import concurrent.futures
+                try:
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
+                        list(ex.map(lambda pair: self.fetch_pitcher_profile(pair[0], pair[1]), pitcher_tasks))
+                except Exception as pe:
+                    print(f"[MLB Scraper] Pitcher prefetch warning: {pe}")
 
         from app.services.player_translation import translate_player_name
 
@@ -365,8 +371,8 @@ class MlbOfficialScraper:
                 h_prob_p = sanitize_player_name(translate_player_name(h_name_raw)) if h_name_raw else None
                 a_prob_p = sanitize_player_name(translate_player_name(a_name_raw)) if a_name_raw else None
 
-                h_prof = self.fetch_pitcher_profile(h_id, h_name_raw) if h_id else {}
-                a_prof = self.fetch_pitcher_profile(a_id, a_name_raw) if a_id else {}
+                h_prof = {} if fast_live else (self.fetch_pitcher_profile(h_id, h_name_raw) if h_id else {})
+                a_prof = {} if fast_live else (self.fetch_pitcher_profile(a_id, a_name_raw) if a_id else {})
 
                 if not h_prof and h_prob_p:
                     h_prof = {"name": h_prob_p, "confirmed": True, "style": "우완", "era": "-", "record": "-"}

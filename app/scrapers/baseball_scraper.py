@@ -26,13 +26,13 @@ class BaseballScraper(BaseScraper):
     def get_league_name(self) -> str:
         return self.league_name
 
-    def scrape_matches(self, target_date: Optional[str] = None) -> List[Dict[str, Any]]:
+    def scrape_matches(self, target_date: Optional[str] = None, fast_live: bool = False) -> List[Dict[str, Any]]:
         d = target_date or datetime.now().strftime("%Y-%m-%d")
         lid = self.league_id.upper()
 
-        # 1. 미국 메이저리그 (MLB) -> 공식 MLB API 실시간 수집
+        # 1. 미국 메이저리그 (MLB) -> 공식 MLB API 실시간 수집 (fast_live 초저지연 지원)
         if lid == "MLB":
-            return self.mlb_live.scrape_schedule(d)
+            return self.mlb_live.scrape_schedule(d, fast_live=fast_live)
 
         # 2. 한국 프로야구 (KBO) -> 공식 KBO 사이트 실시간 수집
         if lid == "KBO":
@@ -44,7 +44,7 @@ class BaseballScraper(BaseScraper):
 
         # 4. 전체 야구 리그
         if lid == "ALL":
-            mlb_games = self.mlb_live.scrape_schedule(d)
+            mlb_games = self.mlb_live.scrape_schedule(d, fast_live=fast_live)
             kbo_games = self.kbo_live.scrape_schedule(target_date=d)
             npb_games = self.npb_live.scrape_schedule(target_date=d)
             return mlb_games + kbo_games + npb_games

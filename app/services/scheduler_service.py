@@ -863,8 +863,18 @@ class SchedulerService:
                     except Exception:
                         pass
 
-                # ⚡ KBO/NPB LIVE 진행 중이면 10초 주기, MLB 및 축구 LIVE면 15초, 시작 직전(Pre-Match) 상태면 45초 대기 (CPU 부하 완화)
-                sleep_sec = 10 if kbo_npb_live else (15 if (mlb_live or soccer_live) else 45)
+                # ⚡ [초저지연 실시간 튜닝] MLB LIVE 진행 중: 1.5초 초고속 실시간 루프 (약 2초 주기 전광판 갱신)
+                # KBO/NPB LIVE: 3초, 축구 LIVE: 8초, 시작 직전(Pre-Match): 5초
+                if mlb_live:
+                    sleep_sec = 1.5
+                elif kbo_npb_live:
+                    sleep_sec = 3.0
+                elif soccer_live:
+                    sleep_sec = 8.0
+                elif has_imminent:
+                    sleep_sec = 5.0
+                else:
+                    sleep_sec = 30.0
 
                 # 🧹 Render 512MB RAM 안전 최적화: 매 루프마다 점유 메모리 OS에 즉시 반환
                 try:
