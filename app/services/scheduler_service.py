@@ -838,12 +838,16 @@ class SchedulerService:
                                 return 0
                         sync_tasks.append(asyncio.to_thread(_sync_smart_live_football))
 
-                # 병렬 실행
+                # 🛡️ Render 512MB RAM OOM 방지: 다중 스레드 동시 폭주(Spike)를 방지하기 위해 순차적으로 안전하게 실행
+                updated_total = 0
                 if sync_tasks:
-                    results = await asyncio.gather(*sync_tasks, return_exceptions=True)
-                    updated_total = sum(r for r in results if isinstance(r, int))
-                else:
-                    updated_total = 0
+                    for task in sync_tasks:
+                        try:
+                            res = await task
+                            if isinstance(res, int):
+                                updated_total += res
+                        except Exception as e:
+                            logger.warning(f"[Scheduler Live Loop] 동기화 태스크 오류: {e}")
 
                 # ⚡ 실제로 스코어나 데이터가 변경되었을 때만 캐시를 초기화하여 초고속 API 응답 보장
                 if updated_total > 0:
@@ -924,18 +928,18 @@ class SchedulerService:
                     except Exception:
                         pass
 
-                # ⚡ [초저지연 실시간 튜닝] MLB LIVE 진행 중: 1.5초 초고속 실시간 루프 (약 2초 주기 전광판 갱신)
-                # KBO/NPB LIVE: 3초, 축구 LIVE: 8초, 시작 직전(Pre-Match): 5초
+                # ⚡ [초저지연 실시간 튜닝] Render 512MB 환경 최적화
+                # MLB LIVE: 8초, KBO/NPB LIVE: 10초, 축구 LIVE: 15초, 시작 직전(Pre-Match): 30초, 대기: 60초
                 if mlb_live:
-                    sleep_sec = 2.0
-                elif kbo_npb_live:
-                    sleep_sec = 3.5
-                elif soccer_live:
                     sleep_sec = 8.0
+                elif kbo_npb_live:
+                    sleep_sec = 10.0
+                elif soccer_live:
+                    sleep_sec = 15.0
                 elif has_imminent:
-                    sleep_sec = 25.0
+                    sleep_sec = 30.0
                 else:
-                    sleep_sec = 45.0
+                    sleep_sec = 60.0
 
                 # 🧹 Render 512MB RAM 안전 최적화: 매 루프마다 점유 메모리 OS에 즉시 반환
                 try:

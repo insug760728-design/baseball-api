@@ -74,16 +74,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[WARN] 초기 경기 캐시 프리로드 오류: {e}")
 
-    # ⏱️ 9분 주기 Keep-Alive 셀프 핑 데몬 (Render 15분 절전 및 1분 콜드스타트 지연 원천 차단)
+    # ⏱️ Render Hobby 플랜은 24시간 상시 가동(Never Sleeps)되므로 외부 핑 불필요
+    # 내부 루프백(127.0.0.1) 상태 점검만 수행하여 대역폭 소모 0Byte 달성
     async def _keep_alive_daemon():
         import urllib.request
         while True:
             try:
-                await asyncio.sleep(540)  # 9분 주기
-                ext_url = os.getenv("RENDER_EXTERNAL_URL") or os.getenv("SERVER_PUBLIC_URL")
-                ping_url = f"{ext_url.rstrip('/')}/health" if ext_url else "http://127.0.0.1:8000/health"
-                req = urllib.request.Request(ping_url, headers={"User-Agent": "TOKEON-KeepAlive/1.0"})
-                with urllib.request.urlopen(req, timeout=10) as resp:
+                await asyncio.sleep(600)  # 10분 주기
+                ping_url = "http://127.0.0.1:8000/health"
+                req = urllib.request.Request(ping_url, headers={"User-Agent": "TOKEON-InternalHealth/1.0"})
+                with urllib.request.urlopen(req, timeout=5) as resp:
                     pass
             except Exception:
                 pass

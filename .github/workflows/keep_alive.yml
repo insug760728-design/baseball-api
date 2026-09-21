@@ -1,9 +1,9 @@
 name: 24/7 Keep-Alive Heartbeat
 
+# Render Hobby 플랜은 24시간 상시 가동(Never Sleeps)되므로 5분 주기 자동 핑 불필요 (대역폭 5GB 소진 방지)
 on:
-  schedule:
-    # 5분마다 자동 실행
-    - cron: '*/5 * * * *'
+  # schedule:
+  #   - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:

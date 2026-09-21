@@ -53,7 +53,12 @@ def sanitize_text(raw: str) -> str:
 
 def sanitize_player_name(raw: str) -> str:
     """Sanitize player names from external APIs, web scraping, and user queries."""
-    return sanitize_text(raw)
+    if not raw or not isinstance(raw, str):
+        return ""
+    text = sanitize_text(raw)
+    # Strip NPB win/loss/save/hold annotations: (勝), (敗), (S), (H), (セ), [勝], [敗]
+    text = re.sub(r'[\(\[\{][勝敗SH세홀][\)\]\}]', '', text).strip()
+    return text
 
 
 # =============================================================
@@ -323,11 +328,15 @@ FULL_NAMES = {
     "이토 将": "이토 마사시", "伊藤 将": "이토 마사시", "伊藤将": "이토 마사시",
     "야나기 川": "야나기가와", "柳 川": "야나기가와", "柳川": "야나기가와",
     "増居": "마스이", "増居 翔太": "마스이 쇼타",
-    "林 安可": "린안커", "林安可": "린안커"
+    "林 安可": "린안커", "林安可": "린안커",
+    "Ａ．자쿠손": "안드레 잭슨", "A.자쿠손": "안드레 잭슨", "자쿠손": "안드레 잭슨",
+    "Ｋ．마라": "케빈 말러", "K.마라": "케빈 말러", "마라": "케빈 말러",
+    "아즈마 마츠 快征": "마츠 카이세이", "아즈마 마츠 카이세이": "마츠 카이세이"
 }
 
 # NPB 성씨 / 단독 이름 사전
 NPB_FAMILY_NAME_MAP = {
+    "玉村": "타마무라", "松": "마츠",
     "上茶谷": "카미차타니", "戸郷": "토고", "東": "아즈마", "才木": "사이키", "今井": "이마이", "伊藤": "이토", "床田": "토코다",
     "髙橋": "다카하시", "高橋": "다카하시", "山崎": "야마사키", "山﨑": "야마사키", "小島": "코지마",
     "早川": "하야카와", "宮城": "미야기", "種市": "타네이치", "大瀬良": "오오세라", "森下": "모리시타",
@@ -369,6 +378,28 @@ NPB_FAMILY_NAME_MAP = {
     "進藤": "신도", "郡司": "군지", "野村": "노무라", "長岡": "나가오카", "竹田": "다케다",
     "宮﨑": "미야자키", "宮崎": "미야자키", "辰己": "타츠미", "西村": "니시무라", "西野": "니시노",
     "増居": "마스이", "伊藤将": "이토 마사시", "柳川": "야나기가와"
+}
+
+# NPB 선수 주요 이름(Given Name) 한글 음차 사전
+NPB_GIVEN_NAME_MAP = {
+    "健吾": "켄고", "樹": "타츠키", "亘基": "코키", "昇悟": "쇼고", "快征": "카이세이",
+    "大河": "다이가", "爽": "소우", "翔征": "쇼세이", "将司": "마사시", "克樹": "카츠키",
+    "悠斗": "유토", "翔太": "쇼타", "祐樹": "유키", "泰志": "타이시", "勇人": "하야토",
+    "友哉": "토모야", "宗佑": "소우스케", "正尚": "마사타카", "宗隆": "무네타카", "晃": "아키라",
+    "裕太": "유타", "拓也": "타쿠야", "誠也": "세이야", "健司": "켄지", "裕太郎": "유타로",
+    "和真": "카즈마", "輝明": "테루아키", "大智": "다이치", "広大": "코다이", "朗希": "로키",
+    "晃希": "코키", "大輔": "다이스케", "浩二": "코지", "達也": "타츠야", "健太": "켄타",
+    "優心": "유신", "一輝": "카즈키", "一真": "카즈마", "拓海": "타쿠미", "翔平": "쇼헤이",
+    "裕樹": "유키", "大地": "다이치", "大晟": "타이세이", "航希": "코키", "龍平": "료헤이",
+    "勇気": "유우키", "貴之": "타카유키", "大樹": "다이키", "柊太": "슈타", "悠真": "유우마",
+    "俊介": "슌스케", "大貴": "다이키", "蓮": "렌", "大和": "야마토", "洋平": "요헤이",
+    "健三": "켄조", "光成": "코나", "啓輔": "케이스케", "拓実": "타쿠미", "剛": "고",
+    "誠": "마코토", "翼": "츠바사", "廉": "렌", "直人": "나오토", "陽介": "요우스케",
+    "隼太": "하야타", "慶三": "케이조", "祐太": "유우타", "航平": "코헤이", "龍世": "류세이",
+    "雅也": "마사야", "駿": "슌", "大成": "타이세이", "悠太": "유타", "慎吾": "신고",
+    "亮太": "료타", "慎之助": "신노스케", "雄大": "유다이", "博紀": "히로키", "康晃": "야스아키",
+    "博志": "히로시", "裕大": "유다이", "陸": "리쿠", "颯": "하야테", "琉偉": "루이",
+    "純平": "준페이", "真之介": "신노스케"
 }
 
 def katakana_to_hangul(text: str) -> str:
@@ -690,15 +721,39 @@ def translate_player_name(raw: str) -> str:
         return NPB_FAMILY_NAME_MAP[raw] + suffix
     if no_space in NPB_FAMILY_NAME_MAP:
         return NPB_FAMILY_NAME_MAP[no_space] + suffix
-    for fam, fam_ko in NPB_FAMILY_NAME_MAP.items():
+    for fam in sorted(NPB_FAMILY_NAME_MAP.keys(), key=len, reverse=True):
+        fam_ko = NPB_FAMILY_NAME_MAP[fam]
         if raw.startswith(fam) and len(raw) > len(fam):
             rem = raw[len(fam):].strip()
-            rem_ko = NPB_FAMILY_NAME_MAP.get(rem, rem)
+            rem_ko = NPB_GIVEN_NAME_MAP.get(rem) or NPB_FAMILY_NAME_MAP.get(rem) or (katakana_to_hangul(rem) if re.search(r'[\u3040-\u309F\u30A0-\u30FF]', rem) else rem)
             return f"{fam_ko} {rem_ko}".strip() + suffix
         if no_space.startswith(fam) and len(no_space) > len(fam):
             rem = no_space[len(fam):].strip()
-            rem_ko = NPB_FAMILY_NAME_MAP.get(rem, rem)
+            rem_ko = NPB_GIVEN_NAME_MAP.get(rem) or NPB_FAMILY_NAME_MAP.get(rem) or (katakana_to_hangul(rem) if re.search(r'[\u3040-\u309F\u30A0-\u30FF]', rem) else rem)
             return f"{fam_ko} {rem_ko}".strip() + suffix
+
+    # 3-1. Mixed Korean + CJK / Kanji / Katakana translation (e.g. "마츠모토 健吾", "키타야마 亘基", "이토 樹")
+    if any('\u4e00' <= ch <= '\u9fff' or '\u3040' <= ch <= '\u30ff' for ch in raw):
+        tokens = raw.split()
+        converted_tokens = []
+        any_converted = False
+        for tok in tokens:
+            if tok in NPB_GIVEN_NAME_MAP:
+                converted_tokens.append(NPB_GIVEN_NAME_MAP[tok])
+                any_converted = True
+            elif tok in NPB_FAMILY_NAME_MAP:
+                converted_tokens.append(NPB_FAMILY_NAME_MAP[tok])
+                any_converted = True
+            elif tok in FULL_NAMES:
+                converted_tokens.append(FULL_NAMES[tok])
+                any_converted = True
+            elif re.search(r'[\u3040-\u309F\u30A0-\u30FF]', tok):
+                converted_tokens.append(katakana_to_hangul(tok))
+                any_converted = True
+            else:
+                converted_tokens.append(tok)
+        if any_converted:
+            return " ".join(converted_tokens).strip() + suffix
 
     # 4. Japanese Katakana / Hiragana automatic transliteration
     if re.search(r'[\u3040-\u309F\u30A0-\u30FF]', raw):

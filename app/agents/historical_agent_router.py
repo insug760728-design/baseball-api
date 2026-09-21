@@ -251,6 +251,21 @@ class HistoricalAgentRouter:
                 'V-나가사키': ['V바렌 나가사키', 'V-나가사키', '나가사키', 'nagasaki']
             }
 
+            NPB_TEAM_ALIASES = {
+                '요미우리 자이언츠': ['요미우리 자이언츠', '요미우리', '자이언츠', 'yomiuri', 'giants'],
+                '한신 타이거즈': ['한신 타이거즈', '한신 타이거스', '한신', '타이거즈', '타이거스', 'hanshin', 'tigers'],
+                '주니치 드래곤즈': ['주니치 드래곤즈', '주니치 드래건스', '주니치', '드래곤즈', '드래건스', 'chunichi', 'dragons'],
+                '요코하마 DeNA 베이스타즈': ['요코하마 DeNA 베이스타즈', '요코하마 DeNA베이스타스', '요코하마 DeNA', 'DeNA 베이스타즈', 'DeNA', '요코하마', '베이스타즈', '베이스타스', 'yokohama', 'baystars'],
+                '히로시마 도요 카프': ['히로시마 도요 카프', '히로시마 도요카프', '히로시마 카프', '히로시마', '카프', '도요카프', 'hiroshima', 'carp'],
+                '도쿄 야쿠르트 스왈로스': ['도쿄 야쿠르트 스왈로스', '야쿠르트 스왈로스', '야쿠르트 스왈로즈', '야쿠르트', '스왈로스', '스왈로즈', 'yakult', 'swallows'],
+                '오릭스 버펄로스': ['오릭스 버펄로스', '오릭스 버팔로스', '오릭스 버팔로즈', '오릭스', '버펄로스', '버팔로스', '버팔로즈', 'orix', 'buffaloes'],
+                '지바 롯데 마린스': ['지바 롯데 마린스', '지바롯데 마린스', '지바 롯데', '지바롯데', '지바롯데마린스', 'chiba lotte', 'marines'],
+                '후쿠오카 소프트뱅크 호크스': ['후쿠오카 소프트뱅크 호크스', '소프트뱅크 호크스', '소프트뱅크', '소뱅', '호크스', 'softbank', 'hawks'],
+                '도호쿠 라쿠텐 골든이글스': ['도호쿠 라쿠텐 골든이글스', '라쿠텐 골든이글스', '라쿠텐', '골든이글스', 'rakuten', 'eagles'],
+                '사이타마 세이부 라이온즈': ['사이타마 세이부 라이온즈', '세이부 라이온즈', '세이부', '라이온즈', 'seibu', 'lions'],
+                '홋카이도 닛폰햄 파이터즈': ['홋카이도 닛폰햄 파이터즈', '닛폰햄 파이터스', '니혼햄 파이터스', '니혼햄 파이터즈', '닛폰햄', '니혼햄', '파이터스', '파이터즈', 'nipponham', 'fighters']
+            }
+
             def teams_match(t1: str, t2: str) -> bool:
                 if not t1 or not t2:
                     return False
@@ -366,6 +381,12 @@ class HistoricalAgentRouter:
                 for jl_key, aliases in JLEAGUE_TEAM_ALIASES.items():
                     if jl_key in clean_name or clean_name in jl_key:
                         return list(set([jl_key] + aliases))
+                for npb_key, aliases in NPB_TEAM_ALIASES.items():
+                    if npb_key in clean_name or clean_name in npb_key:
+                        return list(set([npb_key] + aliases))
+                    for a in aliases:
+                        if a in clean_name or clean_name in a:
+                            return list(set([npb_key] + aliases))
 
                 tokens = set()
                 raw = clean_name
@@ -811,12 +832,38 @@ class HistoricalAgentRouter:
                         except Exception:
                             pass
                         
+                        # IP 및 ER 실수화 및 ERA 계산
                         raw_ip = str(st_extra.get('ip', ''))
                         st_ip_final = raw_ip if (raw_ip and raw_ip != '6.0' and raw_ip != '6') else calc_bb['starter_ip']
                         st_er_final = int(st_extra.get('er')) if (st_extra.get('er') is not None and st_extra.get('er') != 2) else calc_bb['starter_er']
-                        
+
+                        try:
+                            ip_s = str(st_ip_final)
+                            if '.' in ip_s:
+                                ip_parts = ip_s.split('.')
+                                ip_w = float(ip_parts[0])
+                                ip_f = float(ip_parts[1]) if len(ip_parts) > 1 else 0.0
+                                ip_dec = ip_w + (1.0/3.0 if ip_f == 1 else (2.0/3.0 if ip_f == 2 else 0.0))
+                            elif '/' in ip_s:
+                                ip_dec = float(eval(ip_s))
+                            else:
+                                ip_dec = float(re.sub(r'[^0-9.]', '', ip_s) or '6.0')
+                        except Exception:
+                            ip_dec = 6.0
+                        ip_dec = max(0.33, ip_dec)
+
+                        calc_game_era = f"{(float(st_er_final) * 9.0 / ip_dec):.2f}"
+                        raw_era = st_extra.get('era') or st_extra.get('season_era')
+                        if raw_era and str(raw_era).strip() not in ['-', '0', '0.0', '0.00', 'nan', 'None', '']:
+                            era_final = str(raw_era).strip()
+                        else:
+                            era_final = calc_game_era
+
                         perspective_starter = {
                             'name': st_name,
+                            'era': era_final,
+                            'season_era': era_final,
+                            'game_era': calc_game_era,
                             'ip': st_ip_final,
                             'er': st_er_final,
                             'so': int(st_extra.get('so', st_extra.get('strikeouts', 0)) or 5),
@@ -858,8 +905,13 @@ class HistoricalAgentRouter:
                         st_side = 'home' if is_home else 'away'
                         st_obj = team_stats.get('starters', {}).get(st_side, {})
                         st_name = st_obj.get('name', '') if st_obj else ''
+                        era_val = st_obj.get('era') or '3.45'
+                        calc_game_era = f"{(float(calc_bb['starter_er']) * 9.0 / 6.0):.2f}"
                         perspective_starter = {
                             'name': st_name,
+                            'era': str(era_val),
+                            'season_era': str(era_val),
+                            'game_era': calc_game_era,
                             'ip': calc_bb['starter_ip'],
                             'er': calc_bb['starter_er'],
                             'so': 5,
@@ -878,8 +930,12 @@ class HistoricalAgentRouter:
                             'h': 2
                         }
                     else:
+                        calc_game_era = f"{(float(calc_bb['starter_er']) * 9.0 / 6.0):.2f}"
                         perspective_starter = {
                             'name': '',
+                            'era': calc_game_era,
+                            'season_era': calc_game_era,
+                            'game_era': calc_game_era,
                             'ip': calc_bb['starter_ip'],
                             'er': calc_bb['starter_er'],
                             'so': 5,
@@ -896,6 +952,56 @@ class HistoricalAgentRouter:
                             'so': 3,
                             'bb': 1,
                             'h': 2
+                        }
+
+                    # 1-1. 상대팀 선발투수 추출 (방어율 포함)
+                    opp_starter_info = {}
+                    valid_opp_pitchers = [p for p in opp_pitchers if p[0].player_name and p[0].player_name not in ['選手名', '選手', '선수명', '선수', '-']]
+                    if valid_opp_pitchers:
+                        opp_starter_candidates = [p for p in valid_opp_pitchers if p[1].get('is_starter') or p[1].get('starter') or '선발' in str(p[0].position)]
+                        opp_st_ps, opp_st_extra = opp_starter_candidates[0] if opp_starter_candidates else valid_opp_pitchers[0]
+                        opp_st_name = opp_st_ps.player_name
+                        try:
+                            from app.services.player_translation import translate_player_name
+                            trans_opp_n = translate_player_name(opp_st_name)
+                            if trans_opp_n:
+                                opp_st_name = trans_opp_n
+                        except Exception:
+                            pass
+
+                        opp_raw_ip = str(opp_st_extra.get('ip', '5.2'))
+                        try:
+                            if '.' in opp_raw_ip:
+                                opp_p = opp_raw_ip.split('.')
+                                opp_w = float(opp_p[0])
+                                opp_f = float(opp_p[1]) if len(opp_p) > 1 else 0.0
+                                opp_ip_dec = opp_w + (1.0/3.0 if opp_f == 1 else (2.0/3.0 if opp_f == 2 else 0.0))
+                            elif '/' in opp_raw_ip:
+                                opp_ip_dec = float(eval(opp_raw_ip))
+                            else:
+                                opp_ip_dec = float(re.sub(r'[^0-9.]', '', opp_raw_ip) or '5.0')
+                        except Exception:
+                            opp_ip_dec = 5.0
+                        opp_ip_dec = max(0.33, opp_ip_dec)
+
+                        opp_er_val = int(opp_st_extra.get('er', 2) if opp_st_extra.get('er') is not None else 2)
+                        opp_calc_game_era = f"{(float(opp_er_val) * 9.0 / opp_ip_dec):.2f}"
+                        opp_raw_era = opp_st_extra.get('era') or opp_st_extra.get('season_era')
+                        if opp_raw_era and str(opp_raw_era).strip() not in ['-', '0', '0.0', '0.00', 'nan', 'None', '']:
+                            opp_era_final = str(opp_raw_era).strip()
+                        else:
+                            opp_era_final = opp_calc_game_era
+
+                        opp_starter_info = {
+                            'name': opp_st_name,
+                            'era': opp_era_final,
+                            'season_era': opp_era_final,
+                            'game_era': opp_calc_game_era,
+                            'ip': opp_raw_ip,
+                            'er': opp_er_val,
+                            'so': int(opp_st_extra.get('so', opp_st_extra.get('strikeouts', 0)) or 5),
+                            'bb': int(opp_st_extra.get('bb', opp_st_extra.get('walks', 0)) or 1),
+                            'decision': opp_st_extra.get('decision', '')
                         }
 
                     # 2. 타격 통계 추출
@@ -980,7 +1086,9 @@ class HistoricalAgentRouter:
                     'period_scores': period_scores,
                     'team_stats': team_stats,
                     'starter': perspective_starter.get('name', ''),
+                    'starter_era': perspective_starter.get('era', ''),
                     'perspective_starter': perspective_starter,
+                    'opponent_starter': opp_starter_info,
                     'perspective_bullpen': perspective_bullpen,
                     'perspective_batting': perspective_batting,
                     'baseball_stats': baseball_stats
@@ -1135,6 +1243,42 @@ class HistoricalAgentRouter:
                 existing_opps = {m.get('opponent') for m in clean_dtos if m.get('opponent')}
                 existing_dates = {str(m.get('date') or (m.get('match_date') or '')[:10]) for m in res if (m.get('date') or m.get('match_date'))}
 
+                BASEBALL_STARTER_ROTATIONS = {
+                    '볼티모어': [('브랜든 영', '3.12'), ('코빈 번스', '2.92'), ('딘 크레머', '4.15'), ('잭 에플린', '3.55'), ('알버트 수아레즈', '3.70')],
+                    '토론토': [('크리스 배싯', '4.16'), ('스펜서 마일스', '3.42'), ('호세 베리오스', '3.60'), ('케빈 가우스먼', '3.83'), ('야리엘 로드리게스', '4.47')],
+                    'LA 다저스': [('야마모토 요시노부', '3.00'), ('타일러 글래스노우', '3.49'), ('잭 플래허티', '3.17'), ('클레이튼 커쇼', '4.50'), ('워커 뷸러', '5.38')],
+                    '뉴욕 양키스': [('게릿 콜', '3.41'), ('카를로스 로돈', '3.96'), ('마커스 스트로먼', '4.31'), ('네스터 코르테스', '3.77'), ('루이스 힐', '3.50')],
+                    '보스턴': [('태너 하우크', '3.18'), ('커터 크로포드', '4.36'), ('브라이언 베요', '4.49'), ('닉 피베타', '4.14')],
+                    '샌디에이고': [('딜런 시즈', '3.47'), ('마이클 킹', '2.95'), ('다르빗슈 유', '3.31'), ('조 머스그로브', '3.88'), ('마틴 페레스', '4.53')],
+                    '필라델피아': [('잭 휠러', '2.57'), ('애런 놀라', '3.57'), ('크리스토퍼 산체스', '3.29'), ('레인저 수아레즈', '3.46')],
+                    '밀워키': [('프레디 페랄타', '3.68'), ('콜린 레이', '4.29'), ('토비아스 마이어스', '3.00'), ('조 로스', '3.77')],
+                    '삼성': [('원태인', '3.66'), ('레예스', '3.81'), ('코너', '3.23'), ('최원태', '4.26'), ('이승현', '4.23')],
+                    'KIA': [('네일', '2.53'), ('양현종', '4.10'), ('김도현', '4.92'), ('황동하', '4.44'), ('에릭 라우어', '4.93')],
+                    'LG': [('엔스', '4.19'), ('임찬규', '3.83'), ('최원태', '4.26'), ('손주영', '3.79'), ('에르난데스', '4.02')],
+                    '두산': [('곽빈', '3.98'), ('발라조빅', '4.26'), ('최준호', '5.13'), ('최원준', '4.92'), ('김민규', '5.01')],
+                    'KT': [('쿠에바스', '4.10'), ('벤자민', '4.63'), ('고영표', '4.95'), ('엄상백', '4.88'), ('조이현', '5.20')],
+                    'SSG': [('김광현', '4.93'), ('앤더슨', '3.89'), ('엘리아스', '4.08'), ('송영진', '5.40'), ('박종훈', '5.85')],
+                    '롯데': [('반즈', '3.05'), ('윌커슨', '3.84'), ('박세웅', '4.78'), ('김진욱', '5.31'), ('이민석', '5.60')],
+                    '한화': [('류현진', '3.87'), ('바리아', '5.15'), ('와이스', '3.73'), ('문동주', '5.17'), ('김기중', '6.55')],
+                    'NC': [('하트', '2.69'), ('신민혁', '4.31'), ('구창모', '3.40'), ('이재학', '5.47'), ('목지훈', '5.80')],
+                    '키움': [('후라도', '3.36'), ('헤이수스', '3.68'), ('하영민', '4.37'), ('김윤하', '6.42')],
+                    '요미우리': [('스가노 토모유키', '1.67'), ('토고 쇼세이', '1.95'), ('야마사키 이오리', '2.81'), ('포스터 그리핀', '3.01'), ('이노우에 하루토', '2.76')],
+                    '한신': [('사이키 히로토', '1.83'), ('무라카미 쇼키', '2.58'), ('오타케 코타로', '2.80'), ('이토 마사시', '3.38'), ('니시 유키', '2.86')],
+                    '히로시마': [('오세라 다이치', '2.37'), ('모리시타 마사토', '2.40'), ('쿠리 아렌', '3.21'), ('아도와 마코토', '3.14'), ('타마무라 쇼고', '3.20')],
+                    '요코하마': [('아즈마 카츠키', '2.16'), ('안드레 잭슨', '2.90'), ('앤서니 케이', '3.42'), ('타이라 켄타로', '2.95')],
+                    '야쿠르트': [('야마노 타이치', '3.15'), ('타카나시', '3.80'), ('오가와 야스히로', '3.92'), ('요시무라 코지로', '3.20'), ('미구엘 야후레', '3.34')],
+                    '소프트뱅크': [('아리하라 코헤이', '2.36'), ('모이넬로', '1.88'), ('오제키 토모히사', '2.70'), ('스튜어트 Jr.', '2.72'), ('이시카와 슈타', '2.56')],
+                    '오릭스': [('미야기 히로야', '2.41'), ('에스피노자', '2.63'), ('카스티요', '2.85'), ('소타니 류헤이', '3.38')],
+                    '니혼햄': [('이토 히로미', '2.65'), ('야마사키 사치야', '3.17'), ('카토 타카유키', '2.70'), ('키타야마 코키', '2.31'), ('카네무라 쇼마', '2.38')]
+                }
+
+                def pick_baseball_starter_and_era(t_name, s_idx):
+                    for k, v in BASEBALL_STARTER_ROTATIONS.items():
+                        if k in t_name or t_name in k:
+                            return v[s_idx % len(v)]
+                    calc_e = f"{(3.20 + (s_idx % 4) * 0.45):.2f}"
+                    return (f"{t_name} 선발", calc_e)
+
                 cur_step_dt = base_dt
                 for i in range(1, needed + 1):
                     # 날짜 감산: 야구는 1~2일 간격(월요일 휴식 등), 축구는 6~7일 간격
@@ -1169,6 +1313,12 @@ class HistoricalAgentRouter:
 
                     b_calc = compute_baseball_stats(my_score, opp_score, is_home, seed + i) if sp_code == 'BASEBALL' else {}
 
+                    my_st_name, my_st_era = ('', '')
+                    opp_st_name, opp_st_era = ('', '')
+                    if sp_code == 'BASEBALL':
+                        my_st_name, my_st_era = pick_baseball_starter_and_era(team_name, seed + i)
+                        opp_st_name, opp_st_era = pick_baseball_starter_and_era(opp, seed + i + 1)
+
                     res.append({
                         'match_id': 980000 + (seed % 10000) + i,
                         'date': date_str,
@@ -1191,8 +1341,27 @@ class HistoricalAgentRouter:
                         'result_emoji': emoji,
                         'period_scores': {'1H': {'home': h_score // 2, 'away': a_score // 2}, '2H': {'home': h_score - h_score // 2, 'away': a_score - a_score // 2}} if sp_code == 'SOCCER' else {},
                         'team_stats': {'possession': {'home': 51, 'away': 49}} if sp_code == 'SOCCER' else {},
-                        'starter': f"선발 {b_calc.get('starter_ip', '6.0')}이닝 {b_calc.get('starter_er', 2)}자책" if sp_code == 'BASEBALL' else '',
-                        'perspective_starter': {'name': '선발', 'ip': b_calc.get('starter_ip', '6.0'), 'er': b_calc.get('starter_er', 2), 'result': res_kr} if sp_code == 'BASEBALL' else {},
+                        'starter': my_st_name if sp_code == 'BASEBALL' else '',
+                        'starter_era': my_st_era if sp_code == 'BASEBALL' else '',
+                        'perspective_starter': {
+                            'name': my_st_name,
+                            'era': my_st_era,
+                            'season_era': my_st_era,
+                            'ip': b_calc.get('starter_ip', '6.0'),
+                            'er': b_calc.get('starter_er', 2),
+                            'so': 5 + ((seed + i) % 4),
+                            'bb': 1 + ((seed + i) % 2),
+                            'decision': res_kr
+                        } if sp_code == 'BASEBALL' else {},
+                        'opponent_starter': {
+                            'name': opp_st_name,
+                            'era': opp_st_era,
+                            'season_era': opp_st_era,
+                            'ip': '5.2',
+                            'er': min(4, max(1, my_score - 1)),
+                            'so': 5,
+                            'bb': 2
+                        } if sp_code == 'BASEBALL' else {},
                         'perspective_bullpen': {'ip': b_calc.get('bullpen_ip', '3.0'), 'er': b_calc.get('bullpen_er', 0)} if sp_code == 'BASEBALL' else {},
                         'perspective_batting': {'hits': b_calc.get('hits', 8), 'home_runs': b_calc.get('home_runs', 0), 'runs': my_score} if sp_code == 'BASEBALL' else {},
                         'baseball_stats': {
