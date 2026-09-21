@@ -27,7 +27,7 @@ class SchedulerService:
         "hour": 0,
         "minute": 0,
         "enabled": True,
-        "leagues": ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS", "UCL", "UEL", "CHAMPIONSHIP", "ENGLAND_CUP", "EREDIVISIE", "LIBERTADORES", "JLEAGUE", "NBA", "KBL"]
+        "leagues": ["KBO", "NPB", "MLB", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS", "UCL", "UEL", "CHAMPIONSHIP", "ENGLAND_CUP", "EREDIVISIE", "LIBERTADORES", "JLEAGUE", "NBA", "KBL", "VOLLEYBALL", "KOVO"]
     }
     _last_run_info: Dict[str, Any] = {
         "last_run_time": None,
@@ -41,6 +41,8 @@ class SchedulerService:
     _last_football_live_api_sync_ts: float = 0.0
     _last_football_full_sync_ts: float = 0.0
     _last_baseball_sync_ts: float = 0.0
+    _last_basketball_sync_ts: float = 0.0
+    _last_volleyball_sync_ts: float = 0.0
 
     @classmethod
     def get_scheduler(cls) -> AsyncIOScheduler:
@@ -615,10 +617,14 @@ class SchedulerService:
                 mlb_live = False
                 kbo_npb_live = False
                 soccer_live = False
+                basketball_live = False
+                volleyball_live = False
 
                 mlb_imminent = False
                 kbo_npb_imminent = False
                 soccer_imminent = False
+                basketball_imminent = False
+                volleyball_imminent = False
 
                 active_soccer_leagues = set()
 
@@ -647,6 +653,10 @@ class SchedulerService:
                                 elif "유로파" in lname or "UEL" in lname.upper(): active_soccer_leagues.add("UEL")
                                 elif "챔피언십" in lname or "CHAMPIONSHIP" in lname.upper(): active_soccer_leagues.add("CHAMPIONSHIP")
                                 elif "메이저" in lname or "MLS" in lname.upper(): active_soccer_leagues.add("MLS")
+                            elif m.sport_code == "BASKETBALL":
+                                basketball_live = True
+                            elif m.sport_code == "VOLLEYBALL":
+                                volleyball_live = True
 
                     # 2. 🟡 시작 직전(15분 전) 또는 최근 3.5시간 내 시작한 SCHEDULED 경기 확인
                     sched_imminent = db.query(Match).filter(
@@ -673,6 +683,10 @@ class SchedulerService:
                                 elif "유로파" in lname or "UEL" in lname.upper(): active_soccer_leagues.add("UEL")
                                 elif "챔피언십" in lname or "CHAMPIONSHIP" in lname.upper(): active_soccer_leagues.add("CHAMPIONSHIP")
                                 elif "메이저" in lname or "MLS" in lname.upper(): active_soccer_leagues.add("MLS")
+                            elif m.sport_code == "BASKETBALL":
+                                basketball_imminent = True
+                            elif m.sport_code == "VOLLEYBALL":
+                                volleyball_imminent = True
                 finally:
                     db.close()
 
@@ -736,7 +750,45 @@ class SchedulerService:
                                 d_db.close()
                         sync_tasks.append(asyncio.to_thread(_sync_free_soccer))
 
-                # (D) 유료 LiveApiSports 스마트 동적 수집 (한국/일본 야구 및 축구 실시간 수집)
+                # (D) 농구 공식 무료 실시간 동기화 (LIVE 15초 / 시작전 45초)
+                if basketball_live or basketball_imminent:
+                    bk_interval = 15.0 if basketball_live else 45.0
+                    if now_epoch - cls._last_basketball_sync_ts >= bk_interval:
+                        cls._last_basketball_sync_ts = now_epoch
+                        def _sync_free_basketball():
+                            d_db = SessionLocal()
+                            cnt = 0
+                            try:
+                                res = MatchService.sync_from_official_site(d_db, league_id="BASKETBALL", target_date=today_str, sync_boxscore=False)
+                                cnt += res.get("synced_matches_count", 0)
+                                return cnt
+                            except Exception as e:
+                                logger.warning(f"[Scheduler Live Basketball] 동기화 경고: {e}")
+                                return 0
+                            finally:
+                                d_db.close()
+                        sync_tasks.append(asyncio.to_thread(_sync_free_basketball))
+
+                # (E) 배구 공식 무료 실시간 동기화 (LIVE 15초 / 시작전 45초)
+                if volleyball_live or volleyball_imminent:
+                    vb_interval = 15.0 if volleyball_live else 45.0
+                    if now_epoch - cls._last_volleyball_sync_ts >= vb_interval:
+                        cls._last_volleyball_sync_ts = now_epoch
+                        def _sync_free_volleyball():
+                            d_db = SessionLocal()
+                            cnt = 0
+                            try:
+                                res = MatchService.sync_from_official_site(d_db, league_id="VOLLEYBALL", target_date=today_str, sync_boxscore=False)
+                                cnt += res.get("synced_matches_count", 0)
+                                return cnt
+                            except Exception as e:
+                                logger.warning(f"[Scheduler Live Volleyball] 동기화 경고: {e}")
+                                return 0
+                            finally:
+                                d_db.close()
+                        sync_tasks.append(asyncio.to_thread(_sync_free_volleyball))
+
+                # (F) 유료 LiveApiSports 스마트 동적 수집 (한국/일본 야구 및 축구 실시간 수집)
                 from app.services.live_api_sports_service import LiveApiSportsService
                 if LiveApiSportsService.is_configured():
                     # ⚡ MLB는 공식 사이트로 수집하므로 유료 API-Baseball 호출 대상에서 완전 제외 (KBO/NPB만 연동)

@@ -59,14 +59,37 @@ def set_live_api_key(payload: ApiKeyPayload):
     result = LiveApiSportsService.set_api_key(key=payload.key, provider=payload.provider or "api_sports")
     return result
 
-@router.post("/sync-now", summary="실시간 축구 및 야구 경기 결과 즉시 강제 동기화")
+@router.post("/sync-now", summary="실시간 전종목(축구, 야구, 농구, 배구) 경기 결과 즉시 강제 동기화")
 async def force_sync_live():
     res = await LiveApiSportsService.sync_all_async()
+
+    # ⚡ 무료 공식 실시간 농구 및 배구 동기화
+    from app.services.match_service import MatchService
+    import asyncio
+    
+    def _sync_free_sports():
+        db = SessionLocal()
+        try:
+            bk_res = MatchService.sync_from_official_site(db, league_id="BASKETBALL")
+            vb_res = MatchService.sync_from_official_site(db, league_id="VOLLEYBALL")
+            return {
+                "basketball_synced": bk_res.get("synced_matches_count", 0),
+                "volleyball_synced": vb_res.get("synced_matches_count", 0)
+            }
+        except Exception as e:
+            return {"error": str(e)}
+        finally:
+            db.close()
+
+    free_res = await asyncio.to_thread(_sync_free_sports)
+    if isinstance(res, dict):
+        res["free_sports"] = free_res
+
     from datetime import timedelta
     now_kst = datetime.utcnow() + timedelta(hours=9)
     return {
         "status": "SUCCESS",
-        "message": "실시간 데이터 동기화 완료",
+        "message": "실시간 데이터 동기화 완료 (농구/배구 무료 수집 포함)",
         "details": res,
         "timestamp": now_kst.strftime("%Y-%m-%d %H:%M:%S")
     }

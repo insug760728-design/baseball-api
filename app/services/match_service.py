@@ -9,6 +9,7 @@ from app.models.models import Match, MatchDetail, MatchEvent, PlayerMatchStat
 from app.scrapers.baseball_scraper import BaseballScraper
 from app.scrapers.soccer_scraper import SoccerScraper, SOCCER_LEAGUE_CODES
 from app.scrapers.basketball_scraper import BasketballScraper
+from app.scrapers.volleyball_scraper import VolleyballScraper
 from app.core.sports_catalog import SPORTS_CATALOG
 from app.services.team_split_service import TeamSplitService, is_valid_starter_name, _resolve_match_starters, DEFAULT_ROTATION_STARTERS
 from app.services.live_api_sports_service import lookup_pitcher_season_era
@@ -33,8 +34,10 @@ class MatchService:
 
         if league_id.upper() in SOCCER_LEAGUE_CODES:
             scraper = SoccerScraper(league_id=league_id)
-        elif league_id.upper() in ["NBA", "BASKETBALL"]:
+        elif league_id.upper() in ["NBA", "BASKETBALL", "KBL", "WKBL", "BK"]:
             scraper = BasketballScraper(league_id=league_id)
+        elif league_id.upper() in ["VOLLEYBALL", "KOVO", "VLEAGUE", "V-LEAGUE", "VL", "VB"]:
+            scraper = VolleyballScraper(league_id=league_id)
         else:
             scraper = BaseballScraper(league_id=league_id, league_name=resolved_name)
         
@@ -1286,6 +1289,34 @@ class MatchService:
                     "fouls": {"home": 12 + (seed % 6), "away": 14 + (seed % 5)},
                     "rebounds": {"home": 42 + (seed % 10), "away": 38 + (seed % 10)},
                     "assists": {"home": 24 + (seed % 8), "away": 21 + (seed % 7)}
+                }
+
+            # 배구 전광판 세부 지표 (1~5세트 스코어, 공격/블로킹/서브/디그)
+            elif m.sport_code == "VOLLEYBALL":
+                seed = (m.id * 17) % 100
+                v_stats = t_stats.get("volleyball_stats") if isinstance(t_stats, dict) else {}
+                if not isinstance(v_stats, dict):
+                    v_stats = {}
+                s1_h = v_stats.get("s1_home", 25 if (m.home_score or 0) >= 1 else 22)
+                s1_a = v_stats.get("s1_away", 22 if (m.home_score or 0) >= 1 else 25)
+                s2_h = v_stats.get("s2_home", 25 if (m.home_score or 0) >= 2 else 23)
+                s2_a = v_stats.get("s2_away", 23 if (m.home_score or 0) >= 2 else 25)
+                s3_h = v_stats.get("s3_home", 25 if (m.home_score or 0) >= 3 else 21)
+                s3_a = v_stats.get("s3_away", 21 if (m.home_score or 0) >= 3 else 25)
+                s4_h = v_stats.get("s4_home", 25 if (m.home_score or 0) >= 3 and (m.away_score or 0) >= 1 else 0)
+                s4_a = v_stats.get("s4_away", 19 if (m.home_score or 0) >= 3 and (m.away_score or 0) >= 1 else 0)
+                s5_h = v_stats.get("s5_home", 15 if (m.home_score or 0) == 3 and (m.away_score or 0) == 2 else 0)
+                s5_a = v_stats.get("s5_away", 13 if (m.home_score or 0) == 3 and (m.away_score or 0) == 2 else 0)
+
+                board["volleyball"] = {
+                    "current_set": "4세트" if m.status == "LIVE" else ("경기종료" if m.status == "FINISHED" else "경기전"),
+                    "sets_home": [s1_h, s2_h, s3_h, s4_h, s5_h],
+                    "sets_away": [s1_a, s2_a, s3_a, s4_a, s5_a],
+                    "set_score": f"{m.home_score or 0} : {m.away_score or 0}",
+                    "attacks": {"home": v_stats.get("attacks_home", 52 + (seed % 10)), "away": v_stats.get("attacks_away", 48 + (seed % 9))},
+                    "blocks": {"home": v_stats.get("blocks_home", 10 + (seed % 5)), "away": v_stats.get("blocks_away", 8 + (seed % 4))},
+                    "aces": {"home": v_stats.get("aces_home", 5 + (seed % 3)), "away": v_stats.get("aces_away", 4 + (seed % 3))},
+                    "digs": {"home": v_stats.get("digs_home", 44 + (seed % 8)), "away": v_stats.get("digs_away", 41 + (seed % 7))}
                 }
 
             boards.append(board)

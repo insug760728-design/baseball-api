@@ -1171,6 +1171,9 @@ class BetmanService:
                         BetmanOddsHistory.match_id == match.id
                     ).order_by(BetmanOddsHistory.captured_at.desc(), BetmanOddsHistory.id.desc()).first()
 
+                    is_odds_diff = False
+                    prev_h, prev_d, prev_a = '0.0', '0.0', '0.0'
+
                     # 만약 기존 최초 기록이 0.0 이었으면 유효한 발매 배당으로 갱신
                     if last_hist and (float(last_hist.home_odds or 0) <= 0 or float(last_hist.away_odds or 0) <= 0):
                         last_hist.home_odds = cur_h

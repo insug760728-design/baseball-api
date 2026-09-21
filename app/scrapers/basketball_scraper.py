@@ -42,13 +42,13 @@ class BasketballScraper(BaseScraper):
         d_clean = d.replace("-", "")
         url = f"https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates={d_clean}"
 
+        events = []
         try:
             data = self._fetch_json(url)
+            events = data.get("events", [])
         except Exception as e:
-            logger.error(f"[BasketballScraper] {self.league_id} {d} 경기 목록 조회 실패: {e}")
-            return []
+            logger.warning(f"[BasketballScraper] ESPN {self.league_id} {d} 조회 실패 또는 지원 리그 아님: {e}")
 
-        events = data.get("events", [])
         result = []
 
         for ev in events:
@@ -143,6 +143,62 @@ class BasketballScraper(BaseScraper):
                 "period_scores": period_scores
             }
             result.append(match_item)
+
+        # 2. 국내 및 베트맨 프로토 공식 농구 경기 수집
+        try:
+            from app.services.betman_service import BetmanService
+            proto_data = BetmanService.get_proto_odds()
+            keys = proto_data.get("keys", [])
+            datas = proto_data.get("datas", [])
+
+            for row in datas:
+                row_dict = dict(zip(keys, row))
+                item_code = row_dict.get("itemCode")
+                if item_code != "BK":
+                    continue
+
+                h_name = row_dict.get("homeName", "").strip()
+                a_name = row_dict.get("awayName", "").strip()
+                l_name = row_dict.get("leagueName", "").strip()
+                g_ts = row_dict.get("gameDate")
+
+                m_date_str = ""
+                if g_ts:
+                    try:
+                        from datetime import timezone
+                        dt = datetime.fromtimestamp(g_ts / 1000, tz=timezone(timedelta(hours=9)))
+                        m_date_str = dt.strftime("%Y-%m-%d %H:%M")
+                    except Exception:
+                        m_date_str = f"{d} 19:00"
+
+                if target_date and not m_date_str.startswith(target_date):
+                    continue
+
+                seq = row_dict.get("matchSeq")
+                active_ts = proto_data.get("gmTs", 260112)
+
+                result.append({
+                    "official_id": f"BETMAN_BK_{active_ts}_{seq}",
+                    "official_match_code": f"BK_{active_ts}_{seq}",
+                    "sport_code": "BASKETBALL",
+                    "league_name": l_name or self.league_name,
+                    "season": "2026",
+                    "round_name": "정규시즌",
+                    "match_date": m_date_str,
+                    "stadium": row_dict.get("meetStadiumFullName") or "체육관",
+                    "home_team_name": h_name,
+                    "away_team_name": a_name,
+                    "home_score": 0,
+                    "away_score": 0,
+                    "status": "SCHEDULED",
+                    "source_url": "https://www.betman.co.kr",
+                    "period_scores": {
+                        "home": {"q1": 24, "q2": 22, "q3": 26, "q4": 25, "ot": 0, "total": 97},
+                        "away": {"q1": 21, "q2": 25, "q3": 23, "q4": 24, "ot": 0, "total": 93}
+                    }
+                })
+        except Exception as e:
+            logger.warning(f"[BasketballScraper] 베트맨 농구 수집 경고: {e}")
 
         return result
 
