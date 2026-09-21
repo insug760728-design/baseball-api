@@ -308,6 +308,7 @@ class KboOfficialScraper:
 
             res_obj = {
                 'name': clean_name,
+                'name_kr': clean_name,
                 'name_raw': p_name,
                 'name_en': clean_name,
                 'player_id': pid,

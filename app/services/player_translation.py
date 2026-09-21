@@ -766,13 +766,20 @@ def resolve_player_english_name(raw: str) -> str:
     for en, ko in FULL_NAMES.items():
         if ko == clean and re.match(r'^[A-Za-z\s\.\'-]+$', en):
             return en
+
+    # 2. Word-set match in FULL_NAMES (handles '토모유키 스가노' vs '스가노 토모유키')
+    clean_words = set(clean.split())
+    if len(clean_words) >= 2:
+        for en, ko in FULL_NAMES.items():
+            if set(ko.split()) == clean_words and re.match(r'^[A-Za-z\s\.\'-]+$', en):
+                return en
             
-    # 2. Substring match in FULL_NAMES - prefer ASCII English
+    # 3. Substring match in FULL_NAMES - prefer ASCII English
     for en, ko in FULL_NAMES.items():
-        if (clean == ko or clean in ko or ko in clean) and re.match(r'^[A-Za-z\s\.\'-]+$', en):
+        if (clean in ko or ko in clean) and re.match(r'^[A-Za-z\s\.\'-]+$', en):
             return en
             
-    # 3. Two-word reverse lookup (First + Last)
+    # 4. Two-word reverse lookup (First + Last, or Last + First)
     parts = clean.split()
     if len(parts) == 2:
         p0, p1 = parts[0], parts[1]
@@ -780,16 +787,29 @@ def resolve_player_english_name(raw: str) -> str:
         l = next((k for k, v in LAST_NAMES.items() if v == p1 and re.match(r'^[A-Za-z]+$', k)), None)
         if f and l:
             return f"{f} {l}"
+            
+        f_inv = next((k for k, v in FIRST_NAMES.items() if v == p1 and re.match(r'^[A-Za-z]+$', k)), None)
+        l_inv = next((k for k, v in LAST_NAMES.items() if v == p0 and re.match(r'^[A-Za-z]+$', k)), None)
+        if f_inv and l_inv:
+            return f"{f_inv} {l_inv}"
         if l:
             return l
+        if l_inv:
+            return l_inv
 
-    # 4. Single-word reverse lookup (Last or First name)
+    # 5. Single-word reverse lookup (Last or First name)
     l = next((k for k, v in LAST_NAMES.items() if v == clean and re.match(r'^[A-Za-z]+$', k)), None)
     if l:
         return l
     f = next((k for k, v in FIRST_NAMES.items() if v == clean and re.match(r'^[A-Za-z]+$', k)), None)
     if f:
         return f
+
+    # 6. Check individual words in LAST_NAMES
+    for p in parts:
+        l = next((k for k, v in LAST_NAMES.items() if v == p and re.match(r'^[A-Za-z]+$', k)), None)
+        if l:
+            return l
 
     return clean
 

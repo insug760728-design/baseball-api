@@ -4192,10 +4192,11 @@
     let liveSocket = null;
     let pollVotes = { H: 45, D: 20, A: 35 };
 
-    // ⚡ [TOKEON APP CACHE GUARD V105] - NPB/KBO 공식 데이터 엄격 검증 및 캐시 최신화
+    // ⚡ [TOKEON APP CACHE GUARD V106] - 공식 선발투수 및 경기결과 정밀 데이터 캐시 최신화
     try {
-      const APP_VERSION = 'v105';
+      const APP_VERSION = 'v106';
       if (localStorage.getItem('tokeon_app_version') !== APP_VERSION) {
+        localStorage.removeItem('OFFICIAL_PITCHER_DATABASE_CACHE_V5');
         localStorage.removeItem('OFFICIAL_PITCHER_DATABASE_CACHE_V4');
         localStorage.removeItem('OFFICIAL_PITCHER_DATABASE_CACHE_V3');
         localStorage.removeItem('OFFICIAL_PITCHER_DATABASE_CACHE_V2');
@@ -8225,135 +8226,24 @@ function getFullModalMatchList() {
           const oppDisplay = (typeof formatTeamName === 'function') ? formatTeamName(g.opponent) : (g.opponent || '상대팀');
           const scoreDisplay = (g.team_score !== undefined && g.opp_score !== undefined) ? `${g.team_score} : ${g.opp_score}` : (g.score || '-');
 
-          let stText = g.starter_info || '';
-          let bpText = g.bullpen_info || '';
-          let batText = g.batting_info || '';
-
-          if (isBaseball) {
-            let tScore = Number(g.team_score);
-            let oScore = Number(g.opp_score);
-            if (isNaN(tScore) || isNaN(oScore)) {
-              if (g.score && g.score.includes(':')) {
-                const parts = g.score.split(':');
-                tScore = parseInt(parts[0].replace(/[^0-9]/g, ''), 10) || 0;
-                oScore = parseInt(parts[1].replace(/[^0-9]/g, ''), 10) || 0;
-              } else {
-                tScore = isWin ? 5 : 2;
-                oScore = isWin ? 2 : 5;
-              }
-            }
-
-            const rawStarter = g.starter || (g.baseball_stats && g.baseball_stats.starter) || '';
-            const rawIp = g.baseball_stats ? g.baseball_stats.starter_ip : '';
-            const rawEr = g.baseball_stats ? g.baseball_stats.starter_er : undefined;
-            const rawBpIp = g.baseball_stats ? g.baseball_stats.bullpen_ip : '';
-
-            const isDummyRepetitive = (!rawIp || rawIp === '6.0' || rawIp === '6') && (rawEr === 2 || rawEr === undefined) && (!rawBpIp || rawBpIp === '3.0' || rawBpIp === '3');
-
-            if (!stText || isDummyRepetitive) {
-              const isHomeVenue = (venueText === '홈');
-              const seed = Math.abs((Number(g.match_id || 0) * 17) + (gIdx * 13) + (tScore * 7) + oScore) % 100;
-
-              let stIp = '6.0';
-              let stEr = 0;
-
-              if (oScore === 0) {
-                const ips = ['6.0', '7.0', '7.1', '8.0'];
-                stIp = ips[seed % ips.length];
-                stEr = 0;
-              } else if (oScore === 1) {
-                const ips = ['6.0', '6.2', '7.0', '7.1'];
-                stIp = ips[seed % ips.length];
-                stEr = (seed % 2 === 0) ? 0 : 1;
-              } else if (oScore === 2) {
-                const ips = ['5.2', '6.0', '6.1', '7.0'];
-                stIp = ips[seed % ips.length];
-                stEr = (seed % 2 === 0) ? 1 : 2;
-              } else if (oScore <= 4) {
-                if (isWin) {
-                  const ips = ['5.1', '6.0', '6.1', '6.2'];
-                  stIp = ips[seed % ips.length];
-                  stEr = (seed % 2 === 0) ? 2 : 3;
-                } else {
-                  const ips = ['5.0', '5.1', '5.2', '6.0'];
-                  stIp = ips[seed % ips.length];
-                  stEr = Math.min(oScore, (seed % 2 === 0) ? 2 : 3);
-                }
-              } else if (oScore <= 6) {
-                if (isWin) {
-                  const ips = ['5.0', '5.1', '5.2', '6.0'];
-                  stIp = ips[seed % ips.length];
-                  stEr = 3;
-                } else {
-                  const ips = ['4.1', '5.0', '5.1'];
-                  stIp = ips[seed % ips.length];
-                  stEr = Math.min(oScore, (seed % 2 === 0) ? 4 : 5);
-                }
-              } else {
-                const ips = ['3.1', '4.0', '4.1', '4.2'];
-                stIp = ips[seed % ips.length];
-                stEr = Math.min(oScore - 1, 4 + (seed % 3));
-              }
-              stEr = Math.max(0, Math.min(stEr, oScore));
-
-              const totalGameOuts = (isHomeVenue && isWin) ? 24 : 27;
-              const stParts = stIp.split('.');
-              const stOuts = parseInt(stParts[0], 10) * 3 + (stParts[1] ? parseInt(stParts[1], 10) : 0);
-              const bpOuts = Math.max(0, totalGameOuts - stOuts);
-              const bpFull = Math.floor(bpOuts / 3);
-              const bpFrac = bpOuts % 3;
-              const bpIp = `${bpFull}.${bpFrac}`;
-              const bpEr = Math.max(0, oScore - stEr);
-
-              let hits = 8;
-              let hrs = 0;
-              if (tScore === 0) {
-                hits = 2 + (seed % 3);
-                hrs = 0;
-              } else if (tScore <= 2) {
-                hits = 4 + (seed % 3);
-                hrs = (seed % 3 === 0) ? 1 : 0;
-              } else if (tScore <= 4) {
-                hits = tScore + 3 + (seed % 3);
-                hrs = (seed % 2 === 0) ? 1 : 0;
-              } else if (tScore <= 7) {
-                hits = tScore + 3 + (seed % 3);
-                hrs = 1 + (seed % 2);
-              } else {
-                hits = tScore + 3 + (seed % 4);
-                hrs = 2 + (seed % 2);
-              }
-
-              let cleanStarterName = rawStarter;
-              if (cleanStarterName === '선발 6.0이닝 2자책' || cleanStarterName === '에이스 선발' || cleanStarterName === '선발') {
-                cleanStarterName = '';
-              }
-
-              stText = cleanStarterName ? `${cleanStarterName} ${stIp}이닝 ${stEr}자책` : `선발 ${stIp}이닝 ${stEr}자책`;
-              bpText = `불펜 ${bpIp}이닝 (${bpEr}실점)`;
-              batText = `${hits}안타 (${hrs}홈런)`;
-            }
-          } else if (!batText && isBaseball && g.baseball_stats) {
-            const hCount = venueText === '홈' ? g.baseball_stats.home_hits : g.baseball_stats.away_hits;
-            batText = `${hCount || 8}안타`;
-          } else if (!batText && isBaseball) {
-            const hits = Math.max(3, (Number(g.team_score) || 3) + 4);
-            batText = `${hits}안타`;
-          }
-
           return `
             <tr style="height: 28px; background: ${gIdx % 2 === 0 ? '#ffffff' : '#f8fafc'}; font-size: 0.72rem;">
-              <td class="text-muted fw-bold" style="white-space:nowrap; padding:3px 4px;">#${gIdx+1} ${dateDisplay}</td>
-              <td style="white-space:nowrap; padding:3px 4px;"><span class="badge ${venueText === '홈' ? 'bg-light text-danger border border-danger-subtle' : 'bg-light text-primary border border-primary-subtle'}" style="font-size:0.60rem;">${venueText}</span></td>
-              <td class="fw-bold text-dark text-truncate" style="max-width:85px; white-space:nowrap; padding:3px 4px;" title="${oppDisplay}">vs ${oppDisplay}</td>
-              <td class="fw-black text-center" style="white-space:nowrap; font-family:monospace; font-size:0.78rem; padding:3px 4px;">${scoreDisplay}</td>
-              <td style="white-space:nowrap; padding:3px 4px;"><span class="badge ${resBadge} px-1.5 py-0.5" style="font-size:0.62rem;">${resText}</span></td>
-              ${isBaseball ? `
-                <td class="text-dark fw-bold text-truncate" style="max-width:110px; font-size:0.68rem; padding:3px 4px;" title="${stText || '-'}">${stText || '-'}</td>
-                <td class="text-muted" style="white-space:nowrap; font-size:0.68rem; padding:3px 4px;">${bpText || '-'}</td>
-                <td class="text-dark fw-bold text-truncate" style="max-width:95px; font-size:0.68rem; padding:3px 4px;" title="${batText || '-'}">${batText || '-'}</td>
-              ` : ''}
+              <td class="text-muted fw-bold text-center" style="white-space:nowrap; padding:3px 2px;">#${gIdx+1} ${dateDisplay}</td>
+              <td class="text-center" style="white-space:nowrap; padding:3px 2px;"><span class="badge ${venueText === '홈' ? 'bg-light text-danger border border-danger-subtle' : 'bg-light text-primary border border-primary-subtle'}" style="font-size:0.62rem; padding:1px 3px;">${venueText}</span></td>
+              <td class="fw-bold text-dark text-truncate text-center" style="padding:3px 2px;" title="${oppDisplay}">vs ${oppDisplay}</td>
+              <td class="fw-black text-center" style="white-space:nowrap; font-family:monospace; font-size:0.76rem; padding:3px 2px;">${scoreDisplay}</td>
+              <td class="text-center" style="white-space:nowrap; padding:3px 2px;"><span class="badge ${resBadge} px-1.5 py-0.5" style="font-size:0.65rem;">${resText}</span></td>
             </tr>
+          `;
+        }
+
+        if (!fullList || fullList.length === 0 || !firstGame) {
+          return `
+            <div id="box_teamRec_${sideKey}_${uId}" class="team-rec-box">
+              <div class="p-3 text-center text-secondary fw-semibold bg-white rounded border mb-2" style="font-size:0.75rem; border-color:#e2e8f0;">
+                ${teamName}의 최근 공식 경기 일지 준비 중입니다.
+              </div>
+            </div>
           `;
         }
 
@@ -8380,20 +8270,15 @@ function getFullModalMatchList() {
               </div>
             </div>
 
-            <div class="table-responsive rounded border bg-white" style="border-color: #e2e8f0; overflow-x: auto;">
-              <table class="table table-sm table-bordered text-center align-middle mb-0" style="width: 100%; min-width: ${isBaseball ? '500px' : '320px'}; font-size: 0.72rem; table-layout: fixed;">
+            <div class="rounded border bg-white" style="border-color: #e2e8f0; width:100%; overflow:hidden;">
+              <table class="table table-sm text-center align-middle mb-0" style="width: 100%; font-size: 0.72rem; table-layout: fixed;">
                 <thead style="background: ${isHome ? '#fee2e2' : '#dbeafe'}; color: ${isHome ? '#991b1b' : '#1e40af'};">
-                  <tr style="height: 24px;">
-                    <th style="width: 14%;">일자</th>
-                    <th style="width: 10%;">구분</th>
-                    <th style="width: 18%;">상대</th>
-                    <th style="width: 14%;">스코어</th>
-                    <th style="width: 12%;">결과</th>
-                    ${isBaseball ? `
-                      <th style="width: 24%;">선발 등판 기록</th>
-                      <th style="width: 16%;">불펜투구</th>
-                      <th style="width: 20%;">팀 타격 화력</th>
-                    ` : ''}
+                  <tr style="height: 25px;">
+                    <th style="width: 20%; padding:3px 2px;">일자</th>
+                    <th style="width: 14%; padding:3px 2px;">구분</th>
+                    <th style="width: 28%; padding:3px 2px;">상대</th>
+                    <th style="width: 20%; padding:3px 2px;">스코어</th>
+                    <th style="width: 18%; padding:3px 2px;">결과</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -8419,23 +8304,18 @@ function getFullModalMatchList() {
             <div class="collapse show" id="${collapseId}">
               <div class="p-2 rounded-2 bg-white border mb-2" style="border-color: #e2e8f0;">
                 <div class="d-flex justify-content-between align-items-center text-muted small fw-bold mb-1" style="font-size: 0.68rem;">
-                  <span><i class="bi bi-clock-history me-1"></i>${teamName} 2차전 ~ 10차전 공식 경기 일지 (100% 공식 실데이터)</span>
-                  <span class="badge bg-success-subtle text-success border border-success-subtle px-1.5 py-0.5">공식 실데이터 10G 완비</span>
+                  <span><i class="bi bi-clock-history me-1"></i>${teamName} 2차전 ~ 10차전 공식 경기 일지</span>
+                  <span class="badge bg-success-subtle text-success border border-success-subtle px-1.5 py-0.5">공식 실데이터</span>
                 </div>
-                <div class="table-responsive rounded border bg-white" style="border-color: #e2e8f0; overflow-x: auto; max-height: 320px;">
-                  <table class="table table-sm table-bordered text-center align-middle mb-0" style="width: 100%; min-width: ${isBaseball ? '500px' : '320px'}; font-size: 0.72rem; table-layout: fixed;">
+                <div class="rounded border bg-white" style="border-color: #e2e8f0; width:100%; overflow:hidden; max-height: 320px;">
+                  <table class="table table-sm text-center align-middle mb-0" style="width: 100%; font-size: 0.72rem; table-layout: fixed;">
                     <thead style="background: #f1f5f9; color: #334155; position:sticky; top:0; z-index:1;">
-                      <tr style="height: 24px;">
-                        <th style="width: 14%;">일자</th>
-                        <th style="width: 10%;">구분</th>
-                        <th style="width: 18%;">상대</th>
-                        <th style="width: 14%;">스코어</th>
-                        <th style="width: 12%;">결과</th>
-                        ${isBaseball ? `
-                          <th style="width: 24%;">선발 등판 기록</th>
-                          <th style="width: 16%;">불펜투구</th>
-                          <th style="width: 20%;">팀 타격 화력</th>
-                        ` : ''}
+                      <tr style="height: 25px;">
+                        <th style="width: 20%; padding:3px 2px;">일자</th>
+                        <th style="width: 14%; padding:3px 2px;">구분</th>
+                        <th style="width: 28%; padding:3px 2px;">상대</th>
+                        <th style="width: 20%; padding:3px 2px;">스코어</th>
+                        <th style="width: 18%; padding:3px 2px;">결과</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -8516,131 +8396,17 @@ function getFullModalMatchList() {
           const dateDisplay = rawDate.slice(5, 10).replace('-', '.');
           const scoreDisplay = (!isNaN(hScore) && !isNaN(aScore)) ? `${hScore} : ${aScore}` : (g.score || '-');
 
-          let stText = g.starter_info || '';
-          let bpText = g.bullpen_info || '';
-          let batText = g.batting_info || '';
-
-          if (isBaseball) {
-            let tScore = hScore;
-            let oScore = aScore;
-            if (isNaN(tScore) || isNaN(oScore)) {
-              if (g.score && g.score.includes(':')) {
-                const parts = g.score.split(':');
-                tScore = parseInt(parts[0].replace(/[^0-9]/g, ''), 10) || 0;
-                oScore = parseInt(parts[1].replace(/[^0-9]/g, ''), 10) || 0;
-              } else {
-                tScore = isWin ? 5 : 2;
-                oScore = isWin ? 2 : 5;
-              }
-            }
-
-            const rawStarter = g.starter || (g.baseball_stats && g.baseball_stats.starter) || '';
-            const rawIp = g.baseball_stats ? g.baseball_stats.starter_ip : '';
-            const rawEr = g.baseball_stats ? g.baseball_stats.starter_er : undefined;
-            const rawBpIp = g.baseball_stats ? g.baseball_stats.bullpen_ip : '';
-
-            const isDummyRepetitive = (!rawIp || rawIp === '6.0' || rawIp === '6') && (rawEr === 2 || rawEr === undefined) && (!rawBpIp || rawBpIp === '3.0' || rawBpIp === '3');
-
-            if (!stText || isDummyRepetitive) {
-              const seed = Math.abs((Number(g.match_id || 0) * 19) + (gIdx * 11) + (tScore * 5) + oScore) % 100;
-
-              let stIp = '6.0';
-              let stEr = 0;
-
-              if (oScore === 0) {
-                const ips = ['6.0', '7.0', '7.1', '8.0'];
-                stIp = ips[seed % ips.length];
-                stEr = 0;
-              } else if (oScore === 1) {
-                const ips = ['6.0', '6.2', '7.0', '7.1'];
-                stIp = ips[seed % ips.length];
-                stEr = (seed % 2 === 0) ? 0 : 1;
-              } else if (oScore === 2) {
-                const ips = ['5.2', '6.0', '6.1', '7.0'];
-                stIp = ips[seed % ips.length];
-                stEr = (seed % 2 === 0) ? 1 : 2;
-              } else if (oScore <= 4) {
-                if (isWin) {
-                  const ips = ['5.1', '6.0', '6.1', '6.2'];
-                  stIp = ips[seed % ips.length];
-                  stEr = (seed % 2 === 0) ? 2 : 3;
-                } else {
-                  const ips = ['5.0', '5.1', '5.2', '6.0'];
-                  stIp = ips[seed % ips.length];
-                  stEr = Math.min(oScore, (seed % 2 === 0) ? 2 : 3);
-                }
-              } else if (oScore <= 6) {
-                if (isWin) {
-                  const ips = ['5.0', '5.1', '5.2', '6.0'];
-                  stIp = ips[seed % ips.length];
-                  stEr = 3;
-                } else {
-                  const ips = ['4.1', '5.0', '5.1'];
-                  stIp = ips[seed % ips.length];
-                  stEr = Math.min(oScore, (seed % 2 === 0) ? 4 : 5);
-                }
-              } else {
-                const ips = ['3.1', '4.0', '4.1', '4.2'];
-                stIp = ips[seed % ips.length];
-                stEr = Math.min(oScore - 1, 4 + (seed % 3));
-              }
-              stEr = Math.max(0, Math.min(stEr, oScore));
-
-              const totalGameOuts = (isHomeVenue && isWin) ? 24 : 27;
-              const stParts = stIp.split('.');
-              const stOuts = parseInt(stParts[0], 10) * 3 + (stParts[1] ? parseInt(stParts[1], 10) : 0);
-              const bpOuts = Math.max(0, totalGameOuts - stOuts);
-              const bpFull = Math.floor(bpOuts / 3);
-              const bpFrac = bpOuts % 3;
-              const bpIp = `${bpFull}.${bpFrac}`;
-              const bpEr = Math.max(0, oScore - stEr);
-
-              let hits = 8;
-              let hrs = 0;
-              if (tScore === 0) {
-                hits = 2 + (seed % 3);
-                hrs = 0;
-              } else if (tScore <= 2) {
-                hits = 4 + (seed % 3);
-                hrs = (seed % 3 === 0) ? 1 : 0;
-              } else if (tScore <= 4) {
-                hits = tScore + 3 + (seed % 3);
-                hrs = (seed % 2 === 0) ? 1 : 0;
-              } else if (tScore <= 7) {
-                hits = tScore + 3 + (seed % 3);
-                hrs = 1 + (seed % 2);
-              } else {
-                hits = tScore + 3 + (seed % 4);
-                hrs = 2 + (seed % 2);
-              }
-
-              let cleanStarterName = rawStarter;
-              if (cleanStarterName === '선발 6.0이닝 2자책' || cleanStarterName === '에이스 선발' || cleanStarterName === '선발') {
-                cleanStarterName = '';
-              }
-
-              stText = cleanStarterName ? `${cleanStarterName} ${stIp}이닝 ${stEr}자책` : `선발 ${stIp}이닝 ${stEr}자책`;
-              bpText = `불펜 ${bpIp}이닝 (${bpEr}실점)`;
-              batText = `${hits}안타 (${hrs}홈런)`;
-            }
-          }
-
           return `
             <tr style="height: 28px; background: ${gIdx % 2 === 0 ? '#ffffff' : '#f8fafc'}; font-size: 0.72rem;">
-              <td class="text-muted fw-bold" style="white-space:nowrap; padding:3px 4px;">#${gIdx+1} ${dateDisplay}</td>
-              <td style="white-space:nowrap; padding:3px 4px;"><span class="badge ${isHomeVenue ? 'bg-light text-danger border border-danger-subtle' : 'bg-light text-primary border border-primary-subtle'}" style="font-size:0.60rem;">${venueText}</span></td>
-              <td class="fw-bold text-dark text-truncate" style="max-width:110px; white-space:nowrap; padding:3px 4px;">
+              <td class="text-muted fw-bold" style="white-space:nowrap; padding:3px 2px;">#${gIdx+1} ${dateDisplay}</td>
+              <td style="white-space:nowrap; padding:3px 2px;"><span class="badge ${isHomeVenue ? 'bg-light text-danger border border-danger-subtle' : 'bg-light text-primary border border-primary-subtle'}" style="font-size:0.60rem;">${venueText}</span></td>
+              <td class="fw-bold text-dark text-truncate" style="max-width:110px; white-space:nowrap; padding:3px 2px;">
                 <span class="${isHomeVenue ? 'text-danger fw-bold' : 'text-primary fw-bold'}">${hName}</span>
                 <span class="text-muted small">vs</span>
                 <span class="${!isHomeVenue ? 'text-danger fw-bold' : 'text-primary fw-bold'}">${aName}</span>
               </td>
-              <td class="fw-black text-center" style="white-space:nowrap; font-family:monospace; font-size:0.78rem; padding:3px 4px;">${scoreDisplay}</td>
-              <td style="white-space:nowrap; padding:3px 4px;"><span class="badge ${resBadge} px-1.5 py-0.5" style="font-size:0.62rem;">${resText}</span></td>
-              ${isBaseball ? `
-                <td class="text-dark fw-bold text-truncate" style="max-width:110px; font-size:0.68rem; padding:3px 4px;" title="${stText || '-'}">${stText || '-'}</td>
-                <td class="text-muted" style="white-space:nowrap; font-size:0.68rem; padding:3px 4px;">${bpText || '-'}</td>
-                <td class="text-dark fw-bold text-truncate" style="max-width:95px; font-size:0.68rem; padding:3px 4px;" title="${batText || '-'}">${batText || '-'}</td>
-              ` : ''}
+              <td class="fw-black text-center" style="white-space:nowrap; font-family:monospace; font-size:0.78rem; padding:3px 2px;">${scoreDisplay}</td>
+              <td style="white-space:nowrap; padding:3px 2px;"><span class="badge ${resBadge} px-1.5 py-0.5" style="font-size:0.62rem;">${resText}</span></td>
             </tr>
           `;
         }
@@ -8684,20 +8450,15 @@ function getFullModalMatchList() {
               </div>
             </div>
 
-            <div class="table-responsive rounded border bg-white" style="border-color: #e2e8f0; overflow-x: auto;">
-              <table class="table table-sm table-bordered text-center align-middle mb-0" style="width: 100%; min-width: ${isBaseball ? '500px' : '320px'}; font-size: 0.72rem; table-layout: fixed;">
+            <div class="rounded border bg-white" style="border-color: #e2e8f0; width:100%; overflow:hidden;">
+              <table class="table table-sm text-center align-middle mb-0" style="width: 100%; font-size: 0.72rem; table-layout: fixed;">
                 <thead style="background: #f1f5f9; color: #1e293b;">
-                  <tr style="height: 24px;">
-                    <th style="width: 14%;">일자</th>
-                    <th style="width: 10%;">구분</th>
-                    <th style="width: 18%;">매치업</th>
-                    <th style="width: 14%;">스코어</th>
-                    <th style="width: 12%;">결과</th>
-                    ${isBaseball ? `
-                      <th style="width: 24%;">선발 등판 기록</th>
-                      <th style="width: 16%;">불펜투구</th>
-                      <th style="width: 20%;">팀 타격 화력</th>
-                    ` : ''}
+                  <tr style="height: 25px;">
+                    <th style="width: 20%; padding:3px 2px;">일자</th>
+                    <th style="width: 14%; padding:3px 2px;">구분</th>
+                    <th style="width: 28%; padding:3px 2px;">매치업</th>
+                    <th style="width: 20%; padding:3px 2px;">스코어</th>
+                    <th style="width: 18%; padding:3px 2px;">결과</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -8726,20 +8487,15 @@ function getFullModalMatchList() {
                   <span><i class="bi bi-shield-shaded me-1 text-warning"></i>${hName} vs ${aName} 2차전 ~ 10차전 공식 맞대결 일지</span>
                   <span class="badge bg-success-subtle text-success border border-success-subtle px-1.5 py-0.5">공식 실데이터 10G 완비</span>
                 </div>
-                <div class="table-responsive rounded border bg-white" style="border-color: #e2e8f0; overflow-x: auto; max-height: 320px;">
-                  <table class="table table-sm table-bordered text-center align-middle mb-0" style="width: 100%; min-width: ${isBaseball ? '500px' : '320px'}; font-size: 0.72rem; table-layout: fixed;">
+                <div class="rounded border bg-white" style="border-color: #e2e8f0; width:100%; overflow:hidden; max-height: 320px;">
+                  <table class="table table-sm text-center align-middle mb-0" style="width: 100%; font-size: 0.72rem; table-layout: fixed;">
                     <thead style="background: #f1f5f9; color: #334155; position:sticky; top:0; z-index:1;">
-                      <tr style="height: 24px;">
-                        <th style="width: 14%;">일자</th>
-                        <th style="width: 10%;">구분</th>
-                        <th style="width: 18%;">매치업</th>
-                        <th style="width: 14%;">스코어</th>
-                        <th style="width: 12%;">결과</th>
-                        ${isBaseball ? `
-                          <th style="width: 24%;">선발 등판 기록</th>
-                          <th style="width: 16%;">불펜투구</th>
-                          <th style="width: 20%;">팀 타격 화력</th>
-                        ` : ''}
+                      <tr style="height: 25px;">
+                        <th style="width: 20%; padding:3px 2px;">일자</th>
+                        <th style="width: 14%; padding:3px 2px;">구분</th>
+                        <th style="width: 28%; padding:3px 2px;">매치업</th>
+                        <th style="width: 20%; padding:3px 2px;">스코어</th>
+                        <th style="width: 18%; padding:3px 2px;">결과</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -12064,7 +11820,7 @@ function getFullModalMatchList() {
     // ============================================================
     let OFFICIAL_PITCHER_DATABASE = {};
     try {
-      const cached = localStorage.getItem('OFFICIAL_PITCHER_DATABASE_CACHE_V4');
+      const cached = localStorage.getItem('OFFICIAL_PITCHER_DATABASE_CACHE_V5');
       if (cached) OFFICIAL_PITCHER_DATABASE = JSON.parse(cached);
     } catch (e) {}
 
@@ -12076,7 +11832,7 @@ function getFullModalMatchList() {
           if (data && typeof data === 'object' && Object.keys(data).length > 0) {
             OFFICIAL_PITCHER_DATABASE = data;
             try {
-              localStorage.setItem('OFFICIAL_PITCHER_DATABASE_CACHE_V4', JSON.stringify(data));
+              localStorage.setItem('OFFICIAL_PITCHER_DATABASE_CACHE_V5', JSON.stringify(data));
             } catch (e) {}
             if (window._currentOpenDetailMatch && typeof renderNextGenDetail === 'function') {
               try { renderNextGenDetail(window._currentOpenDetailMatch, _ngActiveTab, _ngRosterSelectedTeam); } catch(e) {}
@@ -12149,7 +11905,7 @@ function getFullModalMatchList() {
         await Promise.all(promises);
         if (updated) {
           try {
-            localStorage.setItem('OFFICIAL_PITCHER_DATABASE_CACHE_V4', JSON.stringify(OFFICIAL_PITCHER_DATABASE));
+            localStorage.setItem('OFFICIAL_PITCHER_DATABASE_CACHE_V5', JSON.stringify(OFFICIAL_PITCHER_DATABASE));
           } catch(e) {}
           if (window._currentOpenDetailMatch && window._currentOpenDetailMatch.id === matchId && typeof renderNextGenDetail === 'function') {
             try { renderNextGenDetail(window._currentOpenDetailMatch, _ngActiveTab, _ngRosterSelectedTeam); } catch(e) {}
@@ -15125,47 +14881,6 @@ function updateSlimPanel(matchId, type, contentHtml) {
             team_score: ts,
             opp_score: os,
             is_real: true
-          });
-        }
-      }
-
-      // 3. 비동기 로딩 대기 중에도 스피너 멈춤 없이 0ms 즉시 렌더링되도록 10경기 즉시 완비
-      if (list.length < count) {
-        const seed = Math.abs(((teamName || '').charCodeAt(0) || 1) * 37 + (isHomeTeam ? 11 : 23));
-        const SCORES = [[5, 3], [4, 1], [2, 6], [7, 4], [3, 2], [1, 5], [6, 2], [4, 5], [8, 3], [3, 4]];
-        const oppPool = (sportCode === 'BASEBALL')
-          ? ['소프트뱅크', '라쿠텐', '지바롯데', '세이부', '오릭스', '닛폰햄', '요미우리', '한신', '히로시마', '야쿠르트']
-          : ['전북', '울산', '포항', '서울', '광주', '강원', '제주', '김천', '대전', '대구'];
-        const now = new Date();
-        for (let i = list.length; i < count; i++) {
-          const d = new Date(now.getTime() - (i + 1) * 3 * 86400000);
-          const dateStr = d.toISOString().slice(0, 10);
-          const isHomeVenue = (seed + i) % 2 === 0;
-          const oppCandidates = oppPool.filter(x => !(teamName || '').includes(x));
-          const opp = oppCandidates[(seed + i) % oppCandidates.length];
-          const [s1, s2] = SCORES[(seed + i) % SCORES.length];
-          const ts = isHomeVenue ? s1 : s2;
-          const os = isHomeVenue ? s2 : s1;
-          const isWin = ts > os;
-          list.push({
-            match_id: 970000 + i,
-            date: dateStr,
-            match_date: `${dateStr} 18:00`,
-            home_away: isHomeVenue ? '홈' : '원정',
-            opponent: opp,
-            team_score: ts,
-            opp_score: os,
-            score: `${ts} : ${os}`,
-            result: isWin ? 'W' : 'L',
-            result_kr: isWin ? '승' : '패',
-            starter: '선발 6.0이닝 2자책',
-            baseball_stats: {
-              starter_ip: '6.0',
-              starter_er: 2,
-              bullpen_ip: '3.0',
-              home_hits: 8,
-              away_hits: 6
-            }
           });
         }
       }
