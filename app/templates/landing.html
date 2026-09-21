@@ -12529,19 +12529,31 @@ function getFullModalMatchList() {
 
     function dismissLiveEventTrack(btn) {
       if (!btn) return;
-      const track = btn.closest('.live-baseball-track-container') || btn.closest('.live-soccer-track-container') || btn.closest('.live-track-container');
-      if (track) {
-        track.style.transition = 'all 0.3s ease';
-        track.style.opacity = '0';
-        track.style.maxHeight = '0';
-        track.style.marginBottom = '0';
-        track.style.padding = '0';
-        setTimeout(() => track.remove(), 300);
+      const overlay = btn.closest('.live-baseball-event-overlay') || btn.closest('.live-soccer-event-overlay') || btn.closest('.live-baseball-track-container') || btn.closest('.live-soccer-track-container') || btn.closest('.live-track-container');
+      if (overlay) {
+        overlay.style.transition = 'all 0.25s ease';
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+          overlay.remove();
+          if (window._activeLivePlayEvents) {
+            for (const key of Object.keys(window._activeLivePlayEvents)) {
+              delete window._activeLivePlayEvents[key];
+            }
+          }
+          if (window._matchLastStateImage) {
+            for (const key of Object.keys(window._matchLastStateImage)) {
+              delete window._matchLastStateImage[key];
+            }
+          }
+          if (typeof renderPredMatches === 'function') renderPredMatches();
+        }, 250);
       }
     }
     window.dismissLiveEventTrack = dismissLiveEventTrack;
 
-    // ⚽ 축구 골 애니메이션 트리거 & 자동 소멸 (1~4번 골 이미지 순환 🔄)
+    if (!window._liveEventTimeouts) window._liveEventTimeouts = {};
+
+    // ⚽ 축구 골 애니메이션 트리거 (정확히 5초 유지 후 메인화면으로 즉시 원복)
     window.triggerSoccerGoalEvent = function(matchId, scoringTeam) {
       if (!window._activeLivePlayEvents) window._activeLivePlayEvents = {};
       if (!window._soccerGoalSeq) window._soccerGoalSeq = 0;
@@ -12560,18 +12572,25 @@ function getFullModalMatchList() {
         time: Date.now() 
       };
       if (typeof renderPredMatches === 'function') renderPredMatches();
-      setTimeout(() => {
+
+      // ⏱️ 정확히 5초간만 유지 후 메인 스타디움 화면으로 즉시 원복
+      if (window._liveEventTimeouts[matchId]) {
+        clearTimeout(window._liveEventTimeouts[matchId]);
+      }
+      window._liveEventTimeouts[matchId] = setTimeout(() => {
         if (window._activeLivePlayEvents && window._activeLivePlayEvents[matchId]) {
           delete window._activeLivePlayEvents[matchId];
-          if (typeof renderPredMatches === 'function') renderPredMatches();
         }
-      }, 6000);
+        if (window._matchLastStateImage && window._matchLastStateImage[matchId]) {
+          delete window._matchLastStateImage[matchId];
+        }
+        if (typeof renderPredMatches === 'function') renderPredMatches();
+      }, 5000);
     };
 
-    // ⚾ 야구 실시간 이벤트 트리거 (1~4번 홈런/안타/볼넷/아웃 이미지 순환 🔄)
+    // ⚾ 야구 실시간 이벤트 트리거 (정확히 5초 유지 후 메인화면으로 즉시 원복)
     window.triggerBaseballEvent = function(matchId, type, details) {
       if (!window._activeLivePlayEvents) window._activeLivePlayEvents = {};
-      if (!window._matchLastStateImage) window._matchLastStateImage = {};
       const t = (type || 'HIT').toUpperCase();
       if (!window._baseballEvSeq) window._baseballEvSeq = {};
       window._baseballEvSeq[t] = ((window._baseballEvSeq[t] || 0) % 4) + 1;
@@ -12604,17 +12623,6 @@ function getFullModalMatchList() {
         }
       }
 
-      // 🖼️ 경기 카드 배경 지속 반영 (오버레이가 끝나도 아웃/안타/홈런 이미지가 계속 유지됨)
-      if (t === 'OUT' || t === 'SO') {
-        window._matchLastStateImage[matchId] = `/static/images/baseball_out_epic_${seqIdx}.jpg`;
-      } else if (t === 'HIT') {
-        window._matchLastStateImage[matchId] = `/static/images/baseball_hit_epic_${seqIdx}.jpg`;
-      } else if (t === 'HOMERUN' || t === 'HR') {
-        window._matchLastStateImage[matchId] = `/static/images/baseball_homerun_epic_${seqIdx}.jpg`;
-      } else if (t === 'BB' || t === 'WALK') {
-        window._matchLastStateImage[matchId] = `/static/images/baseball_walk_epic_${seqIdx}.jpg`;
-      }
-
       window._activeLivePlayEvents[matchId] = {
         type: t,
         subtext: subtext,
@@ -12623,13 +12631,20 @@ function getFullModalMatchList() {
         time: Date.now()
       };
       if (typeof renderPredMatches === 'function') renderPredMatches();
-      const dismissDuration = (t === 'HOMERUN') ? 5500 : (t === 'HIT' ? 4000 : 3500);
-      setTimeout(() => {
+
+      // ⏱️ 정확히 5초간만 상황 이미지 유지 후, 메인 스타디움 화면으로 즉시 원복!
+      if (window._liveEventTimeouts[matchId]) {
+        clearTimeout(window._liveEventTimeouts[matchId]);
+      }
+      window._liveEventTimeouts[matchId] = setTimeout(() => {
         if (window._activeLivePlayEvents && window._activeLivePlayEvents[matchId]) {
           delete window._activeLivePlayEvents[matchId];
-          if (typeof renderPredMatches === 'function') renderPredMatches();
         }
-      }, dismissDuration);
+        if (window._matchLastStateImage && window._matchLastStateImage[matchId]) {
+          delete window._matchLastStateImage[matchId];
+        }
+        if (typeof renderPredMatches === 'function') renderPredMatches();
+      }, 5000);
     };
 
     // ⚡ 전역 실시간 라이브 경기 판단 헬퍼 (공수교대/팀체인지/시간대 완벽 대응)
@@ -12840,7 +12855,7 @@ function getFullModalMatchList() {
           const outDots = (st.outs >= 2) ? '🔴🔴' : (st.outs === 1 ? '🔴⚪' : '⚪⚪');
           const eventBannerHtml = buildLiveBaseballEventTrackHtml(m, st, diffMin);
 
-          // ⚾ 야구 상황별 자동 이미지 판별 (수동 버튼 없이 실시간 상황에 따라 100% 자동 표출)
+          // ⚾ 라이브 메인 화면 배경: 상황 이벤트 5초 경과 후 즉시 메인 스타디움 배경으로 원복!
           let baseballBgImg = '/static/images/baseball_stadium_live.jpg';
           const activeEv = (typeof window._activeLivePlayEvents !== 'undefined' && window._activeLivePlayEvents) ? window._activeLivePlayEvents[m.id] : null;
           if (activeEv) {
@@ -12854,26 +12869,6 @@ function getFullModalMatchList() {
               baseballBgImg = `/static/images/baseball_homerun_epic_${evImgIdx}.jpg`;
             } else if (evT === 'BB' || evT === 'WALK') {
               baseballBgImg = `/static/images/baseball_walk_epic_${evImgIdx}.jpg`;
-            }
-          } else if (window._matchLastStateImage && window._matchLastStateImage[m.id]) {
-            baseballBgImg = window._matchLastStateImage[m.id];
-          } else {
-            const matchSeed = Number(m.id) || 1;
-            const hasRunners = (st.base1 || st.base2 || st.base3);
-            const outsCount = Number(st.outs) || 0;
-            const totalScore = hScore + aScore;
-
-            if (hasRunners) {
-              const hitIdx = ((matchSeed + (st.base2 ? 1 : 0) + (st.base3 ? 2 : 0)) % 4) + 1;
-              baseballBgImg = `/static/images/baseball_hit_epic_${hitIdx}.jpg`;
-            } else if (outsCount >= 1) {
-              const outIdx = ((matchSeed + outsCount) % 4) + 1;
-              baseballBgImg = `/static/images/baseball_out_epic_${outIdx}.jpg`;
-            } else if (totalScore > 0) {
-              const hrIdx = ((matchSeed + totalScore) % 4) + 1;
-              baseballBgImg = `/static/images/baseball_homerun_epic_${hrIdx}.jpg`;
-            } else {
-              baseballBgImg = '/static/images/baseball_stadium_live.jpg';
             }
           }
 
@@ -13004,16 +12999,12 @@ function getFullModalMatchList() {
             `;
           }
 
-          // ⚽ 축구 라이브 배경 이미지 (골 세리머니 1~4번 및 경기장 배경 지속 반영)
+          // ⚽ 라이브 메인 화면 배경: 골 이벤트 5초 경과 후 즉시 메인 스타디움 배경으로 원복!
           let soccerBgImg = '/static/images/soccer_stadium_live.jpg';
+          const activeEv = (typeof window._activeLivePlayEvents !== 'undefined' && window._activeLivePlayEvents) ? window._activeLivePlayEvents[m.id] : null;
           if (activeEv && (activeEv.type === 'GOAL' || activeEv.type === 'SCORE')) {
             const goalImgIdx = activeEv.imgIdx || 1;
             soccerBgImg = `/static/images/soccer_goal_epic_${goalImgIdx}.jpg`;
-          } else if (window._matchLastStateImage && window._matchLastStateImage[m.id]) {
-            soccerBgImg = window._matchLastStateImage[m.id];
-          } else if ((hScore + aScore) > 0) {
-            const goalIdx = (((Number(m.id) || 1) + hScore + aScore) % 4) + 1;
-            soccerBgImg = `/static/images/soccer_goal_epic_${goalIdx}.jpg`;
           }
 
           liveBroadcastStageHtml = `
