@@ -927,15 +927,15 @@ class SchedulerService:
                 # ⚡ [초저지연 실시간 튜닝] MLB LIVE 진행 중: 1.5초 초고속 실시간 루프 (약 2초 주기 전광판 갱신)
                 # KBO/NPB LIVE: 3초, 축구 LIVE: 8초, 시작 직전(Pre-Match): 5초
                 if mlb_live:
-                    sleep_sec = 1.5
+                    sleep_sec = 2.0
                 elif kbo_npb_live:
-                    sleep_sec = 3.0
+                    sleep_sec = 3.5
                 elif soccer_live:
                     sleep_sec = 8.0
                 elif has_imminent:
-                    sleep_sec = 5.0
+                    sleep_sec = 25.0
                 else:
-                    sleep_sec = 30.0
+                    sleep_sec = 45.0
 
                 # 🧹 Render 512MB RAM 안전 최적화: 매 루프마다 점유 메모리 OS에 즉시 반환
                 try:

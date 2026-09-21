@@ -1,5 +1,5 @@
 import os
-os.environ["MALLOC_ARENA_MAX"] = "2"
+os.environ["MALLOC_ARENA_MAX"] = "1"
 os.environ["PYTHONOPTIMIZE"] = "1"
 import sys
 import json
@@ -211,9 +211,9 @@ def refresh_server_matches_cache() -> str:
         # Initial payload focuses on today's active/upcoming matches (~140 matches) for instant 0ms First Paint
         now_kst = datetime.utcnow() + timedelta(hours=9)
         today_str = now_kst.strftime("%Y-%m-%d")
-        matches = MatchService.get_matches(db, start_date=today_str, limit=350, order='asc')
+        matches = MatchService.get_matches(db, start_date=today_str, limit=120, order='asc')
         if not matches:
-            matches = MatchService.get_matches(db, limit=200, order='desc')
+            matches = MatchService.get_matches(db, limit=100, order='desc')
         serialized = [MatchResponse.model_validate(m).model_dump(mode="json") for m in matches]
         json_str = json.dumps(serialized, ensure_ascii=False)
         _SERVER_MATCHES_CACHE["json_str"] = json_str
@@ -230,6 +230,11 @@ def refresh_server_matches_cache() -> str:
                 db.close()
             except Exception:
                 pass
+        try:
+            import gc
+            gc.collect()
+        except Exception:
+            pass
 
 def get_server_initial_matches_json() -> str:
     global _SERVER_MATCHES_CACHE
