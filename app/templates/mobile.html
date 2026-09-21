@@ -475,6 +475,12 @@
                 <div class="team-starter">${m.away_starter || '선발 미정'}</div>
               </div>
             </div>
+            ${(m.custom_notes || m.summary) ? `
+              <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 6px; padding: 5px 8px; margin: 8px 0 4px; font-size: 11px; color: #cbd5e1; display: flex; align-items: center; gap: 6px;">
+                <span style="background: #3b82f6; color: #ffffff; font-weight: 800; font-size: 10px; padding: 1px 4px; border-radius: 3px; flex-shrink: 0;">⚡ 승부처</span>
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600;" title="${m.custom_notes || m.summary}">${m.custom_notes || m.summary}</span>
+              </div>
+            ` : ''}
             ${m.odds && m.odds.home_win ? `
               <div class="odds-bar">
                 <div class="odd-box">
