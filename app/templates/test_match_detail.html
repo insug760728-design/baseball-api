@@ -224,6 +224,32 @@
       color: #dc2626;
       font-weight: 800;
     }
+    .lineup-order-badge {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: #ffffff;
+      background: #475569;
+      width: 16px;
+      height: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      margin-right: 5px;
+      flex-shrink: 0;
+    }
+    .lineup-pitcher-card {
+      transition: all 0.2s ease;
+    }
+    @keyframes highlightPulse {
+      0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6); transform: scale(0.99); }
+      50% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); transform: scale(1.01); }
+      100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); transform: scale(1); }
+    }
+    .highlight-relocate {
+      animation: highlightPulse 0.7s ease-out;
+    }
 
     /* 3. 선발투수 듀얼 */
     .pitcher-duel-card {
@@ -333,6 +359,10 @@
             한신 (3:2) 요코하마
           </button>
         </div>
+        <!-- 라인업 실시간 확정 상태 토글 버튼 -->
+        <button type="button" class="btn btn-sm btn-warning text-dark fw-bold" id="btnLiveLineupToggle" onclick="toggleCurrentLineupConfirmation()">
+          <i class="bi bi-arrow-down-up me-1"></i>라인업 확정 ⇄ 미확정 이동
+        </button>
         <!-- 뷰포트 크기 스위처 -->
         <button type="button" class="btn btn-sm btn-info text-dark fw-bold" onclick="toggleViewportWidth()">
           <i class="bi bi-arrows-expand me-1"></i><span id="viewportToggleText">와이드 PC 뷰</span>
@@ -377,10 +407,8 @@
     <div class="brief-card" id="matchBriefSection">
       <div class="d-flex align-items-center justify-content-between mb-2">
         <div class="d-flex align-items-center gap-1.5">
-          
           <strong style="font-size:0.92rem; color:#0f172a;" id="briefTitle">경기 분석 요약</strong>
         </div>
-        
       </div>
 
       <!-- 1줄 핵심 텍스트 요약 -->
@@ -407,14 +435,21 @@
     </div>
 
     <!-- 3. 선발 라인업 (Batting Order) -->
-    <div class="section-card">
-      <div class="section-header-title">
-        <h3><i class="bi bi-people-fill text-primary"></i>선발 라인업 (Batting Order)</h3>
-        <span class="badge bg-light text-secondary border" style="font-size:0.68rem;">공식 확정 라인업</span>
+    <div class="section-card" id="lineupSectionCard">
+      <div class="section-header-title mb-2">
+        <div class="d-flex align-items-center gap-2">
+          <h3 class="mb-0"><i class="bi bi-people-fill text-primary"></i>선발 라인업 (Batting Order)</h3>
+          <span class="badge" id="lineupStatusBadge" style="font-size:0.68rem;">공식 확정 라인업</span>
+        </div>
+        <button type="button" class="btn btn-xs btn-outline-dark fw-bold py-0.5 px-2" style="font-size:0.68rem;" onclick="toggleCurrentLineupConfirmation()">
+          <i class="bi bi-arrow-down-up me-1"></i>상태 실시간 전환
+        </button>
       </div>
 
+      <div id="lineupNoticeAlert"></div>
+
       <div class="lineup-grid" id="lineupGridContainer">
-        <!-- JS -->
+        <!-- JS: 왼쪽 원정 | 오른쪽 홈 -->
       </div>
     </div>
 
@@ -528,6 +563,7 @@
       BALTOR: {
         no: "#22564",
         league: "메이저리그 (MLB)",
+        isLineupConfirmed: true,
         home: "볼티모어 오리올스",
         away: "토론토 블루제이스",
         homeCode: "볼티오리",
@@ -682,6 +718,7 @@
       BAL: {
         no: "#22354",
         league: "MLB",
+        isLineupConfirmed: false,
         home: "볼티모어 오리올스",
         away: "밀워키 브루어스",
         homeCode: "볼티오리",
@@ -789,6 +826,7 @@
       NYY: {
         no: "#22353",
         league: "MLB",
+        isLineupConfirmed: true,
         home: "애리조나 다이아몬드백스",
         away: "뉴욕 양키스",
         homeCode: "애리다이",
@@ -894,6 +932,7 @@
       TEX: {
         no: "#22348",
         league: "MLB",
+        isLineupConfirmed: false,
         home: "텍사스 레인저스",
         away: "토론토 블루제이스",
         homeCode: "텍사레인",
@@ -997,6 +1036,7 @@
       NPB: {
         no: "#22357",
         league: "NPB",
+        isLineupConfirmed: true,
         home: "한신 타이거스",
         away: "요코하마 DeNA 베이스타즈",
         homeCode: "한신타이",
@@ -1161,39 +1201,154 @@
       `).join('');
       document.getElementById('briefKeyPointsList').innerHTML = keyPointsHtml;
 
-      // 3. 선발 라인업
-      const renderLineupCol = (teamName, teamCode, isHome, lineup) => {
+      // 3. 선발 라인업 (왼쪽 원정, 오른쪽 홈 / 선발투수 그아래 타자순 / 확정시 최상단, 미확정시 최하단)
+      const renderLineupCol = (teamName, teamCode, isHome, lineup, pitcherObj) => {
         const borderClass = isHome ? 'home' : 'away';
         const badgeBg = isHome ? 'bg-danger' : 'bg-primary';
-        const rows = (lineup || []).map(p => {
-          const isHigh = parseFloat(p.avg) >= 0.280;
-          return `
-            <div class=\"lineup-row\">
-              <div class=\"d-flex align-items-center text-truncate\" style=\"max-width:72%;\">
-                <span class=\"pos-badge\">${p.pos}</span>
-                <span class=\"fw-bold text-truncate\">${p.name}</span>
-                <span class=\"hand-tag hand-${p.hand}\">${p.hand}</span>
+        const roleLabel = isHome ? '홈' : '원정';
+        const roleColor = isHome ? '#dc2626' : '#2563eb';
+        const roleBg = isHome ? '#fee2e2' : '#dbeafe';
+
+        // 1) 선발투수 분리 (맨 위 배치)
+        let sp = null;
+        const batters = [];
+
+        if (Array.isArray(lineup)) {
+          lineup.forEach(p => {
+            if (!sp && (p.pos === 'P' || p.pos === 'SP' || p.pos === '선발')) {
+              sp = p;
+            } else {
+              batters.push(p);
+            }
+          });
+        }
+
+        if (!sp && pitcherObj) {
+          sp = {
+            pos: 'P',
+            name: pitcherObj.name,
+            hand: pitcherObj.hand,
+            avg: pitcherObj.record || (pitcherObj.era ? `${pitcherObj.era} ERA` : '-')
+          };
+        }
+
+        // 선발투수 영역 HTML (맨 위)
+        let pitcherHtml = '';
+        if (sp) {
+          const spHandText = sp.hand === 'L' ? '좌완' : (sp.hand === 'R' ? '우완' : sp.hand);
+          pitcherHtml = `
+            <div class="lineup-pitcher-card mb-2" style="background:${roleBg}; border:1.5px solid ${roleColor}; border-radius:8px; padding:6px 9px;">
+              <div class="d-flex justify-content-between align-items-center mb-0.5">
+                <span class="badge ${isHome ? 'bg-danger' : 'bg-primary'} text-white fw-bold" style="font-size:0.64rem; padding:2px 6px;">
+                  <i class="bi bi-shield-fill-check me-0.5"></i>선발 투수 (SP)
+                </span>
+                <span class="fw-bold" style="font-size:0.72rem; color:${roleColor};">${sp.avg || ''}</span>
               </div>
-              <div class=\"avg-val ${isHigh ? 'high' : ''}\">${p.avg}</div>
+              <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-1 text-truncate" style="max-width:72%;">
+                  <strong class="text-dark text-truncate" style="font-size:0.86rem;">${sp.name}</strong>
+                  <span class="hand-tag hand-${sp.hand || 'R'}">${spHandText}</span>
+                </div>
+                ${pitcherObj && pitcherObj.sub ? `<span class="text-muted text-truncate ms-1" style="font-size:0.62rem; max-width:28%;">${pitcherObj.sub}</span>` : ''}
+              </div>
+            </div>
+          `;
+        }
+
+        // 2) 선발 타순 (1번 ~ 9번 타자순) 영역 (선발 그 아래)
+        const batterRows = batters.map((p, idx) => {
+          const orderNum = idx + 1;
+          const isHigh = parseFloat(p.avg) >= 0.280;
+          const bHandText = p.hand === 'L' ? '좌타' : (p.hand === 'R' ? '우타' : (p.hand === 'S' ? '양타' : p.hand));
+          return `
+            <div class="lineup-row">
+              <div class="d-flex align-items-center text-truncate" style="max-width:75%;">
+                <span class="lineup-order-badge">${orderNum}</span>
+                <span class="pos-badge">${p.pos}</span>
+                <span class="fw-bold text-truncate player-name" title="${p.name}">${p.name}</span>
+                <span class="hand-tag hand-${p.hand}">${bHandText}</span>
+              </div>
+              <div class="avg-val ${isHigh ? 'high' : ''}">${p.avg}</div>
             </div>
           `;
         }).join('');
 
         return `
-          <div class=\"lineup-team-card ${borderClass}\">
-            <div class=\"lineup-team-header\">
-              <span class=\"badge ${badgeBg} text-white\">${isHome ? '홈' : '원정'} ${teamName} (${teamCode})</span>
-              <span class=\"text-muted\" style=\"font-size:0.68rem;\">타율/ERA</span>
+          <div class="lineup-team-card ${borderClass}">
+            <div class="lineup-team-header">
+              <span class="badge ${badgeBg} text-white fw-bold" style="font-size:0.76rem; padding:3px 8px;">
+                ${roleLabel} ${teamName} (${teamCode})
+              </span>
+              <span class="text-secondary fw-semibold" style="font-size:0.68rem;">타율 / 시즌성적</span>
             </div>
-            ${rows}
+            <div style="padding: 8px 7px;">
+              ${pitcherHtml}
+              <div class="d-flex justify-content-between align-items-center px-1 mb-1 text-muted" style="font-size:0.65rem; font-weight:700; border-bottom:1px dashed #cbd5e1; padding-bottom:3px;">
+                <span>선발 타순 (1~9번)</span>
+                <span>포지션 / 타율</span>
+              </div>
+              <div class="lineup-batter-list">
+                ${batterRows}
+              </div>
+            </div>
           </div>
         `;
       };
 
+      // 🎯 왼쪽 원정, 오른쪽 홈 한눈에 배치
       document.getElementById('lineupGridContainer').innerHTML = `
-        ${renderLineupCol(data.home, data.homeCode, true, data.homeLineup)}
-        ${renderLineupCol(data.away, data.awayCode, false, data.awayLineup)}
+        ${renderLineupCol(data.away, data.awayCode, false, data.awayLineup, data.pitchers?.away)}
+        ${renderLineupCol(data.home, data.homeCode, true, data.homeLineup, data.pitchers?.home)}
       `;
+
+      // 🎯 라인업 위치 자동 재배치: 확정된 순간 맨 위로, 미확정 시 상세 맨 아래로
+      const lineupSection = document.getElementById('lineupSectionCard');
+      const headerCard = document.getElementById('matchHeaderCard');
+      const mainViewport = document.getElementById('mainViewport');
+      const statusBadge = document.getElementById('lineupStatusBadge');
+      const noticeAlert = document.getElementById('lineupNoticeAlert');
+
+      if (data.isLineupConfirmed) {
+        // [확정 순간] 상세 최상단으로 이동 (headerCard 바로 뒤, 브리핑보다 위)
+        if (lineupSection && headerCard && lineupSection.previousElementSibling !== headerCard) {
+          headerCard.insertAdjacentElement('afterend', lineupSection);
+        }
+        if (statusBadge) {
+          statusBadge.className = 'badge bg-success text-white fw-bold';
+          statusBadge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>공식 확정 라인업 (상세 맨위)';
+        }
+        if (noticeAlert) {
+          noticeAlert.innerHTML = `
+            <div class="alert alert-success py-1.5 px-2.5 mb-2 d-flex align-items-center justify-content-between" style="font-size:0.72rem; border-radius:6px; background:#f0fdf4; border:1px solid #86efac;">
+              <div class="d-flex align-items-center gap-1.5 text-truncate">
+                <i class="bi bi-lightning-charge-fill text-success fs-6"></i>
+                <span class="text-truncate"><strong>[실시간 확정]</strong> 양 팀 공식 선발 라인업이 확정되어 <strong>상세 최상단</strong>에 실시간 표시 중입니다.</span>
+              </div>
+              <span class="badge bg-success text-white py-0.5 px-1.5 ms-1 flex-shrink-0" style="font-size:0.62rem;">최상단 배치</span>
+            </div>
+          `;
+        }
+      } else {
+        // [미확정 상태] 상세 맨 아래로 이동 (mainViewport 맨 끝)
+        if (lineupSection && mainViewport && mainViewport.lastElementChild !== lineupSection) {
+          mainViewport.appendChild(lineupSection);
+        }
+        if (statusBadge) {
+          statusBadge.className = 'badge bg-warning text-dark fw-bold';
+          statusBadge.innerHTML = '<i class="bi bi-clock-history me-1"></i>예상 라인업 (상세 맨아래)';
+        }
+        if (noticeAlert) {
+          noticeAlert.innerHTML = `
+            <div class="alert alert-warning py-1.5 px-2.5 mb-2 d-flex align-items-center justify-content-between" style="font-size:0.72rem; border-radius:6px; background:#fffbeb; border:1px solid #fde68a;">
+              <div class="d-flex align-items-center gap-1.5 text-truncate">
+                <i class="bi bi-hourglass-split text-warning fs-6"></i>
+                <span class="text-truncate"><strong>[공식 발표 대기]</strong> 미확정 상태로 <strong>상세 최하단</strong>에 예상 라인업이 배치됩니다. 확정 시 즉시 최상단으로 자동 이동합니다.</span>
+              </div>
+              <span class="badge bg-warning text-dark py-0.5 px-1.5 ms-1 flex-shrink-0" style="font-size:0.62rem;">최하단 배치</span>
+            </div>
+          `;
+        }
+      }
 
       // 4. 선발투수 정보
       if (data.pitchers) {
@@ -1810,6 +1965,22 @@
       renderAll();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    function toggleCurrentLineupConfirmation() {
+      const data = MATCH_DATA[currentMatchKey];
+      if (!data) return;
+      data.isLineupConfirmed = !data.isLineupConfirmed;
+      renderAll();
+      const lineupSection = document.getElementById('lineupSectionCard');
+      if (lineupSection) {
+        lineupSection.classList.remove('highlight-relocate');
+        void lineupSection.offsetWidth;
+        lineupSection.classList.add('highlight-relocate');
+        lineupSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+    window.toggleCurrentLineupConfirmation = toggleCurrentLineupConfirmation;
+
 
     let isPitcherLogsOpen = false;
     function togglePitcherLogs() {
