@@ -441,7 +441,7 @@
             🇺🇸 MLB (애리조나 vs 텍사스)
           </button>
           <button type="button" class="btn btn-outline-light" id="btnMatchNPB" onclick="switchTestMatch('NPB')">
-            🇯🇵 NPB (히로카프 vs 요코베이)
+            🇯🇵 NPB (히로시마 vs 요코하마)
           </button>
         </div>
         <!-- 뷰포트 크기 스위처 -->
@@ -467,9 +467,9 @@
       </div>
 
       <div class="match-title-row">
-        <span class="team-name-hud text-danger" id="hudHomeName">애리다이</span>
+        <span class="team-name-hud text-danger" id="hudHomeName">애리조나 <small style="font-size:0.8rem; font-weight:700; opacity:0.85;">(애리다이)</small></span>
         <span class="vs-hud">VS</span>
-        <span class="team-name-hud text-primary" id="hudAwayName">텍사레인</span>
+        <span class="team-name-hud text-primary" id="hudAwayName">텍사스 <small style="font-size:0.8rem; font-weight:700; opacity:0.85;">(텍사레인)</small></span>
       </div>
 
       <div class="match-subinfo" id="hudSubInfo">
@@ -677,8 +677,12 @@
       MLB: {
         no: "#1634",
         league: "MLB",
-        home: "애리다이",
-        away: "텍사레인",
+        home: "애리조나",
+        away: "텍사스",
+        homeCode: "애리다이",
+        awayCode: "텍사레인",
+        homeFull: "애리조나 다이아몬드백스",
+        awayFull: "텍사스 레인저스",
         time: "2026.09.14(월) 05:10",
         stadium: "체이스필드",
         homeLineup: [
@@ -738,28 +742,28 @@
           { league: "American", rank: 1, team: "탬파레이", g: 149, w: 90, d: 0, l: 59, rf: 4.6, ra: 4.1, pct: "0.604", form: ["W","W","W","L","W"] },
           { league: "American", rank: 2, team: "뉴욕양키", g: 149, w: 86, d: 0, l: 63, rf: 4.5, ra: 3.7, pct: "0.577", form: ["W","L","W","W","W"] },
           { league: "American", rank: 3, team: "보스레드", g: 149, w: 81, d: 0, l: 68, rf: 4.4, ra: 3.9, pct: "0.544", form: ["W","L","L","L","W"] },
-          { league: "American", rank: 8, team: "텍사레인", g: 149, w: 73, d: 0, l: 76, rf: 4.1, ra: 4.4, pct: "0.490", form: ["W","L","L","L","W"] },
+          { league: "American", rank: 8, team: "텍사스(텍사레인)", g: 149, w: 73, d: 0, l: 76, rf: 4.1, ra: 4.4, pct: "0.490", form: ["W","L","L","L","W"] },
           { league: "National", rank: 1, team: "밀워브루", g: 150, w: 93, d: 0, l: 57, rf: 5.2, ra: 3.9, pct: "0.620", form: ["L","W","W","W","W"] },
           { league: "National", rank: 2, team: "LA다저스", g: 149, w: 90, d: 0, l: 59, rf: 5.0, ra: 3.8, pct: "0.604", form: ["L","L","W","W","W"] },
-          { league: "National", rank: 7, team: "애리다이", g: 149, w: 79, d: 0, l: 70, rf: 4.4, ra: 4.4, pct: "0.530", form: ["L","W","L","W","W"] }
+          { league: "National", rank: 7, team: "애리조나(애리다이)", g: 149, w: 79, d: 0, l: 70, rf: 4.4, ra: 4.4, pct: "0.530", form: ["L","W","L","W","W"] }
         ],
         h2h: [
-          { date: "2026.09.13", h: "애리다이", hScore: 2, a: "텍사레인", aScore: 6, win: "텍사레인" },
-          { date: "2026.09.12", h: "애리다이", hScore: 9, a: "텍사레인", aScore: 1, win: "애리다이" },
-          { date: "2026.05.14", h: "텍사레인", hScore: 6, a: "애리다이", aScore: 5, win: "텍사레인" },
-          { date: "2026.05.13", h: "텍사레인", hScore: 7, a: "애리다이", aScore: 4, win: "텍사레인" },
-          { date: "2026.05.12", h: "텍사레인", hScore: 0, a: "애리다이", aScore: 1, win: "애리다이" }
+          { date: "2026.09.13", h: "애리조나", a: "텍사스", hScore: 2, aScore: 6, win: "텍사스" },
+          { date: "2026.09.12", h: "애리조나", a: "텍사스", hScore: 9, aScore: 1, win: "애리조나" },
+          { date: "2026.05.14", h: "텍사스", a: "애리조나", hScore: 6, aScore: 5, win: "텍사스" },
+          { date: "2026.05.13", h: "텍사스", a: "애리조나", hScore: 7, aScore: 4, win: "텍사스" },
+          { date: "2026.05.12", h: "텍사스", a: "애리조나", hScore: 0, aScore: 1, win: "애리조나" }
         ],
         recentHome: [
-          { date: "09.13", result: "L", score: "2 : 6", opp: "텍사레인" },
-          { date: "09.12", result: "W", score: "9 : 1", opp: "텍사레인" },
+          { date: "09.13", result: "L", score: "2 : 6", opp: "텍사스 (텍사레인)" },
+          { date: "09.12", result: "W", score: "9 : 1", opp: "텍사스 (텍사레인)" },
           { date: "09.10", result: "L", score: "5 : 2", opp: "캔자로얄" },
           { date: "09.09", result: "W", score: "3 : 5", opp: "캔자로얄" },
           { date: "09.08", result: "W", score: "4 : 5", opp: "캔자로얄" }
         ],
         recentAway: [
-          { date: "09.13", result: "W", score: "2 : 6", opp: "애리다이" },
-          { date: "09.12", result: "L", score: "9 : 1", opp: "애리다이" },
+          { date: "09.13", result: "W", score: "2 : 6", opp: "애리조나 (애리다이)" },
+          { date: "09.12", result: "L", score: "9 : 1", opp: "애리조나 (애리다이)" },
           { date: "09.11", result: "L", score: "4 : 3", opp: "시애매리" },
           { date: "09.10", result: "L", score: "3 : 2", opp: "시애매리" },
           { date: "09.09", result: "W", score: "5 : 10", opp: "시애매리" }
@@ -769,8 +773,10 @@
       NPB: {
         no: "#676",
         league: "NPB",
-        home: "히로카프",
-        away: "요코베이",
+        home: "히로시마",
+        away: "요코하마",
+        homeCode: "히로카프",
+        awayCode: "요코베이",
         time: "2026.09.11(금) 18:00",
         stadium: "마쓰다ZoomZoom스타디움",
         homeLineup: [
@@ -828,9 +834,9 @@
         standings: [
           { league: "Central", rank: 1, team: "한신", g: 123, w: 69, d: 1, l: 53, rf: 3.7, ra: 3.1, pct: "0.566", form: ["L","L","L","W","L"] },
           { league: "Central", rank: 2, team: "요미우리", g: 127, w: 69, d: 2, l: 56, rf: 3.4, ra: 3.1, pct: "0.552", form: ["W","W","L","W","W"] },
-          { league: "Central", rank: 3, team: "요코베이", g: 125, w: 59, d: 3, l: 63, rf: 3.9, ra: 3.7, pct: "0.484", form: ["W","W","L","W","W"] },
+          { league: "Central", rank: 3, team: "요코하마(요코베이)", g: 125, w: 59, d: 3, l: 63, rf: 3.9, ra: 3.7, pct: "0.484", form: ["W","W","L","W","W"] },
           { league: "Central", rank: 4, team: "야쿠르트", g: 125, w: 54, d: 2, l: 69, rf: 3.1, ra: 3.9, pct: "0.439", form: ["L","L","W","L","D"] },
-          { league: "Central", rank: 5, team: "히로카프", g: 121, w: 50, d: 4, l: 67, rf: 3.0, ra: 3.7, pct: "0.427", form: ["W","L","L","L","W"] },
+          { league: "Central", rank: 5, team: "히로시마(히로카프)", g: 121, w: 50, d: 4, l: 67, rf: 3.0, ra: 3.7, pct: "0.427", form: ["W","L","L","L","W"] },
           { league: "Central", rank: 6, team: "주니치", g: 129, w: 54, d: 2, l: 73, rf: 3.3, ra: 3.4, pct: "0.425", form: ["L","L","W","W","D"] },
           { league: "Pacific", rank: 1, team: "소프트뱅", g: 126, w: 78, d: 3, l: 45, rf: 4.8, ra: 3.2, pct: "0.634", form: ["W","W","W","L","W"] },
           { league: "Pacific", rank: 2, team: "세이부", g: 128, w: 73, d: 3, l: 52, rf: 3.6, ra: 3.2, pct: "0.584", form: ["W","W","W","W","L"] },
@@ -840,23 +846,23 @@
           { league: "Pacific", rank: 6, team: "라쿠텐", g: 125, w: 47, d: 1, l: 77, rf: 3.3, ra: 4.1, pct: "0.379", form: ["L","L","L","L","L"] }
         ],
         h2h: [
-          { date: "2026.08.27", h: "히로카프", hScore: 1, a: "요코베이", aScore: 6, win: "요코베이" },
-          { date: "2026.08.26", h: "히로카프", hScore: 3, a: "요코베이", aScore: 2, win: "히로카프" },
-          { date: "2026.08.09", h: "요코베이", hScore: 4, a: "히로카프", aScore: 1, win: "요코베이" },
-          { date: "2026.08.08", h: "요코베이", hScore: 2, a: "히로카프", aScore: 5, win: "히로카프" }
+          { date: "2026.08.27", h: "히로시마", a: "요코하마", hScore: 1, aScore: 6, win: "요코하마" },
+          { date: "2026.08.26", h: "히로시마", a: "요코하마", hScore: 3, aScore: 2, win: "히로시마" },
+          { date: "2026.08.09", h: "요코하마", a: "히로시마", hScore: 4, aScore: 1, win: "요코하마" },
+          { date: "2026.08.08", h: "요코하마", a: "히로시마", hScore: 2, aScore: 5, win: "히로시마" }
         ],
         recentHome: [
           { date: "09.04", result: "W", score: "4 : 2", opp: "요미우리" },
           { date: "09.03", result: "L", score: "1 : 3", opp: "요미우리" },
           { date: "08.28", result: "L", score: "2 : 5", opp: "야쿠르트" },
-          { date: "08.27", result: "L", score: "1 : 6", opp: "요코베이" },
-          { date: "08.26", result: "W", score: "3 : 2", opp: "요코베이" }
+          { date: "08.27", result: "L", score: "1 : 6", opp: "요코하마" },
+          { date: "08.26", result: "W", score: "3 : 2", opp: "요코하마" }
         ],
         recentAway: [
           { date: "09.06", result: "W", score: "5 : 3", opp: "주니치" },
           { date: "09.05", result: "W", score: "6 : 1", opp: "주니치" },
-          { date: "08.27", result: "W", score: "6 : 1", opp: "히로카프" },
-          { date: "08.26", result: "L", score: "2 : 3", opp: "히로카프" },
+          { date: "08.27", result: "W", score: "6 : 1", opp: "히로시마" },
+          { date: "08.26", result: "L", score: "2 : 3", opp: "히로시마" },
           { date: "08.20", result: "W", score: "4 : 0", opp: "한신" }
         ]
       }
@@ -871,12 +877,12 @@
       // 1. 헤더 HUD
       document.getElementById('hudMatchNo').innerText = data.no;
       document.getElementById('hudLeague').innerText = data.league;
-      document.getElementById('hudHomeName').innerText = data.home;
-      document.getElementById('hudAwayName').innerText = data.away;
+      document.getElementById('hudHomeName').innerHTML = `${data.home} <small style="font-size:0.8rem; font-weight:700; opacity:0.85;">(${data.homeCode})</small>`;
+      document.getElementById('hudAwayName').innerHTML = `${data.away} <small style="font-size:0.8rem; font-weight:700; opacity:0.85;">(${data.awayCode})</small>`;
       document.getElementById('hudSubInfo').innerHTML = `<i class="bi bi-calendar-event me-1"></i>${data.time} &nbsp;|&nbsp; <i class="bi bi-geo-alt me-1"></i>${data.stadium}`;
 
       // 2. 라인업 (1~9번 + 선발투수)
-      const renderLineupCol = (teamName, isHome, lineup) => {
+      const renderLineupCol = (teamName, teamCode, isHome, lineup) => {
         const borderClass = isHome ? 'home' : 'away';
         const badgeBg = isHome ? 'bg-danger' : 'bg-primary';
         const rows = lineup.map((p, idx) => {
@@ -896,7 +902,7 @@
         return `
           <div class="lineup-team-card ${borderClass}">
             <div class="lineup-team-header">
-              <span class="badge ${badgeBg} text-white">${isHome ? '홈' : '원정'} ${teamName}</span>
+              <span class="badge ${badgeBg} text-white">${isHome ? '홈' : '원정'} ${teamName} (${teamCode})</span>
               <span class="text-muted" style="font-size:0.68rem;">타율/ERA</span>
             </div>
             ${rows}
@@ -905,19 +911,19 @@
       };
 
       document.getElementById('lineupGridContainer').innerHTML = `
-        ${renderLineupCol(data.home, true, data.homeLineup)}
-        ${renderLineupCol(data.away, false, data.awayLineup)}
+        ${renderLineupCol(data.home, data.homeCode, true, data.homeLineup)}
+        ${renderLineupCol(data.away, data.awayCode, false, data.awayLineup)}
       `;
 
       // 3. 선발투수 분석
-      document.getElementById('pHomeTeamBadge').innerText = `홈 ${data.home}`;
+      document.getElementById('pHomeTeamBadge').innerText = `홈 ${data.home}(${data.homeCode})`;
       document.getElementById('pHomeName').innerText = data.pitchers.home.name;
       document.getElementById('pHomeHand').innerText = data.pitchers.home.hand;
       document.getElementById('pHomeHand').className = `hand-tag hand-${data.pitchers.home.hand} ms-1`;
       document.getElementById('pHomeRecord').innerText = data.pitchers.home.record;
       document.getElementById('pHomeSub').innerText = data.pitchers.home.sub;
 
-      document.getElementById('pAwayTeamBadge').innerText = `원정 ${data.away}`;
+      document.getElementById('pAwayTeamBadge').innerText = `원정 ${data.away}(${data.awayCode})`;
       document.getElementById('pAwayName').innerText = data.pitchers.away.name;
       document.getElementById('pAwayHand').innerText = data.pitchers.away.hand;
       document.getElementById('pAwayHand').className = `hand-tag hand-${data.pitchers.away.hand} ms-1`;
@@ -973,8 +979,8 @@
       document.getElementById('oddsDomesticHome').innerText = data.domesticOdds.home;
       document.getElementById('oddsDomesticAway').innerText = data.domesticOdds.away;
 
-      document.getElementById('betmanHomeLabel').innerText = `홈 승리 구매율: ${data.betman.homePct}`;
-      document.getElementById('betmanAwayLabel').innerText = `원정 승리 구매율: ${data.betman.awayPct}`;
+      document.getElementById('betmanHomeLabel').innerText = `홈 ${data.home}(${data.homeCode}) 승리 구매율: ${data.betman.homePct}`;
+      document.getElementById('betmanAwayLabel').innerText = `원정 ${data.away}(${data.awayCode}) 승리 구매율: ${data.betman.awayPct}`;
       document.getElementById('betmanHomeBar').style.width = data.betman.homePct;
       document.getElementById('betmanAwayBar').style.width = data.betman.awayPct;
       document.getElementById('payoutHome').innerText = data.betman.payoutHome;
@@ -1032,9 +1038,9 @@
       `;
 
       // 6. 상대 맞대결
-      document.getElementById('h2hSummaryText').innerHTML = `홈팀 <strong>${data.home}</strong> 기준 <strong>${data.h2h.filter(x => x.win === data.home).length}승 ${data.h2h.filter(x => x.win === data.away).length}패</strong>`;
+      document.getElementById('h2hSummaryText').innerHTML = `홈팀 <strong>${data.home} (${data.homeCode})</strong> 기준 <strong>${data.h2h.filter(x => x.win === data.home || x.win === data.homeCode).length}승 ${data.h2h.filter(x => x.win === data.away || x.win === data.awayCode).length}패</strong>`;
       document.getElementById('h2hListContainer').innerHTML = data.h2h.map(m => {
-        const isHomeWin = (m.win === data.home);
+        const isHomeWin = (m.win === data.home || m.win === data.homeCode);
         return `
           <div class="match-history-item">
             <div class="d-flex align-items-center gap-1.5" style="min-width:0;">
@@ -1067,9 +1073,9 @@
         `).join('');
       };
 
-      document.getElementById('recentTitleHome').innerHTML = `<i class="bi bi-clock-history text-danger"></i>${data.home} 최근 10경기`;
+      document.getElementById('recentTitleHome').innerHTML = `<i class="bi bi-clock-history text-danger"></i>${data.home} (${data.homeCode}) 최근 10경기`;
       document.getElementById('recentListHome').innerHTML = renderRecentList(data.recentHome);
-      document.getElementById('recentTitleAway').innerHTML = `<i class="bi bi-clock-history text-primary"></i>${data.away} 최근 10경기`;
+      document.getElementById('recentTitleAway').innerHTML = `<i class="bi bi-clock-history text-primary"></i>${data.away} (${data.awayCode}) 최근 10경기`;
       document.getElementById('recentListAway').innerHTML = renderRecentList(data.recentAway);
     }
 

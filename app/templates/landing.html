@@ -2489,6 +2489,33 @@
               </div>
             </div>
 
+            <!-- 🧪 신규 상세분석 테스트 배너 (애리조나 vs 텍사스 원클릭 팝업) -->
+            <div class="px-2 pt-2 pb-1" id="testMatchDetailBanner">
+              <div class="d-flex align-items-center justify-content-between p-2 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); border: 1.5px solid #3b82f6; color: #ffffff;">
+                <div class="d-flex align-items-center gap-2" style="min-width: 0;">
+                  <span class="badge bg-warning text-dark fw-black px-2 py-1" style="font-size:0.75rem;">
+                    <i class="bi bi-flask-fill me-1"></i>TEST
+                  </span>
+                  <div style="min-width:0;">
+                    <div class="fw-black text-truncate" style="font-size: 0.88rem; color:#f8fafc;">
+                      ⚾ 애리조나 vs 텍사스
+                    </div>
+                    <div class="text-truncate" style="font-size: 0.72rem; color:#93c5fd;">
+                      신규 상세분석 테스트 (라인업·선발10경기·순위)
+                    </div>
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                  <button type="button" class="btn btn-sm btn-warning text-dark fw-black px-2.5 py-1 shadow-sm" onclick="openTestMatchModal('MLB')" style="font-size: 0.76rem; border-radius: 6px; white-space: nowrap;">
+                    <i class="bi bi-window-stack me-1"></i>상세보기
+                  </button>
+                  <a href="/test" target="_blank" class="btn btn-sm btn-outline-light px-2 py-1" style="font-size: 0.72rem; border-radius: 6px;" title="새 창으로 열기">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+
             <!-- Body: Scrollable Match List -->
             <div class="dash-card-body p-2" id="predMatchList">
               <div class="d-flex flex-column gap-2" id="predMatchListSkeleton">
@@ -2910,6 +2937,29 @@
           <!-- Injected dynamically -->
         </div>
 
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Test Match Detail Viewer Modal (애리조나 vs 텍사스 신규 상세분석 팝업) -->
+  <div class="modal fade" id="testMatchViewerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" style="max-width: 540px;">
+      <div class="modal-content" style="border: 1px solid #cbd5e1; border-radius: 16px; overflow: hidden; background: #0f172a; box-shadow: 0 25px 60px rgba(0,0,0,0.35);">
+        <div class="modal-header d-flex justify-content-between align-items-center py-2 px-3" style="background: #0f172a; border-bottom: 1px solid rgba(255,255,255,0.1); color: #ffffff;">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-warning text-dark fw-bold">PRO ANALYTICS TEST</span>
+            <span class="fw-bold" style="font-size: 0.92rem;">⚾ 애리조나 vs 텍사스 상세분석</span>
+          </div>
+          <div class="d-flex align-items-center gap-1.5">
+            <a href="/test" target="_blank" class="btn btn-xs btn-outline-light py-0.5 px-2" style="font-size:0.75rem;" title="새 창으로 열기">
+              <i class="bi bi-box-arrow-up-right me-1"></i>새 창
+            </a>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+        </div>
+        <div class="modal-body p-0" style="background: #f1f5f9; height: 85vh;">
+          <iframe id="testMatchIframe" src="/test" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
       </div>
     </div>
   </div>
@@ -15339,11 +15389,27 @@ function updateSlimPanel(matchId, type, contentHtml) {
       bodyEl.innerHTML = renderColorCodedLastMatchContent(match, hShort, aShort, _lastMatchSelectedTeam);
     }
 
-    // 글로벌 바인딩
-    window.openLastMatchDetailModal = openLastMatchDetailModal;
-    window.switchLastMatchTeam = switchLastMatchTeam;
+    // 🧪 [신규 상세분석 테스트 팝업 열기 (애리조나 vs 텍사스)]
+    function openTestMatchModal(matchKey = 'MLB') {
+      const modalEl = document.getElementById('testMatchViewerModal');
+      const iframe = document.getElementById('testMatchIframe');
+      if (iframe) {
+        iframe.src = '/test';
+      }
+      if (modalEl) {
+        const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        bsModal.show();
+      } else {
+        window.open('/test', '_blank');
+      }
+    }
+    window.openTestMatchModal = openTestMatchModal;
 
     function openNextGenDetailModal(matchId, initialTab = 'roster') {
+      if (matchId === 'test' || matchId === 287 || String(matchId) === '287') {
+        openTestMatchModal('MLB');
+        return;
+      }
       let match = null;
       if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
         match = allMatches.find(m => m.id == matchId || String(m.id) === String(matchId));
