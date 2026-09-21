@@ -486,28 +486,28 @@
 
   <script>
     const ALL_22_MATCHES = [
-      { time: '08:20', league: 'MLB', home: '볼티모어', away: '밀워키', score: '0 : 3', res: '밀워키 3:0 승', key: 'BAL', highlight: '밀워키 7인 계투 합작 영봉승 · 콘트레라스 18호 솔로포 및 볼티모어 7안타 봉쇄' },
-      { time: '05:10', league: 'MLB', home: '애리조나', away: '뉴욕 양키스', score: '8 : 4', res: '애리조나 8:4 승', key: 'NYY', highlight: '5회말 아레나도 역전 만루홈런(27호) · 3회초 양키스 3홈런 폭발' },
-      { time: '03:35', league: 'MLB', home: '텍사스', away: '토론토', score: '2 : 7', res: '토론토 7:2 승', key: 'TEX', highlight: '토론토 7:2 완승 · 텍사스 타선 4안타 빈공 및 선발 조기 강판' },
-      { time: '14:00', league: 'NPB', home: '한신', away: '요코하마', score: '3 : 2', res: '한신 3:2 승', key: 'NPB', highlight: '한신 고시엔 3:2 진땀승 · 사이키 히로토 12승 역투 및 불펜 사수' },
-      { time: '05:10', league: 'MLB', home: 'LA 다저스', away: '샌프란시스코', score: '3 : 1', res: '다저스 3:1 승', highlight: '다저스 3:1 제압 · 선발 호투 및 불펜 무실점 봉쇄' },
-      { time: '14:00', league: 'NPB', home: '주니치', away: '히로시마', score: '10 : 0', res: '주니치 10:0 승', highlight: '주니치 10:0 대승 · 장단 14안타 폭발 및 히로시마 타선 영봉' },
-      { time: '14:00', league: 'NPB', home: '오릭스', away: '닛폰햄', score: '3 : 5', res: '닛폰햄 5:3 승', highlight: '닛폰햄 5:3 역전승 · 후반 8회 집중 3타점 쐐기타' },
-      { time: '18:30', league: '아시안게임', home: '한국', away: '대만', score: '5 : 0', res: '한국 5:0 승', highlight: '한국 5:0 대만 완파 · 완벽한 무실점 계투승 및 중심타선 폭발' },
-      { time: '18:30', league: '아시안게임', home: '중국', away: '일본', score: '3 : 11', res: '일본 11:3 승', highlight: '일본 11:3 콜드급 대승 · 타선 15안타 폭격' },
-      { time: '02:10', league: 'MLB', home: '뉴욕 메츠', away: '필라델피아', score: '2 : 7', res: '필라델피아 7:2 승', highlight: '필라델피아 7:2 승리 · 중심타선 집중타 및 선발 6이닝 1실점 호투' },
-      { time: '02:35', league: 'MLB', home: '피츠버그', away: '캔자스시티', score: '4 : 3', res: '피츠버그 4:3 승', highlight: '피츠버그 4:3 1점차 신승 · 8회말 천금 결승 희생플라이' },
-      { time: '02:40', league: 'MLB', home: '탬파베이', away: '보스턴', score: '5 : 1', res: '탬파베이 5:1 승', highlight: '탬파베이 5:1 완승 · 철벽 계투진 9K 무실점 릴레이' },
-      { time: '02:40', league: 'MLB', home: '클리블랜드', away: '애슬레틱스', score: '1 : 0', res: '클리블랜드 1:0 승', highlight: '클리블랜드 1:0 투수전 승리 · 팽팽한 1점차 영봉승' },
-      { time: '02:40', league: 'MLB', home: '신시내티', away: '시카고 컵스', score: '1 : 9', res: '시카고 컵스 9:1 승', highlight: '시카고 컵스 9:1 화력 폭발 대승 · 홈런 2방 포함 13안타' },
-      { time: '03:10', league: 'MLB', home: '휴스턴', away: '애틀랜타', score: '2 : 4', res: '애틀랜타 4:2 승', highlight: '애틀랜타 4:2 신승 · 7회 역전 2루타 및 불펜 3이닝 완벽 봉쇄' },
-      { time: '03:10', league: 'MLB', home: '시카고 화이트삭스', away: '디트로이트', score: '8 : 1', res: '화이트삭스 8:1 승', highlight: '화이트삭스 8:1 대승 · 타선 12안타 및 선발 7이닝 1실점 쾌투' },
-      { time: '03:15', league: 'MLB', home: '세인트루이스', away: '워싱턴', score: '5 : 3', res: '세인트루이스 5:3 승', highlight: '세인트루이스 5:3 역전승 · 6회 빅이닝 3득점 역전' },
-      { time: '04:10', league: 'MLB', home: '콜로라도', away: '시애틀', score: '1 : 2', res: '시애틀 2:1 승', highlight: '시애틀 2:1 팽팽한 투수전 끝 승리 · 마무리 1점차 세이브' },
-      { time: '05:07', league: 'MLB', home: 'LA 에인절스', away: '미네소타', score: '0 : 8', res: '미네소타 8:0 승', highlight: '미네소타 8:0 영봉승 · 선발 7이닝 무실점 10K 압도적 역투' },
-      { time: '05:10', league: 'MLB', home: '샌디에이고', away: '마이애미', score: '7 : 3', res: '샌디에이고 7:3 승', highlight: '샌디에이고 7:3 완승 · 중심타선 멀티히트 활약' },
-      { time: '13:00', league: 'NPB', home: '라쿠텐', away: '소프트뱅크', score: '0 : 0', res: '우천순연', highlight: '우천 순연 (경기 일정 재편성 예정)' },
-      { time: '18:00', league: 'NPB', home: '세이부', away: '지바롯데', score: '0 : 0', res: '우천순연', highlight: '우천 순연 (경기 일정 재편성 예정)' }
+      { time: '08:20', league: 'MLB', home: '볼티모어', away: '밀워키', homeScore: 0, awayScore: 3, res: '밀워키 3:0 승', key: 'BAL', highlight: '밀워키 7인 계투 합작 영봉승 · 콘트레라스 18호 솔로포 및 볼티모어 7안타 봉쇄' },
+      { time: '05:10', league: 'MLB', home: '애리조나', away: '뉴욕 양키스', homeScore: 8, awayScore: 4, res: '애리조나 8:4 승', key: 'NYY', highlight: '5회말 아레나도 역전 만루홈런(27호) · 3회초 양키스 3홈런 폭발' },
+      { time: '03:35', league: 'MLB', home: '텍사스', away: '토론토', homeScore: 2, awayScore: 7, res: '토론토 7:2 승', key: 'TEX', highlight: '토론토 7:2 완승 · 텍사스 타선 4안타 빈공 및 선발 조기 강판' },
+      { time: '14:00', league: 'NPB', home: '한신', away: '요코하마', homeScore: 3, awayScore: 2, res: '한신 3:2 승', key: 'NPB', highlight: '한신 고시엔 3:2 진땀승 · 사이키 히로토 12승 역투 및 불펜 사수' },
+      { time: '05:10', league: 'MLB', home: 'LA 다저스', away: '샌프란시스코', homeScore: 3, awayScore: 1, res: '다저스 3:1 승', highlight: '다저스 3:1 제압 · 선발 호투 및 불펜 무실점 봉쇄' },
+      { time: '14:00', league: 'NPB', home: '주니치', away: '히로시마', homeScore: 10, awayScore: 0, res: '주니치 10:0 승', highlight: '주니치 10:0 대승 · 장단 14안타 폭발 및 히로시마 타선 영봉' },
+      { time: '14:00', league: 'NPB', home: '닛폰햄', away: '오릭스', homeScore: 5, awayScore: 3, res: '닛폰햄 5:3 승', highlight: '닛폰햄 5:3 역전승 · 후반 8회 집중 3타점 쐐기타' },
+      { time: '18:30', league: '아시안게임', home: '한국', away: '대만', homeScore: 5, awayScore: 0, res: '한국 5:0 승', highlight: '한국 5:0 대만 완파 · 완벽한 무실점 계투승 및 중심타선 폭발' },
+      { time: '18:30', league: '아시안게임', home: '중국', away: '일본', homeScore: 3, awayScore: 11, res: '일본 11:3 승', highlight: '일본 11:3 콜드급 대승 · 타선 15안타 폭격' },
+      { time: '02:10', league: 'MLB', home: '뉴욕 메츠', away: '필라델피아', homeScore: 2, awayScore: 7, res: '필라델피아 7:2 승', highlight: '필라델피아 7:2 승리 · 중심타선 집중타 및 선발 6이닝 1실점 호투' },
+      { time: '02:35', league: 'MLB', home: '피츠버그', away: '캔자스시티', homeScore: 4, awayScore: 3, res: '피츠버그 4:3 승', highlight: '피츠버그 4:3 1점차 신승 · 8회말 천금 결승 희생플라이' },
+      { time: '02:40', league: 'MLB', home: '탬파베이', away: '보스턴', homeScore: 5, awayScore: 1, res: '탬파베이 5:1 승', highlight: '탬파베이 5:1 완승 · 철벽 계투진 9K 무실점 릴레이' },
+      { time: '02:40', league: 'MLB', home: '클리블랜드', away: '애슬레틱스', homeScore: 1, awayScore: 0, res: '클리블랜드 1:0 승', highlight: '클리블랜드 1:0 투수전 승리 · 팽팽한 1점차 영봉승' },
+      { time: '02:40', league: 'MLB', home: '신시내티', away: '시카고 컵스', homeScore: 1, awayScore: 9, res: '시카고 컵스 9:1 승', highlight: '시카고 컵스 9:1 화력 폭발 대승 · 홈런 2방 포함 13안타' },
+      { time: '03:10', league: 'MLB', home: '휴스턴', away: '애틀랜타', homeScore: 2, awayScore: 4, res: '애틀랜타 4:2 승', highlight: '애틀랜타 4:2 신승 · 7회 역전 2루타 및 불펜 3이닝 완벽 봉쇄' },
+      { time: '03:10', league: 'MLB', home: '시카고 화이트삭스', away: '디트로이트', homeScore: 8, awayScore: 1, res: '화이트삭스 8:1 승', highlight: '화이트삭스 8:1 대승 · 타선 12안타 및 선발 7이닝 1실점 쾌투' },
+      { time: '03:15', league: 'MLB', home: '세인트루이스', away: '워싱턴', homeScore: 5, awayScore: 3, res: '세인트루이스 5:3 승', highlight: '세인트루이스 5:3 역전승 · 6회 빅이닝 3득점 역전' },
+      { time: '04:10', league: 'MLB', home: '콜로라도', away: '시애틀', homeScore: 1, awayScore: 2, res: '시애틀 2:1 승', highlight: '시애틀 2:1 팽팽한 투수전 끝 승리 · 마무리 1점차 세이브' },
+      { time: '05:07', league: 'MLB', home: 'LA 에인절스', away: '미네소타', homeScore: 0, awayScore: 8, res: '미네소타 8:0 승', highlight: '미네소타 8:0 영봉승 · 선발 7이닝 무실점 10K 압도적 역투' },
+      { time: '05:10', league: 'MLB', home: '샌디에이고', away: '마이애미', homeScore: 7, awayScore: 3, res: '샌디에이고 7:3 승', highlight: '샌디에이고 7:3 완승 · 중심타선 멀티히트 활약' },
+      { time: '13:00', league: 'NPB', home: '라쿠텐', away: '소프트뱅크', homeScore: 0, awayScore: 0, res: '우천순연', highlight: '우천 순연 (경기 일정 재편성 예정)' },
+      { time: '18:00', league: 'NPB', home: '지바롯데', away: '세이부', homeScore: 0, awayScore: 0, res: '우천순연', highlight: '우천 순연 (경기 일정 재편성 예정)' }
     ];
 
     const MATCH_DATA = {
@@ -846,22 +846,25 @@
     function renderAll22Matches() {
       const container = document.getElementById('allMatchesContainer');
       if (!container) return;
-      container.innerHTML = ALL_22_MATCHES.map((m, idx) => `
-        <div class=\"all-match-row\" onclick=\"${m.key ? `switchTestMatch('${m.key}')` : ''}\" title=\"${m.key ? '클릭하여 상세 보기' : ''}\">
-          <div class=\"d-flex justify-content-between align-items-center mb-1\">
-            <div class=\"d-flex align-items-center gap-1.5\">
-              <span class=\"badge bg-secondary\" style=\"font-size:0.65rem;\">${m.league}</span>
-              <span class=\"text-muted\" style=\"font-size:0.72rem;\"><i class=\"bi bi-clock me-0.5\"></i>${m.time}</span>
-              <strong style=\"font-size:0.82rem; color:#0f172a;\">${m.away} <span class=\"text-danger\">${m.score}</span> ${m.home}</strong>
+      container.innerHTML = ALL_22_MATCHES.map((m, idx) => {
+        const isPostponed = (m.res === '우천순연');
+        const scoreDisplay = isPostponed ? '<span class="text-muted">취소</span>' : `<span class="text-danger fw-black">${m.homeScore} : ${m.awayScore}</span>`;
+        return `
+          <div class="all-match-row" onclick="${m.key ? `switchTestMatch('${m.key}')` : ''}" title="${m.key ? '클릭하여 상세 보기' : ''}">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <div class="d-flex align-items-center gap-1.5">
+                <span class="badge bg-secondary" style="font-size:0.65rem;">${m.league}</span>
+                <span class="text-muted" style="font-size:0.72rem;"><i class="bi bi-clock me-0.5"></i>${m.time}</span>
+                <strong style="font-size:0.84rem; color:#0f172a;">${m.home} ${scoreDisplay} ${m.away}</strong>
+              </div>
+              <span class="badge ${isPostponed ? 'bg-warning text-dark' : 'bg-primary text-white'}" style="font-size:0.65rem; font-weight:700;">${m.res}</span>
             </div>
-            <span class=\"badge ${m.score === '0 : 0' ? 'bg-warning text-dark' : 'bg-primary text-white'}\" style=\"font-size:0.65rem;\">${m.res}</span>
+            <div style="font-size:0.76rem; font-weight:600; color:#334155; margin-top:4px; line-height:1.4;">
+              ${m.highlight}
+            </div>
           </div>
-          <div class=\"all-match-highlight-badge\">
-            <span class=\"badge bg-dark text-white px-1.5 py-0.5\" style=\"font-size:0.62rem; flex-shrink:0;\">⚡ 승부처</span>
-            <span class=\"fw-bold text-truncate\" style=\"font-size:0.75rem; color:#1e293b;\">${m.highlight}</span>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function switchTestMatch(key) {
