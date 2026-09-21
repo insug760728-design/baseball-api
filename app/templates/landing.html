@@ -8571,13 +8571,15 @@ function getFullModalMatchList() {
           let venueText = g.home_away || ((g.is_home_venue !== undefined) ? (g.is_home_venue ? '홈' : '원정') : (gIdx % 2 === 0 ? '홈' : '원정'));
           if (venueText === '원') venueText = '원정';
           const rawDate = g.match_date || g.date || '';
-          const dateDisplay = rawDate.slice(5, 10).replace('-', '.');
+          const mmdd = (rawDate.length >= 10) ? rawDate.slice(5, 10).replace('-', '.') : (rawDate.slice(-5).replace('-', '.') || '09.21');
           const oppDisplay = (typeof formatTeamName === 'function') ? formatTeamName(g.opponent) : (g.opponent || '상대팀');
           const scoreDisplay = (g.team_score !== undefined && g.opp_score !== undefined) ? `${g.team_score} : ${g.opp_score}` : (g.score || '-');
 
           return `
             <tr style="height: 28px; background: ${gIdx % 2 === 0 ? '#ffffff' : '#f8fafc'}; font-size: 0.72rem;">
-              <td class="text-muted fw-bold text-center" style="white-space:nowrap; padding:3px 2px;">#${gIdx+1} ${dateDisplay}</td>
+              <td class="fw-bold text-dark text-center" style="white-space:nowrap; padding:3px 2px;">
+                <span class="text-secondary small">2026.</span><span>${mmdd}</span>${gIdx === 0 ? ' <span class="badge bg-danger ms-0.5" style="font-size:0.58rem;">직전</span>' : ''}
+              </td>
               <td class="text-center" style="white-space:nowrap; padding:3px 2px;"><span class="badge ${venueText === '홈' ? 'bg-light text-danger border border-danger-subtle' : 'bg-light text-primary border border-primary-subtle'}" style="font-size:0.62rem; padding:1px 3px;">${venueText}</span></td>
               <td class="fw-bold text-dark text-truncate text-center" style="padding:3px 2px;" title="${oppDisplay}">vs ${oppDisplay}</td>
               <td class="fw-black text-center" style="white-space:nowrap; font-family:monospace; font-size:0.76rem; padding:3px 2px;">${scoreDisplay}</td>
@@ -8616,10 +8618,10 @@ function getFullModalMatchList() {
               <table class="table table-sm text-center align-middle mb-0" style="width: 100%; font-size: 0.72rem; table-layout: fixed;">
                 <thead style="background: #f1f5f9; color: #334155; position:sticky; top:0; z-index:2;">
                   <tr style="height: 25px;">
-                    <th style="width: 20%; padding:3px 2px;">일자</th>
-                    <th style="width: 14%; padding:3px 2px;">구분</th>
-                    <th style="width: 28%; padding:3px 2px;">상대</th>
-                    <th style="width: 20%; padding:3px 2px;">스코어</th>
+                    <th style="width: 26%; padding:3px 2px;">2026 시즌 일자</th>
+                    <th style="width: 12%; padding:3px 2px;">구분</th>
+                    <th style="width: 26%; padding:3px 2px;">상대</th>
+                    <th style="width: 18%; padding:3px 2px;">스코어</th>
                     <th style="width: 18%; padding:3px 2px;">결과</th>
                   </tr>
                 </thead>
@@ -8686,12 +8688,14 @@ function getFullModalMatchList() {
           const resText = isWin ? `${hName} 승` : (isLoss ? `${aName} 승` : '무승부');
           const venueText = isHomeVenue ? '홈' : '원정';
           const rawDate = g.match_date || g.date || '';
-          const dateDisplay = rawDate.slice(5, 10).replace('-', '.');
+          const mmdd = (rawDate.length >= 10) ? rawDate.slice(5, 10).replace('-', '.') : (rawDate.slice(-5).replace('-', '.') || '09.13');
           const scoreDisplay = (!isNaN(hScore) && !isNaN(aScore)) ? `${hScore} : ${aScore}` : (g.score || '-');
 
           return `
             <tr style="height: 28px; background: ${gIdx % 2 === 0 ? '#ffffff' : '#f8fafc'}; font-size: 0.72rem;">
-              <td class="text-muted fw-bold" style="white-space:nowrap; padding:3px 2px;">#${gIdx+1} ${dateDisplay}</td>
+              <td class="fw-bold text-dark text-center" style="white-space:nowrap; padding:3px 2px;">
+                <span class="text-secondary small">2026.</span><span>${mmdd}</span>${gIdx === 0 ? ' <span class="badge bg-secondary ms-0.5" style="font-size:0.58rem;">직전</span>' : ''}
+              </td>
               <td style="white-space:nowrap; padding:3px 2px;"><span class="badge ${isHomeVenue ? 'bg-light text-danger border border-danger-subtle' : 'bg-light text-primary border border-primary-subtle'}" style="font-size:0.60rem;">${venueText}</span></td>
               <td class="fw-bold text-dark text-truncate" style="max-width:110px; white-space:nowrap; padding:3px 2px;">
                 <span class="${isHomeVenue ? 'text-danger fw-bold' : 'text-primary fw-bold'}">${hName}</span>
@@ -8723,10 +8727,10 @@ function getFullModalMatchList() {
               <table class="table table-sm text-center align-middle mb-0" style="width: 100%; font-size: 0.72rem; table-layout: fixed;">
                 <thead style="background: #f1f5f9; color: #1e293b; position:sticky; top:0; z-index:2;">
                   <tr style="height: 25px;">
-                    <th style="width: 20%; padding:3px 2px;">일자</th>
-                    <th style="width: 14%; padding:3px 2px;">구분</th>
-                    <th style="width: 28%; padding:3px 2px;">매치업</th>
-                    <th style="width: 20%; padding:3px 2px;">스코어</th>
+                    <th style="width: 26%; padding:3px 2px;">2026 시즌 일자</th>
+                    <th style="width: 12%; padding:3px 2px;">구분</th>
+                    <th style="width: 26%; padding:3px 2px;">매치업</th>
+                    <th style="width: 18%; padding:3px 2px;">스코어</th>
                     <th style="width: 18%; padding:3px 2px;">결과</th>
                   </tr>
                 </thead>
