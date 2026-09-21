@@ -408,6 +408,7 @@ def analytics_portal(request: Request):
 
 @app.get("/test", response_class=HTMLResponse, summary="TOKEON 매치 정밀 분석 테스트 뷰어")
 @app.get("/test-match", response_class=HTMLResponse, summary="TOKEON 매치 정밀 분석 테스트 뷰어")
+@app.get("/test-match-detail", response_class=HTMLResponse, summary="TOKEON 매치 정밀 분석 테스트 뷰어")
 def test_match_portal(request: Request):
     try:
         if os.path.exists(test_match_path):

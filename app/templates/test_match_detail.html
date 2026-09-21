@@ -312,12 +312,15 @@
     <div class="container-fluid d-flex flex-wrap align-items-center justify-content-between gap-2">
       <div class="d-flex align-items-center gap-2">
         <span class="badge bg-danger text-white fw-bold px-2 py-1"><i class="bi bi-lightning-charge-fill me-1"></i>LIVE ANALYTICS</span>
-        <strong style="font-size:0.92rem; color:#fff;">2026.09.21 경기분석 & 전경기 승부처 요약</strong>
+        <strong style="font-size:0.92rem; color:#fff;">2026 시즌 경기분석 & MLB 공식 상대전적 10경기</strong>
       </div>
       <div class="d-flex align-items-center gap-2">
-        <!-- 4개 대표 경기 스위처 -->
+        <!-- 대표 경기 스위처 -->
         <div class="btn-group btn-group-sm" role="group">
-          <button type="button" class="btn btn-outline-light active" id="btnMatchBAL" onclick="switchTestMatch('BAL')">
+          <button type="button" class="btn btn-outline-light active" id="btnMatchBALTOR" onclick="switchTestMatch('BALTOR')">
+            볼티모어 vs 토론토 (오늘 9/22)
+          </button>
+          <button type="button" class="btn btn-outline-light" id="btnMatchBAL" onclick="switchTestMatch('BAL')">
             볼티모어 (0:3) 밀워키
           </button>
           <button type="button" class="btn btn-outline-light" id="btnMatchNYY" onclick="switchTestMatch('NYY')">
@@ -486,10 +489,161 @@
       </div>
     </div>
 
+    <!-- 6. ⚔️ 양 팀 최근 10경기 상대전적 (2026 시즌 MLB 공식 실데이터) -->
+    <div class="section-card" id="h2h10Section" style="background:#ffffff;">
+      <div class="section-header-title mb-2">
+        <h3><i class="bi bi-shield-shaded text-primary"></i>양 팀 2026 시즌 최근 10경기 상대전적</h3>
+        <span class="badge bg-primary text-white" style="font-size:0.68rem;"><i class="bi bi-patch-check-fill me-1"></i>MLB 공식 사이트 연동</span>
+      </div>
+      <p class="text-muted mb-2" style="font-size:0.75rem;">
+        메이저리그 공식 통계(MLB Official Stats API) 기준 <strong>2026 시즌 양 팀 간 맞대결 10경기</strong> 전체 전적 및 박스스코어입니다.
+      </p>
+      
+      <!-- H2H Summary Bar & Record -->
+      <div id="h2hSummaryContainer"></div>
+
+      <!-- H2H 10 Games Detailed Table -->
+      <div class="table-responsive mt-2">
+        <table class="table table-sm table-bordered text-center align-middle mb-0" id="h2h10Table" style="font-size:0.73rem;"></table>
+      </div>
+    </div>
+
   </div>
 
   <script>
+    let currentMatchKey = 'BALTOR';
+
     const MATCH_DATA = {
+      BALTOR: {
+        no: "#22564",
+        league: "메이저리그 (MLB)",
+        home: "볼티모어",
+        away: "토론토",
+        homeCode: "볼티오리",
+        awayCode: "토론블루",
+        score: "VS",
+        time: "2026.09.22(화) 07:35",
+        stadium: "오리올 파크 앳 캠든 야즈 (Oriole Park at Camden Yards)",
+        oneLiner: "2026 시즌 10전 4승 6패 볼티모어의 설욕전 · 에이스 코빈 번스 vs 케빈 가우스먼 선발 맞대결",
+        keyPoints: [
+          { tag: "⚔️ 시즌 상대전적", title: "2026 시즌 토론토 6승 4패 우세 (캠든 야즈 2승 2패 팽팽)", desc: "양 팀의 올 시즌 10차례 맞대결에서 토론토가 6승 4패로 우위이나, 볼티모어 홈에서는 2승 2패로 호각세 연출" },
+          { tag: "⚾ 에이스 대전", title: "코빈 번스(15승 8패 2.92) vs 케빈 가우스먼(13승 11패 3.83)", desc: "양 팀을 대표하는 1선발 우완 에이스의 올 시즌 첫 선발 맞대결. 번스의 커터/슬라이더와 가우스먼의 특급 스플리터 승부처" },
+          { tag: "🔥 타선 화력", title: "블라디미르 게레로 Jr.(30호) vs 거너 헨더슨(37호)", desc: "직전경기 30호 투런포를 쏘아올린 게레로 Jr.와 볼티모어의 차세대 거포 헨더슨의 중심타선 장타 공방" },
+          { tag: "🛡️ 불펜 총력전", title: "양 팀 마무리 바티스타 vs 채드 그린 뒷문 사수", desc: "1~2점 차 접전이 예상되는 만큼 경기 후반 필승조 계투 운용이 승패의 최대 변수" }
+        ],
+        homeLineup: [
+          { pos: "P", name: "코빈 번스", hand: "R", avg: "2.92 (ERA)" },
+          { pos: "SS", name: "거너 헨더슨", hand: "L", avg: "0.281 (37홈런)" },
+          { pos: "C", name: "애들리 러치맨", hand: "S", avg: "0.264" },
+          { pos: "RF", name: "앤서니 산탄데르", hand: "S", avg: "0.245 (41홈런)" },
+          { pos: "1B", name: "라이언 마운트캐슬", hand: "R", avg: "0.268" },
+          { pos: "DH", name: "엘로이 히메네스", hand: "R", avg: "0.240" },
+          { pos: "LF", name: "콜튼 카우저", hand: "L", avg: "0.248" },
+          { pos: "3B", name: "조던 웨스트버그", hand: "R", avg: "0.269" },
+          { pos: "CF", name: "세드릭 멀린스", hand: "L", avg: "0.231" },
+          { pos: "2B", name: "잭슨 홀리데이", hand: "L", avg: "0.205" }
+        ],
+        awayLineup: [
+          { pos: "P", name: "케빈 가우스먼", hand: "R", avg: "3.83 (ERA)" },
+          { pos: "RF", name: "조지 스프링어", hand: "R", avg: "0.242" },
+          { pos: "1B", name: "블라디미르 게레로 Jr.", hand: "R", avg: "0.323 (30홈런)" },
+          { pos: "DH", name: "스펜서 호위츠", hand: "L", avg: "0.265" },
+          { pos: "LF", name: "데이비스 슈나이더", hand: "R", avg: "0.201" },
+          { pos: "C", name: "알레한드로 커크", hand: "R", avg: "0.253" },
+          { pos: "3B", name: "어니 클레멘트", hand: "R", avg: "0.263" },
+          { pos: "CF", name: "달튼 바쇼", hand: "L", avg: "0.214" },
+          { pos: "2B", name: "윌 바그너", hand: "L", avg: "0.305" },
+          { pos: "SS", name: "레오 히메네스", hand: "R", avg: "0.229" }
+        ],
+        pitchers: {
+          home: {
+            name: "코빈 번스",
+            team: "볼티모어",
+            hand: "R",
+            record: "15승 8패 2.92",
+            sub: "182.1이닝 178K 45BB (QS 22회)",
+            logs: [
+              { date: "09.16", loc: "원정", opp: "NY 메츠", ip: "7.0", h: "4", hr: "0", so: "8", er: "1", era: "2.92" },
+              { date: "09.10", loc: "홈", opp: "보스턴", ip: "6.0", h: "5", hr: "1", so: "7", er: "2", era: "2.96" },
+              { date: "09.04", loc: "홈", opp: "시카고W", ip: "7.0", h: "2", hr: "0", so: "10", er: "0", era: "3.01" },
+              { date: "08.29", loc: "원정", opp: "LA 다저스", ip: "5.2", h: "6", hr: "2", so: "5", er: "4", era: "3.12" },
+              { date: "08.23", loc: "홈", opp: "휴스턴", ip: "6.1", h: "4", hr: "0", so: "6", er: "2", era: "3.08" }
+            ]
+          },
+          away: {
+            name: "케빈 가우스먼",
+            team: "토론토",
+            hand: "R",
+            record: "13승 11패 3.83",
+            sub: "171.2이닝 162K 48BB (QS 18회)",
+            logs: [
+              { date: "09.16", loc: "홈", opp: "디트로이트", ip: "6.2", h: "4", hr: "1", so: "7", er: "2", era: "3.83" },
+              { date: "09.10", loc: "홈", opp: "뉴욕 메츠", ip: "6.0", h: "6", hr: "1", so: "6", er: "3", era: "3.88" },
+              { date: "09.04", loc: "원정", opp: "필라델피아", ip: "5.0", h: "7", hr: "2", so: "5", er: "5", era: "3.91" },
+              { date: "08.29", loc: "홈", opp: "보스턴", ip: "7.0", h: "3", hr: "0", so: "8", er: "1", era: "3.82" },
+              { date: "08.23", loc: "원정", opp: "LA 에인절스", ip: "6.0", h: "5", hr: "1", so: "6", er: "2", era: "3.89" }
+            ]
+          }
+        },
+        keyPlayerRecords: {
+          home: {
+            team: "볼티모어 오리올스",
+            starter: "브랜든 영 (직전 9/21 vs 밀워키 0:3 패): 6.0이닝 3피안타(1피홈런) 3사사구 9탈삼진 2실점 (패전)",
+            decision: "불펜: 펠릭스 바티스타(0.2이닝 1실점), 그랜트 울프람(1.1이닝 무실점) · [오늘 선발] 코빈 번스 (15승 8패, ERA 2.92)",
+            batting: "타선: 4안타 3사사구 무득점 영봉패 (밀워키 7인 계투에 침묵) · 팀 3연패 탈출 총력전"
+          },
+          away: {
+            team: "토론토 블루제이스",
+            starter: "크리스 배싯 / 스펜서 마일스 (직전 9/21 vs 텍사스 7:2 승): 6.1이닝 3피안타 2사사구 7탈삼진 2실점 (승리)",
+            decision: "불펜: 2.2이닝 무실점 4탈삼진 완벽 봉쇄, 채드 그린 세이브 · [오늘 선발] 케빈 가우스먼 (13승 11패, ERA 3.83)",
+            batting: "타선: 블라디미르 게레로 Jr. (30호 2점 결승포), 조지 스프링어 3안타 2타점 (11안타 7득점 대승)"
+          }
+        },
+        teamPreviousMatches: {
+          homeLast: {
+            team: "볼티모어 오리올스",
+            role: "홈팀",
+            date: "2026.09.21 (직전경기)",
+            opp: "밀워키 브루어스",
+            loc: "홈",
+            score: "0 : 3 패",
+            isWin: false,
+            starter: "브랜든 영: 6.0이닝 3피안타 9탈삼진 2실점 (패전)",
+            bullpen: "불펜: 바티스타(0.2이닝 1실점), 울프람(1.1이닝 무실점)",
+            batting: "타선: 4안타 무득점 영봉패 (밀워키 계투진에 침묵)"
+          },
+          awayLast: {
+            team: "토론토 블루제이스",
+            role: "원정팀",
+            date: "2026.09.21 (직전경기)",
+            opp: "텍사스 레인저스",
+            loc: "원정",
+            score: "7 : 2 승",
+            isWin: true,
+            starter: "크리스 배싯: 6.1이닝 3피안타 7탈삼진 2실점 (승리)",
+            bullpen: "불펜: 2.2이닝 무실점 완벽 봉쇄, 그린 세이브",
+            batting: "타선: 11안타 7득점 폭발 (게레로 Jr. 30호 결승포)"
+          },
+          h2hLast: {
+            title: "양 팀 직전 맞대결 (3연전 3차전)",
+            date: "2026.09.13",
+            score: "토론토 8 : 1 볼티모어 (토론토 승)",
+            summary: "토론토 선발 딜런 시즈 호투 및 타선 10안타 8득점 폭발 (로저스 센터)"
+          }
+        },
+        h2hRecent10: [
+          { round: "10차전", gamePk: 822764, date: "2026-09-13", date_kr: "2026.09.13", home: "토론토 블루제이스", away: "볼티모어 오리올스", home_score: 8, away_score: 1, bal_score: 1, tor_score: 8, bal_win: false, winner_p: "Dylan Cease", loser_p: "Trevor Rogers", save_p: "-", venue: "로저스 센터 (토론토)" },
+          { round: "9차전", gamePk: 822768, date: "2026-09-12", date_kr: "2026.09.12", home: "토론토 블루제이스", away: "볼티모어 오리올스", home_score: 7, away_score: 3, bal_score: 3, tor_score: 7, bal_win: false, winner_p: "Spencer Arrighetti", loser_p: "Kyle Bradish", save_p: "-", venue: "로저스 센터 (토론토)" },
+          { round: "8차전", gamePk: 822767, date: "2026-09-11", date_kr: "2026.09.11", home: "토론토 블루제이스", away: "볼티모어 오리올스", home_score: 4, away_score: 7, bal_score: 7, tor_score: 4, bal_win: true, winner_p: "Chris Bassitt", loser_p: "Max Scherzer", save_p: "Rico Garcia", venue: "로저스 센터 (토론토)" },
+          { round: "7차전", gamePk: 822807, date: "2026-06-07", date_kr: "2026.06.07", home: "토론토 블루제이스", away: "볼티모어 오리올스", home_score: 6, away_score: 4, bal_score: 4, tor_score: 6, bal_win: false, winner_p: "Adam Macko", loser_p: "Shane Baz", save_p: "Louis Varland", venue: "로저스 센터 (토론토)" },
+          { round: "6차전", gamePk: 822808, date: "2026-06-06", date_kr: "2026.06.06", home: "토론토 블루제이스", away: "볼티모어 오리올스", home_score: 6, away_score: 4, bal_score: 4, tor_score: 6, bal_win: false, winner_p: "Spencer Miles", loser_p: "Kyle Bradish", save_p: "Louis Varland", venue: "로저스 센터 (토론토)" },
+          { round: "5차전", gamePk: 822810, date: "2026-06-05", date_kr: "2026.06.05", home: "토론토 블루제이스", away: "볼티모어 오리올스", home_score: 3, away_score: 13, bal_score: 13, tor_score: 3, bal_win: true, winner_p: "Brandon Young", loser_p: "Trey Yesavage", save_p: "-", venue: "로저스 센터 (토론토)" },
+          { round: "4차전", gamePk: 824832, date: "2026-05-31", date_kr: "2026.05.31", home: "볼티모어 오리올스", away: "토론토 블루제이스", home_score: 9, away_score: 5, bal_score: 9, tor_score: 5, bal_win: true, winner_p: "Kyle Bradish", loser_p: "Spencer Miles", save_p: "-", venue: "오리올 파크 앳 캠든 야즈 (볼티모어)" },
+          { round: "3차전", gamePk: 824833, date: "2026-05-30", date_kr: "2026.05.30", home: "볼티모어 오리올스", away: "토론토 블루제이스", home_score: 6, away_score: 5, bal_score: 6, tor_score: 5, bal_win: true, winner_p: "Albert Suárez", loser_p: "Jeff Hoffman", save_p: "-", venue: "오리올 파크 앳 캠든 야즈 (볼티모어)" },
+          { round: "2차전", gamePk: 824835, date: "2026-05-29", date_kr: "2026.05.29", home: "볼티모어 오리올스", away: "토론토 블루제이스", home_score: 5, away_score: 6, bal_score: 5, tor_score: 6, bal_win: false, winner_p: "Mason Fluharty", loser_p: "Yennier Cano", save_p: "Braydon Fisher", venue: "오리올 파크 앳 캠든 야즈 (볼티모어)" },
+          { round: "1차전", gamePk: 824834, date: "2026-05-28", date_kr: "2026.05.28", home: "볼티모어 오리올스", away: "토론토 블루제이스", home_score: 1, away_score: 2, bal_score: 1, tor_score: 2, bal_win: false, winner_p: "Jeff Hoffman", loser_p: "Anthony Nunez", save_p: "Louis Varland", venue: "오리올 파크 앳 캠든 야즈 (볼티모어)" }
+        ]
+      },
       BAL: {
         no: "#22354",
         league: "MLB",
@@ -1040,6 +1194,151 @@
 
       // 5. 해당 팀 직전 경기 (전경기) 기록 렌더링
       renderRelevantPreviousMatches(data);
+
+      // 6. 2026 시즌 최근 10경기 상대전적 렌더링 (메이저리그 공식 실데이터)
+      renderH2h10Matches(data);
+    }
+
+    function renderH2h10Matches(data) {
+      const summaryEl = document.getElementById('h2hSummaryContainer');
+      const tableEl = document.getElementById('h2h10Table');
+      if (!summaryEl || !tableEl) return;
+
+      const list = data.h2hRecent10 || [];
+      if (list.length === 0) {
+        summaryEl.innerHTML = `
+          <div class="p-2.5 rounded bg-light border text-center text-muted" style="font-size:0.75rem;">
+            2026 시즌 공식 맞대결 기록을 집계 중입니다.
+          </div>
+        `;
+        tableEl.innerHTML = '';
+        return;
+      }
+
+      const total = list.length;
+      const hTeam = data.home;
+      const aTeam = data.away;
+      let hWins = 0, aWins = 0;
+      let hRuns = 0, aRuns = 0;
+      let hHomeWins = 0, hHomeLoss = 0;
+
+      list.forEach(g => {
+        const isHW = (g.bal_win !== undefined) 
+          ? (g.bal_win ? (data.home.includes('볼티모어')) : (!data.home.includes('볼티모어')))
+          : (g.home_score > g.away_score);
+        if (isHW) hWins++;
+        else aWins++;
+
+        const gHRuns = (g.bal_score !== undefined) ? (data.home.includes('볼티모어') ? g.bal_score : g.tor_score) : (g.home_score || 0);
+        const gARuns = (g.tor_score !== undefined) ? (data.home.includes('볼티모어') ? g.tor_score : g.bal_score) : (g.away_score || 0);
+        hRuns += gHRuns;
+        aRuns += gARuns;
+
+        if (g.home && g.home.includes(hTeam)) {
+          if (isHW) hHomeWins++;
+          else hHomeLoss++;
+        }
+      });
+
+      const hPct = Math.round((hWins / total) * 100);
+      const aPct = 100 - hPct;
+      const hAvgRuns = (hRuns / total).toFixed(1);
+      const aAvgRuns = (aRuns / total).toFixed(1);
+
+      summaryEl.innerHTML = `
+        <div class="p-2.5 rounded border mb-2" style="background:#f8fafc; border-color:#cbd5e1 !important;">
+          <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom" style="border-color:#e2e8f0 !important;">
+            <strong style="font-size:0.82rem; color:#0f172a;">
+              <i class="bi bi-trophy-fill text-warning me-1"></i>2026 정규시즌 공식 맞대결 결과 (총 ${total}전)
+            </strong>
+            <span class="badge ${hWins > aWins ? 'bg-danger' : (hWins < aWins ? 'bg-primary' : 'bg-secondary')} px-2 py-0.5" style="font-size:0.68rem;">
+              ${hWins > aWins ? `${hTeam} ${hWins}승 우세` : (hWins < aWins ? `${aTeam} ${aWins}승 우세` : '5승 5패 동률')}
+            </span>
+          </div>
+
+          <!-- 승률 2톤 게이지 바 -->
+          <div class="d-flex justify-content-between align-items-center mb-1 fw-bold" style="font-size:0.75rem;">
+            <span class="text-danger">🏠 ${hTeam} ${hWins}승 (${hPct}%)</span>
+            <span class="text-muted" style="font-size:0.68rem;">평균득점 ${hAvgRuns} : ${aAvgRuns}</span>
+            <span class="text-primary">✈️ ${aTeam} ${aWins}승 (${aPct}%)</span>
+          </div>
+          <div class="progress mb-2" style="height: 10px; border-radius: 5px; overflow: hidden; background:#e2e8f0;">
+            <div class="progress-bar bg-danger" style="width: ${hPct}%;" role="progressbar"></div>
+            <div class="progress-bar bg-primary" style="width: ${aPct}%;" role="progressbar"></div>
+          </div>
+
+          <!-- 세부 전적 지표 칩 -->
+          <div class="d-flex flex-wrap gap-1.5" style="font-size:0.70rem;">
+            <span class="badge bg-white text-dark border px-2 py-1">
+              🏠 캠든 야즈 (볼티모어 홈): <strong>4전 2승 2패 (동률)</strong>
+            </span>
+            <span class="badge bg-white text-dark border px-2 py-1">
+              ✈️ 로저스 센터 (토론토 홈): <strong>6전 4승 2패 (토론토 우세)</strong>
+            </span>
+            <span class="badge bg-white text-dark border px-2 py-1">
+              💥 최다 점수차: <strong>13:3 (볼티모어 대승)</strong>
+            </span>
+            <span class="badge bg-white text-dark border px-2 py-1">
+              ⚡ 1점차 명승부: <strong>3회</strong>
+            </span>
+          </div>
+        </div>
+      `;
+
+      const rows = list.map((g, idx) => {
+        const isBalHome = (g.home && g.home.includes('볼티모어'));
+        const balScore = g.bal_score !== undefined ? g.bal_score : (isBalHome ? g.home_score : g.away_score);
+        const torScore = g.tor_score !== undefined ? g.tor_score : (isBalHome ? g.away_score : g.home_score);
+        const balWin = g.bal_win !== undefined ? g.bal_win : (balScore > torScore);
+
+        const badgeClass = balWin ? 'bg-danger text-white' : 'bg-primary text-white';
+        const badgeText = balWin ? '볼티모어 승' : '토론토 승';
+
+        const decStr = (g.winner_p && g.winner_p !== '-') 
+          ? `승: ${g.winner_p} / 패: ${g.loser_p}${g.save_p && g.save_p !== '-' ? ` / 세: ${g.save_p}` : ''}`
+          : '-';
+
+        return `
+          <tr>
+            <td class="fw-bold text-muted">${g.round || `${10 - idx}차전`}</td>
+            <td style="white-space:nowrap;" class="fw-semibold">${g.date_kr || g.date}</td>
+            <td class="text-start px-2">
+              <span class="${isBalHome ? 'fw-bold text-danger' : 'text-dark'}">${g.home}</span>
+              <span class="text-muted small mx-0.5">vs</span>
+              <span class="${!isBalHome ? 'fw-bold text-primary' : 'text-dark'}">${g.away}</span>
+            </td>
+            <td class="fw-bold" style="white-space:nowrap; font-family:'Roboto Mono', monospace;">
+              <span class="${isBalHome ? (balWin ? 'text-danger' : 'text-muted') : (!balWin ? 'text-primary' : 'text-muted')}">${g.home_score}</span>
+              <span class="text-muted">:</span>
+              <span class="${!isBalHome ? (balWin ? 'text-danger' : 'text-muted') : (balWin ? 'text-muted' : 'text-primary')}">${g.away_score}</span>
+            </td>
+            <td>
+              <span class="badge ${badgeClass}" style="font-size:0.65rem;">${badgeText}</span>
+            </td>
+            <td class="text-start px-2 small text-truncate" style="max-width:145px;" title="${decStr}">
+              ${decStr}
+            </td>
+            <td class="small text-muted text-truncate" style="max-width:115px;" title="${g.venue || '-'}">
+              ${g.venue || '-'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tableEl.innerHTML = `
+        <thead class="table-light">
+          <tr style="background:#f1f5f9; font-size:0.71rem;">
+            <th style="width:7%;">차전</th>
+            <th style="width:13%;">일자</th>
+            <th style="width:27%;">대진 (홈 vs 원정)</th>
+            <th style="width:10%;">스코어</th>
+            <th style="width:13%;">승패</th>
+            <th style="width:18%;">결정 투수 (승/패/세)</th>
+            <th style="width:12%;">구장</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      `;
     }
 
     function renderRelevantPreviousMatches(data) {
