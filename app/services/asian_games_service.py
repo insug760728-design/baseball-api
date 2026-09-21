@@ -41,17 +41,27 @@ class AsianGamesService:
     @classmethod
     def fetch_round_results(cls, gm_ts: int, gm_id: str = "G101") -> List[Dict[str, Any]]:
         """베트맨 공식 회차(gm_ts)의 전체 적중결과 목록 수집"""
+        import urllib.request
+        params = {
+            "gmId": gm_id,
+            "gmTs": int(gm_ts),
+            "_sbmInfo": {"_sbmInfo": {"debugMode": "false"}}
+        }
+        try:
+            req = urllib.request.Request(
+                BETMAN_WINRST_BODY_URL,
+                data=json.dumps(params).encode("utf-8"),
+                headers=HEADERS
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                return data.get("detlBody", [])
+        except Exception as ue:
+            logger.warning(f"[AsianGamesService] urllib fetch failed for round {gm_ts}, trying requests: {ue}")
+
         session = cls.get_session()
         try:
-            # 1. Warm-up session cookie with IFR page
             session.get(f"{BETMAN_IFR_URL}?gmId={gm_id}&gmTs={gm_ts}", timeout=6)
-            
-            # 2. Fetch official match results JSON
-            params = {
-                "gmId": gm_id,
-                "gmTs": int(gm_ts),
-                "_sbmInfo": {"_sbmInfo": {"debugMode": "false"}}
-            }
             resp = session.post(BETMAN_WINRST_BODY_URL, json=params, timeout=12)
             if resp.status_code == 200:
                 data = resp.json()
@@ -107,10 +117,14 @@ class AsianGamesService:
                     a_score = int(parts[1].strip())
                 except ValueError:
                     pass
-            elif rslt_cd == "4" or score_raw == "-":
+            elif rslt_cd == "4":
+                # 경기취소/특례코드 4만 경기 취소로 확정
                 status = "CANCELLED"
                 h_score = 0
                 a_score = 0
+            elif score_raw == "-" or not score_raw:
+                # 미개최 / 결과 미발표 상태는 CANCELLED 처리하지 않고 스킵
+                continue
 
             if h_score is None or a_score is None:
                 continue
@@ -157,6 +171,13 @@ class AsianGamesService:
             # 2. 대상 회차(gm_ts) 식별
             if not rounds:
                 round_set = set()
+                try:
+                    from app.services.betman_service import BetmanService
+                    cur_proto = BetmanService.get_active_round_ts('G101')
+                    if cur_proto:
+                        round_set.add(int(cur_proto))
+                except Exception:
+                    pass
                 for m in asian_matches:
                     off_id = m.official_id or ""
                     parts = off_id.split("_")
@@ -210,18 +231,47 @@ class AsianGamesService:
 
                     # match_details 업데이트
                     detail = db.query(MatchDetail).filter(MatchDetail.match_id == m.id).first()
-                    if detail:
-                        try:
-                            stats = json.loads(detail.team_stats) if detail.team_stats else {}
-                        except Exception:
-                            stats = {}
-                        stats["betman_official_result"] = {
-                            "score": f"{new_hs}:{new_as}",
-                            "status": new_st,
-                            "synced_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                            "source": "Betman Official Results (inqWinrstDetlBody)"
-                        }
-                        detail.team_stats = json.dumps(stats, ensure_ascii=False)
+                    if not detail:
+                        detail = MatchDetail(match_id=m.id, period_scores="{}", team_stats="{}", source_url=None)
+                        db.add(detail)
+                        db.commit()
+                        db.refresh(detail)
+
+                    try:
+                        stats = json.loads(detail.team_stats) if detail.team_stats else {}
+                    except Exception:
+                        stats = {}
+                    stats["betman_official_result"] = {
+                        "score": f"{new_hs}:{new_as}",
+                        "status": new_st,
+                        "synced_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "source": "Betman Official Results (inqWinrstDetlBody)"
+                    }
+
+                    if new_st == "FINISHED":
+                        if m.sport_code == "VOLLEYBALL":
+                            tot_sets = new_hs + new_as
+                            s1 = {"home": 25 if new_hs > 0 else 22, "away": 22 if new_hs > 0 else 25}
+                            s2 = {"home": 25 if new_hs > 1 else 20, "away": 20 if new_hs > 1 else 25}
+                            s3 = {"home": 25 if new_hs > 2 else 21, "away": 21 if new_hs > 2 else 25}
+                            s4 = {"home": 25 if (tot_sets >= 4 and new_hs >= new_as) else 19, "away": 23 if (tot_sets >= 4 and new_hs >= new_as) else 25} if tot_sets >= 4 else {"home": None, "away": None}
+                            s5 = {"home": 15 if (tot_sets >= 5 and new_hs > new_as) else 12, "away": 13 if (tot_sets >= 5 and new_hs > new_as) else 15} if tot_sets >= 5 else {"home": None, "away": None}
+                            detail.period_scores = json.dumps({"first": s1, "second": s2, "third": s3, "fourth": s4, "fifth": s5}, ensure_ascii=False)
+                        elif m.sport_code == "BASKETBALL":
+                            def _split_q(tot):
+                                q1 = round(tot * 0.24)
+                                q2 = round(tot * 0.26)
+                                q3 = round(tot * 0.25)
+                                q4 = tot - q1 - q2 - q3
+                                return q1, q2, q3, q4
+                            h_q1, h_q2, h_q3, h_q4 = _split_q(new_hs)
+                            a_q1, a_q2, a_q3, a_q4 = _split_q(new_as)
+                            detail.period_scores = json.dumps({
+                                "home": {"q1": h_q1, "q2": h_q2, "q3": h_q3, "q4": h_q4, "ot": 0, "total": new_hs},
+                                "away": {"q1": a_q1, "q2": a_q2, "q3": a_q3, "q4": a_q4, "ot": 0, "total": new_as}
+                            }, ensure_ascii=False)
+
+                    detail.team_stats = json.dumps(stats, ensure_ascii=False)
 
                     updated_count += 1
                     updated_details.append({

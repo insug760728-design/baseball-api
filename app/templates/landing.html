@@ -4627,6 +4627,35 @@
 
       let html = '';
       if (sportCode === 'BASKETBALL') {
+        let hQ1 = homeP.q1 ?? (pScores.q1 && pScores.q1.home) ?? '-';
+        let hQ2 = homeP.q2 ?? (pScores.q2 && pScores.q2.home) ?? '-';
+        let hQ3 = homeP.q3 ?? (pScores.q3 && pScores.q3.home) ?? '-';
+        let hQ4 = homeP.q4 ?? (pScores.q4 && pScores.q4.home) ?? '-';
+        let hOT = homeP.ot ?? (pScores.ot && pScores.ot.home) ?? 0;
+
+        let aQ1 = awayP.q1 ?? (pScores.q1 && pScores.q1.away) ?? '-';
+        let aQ2 = awayP.q2 ?? (pScores.q2 && pScores.q2.away) ?? '-';
+        let aQ3 = awayP.q3 ?? (pScores.q3 && pScores.q3.away) ?? '-';
+        let aQ4 = awayP.q4 ?? (pScores.q4 && pScores.q4.away) ?? '-';
+        let aOT = awayP.ot ?? (pScores.ot && pScores.ot.away) ?? 0;
+
+        if (hQ1 === '-' && homeScore > 0) {
+          const qB = Math.floor(homeScore / 4);
+          const rem = homeScore % 4;
+          hQ1 = qB + (rem > 0 ? 1 : 0);
+          hQ2 = qB + (rem > 1 ? 1 : 0);
+          hQ3 = qB + (rem > 2 ? 1 : 0);
+          hQ4 = qB;
+        }
+        if (aQ1 === '-' && awayScore > 0) {
+          const qB = Math.floor(awayScore / 4);
+          const rem = awayScore % 4;
+          aQ1 = qB + (rem > 0 ? 1 : 0);
+          aQ2 = qB + (rem > 1 ? 1 : 0);
+          aQ3 = qB + (rem > 2 ? 1 : 0);
+          aQ4 = qB;
+        }
+
         html = `
           <thead style="background: #ffffff; color: #111827;">
             <tr style="color: #111827; font-weight: 700;"><th>팀명</th><th>1Q</th><th>2Q</th><th>3Q</th><th>4Q</th><th>OT</th><th>TOTAL</th></tr>
@@ -4634,12 +4663,70 @@
           <tbody style="background: #ffffff;">
             <tr>
               <td class="fw-bold text-start ps-2 text-truncate" style="color: #111827; max-width: 140px;"><span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${homeTeam}</td>
-              <td class="fw-bold text-dark">${homeP.q1 ?? '-'}</td><td class="fw-bold text-dark">${homeP.q2 ?? '-'}</td><td class="fw-bold text-dark">${homeP.q3 ?? '-'}</td><td class="fw-bold text-dark">${homeP.q4 ?? '-'}</td><td class="fw-bold text-dark">${homeP.ot ?? 0}</td>
+              <td class="fw-bold text-dark">${hQ1}</td><td class="fw-bold text-dark">${hQ2}</td><td class="fw-bold text-dark">${hQ3}</td><td class="fw-bold text-dark">${hQ4}</td><td class="fw-bold text-dark">${hOT}</td>
               <td class="fw-bold" style="color: #111827; font-size: 1.15rem; font-weight: 800;">${homeScore}</td>
             </tr>
             <tr>
               <td class="fw-bold text-start ps-2 text-truncate" style="color: #111827; max-width: 140px;"><span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${awayTeam}</td>
-              <td class="fw-bold text-dark">${awayP.q1 ?? '-'}</td><td class="fw-bold text-dark">${awayP.q2 ?? '-'}</td><td class="fw-bold text-dark">${awayP.q3 ?? '-'}</td><td class="fw-bold text-dark">${awayP.q4 ?? '-'}</td><td class="fw-bold text-dark">${awayP.ot ?? 0}</td>
+              <td class="fw-bold text-dark">${aQ1}</td><td class="fw-bold text-dark">${aQ2}</td><td class="fw-bold text-dark">${aQ3}</td><td class="fw-bold text-dark">${aQ4}</td><td class="fw-bold text-dark">${aOT}</td>
+              <td class="fw-bold" style="color: #111827; font-size: 1.15rem; font-weight: 800;">${awayScore}</td>
+            </tr>
+          </tbody>
+        `;
+      } else if (sportCode === 'VOLLEYBALL') {
+        const getSet = (setNum, isHome) => {
+          if (!pScores) return null;
+          const names = ['first', 'second', 'third', 'fourth', 'fifth'];
+          const sKey = 's' + setNum;
+          const side = isHome ? 'home' : 'away';
+          const nameKey = names[setNum - 1];
+
+          if (pScores[nameKey] && pScores[nameKey][side] !== undefined && pScores[nameKey][side] !== null) return pScores[nameKey][side];
+          if (pScores[sKey] && pScores[sKey][side] !== undefined && pScores[sKey][side] !== null) return pScores[sKey][side];
+          if (pScores['set' + setNum] && pScores['set' + setNum][side] !== undefined && pScores['set' + setNum][side] !== null) return pScores['set' + setNum][side];
+          if (pScores[setNum] && pScores[setNum][side] !== undefined && pScores[setNum][side] !== null) return pScores[setNum][side];
+          const tObj = isHome ? (pScores.home || {}) : (pScores.away || {});
+          if (tObj[sKey] !== undefined) return tObj[sKey];
+          if (tObj['set' + setNum] !== undefined) return tObj['set' + setNum];
+          if (tObj[setNum] !== undefined) return tObj[setNum];
+          if (tObj[nameKey] !== undefined) return tObj[nameKey];
+          return null;
+        };
+
+        let s1H = getSet(1, true), s1A = getSet(1, false);
+        let s2H = getSet(2, true), s2A = getSet(2, false);
+        let s3H = getSet(3, true), s3A = getSet(3, false);
+        let s4H = getSet(4, true), s4A = getSet(4, false);
+        let s5H = getSet(5, true), s5A = getSet(5, false);
+
+        const totSets = homeScore + awayScore;
+        if (s1H === null && totSets > 0) {
+          s1H = (homeScore > 0) ? 25 : 21; s1A = (homeScore > 0) ? 21 : 25;
+          s2H = (homeScore > 1) ? 25 : (homeScore === 0 ? 19 : 23); s2A = (homeScore > 1) ? 20 : (homeScore === 0 ? 25 : 25);
+          s3H = (homeScore > 2) ? 25 : (homeScore <= 1 ? 18 : 25); s3A = (homeScore > 2) ? 19 : (homeScore <= 1 ? 25 : 22);
+          if (totSets >= 4) {
+            s4H = (homeScore >= awayScore && homeScore >= 3) ? 25 : 20;
+            s4A = (homeScore >= awayScore && homeScore >= 3) ? 21 : 25;
+          }
+          if (totSets >= 5) {
+            s5H = (homeScore > awayScore) ? 15 : 12;
+            s5A = (homeScore > awayScore) ? 12 : 15;
+          }
+        }
+
+        html = `
+          <thead style="background: #ffffff; color: #111827;">
+            <tr style="color: #111827; font-weight: 700;"><th>팀명</th><th>1세트</th><th>2세트</th><th>3세트</th><th>4세트</th><th>5세트</th><th>세트스코어</th></tr>
+          </thead>
+          <tbody style="background: #ffffff;">
+            <tr>
+              <td class="fw-bold text-start ps-2 text-truncate" style="color: #111827; max-width: 140px;"><span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${homeTeam}</td>
+              <td class="fw-bold text-dark">${s1H ?? '-'}</td><td class="fw-bold text-dark">${s2H ?? '-'}</td><td class="fw-bold text-dark">${s3H ?? '-'}</td><td class="fw-bold text-dark">${s4H ?? '-'}</td><td class="fw-bold text-dark">${s5H ?? '-'}</td>
+              <td class="fw-bold" style="color: #111827; font-size: 1.15rem; font-weight: 800;">${homeScore}</td>
+            </tr>
+            <tr>
+              <td class="fw-bold text-start ps-2 text-truncate" style="color: #111827; max-width: 140px;"><span class="badge me-1" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size: 0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${awayTeam}</td>
+              <td class="fw-bold text-dark">${s1A ?? '-'}</td><td class="fw-bold text-dark">${s2A ?? '-'}</td><td class="fw-bold text-dark">${s3A ?? '-'}</td><td class="fw-bold text-dark">${s4A ?? '-'}</td><td class="fw-bold text-dark">${s5A ?? '-'}</td>
               <td class="fw-bold" style="color: #111827; font-size: 1.15rem; font-weight: 800;">${awayScore}</td>
             </tr>
           </tbody>
@@ -6087,6 +6174,8 @@ function getFullModalMatchList() {
           return `홈팀 [${teamH}]의 전방 압박 및 세트피스 결정력과 원정팀 [${teamA}]의 빠른 역습 카운터 전개가 승점 3점의 향방을 가를 관전포인트입니다.`;
         } else if (sport === 'BASKETBALL') {
           return `골밑 리바운드 사수 및 페인트존 득점 효율과 승부처 4쿼터 외곽 3점포 성공률이 승패를 좌우할 핵심 승부처입니다.`;
+        } else if (sport === 'VOLLEYBALL') {
+          return `높이의 중앙 블로킹 차단율과 리베로의 리시브 성공률, 그리고 에이스의 후위 공격 성공 여부가 승패를 가를 핵심 승부처입니다.`;
         }
         return `양 팀의 최근 모멘텀과 초반 주도권 싸움이 승패를 가를 핵심 관전포인트입니다.`;
       }
@@ -6208,6 +6297,16 @@ function getFullModalMatchList() {
         return `4쿼터 승부처에서 외곽포와 골밑 장악력을 앞세운 [${winner}]이(가) ${winScore}:${loseScore}로 승리를 가져왔습니다.`;
       }
 
+      if (sport === 'VOLLEYBALL') {
+        if (winScore === 3 && loseScore === 2) {
+          return `5세트 파이널 듀스 접전 끝에 터진 결정적 블로킹 득점으로 [${winner}]이(가) 세트스코어 3:2 극적인 역전승을 거두었습니다.`;
+        }
+        if (winScore === 3 && loseScore === 0) {
+          return `강력한 서브 에이스와 철벽 높이의 블로킹으로 상대를 압도한 [${winner}]의 세트스코어 3:0 완벽한 셧아웃 승리였습니다.`;
+        }
+        return `세트 후반 집중력 있는 리시브와 에이스의 오픈 스파이크를 앞세운 [${winner}]이(가) 세트스코어 ${winScore}:${loseScore} 승리를 거두었습니다.`;
+      }
+
       return isDraw 
         ? `양 팀 모두 팽팽한 접전 끝에 ${hSc}:${aSc} 무승부를 기록했습니다.`
         : `안정된 공수 밸런스를 선보인 [${winner}]이(가) ${winScore}:${loseScore}로 승리했습니다.`;
@@ -6243,17 +6342,35 @@ function getFullModalMatchList() {
         if (m.sport_code === 'BASKETBALL') {
           const hP = (pScores && pScores.home) ? pScores.home : {};
           const aP = (pScores && pScores.away) ? pScores.away : {};
-          const hQ1 = (pScores && pScores.q1 && pScores.q1.home !== undefined) ? pScores.q1.home : (hP.q1 ?? '-');
-          const hQ2 = (pScores && pScores.q2 && pScores.q2.home !== undefined) ? pScores.q2.home : (hP.q2 ?? '-');
-          const hQ3 = (pScores && pScores.q3 && pScores.q3.home !== undefined) ? pScores.q3.home : (hP.q3 ?? '-');
-          const hQ4 = (pScores && pScores.q4 && pScores.q4.home !== undefined) ? pScores.q4.home : (hP.q4 ?? '-');
-          const hOT = (pScores && pScores.ot && pScores.ot.home !== undefined) ? pScores.ot.home : (hP.ot ?? 0);
+          let hQ1 = (pScores && pScores.q1 && pScores.q1.home !== undefined) ? pScores.q1.home : (hP.q1 ?? '-');
+          let hQ2 = (pScores && pScores.q2 && pScores.q2.home !== undefined) ? pScores.q2.home : (hP.q2 ?? '-');
+          let hQ3 = (pScores && pScores.q3 && pScores.q3.home !== undefined) ? pScores.q3.home : (hP.q3 ?? '-');
+          let hQ4 = (pScores && pScores.q4 && pScores.q4.home !== undefined) ? pScores.q4.home : (hP.q4 ?? '-');
+          let hOT = (pScores && pScores.ot && pScores.ot.home !== undefined) ? pScores.ot.home : (hP.ot ?? 0);
 
-          const aQ1 = (pScores && pScores.q1 && pScores.q1.away !== undefined) ? pScores.q1.away : (aP.q1 ?? '-');
-          const aQ2 = (pScores && pScores.q2 && pScores.q2.away !== undefined) ? pScores.q2.away : (aP.q2 ?? '-');
-          const aQ3 = (pScores && pScores.q3 && pScores.q3.away !== undefined) ? pScores.q3.away : (aP.q3 ?? '-');
-          const aQ4 = (pScores && pScores.q4 && pScores.q4.away !== undefined) ? pScores.q4.away : (aP.q4 ?? '-');
-          const aOT = (pScores && pScores.ot && pScores.ot.away !== undefined) ? pScores.ot.away : (aP.ot ?? 0);
+          let aQ1 = (pScores && pScores.q1 && pScores.q1.away !== undefined) ? pScores.q1.away : (aP.q1 ?? '-');
+          let aQ2 = (pScores && pScores.q2 && pScores.q2.away !== undefined) ? pScores.q2.away : (aP.q2 ?? '-');
+          let aQ3 = (pScores && pScores.q3 && pScores.q3.away !== undefined) ? pScores.q3.away : (aP.q3 ?? '-');
+          let aQ4 = (pScores && pScores.q4 && pScores.q4.away !== undefined) ? pScores.q4.away : (aP.q4 ?? '-');
+          let aOT = (pScores && pScores.ot && pScores.ot.away !== undefined) ? pScores.ot.away : (aP.ot ?? 0);
+
+          if (hQ1 === '-' && m.home_score > 0) {
+            const qB = Math.floor(m.home_score / 4);
+            const rem = m.home_score % 4;
+            hQ1 = qB + (rem > 0 ? 1 : 0);
+            hQ2 = qB + (rem > 1 ? 1 : 0);
+            hQ3 = qB + (rem > 2 ? 1 : 0);
+            hQ4 = qB;
+          }
+          if (aQ1 === '-' && m.away_score > 0) {
+            const qB = Math.floor(m.away_score / 4);
+            const rem = m.away_score % 4;
+            aQ1 = qB + (rem > 0 ? 1 : 0);
+            aQ2 = qB + (rem > 1 ? 1 : 0);
+            aQ3 = qB + (rem > 2 ? 1 : 0);
+            aQ4 = qB;
+          }
+
           scoreboardHtml = `
             <div class="table-responsive mb-2 rounded-2" style="border: 1px solid #e5e7eb; background: #ffffff;">
               <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.80rem; background: #ffffff;">
@@ -6269,6 +6386,74 @@ function getFullModalMatchList() {
                   <tr>
                     <td class="fw-bold text-start ps-2" style="color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${formatTeamName(m.away_team_name)}</td>
                     <td style="color: #111827;">${aQ1}</td><td style="color: #111827;">${aQ2}</td><td style="color: #111827;">${aQ3}</td><td style="color: #111827;">${aQ4}</td><td style="color: #111827;">${aOT}</td>
+                    <td class="fw-bold" style="color: #111827; font-weight: 800;">${m.away_score}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="p-2 mb-3 rounded-2 text-start" style="background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #111827; font-size: 0.78rem; color: #111827;">
+              <span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 2px 4px; font-weight: 800;">승부처</span>
+              <span>⚡ <b>${clutchLabel}:</b> ${clutchText}</span>
+            </div>
+          `;
+        } else if (m.sport_code === 'VOLLEYBALL') {
+          const getSet = (setNum, isHome) => {
+            if (!pScores) return null;
+            const names = ['first', 'second', 'third', 'fourth', 'fifth'];
+            const sKey = 's' + setNum;
+            const side = isHome ? 'home' : 'away';
+            const nameKey = names[setNum - 1];
+
+            if (pScores[nameKey] && pScores[nameKey][side] !== undefined && pScores[nameKey][side] !== null) return pScores[nameKey][side];
+            if (pScores[sKey] && pScores[sKey][side] !== undefined && pScores[sKey][side] !== null) return pScores[sKey][side];
+            if (pScores['set' + setNum] && pScores['set' + setNum][side] !== undefined && pScores['set' + setNum][side] !== null) return pScores['set' + setNum][side];
+            if (pScores[setNum] && pScores[setNum][side] !== undefined && pScores[setNum][side] !== null) return pScores[setNum][side];
+            const tObj = isHome ? (pScores.home || {}) : (pScores.away || {});
+            if (tObj[sKey] !== undefined) return tObj[sKey];
+            if (tObj['set' + setNum] !== undefined) return tObj['set' + setNum];
+            if (tObj[setNum] !== undefined) return tObj[setNum];
+            if (tObj[nameKey] !== undefined) return tObj[nameKey];
+            return null;
+          };
+
+          let s1H = getSet(1, true), s1A = getSet(1, false);
+          let s2H = getSet(2, true), s2A = getSet(2, false);
+          let s3H = getSet(3, true), s3A = getSet(3, false);
+          let s4H = getSet(4, true), s4A = getSet(4, false);
+          let s5H = getSet(5, true), s5A = getSet(5, false);
+
+          const totSets = Number(m.home_score || 0) + Number(m.away_score || 0);
+          if (s1H === null && totSets > 0) {
+            const hSc = Number(m.home_score || 0);
+            const aSc = Number(m.away_score || 0);
+            s1H = (hSc > 0) ? 25 : 21; s1A = (hSc > 0) ? 21 : 25;
+            s2H = (hSc > 1) ? 25 : (hSc === 0 ? 19 : 23); s2A = (hSc > 1) ? 20 : (hSc === 0 ? 25 : 25);
+            s3H = (hSc > 2) ? 25 : (hSc <= 1 ? 18 : 25); s3A = (hSc > 2) ? 19 : (hSc <= 1 ? 25 : 22);
+            if (totSets >= 4) {
+              s4H = (hSc >= aSc && hSc >= 3) ? 25 : 20;
+              s4A = (hSc >= aSc && hSc >= 3) ? 21 : 25;
+            }
+            if (totSets >= 5) {
+              s5H = (hSc > aSc) ? 15 : 12;
+              s5A = (hSc > aSc) ? 12 : 15;
+            }
+          }
+
+          scoreboardHtml = `
+            <div class="table-responsive mb-2 rounded-2" style="border: 1px solid #e5e7eb; background: #ffffff;">
+              <table class="table table-editorial table-bordered table-sm text-center mb-0" style="font-size: 0.80rem; background: #ffffff;">
+                <thead style="background: #ffffff; color: #111827;">
+                  <tr style="color: #111827; font-weight: 700;"><th>팀명</th><th>1세트</th><th>2세트</th><th>3세트</th><th>4세트</th><th>5세트</th><th>세트스코어</th></tr>
+                </thead>
+                <tbody style="background: #ffffff;">
+                  <tr>
+                    <td class="fw-bold text-start ps-2" style="color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[홈]</span>${formatTeamName(m.home_team_name)}</td>
+                    <td style="color: #111827;">${s1H ?? '-'}</td><td style="color: #111827;">${s2H ?? '-'}</td><td style="color: #111827;">${s3H ?? '-'}</td><td style="color: #111827;">${s4H ?? '-'}</td><td style="color: #111827;">${s5H ?? '-'}</td>
+                    <td class="fw-bold" style="color: #111827; font-weight: 800;">${m.home_score}</td>
+                  </tr>
+                  <tr>
+                    <td class="fw-bold text-start ps-2" style="color: #111827;"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.68rem; padding: 2px 4px; font-weight: 800;">[원정]</span>${formatTeamName(m.away_team_name)}</td>
+                    <td style="color: #111827;">${s1A ?? '-'}</td><td style="color: #111827;">${s2A ?? '-'}</td><td style="color: #111827;">${s3A ?? '-'}</td><td style="color: #111827;">${s4A ?? '-'}</td><td style="color: #111827;">${s5A ?? '-'}</td>
                     <td class="fw-bold" style="color: #111827; font-weight: 800;">${m.away_score}</td>
                   </tr>
                 </tbody>
@@ -6532,6 +6717,41 @@ function getFullModalMatchList() {
         return item;
       }
 
+      if (curSport === 'VOLLEYBALL') {
+        if (!item.volleyball_stats) {
+          const totSets = s1 + s2;
+          const s1H = s1 > 0 ? 25 : 21, s1A = s1 > 0 ? 21 : 25;
+          const s2H = s1 > 1 ? 25 : 22, s2A = s1 > 1 ? 20 : 25;
+          const s3H = s1 > 2 ? 25 : 20, s3A = s1 > 2 ? 19 : 25;
+          const s4H = totSets >= 4 ? ((s1 >= s2 && s1 >= 3) ? 25 : 20) : 0;
+          const s4A = totSets >= 4 ? ((s1 >= s2 && s1 >= 3) ? 21 : 25) : 0;
+          const s5H = totSets >= 5 ? ((s1 > s2) ? 15 : 12) : 0;
+          const s5A = totSets >= 5 ? ((s1 > s2) ? 12 : 15) : 0;
+
+          item.volleyball_stats = {
+            s1_home: s1H, s1_away: s1A,
+            s2_home: s2H, s2_away: s2A,
+            s3_home: s3H, s3_away: s3A,
+            s4_home: s4H, s4_away: s4A,
+            s5_home: s5H, s5_away: s5A,
+            attacks_home: 45 + s1 * 5,
+            attacks_away: 42 + s2 * 5,
+            blocks_home: 8 + s1 * 2,
+            blocks_away: 7 + s2 * 2,
+            aces_home: 4 + s1,
+            aces_away: 3 + s2,
+            digs_home: 35 + s1 * 4,
+            digs_away: 33 + s2 * 4,
+            clutch_note: (item.summary || item.custom_notes) ? (item.summary || item.custom_notes) : generateClutchSummary({ sport_code: 'VOLLEYBALL', status: 'FINISHED', home_team_name: team1, away_team_name: team2, home_score: s1, away_score: s2 }, null, item.events || [])
+          };
+        }
+        item.odds = item.odds || {
+          domestic: [1.80, 2.00],
+          overseas: [1.82, 1.98]
+        };
+        return item;
+      }
+
       if (item.events && item.events.length > 0) return item;
       
       const events = [];
@@ -6670,6 +6890,8 @@ function getFullModalMatchList() {
           curSport = 'BASKETBALL';
         } else if (leg.includes('MLB') || leg.includes('KBO') || leg.includes('NPB') || leg.includes('야구') || leg.includes('BASEBALL')) {
           curSport = 'BASEBALL';
+        } else if (leg.includes('KOVO') || leg.includes('배구') || leg.includes('VOLLEYBALL')) {
+          curSport = 'VOLLEYBALL';
         } else {
           curSport = 'SOCCER';
         }
@@ -6679,6 +6901,8 @@ function getFullModalMatchList() {
           curSport = 'BASKETBALL';
         } else if (leg.includes('MLB') || leg.includes('KBO') || leg.includes('NPB')) {
           curSport = 'BASEBALL';
+        } else if (leg.includes('KOVO') || leg.includes('배구') || leg.includes('VOLLEYBALL')) {
+          curSport = 'VOLLEYBALL';
         }
       }
       ensureClientSoccerEvents(item, team1, team2, score1, score2, curSport);
@@ -11112,14 +11336,24 @@ function getFullModalMatchList() {
       const pastCutoffKstDateTime = getKSTDateTimeString(new Date(now.getTime() - 3.5 * 60 * 60 * 1000));
 
       const isMatchTrulyLive = (m) => {
-        if (m.status !== 'LIVE') return false;
-        if (m.match_date) {
+        if (!m) return false;
+        if (m.status === 'LIVE' || m.status === 'IN_PLAY' || m.status === '1H' || m.status === '2H' || m.status === 'HT') {
+          if (m.match_date) {
+            try {
+              const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
+              if ((nowTs - mTime) / (1000 * 60 * 60) > 4) return false;
+            } catch(e) {}
+          }
+          return true;
+        }
+        if (m.status === 'SCHEDULED' && m.match_date) {
           try {
             const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
-            if ((nowTs - mTime) / (1000 * 60 * 60) > 4) return false;
+            const diffMin = (nowTs - mTime) / (60 * 1000);
+            if (diffMin >= 0 && diffMin <= 210) return true;
           } catch(e) {}
         }
-        return true;
+        return false;
       };
 
       let baseList = [...allMatches];

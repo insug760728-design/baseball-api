@@ -88,13 +88,17 @@ class MatchService:
                 else:
                     if not match.is_customized:
                         match.stadium = m_data.get("stadium") or match.stadium
-                        match.home_score = m_data["home_score"]
-                        match.away_score = m_data["away_score"]
-                        match.status = m_data["status"]
+                        # Do not revert an already FINISHED or CANCELLED match back to SCHEDULED 0:0
+                        if match.status in ["FINISHED", "CANCELLED"] and m_data.get("status") == "SCHEDULED":
+                            pass
+                        else:
+                            match.home_score = m_data["home_score"]
+                            match.away_score = m_data["away_score"]
+                            match.status = m_data["status"]
                         db.commit()
 
-                # 선발 예고 투수(probablePitcher) 및 라이브 이닝/스코어보드 자동 등록 및 최신화
-                if m_data.get("probable_pitcher_home") or m_data.get("probable_pitcher_away") or m_data.get("period_scores") or m_data.get("scoreboard") or m_data.get("current_inning"):
+                # 선발 예고 투수(probablePitcher) 및 라이브 이닝/스코어보드/배구/농구 스코어 자동 등록 및 최신화
+                if m_data.get("probable_pitcher_home") or m_data.get("probable_pitcher_away") or m_data.get("period_scores") or m_data.get("scoreboard") or m_data.get("current_inning") or m_data.get("volleyball_stats"):
                     detail = db.query(MatchDetail).filter(MatchDetail.match_id == match.id).first()
                     if not detail:
                         detail = MatchDetail(match_id=match.id, period_scores="{}", team_stats="{}", source_url=None)
@@ -128,6 +132,8 @@ class MatchService:
                         ts["scoreboard"] = m_data["scoreboard"]
                     if m_data.get("current_inning"):
                         ts["current_inning"] = m_data["current_inning"]
+                    if m_data.get("volleyball_stats"):
+                        ts["volleyball_stats"] = m_data["volleyball_stats"]
 
                     detail.team_stats = json.dumps(ts, ensure_ascii=False)
                     if m_data.get("period_scores") and not detail.is_customized:
