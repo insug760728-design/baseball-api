@@ -255,9 +255,9 @@
   </div>
 
   <!-- Modal C: Login & Access Modal (별명, 나이, 비밀번호 간편 접속) -->
-  <div class="modal fade" id="v2LoginModal" tabindex="-1" aria-labelledby="v2LoginModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
-      <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
+  <div class="modal fade" id="v2LoginModal" tabindex="-1" aria-labelledby="v2LoginModalLabel" aria-hidden="true" style="z-index: 100000020 !important;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 420px; z-index: 100000021 !important; position: relative;">
+      <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden; pointer-events: auto !important;">
         <div class="modal-header bg-dark text-white py-3 px-4">
           <div class="d-flex align-items-center gap-2">
             <i class="bi bi-shield-lock-fill text-warning fs-5"></i>
@@ -265,27 +265,32 @@
           </div>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body p-4 bg-light">
-          <form id="v2LoginForm" onsubmit="event.preventDefault(); AuthManager.submitLogin();">
+        <div class="modal-body p-4 bg-white" style="pointer-events: auto !important;">
+          <form id="v2LoginForm" onsubmit="AuthManager.handleLogin(event)">
             <div class="mb-3">
-              <label for="loginNickname" class="form-label fw-bold text-dark small">
+              <label for="loginNickname" class="form-label fw-bold text-dark small" style="cursor: pointer;">
                 <i class="bi bi-person-fill text-primary me-1"></i>별명 (닉네임 / 아이디)
               </label>
-              <input type="text" class="form-control form-control-lg fs-6" id="loginNickname" placeholder="별명을 입력하세요 (예: 축구도사)" required autofocus>
+              <input type="text" class="form-control form-control-lg fs-6" id="loginNickname" placeholder="별명을 입력하세요 (예: 축구도사)" required autofocus style="pointer-events: auto !important;">
             </div>
             
             <div class="mb-3">
-              <label for="loginAge" class="form-label fw-bold text-dark small">
+              <label for="loginAge" class="form-label fw-bold text-dark small" style="cursor: pointer;">
                 <i class="bi bi-calendar-event text-success me-1"></i>나이 (연령)
               </label>
-              <input type="number" class="form-control form-control-lg fs-6" id="loginAge" placeholder="나이를 입력하세요 (예: 32)" min="1" max="120" value="30" required>
+              <input type="number" class="form-control form-control-lg fs-6" id="loginAge" placeholder="나이를 입력하세요 (예: 32)" min="1" max="120" value="30" required style="pointer-events: auto !important;">
             </div>
 
             <div class="mb-3">
-              <label for="loginPassword" class="form-label fw-bold text-dark small">
+              <label for="loginPassword" class="form-label fw-bold text-dark small" style="cursor: pointer;">
                 <i class="bi bi-key-fill text-warning me-1"></i>비밀번호
               </label>
-              <input type="password" class="form-control form-control-lg fs-6" id="loginPassword" placeholder="비밀번호 입력 (4자리 이상)" required>
+              <div class="input-group">
+                <input type="password" class="form-control form-control-lg fs-6" id="loginPassword" placeholder="비밀번호 입력 (4자리 이상)" required style="pointer-events: auto !important;">
+                <button type="button" class="btn btn-outline-secondary bg-white border border-start-0 px-3" onclick="togglePasswordVisibility('loginPassword', this)" title="비밀번호 보기/숨기기" tabindex="-1">
+                  <i class="bi bi-eye-slash text-muted"></i>
+                </button>
+              </div>
             </div>
 
             <div id="loginAlertBox" class="alert alert-danger py-2 small d-none" role="alert"></div>
@@ -388,6 +393,24 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
 
       if (msgInput) msgInput.value = '';
+    }
+
+    function togglePasswordVisibility(inputId, btnEl) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      const isPassword = input.getAttribute('type') === 'password';
+      input.setAttribute('type', isPassword ? 'text' : 'password');
+      const icon = btnEl ? btnEl.querySelector('i') : null;
+      if (icon) {
+        if (isPassword) {
+          icon.className = 'bi bi-eye text-primary';
+          btnEl.title = '비밀번호 숨기기';
+        } else {
+          icon.className = 'bi bi-eye-slash text-muted';
+          btnEl.title = '비밀번호 보기';
+        }
+      }
+      input.focus();
     }
 
     function escapeHtml(str) {

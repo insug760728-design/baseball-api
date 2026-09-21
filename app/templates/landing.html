@@ -2389,6 +2389,28 @@
       animation: phoneRotateAnim 2.2s infinite ease-in-out;
       margin-bottom: 14px;
     }
+    /* ⚡ 로그인/가입 모달 및 비밀번호 입력창 완벽 터치/클릭 보장 */
+    #simpleLoginModal {
+      z-index: 100000020 !important;
+    }
+    #simpleLoginModal .modal-dialog {
+      z-index: 100000021 !important;
+      position: relative !important;
+    }
+    #simpleLoginModal .modal-content {
+      pointer-events: auto !important;
+    }
+    #simpleLoginModal input {
+      pointer-events: auto !important;
+      cursor: text !important;
+      -webkit-user-select: text !important;
+      user-select: text !important;
+      font-size: 16px !important; /* iOS 사파리 줌 잠금 현상 방지 */
+    }
+    #simpleLoginModal button {
+      pointer-events: auto !important;
+      cursor: pointer !important;
+    }
   </style>
 </head>
 <body>
@@ -3483,6 +3505,24 @@
       }
     }
 
+    function togglePasswordVisibility(inputId, btnEl) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      const isPassword = input.getAttribute('type') === 'password';
+      input.setAttribute('type', isPassword ? 'text' : 'password');
+      const icon = btnEl ? btnEl.querySelector('i') : null;
+      if (icon) {
+        if (isPassword) {
+          icon.className = 'bi bi-eye text-primary';
+          btnEl.title = '비밀번호 숨기기';
+        } else {
+          icon.className = 'bi bi-eye-slash text-muted';
+          btnEl.title = '비밀번호 보기';
+        }
+      }
+      input.focus();
+    }
+
     function openLoginModal(defaultTab = 'login') {
       switchAuthTab(defaultTab);
       if (currentUser) {
@@ -3492,6 +3532,11 @@
       try {
         const modalEl = document.getElementById('simpleLoginModal');
         if (modalEl) {
+          if (modalEl.classList.contains('show')) {
+            const targetInput = defaultTab === 'register' ? document.getElementById('regPasswordInput') : document.getElementById('loginPasswordInput');
+            if (targetInput) targetInput.focus();
+            return;
+          }
           if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
             const modal = (typeof bootstrap.Modal.getOrCreateInstance === 'function') 
               ? bootstrap.Modal.getOrCreateInstance(modalEl) 
@@ -3501,6 +3546,14 @@
             modalEl.classList.add('show');
             modalEl.style.display = 'block';
           }
+          setTimeout(() => {
+            document.querySelectorAll('.modal-backdrop').forEach(b => {
+              b.style.zIndex = '100000010';
+            });
+            modalEl.style.zIndex = '100000020';
+            const targetInput = defaultTab === 'register' ? document.getElementById('regNicknameInput') : document.getElementById('loginNicknameInput');
+            if (targetInput) targetInput.focus();
+          }, 80);
         }
       } catch(e) {
         console.warn('Modal open error:', e);
@@ -23212,9 +23265,9 @@ function renderPredDetail(m, customDetailData = null) {
   </div>
 
   <!-- ⚡ Modal: 계정 접속 및 회원가입 (별명 + 비번 간편 로그인 & 신규가입) -->
-  <div class="modal fade" id="simpleLoginModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
-      <div class="modal-content" style="background: #ffffff; color: #111827; border: 1px solid #cbd5e1; border-radius: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.35);">
+  <div class="modal fade" id="simpleLoginModal" tabindex="-1" aria-hidden="true" style="z-index: 100000020 !important;">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 440px; z-index: 100000021 !important; position: relative;">
+      <div class="modal-content" style="background: #ffffff; color: #111827; border: 1px solid #cbd5e1; border-radius: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.35); pointer-events: auto !important;">
         <div class="modal-header border-bottom d-flex justify-content-between align-items-center" style="border-color: #e2e8f0 !important; background: #f8fafc; border-top-left-radius: 16px; border-top-right-radius: 16px;">
           <div class="d-flex align-items-center gap-2">
             <div style="background: linear-gradient(135deg, #0284c7, #2563eb); width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center;">
@@ -23228,7 +23281,7 @@ function renderPredDetail(m, customDetailData = null) {
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
-        <div class="modal-body p-4">
+        <div class="modal-body p-4" style="pointer-events: auto !important;">
           <!-- 탭 선택기 (로그인 / 회원가입) -->
           <div class="d-flex p-1 mb-3 rounded-3" style="background: #f1f5f9; border: 1px solid #e2e8f0;">
             <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5 rounded-2 shadow-sm" id="authTabBtnLogin" onclick="switchAuthTab('login')" style="background: #ffffff; color: #0284c7; border: none; font-size: 0.86rem;">
@@ -23242,13 +23295,18 @@ function renderPredDetail(m, customDetailData = null) {
           <!-- 1. 간편 로그인 폼 (기본) -->
           <form id="authLoginForm" onsubmit="handleUserLogin(event)">
             <div class="mb-3">
-              <label class="form-label text-dark fw-bold small"><i class="bi bi-person-fill text-primary me-1"></i>활동 별명 (닉네임)</label>
-              <input type="text" class="form-control bg-white text-dark border py-2" id="loginNicknameInput" placeholder="가입한 별명 입력 (예: 슈퍼손)" maxlength="12" required autocomplete="username" style="font-size: 0.9rem;">
+              <label for="loginNicknameInput" class="form-label text-dark fw-bold small" style="cursor: pointer;"><i class="bi bi-person-fill text-primary me-1"></i>활동 별명 (닉네임)</label>
+              <input type="text" class="form-control bg-white text-dark border py-2" id="loginNicknameInput" placeholder="가입한 별명 입력 (예: 슈퍼손)" maxlength="12" required autocomplete="username" style="font-size: 1rem; pointer-events: auto !important;">
             </div>
 
             <div class="mb-3">
-              <label class="form-label text-dark fw-bold small"><i class="bi bi-key-fill text-warning me-1"></i>비밀번호 (패스워드)</label>
-              <input type="password" class="form-control bg-white text-dark border py-2" id="loginPasswordInput" placeholder="비밀번호 입력" required autocomplete="current-password" style="font-size: 0.9rem;">
+              <label for="loginPasswordInput" class="form-label text-dark fw-bold small" style="cursor: pointer;"><i class="bi bi-key-fill text-warning me-1"></i>비밀번호 (패스워드)</label>
+              <div class="input-group">
+                <input type="password" class="form-control bg-white text-dark border py-2" id="loginPasswordInput" placeholder="비밀번호 입력" required autocomplete="current-password" style="font-size: 1rem; pointer-events: auto !important;">
+                <button type="button" class="btn btn-outline-secondary bg-white border border-start-0 px-3" onclick="togglePasswordVisibility('loginPasswordInput', this)" title="비밀번호 보기/숨기기" style="border-color: #cbd5e1 !important; z-index: 5;" tabindex="-1">
+                  <i class="bi bi-eye-slash text-muted"></i>
+                </button>
+              </div>
             </div>
 
             <div class="p-2 mb-3 rounded-2 text-center" style="background: rgba(2, 132, 199, 0.08); border: 1px solid rgba(2, 132, 199, 0.2);">
@@ -23270,14 +23328,19 @@ function renderPredDetail(m, customDetailData = null) {
           <!-- 2. 신규 회원가입 폼 -->
           <form id="authRegisterForm" class="d-none" onsubmit="handleUserRegister(event)">
             <div class="mb-3">
-              <label class="form-label text-dark fw-bold small"><i class="bi bi-person-fill text-primary me-1"></i>활동할 별명 (닉네임)</label>
-              <input type="text" class="form-control bg-white text-dark border py-2" id="regNicknameInput" placeholder="원하는 별명 입력 (최대 12자)" maxlength="12" required autocomplete="off" style="font-size: 0.9rem;">
+              <label for="regNicknameInput" class="form-label text-dark fw-bold small" style="cursor: pointer;"><i class="bi bi-person-fill text-primary me-1"></i>활동할 별명 (닉네임)</label>
+              <input type="text" class="form-control bg-white text-dark border py-2" id="regNicknameInput" placeholder="원하는 별명 입력 (최대 12자)" maxlength="12" required autocomplete="off" style="font-size: 1rem; pointer-events: auto !important;">
               <div class="form-text text-muted" style="font-size: 0.72rem;">실시간 채팅 및 분석방에서 표시될 고유 별명입니다.</div>
             </div>
 
             <div class="mb-3">
-              <label class="form-label text-dark fw-bold small"><i class="bi bi-lock-fill text-warning me-1"></i>비밀번호 설정</label>
-              <input type="password" class="form-control bg-white text-dark border py-2" id="regPasswordInput" placeholder="비밀번호 설정 (최소 4자리 이상)" minlength="4" required autocomplete="new-password" style="font-size: 0.9rem;">
+              <label for="regPasswordInput" class="form-label text-dark fw-bold small" style="cursor: pointer;"><i class="bi bi-lock-fill text-warning me-1"></i>비밀번호 설정</label>
+              <div class="input-group">
+                <input type="password" class="form-control bg-white text-dark border py-2" id="regPasswordInput" placeholder="비밀번호 설정 (최소 4자리 이상)" minlength="4" required autocomplete="new-password" style="font-size: 1rem; pointer-events: auto !important;">
+                <button type="button" class="btn btn-outline-secondary bg-white border border-start-0 px-3" onclick="togglePasswordVisibility('regPasswordInput', this)" title="비밀번호 보기/숨기기" style="border-color: #cbd5e1 !important; z-index: 5;" tabindex="-1">
+                  <i class="bi bi-eye-slash text-muted"></i>
+                </button>
+              </div>
               <div class="form-text text-muted" style="font-size: 0.72rem;">다음에 접속할 때 별명과 함께 사용됩니다.</div>
             </div>
 
