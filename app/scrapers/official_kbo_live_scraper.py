@@ -274,6 +274,38 @@ class KboOfficialScraper:
             so = int(rec1['SO']) if rec1.get('SO', '').isdigit() else None
             bb = int(rec1['BB']) if rec1.get('BB', '').isdigit() else None
 
+            # Fallback to Total.aspx (통산/최근 시즌 기록) if current season is empty
+            if era == '-' or games is None:
+                try:
+                    tot_url = f'https://www.koreabaseball.com/Record/Player/PitcherDetail/Total.aspx?playerId={pid}'
+                    req_tot = urllib.request.Request(tot_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+                    with urllib.request.urlopen(req_tot, context=self.ctx, timeout=10) as resp_tot:
+                        html_tot = resp_tot.read().decode('utf-8', errors='ignore')
+                    soup_tot = BeautifulSoup(html_tot, 'html.parser')
+                    t_tot = soup_tot.find('table')
+                    if t_tot:
+                        rows_tot = t_tot.find_all('tr')
+                        if len(rows_tot) >= 2:
+                            h_tot = [th.get_text(strip=True) for th in rows_tot[0].find_all(['th', 'td'])]
+                            r_last = [td.get_text(strip=True) for td in rows_tot[-1].find_all(['th', 'td'])]
+                            tot_map = dict(zip(h_tot, r_last))
+                            if tot_map.get('ERA') and tot_map['ERA'] != '-':
+                                era = tot_map['ERA']
+                            if tot_map.get('G', '').isdigit():
+                                games = int(tot_map['G'])
+                            if tot_map.get('W', '').isdigit():
+                                wins = int(tot_map['W'])
+                            if tot_map.get('L', '').isdigit():
+                                losses = int(tot_map['L'])
+                            if tot_map.get('IP') and tot_map['IP'] != '-':
+                                ip = tot_map['IP']
+                            if tot_map.get('SO', '').isdigit():
+                                so = int(tot_map['SO'])
+                            if tot_map.get('BB', '').isdigit():
+                                bb = int(tot_map['BB'])
+                except Exception as e_tot:
+                    print(f"[KBO Scraper] Total.aspx fallback error for {pid}: {e_tot}")
+
             res_obj = {
                 'name': clean_name,
                 'name_raw': p_name,

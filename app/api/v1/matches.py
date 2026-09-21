@@ -218,6 +218,9 @@ def get_pitcher_profile_endpoint(
     선발투수의 실시간 공식 시즌 성적 및 최근 10경기 등판 일지를 100% 공식 실데이터로 반환합니다.
     """
     clean = re.sub(r"\([^\)]+\)", "", name).strip()
+    if not clean or clean in ("선발 미정", "미정", "None", "선발 예고 대기중"):
+        return {}
+
     json_path = os.path.join(os.path.dirname(__file__), "../../services/official_pitchers_dataset.json")
     dataset = {}
     if os.path.exists(json_path):
@@ -227,24 +230,41 @@ def get_pitcher_profile_endpoint(
         except Exception:
             pass
 
-    # 1. Direct match or partial match in dataset
-    if clean in dataset and dataset[clean].get("recent_starts"):
+    # 1. Direct match in dataset (only if full quality: at least 5 starts)
+    if clean in dataset and len(dataset[clean].get("recent_starts", [])) >= 5:
         return dataset[clean]
-    for k, v in dataset.items():
-        if (clean == k or clean in k or k in clean) and v.get("recent_starts"):
-            return v
 
     # 2. 로컬 DB(PlayerMatchStat + Match)에서 100% 공식 실데이터 탐색 (KBO/NPB 등)
     db_prof = get_pitcher_profile_from_db(clean)
-    if db_prof and db_prof.get("recent_starts"):
+    if db_prof and len(db_prof.get("recent_starts", [])) >= 8:
         return db_prof
 
-    # 3. Fallback to live MLB Stats API scraper if not found
+    # 3. KBO 리그 선발투수일 경우 KBO 공식 사이트 실시간 크롤링 우선
+    is_kbo = (isinstance(league, str) and "KBO" in league.upper()) or any(x in clean for x in ["쿠에바스", "원태인", "류현진", "엄상백", "고영표", "안우진", "문동주", "곽빈", "김광현", "양현종", "손주영", "엔스", "네일", "후라도", "헤이수스"])
+    if is_kbo:
+        try:
+            from app.scrapers.official_kbo_live_scraper import KboOfficialScraper
+            kbo_scraper = KboOfficialScraper()
+            kbo_prof = kbo_scraper.fetch_kbo_pitcher_profile(clean)
+            if kbo_prof and (kbo_prof.get("season_era") != '-' or kbo_prof.get("games") or kbo_prof.get("wins") is not None):
+                if db_prof and db_prof.get("recent_starts"):
+                    kbo_prof["recent_starts"] = db_prof["recent_starts"]
+                dataset[clean] = kbo_prof
+                try:
+                    with open(json_path, "w", encoding="utf-8") as f:
+                        json.dump(dataset, f, ensure_ascii=False, indent=2)
+                except Exception:
+                    pass
+                return kbo_prof
+        except Exception as e:
+            print(f"[Matches API] KBO Pitcher fetch error ({clean}): {e}")
+
+    # 4. Fallback to live MLB Stats API scraper
     try:
         from app.scrapers.official_mlb_live_scraper import MlbOfficialScraper
         scraper = MlbOfficialScraper()
         prof = scraper.search_and_fetch_pitcher(name)
-        if prof and prof.get("recent_starts"):
+        if prof and (prof.get("recent_starts") or prof.get("season_era")):
             dataset[clean] = prof
             try:
                 with open(json_path, "w", encoding="utf-8") as f:
@@ -253,7 +273,31 @@ def get_pitcher_profile_endpoint(
                 pass
             return prof
     except Exception as e:
-        print(f"[Matches API] Pitcher profile fetch error ({name}): {e}")
+        print(f"[Matches API] MLB Pitcher profile fetch error ({name}): {e}")
+
+    # 5. KBO 일반 시도 (MLB에서 못 찾았을 경우)
+    if not is_kbo:
+        try:
+            from app.scrapers.official_kbo_live_scraper import KboOfficialScraper
+            kbo_scraper = KboOfficialScraper()
+            kbo_prof = kbo_scraper.fetch_kbo_pitcher_profile(clean)
+            if kbo_prof and (kbo_prof.get("season_era") != '-' or kbo_prof.get("games") or kbo_prof.get("wins") is not None):
+                if db_prof and db_prof.get("recent_starts"):
+                    kbo_prof["recent_starts"] = db_prof["recent_starts"]
+                dataset[clean] = kbo_prof
+                return kbo_prof
+        except Exception:
+            pass
+
+    if db_prof and db_prof.get("recent_starts"):
+        return db_prof
+
+    if clean in dataset and dataset[clean].get("recent_starts"):
+        return dataset[clean]
+
+    for k, v in dataset.items():
+        if (clean == k or clean in k or k in clean) and v.get("recent_starts"):
+            return v
 
     return dataset.get(clean, {})
 

@@ -61,6 +61,11 @@ def sanitize_player_name(raw: str) -> str:
 # =============================================================
 FULL_NAMES = {
     # Starters & Rotations (MLB)
+    "Tomoyuki Sugano": "스가노 토모유키", "Will Warren": "윌 워렌", "Brandon Young": "브랜든 영",
+    "William Cuevas": "윌리엄 쿠에바스", "Cuevas": "쿠에바스", "Jacob deGrom": "제이콥 디그롬", "deGrom": "디그롬",
+    "Michael Wacha": "마이클 와카", "Wacha": "와카", "Pierce Johnson": "피어스 존슨", "Johnson": "존슨",
+    "Jack Perkins": "잭 퍼킨스", "Tyler Perkins": "타일러 퍼킨스", "Perkins": "퍼킨스",
+    "Sandy Alcantara": "샌디 알칸타라", "Alcantara": "알칸타라",
     "Paul Skenes": "폴 스킨스", "Tarik Skubal": "타릭 스쿠발", "Zack Wheeler": "잭 휠러", "Chris Sale": "크리스 세일",
     "Corbin Burnes": "코빈 번스", "Shohei Ohtani": "오타니 쇼헤이", "Yoshinobu Yamamoto": "야마모토 요시노부",
     "Shota Imanaga": "이마나가 쇼타", "Kodai Senga": "센가 코다이", "Yu Darvish": "다르빗슈 유",
@@ -756,12 +761,36 @@ def resolve_player_english_name(raw: str) -> str:
     clean = re.sub(r'\([^\)]+\)', '', raw).strip()
     if re.match(r'^[A-Za-z\s\.\'-]+$', clean):
         return clean
+        
+    # 1. Exact match in FULL_NAMES - MUST prefer ASCII English over Japanese Kanji
     for en, ko in FULL_NAMES.items():
-        if ko == clean:
+        if ko == clean and re.match(r'^[A-Za-z\s\.\'-]+$', en):
             return en
+            
+    # 2. Substring match in FULL_NAMES - prefer ASCII English
     for en, ko in FULL_NAMES.items():
-        if clean in ko or ko in clean:
+        if (clean == ko or clean in ko or ko in clean) and re.match(r'^[A-Za-z\s\.\'-]+$', en):
             return en
+            
+    # 3. Two-word reverse lookup (First + Last)
+    parts = clean.split()
+    if len(parts) == 2:
+        p0, p1 = parts[0], parts[1]
+        f = next((k for k, v in FIRST_NAMES.items() if v == p0 and re.match(r'^[A-Za-z]+$', k)), None)
+        l = next((k for k, v in LAST_NAMES.items() if v == p1 and re.match(r'^[A-Za-z]+$', k)), None)
+        if f and l:
+            return f"{f} {l}"
+        if l:
+            return l
+
+    # 4. Single-word reverse lookup (Last or First name)
+    l = next((k for k, v in LAST_NAMES.items() if v == clean and re.match(r'^[A-Za-z]+$', k)), None)
+    if l:
+        return l
+    f = next((k for k, v in FIRST_NAMES.items() if v == clean and re.match(r'^[A-Za-z]+$', k)), None)
+    if f:
+        return f
+
     return clean
 
 def rule_transliterate_word(word: str) -> str:
