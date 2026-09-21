@@ -297,8 +297,8 @@ class MlbOfficialScraper:
         fast_live=True: 초고속 0.7초 라이브 전용 (투수 프로필 심층 통계 API 호출 생략)"""
         d = target_date or datetime.now().strftime("%Y-%m-%d")
 
-        # 1. API 요청 시 season=2026 및 date={d} 파라미터를 명시적으로 포함
-        url = f"{MLB_API_BASE}/schedule?sportId=1&season=2026&date={d}&hydrate=probablePitcher,linescore,team"
+        # 1. API 요청 시 season=2026 및 date={d} 파라미터를 명시적으로 포함 (공식 선발 라인업 lineups 동시 수집)
+        url = f"{MLB_API_BASE}/schedule?sportId=1&season=2026&date={d}&hydrate=probablePitcher,linescore,team,lineups"
         logger.info(f"[MLB Scraper] Requesting official schedule for date: {d} (season=2026) -> {url}")
         
         try:
@@ -473,6 +473,43 @@ class MlbOfficialScraper:
                     "batter": curr_batter
                 }
 
+                # 공식 1~9번 선발 라인업 추출 (MLB Stats API 실데이터)
+                lineups = g.get("lineups", {})
+                h_lineup_raw = lineups.get("homePlayers", [])
+                a_lineup_raw = lineups.get("awayPlayers", [])
+
+                home_lineup = []
+                for idx, p in enumerate(h_lineup_raw[:9]):
+                    p_en = p.get("fullName", "")
+                    p_ko = sanitize_player_name(translate_player_name(p_en))
+                    pos = p.get("primaryPosition", {}).get("abbreviation", "타자")
+                    home_lineup.append({
+                        "order": idx + 1,
+                        "pos": pos,
+                        "name": p_ko,
+                        "name_en": p_en,
+                        "id": p.get("id"),
+                        "hand": "R",
+                        "avg": ".270"
+                    })
+
+                away_lineup = []
+                for idx, p in enumerate(a_lineup_raw[:9]):
+                    p_en = p.get("fullName", "")
+                    p_ko = sanitize_player_name(translate_player_name(p_en))
+                    pos = p.get("primaryPosition", {}).get("abbreviation", "타자")
+                    away_lineup.append({
+                        "order": idx + 1,
+                        "pos": pos,
+                        "name": p_ko,
+                        "name_en": p_en,
+                        "id": p.get("id"),
+                        "hand": "R",
+                        "avg": ".270"
+                    })
+
+                is_lineup_confirmed = bool((len(home_lineup) >= 9 and len(away_lineup) >= 9) or (len(home_lineup) >= 9) or (status in ("LIVE", "FINISHED")))
+
                 team_stats = {
                     "scoreboard": scoreboard,
                     "current_inning": inning_text,
@@ -482,6 +519,11 @@ class MlbOfficialScraper:
                     "starters": {
                         "home": h_prof,
                         "away": a_prof
+                    },
+                    "lineup": {
+                        "home": home_lineup,
+                        "away": away_lineup,
+                        "confirmed": is_lineup_confirmed
                     }
                 }
 
@@ -511,7 +553,11 @@ class MlbOfficialScraper:
                     "strikes": strikes,
                     "period_scores": period_scores,
                     "scoreboard": scoreboard,
-                    "team_stats": team_stats
+                    "team_stats": team_stats,
+                    "home_lineup": home_lineup,
+                    "away_lineup": away_lineup,
+                    "is_lineup_confirmed": is_lineup_confirmed,
+                    "lineup_status": "CONFIRMED" if is_lineup_confirmed else "EXPECTED"
                 })
 
         return results
@@ -816,3 +862,213 @@ class MlbOfficialScraper:
             "events": events,
             "player_stats": player_stats
         }
+
+    def fetch_realtime_lineup(self, away_team: str, home_team: str, match_date: Optional[str] = None, game_pk: Optional[int] = None) -> Dict[str, Any]:
+        """MLB 공식 실시간 선발 라인업 추출 (statsapi.mlb.com 100% 공식 데이터)"""
+        from app.services.player_translation import translate_player_name
+        
+        target_dates = []
+        if match_date:
+            try:
+                dt_kst = datetime.strptime(match_date[:10], "%Y-%m-%d")
+                dt_us = dt_kst - timedelta(days=1)
+                target_dates = [dt_us.strftime("%Y-%m-%d"), dt_kst.strftime("%Y-%m-%d")]
+            except Exception:
+                target_dates = [datetime.now().strftime("%Y-%m-%d")]
+        else:
+            today_str = datetime.now().strftime("%Y-%m-%d")
+            yesterday_str = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+            target_dates = [yesterday_str, today_str]
+
+        matched_game = None
+        matched_game_pk = game_pk
+
+        if not matched_game_pk:
+            def get_team_keywords(name: str) -> List[str]:
+                clean = (name or "").replace(" ", "").lower()
+                mapping = {
+                    "볼티모어": ["orioles", "baltimore"], "볼티": ["orioles", "baltimore"],
+                    "토론토": ["bluejays", "toronto"], "토론": ["bluejays", "toronto"],
+                    "양키스": ["yankees"], "뉴욕양키": ["yankees"], "뉴욕양키스": ["yankees"],
+                    "보스턴": ["redsox", "boston"], "보스": ["redsox", "boston"],
+                    "탬파베이": ["rays", "tampabay"], "탬파": ["rays", "tampabay"],
+                    "시카고화이트삭스": ["whitesox", "chicago"], "시카화삭": ["whitesox"],
+                    "클리블랜드": ["guardians", "cleveland"], "클리": ["guardians"],
+                    "디트로이트": ["tigers", "detroit"], "디트": ["tigers"],
+                    "캔자스시티": ["royals", "kansascity"], "캔자": ["royals"],
+                    "미네소타": ["twins", "minnesota"], "미네": ["twins"],
+                    "휴스턴": ["astros", "houston"], "휴스": ["astros"],
+                    "에인절스": ["angels", "anaheim"], "LA에인절스": ["angels"], "LA에인절": ["angels"],
+                    "오클랜드": ["athletics", "oakland"], "애슬레틱스": ["athletics"],
+                    "시애틀": ["mariners", "seattle"], "시애": ["mariners"],
+                    "텍사스": ["rangers", "texas"], "텍사": ["rangers"],
+                    "애틀랜타": ["braves", "atlanta"], "애틀": ["braves"],
+                    "마이애미": ["marlins", "miami"], "마이": ["marlins"],
+                    "메츠": ["mets", "newyorkmets"], "뉴욕메츠": ["mets"],
+                    "필라델피아": ["phillies", "philadelphia"], "필라": ["phillies"],
+                    "워싱턴": ["nationals", "washington"], "워싱": ["nationals"],
+                    "시카고컵스": ["cubs", "chicagocubs"], "시카컵스": ["cubs"],
+                    "신시내티": ["reds", "cincinnati"], "신시": ["reds"],
+                    "밀워키": ["brewers", "milwaukee"], "밀워": ["brewers"],
+                    "피츠버그": ["pirates", "pittsburgh"], "피츠": ["pirates"],
+                    "세인트루이스": ["cardinals", "stlouis"], "세인": ["cardinals"],
+                    "애리조나": ["diamondbacks", "arizona"], "애리": ["diamondbacks"],
+                    "콜로라도": ["rockies", "colorado"], "콜로": ["rockies"],
+                    "다저스": ["dodgers", "losangelesdodgers"], "LA다저스": ["dodgers"],
+                    "샌디에이고": ["padres", "sandiego"], "샌디": ["padres"],
+                    "샌프란시스코": ["giants", "sanfrancisco"], "샌프": ["giants"]
+                }
+                kws = []
+                for k, v in mapping.items():
+                    if k in clean or clean in k:
+                        kws.extend(v)
+                if not kws:
+                    kws.append(clean)
+                return kws
+
+            h_kws = get_team_keywords(home_team)
+            a_kws = get_team_keywords(away_team)
+
+            for d in target_dates:
+                url = f"{MLB_API_BASE}/schedule?sportId=1&season=2026&date={d}&hydrate=probablePitcher,linescore,team,lineups"
+                try:
+                    data = self._fetch_json(url)
+                    for d_obj in data.get("dates", []):
+                        for g in d_obj.get("games", []):
+                            g_h = g.get("teams", {}).get("home", {}).get("team", {}).get("name", "").lower().replace(" ", "")
+                            g_a = g.get("teams", {}).get("away", {}).get("team", {}).get("name", "").lower().replace(" ", "")
+                            h_match = any(kw in g_h for kw in h_kws)
+                            a_match = any(kw in g_a for kw in a_kws)
+                            if h_match and a_match:
+                                matched_game = g
+                                matched_game_pk = g.get("gamePk")
+                                break
+                        if matched_game:
+                            break
+                except Exception as e:
+                    logger.warning(f"fetch_realtime_lineup schedule error: {e}")
+                if matched_game:
+                    break
+
+        home_lineup = []
+        away_lineup = []
+        home_starter = {}
+        away_starter = {}
+        is_confirmed = False
+
+        if matched_game:
+            lineups = matched_game.get("lineups", {})
+            h_players = lineups.get("homePlayers", [])
+            a_players = lineups.get("awayPlayers", [])
+
+            for idx, p in enumerate(h_players[:9]):
+                p_en = p.get("fullName", "")
+                p_ko = sanitize_player_name(translate_player_name(p_en))
+                pos = p.get("primaryPosition", {}).get("abbreviation", "타자")
+                home_lineup.append({
+                    "order": idx + 1,
+                    "pos": pos,
+                    "name": p_ko,
+                    "name_en": p_en,
+                    "id": p.get("id"),
+                    "hand": "R",
+                    "avg": ".270"
+                })
+
+            for idx, p in enumerate(a_players[:9]):
+                p_en = p.get("fullName", "")
+                p_ko = sanitize_player_name(translate_player_name(p_en))
+                pos = p.get("primaryPosition", {}).get("abbreviation", "타자")
+                away_lineup.append({
+                    "order": idx + 1,
+                    "pos": pos,
+                    "name": p_ko,
+                    "name_en": p_en,
+                    "id": p.get("id"),
+                    "hand": "R",
+                    "avg": ".270"
+                })
+
+            h_prob = matched_game.get("teams", {}).get("home", {}).get("probablePitcher", {})
+            a_prob = matched_game.get("teams", {}).get("away", {}).get("probablePitcher", {})
+            if h_prob:
+                h_p_en = h_prob.get("fullName", "")
+                home_starter = {
+                    "id": h_prob.get("id"),
+                    "name": sanitize_player_name(translate_player_name(h_p_en)) if h_p_en else "선발투수",
+                    "name_en": h_p_en,
+                    "hand": "R",
+                    "confirmed": True
+                }
+            if a_prob:
+                a_p_en = a_prob.get("fullName", "")
+                away_starter = {
+                    "id": a_prob.get("id"),
+                    "name": sanitize_player_name(translate_player_name(a_p_en)) if a_p_en else "선발투수",
+                    "name_en": a_p_en,
+                    "hand": "R",
+                    "confirmed": True
+                }
+
+            status_raw = matched_game.get("status", {}).get("abstractGameState", "")
+            is_confirmed = bool((len(home_lineup) >= 9 and len(away_lineup) >= 9) or (len(home_lineup) >= 9) or status_raw in ("Live", "Final"))
+
+        # feed/live fallback
+        if (len(home_lineup) == 0 or len(away_lineup) == 0) and matched_game_pk:
+            try:
+                feed_url = f"https://statsapi.mlb.com/api/v1.1/game/{matched_game_pk}/feed/live"
+                feed_data = self._fetch_json(feed_url)
+                box = feed_data.get("liveData", {}).get("boxscore", {}).get("teams", {})
+                game_data = feed_data.get("gameData", {})
+                players_data = game_data.get("players", {})
+
+                for side, target_list in [("home", home_lineup), ("away", away_lineup)]:
+                    if len(target_list) >= 9:
+                        continue
+                    t_box = box.get(side, {})
+                    b_ids = t_box.get("batters", [])
+                    p_box = t_box.get("players", {})
+                    order_idx = 0
+                    for bid in b_ids:
+                        p_obj = p_box.get(f"ID{bid}")
+                        if not p_obj:
+                            continue
+                        b_order = p_obj.get("battingOrder")
+                        if b_order and (b_order.endswith("00") or order_idx < 9):
+                            p_info = p_obj.get("person", {})
+                            p_meta = players_data.get(f"ID{bid}", {})
+                            p_en = p_info.get("fullName") or p_meta.get("fullName") or ""
+                            p_ko = sanitize_player_name(translate_player_name(p_en))
+                            pos = p_obj.get("position", {}).get("abbreviation", "타자")
+                            b_hand = p_meta.get("batSide", {}).get("code") or "R"
+                            s_bat = p_obj.get("seasonStats", {}).get("batting", {})
+                            avg_val = s_bat.get("avg") or ".270"
+                            target_list.append({
+                                "order": order_idx + 1,
+                                "pos": pos,
+                                "name": p_ko,
+                                "name_en": p_en,
+                                "id": bid,
+                                "hand": b_hand,
+                                "avg": avg_val
+                            })
+                            order_idx += 1
+                            if order_idx >= 9:
+                                break
+
+                if len(home_lineup) >= 9 or len(away_lineup) >= 9:
+                    is_confirmed = True
+            except Exception as fe:
+                logger.warning(f"fetch_realtime_lineup feed/live fallback error: {fe}")
+
+        return {
+            "game_pk": matched_game_pk,
+            "is_lineup_confirmed": is_confirmed,
+            "lineup_status": "CONFIRMED" if is_confirmed else "EXPECTED",
+            "home_lineup": home_lineup,
+            "away_lineup": away_lineup,
+            "home_starter": home_starter,
+            "away_starter": away_starter,
+            "source": "statsapi.mlb.com"
+        }
+

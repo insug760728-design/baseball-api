@@ -8104,6 +8104,13 @@ function getFullModalMatchList() {
               </span>
             </div>
             <div class="d-flex align-items-center gap-1">
+              <button type="button" class="btn btn-xs py-0.5 px-2 rounded-pill fw-bold btn-outline-primary" 
+                      id="btnRefreshLineup_${m.id}" 
+                      style="font-size:0.65rem;" 
+                      onclick="refreshMatchLineupRealtime(${m.id})" 
+                      title="MLB 공식 Stats API 실시간 라인업 갱신">
+                <i class="bi bi-arrow-clockwise me-0.5"></i>실시간 갱신
+              </button>
               <button type="button" class="btn btn-xs py-0.5 px-2 rounded-pill fw-bold ${isLineupConfirmed ? 'btn-outline-secondary' : 'btn-success text-white'}" 
                       style="font-size:0.65rem;" 
                       onclick="toggleMatchLineupConfirmed(${m.id})" 
@@ -8183,6 +8190,74 @@ function getFullModalMatchList() {
       if (typeof showMiniToast === 'function') {
         showMiniToast(nextConfirmed ? '⚡ [라인업 확정] 상세 최상단으로 실시간 이동되었습니다.' : '⏳ [라인업 미확정] 상세 최하단으로 실시간 이동되었습니다.');
       }
+    };
+
+    // -------------------------------------------------------------
+    // ⚡ [실시간 라인업 수집 & 동기화] MLB/야구 공식 API 백그라운드 실시간 갱신
+    // -------------------------------------------------------------
+    function fetchLineupRealtime(matchId, force = false) {
+      if (!matchId) return;
+      const targetMatch = (typeof allMatches !== 'undefined' && Array.isArray(allMatches) ? allMatches.find(m => String(m.id) === String(matchId)) : null)
+        || (window.allMatchesList || []).find(m => String(m.id) === String(matchId))
+        || (window._currentOpenDetailMatch && String(window._currentOpenDetailMatch.id) === String(matchId) ? window._currentOpenDetailMatch : null);
+      if (!targetMatch) return;
+
+      fetch(`/api/v1/matches/${matchId}/lineup${force ? '?force=true' : ''}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (!data) return;
+          let changed = false;
+          if (data.home_lineup && Array.isArray(data.home_lineup) && data.home_lineup.length > 0) {
+            targetMatch.home_lineup = data.home_lineup;
+            changed = true;
+          }
+          if (data.away_lineup && Array.isArray(data.away_lineup) && data.away_lineup.length > 0) {
+            targetMatch.away_lineup = data.away_lineup;
+            changed = true;
+          }
+          if (data.is_lineup_confirmed !== undefined && targetMatch.is_lineup_confirmed !== data.is_lineup_confirmed) {
+            targetMatch.is_lineup_confirmed = data.is_lineup_confirmed;
+            targetMatch.lineup_status = data.lineup_status || (data.is_lineup_confirmed ? 'CONFIRMED' : 'EXPECTED');
+            changed = true;
+          }
+          if (data.home_starter && data.home_starter.name && targetMatch.home_starter_name !== data.home_starter.name) {
+            targetMatch.home_starter_name = data.home_starter.name;
+            changed = true;
+          }
+          if (data.away_starter && data.away_starter.name && targetMatch.away_starter_name !== data.away_starter.name) {
+            targetMatch.away_starter_name = data.away_starter.name;
+            changed = true;
+          }
+
+          if (window._currentOpenDetailMatch && String(window._currentOpenDetailMatch.id) === String(matchId)) {
+            Object.assign(window._currentOpenDetailMatch, targetMatch);
+            if (changed && typeof renderNextGenDetail === 'function') {
+              renderNextGenDetail(window._currentOpenDetailMatch);
+              if (data.is_lineup_confirmed) {
+                const card = document.getElementById(`ngLineupSectionCard_${matchId}`);
+                if (card) {
+                  card.classList.remove('highlight-relocate');
+                  void card.offsetWidth;
+                  card.classList.add('highlight-relocate');
+                }
+              }
+            }
+          }
+        })
+        .catch(err => console.warn('fetchLineupRealtime err:', err));
+    }
+    window.fetchLineupRealtime = fetchLineupRealtime;
+
+    window.refreshMatchLineupRealtime = function(matchId) {
+      const btn = document.getElementById(`btnRefreshLineup_${matchId}`);
+      if (btn) btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1 spin-icon"></i>확인 중...';
+      fetchLineupRealtime(matchId, true);
+      setTimeout(() => {
+        if (btn) btn.innerHTML = '<i class="bi bi-arrow-clockwise me-0.5"></i>실시간 갱신';
+        if (typeof showMiniToast === 'function') {
+          showMiniToast('⚾ [MLB 공식 라인업] 메이저리그 공식 실시간 선발 라인업을 갱신하였습니다.');
+        }
+      }, 700);
     };
     
     function renderBaseballPitchingBattingWidgetHtml(m) {
@@ -16181,6 +16256,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
         if (!modalEl._hasApexCleanupAttached) {
           modalEl.addEventListener('hidden.bs.modal', function() {
             if (typeof destroyApexCharts === 'function') destroyApexCharts();
+            if (window._lineupPollInterval) {
+              clearInterval(window._lineupPollInterval);
+              window._lineupPollInterval = null;
+            }
           });
           modalEl._hasApexCleanupAttached = true;
         }
@@ -16190,6 +16269,31 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
       if (initialTab && initialTab !== 'roster') {
         setTimeout(() => scrollToNgSection(initialTab), 150);
+      }
+
+      // ⚾ 야구 경기일 경우 즉시 공식 실시간 라인업 호출 & 미확정 시 20초 주기 자동 폴링
+      if (match.sport_code === 'BASEBALL' && typeof fetchLineupRealtime === 'function') {
+        fetchLineupRealtime(match.id);
+
+        if (window._lineupPollInterval) {
+          clearInterval(window._lineupPollInterval);
+          window._lineupPollInterval = null;
+        }
+        if (!match.is_lineup_confirmed) {
+          window._lineupPollInterval = setInterval(() => {
+            if (!modalEl.classList.contains('show')) {
+              clearInterval(window._lineupPollInterval);
+              window._lineupPollInterval = null;
+              return;
+            }
+            if (window._currentOpenDetailMatch && !window._currentOpenDetailMatch.is_lineup_confirmed) {
+              fetchLineupRealtime(window._currentOpenDetailMatch.id);
+            } else {
+              clearInterval(window._lineupPollInterval);
+              window._lineupPollInterval = null;
+            }
+          }, 20000);
+        }
       }
 
       // Background detail fetch for rich player_stats & matchup_analysis
@@ -16213,6 +16317,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
               if (match.sport_code === 'BASEBALL' && typeof getMatchStarters === 'function' && typeof fetchPitcherProfileAsync === 'function') {
                 const stInfo = getMatchStarters(match);
                 fetchPitcherProfileAsync(match.id, stInfo.homeStarter, stInfo.awayStarter, match.league_name);
+              }
+              if (match.sport_code === 'BASEBALL' && typeof fetchLineupRealtime === 'function') {
+                fetchLineupRealtime(match.id);
               }
             }
           }).catch(()=>{});

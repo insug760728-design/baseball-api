@@ -461,6 +461,37 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
                 a_starter = ps.get("player_name")
                 break
 
+    h_lineup = None
+    a_lineup = None
+    is_lineup_confirmed = False
+
+    if isinstance(details_ts, dict) and details_ts.get("lineup"):
+        lu = details_ts["lineup"]
+        h_lineup = lu.get("home", [])
+        a_lineup = lu.get("away", [])
+        is_lineup_confirmed = lu.get("confirmed", False)
+
+    is_mlb = (m.sport_code == "BASEBALL") and (
+        ("MLB" in (m.league_name or "")) or 
+        (m.official_id and m.official_id.startswith("MLB_")) or 
+        any(k in (m.home_team_name or "") for k in ["양키", "다저", "토론", "볼티", "보스", "디트", "워싱", "메츠", "필라", "컵스", "화삭", "자이", "파드", "브루", "카디"])
+    )
+
+    if is_mlb and (force or not is_lineup_confirmed or not h_lineup or not a_lineup):
+        try:
+            from app.scrapers.official_mlb_live_scraper import MlbOfficialScraper
+            mlb_res = MlbOfficialScraper().fetch_realtime_lineup(m.away_team_name, m.home_team_name, m.match_date)
+            if mlb_res and (mlb_res.get("home_lineup") or mlb_res.get("away_lineup")):
+                if mlb_res.get("home_lineup"): h_lineup = mlb_res["home_lineup"]
+                if mlb_res.get("away_lineup"): a_lineup = mlb_res["away_lineup"]
+                is_lineup_confirmed = mlb_res.get("is_lineup_confirmed", False)
+                if mlb_res.get("home_starter") and mlb_res["home_starter"].get("name"):
+                    h_starter = mlb_res["home_starter"]["name"]
+                if mlb_res.get("away_starter") and mlb_res["away_starter"].get("name"):
+                    a_starter = mlb_res["away_starter"]["name"]
+        except Exception:
+            pass
+
     res = {
         "id": m.id,
         "official_id": m.official_id,
@@ -483,7 +514,11 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
         "events": data["events"],
         "player_stats": data["player_stats"],
         "matchup_analysis": matchup_analysis,
-        "history": HistoricalAgentRouter.get_match_history_by_agent(m.id, max_games=10)
+        "history": HistoricalAgentRouter.get_match_history_by_agent(m.id, max_games=10),
+        "home_lineup": h_lineup,
+        "away_lineup": a_lineup,
+        "is_lineup_confirmed": is_lineup_confirmed,
+        "lineup_status": "CONFIRMED" if is_lineup_confirmed else "EXPECTED"
     }
     ttl = 10 if (res.get("status") == "LIVE") else (180 if res.get("status") == "SCHEDULED" else 1800)
     cache_set_json(ckey, res, ttl_seconds=ttl)
@@ -520,6 +555,85 @@ def update_match_starters(match_id: int, payload: dict, db: Session = Depends(ge
         raise HTTPException(status_code=404, detail="경기를 찾을 수 없습니다.")
     clear_matches_cache()
     return updated
+
+
+@router.get("/{match_id}/lineup", summary="야구 경기 실시간 공식 선발 라인업 조회 (MLB/KBO/NPB)")
+def get_match_lineup(match_id: int, force: bool = False, db: Session = Depends(get_db)):
+    """MLB 공식 Stats API 또는 DB 기반 실시간 1~9번 선발 타순 및 투수 라인업 조회"""
+    from app.models.models import Match, MatchDetail
+    import logging
+    m = db.query(Match).filter(Match.id == match_id).first()
+    if not m:
+        raise HTTPException(status_code=404, detail="경기를 찾을 수 없습니다.")
+
+    dt = db.query(MatchDetail).filter(MatchDetail.match_id == m.id).first()
+    ts = {}
+    if dt and dt.team_stats:
+        try:
+            ts = json.loads(dt.team_stats) if isinstance(dt.team_stats, str) else dt.team_stats
+        except Exception:
+            ts = {}
+
+    db_lineup = ts.get("lineup", {})
+    db_home = db_lineup.get("home", [])
+    db_away = db_lineup.get("away", [])
+    db_confirmed = db_lineup.get("confirmed", False)
+
+    is_mlb = (m.sport_code == "BASEBALL") and (
+        ("MLB" in (m.league_name or "")) or 
+        (m.official_id and m.official_id.startswith("MLB_")) or 
+        any(k in (m.home_team_name or "") for k in ["양키", "다저", "토론", "볼티", "보스", "디트", "워싱", "메츠", "필라", "컵스", "화삭", "자이", "파드", "브루", "카디"])
+    )
+
+    if is_mlb and (force or not db_confirmed or not db_home or not db_away):
+        try:
+            from app.scrapers.official_mlb_live_scraper import MlbOfficialScraper
+            mlb_scraper = MlbOfficialScraper()
+            res = mlb_scraper.fetch_realtime_lineup(m.away_team_name, m.home_team_name, m.match_date)
+            if res and (res.get("home_lineup") or res.get("away_lineup")):
+                home_lineup = res.get("home_lineup", [])
+                away_lineup = res.get("away_lineup", [])
+                is_confirmed = res.get("is_lineup_confirmed", False)
+                if dt:
+                    ts["lineup"] = {
+                        "home": home_lineup,
+                        "away": away_lineup,
+                        "confirmed": is_confirmed
+                    }
+                    if res.get("home_starter") and res.get("home_starter").get("name"):
+                        if "starters" not in ts: ts["starters"] = {}
+                        ts["starters"]["home"] = res["home_starter"]
+                    if res.get("away_starter") and res.get("away_starter").get("name"):
+                        if "starters" not in ts: ts["starters"] = {}
+                        ts["starters"]["away"] = res["away_starter"]
+                    dt.team_stats = json.dumps(ts, ensure_ascii=False)
+                    db.commit()
+                return {
+                    "match_id": m.id,
+                    "is_lineup_confirmed": is_confirmed,
+                    "lineup_status": "CONFIRMED" if is_confirmed else "EXPECTED",
+                    "home_lineup": home_lineup,
+                    "away_lineup": away_lineup,
+                    "home_starter": res.get("home_starter"),
+                    "away_starter": res.get("away_starter"),
+                    "league": m.league_name,
+                    "source": "statsapi.mlb.com"
+                }
+        except Exception as e:
+            logging.getLogger("MatchAPI").warning(f"get_match_lineup MLB error: {e}")
+
+    return {
+        "match_id": m.id,
+        "is_lineup_confirmed": db_confirmed,
+        "lineup_status": "CONFIRMED" if db_confirmed else "EXPECTED",
+        "home_lineup": db_home,
+        "away_lineup": db_away,
+        "home_starter": ts.get("starters", {}).get("home"),
+        "away_starter": ts.get("starters", {}).get("away"),
+        "league": m.league_name,
+        "source": "database"
+    }
+
 
 
 @router.put("/players/{stat_id}", summary="야구 선수 세부 지표 수정")
