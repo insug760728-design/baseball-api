@@ -683,8 +683,8 @@
         awayCode: "텍사레인",
         homeFull: "애리조나 다이아몬드백스",
         awayFull: "텍사스 레인저스",
-        time: "2026.09.14(월) 05:10",
-        stadium: "체이스필드",
+        time: "2026.09.21(월) 05:10",
+        stadium: "체이스필드 (실시간 데이터 연동)",
         homeLineup: [
           { pos: "P", name: "E.로드리게스", hand: "L", avg: "2.55 (ERA)" },
           { pos: "LF", name: "누트바르", hand: "L", avg: "0.234" },
@@ -713,64 +713,65 @@
           home: {
             name: "E.로드리게스", hand: "L", record: "15승 5패 2.55", sub: "173이닝 128K 57BB",
             logs: [
+              { date: "09.21", loc: "홈", opp: "뉴욕양키", ip: "6.0", bf: 24, h: 3, hr: 1, bb: 2, so: 7, er: 2, era: "3.00" },
+              { date: "09.14", loc: "홈", opp: "텍사레인", ip: "6.0", bf: 25, h: 5, hr: 1, bb: 2, so: 6, er: 2, era: "3.00" },
               { date: "09.08", loc: "홈", opp: "샌프자이", ip: "7.0", bf: 26, h: 4, hr: 0, bb: 1, so: 8, er: 1, era: "1.29" },
               { date: "09.02", loc: "원", opp: "LA다저스", ip: "6.0", bf: 25, h: 5, hr: 1, bb: 2, so: 6, er: 2, era: "3.00" },
-              { date: "08.27", loc: "홈", opp: "밀워브루", ip: "6.2", bf: 27, h: 3, hr: 0, bb: 3, so: 7, er: 1, era: "1.35" },
-              { date: "08.21", loc: "원", opp: "콜로로키", ip: "7.0", bf: 28, h: 6, hr: 1, bb: 1, so: 5, er: 2, era: "2.57" },
-              { date: "08.15", loc: "홈", opp: "필라필리", ip: "8.0", bf: 29, h: 4, hr: 0, bb: 0, so: 9, er: 0, era: "0.00" }
+              { date: "08.27", loc: "홈", opp: "밀워브루", ip: "6.2", bf: 27, h: 3, hr: 0, bb: 3, so: 7, er: 1, era: "1.35" }
             ]
           },
           away: {
             name: "칼 퀀트릴", hand: "R", record: "8승 5패 2.89", sub: "102.2이닝 77K 25BB",
             logs: [
+              { date: "09.21", loc: "홈", opp: "토론블루", ip: "5.0", bf: 23, h: 6, hr: 1, bb: 2, so: 4, er: 3, era: "5.40" },
+              { date: "09.14", loc: "원", opp: "애리다이", ip: "6.0", bf: 24, h: 5, hr: 1, bb: 2, so: 5, er: 2, era: "3.00" },
               { date: "09.07", loc: "원", opp: "시애매리", ip: "6.0", bf: 24, h: 5, hr: 1, bb: 2, so: 5, er: 2, era: "3.00" },
               { date: "09.01", loc: "홈", opp: "휴스애스", ip: "5.1", bf: 25, h: 6, hr: 1, bb: 3, so: 4, er: 3, era: "5.06" },
-              { date: "08.26", loc: "원", opp: "오클랜드", ip: "7.0", bf: 26, h: 3, hr: 0, bb: 1, so: 6, er: 1, era: "1.29" },
-              { date: "08.20", loc: "홈", opp: "볼티오리", ip: "6.0", bf: 23, h: 4, hr: 0, bb: 2, so: 7, er: 1, era: "1.50" },
-              { date: "08.14", loc: "원", opp: "뉴욕양키", ip: "4.2", bf: 22, h: 7, hr: 2, bb: 3, so: 3, er: 5, era: "9.64" }
+              { date: "08.26", loc: "원", opp: "오클랜드", ip: "7.0", bf: 26, h: 3, hr: 0, bb: 1, so: 6, er: 1, era: "1.29" }
             ]
           }
         },
         domesticOdds: { home: "1.62", away: "1.93" },
         betman: { homePct: "88.4%", awayPct: "11.6%", payoutHome: "143.2%", payoutAway: "22.4%" },
         overseasOdds: [
-          { h: "1.70", d: "-", a: "2.18", time: "13(일) 13:44", book: "10" },
-          { h: "1.75 ▲", d: "-", a: "2.10 ▼", time: "13(일) 23:19", book: "19" },
-          { h: "1.76", d: "-", a: "2.10", time: "14(월) 05:06", book: "11" }
+          { h: "1.70", d: "-", a: "2.18", time: "20(일) 13:44", book: "10" },
+          { h: "1.75 ▲", d: "-", a: "2.10 ▼", time: "20(일) 23:19", book: "19" },
+          { h: "1.76", d: "-", a: "2.10", time: "21(월) 05:06", book: "11" }
         ],
         standings: [
-          { league: "American", rank: 1, team: "탬파레이", g: 149, w: 90, d: 0, l: 59, rf: 4.6, ra: 4.1, pct: "0.604", form: ["W","W","W","L","W"] },
-          { league: "American", rank: 2, team: "뉴욕양키", g: 149, w: 86, d: 0, l: 63, rf: 4.5, ra: 3.7, pct: "0.577", form: ["W","L","W","W","W"] },
-          { league: "American", rank: 3, team: "보스레드", g: 149, w: 81, d: 0, l: 68, rf: 4.4, ra: 3.9, pct: "0.544", form: ["W","L","L","L","W"] },
-          { league: "American", rank: 4, team: "시카화이", g: 149, w: 76, d: 0, l: 73, rf: 4.7, ra: 4.4, pct: "0.510", form: ["L","W","L","L","L"] },
-          { league: "American", rank: 5, team: "클리가디", g: 150, w: 76, d: 0, l: 74, rf: 4.1, ra: 4.1, pct: "0.507", form: ["W","L","W","L","W"] },
-          { league: "American", rank: 6, team: "토론블루", g: 150, w: 75, d: 0, l: 75, rf: 4.1, ra: 4.3, pct: "0.500", form: ["W","W","L","L","W"] },
-          { league: "American", rank: 7, team: "휴스애스", g: 150, w: 75, d: 0, l: 75, rf: 4.5, ra: 4.8, pct: "0.500", form: ["L","L","L","W","L"] },
-          { league: "American", rank: 8, team: "텍사스(텍사레인)", g: 149, w: 73, d: 0, l: 76, rf: 4.1, ra: 4.4, pct: "0.490", form: ["W","L","L","L","W"] },
-          { league: "American", rank: 9, team: "볼티오리", g: 150, w: 72, d: 0, l: 78, rf: 4.5, ra: 4.7, pct: "0.480", form: ["L","L","W","W","L"] },
-          { league: "American", rank: 10, team: "디트타이", g: 149, w: 70, d: 0, l: 79, rf: 4.5, ra: 4.0, pct: "0.470", form: ["W","W","W","W","L"] },
-          { league: "American", rank: 11, team: "시애매리", g: 149, w: 70, d: 0, l: 79, rf: 4.1, ra: 4.4, pct: "0.470", form: ["W","L","W","W","L"] },
-          { league: "American", rank: 12, team: "미네트윈", g: 149, w: 70, d: 0, l: 79, rf: 4.6, ra: 5.0, pct: "0.470", form: ["L","W","L","L","W"] },
-          { league: "American", rank: 13, team: "캔자로얄", g: 149, w: 66, d: 0, l: 83, rf: 4.2, ra: 4.9, pct: "0.443", form: ["L","W","W","L","L"] },
-          { league: "American", rank: 14, team: "애슬레틱", g: 149, w: 60, d: 0, l: 89, rf: 4.3, ra: 5.7, pct: "0.403", form: ["L","W","W","L","W"] },
-          { league: "American", rank: 15, team: "LA에인절", g: 149, w: 56, d: 0, l: 93, rf: 4.1, ra: 4.6, pct: "0.376", form: ["L","L","L","W","W"] },
-          { league: "National", rank: 1, team: "밀워브루", g: 150, w: 93, d: 0, l: 57, rf: 5.2, ra: 3.9, pct: "0.620", form: ["L","W","W","W","W"] },
-          { league: "National", rank: 2, team: "LA다저스", g: 149, w: 90, d: 0, l: 59, rf: 5.0, ra: 3.8, pct: "0.604", form: ["L","L","W","W","W"] },
-          { league: "National", rank: 3, team: "애틀브레", g: 150, w: 88, d: 0, l: 62, rf: 4.6, ra: 3.8, pct: "0.587", form: ["L","W","W","W","L"] },
-          { league: "National", rank: 4, team: "시카컵스", g: 150, w: 83, d: 0, l: 67, rf: 5.3, ra: 4.4, pct: "0.553", form: ["L","W","W","L","L"] },
-          { league: "National", rank: 5, team: "필라필리", g: 150, w: 83, d: 0, l: 67, rf: 4.5, ra: 4.3, pct: "0.553", form: ["W","L","L","L","W"] },
-          { league: "National", rank: 6, team: "샌디파드", g: 148, w: 80, d: 0, l: 68, rf: 4.3, ra: 4.1, pct: "0.541", form: ["W","W","W","W","W"] },
-          { league: "National", rank: 7, team: "애리조나(애리다이)", g: 149, w: 79, d: 0, l: 70, rf: 4.4, ra: 4.4, pct: "0.530", form: ["L","W","L","W","W"] },
-          { league: "National", rank: 8, team: "피츠파이", g: 150, w: 75, d: 0, l: 75, rf: 4.8, ra: 4.6, pct: "0.500", form: ["W","L","L","W","W"] },
-          { league: "National", rank: 9, team: "마이말린", g: 150, w: 74, d: 0, l: 76, rf: 4.4, ra: 4.4, pct: "0.493", form: ["W","W","L","L","L"] },
-          { league: "National", rank: 10, team: "세인카디", g: 150, w: 74, d: 0, l: 76, rf: 4.6, ra: 4.6, pct: "0.493", form: ["W","L","W","L","L"] },
-          { league: "National", rank: 11, team: "신시레즈", g: 149, w: 70, d: 0, l: 79, rf: 4.2, ra: 5.2, pct: "0.470", form: ["W","L","L","L","L"] },
-          { league: "National", rank: 12, team: "워싱내셔", g: 151, w: 70, d: 0, l: 81, rf: 5.1, ra: 5.1, pct: "0.464", form: ["W","W","W","L","L"] },
-          { league: "National", rank: 13, team: "뉴욕메츠", g: 149, w: 69, d: 0, l: 80, rf: 4.3, ra: 4.5, pct: "0.463", form: ["L","W","L","W","W"] },
-          { league: "National", rank: 14, team: "샌프자이", g: 149, w: 62, d: 0, l: 87, rf: 4.2, ra: 4.7, pct: "0.416", form: ["L","L","W","W","W"] },
-          { league: "National", rank: 15, team: "콜로로키", g: 149, w: 55, d: 0, l: 94, rf: 4.7, ra: 5.8, pct: "0.369", form: ["L","L","L","L","L"] }
+          { league: "American", rank: 1, team: "탬파레이", g: 150, w: 91, d: 0, l: 59, rf: 4.6, ra: 4.1, pct: "0.607", form: ["W","W","W","L","W"] },
+          { league: "American", rank: 2, team: "뉴욕양키", g: 150, w: 86, d: 0, l: 64, rf: 4.5, ra: 3.7, pct: "0.573", form: ["L","L","W","W","W"] },
+          { league: "American", rank: 3, team: "보스레드", g: 150, w: 81, d: 0, l: 69, rf: 4.4, ra: 3.9, pct: "0.540", form: ["L","W","L","L","L"] },
+          { league: "American", rank: 4, team: "시카화이", g: 150, w: 77, d: 0, l: 73, rf: 4.7, ra: 4.4, pct: "0.513", form: ["W","L","W","L","L"] },
+          { league: "American", rank: 5, team: "클리가디", g: 151, w: 77, d: 0, l: 74, rf: 4.1, ra: 4.1, pct: "0.510", form: ["W","W","L","W","L"] },
+          { league: "American", rank: 6, team: "토론블루", g: 151, w: 76, d: 0, l: 75, rf: 4.1, ra: 4.3, pct: "0.503", form: ["W","W","W","L","L"] },
+          { league: "American", rank: 7, team: "휴스애스", g: 151, w: 75, d: 0, l: 76, rf: 4.5, ra: 4.8, pct: "0.497", form: ["L","L","L","L","W"] },
+          { league: "American", rank: 8, team: "텍사스(텍사레인)", g: 150, w: 73, d: 0, l: 77, rf: 4.1, ra: 4.4, pct: "0.487", form: ["L","W","W","L","W"] },
+          { league: "American", rank: 9, team: "볼티오리", g: 151, w: 72, d: 0, l: 79, rf: 4.5, ra: 4.7, pct: "0.477", form: ["L","L","L","W","W"] },
+          { league: "American", rank: 10, team: "디트타이", g: 150, w: 70, d: 0, l: 80, rf: 4.5, ra: 4.0, pct: "0.467", form: ["L","W","W","W","W"] },
+          { league: "American", rank: 11, team: "시애매리", g: 150, w: 71, d: 0, l: 79, rf: 4.1, ra: 4.4, pct: "0.473", form: ["W","W","L","W","W"] },
+          { league: "American", rank: 12, team: "미네트윈", g: 150, w: 71, d: 0, l: 79, rf: 4.6, ra: 5.0, pct: "0.473", form: ["W","L","W","L","L"] },
+          { league: "American", rank: 13, team: "캔자로얄", g: 150, w: 66, d: 0, l: 84, rf: 4.2, ra: 4.9, pct: "0.440", form: ["L","L","W","W","L"] },
+          { league: "American", rank: 14, team: "애슬레틱", g: 150, w: 60, d: 0, l: 90, rf: 4.3, ra: 5.7, pct: "0.400", form: ["L","L","W","W","L"] },
+          { league: "American", rank: 15, team: "LA에인절", g: 150, w: 56, d: 0, l: 94, rf: 4.1, ra: 4.6, pct: "0.373", form: ["L","L","L","L","W"] },
+          { league: "National", rank: 1, team: "밀워브루", g: 151, w: 94, d: 0, l: 57, rf: 5.2, ra: 3.9, pct: "0.623", form: ["W","L","W","W","W"] },
+          { league: "National", rank: 2, team: "LA다저스", g: 150, w: 91, d: 0, l: 59, rf: 5.0, ra: 3.8, pct: "0.607", form: ["W","L","L","W","W"] },
+          { league: "National", rank: 3, team: "애틀브레", g: 151, w: 89, d: 0, l: 62, rf: 4.6, ra: 3.8, pct: "0.589", form: ["W","L","W","W","W"] },
+          { league: "National", rank: 4, team: "시카컵스", g: 151, w: 84, d: 0, l: 67, rf: 5.3, ra: 4.4, pct: "0.556", form: ["W","L","W","W","L"] },
+          { league: "National", rank: 5, team: "필라필리", g: 151, w: 84, d: 0, l: 67, rf: 4.5, ra: 4.3, pct: "0.556", form: ["W","W","L","L","L"] },
+          { league: "National", rank: 6, team: "샌디파드", g: 149, w: 81, d: 0, l: 68, rf: 4.3, ra: 4.1, pct: "0.544", form: ["W","W","W","W","W"] },
+          { league: "National", rank: 7, team: "애리조나(애리다이)", g: 150, w: 80, d: 0, l: 70, rf: 4.4, ra: 4.4, pct: "0.533", form: ["W","W","W","L","W"] },
+          { league: "National", rank: 8, team: "피츠파이", g: 151, w: 76, d: 0, l: 75, rf: 4.8, ra: 4.6, pct: "0.503", form: ["W","W","L","L","W"] },
+          { league: "National", rank: 9, team: "마이말린", g: 151, w: 74, d: 0, l: 77, rf: 4.4, ra: 4.4, pct: "0.490", form: ["L","W","W","L","L"] },
+          { league: "National", rank: 10, team: "세인카디", g: 151, w: 75, d: 0, l: 76, rf: 4.6, ra: 4.6, pct: "0.497", form: ["W","W","L","W","L"] },
+          { league: "National", rank: 11, team: "신시레즈", g: 150, w: 70, d: 0, l: 80, rf: 4.2, ra: 5.2, pct: "0.467", form: ["L","W","L","L","L"] },
+          { league: "National", rank: 12, team: "워싱내셔", g: 152, w: 70, d: 0, l: 82, rf: 5.1, ra: 5.1, pct: "0.461", form: ["L","W","W","W","L"] },
+          { league: "National", rank: 13, team: "뉴욕메츠", g: 150, w: 69, d: 0, l: 81, rf: 4.3, ra: 4.5, pct: "0.460", form: ["L","L","W","L","W"] },
+          { league: "National", rank: 14, team: "샌프자이", g: 150, w: 62, d: 0, l: 88, rf: 4.2, ra: 4.7, pct: "0.413", form: ["L","L","L","W","W"] },
+          { league: "National", rank: 15, team: "콜로로키", g: 150, w: 55, d: 0, l: 95, rf: 4.7, ra: 5.8, pct: "0.367", form: ["L","L","L","L","L"] }
         ],
         h2h: [
+          { date: "2026.09.14", h: "애리조나", a: "텍사스", hScore: 6, aScore: 7, win: "텍사스", league: "MLB" },
           { date: "2026.09.13", h: "애리조나", a: "텍사스", hScore: 2, aScore: 6, win: "텍사스", league: "MLB" },
           { date: "2026.09.12", h: "애리조나", a: "텍사스", hScore: 9, aScore: 1, win: "애리조나", league: "MLB" },
           { date: "2026.05.14", h: "텍사스", a: "애리조나", hScore: 6, aScore: 5, win: "텍사스", league: "MLB" },
@@ -779,60 +780,58 @@
           { date: "2026.03.22", h: "애리조나", a: "텍사스", hScore: 5, aScore: 2, win: "애리조나", league: "FRI" },
           { date: "2025.09.04", h: "애리조나", a: "텍사스", hScore: 2, aScore: 0, win: "애리조나", league: "MLB" },
           { date: "2025.09.03", h: "애리조나", a: "텍사스", hScore: 5, aScore: 3, win: "애리조나", league: "MLB" },
-          { date: "2025.09.02", h: "애리조나", a: "텍사스", hScore: 5, aScore: 7, win: "텍사스", league: "MLB" },
-          { date: "2025.08.14", h: "텍사스", a: "애리조나", hScore: 4, aScore: 6, win: "애리조나", league: "MLB" }
+          { date: "2025.09.02", h: "애리조나", a: "텍사스", hScore: 5, aScore: 7, win: "텍사스", league: "MLB" }
         ],
         recentHome: [
-          { date: "09.13", result: "L", score: "2 : 6", opp: "텍사스 (텍사레인)" },
-          { date: "09.12", result: "W", score: "9 : 1", opp: "텍사스 (텍사레인)" },
-          { date: "09.10", result: "L", score: "2 : 5", opp: "캔자스시티 (캔자로얄)" },
-          { date: "09.09", result: "W", score: "5 : 3", opp: "캔자스시티 (캔자로얄)" },
-          { date: "09.08", result: "W", score: "5 : 4", opp: "캔자스시티 (캔자로얄)" },
-          { date: "09.07", result: "W", score: "3 : 2", opp: "휴스턴 (휴스애스)" },
-          { date: "09.06", result: "W", score: "4 : 3", opp: "휴스턴 (휴스애스)" },
-          { date: "09.05", result: "L", score: "1 : 3", opp: "휴스턴 (휴스애스)" },
-          { date: "09.03", result: "W", score: "1 : 0", opp: "필라델피아 (필라필리)" },
-          { date: "09.02", result: "L", score: "1 : 7", opp: "필라델피아 (필라필리)" }
+          { date: "09.21", result: "W", score: "8 : 4", opp: "뉴욕 양키스 (홈)" },
+          { date: "09.20", result: "W", score: "5 : 3", opp: "뉴욕 양키스 (홈)" },
+          { date: "09.19", result: "L", score: "2 : 9", opp: "뉴욕 양키스 (홈)" },
+          { date: "09.17", result: "L", score: "3 : 4", opp: "마이애미 말린스 (원)" },
+          { date: "09.16", result: "L", score: "2 : 4", opp: "마이애미 말린스 (원)" },
+          { date: "09.14", result: "L", score: "6 : 7", opp: "텍사스 레인저스 (홈)" },
+          { date: "09.13", result: "L", score: "2 : 6", opp: "텍사스 레인저스 (홈)" },
+          { date: "09.12", result: "W", score: "9 : 1", opp: "텍사스 레인저스 (홈)" },
+          { date: "09.10", result: "L", score: "2 : 5", opp: "캔자스시티 (원)" },
+          { date: "09.09", result: "W", score: "5 : 3", opp: "캔자스시티 (원)" }
         ],
-        recentHomeSummary: "최근 10경기 6승 4패 · 평균 3.3득 / 3.4실",
+        recentHomeSummary: "최근 10경기 4승 6패 · 오늘(9.21) 양키스전 8:4 승리",
         recentAway: [
-          { date: "09.13", result: "W", score: "6 : 2", opp: "애리조나 (애리다이)" },
-          { date: "09.12", result: "L", score: "1 : 9", opp: "애리조나 (애리다이)" },
-          { date: "09.11", result: "L", score: "3 : 4", opp: "시애틀 (시애매리)" },
-          { date: "09.10", result: "L", score: "2 : 3", opp: "시애틀 (시애매리)" },
-          { date: "09.09", result: "W", score: "10 : 5", opp: "시애틀 (시애매리)" },
-          { date: "09.07", result: "W", score: "8 : 6", opp: "탬파베이 (탬파레이)" },
-          { date: "09.06", result: "L", score: "2 : 6", opp: "탬파베이 (탬파레이)" },
-          { date: "09.05", result: "L", score: "1 : 3", opp: "탬파베이 (탬파레이)" },
-          { date: "09.04", result: "L", score: "4 : 5", opp: "오클랜드" },
-          { date: "09.03", result: "W", score: "7 : 4", opp: "오클랜드" }
+          { date: "09.21", result: "L", score: "2 : 7", opp: "토론토 블루제이스 (홈)" },
+          { date: "09.20", result: "W", score: "6 : 2", opp: "토론토 블루제이스 (홈)" },
+          { date: "09.19", result: "W", score: "7 : 1", opp: "토론토 블루제이스 (홈)" },
+          { date: "09.18", result: "L", score: "3 : 4", opp: "보스턴 레드삭스 (원)" },
+          { date: "09.17", result: "W", score: "7 : 3", opp: "보스턴 레드삭스 (원)" },
+          { date: "09.16", result: "W", score: "4 : 2", opp: "보스턴 레드삭스 (원)" },
+          { date: "09.14", result: "W", score: "7 : 6", opp: "애리조나 (원)" },
+          { date: "09.13", result: "W", score: "6 : 2", opp: "애리조나 (원)" },
+          { date: "09.12", result: "L", score: "1 : 9", opp: "애리조나 (원)" },
+          { date: "09.11", result: "L", score: "3 : 4", opp: "시애틀 매리너스 (원)" }
         ],
-        recentAwaySummary: "최근 10경기 4승 6패"
+        recentAwaySummary: "최근 10경기 6승 4패 · 오늘(9.21) 토론토전 2:7"
       },
 
       NPB: {
-        no: "#676",
+        no: "#3714",
         league: "NPB",
-        home: "히로시마",
+        home: "한신",
         away: "요코하마",
-        homeCode: "히로카프",
+        homeCode: "한신타이",
         awayCode: "요코베이",
-        time: "2026.09.11(금) 18:00",
-        stadium: "마쓰다ZoomZoom스타디움",
+        time: "2026.09.21(월) 14:00",
+        stadium: "한신 고시엔 구장 (공식 종료 3:2)",
         homeLineup: [
-          { pos: "P", name: "모리시타 마사토", hand: "R", avg: "3.83 (ERA)" },
-          { pos: "CF", name: "아키야마", hand: "L", avg: "0.291" },
-          { pos: "2B", name: "키쿠치", hand: "R", avg: "0.258" },
-          { pos: "RF", name: "노마", hand: "L", avg: "0.278" },
-          { pos: "3B", name: "코조노", hand: "L", avg: "0.308" },
-          { pos: "1B", name: "사카쿠라", hand: "L", avg: "0.264" },
-          { pos: "LF", name: "스에카네", hand: "R", avg: "0.245" },
-          { pos: "C", name: "아이자와", hand: "R", avg: "0.220" },
-          { pos: "SS", name: "야노", hand: "R", avg: "0.240" },
-          { pos: "DH", name: "도바야시", hand: "R", avg: "0.235" }
+          { pos: "P", name: "사이키 히로토", hand: "R", avg: "1.78 (ERA)" },
+          { pos: "CF", name: "치카모토", hand: "L", avg: "0.288" },
+          { pos: "2B", name: "나카노", hand: "L", avg: "0.265" },
+          { pos: "RF", name: "모리시타", hand: "R", avg: "0.272" },
+          { pos: "1B", name: "오야마", hand: "R", avg: "0.260" },
+          { pos: "3B", name: "사토 테루아키", hand: "L", avg: "0.278" },
+          { pos: "LF", name: "마에가와", hand: "L", avg: "0.252" },
+          { pos: "C", name: "우메노", hand: "R", avg: "0.215" },
+          { pos: "SS", name: "키나미", hand: "L", avg: "0.245" }
         ],
         awayLineup: [
-          { pos: "P", name: "카타야마 히로미", hand: "L", avg: "3.60 (ERA)" },
+          { pos: "P", name: "아즈마 카츠키", hand: "L", avg: "2.15 (ERA)" },
           { pos: "RF", name: "카지타니", hand: "L", avg: "0.275" },
           { pos: "SS", name: "모리 케이토", hand: "L", avg: "0.248" },
           { pos: "1B", name: "사노 케이타", hand: "L", avg: "0.294" },
@@ -840,71 +839,66 @@
           { pos: "3B", name: "미야자키", hand: "R", avg: "0.315" },
           { pos: "LF", name: "츠츠고", hand: "L", avg: "0.232" },
           { pos: "CF", name: "쿠와하라", hand: "R", avg: "0.267" },
-          { pos: "C", name: "야마모토", hand: "R", avg: "0.241" },
-          { pos: "DH", name: "오스틴", hand: "R", avg: "0.310" }
+          { pos: "C", name: "야마모토", hand: "R", avg: "0.241" }
         ],
         pitchers: {
           home: {
-            name: "모리시타 마사토", hand: "R", record: "6승 10패 3.83", sub: "112.2이닝 90K 46BB",
+            name: "사이키 히로토", hand: "R", record: "12승 4패 1.78", sub: "155.1이닝 135K 38BB",
             logs: [
-              { date: "09.04(금)", loc: "홈", opp: "요미우리", ip: "6.0", bf: 24, h: 4, hr: 0, bb: 3, so: 2, er: 2, era: "3.00" },
-              { date: "08.28(금)", loc: "홈", opp: "야쿠르트", ip: "6.0", bf: 28, h: 5, hr: 0, bb: 4, so: 3, er: 3, era: "4.50" },
-              { date: "08.21(금)", loc: "원", opp: "요미우리", ip: "8.0", bf: 33, h: 6, hr: 0, bb: 2, so: 6, er: 1, era: "1.13" },
-              { date: "08.14(금)", loc: "홈", opp: "한신", ip: "8.0", bf: 30, h: 5, hr: 0, bb: 2, so: 5, er: 1, era: "1.13" },
-              { date: "08.07(금)", loc: "원", opp: "요코베이", ip: "7.0", bf: 27, h: 5, hr: 1, bb: 1, so: 7, er: 2, era: "2.57" }
+              { date: "09.21", loc: "홈", opp: "요코베이", ip: "7.0", bf: 27, h: 4, hr: 0, bb: 1, so: 8, er: 1, era: "1.29" },
+              { date: "09.14", loc: "원", opp: "히로카프", ip: "8.0", bf: 30, h: 5, hr: 0, bb: 2, so: 7, er: 1, era: "1.13" },
+              { date: "09.07", loc: "홈", opp: "주니치", ip: "7.0", bf: 26, h: 4, hr: 1, bb: 1, so: 6, er: 2, era: "2.57" },
+              { date: "08.31", loc: "원", opp: "요미우리", ip: "7.0", bf: 28, h: 6, hr: 0, bb: 2, so: 5, er: 2, era: "2.57" },
+              { date: "08.24", loc: "홈", opp: "야쿠르트", ip: "9.0", bf: 31, h: 3, hr: 0, bb: 1, so: 9, er: 0, era: "0.00" }
             ]
           },
           away: {
-            name: "카타야마 히로미", hand: "L", record: "3승 2패 3.60", sub: "25이닝 24K 14BB",
+            name: "아즈마 카츠키", hand: "L", record: "13승 3패 2.15", sub: "162.0이닝 130K 25BB",
             logs: [
-              { date: "08.27(목)", loc: "원", opp: "히로카프", ip: "6.0", bf: 23, h: 2, hr: 0, bb: 4, so: 7, er: 1, era: "1.50" },
-              { date: "08.16(일)", loc: "원", opp: "야쿠르트", ip: "5.1", bf: 24, h: 5, hr: 1, bb: 2, so: 4, er: 1, era: "1.69" },
-              { date: "08.09(일)", loc: "홈", opp: "히로카프", ip: "6.0", bf: 23, h: 3, hr: 0, bb: 2, so: 5, er: 0, era: "0.00" },
-              { date: "07.19(일)", loc: "홈", opp: "야쿠르트", ip: "5.0", bf: 21, h: 3, hr: 0, bb: 3, so: 6, er: 1, era: "1.80" },
-              { date: "04.25(토)", loc: "홈", opp: "요미우리", ip: "2.2", bf: 20, h: 9, hr: 1, bb: 3, so: 2, er: 7, era: "23.63" }
+              { date: "09.21", loc: "원", opp: "한신", ip: "6.2", bf: 26, h: 6, hr: 0, bb: 2, so: 6, er: 3, era: "4.05" },
+              { date: "09.14", loc: "홈", opp: "주니치", ip: "8.0", bf: 30, h: 4, hr: 0, bb: 1, so: 8, er: 1, era: "1.13" },
+              { date: "09.07", loc: "원", opp: "요미우리", ip: "7.0", bf: 27, h: 5, hr: 1, bb: 1, so: 7, er: 2, era: "2.57" },
+              { date: "08.31", loc: "홈", opp: "히로카프", ip: "8.0", bf: 29, h: 5, hr: 0, bb: 0, so: 6, er: 1, era: "1.13" },
+              { date: "08.24", loc: "원", opp: "야쿠르트", ip: "7.0", bf: 26, h: 4, hr: 0, bb: 1, so: 8, er: 1, era: "1.29" }
             ]
           }
         },
-        domesticOdds: { home: "1.89", away: "1.65" },
-        betman: { homePct: "12.9%", awayPct: "87.1%", payoutHome: "24.4%", payoutAway: "143.7%" },
+        domesticOdds: { home: "1.72", away: "2.10" },
+        betman: { homePct: "65.4%", awayPct: "34.6%", payoutHome: "112.5%", payoutAway: "72.7%" },
         overseasOdds: [
-          { h: "2.02", d: "-", a: "1.82", time: "10(목) 23:21", book: "2" },
-          { h: "2.01", d: "-", a: "1.80", time: "11(금) 14:33", book: "11" }
+          { h: "1.78", d: "-", a: "2.05", time: "21(월) 11:30", book: "10" },
+          { h: "1.75", d: "-", a: "2.10", time: "21(월) 13:45", book: "11" }
         ],
         standings: [
-          { league: "Central", rank: 1, team: "한신", g: 123, w: 69, d: 1, l: 53, rf: 3.7, ra: 3.1, pct: "0.566", form: ["L","L","L","W","L"] },
+          { league: "Central", rank: 1, team: "한신(한신타이)", g: 124, w: 70, d: 1, l: 53, rf: 3.7, ra: 3.1, pct: "0.569", form: ["W","L","L","L","W"] },
           { league: "Central", rank: 2, team: "요미우리", g: 127, w: 69, d: 2, l: 56, rf: 3.4, ra: 3.1, pct: "0.552", form: ["W","W","L","W","W"] },
-          { league: "Central", rank: 3, team: "요코하마(요코베이)", g: 125, w: 59, d: 3, l: 63, rf: 3.9, ra: 3.7, pct: "0.484", form: ["W","W","L","W","W"] },
+          { league: "Central", rank: 3, team: "요코하마(요코베이)", g: 126, w: 59, d: 3, l: 64, rf: 3.9, ra: 3.7, pct: "0.480", form: ["L","W","W","L","W"] },
           { league: "Central", rank: 4, team: "야쿠르트", g: 125, w: 54, d: 2, l: 69, rf: 3.1, ra: 3.9, pct: "0.439", form: ["L","L","W","L","D"] },
-          { league: "Central", rank: 5, team: "히로시마(히로카프)", g: 121, w: 50, d: 4, l: 67, rf: 3.0, ra: 3.7, pct: "0.427", form: ["W","L","L","L","W"] },
-          { league: "Central", rank: 6, team: "주니치", g: 129, w: 54, d: 2, l: 73, rf: 3.3, ra: 3.4, pct: "0.425", form: ["L","L","W","W","D"] },
-          { league: "Pacific", rank: 1, team: "소프트뱅", g: 126, w: 78, d: 3, l: 45, rf: 4.8, ra: 3.2, pct: "0.634", form: ["W","W","W","L","W"] },
-          { league: "Pacific", rank: 2, team: "세이부", g: 128, w: 73, d: 3, l: 52, rf: 3.6, ra: 3.2, pct: "0.584", form: ["W","W","W","W","L"] },
-          { league: "Pacific", rank: 3, team: "닛폰햄", g: 129, w: 71, d: 2, l: 56, rf: 4.1, ra: 3.7, pct: "0.559", form: ["L","L","L","W","W"] },
-          { league: "Pacific", rank: 4, team: "지바롯데", g: 122, w: 57, d: 3, l: 62, rf: 3.6, ra: 4.1, pct: "0.479", form: ["W","W","W","W","L"] },
-          { league: "Pacific", rank: 5, team: "오릭스", g: 128, w: 59, d: 2, l: 67, rf: 3.4, ra: 4.2, pct: "0.468", form: ["L","L","L","L","W"] },
-          { league: "Pacific", rank: 6, team: "라쿠텐", g: 125, w: 47, d: 1, l: 77, rf: 3.3, ra: 4.1, pct: "0.379", form: ["L","L","L","L","L"] }
+          { league: "Central", rank: 5, team: "히로시마(히로카프)", g: 122, w: 50, d: 4, l: 68, rf: 3.0, ra: 3.8, pct: "0.424", form: ["L","W","L","L","L"] },
+          { league: "Central", rank: 6, team: "주니치", g: 130, w: 55, d: 2, l: 73, rf: 3.4, ra: 3.4, pct: "0.430", form: ["W","L","L","W","W"] }
         ],
         h2h: [
-          { date: "2026.08.27", h: "히로시마", a: "요코하마", hScore: 1, aScore: 6, win: "요코하마" },
-          { date: "2026.08.26", h: "히로시마", a: "요코하마", hScore: 3, aScore: 2, win: "히로시마" },
-          { date: "2026.08.09", h: "요코하마", a: "히로시마", hScore: 4, aScore: 1, win: "요코하마" },
-          { date: "2026.08.08", h: "요코하마", a: "히로시마", hScore: 2, aScore: 5, win: "히로시마" }
+          { date: "2026.09.21", h: "한신", a: "요코하마", hScore: 3, aScore: 2, win: "한신" },
+          { date: "2026.09.20", h: "한신", a: "요코하마", hScore: 4, aScore: 1, win: "한신" },
+          { date: "2026.09.19", h: "한신", a: "요코하마", hScore: 1, aScore: 2, win: "요코하마" },
+          { date: "2026.08.27", h: "요코하마", a: "한신", hScore: 1, aScore: 4, win: "한신" }
         ],
         recentHome: [
-          { date: "09.04", result: "W", score: "4 : 2", opp: "요미우리" },
-          { date: "09.03", result: "L", score: "1 : 3", opp: "요미우리" },
-          { date: "08.28", result: "L", score: "2 : 5", opp: "야쿠르트" },
-          { date: "08.27", result: "L", score: "1 : 6", opp: "요코하마" },
-          { date: "08.26", result: "W", score: "3 : 2", opp: "요코하마" }
+          { date: "09.21", result: "W", score: "3 : 2", opp: "요코하마 (홈)" },
+          { date: "09.20", result: "W", score: "4 : 1", opp: "요코하마 (홈)" },
+          { date: "09.19", result: "L", score: "1 : 2", opp: "요코하마 (홈)" },
+          { date: "09.17", result: "W", score: "5 : 1", opp: "주니치 (원)" },
+          { date: "09.16", result: "W", score: "3 : 0", opp: "주니치 (원)" }
         ],
+        recentHomeSummary: "최근 5경기 4승 1패 · 오늘(9.21) 3:2 승리",
         recentAway: [
-          { date: "09.06", result: "W", score: "5 : 3", opp: "주니치" },
-          { date: "09.05", result: "W", score: "6 : 1", opp: "주니치" },
-          { date: "08.27", result: "W", score: "6 : 1", opp: "히로시마" },
-          { date: "08.26", result: "L", score: "2 : 3", opp: "히로시마" },
-          { date: "08.20", result: "W", score: "4 : 0", opp: "한신" }
-        ]
+          { date: "09.21", result: "L", score: "2 : 3", opp: "한신 (원)" },
+          { date: "09.20", result: "L", score: "1 : 4", opp: "한신 (원)" },
+          { date: "09.19", result: "W", score: "2 : 1", opp: "한신 (원)" },
+          { date: "09.17", result: "L", score: "2 : 4", opp: "요미우리 (홈)" },
+          { date: "09.16", result: "W", score: "6 : 3", opp: "요미우리 (홈)" }
+        ],
+        recentAwaySummary: "최근 5경기 2승 3패"
       }
     };
 

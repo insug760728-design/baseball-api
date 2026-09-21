@@ -302,11 +302,9 @@ class MlbOfficialScraper:
             d_prev = d
             d_next = d
 
-        if fast_live:
-            # ⚡ 초고속 라이브 전용: 당일 경기만 linescore, team, probablePitcher와 함께 단일 호출 (0.7초)
-            url = f"{MLB_API_BASE}/schedule?sportId=1&date={d}&hydrate=probablePitcher,linescore,team"
-        else:
-            url = f"{MLB_API_BASE}/schedule?sportId=1&startDate={d_prev}&endDate={d_next}&hydrate=probablePitcher,linescore,team"
+        # ⚡ 한국 시차(KST UTC+9 vs 미국 ET UTC-4, 13~16시간 시차):
+        # 한국 오전 경기는 미국 전일(d_prev) 날짜이므로 fast_live에서도 d_prev~d_next 범위를 조회해야 누락 없이 실시간 수집됨 (단일 호출 0.8초)
+        url = f"{MLB_API_BASE}/schedule?sportId=1&startDate={d_prev}&endDate={d_next}&hydrate=probablePitcher,linescore,team"
         
         try:
             data = self._fetch_json(url)
