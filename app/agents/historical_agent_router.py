@@ -101,7 +101,7 @@ class HistoricalAgentRouter:
             from app.services.live_api_sports_service import TEAM_SYNONYMS as LS
 
             SHORT_ALLOWED = {'nc', 'lg', 'kt', 'ssg', 'kia', 'az', 'psv', 'qpr'}
-            NOISY_TOKENS = {'fc', 'cf', 'sc', 'ac', '축구단', '1995', 'city', 'united', 'ren', 'v', 'la', 'as', 'de', 'sv', 'afc', 'bsc', 'sd', 'cd', 'rc', 'ud', 'bk', 'club', 'town', 'and', '레알', 'real', '아틀레틱', 'athletic', '아틀레티코', 'atletico', '마드리드', 'madrid', '스포르팅', 'sporting', '맨', 'man', '도쿄', 'tokyo', '오사카', 'osaka'}
+            NOISY_TOKENS = {'fc', 'cf', 'sc', 'ac', '축구단', '1995', 'city', 'united', 'ren', 'v', 'la', 'as', 'de', 'sv', 'afc', 'bsc', 'sd', 'cd', 'rc', 'ud', 'bk', 'club', 'town', 'and', '레알', 'real', '아틀레틱', 'athletic', '아틀레티코', 'atletico', '마드리드', 'madrid', '스포르팅', 'sporting', '맨', 'man', '도쿄', 'tokyo', '오사카', 'osaka', 'new', 'york', 'los', 'angeles', 'chicago'}
 
             SPAIN_TEAM_ALIASES = {
                 '레알 베티스': ['베티스', 'real betis', 'betis'],
@@ -265,6 +265,14 @@ class HistoricalAgentRouter:
                 is_manu_1 = ('맨유' in s1 or '맨체스터유' in s1 or 'manutd' in s1 or 'manchesterunited' in s1)
                 is_manu_2 = ('맨유' in s2 or '맨체스터유' in s2 or 'manutd' in s2 or 'manchesterunited' in s2)
                 if (is_manc_1 and is_manu_2) or (is_manu_1 and is_manc_2):
+                    return False
+
+                # 🛡️ 야구 동일 연고지 라이벌 구단 상호 오매칭 방지 (양키스 vs 메츠, 컵스 vs 화이트삭스, 다저스 vs 에인절스)
+                if ('양키' in s1 and '메츠' in s2) or ('메츠' in s1 and '양키' in s2) or ('yankee' in s1 and 'met' in s2) or ('met' in s1 and 'yankee' in s2):
+                    return False
+                if ('컵스' in s1 and '화이트삭스' in s2) or ('화이트삭스' in s1 and '컵스' in s2) or ('cub' in s1 and 'sox' in s2) or ('sox' in s1 and 'cub' in s2):
+                    return False
+                if ('다저스' in s1 and '에인절스' in s2) or ('에인절스' in s1 and '다저스' in s2) or ('dodger' in s1 and 'angel' in s2) or ('angel' in s1 and 'dodger' in s2):
                     return False
 
                 # LiveApiSports canonical lookup 우선 확인
@@ -486,12 +494,12 @@ class HistoricalAgentRouter:
                         and_(h_side1, a_side1),
                         and_(h_side2, a_side2)
                     )
-                ).order_by(desc(Match.match_date)).limit(max(max_games * 3, 30))
+                ).order_by(desc(Match.match_date)).limit(max(max_games * 6, 60))
                 res = q.all()
-                if res and len(res) >= 4:
+                if res and len(res) >= max_games:
                     return res
 
-                # 2차: 동일 종목 전체(과거 J1/J2 승강전, 컵대회, FA컵 등) 크로스 H2H 검색
+                # 2차: 동일 종목 전체(과거 J1/J2 승강전, 인터리그, 컵대회, 과거 시즌 등) 크로스 H2H 검색
                 existing_ids = {m.id for m in res}
                 q_fb = db.query(Match).filter(
                     Match.sport_code == sport_code,
@@ -501,7 +509,7 @@ class HistoricalAgentRouter:
                         and_(h_side1, a_side1),
                         and_(h_side2, a_side2)
                     )
-                ).order_by(desc(Match.match_date)).limit(max(max_games * 3, 30))
+                ).order_by(desc(Match.match_date)).limit(max(max_games * 6, 60))
                 fb_res = q_fb.all()
                 for fm in fb_res:
                     if fm.id not in existing_ids:
@@ -584,7 +592,16 @@ class HistoricalAgentRouter:
                         continue
                     if cur_dt > ref_dt:
                         continue
-                    if sp_code == 'BASEBALL' and cur_dt.year < ref_dt.year:
+
+                    # 🛡️ 상대전적은 한 시즌에 10경기가 채워지지 않는 팀들(인터리그, 타 지구 등)이 있으므로,
+                    # 작년 시즌(2025), 과거 시즌(2024, 2023 등)까지 거슬러 올라가며 최신순으로 나열
+                    m_h = getattr(m, 'home_team_name', '') or ''
+                    m_a = getattr(m, 'away_team_name', '') or ''
+                    is_direct_h2h = (
+                        (teams_match(m_h, home_team) and teams_match(m_a, away_team)) or
+                        (teams_match(m_h, away_team) and teams_match(m_a, home_team))
+                    )
+                    if not is_direct_h2h:
                         continue
 
                     if d_str not in by_date:

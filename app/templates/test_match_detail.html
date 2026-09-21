@@ -1423,13 +1423,15 @@
             ? `승: ${g.winner_p} / 패: ${g.loser_p}${g.save_p && g.save_p !== '-' ? ` / 세: ${g.save_p}` : ''}`
             : '-';
           const rawDate = g.date || '';
+          const yyyy = (rawDate.length >= 4) ? rawDate.slice(0, 4) : '2026';
           const mmdd = (rawDate.length >= 10) ? rawDate.slice(5, 10).replace('-', '.') : (rawDate.slice(-5).replace('-', '.') || '09.13');
+          const isPastSeason = yyyy < '2026';
 
           return `
             <tr>
               <td style="white-space:nowrap;" class="fw-bold text-dark">
-                <span class="text-secondary small">2026.</span><span class="fw-bold">${mmdd}</span>
-                ${idx === 0 ? `<span class="badge bg-secondary ms-1" style="font-size:0.60rem;">직전</span>` : ''}
+                <span class="text-secondary small">${yyyy}.</span><span class="fw-bold">${mmdd}</span>
+                ${idx === 0 ? `<span class="badge bg-secondary ms-1" style="font-size:0.60rem;">직전</span>` : (isPastSeason ? `<span class="badge bg-light text-muted border ms-1" style="font-size:0.58rem;">${yyyy}시즌</span>` : '')}
               </td>
               <td class="text-start px-2">
                 <span class="${isBalHome ? 'fw-bold text-danger' : 'text-dark'}">${g.home}</span>
@@ -1460,7 +1462,7 @@
             <div class="p-2.5 rounded border mb-2" style="background:#f8fafc; border-color:#cbd5e1 !important;">
               <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom" style="border-color:#e2e8f0 !important;">
                 <strong style="font-size:0.82rem; color:#0f172a;">
-                  <i class="bi bi-trophy-fill text-warning me-1"></i>2026 정규시즌 양 팀 맞대결 전적 (총 ${total}전)
+                  <i class="bi bi-trophy-fill text-warning me-1"></i>양 팀 최근 10경기 맞대결 전적 (과거 시즌 포함 최신순)
                 </strong>
                 <span class="badge ${hWins > aWins ? 'bg-danger' : (hWins < aWins ? 'bg-primary' : 'bg-secondary')} px-2 py-0.5" style="font-size:0.68rem;">
                   ${hWins > aWins ? `${hName} ${hWins}승 우세` : (hWins < aWins ? `${aName} ${aWins}승 우세` : '5승 5패 동률')}
@@ -1481,16 +1483,16 @@
               <!-- 세부 전적 지표 칩 -->
               <div class="d-flex flex-wrap gap-1.5" style="font-size:0.70rem;">
                 <span class="badge bg-white text-dark border px-2 py-1">
-                  🏠 볼티모어 홈: <strong>4전 2승 2패 (동률)</strong>
+                  📅 집계 기준: <strong>한 시즌 10경기 미달 시 작년·과거 시즌까지 최신순 연장 집계</strong>
                 </span>
                 <span class="badge bg-white text-dark border px-2 py-1">
-                  ✈️ 토론토 홈: <strong>6전 4승 2패 (토론토 우세)</strong>
+                  🏠 ${hName} 홈: <strong>4전 2승 2패</strong>
                 </span>
                 <span class="badge bg-white text-dark border px-2 py-1">
-                  💥 최다 점수차: <strong>13:3 (볼티모어 대승)</strong>
+                  ✈️ ${aName} 홈: <strong>6전 4승 2패</strong>
                 </span>
                 <span class="badge bg-white text-dark border px-2 py-1">
-                  ⚡ 1점차 접전: <strong>3회</strong>
+                  💥 최다 점수차: <strong>13:3</strong>
                 </span>
               </div>
             </div>
@@ -1500,7 +1502,7 @@
               <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size:0.73rem;">
                 <thead class="table-light">
                   <tr style="background:#f1f5f9; font-size:0.71rem;">
-                    <th style="width:20%;">2026 시즌 경기일자</th>
+                    <th style="width:20%;">시즌 경기일자</th>
                     <th style="width:28%;">대진 (홈 vs 원정)</th>
                     <th style="width:11%;">스코어</th>
                     <th style="width:11%;">승패</th>

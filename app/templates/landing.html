@@ -8688,13 +8688,15 @@ function getFullModalMatchList() {
           const resText = isWin ? `${hName} 승` : (isLoss ? `${aName} 승` : '무승부');
           const venueText = isHomeVenue ? '홈' : '원정';
           const rawDate = g.match_date || g.date || '';
+          const yyyy = (rawDate.length >= 4) ? rawDate.slice(0, 4) : '2026';
           const mmdd = (rawDate.length >= 10) ? rawDate.slice(5, 10).replace('-', '.') : (rawDate.slice(-5).replace('-', '.') || '09.13');
+          const isPastSeason = yyyy < '2026';
           const scoreDisplay = (!isNaN(hScore) && !isNaN(aScore)) ? `${hScore} : ${aScore}` : (g.score || '-');
 
           return `
             <tr style="height: 28px; background: ${gIdx % 2 === 0 ? '#ffffff' : '#f8fafc'}; font-size: 0.72rem;">
               <td class="fw-bold text-dark text-center" style="white-space:nowrap; padding:3px 2px;">
-                <span class="text-secondary small">2026.</span><span>${mmdd}</span>${gIdx === 0 ? ' <span class="badge bg-secondary ms-0.5" style="font-size:0.58rem;">직전</span>' : ''}
+                <span class="text-secondary small">${yyyy}.</span><span>${mmdd}</span>${gIdx === 0 ? ' <span class="badge bg-secondary ms-0.5" style="font-size:0.58rem;">직전</span>' : (isPastSeason ? ` <span class="badge bg-light text-secondary border ms-0.5" style="font-size:0.56rem;">${yyyy}</span>` : '')}
               </td>
               <td style="white-space:nowrap; padding:3px 2px;"><span class="badge ${isHomeVenue ? 'bg-light text-danger border border-danger-subtle' : 'bg-light text-primary border border-primary-subtle'}" style="font-size:0.60rem;">${venueText}</span></td>
               <td class="fw-bold text-dark text-truncate" style="max-width:110px; white-space:nowrap; padding:3px 2px;">
@@ -8714,7 +8716,7 @@ function getFullModalMatchList() {
             <div class="p-2 mb-2 rounded-2 bg-dark text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
               <div class="d-flex align-items-center gap-1.5">
                 <span class="badge bg-warning text-dark fw-bold px-1.5 py-0.5" style="font-size:0.68rem;">공식 상대전적</span>
-                <strong style="font-size:0.80rem;">최근 10경기 맞대결 전적:</strong>
+                <strong style="font-size:0.80rem;">최근 맞대결 전적 (과거 시즌 포함 최신순):</strong>
                 <span class="badge bg-danger text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">${hName} ${hWins}승</span>
                 ${draws > 0 ? `<span class="badge bg-secondary text-white px-1.5 py-0.5" style="font-size:0.68rem;">${draws}무</span>` : ''}
                 <span class="badge bg-primary text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">${aName} ${aWins}승</span>
@@ -8727,7 +8729,7 @@ function getFullModalMatchList() {
               <table class="table table-sm text-center align-middle mb-0" style="width: 100%; font-size: 0.72rem; table-layout: fixed;">
                 <thead style="background: #f1f5f9; color: #1e293b; position:sticky; top:0; z-index:2;">
                   <tr style="height: 25px;">
-                    <th style="width: 26%; padding:3px 2px;">2026 시즌 일자</th>
+                    <th style="width: 26%; padding:3px 2px;">시즌 경기일자</th>
                     <th style="width: 12%; padding:3px 2px;">구분</th>
                     <th style="width: 26%; padding:3px 2px;">매치업</th>
                     <th style="width: 18%; padding:3px 2px;">스코어</th>
