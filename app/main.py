@@ -189,6 +189,7 @@ dashboard_path = os.path.join(current_dir, "templates", "index.html")
 live_center_path = os.path.join(current_dir, "templates", "live_center.html")
 mobile_path = os.path.join(current_dir, "templates", "mobile.html")
 mlb_dashboard_path = os.path.join(current_dir, "templates", "mlb_dashboard.html")
+test_match_path = os.path.join(current_dir, "templates", "test_match_detail.html")
 gallery_path = os.path.join(current_dir, "../baseball_gallery.html")
 
 static_dir = os.path.join(current_dir, "static")
@@ -404,6 +405,18 @@ def analytics_portal(request: Request):
         return HTMLResponse(content=content, headers={"ETag": etag, "Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
     except Exception as e:
         return HTMLResponse(content=f"<h1>분석 포털 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
+
+@app.get("/test", response_class=HTMLResponse, summary="TOKEON 매치 정밀 분석 테스트 뷰어")
+@app.get("/test-match", response_class=HTMLResponse, summary="TOKEON 매치 정밀 분석 테스트 뷰어")
+def test_match_portal(request: Request):
+    try:
+        if os.path.exists(test_match_path):
+            with open(test_match_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
+        return HTMLResponse(content="<h1>테스트 페이지를 찾을 수 없습니다.</h1>", status_code=404)
+    except Exception as e:
+        return HTMLResponse(content=f"<h1>테스트 뷰어 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
 
 @app.get("/dashboard", response_class=HTMLResponse, summary="스포츠 전문 관리 대시보드")
 def admin_dashboard(request: Request):

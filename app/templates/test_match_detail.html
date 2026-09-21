@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>⚡ 매치 정밀 분석 테스트 뷰어 (PRO ANALYTICS)</title>
+  <!-- Bootstrap 5.3 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #1d4ed8;
+      --primary-dark: #1e40af;
+      --primary-light: #eff6ff;
+      --primary-border: #bfdbfe;
+      --win-orange: #ea580c;
+      --win-bg: #fff7ed;
+      --win-border: #fdba74;
+      --loss-cyan: #0284c7;
+      --loss-bg: #f0f9ff;
+      --loss-border: #7dd3fc;
+      --draw-gray: #64748b;
+      --draw-bg: #f1f5f9;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --card-bg: #ffffff;
+      --border-color: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      background: #f1f5f9;
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 60px;
+    }
+
+    /* 상단 컨트롤 바 (테스트 모드 전환용) */
+    .test-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 1060;
+      background: #0f172a;
+      color: #f8fafc;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* 모바일 프레임 시뮬레이터 */
+    .app-viewport-container {
+      max-width: 480px;
+      margin: 20px auto;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12), 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid #cbd5e1;
+      overflow: hidden;
+      transition: max-width 0.3s ease;
+    }
+    .app-viewport-container.wide-mode {
+      max-width: 900px;
+    }
+
+    /* 1. 모던 헤더 HUD */
+    .match-header-card {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 16px 18px 14px;
+      position: relative;
+    }
+    .match-number-badge {
+      background: #3b82f6;
+      color: #ffffff;
+      font-family: 'Roboto Mono', monospace;
+      font-weight: 800;
+      font-size: 0.78rem;
+      padding: 2px 7px;
+      border-radius: 5px;
+      letter-spacing: 0.5px;
+    }
+    .league-badge {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .match-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin: 10px 0 6px;
+    }
+    .team-name-hud {
+      font-size: 1.35rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+    .vs-hud {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #94a3b8;
+      background: rgba(255,255,255,0.08);
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+    .match-subinfo {
+      font-size: 0.76rem;
+      color: #94a3b8;
+      text-align: center;
+    }
+
+    /* 섹션 공통 아코디언/카드 */
+    .section-card {
+      background: #ffffff;
+      border-bottom: 8px solid #f1f5f9;
+      padding: 14px 16px;
+    }
+    .section-header-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .section-header-title h3 {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 2. 라인업 (Batting Lineup) 테이블 */
+    .lineup-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .lineup-team-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .lineup-team-card.home {
+      border-top: 3px solid #ef4444;
+    }
+    .lineup-team-card.away {
+      border-top: 3px solid #3b82f6;
+    }
+    .lineup-team-header {
+      padding: 7px 10px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .lineup-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 8px;
+      font-size: 0.74rem;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+    .lineup-row:last-child {
+      border-bottom: none;
+    }
+    .pos-badge {
+      display: inline-block;
+      width: 22px;
+      text-align: center;
+      font-size: 0.65rem;
+      font-weight: 800;
+      background: #e2e8f0;
+      color: #475569;
+      border-radius: 3px;
+      margin-right: 4px;
+    }
+    .hand-tag {
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 1px 4px;
+      border-radius: 3px;
+      margin-left: 2px;
+    }
+    .hand-L { color: #ef4444; background: #fee2e2; }
+    .hand-R { color: #2563eb; background: #dbeafe; }
+    .hand-S { color: #d97706; background: #fef3c7; }
+    .avg-val {
+      font-family: 'Roboto Mono', monospace;
+      font-weight: 700;
+      font-size: 0.74rem;
+    }
+    .avg-val.high {
+      color: #dc2626;
+      font-weight: 800;
+    }
+
+    /* 3. 선발투수 비교 & 최근경기 박스스코어 */
+    .pitcher-duel-card {
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .pitcher-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 8px;
+    }
+    .pitcher-item.home {
+      border-left: 4px solid #ef4444;
+    }
+    .pitcher-item.away {
+      border-left: 4px solid #3b82f6;
+    }
+    .pitcher-stat-highlight {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #dc2626;
+    }
+
+    /* 투수 최근 10경기 테이블 */
+    .pitcher-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.72rem;
+      text-align: center;
+      margin-top: 6px;
+    }
+    .pitcher-table th {
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 700;
+      padding: 6px 4px;
+      border: 1px solid #e2e8f0;
+    }
+    .pitcher-table td {
+      padding: 5px 4px;
+      border: 1px solid #e2e8f0;
+      color: #1e293b;
+    }
+    .pitcher-table tr:nth-child(even) {
+      background: #f8fafc;
+    }
+    .era-badge {
+      font-family: 'Roboto Mono', monospace;
+      font-weight: 800;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .era-elite { background: #dcfce7; color: #15803d; }
+    .era-good { background: #e0f2fe; color: #0369a1; }
+    .era-warning { background: #fee2e2; color: #b91c1c; }
+
+    /* 4. 배당 & 베트맨 구매율 */
+    .odds-box {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .domestic-odds-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      text-align: center;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 8px 4px;
+      margin-bottom: 12px;
+    }
+    .domestic-odds-val {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #0f172a;
+    }
+    
+    /* 베트맨 구매율 바 */
+    .betman-bar-container {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .betman-progress-rail {
+      height: 18px;
+      border-radius: 9px;
+      background: #e2e8f0;
+      overflow: hidden;
+      display: flex;
+      margin: 6px 0;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .betman-seg-home {
+      background: linear-gradient(90deg, #f87171, #ef4444);
+      height: 100%;
+      transition: width 0.6s ease;
+    }
+    .betman-seg-away {
+      background: linear-gradient(90deg, #38bdf8, #2563eb);
+      height: 100%;
+      transition: width 0.6s ease;
+    }
+
+    /* 해외배당 히스토리 */
+    .overseas-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.72rem;
+      text-align: center;
+    }
+    .overseas-table th {
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 700;
+      padding: 6px 2px;
+      border: 1px solid #e2e8f0;
+    }
+    .overseas-table td {
+      padding: 6px 2px;
+      border: 1px solid #e2e8f0;
+      font-family: 'Roboto Mono', monospace;
+    }
+
+    /* 5. 팀 순위 (Standings) */
+    .standings-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.72rem;
+      text-align: center;
+    }
+    .standings-table th {
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 800;
+      padding: 6px 2px;
+      border: 1px solid #e2e8f0;
+    }
+    .standings-table td {
+      padding: 6px 2px;
+      border: 1px solid #e2e8f0;
+    }
+    .standings-table tr.highlight-team {
+      background: #fef3c7 !important;
+      font-weight: 800;
+    }
+    .standings-table tr.highlight-team td:nth-child(2) {
+      color: #b45309;
+      font-weight: 900;
+    }
+
+    /* 최근 5경기 Form 뱃지 (승/패/무) */
+    .form-pills {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .form-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      font-size: 0.62rem;
+      font-weight: 900;
+      color: #ffffff;
+    }
+    .form-W { background: var(--win-orange); }
+    .form-L { background: var(--loss-cyan); }
+    .form-D { background: var(--draw-gray); }
+
+    /* 6. 맞대결 & 최근경기 리스트 */
+    .match-history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      background: #ffffff;
+      font-size: 0.75rem;
+      transition: all 0.2s ease;
+    }
+    .match-history-item:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    .score-badge {
+      font-family: 'Roboto Mono', monospace;
+      font-weight: 800;
+      font-size: 0.85rem;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: #f1f5f9;
+    }
+    .score-badge.win {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 🛠️ 상단 테스트 뷰어 컨트롤러 (배포 없이 로컬 실시간 테스트 가능) -->
+  <div class="test-toolbar py-2.5 px-3">
+    <div class="container-fluid d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-warning text-dark fw-bold px-2 py-1"><i class="bi bi-flask-fill me-1"></i>PRO ANALYTICS TEST</span>
+        <strong style="font-size:0.9rem;">매치 정밀 분석 팝업 2026 차세대 리디자인</strong>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <!-- 매치 선택 스위처 -->
+        <div class="btn-group btn-group-sm" role="group">
+          <button type="button" class="btn btn-outline-light active" id="btnMatchMLB" onclick="switchTestMatch('MLB')">
+            🇺🇸 MLB (애리조나 vs 텍사스)
+          </button>
+          <button type="button" class="btn btn-outline-light" id="btnMatchNPB" onclick="switchTestMatch('NPB')">
+            🇯🇵 NPB (히로카프 vs 요코베이)
+          </button>
+        </div>
+        <!-- 뷰포트 크기 스위처 -->
+        <button type="button" class="btn btn-sm btn-info text-dark fw-bold" onclick="toggleViewportWidth()">
+          <i class="bi bi-arrows-expand me-1"></i><span id="viewportToggleText">와이드 PC 뷰</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📱 메인 뷰포트 컨테이너 -->
+  <div class="app-viewport-container" id="mainViewport">
+    
+    <!-- 1. 헤더 HUD -->
+    <div class="match-header-card" id="matchHeaderCard">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-1.5">
+          <span class="match-number-badge" id="hudMatchNo">#1634</span>
+          <span class="league-badge" id="hudLeague">MLB</span>
+          <span class="badge bg-success bg-opacity-75 text-white" style="font-size:0.68rem;">경기예정</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white" style="font-size:0.7rem; opacity:0.8;" title="닫기"></button>
+      </div>
+
+      <div class="match-title-row">
+        <span class="team-name-hud text-danger" id="hudHomeName">애리다이</span>
+        <span class="vs-hud">VS</span>
+        <span class="team-name-hud text-primary" id="hudAwayName">텍사레인</span>
+      </div>
+
+      <div class="match-subinfo" id="hudSubInfo">
+        <i class="bi bi-calendar-event me-1"></i>2026.09.14(월) 05:10 &nbsp;|&nbsp; 
+        <i class="bi bi-geo-alt me-1"></i>체이스필드
+      </div>
+    </div>
+
+    <!-- 2. 라인업 섹션 (Lineup) -->
+    <div class="section-card">
+      <div class="section-header-title">
+        <h3><i class="bi bi-people-fill text-primary"></i>선발 라인업 (Batting Order)</h3>
+        <span class="badge bg-light text-secondary border" style="font-size:0.68rem;">공식 확정 라인업</span>
+      </div>
+
+      <div class="lineup-grid" id="lineupGridContainer">
+        <!-- JS 렌더링 -->
+      </div>
+    </div>
+
+    <!-- 3. 예상 선발투수 & 최근 10경기 전적 -->
+    <div class="section-card">
+      <div class="section-header-title">
+        <h3><i class="bi bi-lightning-charge-fill text-warning"></i>예상 선발투수 분석</h3>
+        <button type="button" class="btn btn-xs btn-outline-primary fw-bold py-0.5 px-2" id="btnTogglePitcherLogs" onclick="togglePitcherLogs()">
+          <i class="bi bi-clock-history me-1"></i>최근 10경기 기록 <i class="bi bi-chevron-down ms-0.5" id="pitcherLogChevron"></i>
+        </button>
+      </div>
+
+      <div class="pitcher-duel-card">
+        <!-- 홈 투수 -->
+        <div class="pitcher-item home">
+          <div>
+            <span class="badge bg-danger text-white me-1.5" style="font-size:0.68rem;" id="pHomeTeamBadge">홈 애리다이</span>
+            <strong style="font-size:0.86rem;" id="pHomeName">E.로드리게스</strong>
+            <span class="hand-tag hand-L ms-1" id="pHomeHand">L</span>
+          </div>
+          <div class="text-end">
+            <div class="pitcher-stat-highlight" id="pHomeRecord">15승 5패 2.55</div>
+            <div class="text-muted" style="font-size:0.68rem;" id="pHomeSub">173이닝 128K 57BB</div>
+          </div>
+        </div>
+        <!-- 홈 투수 최근 10경기 박스스코어 (토글) -->
+        <div class="collapse mb-2" id="homePitcherLogsCollapse">
+          <div class="p-2 rounded bg-white border">
+            <div class="fw-bold small text-secondary mb-1" style="font-size:0.7rem;">홈 선발투수 최근 등판 기록</div>
+            <div class="table-responsive">
+              <table class="pitcher-table" id="homePitcherTable">
+                <!-- JS 렌더링 -->
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 원정 투수 -->
+        <div class="pitcher-item away">
+          <div>
+            <span class="badge bg-primary text-white me-1.5" style="font-size:0.68rem;" id="pAwayTeamBadge">원정 텍사레인</span>
+            <strong style="font-size:0.86rem;" id="pAwayName">칼 퀀트릴</strong>
+            <span class="hand-tag hand-R ms-1" id="pAwayHand">R</span>
+          </div>
+          <div class="text-end">
+            <div class="pitcher-stat-highlight" id="pAwayRecord">8승 5패 2.89</div>
+            <div class="text-muted" style="font-size:0.68rem;" id="pAwaySub">102.2이닝 77K 25BB</div>
+          </div>
+        </div>
+        <!-- 원정 투수 최근 10경기 박스스코어 (토글) -->
+        <div class="collapse" id="awayPitcherLogsCollapse">
+          <div class="p-2 rounded bg-white border">
+            <div class="fw-bold small text-secondary mb-1" style="font-size:0.7rem;">원정 선발투수 최근 등판 기록</div>
+            <div class="table-responsive">
+              <table class="pitcher-table" id="awayPitcherTable">
+                <!-- JS 렌더링 -->
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 국내배당 / 해외배당 & Betman 구매율 -->
+    <div class="section-card">
+      <div class="section-header-title">
+        <h3><i class="bi bi-graph-up-arrow text-danger"></i>배당 분석 및 Betman 구매율</h3>
+        <span class="text-muted small" style="font-size:0.68rem;">실시간 배당 변동 추적</span>
+      </div>
+
+      <!-- 국내 배당 -->
+      <div class="domestic-odds-row">
+        <div>
+          <div class="text-muted small" style="font-size:0.7rem;">홈승</div>
+          <div class="domestic-odds-val text-danger" id="oddsDomesticHome">1.62</div>
+        </div>
+        <div>
+          <div class="text-muted small" style="font-size:0.7rem;">기준</div>
+          <div class="text-muted small fw-bold pt-1">초기배당</div>
+        </div>
+        <div>
+          <div class="text-muted small" style="font-size:0.7rem;">원정승</div>
+          <div class="domestic-odds-val text-primary" id="oddsDomesticAway">1.93</div>
+        </div>
+      </div>
+
+      <!-- Betman 구매율 바 -->
+      <div class="betman-bar-container mb-3">
+        <div class="d-flex justify-content-between align-items-center small fw-bold mb-1">
+          <span class="text-danger" id="betmanHomeLabel">홈 승리 구매율: 88.4%</span>
+          <span class="text-primary" id="betmanAwayLabel">원정 승리 구매율: 11.6%</span>
+        </div>
+        <div class="betman-progress-rail">
+          <div class="betman-seg-home" id="betmanHomeBar" style="width: 88.4%;"></div>
+          <div class="betman-seg-away" id="betmanAwayBar" style="width: 11.6%;"></div>
+        </div>
+        <div class="d-flex justify-content-between text-muted" style="font-size:0.68rem;">
+          <span>환급률(PAYOUT): <strong class="text-dark" id="payoutHome">143.2%</strong></span>
+          <span>환급률(PAYOUT): <strong class="text-dark" id="payoutAway">22.4%</strong></span>
+        </div>
+      </div>
+
+      <!-- 해외배당 시간대별 변동 추이 -->
+      <div class="p-2 rounded bg-light border">
+        <div class="fw-bold small text-secondary mb-1.5" style="font-size:0.72rem;">
+          <i class="bi bi-globe2 me-1 text-primary"></i>해외 오즈메이커 배당 변동 이력
+        </div>
+        <table class="overseas-table" id="overseasTable">
+          <thead>
+            <tr>
+              <th>홈승</th>
+              <th>무</th>
+              <th>패(원정)</th>
+              <th>변동 시간</th>
+              <th>업체수</th>
+            </tr>
+          </thead>
+          <tbody id="overseasTbody">
+            <!-- JS 렌더링 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5. 팀 순위 (Standings) -->
+    <div class="section-card">
+      <div class="section-header-title">
+        <h3><i class="bi bi-trophy-fill text-warning"></i>팀 순위 및 최근 5경기 흐름</h3>
+        <!-- 탭 버튼: 전체, 홈, 원정 -->
+        <div class="btn-group btn-group-sm" role="group">
+          <button type="button" class="btn btn-primary active py-0.5 px-2" style="font-size:0.7rem;" id="tabStandingsAll" onclick="setStandingsTab('ALL')">전체</button>
+          <button type="button" class="btn btn-outline-secondary py-0.5 px-2" style="font-size:0.7rem;" id="tabStandingsHome" onclick="setStandingsTab('HOME')">홈</button>
+          <button type="button" class="btn btn-outline-secondary py-0.5 px-2" style="font-size:0.7rem;" id="tabStandingsAway" onclick="setStandingsTab('AWAY')">원정</button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="standings-table" id="standingsTable">
+          <!-- JS 렌더링 -->
+        </table>
+      </div>
+    </div>
+
+    <!-- 6. 맞대결 (Head-to-Head) -->
+    <div class="section-card">
+      <div class="section-header-title">
+        <h3><i class="bi bi-fire text-danger"></i>양 팀 상대 맞대결 (H2H)</h3>
+        <div class="btn-group btn-group-sm" role="group">
+          <button type="button" class="btn btn-outline-secondary active py-0.5 px-1.5" style="font-size:0.68rem;">국내배당</button>
+          <button type="button" class="btn btn-outline-secondary py-0.5 px-1.5" style="font-size:0.68rem;">해외배당</button>
+        </div>
+      </div>
+
+      <div class="p-2 rounded bg-light border mb-2 d-flex justify-content-between align-items-center small">
+        <span id="h2hSummaryText">홈팀 <strong>애리다이</strong> 기준 <strong>6승 4패</strong> (평균 4.4득 / 3.6실)</span>
+        <span class="badge bg-primary text-white" style="font-size:0.65rem;">상대전적 우세</span>
+      </div>
+
+      <div id="h2hListContainer">
+        <!-- JS 렌더링 -->
+      </div>
+    </div>
+
+    <!-- 7. 홈/원정팀 최근 10경기 흐름 -->
+    <div class="section-card" style="border-bottom:none;">
+      <div class="section-header-title">
+        <h3 id="recentTitleHome"><i class="bi bi-clock-history text-primary"></i>애리다이 최근 10경기</h3>
+        <span class="badge bg-danger bg-opacity-10 text-danger fw-bold" id="recentSummaryHome">최근 10경기 6승 4패</span>
+      </div>
+      <div id="recentListHome" class="mb-3">
+        <!-- JS 렌더링 -->
+      </div>
+
+      <div class="section-header-title pt-2 border-top">
+        <h3 id="recentTitleAway"><i class="bi bi-clock-history text-secondary"></i>텍사레인 최근 10경기</h3>
+        <span class="badge bg-primary bg-opacity-10 text-primary fw-bold" id="recentSummaryAway">최근 10경기 4승 6패</span>
+      </div>
+      <div id="recentListAway">
+        <!-- JS 렌더링 -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 테스트 데이터 & 동적 렌더링 스크립트 -->
+  <script>
+    const MATCH_DATA = {
+      MLB: {
+        no: "#1634",
+        league: "MLB",
+        home: "애리다이",
+        away: "텍사레인",
+        time: "2026.09.14(월) 05:10",
+        stadium: "체이스필드",
+        homeLineup: [
+          { pos: "P", name: "E.로드리게스", hand: "L", avg: "2.55 (ERA)" },
+          { pos: "LF", name: "누트바르", hand: "L", avg: "0.234" },
+          { pos: "2B", name: "마르테", hand: "S", avg: "0.250" },
+          { pos: "DH", name: "모레노", hand: "R", avg: "0.302" },
+          { pos: "SS", name: "페르도모", hand: "S", avg: "0.249" },
+          { pos: "RF", name: "캐롤", hand: "L", avg: "0.238" },
+          { pos: "3B", name: "아레나도", hand: "R", avg: "0.238" },
+          { pos: "1B", name: "팀 타와", hand: "R", avg: "0.248" },
+          { pos: "C", name: "맥캔", hand: "R", avg: "0.290" },
+          { pos: "CF", name: "롤러", hand: "R", avg: "0.253" }
+        ],
+        awayLineup: [
+          { pos: "P", name: "칼 퀀트릴", hand: "R", avg: "2.89 (ERA)" },
+          { pos: "2B", name: "포스큐", hand: "R", avg: "0.268" },
+          { pos: "SS", name: "시거", hand: "L", avg: "0.225" },
+          { pos: "3B", name: "조쉬 정", hand: "R", avg: "0.295" },
+          { pos: "1B", name: "버거", hand: "R", avg: "0.235" },
+          { pos: "RF", name: "니모", hand: "L", avg: "0.261" },
+          { pos: "LF", name: "랭포드", hand: "R", avg: "0.244" },
+          { pos: "CF", name: "듀란", hand: "R", avg: "0.268" },
+          { pos: "C", name: "디아즈", hand: "R", avg: "0.240" },
+          { pos: "DH", name: "잰슨", hand: "R", avg: "0.186" }
+        ],
+        pitchers: {
+          home: {
+            name: "E.로드리게스", hand: "L", record: "15승 5패 2.55", sub: "173이닝 128K 57BB",
+            logs: [
+              { date: "09.08", loc: "홈", opp: "샌프자이", ip: "7.0", bf: 26, h: 4, hr: 0, bb: 1, so: 8, er: 1, era: "1.29" },
+              { date: "09.02", loc: "원", opp: "LA다저스", ip: "6.0", bf: 25, h: 5, hr: 1, bb: 2, so: 6, er: 2, era: "3.00" },
+              { date: "08.27", loc: "홈", opp: "밀워브루", ip: "6.2", bf: 27, h: 3, hr: 0, bb: 3, so: 7, er: 1, era: "1.35" },
+              { date: "08.21", loc: "원", opp: "콜로로키", ip: "7.0", bf: 28, h: 6, hr: 1, bb: 1, so: 5, er: 2, era: "2.57" },
+              { date: "08.15", loc: "홈", opp: "필라필리", ip: "8.0", bf: 29, h: 4, hr: 0, bb: 0, so: 9, er: 0, era: "0.00" }
+            ]
+          },
+          away: {
+            name: "칼 퀀트릴", hand: "R", record: "8승 5패 2.89", sub: "102.2이닝 77K 25BB",
+            logs: [
+              { date: "09.07", loc: "원", opp: "시애매리", ip: "6.0", bf: 24, h: 5, hr: 1, bb: 2, so: 5, er: 2, era: "3.00" },
+              { date: "09.01", loc: "홈", opp: "휴스애스", ip: "5.1", bf: 25, h: 6, hr: 1, bb: 3, so: 4, er: 3, era: "5.06" },
+              { date: "08.26", loc: "원", opp: "오클랜드", ip: "7.0", bf: 26, h: 3, hr: 0, bb: 1, so: 6, er: 1, era: "1.29" },
+              { date: "08.20", loc: "홈", opp: "볼티오리", ip: "6.0", bf: 23, h: 4, hr: 0, bb: 2, so: 7, er: 1, era: "1.50" },
+              { date: "08.14", loc: "원", opp: "뉴욕양키", ip: "4.2", bf: 22, h: 7, hr: 2, bb: 3, so: 3, er: 5, era: "9.64" }
+            ]
+          }
+        },
+        domesticOdds: { home: "1.62", away: "1.93" },
+        betman: { homePct: "88.4%", awayPct: "11.6%", payoutHome: "143.2%", payoutAway: "22.4%" },
+        overseasOdds: [
+          { h: "1.70", d: "-", a: "2.18", time: "13(일) 13:44", book: "10" },
+          { h: "1.75 ▲", d: "-", a: "2.10 ▼", time: "13(일) 23:19", book: "19" },
+          { h: "1.76", d: "-", a: "2.10", time: "14(월) 05:06", book: "11" }
+        ],
+        standings: [
+          { league: "American", rank: 1, team: "탬파레이", g: 149, w: 90, d: 0, l: 59, rf: 4.6, ra: 4.1, pct: "0.604", form: ["W","W","W","L","W"] },
+          { league: "American", rank: 2, team: "뉴욕양키", g: 149, w: 86, d: 0, l: 63, rf: 4.5, ra: 3.7, pct: "0.577", form: ["W","L","W","W","W"] },
+          { league: "American", rank: 3, team: "보스레드", g: 149, w: 81, d: 0, l: 68, rf: 4.4, ra: 3.9, pct: "0.544", form: ["W","L","L","L","W"] },
+          { league: "American", rank: 8, team: "텍사레인", g: 149, w: 73, d: 0, l: 76, rf: 4.1, ra: 4.4, pct: "0.490", form: ["W","L","L","L","W"] },
+          { league: "National", rank: 1, team: "밀워브루", g: 150, w: 93, d: 0, l: 57, rf: 5.2, ra: 3.9, pct: "0.620", form: ["L","W","W","W","W"] },
+          { league: "National", rank: 2, team: "LA다저스", g: 149, w: 90, d: 0, l: 59, rf: 5.0, ra: 3.8, pct: "0.604", form: ["L","L","W","W","W"] },
+          { league: "National", rank: 7, team: "애리다이", g: 149, w: 79, d: 0, l: 70, rf: 4.4, ra: 4.4, pct: "0.530", form: ["L","W","L","W","W"] }
+        ],
+        h2h: [
+          { date: "2026.09.13", h: "애리다이", hScore: 2, a: "텍사레인", aScore: 6, win: "텍사레인" },
+          { date: "2026.09.12", h: "애리다이", hScore: 9, a: "텍사레인", aScore: 1, win: "애리다이" },
+          { date: "2026.05.14", h: "텍사레인", hScore: 6, a: "애리다이", aScore: 5, win: "텍사레인" },
+          { date: "2026.05.13", h: "텍사레인", hScore: 7, a: "애리다이", aScore: 4, win: "텍사레인" },
+          { date: "2026.05.12", h: "텍사레인", hScore: 0, a: "애리다이", aScore: 1, win: "애리다이" }
+        ],
+        recentHome: [
+          { date: "09.13", result: "L", score: "2 : 6", opp: "텍사레인" },
+          { date: "09.12", result: "W", score: "9 : 1", opp: "텍사레인" },
+          { date: "09.10", result: "L", score: "5 : 2", opp: "캔자로얄" },
+          { date: "09.09", result: "W", score: "3 : 5", opp: "캔자로얄" },
+          { date: "09.08", result: "W", score: "4 : 5", opp: "캔자로얄" }
+        ],
+        recentAway: [
+          { date: "09.13", result: "W", score: "2 : 6", opp: "애리다이" },
+          { date: "09.12", result: "L", score: "9 : 1", opp: "애리다이" },
+          { date: "09.11", result: "L", score: "4 : 3", opp: "시애매리" },
+          { date: "09.10", result: "L", score: "3 : 2", opp: "시애매리" },
+          { date: "09.09", result: "W", score: "5 : 10", opp: "시애매리" }
+        ]
+      },
+
+      NPB: {
+        no: "#676",
+        league: "NPB",
+        home: "히로카프",
+        away: "요코베이",
+        time: "2026.09.11(금) 18:00",
+        stadium: "마쓰다ZoomZoom스타디움",
+        homeLineup: [
+          { pos: "P", name: "모리시타 마사토", hand: "R", avg: "3.83 (ERA)" },
+          { pos: "CF", name: "아키야마", hand: "L", avg: "0.291" },
+          { pos: "2B", name: "키쿠치", hand: "R", avg: "0.258" },
+          { pos: "RF", name: "노마", hand: "L", avg: "0.278" },
+          { pos: "3B", name: "코조노", hand: "L", avg: "0.308" },
+          { pos: "1B", name: "사카쿠라", hand: "L", avg: "0.264" },
+          { pos: "LF", name: "스에카네", hand: "R", avg: "0.245" },
+          { pos: "C", name: "아이자와", hand: "R", avg: "0.220" },
+          { pos: "SS", name: "야노", hand: "R", avg: "0.240" },
+          { pos: "DH", name: "도바야시", hand: "R", avg: "0.235" }
+        ],
+        awayLineup: [
+          { pos: "P", name: "카타야마 히로미", hand: "L", avg: "3.60 (ERA)" },
+          { pos: "RF", name: "카지타니", hand: "L", avg: "0.275" },
+          { pos: "SS", name: "모리 케이토", hand: "L", avg: "0.248" },
+          { pos: "1B", name: "사노 케이타", hand: "L", avg: "0.294" },
+          { pos: "2B", name: "마키 슈고", hand: "R", avg: "0.301" },
+          { pos: "3B", name: "미야자키", hand: "R", avg: "0.315" },
+          { pos: "LF", name: "츠츠고", hand: "L", avg: "0.232" },
+          { pos: "CF", name: "쿠와하라", hand: "R", avg: "0.267" },
+          { pos: "C", name: "야마모토", hand: "R", avg: "0.241" },
+          { pos: "DH", name: "오스틴", hand: "R", avg: "0.310" }
+        ],
+        pitchers: {
+          home: {
+            name: "모리시타 마사토", hand: "R", record: "6승 10패 3.83", sub: "112.2이닝 90K 46BB",
+            logs: [
+              { date: "09.04(금)", loc: "홈", opp: "요미우리", ip: "6.0", bf: 24, h: 4, hr: 0, bb: 3, so: 2, er: 2, era: "3.00" },
+              { date: "08.28(금)", loc: "홈", opp: "야쿠르트", ip: "6.0", bf: 28, h: 5, hr: 0, bb: 4, so: 3, er: 3, era: "4.50" },
+              { date: "08.21(금)", loc: "원", opp: "요미우리", ip: "8.0", bf: 33, h: 6, hr: 0, bb: 2, so: 6, er: 1, era: "1.13" },
+              { date: "08.14(금)", loc: "홈", opp: "한신", ip: "8.0", bf: 30, h: 5, hr: 0, bb: 2, so: 5, er: 1, era: "1.13" },
+              { date: "08.07(금)", loc: "원", opp: "요코베이", ip: "7.0", bf: 27, h: 5, hr: 1, bb: 1, so: 7, er: 2, era: "2.57" }
+            ]
+          },
+          away: {
+            name: "카타야마 히로미", hand: "L", record: "3승 2패 3.60", sub: "25이닝 24K 14BB",
+            logs: [
+              { date: "08.27(목)", loc: "원", opp: "히로카프", ip: "6.0", bf: 23, h: 2, hr: 0, bb: 4, so: 7, er: 1, era: "1.50" },
+              { date: "08.16(일)", loc: "원", opp: "야쿠르트", ip: "5.1", bf: 24, h: 5, hr: 1, bb: 2, so: 4, er: 1, era: "1.69" },
+              { date: "08.09(일)", loc: "홈", opp: "히로카프", ip: "6.0", bf: 23, h: 3, hr: 0, bb: 2, so: 5, er: 0, era: "0.00" },
+              { date: "07.19(일)", loc: "홈", opp: "야쿠르트", ip: "5.0", bf: 21, h: 3, hr: 0, bb: 3, so: 6, er: 1, era: "1.80" },
+              { date: "04.25(토)", loc: "홈", opp: "요미우리", ip: "2.2", bf: 20, h: 9, hr: 1, bb: 3, so: 2, er: 7, era: "23.63" }
+            ]
+          }
+        },
+        domesticOdds: { home: "1.89", away: "1.65" },
+        betman: { homePct: "12.9%", awayPct: "87.1%", payoutHome: "24.4%", payoutAway: "143.7%" },
+        overseasOdds: [
+          { h: "2.02", d: "-", a: "1.82", time: "10(목) 23:21", book: "2" },
+          { h: "2.01", d: "-", a: "1.80", time: "11(금) 14:33", book: "11" }
+        ],
+        standings: [
+          { league: "Central", rank: 1, team: "한신", g: 123, w: 69, d: 1, l: 53, rf: 3.7, ra: 3.1, pct: "0.566", form: ["L","L","L","W","L"] },
+          { league: "Central", rank: 2, team: "요미우리", g: 127, w: 69, d: 2, l: 56, rf: 3.4, ra: 3.1, pct: "0.552", form: ["W","W","L","W","W"] },
+          { league: "Central", rank: 3, team: "요코베이", g: 125, w: 59, d: 3, l: 63, rf: 3.9, ra: 3.7, pct: "0.484", form: ["W","W","L","W","W"] },
+          { league: "Central", rank: 4, team: "야쿠르트", g: 125, w: 54, d: 2, l: 69, rf: 3.1, ra: 3.9, pct: "0.439", form: ["L","L","W","L","D"] },
+          { league: "Central", rank: 5, team: "히로카프", g: 121, w: 50, d: 4, l: 67, rf: 3.0, ra: 3.7, pct: "0.427", form: ["W","L","L","L","W"] },
+          { league: "Central", rank: 6, team: "주니치", g: 129, w: 54, d: 2, l: 73, rf: 3.3, ra: 3.4, pct: "0.425", form: ["L","L","W","W","D"] },
+          { league: "Pacific", rank: 1, team: "소프트뱅", g: 126, w: 78, d: 3, l: 45, rf: 4.8, ra: 3.2, pct: "0.634", form: ["W","W","W","L","W"] },
+          { league: "Pacific", rank: 2, team: "세이부", g: 128, w: 73, d: 3, l: 52, rf: 3.6, ra: 3.2, pct: "0.584", form: ["W","W","W","W","L"] },
+          { league: "Pacific", rank: 3, team: "닛폰햄", g: 129, w: 71, d: 2, l: 56, rf: 4.1, ra: 3.7, pct: "0.559", form: ["L","L","L","W","W"] },
+          { league: "Pacific", rank: 4, team: "지바롯데", g: 122, w: 57, d: 3, l: 62, rf: 3.6, ra: 4.1, pct: "0.479", form: ["W","W","W","W","L"] },
+          { league: "Pacific", rank: 5, team: "오릭스", g: 128, w: 59, d: 2, l: 67, rf: 3.4, ra: 4.2, pct: "0.468", form: ["L","L","L","L","W"] },
+          { league: "Pacific", rank: 6, team: "라쿠텐", g: 125, w: 47, d: 1, l: 77, rf: 3.3, ra: 4.1, pct: "0.379", form: ["L","L","L","L","L"] }
+        ],
+        h2h: [
+          { date: "2026.08.27", h: "히로카프", hScore: 1, a: "요코베이", aScore: 6, win: "요코베이" },
+          { date: "2026.08.26", h: "히로카프", hScore: 3, a: "요코베이", aScore: 2, win: "히로카프" },
+          { date: "2026.08.09", h: "요코베이", hScore: 4, a: "히로카프", aScore: 1, win: "요코베이" },
+          { date: "2026.08.08", h: "요코베이", hScore: 2, a: "히로카프", aScore: 5, win: "히로카프" }
+        ],
+        recentHome: [
+          { date: "09.04", result: "W", score: "4 : 2", opp: "요미우리" },
+          { date: "09.03", result: "L", score: "1 : 3", opp: "요미우리" },
+          { date: "08.28", result: "L", score: "2 : 5", opp: "야쿠르트" },
+          { date: "08.27", result: "L", score: "1 : 6", opp: "요코베이" },
+          { date: "08.26", result: "W", score: "3 : 2", opp: "요코베이" }
+        ],
+        recentAway: [
+          { date: "09.06", result: "W", score: "5 : 3", opp: "주니치" },
+          { date: "09.05", result: "W", score: "6 : 1", opp: "주니치" },
+          { date: "08.27", result: "W", score: "6 : 1", opp: "히로카프" },
+          { date: "08.26", result: "L", score: "2 : 3", opp: "히로카프" },
+          { date: "08.20", result: "W", score: "4 : 0", opp: "한신" }
+        ]
+      }
+    };
+
+    let currentMatchKey = 'MLB';
+    let currentStandingsTab = 'ALL';
+
+    function renderAll() {
+      const data = MATCH_DATA[currentMatchKey];
+      
+      // 1. 헤더 HUD
+      document.getElementById('hudMatchNo').innerText = data.no;
+      document.getElementById('hudLeague').innerText = data.league;
+      document.getElementById('hudHomeName').innerText = data.home;
+      document.getElementById('hudAwayName').innerText = data.away;
+      document.getElementById('hudSubInfo').innerHTML = `<i class="bi bi-calendar-event me-1"></i>${data.time} &nbsp;|&nbsp; <i class="bi bi-geo-alt me-1"></i>${data.stadium}`;
+
+      // 2. 라인업 (1~9번 + 선발투수)
+      const renderLineupCol = (teamName, isHome, lineup) => {
+        const borderClass = isHome ? 'home' : 'away';
+        const badgeBg = isHome ? 'bg-danger' : 'bg-primary';
+        const rows = lineup.map((p, idx) => {
+          const isHigh = parseFloat(p.avg) >= 0.280;
+          return `
+            <div class="lineup-row">
+              <div class="d-flex align-items-center text-truncate" style="max-width:70%;">
+                <span class="pos-badge">${p.pos}</span>
+                <span class="fw-bold text-truncate">${p.name}</span>
+                <span class="hand-tag hand-${p.hand}">${p.hand}</span>
+              </div>
+              <div class="avg-val ${isHigh ? 'high' : ''}">${p.avg}</div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="lineup-team-card ${borderClass}">
+            <div class="lineup-team-header">
+              <span class="badge ${badgeBg} text-white">${isHome ? '홈' : '원정'} ${teamName}</span>
+              <span class="text-muted" style="font-size:0.68rem;">타율/ERA</span>
+            </div>
+            ${rows}
+          </div>
+        `;
+      };
+
+      document.getElementById('lineupGridContainer').innerHTML = `
+        ${renderLineupCol(data.home, true, data.homeLineup)}
+        ${renderLineupCol(data.away, false, data.awayLineup)}
+      `;
+
+      // 3. 선발투수 분석
+      document.getElementById('pHomeTeamBadge').innerText = `홈 ${data.home}`;
+      document.getElementById('pHomeName').innerText = data.pitchers.home.name;
+      document.getElementById('pHomeHand').innerText = data.pitchers.home.hand;
+      document.getElementById('pHomeHand').className = `hand-tag hand-${data.pitchers.home.hand} ms-1`;
+      document.getElementById('pHomeRecord').innerText = data.pitchers.home.record;
+      document.getElementById('pHomeSub').innerText = data.pitchers.home.sub;
+
+      document.getElementById('pAwayTeamBadge').innerText = `원정 ${data.away}`;
+      document.getElementById('pAwayName').innerText = data.pitchers.away.name;
+      document.getElementById('pAwayHand').innerText = data.pitchers.away.hand;
+      document.getElementById('pAwayHand').className = `hand-tag hand-${data.pitchers.away.hand} ms-1`;
+      document.getElementById('pAwayRecord').innerText = data.pitchers.away.record;
+      document.getElementById('pAwaySub').innerText = data.pitchers.away.sub;
+
+      // 투수 최근경기 테이블 렌더링
+      const renderPitcherLogs = (logs) => {
+        const rows = logs.map(l => {
+          const eraNum = parseFloat(l.era);
+          const eraClass = eraNum <= 2.0 ? 'era-elite' : (eraNum <= 4.0 ? 'era-good' : 'era-warning');
+          return `
+            <tr>
+              <td>${l.date}</td>
+              <td><span class="badge ${l.loc === '홈' ? 'bg-danger-subtle text-danger' : 'bg-primary-subtle text-primary'}" style="font-size:0.6rem;">${l.loc}</span></td>
+              <td class="fw-bold">${l.opp}</td>
+              <td class="fw-bold">${l.ip}</td>
+              <td>${l.bf}</td>
+              <td>${l.h}</td>
+              <td>${l.hr}</td>
+              <td>${l.bb}</td>
+              <td class="fw-bold text-primary">${l.so}</td>
+              <td>${l.er}</td>
+              <td><span class="era-badge ${eraClass}">${l.era}</span></td>
+            </tr>
+          `;
+        }).join('');
+
+        return `
+          <thead>
+            <tr>
+              <th>일자</th>
+              <th>홈원</th>
+              <th>상대</th>
+              <th>이닝</th>
+              <th>타자</th>
+              <th>안타</th>
+              <th>홈런</th>
+              <th>볼넷</th>
+              <th>삼진</th>
+              <th>자책</th>
+              <th>방어율</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        `;
+      };
+
+      document.getElementById('homePitcherTable').innerHTML = renderPitcherLogs(data.pitchers.home.logs);
+      document.getElementById('awayPitcherTable').innerHTML = renderPitcherLogs(data.pitchers.away.logs);
+
+      // 4. 배당 & 베트맨
+      document.getElementById('oddsDomesticHome').innerText = data.domesticOdds.home;
+      document.getElementById('oddsDomesticAway').innerText = data.domesticOdds.away;
+
+      document.getElementById('betmanHomeLabel').innerText = `홈 승리 구매율: ${data.betman.homePct}`;
+      document.getElementById('betmanAwayLabel').innerText = `원정 승리 구매율: ${data.betman.awayPct}`;
+      document.getElementById('betmanHomeBar').style.width = data.betman.homePct;
+      document.getElementById('betmanAwayBar').style.width = data.betman.awayPct;
+      document.getElementById('payoutHome').innerText = data.betman.payoutHome;
+      document.getElementById('payoutAway').innerText = data.betman.payoutAway;
+
+      // 해외배당 테이블
+      document.getElementById('overseasTbody').innerHTML = data.overseasOdds.map(o => `
+        <tr>
+          <td class="fw-bold ${o.h.includes('▲') ? 'text-success' : ''}">${o.h}</td>
+          <td class="text-muted">${o.d}</td>
+          <td class="fw-bold ${o.a.includes('▼') ? 'text-danger' : ''}">${o.a}</td>
+          <td style="font-size:0.68rem;">${o.time}</td>
+          <td><span class="badge bg-secondary" style="font-size:0.62rem;">${o.book}</span></td>
+        </tr>
+      `).join('');
+
+      // 5. 팀 순위
+      const standingsRows = data.standings.map(s => {
+        const isCurrentMatchTeam = (s.team === data.home || s.team === data.away);
+        const formBadges = s.form.map(f => `<span class="form-pill form-${f}">${f === 'W' ? '승' : (f === 'L' ? '패' : '무')}</span>`).join('');
+        return `
+          <tr class="${isCurrentMatchTeam ? 'highlight-team' : ''}">
+            <td class="fw-bold">${s.rank}</td>
+            <td class="text-start ps-2 fw-bold text-truncate" style="max-width:85px;">
+              ${isCurrentMatchTeam ? '<i class="bi bi-star-fill text-warning me-1"></i>' : ''}${s.team}
+            </td>
+            <td>${s.g}</td>
+            <td>${s.w}</td>
+            <td>${s.d}</td>
+            <td>${s.l}</td>
+            <td>${s.rf}</td>
+            <td>${s.ra}</td>
+            <td class="fw-bold font-monospace">${s.pct}</td>
+            <td><div class="form-pills">${formBadges}</div></td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('standingsTable').innerHTML = `
+        <thead>
+          <tr>
+            <th>순위</th>
+            <th class="text-start ps-2">팀명</th>
+            <th>경기</th>
+            <th>승</th>
+            <th>무</th>
+            <th>패</th>
+            <th>득점</th>
+            <th>실점</th>
+            <th>승률</th>
+            <th>Form(최근5)</th>
+          </tr>
+        </thead>
+        <tbody>${standingsRows}</tbody>
+      `;
+
+      // 6. 상대 맞대결
+      document.getElementById('h2hSummaryText').innerHTML = `홈팀 <strong>${data.home}</strong> 기준 <strong>${data.h2h.filter(x => x.win === data.home).length}승 ${data.h2h.filter(x => x.win === data.away).length}패</strong>`;
+      document.getElementById('h2hListContainer').innerHTML = data.h2h.map(m => {
+        const isHomeWin = (m.win === data.home);
+        return `
+          <div class="match-history-item">
+            <div class="d-flex align-items-center gap-1.5" style="min-width:0;">
+              <span class="text-muted" style="font-size:0.68rem;">${m.date}</span>
+              <strong class="${m.win === m.h ? 'text-danger' : 'text-dark'}">${m.h}</strong>
+              <span class="score-badge ${isHomeWin ? 'win' : ''}">${m.hScore} : ${m.aScore}</span>
+              <strong class="${m.win === m.a ? 'text-primary' : 'text-dark'}">${m.a}</strong>
+            </div>
+            <div>
+              <span class="badge ${isHomeWin ? 'bg-danger-subtle text-danger' : 'bg-primary-subtle text-primary'}" style="font-size:0.65rem;">
+                ${m.win} 승
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 7. 최근 경기 리스트
+      const renderRecentList = (list) => {
+        return list.map(r => `
+          <div class="match-history-item">
+            <div class="d-flex align-items-center gap-2">
+              <span class="form-pill form-${r.result}" style="width:20px; height:20px; font-size:0.68rem;">${r.result === 'W' ? '승' : (r.result === 'L' ? '패' : '무')}</span>
+              <span class="text-muted" style="font-size:0.68rem;">${r.date}</span>
+              <span class="score-badge ${r.result === 'W' ? 'win' : ''}">${r.score}</span>
+              <strong style="font-size:0.78rem;">vs ${r.opp}</strong>
+            </div>
+            <span class="text-muted" style="font-size:0.65rem;">공식 정규시즌</span>
+          </div>
+        `).join('');
+      };
+
+      document.getElementById('recentTitleHome').innerHTML = `<i class="bi bi-clock-history text-danger"></i>${data.home} 최근 10경기`;
+      document.getElementById('recentListHome').innerHTML = renderRecentList(data.recentHome);
+      document.getElementById('recentTitleAway').innerHTML = `<i class="bi bi-clock-history text-primary"></i>${data.away} 최근 10경기`;
+      document.getElementById('recentListAway').innerHTML = renderRecentList(data.recentAway);
+    }
+
+    function switchTestMatch(key) {
+      currentMatchKey = key;
+      document.getElementById('btnMatchMLB').classList.toggle('active', key === 'MLB');
+      document.getElementById('btnMatchNPB').classList.toggle('active', key === 'NPB');
+      renderAll();
+    }
+
+    let isPitcherLogsOpen = false;
+    function togglePitcherLogs() {
+      isPitcherLogsOpen = !isPitcherLogsOpen;
+      const hEl = document.getElementById('homePitcherLogsCollapse');
+      const aEl = document.getElementById('awayPitcherLogsCollapse');
+      const chevron = document.getElementById('pitcherLogChevron');
+      if (isPitcherLogsOpen) {
+        hEl.classList.add('show');
+        aEl.classList.add('show');
+        chevron.className = 'bi bi-chevron-up ms-0.5';
+      } else {
+        hEl.classList.remove('show');
+        aEl.classList.remove('show');
+        chevron.className = 'bi bi-chevron-down ms-0.5';
+      }
+    }
+
+    let isWide = false;
+    function toggleViewportWidth() {
+      isWide = !isWide;
+      const vp = document.getElementById('mainViewport');
+      const txt = document.getElementById('viewportToggleText');
+      if (isWide) {
+        vp.classList.add('wide-mode');
+        txt.innerText = '스마트폰 폰 뷰 (390px)';
+      } else {
+        vp.classList.remove('wide-mode');
+        txt.innerText = '와이드 PC 뷰';
+      }
+    }
+
+    function setStandingsTab(tab) {
+      currentStandingsTab = tab;
+      document.getElementById('tabStandingsAll').className = `btn ${tab === 'ALL' ? 'btn-primary active' : 'btn-outline-secondary'} py-0.5 px-2`;
+      document.getElementById('tabStandingsHome').className = `btn ${tab === 'HOME' ? 'btn-primary active' : 'btn-outline-secondary'} py-0.5 px-2`;
+      document.getElementById('tabStandingsAway').className = `btn ${tab === 'AWAY' ? 'btn-primary active' : 'btn-outline-secondary'} py-0.5 px-2`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderAll();
+    });
+  </script>
+</body>
+</html>
