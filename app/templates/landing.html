@@ -12570,27 +12570,90 @@ function getFullModalMatchList() {
 
     if (!window._liveEventTimeouts) window._liveEventTimeouts = {};
 
-    // ⚽ 축구 골 애니메이션 트리거 (정확히 5초 유지 후 메인화면으로 즉시 원복)
-    window.triggerSoccerGoalEvent = function(matchId, scoringTeam) {
+    window.triggerSoccerGoalEvent = function(matchId, scoringTeam, goalType) {
       if (!window._activeLivePlayEvents) window._activeLivePlayEvents = {};
       if (!window._soccerGoalSeq) window._soccerGoalSeq = 0;
       window._soccerGoalSeq = (window._soccerGoalSeq % 4) + 1;
-      const subtexts = [
-        '골망을 찢는 강력한 탑코너 슛 작렬!',
-        '무릎 슬라이딩 포효 세리머니!',
-        '그림 같은 공중 바이시클 킥 골!',
-        '전 선수단 코너플래그 단체 포옹!'
-      ];
+      const t = (goalType || 'GOAL').toUpperCase();
+
+      // 이벤트 타입별 이미지 URL & 서브텍스트 결정
+      let imgUrl = '';
+      let subtext = '';
+      let badgeLabel = 'GOAL';
+      let borderColor = '#22c55e';
+      let glowColor = 'rgba(34,197,94,0.7)';
+
+      if (t === 'PENALTY') {
+        // 패널티 킥 골 — soccer_penalty_epic_1.jpg / _2.jpg
+        const pIdx = (window._soccerGoalSeq % 2) + 1;
+        imgUrl = `/static/images/soccer_penalty_epic_${pIdx}.jpg`;
+        const penaltyTexts = [
+          'PK 스팟에서 골키퍼를 얼리는 완벽한 페널티 킥!',
+          '네트를 폭발시키는 강력한 페널티 킥 득점!',
+          '탑코너를 정확히 꿰뚫는 아이스쿨 페널티 골!',
+          '릇-릇! 골키퍼 반대로 냉정하게 차 넣는 PK 골!'
+        ];
+        subtext = penaltyTexts[window._soccerGoalSeq - 1];
+        badgeLabel = 'PK GOAL';
+        borderColor = '#f59e0b';
+        glowColor = 'rgba(245,158,11,0.7)';
+
+      } else if (t === 'HEADER') {
+        // 헤딩 골 — soccer_header_epic_1.jpg / _2.jpg
+        const hIdx = (window._soccerGoalSeq % 2) + 1;
+        imgUrl = `/static/images/soccer_header_epic_${hIdx}.jpg`;
+        const headerTexts = [
+          '수비를 제치고 날카롭게 꽂히는 헤딩 골!',
+          '크로스 볼을 완벽하게 연결하는 파워 헤딩!',
+          '코너킥에서 솟아올라 정확히 꽂히는 헤딩!',
+          '수비 2명을 제치고 폭발적으로 꽂히는 헤딩 골!'
+        ];
+        subtext = headerTexts[window._soccerGoalSeq - 1];
+        badgeLabel = 'HEADER';
+        borderColor = '#38bdf8';
+        glowColor = 'rgba(56,189,248,0.7)';
+
+      } else if (t === 'LONGRANGE' || t === 'LONG_RANGE') {
+        // 장거리 슛 골 — soccer_longrange_epic_1.jpg
+        imgUrl = `/static/images/soccer_longrange_epic_1.jpg`;
+        const lrTexts = [
+          '35야드 밖에서 터지는 전광석화 같은 중거리포!',
+          '선수 자신도 놀란 절묘한 강력한 장거리 월드클래스 슛!',
+          '우상단 탑코너를 찢어버리는 스트라이커 대포알 슛!',
+          '전반 결정적 장면! 중거리 슈팅이 그대로 골망으로!'
+        ];
+        subtext = lrTexts[window._soccerGoalSeq - 1];
+        badgeLabel = 'SCREAMER';
+        borderColor = '#a855f7';
+        glowColor = 'rgba(168,85,247,0.7)';
+
+      } else {
+        // 일반 골 (기존 soccer_goal_epic)
+        imgUrl = `/static/images/soccer_goal_epic_${window._soccerGoalSeq}.jpg`;
+        const subtexts = [
+          '골망을 찢는 강력한 탑코너 슛 작렬!',
+          '무릎 슬라이딩 포효 세리머니!',
+          '그림 같은 공중 바이시클 킥 골!',
+          '전 선수단 코너플래그 단체 포옹!'
+        ];
+        subtext = subtexts[window._soccerGoalSeq - 1];
+        badgeLabel = 'GOAL';
+      }
+
       window._activeLivePlayEvents[matchId] = { 
-        type: 'GOAL', 
+        type: t,
         scorer: scoringTeam || '골', 
         imgIdx: window._soccerGoalSeq,
-        subtext: subtexts[window._soccerGoalSeq - 1],
+        imgUrl: imgUrl,
+        subtext: subtext,
+        badgeLabel: badgeLabel,
+        borderColor: borderColor,
+        glowColor: glowColor,
         time: Date.now() 
       };
       if (typeof renderPredMatches === 'function') renderPredMatches();
 
-      // ⏱️ 정확히 5초간만 유지 후 메인 스타디움 화면으로 즉시 원복
+      // ⏱️ 정확히 8초간 유지 후 메인 스타디움 화면으로 즉시 원복
       if (window._liveEventTimeouts[matchId]) {
         clearTimeout(window._liveEventTimeouts[matchId]);
       }
@@ -12602,7 +12665,7 @@ function getFullModalMatchList() {
           delete window._matchLastStateImage[matchId];
         }
         if (typeof renderPredMatches === 'function') renderPredMatches();
-      }, 5000);
+      }, 8000);
     };
 
     // ⚾ 야구 실시간 이벤트 트리거 (정확히 5초 유지 후 메인화면으로 즉시 원복)
@@ -13077,7 +13140,43 @@ function getFullModalMatchList() {
           // ⚽ [축구 LIVE] 220px 대형 럭셔리 유럽 챔피언스리그급 스타디움 메인 배경 + 4대 골 비주얼 오버레이
           let eventBannerHtml = '';
           const activeEv = (typeof window._activeLivePlayEvents !== 'undefined' && window._activeLivePlayEvents) ? window._activeLivePlayEvents[m.id] : null;
-          if (activeEv && (activeEv.type === 'GOAL' || activeEv.type === 'SCORE')) {
+          if (activeEv && activeEv.imgUrl) {
+            // 이벤트 타입별 전용 이미지 오버레이 (PENALTY / HEADER / LONGRANGE / GOAL)
+            const evImgUrl = activeEv.imgUrl;
+            const evBorderColor = activeEv.borderColor || '#22c55e';
+            const evGlowColor = activeEv.glowColor || 'rgba(34,197,94,0.7)';
+            const evBadgeLabel = activeEv.badgeLabel || 'GOAL';
+            const evScorer = activeEv.scorer ? `[${activeEv.scorer}]` : '';
+            const evSub = activeEv.subtext || '골이 터졌습니다!';
+
+            // 이벤트 타입별 아이콘
+            const evIcon = activeEv.type === 'PENALTY' ? '🎯' :
+                           activeEv.type === 'HEADER' ? '🤸' :
+                           (activeEv.type === 'LONGRANGE' || activeEv.type === 'LONG_RANGE') ? '💥' : '⚽';
+
+            // 배지 색상
+            const badgeBg = activeEv.type === 'PENALTY' ? '#f59e0b' :
+                            activeEv.type === 'HEADER' ? '#38bdf8' :
+                            (activeEv.type === 'LONGRANGE' || activeEv.type === 'LONG_RANGE') ? '#a855f7' : '#ef4444';
+
+            eventBannerHtml = `
+              <div class="live-soccer-event-overlay position-absolute d-flex flex-column justify-content-between p-2.5" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.02) 30%, rgba(0,0,0,0.02) 68%, rgba(0,0,0,0.75) 100%), url('${evImgUrl}') center center / cover no-repeat; border-radius:10px 10px 0 0; border:2px solid ${evBorderColor}; box-shadow:0 0 28px ${evGlowColor}; pointer-events:auto;">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                  <div class="d-flex align-items-center gap-1.5 live-anim-goal-text-burst">
+                    <span class="badge text-white fw-black px-2 py-0.5" style="font-size:0.75rem; font-weight:900; letter-spacing:0.5px; background:${badgeBg}; box-shadow:0 0 12px ${evGlowColor};"><i class="bi bi-fire me-1"></i>${evBadgeLabel}</span>
+                    <span class="badge bg-dark bg-opacity-80 text-white px-2 py-0.5" style="font-size:0.72rem; font-weight:800; text-shadow:0 1px 4px rgba(0,0,0,0.9); border:1px solid ${evBorderColor}80;">${evIcon} ${evScorer} 득점!</span>
+                  </div>
+                  <button type="button" class="btn-close btn-close-white" style="font-size:0.6rem; opacity:0.9; z-index:15;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>
+                </div>
+                <div class="flex-grow-1"></div>
+                <div class="w-100 text-center">
+                  <div class="d-inline-block bg-dark bg-opacity-80 text-white px-3 py-1 rounded-pill" style="font-size:0.78rem; font-weight:800; backdrop-filter:blur(6px); text-shadow:0 1px 4px rgba(0,0,0,0.9); box-shadow:0 2px 8px rgba(0,0,0,0.6); border:1px solid ${evBorderColor}60; color:#f0fdf4;">
+                    ${evIcon} ${evSub}
+                  </div>
+                </div>
+              </div>
+            `;
+          } else if (activeEv && (activeEv.type === 'GOAL' || activeEv.type === 'SCORE')) {
             const goalImgIdx = activeEv.imgIdx || 1;
             const goalImgUrl = `/static/images/soccer_goal_epic_${goalImgIdx}.jpg`;
             const scorerText = activeEv.scorer ? `[${activeEv.scorer}] 득점!` : '원더골 작렬!';
@@ -13099,11 +13198,12 @@ function getFullModalMatchList() {
                 </div>
               </div>
             `;
-          }
 
-          // ⚽ 라이브 메인 화면 배경: 골 이벤트 5초 경과 후 즉시 메인 스타디움 배경으로 원복!
+          // ⚽ 라이브 메인 화면 배경 — 이벤트 타입별 전용 이미지 사용
           let soccerBgImg = '/static/images/soccer_stadium_live.jpg';
-          if (activeEv && (activeEv.type === 'GOAL' || activeEv.type === 'SCORE')) {
+          if (activeEv && activeEv.imgUrl) {
+            soccerBgImg = activeEv.imgUrl;
+          } else if (activeEv && (activeEv.type === 'GOAL' || activeEv.type === 'SCORE')) {
             const goalImgIdx = activeEv.imgIdx || 1;
             soccerBgImg = `/static/images/soccer_goal_epic_${goalImgIdx}.jpg`;
           }
