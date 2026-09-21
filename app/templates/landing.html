@@ -12960,9 +12960,10 @@ function getFullModalMatchList() {
                   <span class="badge bg-dark bg-opacity-80 text-white border border-white border-opacity-25 px-2 py-1 fw-bold" style="font-size:0.72rem; backdrop-filter:blur(6px);">
                     ${sportIcon} ${m.league_name || m.sport_code}${sweepBadge}
                   </span>
+                  ${(st.inning_text && st.inning_text !== '진행중' && st.inning_text !== 'LIVE') ? `
                   <span class="badge bg-warning text-dark px-2 py-1 fw-black shadow-sm" style="font-size:0.72rem; border-radius:6px;">
-                    ${st.inning_text || '진행중'}
-                  </span>
+                    ${st.inning_text}
+                  </span>` : ''}
                 </div>
                 <div class="d-flex align-items-center gap-1" style="flex-shrink:0;">
                   ${getAuditBadgeHtml(m)}
@@ -12992,7 +12993,7 @@ function getFullModalMatchList() {
                 <div class="position-absolute d-flex flex-column align-items-center justify-content-between" style="left:50%; top:44px; bottom:10px; transform:translateX(-50%); width:230px; z-index:4; pointer-events:none;">
                   <!-- Top: Score HUD -->
                   <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.3); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:28px; pointer-events:auto;">
-                    <span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center" style="font-size:0.62rem; min-width:46px; border-radius:10px;">${st.inning_text || '진행중'}</span>
+                    ${(st.inning_text && st.inning_text !== '진행중' && st.inning_text !== 'LIVE') ? `<span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center me-1" style="font-size:0.62rem; min-width:40px; border-radius:10px;">${st.inning_text}</span>` : ''}
                     <div class="d-flex align-items-center justify-content-center px-2" style="font-family:'Roboto Mono', monospace; font-size:1.25rem; font-weight:900; line-height:1;">
                       <span style="color:#ef4444; min-width:14px; text-align:right; text-shadow:0 0 8px rgba(239,68,68,0.7);">${hScore}</span>
                       <span style="color:rgba(255,255,255,0.4); font-size:0.85rem; font-weight:400; margin:0 5px;">:</span>
@@ -13022,7 +13023,7 @@ function getFullModalMatchList() {
                   <!-- Bottom: Live Situation Status Pill (100% Automatic) -->
                   <div class="d-inline-flex align-items-center justify-content-center px-2.5 py-0.5 rounded-pill" style="background:rgba(15,23,42,0.82); border:1px solid rgba(255,255,255,0.25); backdrop-filter:blur(6px); box-shadow:0 2px 6px rgba(0,0,0,0.5);">
                     <span style="font-size:0.64rem; font-weight:800; color:#f8fafc; letter-spacing:-0.2px;">
-                      ${st.base1 || st.base2 || st.base3 ? '⚡ 득점권 주자 진루 상황' : (st.outs >= 2 ? '🔥 투아웃 승부처' : (st.outs === 1 ? '⚡ 1아웃 접전 상황' : '⚾ 실시간 중계 진행중'))}
+                      ${st.base1 || st.base2 || st.base3 ? '⚡ 득점권 주자 진루' : (st.outs >= 2 ? '🔥 2아웃 승부처' : (st.outs === 1 ? '⚡ 1아웃 접전' : '⚾ 실시간 볼카운트'))}
                     </span>
                   </div>
                 </div>
@@ -13094,9 +13095,10 @@ function getFullModalMatchList() {
                   <span class="badge bg-dark bg-opacity-80 text-white border border-white border-opacity-25 px-2 py-1 fw-bold" style="font-size:0.72rem; backdrop-filter:blur(6px);">
                     ${sportIcon} ${m.league_name || m.sport_code}${sweepBadge}
                   </span>
+                  ${(st.match_time && st.match_time !== '진행중' && st.match_time !== 'LIVE') ? `
                   <span class="badge bg-warning text-dark px-2 py-1 fw-black shadow-sm" style="font-size:0.72rem; border-radius:6px;">
-                    ${st.match_time || '전반'}
-                  </span>
+                    ${st.match_time}
+                  </span>` : ''}
                 </div>
                 <div class="d-flex align-items-center gap-1" style="flex-shrink:0;">
                   ${getAuditBadgeHtml(m)}
@@ -13126,7 +13128,7 @@ function getFullModalMatchList() {
                 <div class="position-absolute d-flex flex-column align-items-center justify-content-between" style="left:50%; top:44px; bottom:10px; transform:translateX(-50%); width:220px; z-index:4; pointer-events:none;">
                   <!-- Top: Symmetrical Soccer Scoreboard Pill -->
                   <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.3); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:28px; pointer-events:auto;">
-                    <span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center" style="font-size:0.62rem; min-width:48px; border-radius:10px;">${st.match_time || '전반'}</span>
+                    ${(st.match_time && st.match_time !== '진행중' && st.match_time !== 'LIVE') ? `<span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center me-1" style="font-size:0.62rem; min-width:44px; border-radius:10px;">${st.match_time}</span>` : ''}
                     <div class="d-flex align-items-center justify-content-center px-2" style="font-family:'Roboto Mono', monospace; font-size:1.25rem; font-weight:900; line-height:1;">
                       <span style="color:#ef4444; min-width:14px; text-align:right; text-shadow:0 0 8px rgba(239,68,68,0.7);">${hScore}</span>
                       <span style="color:rgba(255,255,255,0.4); font-size:0.85rem; font-weight:400; margin:0 5px;">:</span>
@@ -13153,7 +13155,7 @@ function getFullModalMatchList() {
                   <!-- Bottom: Live Situation Status Pill (100% Automatic) -->
                   <div class="d-inline-flex align-items-center justify-content-center px-2.5 py-0.5 rounded-pill" style="background:rgba(15,23,42,0.82); border:1px solid rgba(255,255,255,0.25); backdrop-filter:blur(6px); box-shadow:0 2px 6px rgba(0,0,0,0.5);">
                     <span style="font-size:0.64rem; font-weight:800; color:#86efac; letter-spacing:-0.2px;">
-                      ${(hScore + aScore) > 0 ? '⚽ 실시간 득점 경기 진행' : '⚔️ 치열한 전반 공방전'}
+                      ${(hScore + aScore) > 0 ? '⚽ 실시간 득점 경기' : '⚔️ 치열한 전반 공방'}
                     </span>
                   </div>
                 </div>
@@ -13236,9 +13238,10 @@ function getFullModalMatchList() {
                   <span class="badge bg-dark bg-opacity-80 text-white border border-white border-opacity-25 px-2 py-1 fw-bold" style="font-size:0.72rem; backdrop-filter:blur(6px);">
                     🏀 ${m.league_name || '농구'}${sweepBadge}
                   </span>
+                  ${(qtrText && qtrText !== '진행중' && qtrText !== 'LIVE') ? `
                   <span class="badge bg-warning text-dark px-2 py-1 fw-black shadow-sm" style="font-size:0.72rem; border-radius:6px;">
                     ${qtrText}
-                  </span>
+                  </span>` : ''}
                 </div>
                 <div class="d-flex align-items-center gap-1" style="flex-shrink:0;">
                   ${getAuditBadgeHtml(m)}
@@ -13268,7 +13271,7 @@ function getFullModalMatchList() {
                 <div class="position-absolute d-flex flex-column align-items-center justify-content-between" style="left:50%; top:44px; bottom:10px; transform:translateX(-50%); width:230px; z-index:4; pointer-events:none;">
                   <!-- Top: Score HUD -->
                   <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.3); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:28px; pointer-events:auto;">
-                    <span class="badge bg-warning text-dark px-1.5 py-0.5 fw-black text-center" style="font-size:0.62rem; min-width:42px; border-radius:10px;">${qtrText}</span>
+                    ${(qtrText && qtrText !== '진행중' && qtrText !== 'LIVE') ? `<span class="badge bg-warning text-dark px-1.5 py-0.5 fw-black text-center me-1" style="font-size:0.62rem; min-width:40px; border-radius:10px;">${qtrText}</span>` : ''}
                     <div class="d-flex align-items-center justify-content-center px-2" style="font-family:'Roboto Mono', monospace; font-size:1.25rem; font-weight:900; line-height:1;">
                       <span style="color:#ef4444; min-width:18px; text-align:right; text-shadow:0 0 8px rgba(239,68,68,0.7);">${hScore}</span>
                       <span style="color:rgba(255,255,255,0.4); font-size:0.85rem; font-weight:400; margin:0 5px;">:</span>
@@ -13296,7 +13299,7 @@ function getFullModalMatchList() {
                   <!-- Bottom: Situation Status Pill -->
                   <div class="d-inline-flex align-items-center justify-content-center px-2.5 py-0.5 rounded-pill" style="background:rgba(15,23,42,0.82); border:1px solid rgba(255,255,255,0.25); backdrop-filter:blur(6px); box-shadow:0 2px 6px rgba(0,0,0,0.5);">
                     <span style="font-size:0.64rem; font-weight:800; color:#fdba74; letter-spacing:-0.2px;">
-                      ${Math.abs(hScore - aScore) <= 5 ? '🔥 1포제션 초접전 승부처' : (diffMin > 80 ? '⚡ 클러치 타임 진입' : '🏀 실시간 화력 공방전')}
+                      ${Math.abs(hScore - aScore) <= 5 ? '🔥 1포제션 초접전 승부처' : (diffMin > 80 ? '⚡ 클러치 타임' : '🏀 실시간 화력 공방')}
                     </span>
                   </div>
                 </div>
@@ -13379,9 +13382,10 @@ function getFullModalMatchList() {
                   <span class="badge bg-dark bg-opacity-80 text-white border border-white border-opacity-25 px-2 py-1 fw-bold" style="font-size:0.72rem; backdrop-filter:blur(6px);">
                     🏐 ${m.league_name || '배구'}${sweepBadge}
                   </span>
+                  ${(setTxt && setTxt !== '진행중' && setTxt !== 'LIVE') ? `
                   <span class="badge bg-info text-dark px-2 py-1 fw-black shadow-sm" style="font-size:0.72rem; border-radius:6px;">
                     ${setTxt}
-                  </span>
+                  </span>` : ''}
                 </div>
                 <div class="d-flex align-items-center gap-1" style="flex-shrink:0;">
                   ${getAuditBadgeHtml(m)}
@@ -13411,7 +13415,7 @@ function getFullModalMatchList() {
                 <div class="position-absolute d-flex flex-column align-items-center justify-content-between" style="left:50%; top:44px; bottom:10px; transform:translateX(-50%); width:230px; z-index:4; pointer-events:none;">
                   <!-- Top: Score HUD -->
                   <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.3); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:28px; pointer-events:auto;">
-                    <span class="badge bg-info text-dark px-1.5 py-0.5 fw-black text-center" style="font-size:0.62rem; min-width:42px; border-radius:10px;">${setTxt}</span>
+                    ${(setTxt && setTxt !== '진행중' && setTxt !== 'LIVE') ? `<span class="badge bg-info text-dark px-1.5 py-0.5 fw-black text-center me-1" style="font-size:0.62rem; min-width:40px; border-radius:10px;">${setTxt}</span>` : ''}
                     <div class="d-flex align-items-center justify-content-center px-2" style="font-family:'Roboto Mono', monospace; font-size:1.25rem; font-weight:900; line-height:1;">
                       <span style="color:#ef4444; min-width:14px; text-align:right; text-shadow:0 0 8px rgba(239,68,68,0.7);">${hScore}</span>
                       <span style="color:rgba(255,255,255,0.4); font-size:0.85rem; font-weight:400; margin:0 5px;">:</span>
@@ -13439,7 +13443,7 @@ function getFullModalMatchList() {
                   <!-- Bottom: Situation Status Pill -->
                   <div class="d-inline-flex align-items-center justify-content-center px-2.5 py-0.5 rounded-pill" style="background:rgba(15,23,42,0.82); border:1px solid rgba(255,255,255,0.25); backdrop-filter:blur(6px); box-shadow:0 2px 6px rgba(0,0,0,0.5);">
                     <span style="font-size:0.64rem; font-weight:800; color:#7dd3fc; letter-spacing:-0.2px;">
-                      ${(hScore === 2 && aScore === 2) ? '🔥 5세트 최종 매치포인트 운명의 승부' : ((hScore >= 2 || aScore >= 2) ? '⚡ 세트포인트 접전' : '🏐 실시간 고공 랠리 공방전')}
+                      ${(hScore === 2 && aScore === 2) ? '🔥 5세트 최종 매치포인트' : ((hScore >= 2 || aScore >= 2) ? '⚡ 세트포인트 접전' : '🏐 실시간 고공 랠리')}
                     </span>
                   </div>
                 </div>
@@ -20818,7 +20822,7 @@ function renderPredDetail(m, customDetailData = null) {
             </div>
             <div>
               <span class="badge px-2 py-1" style="${isLive ? 'background: #fef2f2; color: #dc2626; border: 1.5px solid #dc2626; font-weight: 800;' : 'background: #ffffff; color: #111827; border: 1px solid #d1d5db; font-weight: 700;'} font-size: 0.75rem;">
-                ${isLive ? '● LIVE 진행중' : (isFinished ? '경기종료 (OFFICIAL)' : '경기예정 (SCHEDULED)')}
+                ${isLive ? '● LIVE' : (isFinished ? '경기종료 (OFFICIAL)' : '경기예정 (SCHEDULED)')}
               </span>
             </div>
           </div>
@@ -22011,6 +22015,8 @@ function renderPredDetail(m, customDetailData = null) {
         inningBadgeStyle = 'background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;';
       }
 
+      const isBkOrVbPendingFocus = (m.sport_code === 'BASKETBALL' || m.sport_code === 'VOLLEYBALL') && isLive && hScore === 0 && aScore === 0;
+
       let sportSpecificHtml = '';
       if (m.sport_code === 'BASEBALL') {
         const eventBannerHtml = isLive ? buildLiveBaseballEventTrackHtml(m, st) : '';
@@ -22048,10 +22054,9 @@ function renderPredDetail(m, customDetailData = null) {
             <!-- Inning Header Title ABOVE 1~9 Scoreboard Table -->
             <div class="d-flex justify-content-between align-items-center mt-2 mb-1 px-1">
               <div class="d-flex align-items-center gap-1.5">
-                <span class="badge ${isFin ? 'bg-secondary' : 'bg-danger'} text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem; letter-spacing:0.2px;">
-                  <i class="bi bi-broadcast me-1"></i>${isFin ? '경기종료' : (st.inning_text || '진행중')}
-                </span>
-                <strong class="text-dark" style="font-size:0.76rem;">이닝별 득점 전광판</strong>
+                <i class="bi bi-grid-3x3 text-primary" style="font-size:0.82rem;"></i>
+                <strong class="text-dark" style="font-size:0.78rem;">이닝별 득점 전광판</strong>
+                ${isFin ? '<span class="badge bg-secondary text-white py-0.5 px-1.5 fw-bold" style="font-size:0.65rem;">경기종료</span>' : ((st.inning_text && st.inning_text !== '진행중' && st.inning_text !== 'LIVE') ? `<span class="badge bg-danger text-white py-0.5 px-1.5 fw-bold" style="font-size:0.65rem;">${st.inning_text}</span>` : '')}
               </div>
               <span class="text-muted small" style="font-size:0.62rem;">(R:득점 / H:안타 / E:실책 / B:볼넷)</span>
             </div>
@@ -22085,18 +22090,18 @@ function renderPredDetail(m, customDetailData = null) {
           </div>
         `;
       } else if (m.sport_code === 'BASKETBALL' || m.sport_code === 'VOLLEYBALL') {
-        const sportKo = m.sport_code === 'BASKETBALL' ? '🏀 농구' : '🏐 배구';
-        if (isLive && hScore === 0 && aScore === 0) {
+        const sportKo = m.sport_code === 'BASKETBALL' ? '농구' : '배구';
+        if (isBkOrVbPendingFocus) {
           sportSpecificHtml = `
-            <div class="p-2 rounded mb-1 text-center" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.75rem; color:#475569;">
-              <div class="fw-bold mb-0.5"><i class="bi bi-clock-history me-1 text-warning"></i>${sportKo} 공식 결과 집계 중</div>
-              <div class="text-muted" style="font-size:0.68rem;">경기 시작 후 1시간 단위로 공식 스코어(API-Sports)가 자동 집계·반영됩니다.</div>
+            <div class="p-2 rounded mb-1 text-center" style="background:#fefce8; border:1px solid #fef08a; font-size:0.75rem; color:#854d0e;">
+              <i class="bi bi-broadcast me-1 text-warning"></i>
+              <span class="fw-bold">${sportKo} 실시간 LIVE 진행 중 (상세 쿼터/세트 결과 집계 중)</span>
             </div>
           `;
         } else {
           sportSpecificHtml = `
-            <div class="p-2 rounded mb-1 text-center" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.75rem; color:#1e293b;">
-              <span class="badge ${isFin ? 'bg-secondary' : 'bg-success'} text-white me-1">${isFin ? '공식 경기종료' : '진행중'}</span>
+            <div class="p-2 rounded mb-1 text-center" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.75rem; color:#64748b;">
+              <span class="badge ${isFin ? 'bg-secondary' : 'bg-success'} text-white me-1">${isFin ? '공식 경기종료' : '실시간'}</span>
               <span class="fw-bold">${sportKo} API-Sports 공식 기록</span>
             </div>
           `;
@@ -22106,7 +22111,7 @@ function renderPredDetail(m, customDetailData = null) {
           <div class="soccer-live-tracker p-2 rounded mb-1" style="background:#ffffff; border:1px solid #e2e8f0; font-size:0.72rem;">
             <div class="d-flex justify-content-between align-items-center text-muted mb-1">
               <span>진행 상황</span>
-              <span class="fw-bold text-danger">${st.match_time || '진행중'}</span>
+              <span class="fw-bold text-danger">${st.match_time || '실시간 전반'}</span>
             </div>
             <div class="progress" style="height:6px;">
               <div class="progress-bar bg-danger progress-bar-striped progress-bar-animated" style="width: 70%;"></div>
@@ -22114,8 +22119,6 @@ function renderPredDetail(m, customDetailData = null) {
           </div>
         `;
       }
-
-      const isBkOrVbPendingFocus = (m.sport_code === 'BASKETBALL' || m.sport_code === 'VOLLEYBALL') && isLive && hScore === 0 && aScore === 0;
 
       return `
         <div class="live-focus-card p-2.5 mb-2 rounded border" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-color: #cbd5e1 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
@@ -22157,11 +22160,12 @@ function renderPredDetail(m, customDetailData = null) {
                   - : -
                 </div>
               ` : `
+                ${(st.inning_text && st.inning_text !== '진행중' && st.inning_text !== 'LIVE') ? `
                 <div class="mb-0.5">
                   <span class="badge py-0.5 px-2" style="${inningBadgeStyle} font-size:0.68rem; font-weight:800; border-radius:4px; letter-spacing:0.2px;">
-                    ${st.inning_text || 'LIVE'}
+                    ${st.inning_text}
                   </span>
-                </div>
+                </div>` : ''}
                 <div class="fw-bold px-2.5 py-0.5 rounded d-inline-flex align-items-center gap-1.5" style="background:#ffffff; border:1.5px solid #cbd5e1; font-size:1.25rem; font-family:'Roboto Mono', monospace; line-height:1; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
                   <span style="color:#dc2626; font-weight:800;">${hScore}</span>
                   <span style="color:#94a3b8; font-weight:300; font-size:1.0rem;">:</span>
@@ -22226,10 +22230,10 @@ function renderPredDetail(m, customDetailData = null) {
       if (isPendingResult) {
         inningText = '집계대기';
       } else if (isLive) {
-        if (m.sport_code === 'BASEBALL') inningText = st.inning_text || (m.current_inning || '진행중');
-        else if (m.sport_code === 'SOCCER') inningText = st.match_time || '전반';
-        else if (m.sport_code === 'BASKETBALL') inningText = st.quarter || '진행중';
-        else if (m.sport_code === 'VOLLEYBALL') inningText = st.set_score || '진행중';
+        if (m.sport_code === 'BASEBALL') inningText = (st.inning_text && st.inning_text !== '진행중') ? st.inning_text : (m.current_inning || 'LIVE');
+        else if (m.sport_code === 'SOCCER') inningText = (st.match_time && st.match_time !== '진행중') ? st.match_time : '전반';
+        else if (m.sport_code === 'BASKETBALL') inningText = (st.quarter && st.quarter !== '진행중') ? st.quarter : 'LIVE';
+        else if (m.sport_code === 'VOLLEYBALL') inningText = (st.set_score && st.set_score !== '진행중') ? st.set_score : 'LIVE';
         else inningText = 'LIVE';
       } else if (isFin) {
         inningText = '종료';
