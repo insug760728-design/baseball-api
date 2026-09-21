@@ -59,12 +59,13 @@ def set_live_api_key(payload: ApiKeyPayload):
     result = LiveApiSportsService.set_api_key(key=payload.key, provider=payload.provider or "api_sports")
     return result
 
-@router.post("/sync-now", summary="실시간 전종목(축구, 야구, 농구, 배구) 경기 결과 즉시 강제 동기화")
+@router.post("/sync-now", summary="실시간 전종목(축구, 야구, 농구, 배구, 아시안게임) 경기 결과 즉시 강제 동기화")
 async def force_sync_live():
     res = await LiveApiSportsService.sync_all_async()
 
     # ⚡ 무료 공식 실시간 농구 및 배구 동기화
     from app.services.match_service import MatchService
+    from app.services.asian_games_service import AsianGamesService
     import asyncio
     
     def _sync_free_sports():
@@ -72,9 +73,11 @@ async def force_sync_live():
         try:
             bk_res = MatchService.sync_from_official_site(db, league_id="BASKETBALL")
             vb_res = MatchService.sync_from_official_site(db, league_id="VOLLEYBALL")
+            ag_res = AsianGamesService.sync_asian_games_to_db()
             return {
                 "basketball_synced": bk_res.get("synced_matches_count", 0),
-                "volleyball_synced": vb_res.get("synced_matches_count", 0)
+                "volleyball_synced": vb_res.get("synced_matches_count", 0),
+                "asian_games_synced": ag_res.get("updated_count", 0)
             }
         except Exception as e:
             return {"error": str(e)}
@@ -89,10 +92,18 @@ async def force_sync_live():
     now_kst = datetime.utcnow() + timedelta(hours=9)
     return {
         "status": "SUCCESS",
-        "message": "실시간 데이터 동기화 완료 (농구/배구 무료 수집 포함)",
+        "message": "실시간 데이터 동기화 완료 (농구/배구/아시안게임 공식 결과 포함)",
         "details": res,
         "timestamp": now_kst.strftime("%Y-%m-%d %H:%M:%S")
     }
+
+@router.api_route("/sync-asian-games", methods=["GET", "POST"], summary="아시안게임 및 베트맨 공식 경기결과 실시간 동기화")
+async def sync_asian_games():
+    """베트맨 공식 사이트 적중결과를 스크래핑하여 아시안게임 전종목 경기결과를 실시간 동기화합니다."""
+    import asyncio
+    from app.services.asian_games_service import AsianGamesService
+    result = await asyncio.to_thread(AsianGamesService.sync_asian_games_to_db)
+    return result
 
 
 @router.get("/match-history/{match_id}", summary="경기별 홈/원정 팀 전경기 상세 조회 (득점자/경고/선발/안타/홈런)")

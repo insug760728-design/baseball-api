@@ -486,6 +486,15 @@ class SchedulerService:
             finally:
                 db.close()
 
+            # 3. 아시안게임 및 베트맨 공식 경기 결과 자동 동기화
+            try:
+                from app.services.asian_games_service import AsianGamesService
+                ag_sync_res = await asyncio.to_thread(AsianGamesService.sync_asian_games_to_db)
+                if ag_sync_res.get("updated_count", 0) > 0:
+                    logger.info(f"[Scheduler] 아시안게임 공식 결과 자동 동기화: {ag_sync_res.get('updated_count')}경기 최신화 완료")
+            except Exception as ag_err:
+                logger.warning(f"[Scheduler] 아시안게임 동기화 경고: {ag_err}")
+
             try:
                 await manager.broadcast({
                     "type": "BETMAN_10MIN_UPDATED",
