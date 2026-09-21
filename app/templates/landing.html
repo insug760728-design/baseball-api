@@ -18614,6 +18614,137 @@ function updateSlimPanel(matchId, type, contentHtml) {
       `;
     }
 
+    function buildKeyPlayerRecordsHtml(match) {
+      if (!match || match.sport_code !== 'BASEBALL') return '';
+
+      const mid = Number(match.id);
+      const BOX_MAP = {
+        22354: {
+          away: {
+            team: '밀워키 브루어스',
+            starter: '제이콥 미시오로우스키: 3.0이닝 무실점 4탈삼진 (오프너)',
+            decision: '승리투수: DL 홀(DL Hall) (1.2이닝 1피안타 무실점 2탈삼진, 시즌 8승) · 세이브: 데빈 윌리엄스(32세이브)',
+            batting: '홈런/타점: 윌리엄 콘트레라스(18호 솔로포), 쿠퍼 프랫(2안타 2타점 적시타)'
+          },
+          home: {
+            team: '볼티모어 오리올스',
+            starter: '브랜든 영(Brandon Young): 6.0이닝 3피안타(1피홈런) 3사사구 9탈삼진 2실점 (패전, 9승 5패)',
+            decision: '불펜: 펠릭스 바티스타(0.2이닝 1실점 2K), 그랜트 울프람(1.1이닝 무실점)',
+            batting: '타선: 4안타 3사사구 무득점 (밀워키 7인 계투진에 0:3 영봉패)'
+          }
+        },
+        22353: {
+          away: {
+            team: '뉴욕 양키스',
+            starter: '윌 워렌(Will Warren): 4.1이닝 6피안타 3사사구 4탈삼진 4실점',
+            decision: '패전투수: 브렌트 헤드릭(Brent Headrick): 0.2이닝 1피안타(1피홈런) 1사사구 2실점 (패전, 7승 4패)',
+            batting: '홈런: 헬리엇 라모스(13호), 조지 롬바드 주니어(5호, 2점), 스펜서 존스(11호)'
+          },
+          home: {
+            team: '애리조나 다이아몬드백스',
+            starter: '코빈 번스: 2.2이닝 5피안타(3피홈런) 4실점 (조기 강판)',
+            decision: '승리투수: 저스틴 마르티네스(Justin Martinez) (1이닝 무실점 2탈삼진, 시즌 3승)',
+            batting: '결승타: 놀란 아레나도 (5회말 역전 만루홈런, 시즌 27호)'
+          }
+        },
+        22348: {
+          away: {
+            team: '토론토 블루제이스',
+            starter: '크리스 배싯(Chris Bassitt): 6.1이닝 3피안타(1피홈런) 2사사구 7탈삼진 2실점 (승리, 11승 13패)',
+            decision: '불펜: 2.2이닝 무실점 4탈삼진 완벽 봉쇄',
+            batting: '홈런: 블라디미르 게레로 Jr.(30호 2점 홈런) · 결승타: 게레로 Jr. (2회 선제 투런)'
+          },
+          home: {
+            team: '텍사스 레인저스',
+            starter: '칼 퀀트릴(Cal Quantrill): 3.2이닝 7피안타(1피홈런) 2사사구 3탈삼진 5실점 (패전, 8승 6패)',
+            decision: '불펜: 호세 르클럭(1.1이닝 2실점), 헤이넌(4.0이닝 무실점)',
+            batting: '타선: 4안타 2득점 빈공 (토론토 선발 배싯에 완패)'
+          }
+        },
+        22357: {
+          away: {
+            team: '요코하마 DeNA',
+            starter: '아즈마 카츠키: 6.2이닝 6피안타(1피홈런) 2사사구 6탈삼진 3실점 (패전, 13승 4패)',
+            decision: '불펜: 1.1이닝 무실점 2탈삼진',
+            batting: '주요타자: 마키 슈고 (5회 적시타, 4타수 2안타 1타점)'
+          },
+          home: {
+            team: '한신 타이거즈',
+            starter: '사이키 히로토: 7.0이닝 5피안타 1사사구 8탈삼진 1실점 (승리, 12승 4패)',
+            decision: '세이브: 이와자키 스구루: 1.0이닝 무실점 1탈삼진 (시즌 24세이브)',
+            batting: '결승타: 사토 테루아키 (3회말 2점 홈런)'
+          }
+        },
+        22352: {
+          away: {
+            team: '샌프란시스코 자이언츠',
+            starter: '로건 웹: 6.0이닝 6피안타 2사사구 6탈삼진 3실점 (패전)',
+            decision: '불펜: 2.0이닝 무실점',
+            batting: '타선: 5안타 1득점 (다저스 불펜 봉쇄)'
+          },
+          home: {
+            team: 'LA 다저스',
+            starter: '선발: 6.1이닝 3피안타 1실점 8탈삼진 (승리)',
+            decision: '세이브: 에반 필립스: 1.0이닝 무실점 (세이브)',
+            batting: '결승타: 5회 2타점 역전 2루타'
+          }
+        },
+        22356: {
+          away: {
+            team: '히로시마 도요카프',
+            starter: '모리시타 마사토: 3.1이닝 8피안타 3사사구 6실점 (패전)',
+            decision: '불펜: 4.2이닝 4실점',
+            batting: '타선: 3안타 무득점 영봉패'
+          },
+          home: {
+            team: '주니치 드래건스',
+            starter: '오노 유다이: 7.0이닝 3피안타 무사사구 7탈삼진 무실점 (승리)',
+            decision: '불펜: 2.0이닝 무실점 합작 완봉',
+            batting: '타선: 14안타 10득점 대폭발 (중심타선 7타점 합작)'
+          }
+        },
+        22308: {
+          away: {
+            team: '대만',
+            starter: '린위민: 4.0이닝 5피안타 2사사구 4탈삼진 3실점 (패전)',
+            decision: '불펜: 4.0이닝 2실점',
+            batting: '타선: 4안타 무득점 침묵'
+          },
+          home: {
+            team: '한국',
+            starter: '곽빈: 6.0이닝 2피안타 1사사구 7탈삼진 무실점 (승리)',
+            decision: '계투: 최지민(1이닝) - 조병현(1이닝) - 박영현(1이닝) 무실점 계투승',
+            batting: '결승타: 3회말 2타점 선제 적시타'
+          }
+        }
+      };
+
+      const box = BOX_MAP[mid];
+      if (!box) return '';
+
+      return `
+        <div class="p-2.5 rounded mb-2" style="background: #0f172a; color: #f8fafc; font-size: 0.75rem; line-height: 1.6; border: 1px solid #334155;">
+          <div class="fw-bold mb-1.5" style="color: #60a5fa; font-size: 0.80rem;">⚾ 주요 투수 및 타자 기록</div>
+          <div class="mb-1.5">
+            <div class="fw-bold text-white mb-0.5">• ${box.away.team}:</div>
+            <div class="ps-2" style="color: #cbd5e1;">
+              <div>• 선발 ${box.away.starter}</div>
+              ${box.away.decision ? `<div>• ${box.away.decision}</div>` : ''}
+              ${box.away.batting ? `<div>• ${box.away.batting}</div>` : ''}
+            </div>
+          </div>
+          <div>
+            <div class="fw-bold text-white mb-0.5">• ${box.home.team}:</div>
+            <div class="ps-2" style="color: #cbd5e1;">
+              <div>• 선발 ${box.home.starter}</div>
+              ${box.home.decision ? `<div>• ${box.home.decision}</div>` : ''}
+              ${box.home.batting ? `<div>• ${box.home.batting}</div>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     function renderSlimHistoryDom(matchId, match, data) {
       if (!match) return;
 
@@ -18633,6 +18764,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
         `;
       }
 
+      const keyRecordHtml = buildKeyPlayerRecordsHtml(match);
+
       let compareTableHtml = '';
       if (isBaseball) {
         compareTableHtml = buildBaseballLastMatchCompareTableHtml(data?.home_recent, data?.away_recent, homeName, awayName);
@@ -18645,6 +18778,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const panelHtml = `
         <div class="p-1.5" style="background: #f8fafc;">
           ${highlightBlockHtml}
+          ${keyRecordHtml}
           ${compareTableHtml}
         </div>
       `;

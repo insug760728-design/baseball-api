@@ -385,12 +385,16 @@
         <div class="d-flex align-items-start gap-2">
           <i class="bi bi-chat-quote-fill text-primary" style="font-size:1.25rem; line-height:1.1; flex-shrink:0;"></i>
           <div>
-            
             <div style="font-size:0.86rem; font-weight:800; color:#0f172a; line-height:1.4;" id="briefOneLiner">
               <!-- JS -->
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- ⚾ 주요 투수 및 타자 기록 박스 -->
+      <div id="briefKeyPlayerBox" class="mb-3">
+        <!-- JS -->
       </div>
 
       <!-- 상세 승부처 리스트 -->
@@ -569,6 +573,20 @@
               { date: "09.14", loc: "원", opp: "애리다이", ip: "1.2", bf: 6, h: 0, hr: 0, bb: 1, so: 2, er: 0, era: "0.00" }
             ]
           }
+        },
+        keyPlayerRecords: {
+          away: {
+            team: "밀워키 브루어스",
+            starter: "제이콥 미시오로우스키: 3.0이닝 무실점 4탈삼진 (오프너)",
+            decision: "승리투수: DL 홀(DL Hall) (1.2이닝 1피안타 무실점 2탈삼진, 시즌 8승) · 세이브: 데빈 윌리엄스(32세이브)",
+            batting: "홈런/타점: 윌리엄 콘트레라스(18호 솔로포), 쿠퍼 프랫(2안타 2타점 적시타)"
+          },
+          home: {
+            team: "볼티모어 오리올스",
+            starter: "브랜든 영(Brandon Young): 6.0이닝 3피안타(1피홈런) 3사사구 9탈삼진 2실점 (패전, 9승 5패)",
+            decision: "불펜: 펠릭스 바티스타(0.2이닝 1실점 2K), 그랜트 울프람(1.1이닝 무실점)",
+            batting: "타선: 4안타 3사사구 무득점 (밀워키 7인 계투진에 0:3 영봉패)"
+          }
         }
       },
 
@@ -628,6 +646,20 @@
               { date: "09.15", loc: "홈", opp: "보스레드", ip: "5.1", bf: 24, h: 6, hr: 2, bb: 1, so: 5, er: 4, era: "6.75" }
             ]
           }
+        },
+        keyPlayerRecords: {
+          away: {
+            team: "뉴욕 양키스",
+            starter: "윌 워렌(Will Warren): 4.1이닝 6피안타 3사사구 4탈삼진 4실점",
+            decision: "패전투수: 브렌트 헤드릭(Brent Headrick): 0.2이닝 1피안타(1피홈런) 1사사구 2실점 (패전, 7승 4패)",
+            batting: "홈런: 헬리엇 라모스(13호), 조지 롬바드 주니어(5호, 2점), 스펜서 존스(11호)"
+          },
+          home: {
+            team: "애리조나 다이아몬드백스",
+            starter: "코빈 번스: 2.2이닝 5피안타(3피홈런) 4실점 (조기 강판)",
+            decision: "승리투수: 저스틴 마르티네스(Justin Martinez) (1이닝 무실점 2탈삼진, 시즌 3승)",
+            batting: "결승타: 놀란 아레나도 (5회말 역전 만루홈런)"
+          }
         }
       },
 
@@ -685,6 +717,20 @@
               { date: "09.21", loc: "원", opp: "텍사레인", ip: "6.1", bf: 25, h: 3, hr: 1, bb: 2, so: 7, er: 2, era: "2.84" }
             ]
           }
+        },
+        keyPlayerRecords: {
+          away: {
+            team: "토론토 블루제이스",
+            starter: "크리스 배싯(Chris Bassitt): 6.1이닝 3피안타(1피홈런) 2사사구 7탈삼진 2실점 (승리, 11승 13패)",
+            decision: "불펜: 2.2이닝 무실점 4탈삼진 완벽 봉쇄",
+            batting: "홈런: 블라디미르 게레로 Jr.(30호 2점 홈런) · 결승타: 게레로 Jr. (2회 선제 투런)"
+          },
+          home: {
+            team: "텍사스 레인저스",
+            starter: "칼 퀀트릴(Cal Quantrill): 3.2이닝 7피안타(1피홈런) 2사사구 3탈삼진 5실점 (패전, 8승 6패)",
+            decision: "불펜: 호세 르클럭(1.1이닝 2실점), 헤이넌(4.0이닝 무실점)",
+            batting: "타선: 4안타 2득점 빈공 (토론토 선발 배싯에 완패)"
+          }
         }
       },
 
@@ -740,6 +786,20 @@
               { date: "09.21", loc: "원", opp: "한신", ip: "6.2", bf: 26, h: 6, hr: 1, bb: 2, so: 6, er: 3, era: "4.05" }
             ]
           }
+        },
+        keyPlayerRecords: {
+          away: {
+            team: "요코하마 DeNA",
+            starter: "아즈마 카츠키: 6.2이닝 6피안타(1피홈런) 2사사구 6탈삼진 3실점 (패전, 13승 4패)",
+            decision: "불펜: 1.1이닝 무실점 2탈삼진",
+            batting: "주요타자: 마키 슈고 (5회 적시타, 4타수 2안타 1타점)"
+          },
+          home: {
+            team: "한신 타이거즈",
+            starter: "사이키 히로토: 7.0이닝 5피안타 1사사구 8탈삼진 1실점 (승리, 12승 4패)",
+            decision: "세이브: 이와자키 스구루: 1.0이닝 무실점 1탈삼진 (시즌 24세이브)",
+            batting: "결승타: 사토 테루아키 (3회말 2점 홈런)"
+          }
         }
       }
     };
@@ -762,6 +822,42 @@
       document.getElementById('briefTitle').innerText = `${data.home} vs ${data.away} 승부처 브리핑`;
       document.getElementById('briefOneLiner').innerText = data.oneLiner;
       
+      // 2-1. ⚾ 주요 투수 및 타자 기록 박스
+      const kBox = data.keyPlayerRecords;
+      const keyBoxEl = document.getElementById('briefKeyPlayerBox');
+      if (keyBoxEl) {
+        if (kBox) {
+          keyBoxEl.innerHTML = `
+            <div class="p-3 rounded" style="background: #0f172a; color: #f8fafc; font-size: 0.76rem; line-height: 1.6; border: 1px solid #334155; box-shadow: 0 4px 14px rgba(0,0,0,0.25);">
+              <div class="fw-bold mb-2 d-flex align-items-center justify-content-between" style="color: #60a5fa; font-size: 0.82rem; border-bottom: 1px solid #1e293b; padding-bottom: 5px;">
+                <span><i class="bi bi-person-lines-fill me-1"></i>⚾ 주요 투수 및 타자 기록</span>
+                <span class="badge bg-primary bg-opacity-25 text-info" style="font-size:0.65rem;">박스스코어 요약</span>
+              </div>
+              <div class="mb-2">
+                <div class="fw-bold text-white mb-0.5">• ${kBox.away.team}:</div>
+                <div class="ps-2" style="color: #cbd5e1;">
+                  <div>• 선발 ${kBox.away.starter}</div>
+                  ${kBox.away.decision ? `<div>• ${kBox.away.decision}</div>` : ''}
+                  ${kBox.away.batting ? `<div>• ${kBox.away.batting}</div>` : ''}
+                </div>
+              </div>
+              <div>
+                <div class="fw-bold text-white mb-0.5">• ${kBox.home.team}:</div>
+                <div class="ps-2" style="color: #cbd5e1;">
+                  <div>• 선발 ${kBox.home.starter}</div>
+                  ${kBox.home.decision ? `<div>• ${kBox.home.decision}</div>` : ''}
+                  ${kBox.home.batting ? `<div>• ${kBox.home.batting}</div>` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+          keyBoxEl.style.display = 'block';
+        } else {
+          keyBoxEl.innerHTML = '';
+          keyBoxEl.style.display = 'none';
+        }
+      }
+
       const keyPointsHtml = data.keyPoints.map(kp => `
         <div class=\"brief-point-item\">
           <div class=\"d-flex align-items-center gap-1.5 mb-1\">
