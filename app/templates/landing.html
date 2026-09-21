@@ -12647,6 +12647,90 @@ function getFullModalMatchList() {
       }, 5000);
     };
 
+    // 🏀 농구 실시간 이벤트 트리거 (5초 유지 후 메인 스타디움으로 즉시 원복)
+    window.triggerBasketballEvent = function(matchId, type, details) {
+      if (!window._activeLivePlayEvents) window._activeLivePlayEvents = {};
+      const t = (type || 'DUNK').toUpperCase();
+      if (!window._bballEvSeq) window._bballEvSeq = {};
+      window._bballEvSeq[t] = ((window._bballEvSeq[t] || 0) % 3) + 1;
+      const seqIdx = window._bballEvSeq[t];
+      let subtext = '';
+      if (typeof details === 'string') {
+        subtext = details;
+      } else if (details && typeof details === 'object') {
+        subtext = details.subtext || '';
+      }
+      if (!subtext) {
+        if (t === 'DUNK') subtext = '골밑을 가르는 폭발적인 호쾌한 슬램덩크!';
+        else if (t === 'THREE') subtext = '클러치 3점슛 클린 샷 림 통과!';
+        else if (t === 'BLOCK') subtext = '골밑 림 프로텍팅! 환상적인 몬스터 블록슛!';
+        else subtext = '림을 가르는 전광석화 같은 속공 득점!';
+      }
+
+      window._activeLivePlayEvents[matchId] = {
+        type: t,
+        subtext: subtext,
+        imgIdx: seqIdx,
+        time: Date.now()
+      };
+      if (typeof renderPredMatches === 'function') renderPredMatches();
+
+      if (window._liveEventTimeouts[matchId]) {
+        clearTimeout(window._liveEventTimeouts[matchId]);
+      }
+      window._liveEventTimeouts[matchId] = setTimeout(() => {
+        if (window._activeLivePlayEvents && window._activeLivePlayEvents[matchId]) {
+          delete window._activeLivePlayEvents[matchId];
+        }
+        if (window._matchLastStateImage && window._matchLastStateImage[matchId]) {
+          delete window._matchLastStateImage[matchId];
+        }
+        if (typeof renderPredMatches === 'function') renderPredMatches();
+      }, 5000);
+    };
+
+    // 🏐 배구 실시간 이벤트 트리거 (5초 유지 후 메인 스타디움으로 즉시 원복)
+    window.triggerVolleyballEvent = function(matchId, type, details) {
+      if (!window._activeLivePlayEvents) window._activeLivePlayEvents = {};
+      const t = (type || 'SPIKE').toUpperCase();
+      if (!window._vballEvSeq) window._vballEvSeq = {};
+      window._vballEvSeq[t] = ((window._vballEvSeq[t] || 0) % 3) + 1;
+      const seqIdx = window._vballEvSeq[t];
+      let subtext = '';
+      if (typeof details === 'string') {
+        subtext = details;
+      } else if (details && typeof details === 'object') {
+        subtext = details.subtext || '';
+      }
+      if (!subtext) {
+        if (t === 'SPIKE') subtext = '블로킹을 뚫어내는 무시무시한 고공 강스파이크!';
+        else if (t === 'BLOCK') subtext = '네트 위를 가로막는 철벽 몬스터 블로킹!';
+        else if (t === 'DIG') subtext = '코트에 몸을 던지는 투혼의 슈퍼 다이빙 디그!';
+        else subtext = '상대 리시브를 무너뜨리는 강력한 스파이크 서브에이스!';
+      }
+
+      window._activeLivePlayEvents[matchId] = {
+        type: t,
+        subtext: subtext,
+        imgIdx: seqIdx,
+        time: Date.now()
+      };
+      if (typeof renderPredMatches === 'function') renderPredMatches();
+
+      if (window._liveEventTimeouts[matchId]) {
+        clearTimeout(window._liveEventTimeouts[matchId]);
+      }
+      window._liveEventTimeouts[matchId] = setTimeout(() => {
+        if (window._activeLivePlayEvents && window._activeLivePlayEvents[matchId]) {
+          delete window._activeLivePlayEvents[matchId];
+        }
+        if (window._matchLastStateImage && window._matchLastStateImage[matchId]) {
+          delete window._matchLastStateImage[matchId];
+        }
+        if (typeof renderPredMatches === 'function') renderPredMatches();
+      }, 5000);
+    };
+
     // ⚡ 전역 실시간 라이브 경기 판단 헬퍼 (공수교대/팀체인지/시간대 완벽 대응)
     function isRealTimeLive(m) {
       if (!m) return false;
@@ -13102,31 +13186,290 @@ function getFullModalMatchList() {
               ${eventBannerHtml}
             </div>
           `;
-        } else if (m.sport_code === 'BASKETBALL' || m.sport_code === 'VOLLEYBALL') {
-          // 🏀/🏐 [농구·배구] 경기 시작 후 시간단위 API-Sports 공인 결과 전용 표시
-          const hasOfficialLiveScores = (hScore > 0 || aScore > 0);
-          const periodTxt = (m.sport_code === 'VOLLEYBALL') ? (st.quarter || '세트 진행중') : (st.quarter || '쿼터 진행중');
-          const scoreDisplayHtml = hasOfficialLiveScores
-            ? `<div class="d-flex align-items-center justify-content-between my-2 px-3 py-2 rounded" style="background:#f8fafc; border:1.5px solid #cbd5e1; color:#0f172a; font-family:'Roboto Mono', monospace; font-size:1.3rem; font-weight:800; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-                 <span class="text-truncate text-end" style="flex:1; font-size:0.95rem; font-family:sans-serif; color:#1e293b;">${hName}</span>
-                 <span class="mx-3"><span style="color:#dc2626;">${hScore}</span> <span style="color:#94a3b8; font-weight:300;">:</span> <span style="color:#2563eb;">${aScore}</span></span>
-                 <span class="text-truncate text-start" style="flex:1; font-size:0.95rem; font-family:sans-serif; color:#1e293b;">${aName}</span>
-               </div>`
-            : `<div class="p-3 rounded text-center my-2" style="background:#f1f5f9; border:1px solid #cbd5e1; font-size:0.82rem; color:#475569;">
-                 <i class="bi bi-clock-history me-1 text-primary"></i><b>경기 시작됨</b> · API 스포츠 공식 집계 대기
-               </div>`;
+        } else if (m.sport_code === 'BASKETBALL') {
+          // 🏀 [농구 LIVE] 220px 럭셔리 NBA급 코트 전광판 배경 + 덩크/3점슛/블록슛 상황 비주얼
+          let bballEventBannerHtml = '';
+          const bballActiveEv = (typeof window._activeLivePlayEvents !== 'undefined' && window._activeLivePlayEvents) ? window._activeLivePlayEvents[m.id] : null;
+          if (bballActiveEv && (bballActiveEv.type === 'DUNK' || bballActiveEv.type === 'THREE' || bballActiveEv.type === 'BLOCK' || bballActiveEv.type === 'SCORE')) {
+            const evT = bballActiveEv.type;
+            let evImg = '/static/images/basketball_dunk_epic_1.jpg';
+            let badgeTitle = '💥 SLAM DUNK!';
+            let badgeColor = '#ea580c';
+            if (evT === 'THREE') {
+              evImg = '/static/images/basketball_three_epic_2.jpg';
+              badgeTitle = '🔥 3-POINT BUZZER!';
+              badgeColor = '#dc2626';
+            } else if (evT === 'BLOCK') {
+              evImg = '/static/images/basketball_block_epic_3.jpg';
+              badgeTitle = '🛡️ MONSTER BLOCK!';
+              badgeColor = '#0284c7';
+            }
+            const sub = bballActiveEv.subtext || '코트를 뜨겁게 달구는 환상적인 플레이!';
+            bballEventBannerHtml = `
+              <div class="live-bball-event-overlay position-absolute d-flex flex-column justify-content-between p-2.5" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.02) 28%, rgba(0,0,0,0.02) 70%, rgba(0,0,0,0.70) 100%), url('${evImg}') center center / cover no-repeat; border-radius:10px 10px 0 0; border:1.8px solid #f97316; box-shadow:0 0 25px rgba(249,115,22,0.7); pointer-events:auto;">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                  <div class="d-flex align-items-center gap-1.5 live-anim-goal-text-burst">
+                    <span class="badge text-white fw-black px-2 py-0.5" style="background:${badgeColor}; font-size:0.75rem; font-weight:900; letter-spacing:0.5px; box-shadow:0 0 12px ${badgeColor};">${badgeTitle}</span>
+                  </div>
+                  <button type="button" class="btn-close btn-close-white" style="font-size:0.6rem; opacity:0.9; z-index:15;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>
+                </div>
+                <div class="flex-grow-1"></div>
+                <div class="w-100 text-center">
+                  <div class="d-inline-block bg-dark bg-opacity-80 text-white px-3 py-1 rounded-pill border border-warning border-opacity-50" style="font-size:0.78rem; font-weight:800; backdrop-filter:blur(6px); text-shadow:0 1px 4px rgba(0,0,0,0.9); box-shadow:0 2px 8px rgba(0,0,0,0.6); color:#fed7aa;">
+                    🏀 ${sub}
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
+          let basketballBgImg = '/static/images/basketball_court_live.jpg';
+          if (bballActiveEv) {
+            if (bballActiveEv.type === 'THREE') basketballBgImg = '/static/images/basketball_three_epic_2.jpg';
+            else if (bballActiveEv.type === 'BLOCK') basketballBgImg = '/static/images/basketball_block_epic_3.jpg';
+            else basketballBgImg = '/static/images/basketball_dunk_epic_1.jpg';
+          }
+
+          const qtrText = st.quarter || (diffMin > 90 ? '4Q' : (diffMin > 60 ? '3Q' : (diffMin > 30 ? '2Q' : '1Q')));
 
           liveBroadcastStageHtml = `
-            <div class="p-3 rounded-top" style="background:#ffffff; border-bottom:1px solid #e2e8f0;">
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                <div class="d-flex align-items-center gap-1.5">
-                  <span class="badge bg-danger text-white px-2 py-0.5 fw-black">LIVE</span>
-                  <span class="badge bg-primary text-white px-2 py-0.5" style="font-size:0.68rem;">${sportIcon} ${m.league_name || m.sport_code}</span>
-                  <span class="fw-bold text-danger" style="font-size:0.75rem;">${periodTxt}</span>
+            <div class="live-basketball-stage-wrapper position-relative" style="height: 220px; min-height: 220px; max-height: 220px; border-radius: 10px 10px 0 0; overflow: hidden; border: 1.5px solid rgba(255,255,255,0.18); box-shadow: 0 4px 18px rgba(0,0,0,0.35);">
+              <!-- 1. Luxury Basketball Court Panoramic Background -->
+              <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.02) 28%, rgba(0,0,0,0.02) 70%, rgba(0,0,0,0.70) 100%), url('${basketballBgImg}') center 40%/cover no-repeat; z-index:1; transition: background 0.4s ease-in-out;"></div>
+
+              <!-- Top Integrated HUD -->
+              <div class="position-absolute d-flex justify-content-between align-items-center w-100 px-3" style="top: 10px; left: 0; right: 0; z-index: 5;">
+                <div class="d-flex align-items-center gap-1.5" style="min-width:0; overflow:hidden;">
+                  <span class="badge bg-danger text-white py-1 px-2.5 fw-black shadow-sm" style="font-size:0.75rem; letter-spacing:0.5px; border-radius:6px; box-shadow:0 0 10px rgba(239,68,68,0.7);">
+                    <span class="pulse-dot me-1" style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#fff;"></span>LIVE
+                  </span>
+                  <span class="badge bg-dark bg-opacity-80 text-white border border-white border-opacity-25 px-2 py-1 fw-bold" style="font-size:0.72rem; backdrop-filter:blur(6px);">
+                    🏀 ${m.league_name || '농구'}${sweepBadge}
+                  </span>
+                  <span class="badge bg-warning text-dark px-2 py-1 fw-black shadow-sm" style="font-size:0.72rem; border-radius:6px;">
+                    ${qtrText}
+                  </span>
                 </div>
-                ${getAuditBadgeHtml(m)}
+                <div class="d-flex align-items-center gap-1" style="flex-shrink:0;">
+                  ${getAuditBadgeHtml(m)}
+                  <button type="button" class="btn btn-xs py-1 px-2 d-inline-flex align-items-center justify-content-center gap-1 rounded-pill" style="border:1px solid rgba(255,255,255,0.3); background:rgba(15,23,42,0.75); color:#ffffff; backdrop-filter:blur(6px); height:24px; font-size:0.70rem; font-weight:700;" onclick="event.stopPropagation(); toggleMatchScoreAlert(${m.id}, event);" title="실시간 득점 알림">
+                    <i class="bi ${cardBellIcon}" style="${isCardSubscribed ? 'color:#facc15;' : 'color:#cbd5e1;'}"></i>
+                    <span>${isCardSubscribed ? '알림ON' : '알림'}</span>
+                  </button>
+                </div>
               </div>
-              ${scoreDisplayHtml}
+
+              <!-- 2. Main Live Basketball Stage Content -->
+              <div class="position-relative h-100" style="z-index:3;">
+                <!-- Left: Home Team -->
+                <div class="position-absolute d-flex flex-column justify-content-between text-start" style="left:12px; top:46px; bottom:12px; width:110px; z-index:4;">
+                  <div>
+                    <span class="badge bg-danger bg-opacity-90 text-white py-0.5 px-2 fw-black mb-1 d-inline-block shadow-sm" style="font-size:0.60rem; letter-spacing:0.5px; border-radius:4px;">HOME</span>
+                    <div class="fw-black text-white text-truncate" style="font-size:1.10rem; text-shadow:0 2px 8px rgba(0,0,0,0.95), 0 0 12px rgba(0,0,0,0.8); line-height:1.2;" title="${m.home_team_name}">
+                      ${hName}
+                    </div>
+                  </div>
+                  <div class="text-truncate" style="font-size:0.70rem; color:#fed7aa; line-height:1.2; text-shadow:0 1px 4px #000;">
+                    🏀 <span style="color:#fdba74;">득점:</span> <b class="text-white">${hScore}P</b>
+                  </div>
+                </div>
+
+                <!-- Center: Scoreboard HUD & Court Graphic -->
+                <div class="position-absolute d-flex flex-column align-items-center justify-content-between" style="left:50%; top:44px; bottom:10px; transform:translateX(-50%); width:230px; z-index:4; pointer-events:none;">
+                  <!-- Top: Score HUD -->
+                  <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.3); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:28px; pointer-events:auto;">
+                    <span class="badge bg-warning text-dark px-1.5 py-0.5 fw-black text-center" style="font-size:0.62rem; min-width:42px; border-radius:10px;">${qtrText}</span>
+                    <div class="d-flex align-items-center justify-content-center px-2" style="font-family:'Roboto Mono', monospace; font-size:1.25rem; font-weight:900; line-height:1;">
+                      <span style="color:#ef4444; min-width:18px; text-align:right; text-shadow:0 0 8px rgba(239,68,68,0.7);">${hScore}</span>
+                      <span style="color:rgba(255,255,255,0.4); font-size:0.85rem; font-weight:400; margin:0 5px;">:</span>
+                      <span style="color:#38bdf8; min-width:18px; text-align:left; text-shadow:0 0 8px rgba(56,189,248,0.7);">${aScore}</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-center bg-dark bg-opacity-75 px-1.5 py-0.5 rounded-pill border border-secondary border-opacity-50" style="height:19px; min-width:48px;">
+                      <span class="fw-bold text-warning" style="font-size:0.56rem; letter-spacing:-0.2px;">총 ${hScore + aScore}P</span>
+                    </div>
+                  </div>
+
+                  <!-- Middle: Basketball Hardwood Court SVG -->
+                  <div class="position-relative my-auto" style="pointer-events:auto;">
+                    <svg width="140" height="42" viewBox="0 0 140 42">
+                      <rect x="10" y="2" width="120" height="38" rx="2" fill="rgba(180,83,9,0.35)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2" />
+                      <line x1="70" y1="2" x2="70" y2="40" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" />
+                      <circle cx="70" cy="21" r="10" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.2" />
+                      <path d="M 10 7 C 32 7, 32 35, 10 35" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1" />
+                      <path d="M 130 7 C 108 7, 108 35, 130 35" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1" />
+                      <rect x="10" y="14" width="16" height="14" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.35)" stroke-width="0.8" />
+                      <rect x="114" y="14" width="16" height="14" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.35)" stroke-width="0.8" />
+                      <text x="70" y="36" text-anchor="middle" font-size="6" font-weight="800" fill="rgba(255,255,255,0.7)" letter-spacing="0.5">HARDWOOD ARENA</text>
+                    </svg>
+                  </div>
+
+                  <!-- Bottom: Situation Status Pill -->
+                  <div class="d-inline-flex align-items-center justify-content-center px-2.5 py-0.5 rounded-pill" style="background:rgba(15,23,42,0.82); border:1px solid rgba(255,255,255,0.25); backdrop-filter:blur(6px); box-shadow:0 2px 6px rgba(0,0,0,0.5);">
+                    <span style="font-size:0.64rem; font-weight:800; color:#fdba74; letter-spacing:-0.2px;">
+                      ${Math.abs(hScore - aScore) <= 5 ? '🔥 1포제션 초접전 승부처' : (diffMin > 80 ? '⚡ 클러치 타임 진입' : '🏀 실시간 화력 공방전')}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Right: Away Team -->
+                <div class="position-absolute d-flex flex-column justify-content-between text-end" style="right:12px; top:46px; bottom:12px; width:110px; z-index:4;">
+                  <div>
+                    <span class="badge bg-primary bg-opacity-90 text-white py-0.5 px-2 fw-black mb-1 d-inline-block shadow-sm" style="font-size:0.60rem; letter-spacing:0.5px; border-radius:4px;">AWAY</span>
+                    <div class="fw-black text-white text-truncate" style="font-size:1.10rem; text-shadow:0 2px 8px rgba(0,0,0,0.95), 0 0 12px rgba(0,0,0,0.8); line-height:1.2;" title="${m.away_team_name}">
+                      ${aName}
+                    </div>
+                  </div>
+                  <div class="text-truncate" style="font-size:0.70rem; color:#fed7aa; line-height:1.2; text-shadow:0 1px 4px #000;">
+                    🏀 <span style="color:#fdba74;">득점:</span> <b class="text-white">${aScore}P</b>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. Absolute Event Overlay -->
+              ${bballEventBannerHtml}
+            </div>
+          `;
+        } else if (m.sport_code === 'VOLLEYBALL') {
+          // 🏐 [배구 LIVE] 220px 럭셔리 V-리그/올림픽 코트 전광판 배경 + 스파이크/블로킹/디그 상황 비주얼
+          let vballEventBannerHtml = '';
+          const vballActiveEv = (typeof window._activeLivePlayEvents !== 'undefined' && window._activeLivePlayEvents) ? window._activeLivePlayEvents[m.id] : null;
+          if (vballActiveEv && (vballActiveEv.type === 'SPIKE' || vballActiveEv.type === 'BLOCK' || vballActiveEv.type === 'DIG' || vballActiveEv.type === 'SCORE')) {
+            const evT = vballActiveEv.type;
+            let evImg = '/static/images/volleyball_spike_epic_1.jpg';
+            let badgeTitle = '💥 MONSTER SPIKE!';
+            let badgeColor = '#2563eb';
+            if (evT === 'BLOCK') {
+              evImg = '/static/images/volleyball_block_epic_2.jpg';
+              badgeTitle = '🛡️ WALL BLOCKING!';
+              badgeColor = '#059669';
+            } else if (evT === 'DIG') {
+              evImg = '/static/images/volleyball_dig_epic_3.jpg';
+              badgeTitle = '⚡ SUPER DIVING DIG!';
+              badgeColor = '#d97706';
+            }
+            const sub = vballActiveEv.subtext || '네트 위를 가르는 전율의 랠리 득점!';
+            vballEventBannerHtml = `
+              <div class="live-vball-event-overlay position-absolute d-flex flex-column justify-content-between p-2.5" style="inset:0; z-index:12; background: linear-gradient(180deg, rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.02) 28%, rgba(0,0,0,0.02) 70%, rgba(0,0,0,0.70) 100%), url('${evImg}') center center / cover no-repeat; border-radius:10px 10px 0 0; border:1.8px solid #38bdf8; box-shadow:0 0 25px rgba(56,189,248,0.7); pointer-events:auto;">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                  <div class="d-flex align-items-center gap-1.5 live-anim-goal-text-burst">
+                    <span class="badge text-white fw-black px-2 py-0.5" style="background:${badgeColor}; font-size:0.75rem; font-weight:900; letter-spacing:0.5px; box-shadow:0 0 12px ${badgeColor};">${badgeTitle}</span>
+                  </div>
+                  <button type="button" class="btn-close btn-close-white" style="font-size:0.6rem; opacity:0.9; z-index:15;" onclick="dismissLiveEventTrack(this)" title="닫기"></button>
+                </div>
+                <div class="flex-grow-1"></div>
+                <div class="w-100 text-center">
+                  <div class="d-inline-block bg-dark bg-opacity-80 text-white px-3 py-1 rounded-pill border border-info border-opacity-50" style="font-size:0.78rem; font-weight:800; backdrop-filter:blur(6px); text-shadow:0 1px 4px rgba(0,0,0,0.9); box-shadow:0 2px 8px rgba(0,0,0,0.6); color:#bae6fd;">
+                    🏐 ${sub}
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
+          let volleyballBgImg = '/static/images/volleyball_court_live.jpg';
+          if (vballActiveEv) {
+            if (vballActiveEv.type === 'BLOCK') volleyballBgImg = '/static/images/volleyball_block_epic_2.jpg';
+            else if (vballActiveEv.type === 'DIG') volleyballBgImg = '/static/images/volleyball_dig_epic_3.jpg';
+            else volleyballBgImg = '/static/images/volleyball_spike_epic_1.jpg';
+          }
+
+          const setTxt = st.quarter || ((hScore + aScore >= 4) ? '5세트 파이널' : ((hScore + aScore >= 3) ? '4세트' : ((hScore + aScore >= 2) ? '3세트' : ((hScore + aScore >= 1) ? '2세트' : '1세트'))));
+
+          liveBroadcastStageHtml = `
+            <div class="live-volleyball-stage-wrapper position-relative" style="height: 220px; min-height: 220px; max-height: 220px; border-radius: 10px 10px 0 0; overflow: hidden; border: 1.5px solid rgba(255,255,255,0.18); box-shadow: 0 4px 18px rgba(0,0,0,0.35);">
+              <!-- 1. Luxury Volleyball Arena Panoramic Background -->
+              <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.02) 28%, rgba(0,0,0,0.02) 70%, rgba(0,0,0,0.70) 100%), url('${volleyballBgImg}') center 45%/cover no-repeat; z-index:1; transition: background 0.4s ease-in-out;"></div>
+
+              <!-- Top Integrated HUD -->
+              <div class="position-absolute d-flex justify-content-between align-items-center w-100 px-3" style="top: 10px; left: 0; right: 0; z-index: 5;">
+                <div class="d-flex align-items-center gap-1.5" style="min-width:0; overflow:hidden;">
+                  <span class="badge bg-danger text-white py-1 px-2.5 fw-black shadow-sm" style="font-size:0.75rem; letter-spacing:0.5px; border-radius:6px; box-shadow:0 0 10px rgba(239,68,68,0.7);">
+                    <span class="pulse-dot me-1" style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#fff;"></span>LIVE
+                  </span>
+                  <span class="badge bg-dark bg-opacity-80 text-white border border-white border-opacity-25 px-2 py-1 fw-bold" style="font-size:0.72rem; backdrop-filter:blur(6px);">
+                    🏐 ${m.league_name || '배구'}${sweepBadge}
+                  </span>
+                  <span class="badge bg-info text-dark px-2 py-1 fw-black shadow-sm" style="font-size:0.72rem; border-radius:6px;">
+                    ${setTxt}
+                  </span>
+                </div>
+                <div class="d-flex align-items-center gap-1" style="flex-shrink:0;">
+                  ${getAuditBadgeHtml(m)}
+                  <button type="button" class="btn btn-xs py-1 px-2 d-inline-flex align-items-center justify-content-center gap-1 rounded-pill" style="border:1px solid rgba(255,255,255,0.3); background:rgba(15,23,42,0.75); color:#ffffff; backdrop-filter:blur(6px); height:24px; font-size:0.70rem; font-weight:700;" onclick="event.stopPropagation(); toggleMatchScoreAlert(${m.id}, event);" title="실시간 득점 알림">
+                    <i class="bi ${cardBellIcon}" style="${isCardSubscribed ? 'color:#facc15;' : 'color:#cbd5e1;'}"></i>
+                    <span>${isCardSubscribed ? '알림ON' : '알림'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2. Main Live Volleyball Stage Content -->
+              <div class="position-relative h-100" style="z-index:3;">
+                <!-- Left: Home Team -->
+                <div class="position-absolute d-flex flex-column justify-content-between text-start" style="left:12px; top:46px; bottom:12px; width:110px; z-index:4;">
+                  <div>
+                    <span class="badge bg-danger bg-opacity-90 text-white py-0.5 px-2 fw-black mb-1 d-inline-block shadow-sm" style="font-size:0.60rem; letter-spacing:0.5px; border-radius:4px;">HOME</span>
+                    <div class="fw-black text-white text-truncate" style="font-size:1.10rem; text-shadow:0 2px 8px rgba(0,0,0,0.95), 0 0 12px rgba(0,0,0,0.8); line-height:1.2;" title="${m.home_team_name}">
+                      ${hName}
+                    </div>
+                  </div>
+                  <div class="text-truncate" style="font-size:0.70rem; color:#bae6fd; line-height:1.2; text-shadow:0 1px 4px #000;">
+                    🏐 <span style="color:#7dd3fc;">세트:</span> <b class="text-white">${hScore}</b>
+                  </div>
+                </div>
+
+                <!-- Center: Scoreboard HUD & Court Net Graphic -->
+                <div class="position-absolute d-flex flex-column align-items-center justify-content-between" style="left:50%; top:44px; bottom:10px; transform:translateX(-50%); width:230px; z-index:4; pointer-events:none;">
+                  <!-- Top: Score HUD -->
+                  <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.3); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:28px; pointer-events:auto;">
+                    <span class="badge bg-info text-dark px-1.5 py-0.5 fw-black text-center" style="font-size:0.62rem; min-width:42px; border-radius:10px;">${setTxt}</span>
+                    <div class="d-flex align-items-center justify-content-center px-2" style="font-family:'Roboto Mono', monospace; font-size:1.25rem; font-weight:900; line-height:1;">
+                      <span style="color:#ef4444; min-width:14px; text-align:right; text-shadow:0 0 8px rgba(239,68,68,0.7);">${hScore}</span>
+                      <span style="color:rgba(255,255,255,0.4); font-size:0.85rem; font-weight:400; margin:0 5px;">:</span>
+                      <span style="color:#38bdf8; min-width:14px; text-align:left; text-shadow:0 0 8px rgba(56,189,248,0.7);">${aScore}</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-center bg-dark bg-opacity-75 px-1.5 py-0.5 rounded-pill border border-secondary border-opacity-50" style="height:19px; min-width:48px;">
+                      <span class="fw-bold text-info" style="font-size:0.56rem; letter-spacing:-0.2px;">세트 공방</span>
+                    </div>
+                  </div>
+
+                  <!-- Middle: Volleyball Net Graphic -->
+                  <div class="position-relative my-auto" style="pointer-events:auto;">
+                    <svg width="140" height="42" viewBox="0 0 140 42">
+                      <rect x="10" y="4" width="120" height="34" rx="2" fill="rgba(14,116,144,0.35)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2" />
+                      <line x1="45" y1="4" x2="45" y2="38" stroke="rgba(255,255,255,0.35)" stroke-width="1" stroke-dasharray="2,2" />
+                      <line x1="95" y1="4" x2="95" y2="38" stroke="rgba(255,255,255,0.35)" stroke-width="1" stroke-dasharray="2,2" />
+                      <line x1="70" y1="1" x2="70" y2="41" stroke="#f8fafc" stroke-width="2.2" />
+                      <line x1="68" y1="0" x2="68" y2="42" stroke="#ef4444" stroke-width="1.2" />
+                      <line x1="72" y1="0" x2="72" y2="42" stroke="#ef4444" stroke-width="1.2" />
+                      <circle cx="70" cy="12" r="3" fill="#facc15" />
+                      <text x="70" y="35" text-anchor="middle" font-size="6" font-weight="800" fill="rgba(255,255,255,0.7)" letter-spacing="0.5">TARAFLEX COURT</text>
+                    </svg>
+                  </div>
+
+                  <!-- Bottom: Situation Status Pill -->
+                  <div class="d-inline-flex align-items-center justify-content-center px-2.5 py-0.5 rounded-pill" style="background:rgba(15,23,42,0.82); border:1px solid rgba(255,255,255,0.25); backdrop-filter:blur(6px); box-shadow:0 2px 6px rgba(0,0,0,0.5);">
+                    <span style="font-size:0.64rem; font-weight:800; color:#7dd3fc; letter-spacing:-0.2px;">
+                      ${(hScore === 2 && aScore === 2) ? '🔥 5세트 최종 매치포인트 운명의 승부' : ((hScore >= 2 || aScore >= 2) ? '⚡ 세트포인트 접전' : '🏐 실시간 고공 랠리 공방전')}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Right: Away Team -->
+                <div class="position-absolute d-flex flex-column justify-content-between text-end" style="right:12px; top:46px; bottom:12px; width:110px; z-index:4;">
+                  <div>
+                    <span class="badge bg-primary bg-opacity-90 text-white py-0.5 px-2 fw-black mb-1 d-inline-block shadow-sm" style="font-size:0.60rem; letter-spacing:0.5px; border-radius:4px;">AWAY</span>
+                    <div class="fw-black text-white text-truncate" style="font-size:1.10rem; text-shadow:0 2px 8px rgba(0,0,0,0.95), 0 0 12px rgba(0,0,0,0.8); line-height:1.2;" title="${m.away_team_name}">
+                      ${aName}
+                    </div>
+                  </div>
+                  <div class="text-truncate" style="font-size:0.70rem; color:#bae6fd; line-height:1.2; text-shadow:0 1px 4px #000;">
+                    🏐 <span style="color:#7dd3fc;">세트:</span> <b class="text-white">${aScore}</b>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. Absolute Event Overlay -->
+              ${vballEventBannerHtml}
             </div>
           `;
         } else {
@@ -21515,6 +21858,19 @@ function renderPredDetail(m, customDetailData = null) {
                 } else {
                   triggerBaseballEvent(mId, 'HIT', `⚾ [${scoringSide}] 적시타 득점 성공!`);
                 }
+              }
+            } else if (m.sport_code === 'BASKETBALL') {
+              if (typeof triggerBasketballEvent === 'function') {
+                const diff = (hScore - old.home) + (aScore - old.away);
+                if (diff >= 3) {
+                  triggerBasketballEvent(mId, 'THREE', `🔥 [${scoringSide}] 3점슛 클러치 버저비터 작렬!`);
+                } else {
+                  triggerBasketballEvent(mId, 'DUNK', `🏀 [${scoringSide}] 폭발적인 슬램덩크 득점!`);
+                }
+              }
+            } else if (m.sport_code === 'VOLLEYBALL') {
+              if (typeof triggerVolleyballEvent === 'function') {
+                triggerVolleyballEvent(mId, 'SPIKE', `🏐 [${scoringSide}] 네트를 가르는 고공 강스파이크 득점!`);
               }
             }
             if (isSubscribed) {
