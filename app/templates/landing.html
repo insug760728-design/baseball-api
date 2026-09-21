@@ -8596,32 +8596,25 @@ function getFullModalMatchList() {
           `;
         }
 
-        // 1. 최근 1경기 단독 표 노출
-        const firstGameOpp = (typeof formatTeamName === 'function') ? formatTeamName(firstGame.opponent) : firstGame.opponent;
-        const firstGameScore = (firstGame.team_score !== undefined && firstGame.opp_score !== undefined) ? `${firstGame.team_score} : ${firstGame.opp_score}` : (firstGame.score || '-');
-        const firstGameIsWin = firstGame.result === 'W' || firstGame.result === '승' || firstGame.result === 'WIN' || firstGame.result_kr === '승';
-        const firstGameIsLoss = firstGame.result === 'L' || firstGame.result === '패' || firstGame.result === 'LOSS' || firstGame.result_kr === '패';
-        const firstGameResText = firstGameIsWin ? '승리' : (firstGameIsLoss ? '패배' : '무승부');
-        const firstGameDate = (firstGame.match_date || firstGame.date || '').slice(5, 10).replace('-', '.');
+        let wins = 0, losses = 0;
+        fullList.slice(0, 10).forEach(g => {
+          const isWin = g.result === 'W' || g.result === '승' || g.result === 'WIN' || g.result_kr === '승';
+          if (isWin) wins++; else losses++;
+        });
+        const winPct = Math.round((wins / Math.min(fullList.length, 10)) * 100);
 
-        const firstGameHtml = `
-          <div class="mb-2 p-2 rounded-2 bg-white border shadow-xs" style="border-color: #cbd5e1 !important;">
-            <div class="d-flex justify-content-between align-items-center mb-1.5 flex-wrap gap-1">
-              <div class="d-flex align-items-center gap-1">
-                <span class="badge ${sideBadge} px-1.5 py-0.5" style="font-size: 0.65rem;">${sidePrefix}</span>
-                <strong class="text-dark" style="font-size: 0.78rem;">${teamName} 직전 1차전 결과</strong>
-                <span class="badge bg-light text-secondary border" style="font-size: 0.62rem;">${firstGameDate}</span>
+        return `
+          <div id="box_teamRec_${sideKey}_${uId}" class="team-rec-box mb-2 p-2 rounded-2 bg-white border shadow-xs" style="border-color: #cbd5e1 !important;">
+            <div class="p-2 mb-2 rounded-2 d-flex justify-content-between align-items-center flex-wrap gap-1" style="background:${isHome ? '#fee2e2' : '#dbeafe'}; border-left: 4px solid ${isHome ? '#dc2626' : '#2563eb'};">
+              <div class="d-flex align-items-center gap-1.5">
+                <span class="badge ${sideBadge} px-1.5 py-0.5" style="font-size:0.65rem;">${sidePrefix}</span>
+                <strong class="text-dark" style="font-size:0.78rem;">${teamName} 오늘(2026.09.22) 기준 최근 10경기: ${wins}승 ${losses}패 (${winPct}%)</strong>
               </div>
-              <div>
-                <span class="badge ${firstGameIsWin ? 'bg-danger text-white' : (firstGameIsLoss ? 'bg-primary text-white' : 'bg-secondary text-white')} px-2 py-0.5" style="font-size: 0.70rem; font-weight: 800;">
-                  ${firstGameResText} (${firstGameScore} vs ${firstGameOpp})
-                </span>
-              </div>
+              <span class="badge bg-white text-secondary border" style="font-size:0.62rem;">2026 시즌 공식 실데이터</span>
             </div>
-
-            <div class="rounded border bg-white" style="border-color: #e2e8f0; width:100%; overflow:hidden;">
+            <div class="rounded border bg-white" style="border-color: #e2e8f0; width:100%; overflow:hidden; max-height: 380px; overflow-y: auto;">
               <table class="table table-sm text-center align-middle mb-0" style="width: 100%; font-size: 0.72rem; table-layout: fixed;">
-                <thead style="background: ${isHome ? '#fee2e2' : '#dbeafe'}; color: ${isHome ? '#991b1b' : '#1e40af'};">
+                <thead style="background: #f1f5f9; color: #334155; position:sticky; top:0; z-index:2;">
                   <tr style="height: 25px;">
                     <th style="width: 20%; padding:3px 2px;">일자</th>
                     <th style="width: 14%; padding:3px 2px;">구분</th>
@@ -8631,56 +8624,10 @@ function getFullModalMatchList() {
                   </tr>
                 </thead>
                 <tbody>
-                  ${renderGameTableRow(firstGame, 0)}
+                  ${fullList.slice(0, 10).map((g, idx) => renderGameTableRow(g, idx)).join('')}
                 </tbody>
               </table>
             </div>
-          </div>
-        `;
-
-        // 2. 나머지 2~10경기 펼치기 아코디언 (기본 확장 상태로 10경기 즉시 확인 가능)
-        const collapseId = `collapse_extra_rec_${sideKey}_${uId}`;
-        const btnId = `btn_collapse_rec_${sideKey}_${uId}`;
-
-        const otherGamesHtml = (otherGames.length > 0) ? `
-          <div class="mt-1">
-            <div class="text-center mb-1.5">
-              <button type="button" id="${btnId}" class="btn btn-xs btn-outline-secondary py-1 px-3 fw-bold rounded-pill shadow-xs" style="font-size: 0.70rem; border-color: #cbd5e1; background: #ffffff;" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="true" onclick="toggleRecentGamesBtnText('${btnId}', ${otherGames.length})">
-                <i class="bi bi-chevron-up me-1"></i>이전 2~10차전 공식 경기 일지 (${otherGames.length}경기)
-              </button>
-            </div>
-
-            <div class="collapse show" id="${collapseId}">
-              <div class="p-2 rounded-2 bg-white border mb-2" style="border-color: #e2e8f0;">
-                <div class="d-flex justify-content-between align-items-center text-muted small fw-bold mb-1" style="font-size: 0.68rem;">
-                  <span><i class="bi bi-clock-history me-1"></i>${teamName} 2차전 ~ 10차전 공식 경기 일지</span>
-                  <span class="badge bg-success-subtle text-success border border-success-subtle px-1.5 py-0.5">공식 실데이터</span>
-                </div>
-                <div class="rounded border bg-white" style="border-color: #e2e8f0; width:100%; overflow:hidden; max-height: 320px;">
-                  <table class="table table-sm text-center align-middle mb-0" style="width: 100%; font-size: 0.72rem; table-layout: fixed;">
-                    <thead style="background: #f1f5f9; color: #334155; position:sticky; top:0; z-index:1;">
-                      <tr style="height: 25px;">
-                        <th style="width: 20%; padding:3px 2px;">일자</th>
-                        <th style="width: 14%; padding:3px 2px;">구분</th>
-                        <th style="width: 28%; padding:3px 2px;">상대</th>
-                        <th style="width: 20%; padding:3px 2px;">스코어</th>
-                        <th style="width: 18%; padding:3px 2px;">결과</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${otherGames.map((og, idx) => renderGameTableRow(og, idx + 1)).join('')}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        ` : '';
-
-        return `
-          <div id="box_teamRec_${sideKey}_${uId}" class="team-rec-box">
-            ${firstGameHtml}
-            ${otherGamesHtml}
           </div>
         `;
       }
@@ -8726,9 +8673,6 @@ function getFullModalMatchList() {
         const hWinPct = Math.round((hWins / total) * 100);
         const aWinPct = 100 - hWinPct;
 
-        const firstGame = h2hList[0];
-        const otherGames = h2hList.slice(1, 10);
-
         function renderH2HRow(g, gIdx) {
           const isHomeVenue = (typeof isSameTeamName === 'function')
             ? isSameTeamName(g.home_team_name, hName)
@@ -8760,17 +8704,8 @@ function getFullModalMatchList() {
           `;
         }
 
-        // Summary Bar & First Game Card
-        const firstIsHomeVenue = (typeof isSameTeamName === 'function') ? isSameTeamName(firstGame.home_team_name, hName) : (firstGame.home_team_name === hName);
-        const firstHScore = Number(firstIsHomeVenue ? firstGame.home_score : firstGame.away_score);
-        const firstAScore = Number(firstIsHomeVenue ? firstGame.away_score : firstGame.home_score);
-        const firstIsWin = !isNaN(firstHScore) && !isNaN(firstAScore) ? (firstHScore > firstAScore) : (firstGame.result === 'WIN' || firstGame.result_kr === '승');
-        const firstIsLoss = !isNaN(firstHScore) && !isNaN(firstAScore) ? (firstHScore < firstAScore) : (firstGame.result === 'LOSS' || firstGame.result_kr === '패');
-        const firstScoreStr = (!isNaN(firstHScore) && !isNaN(firstAScore)) ? `${firstHScore} : ${firstAScore}` : (firstGame.score || '-');
-        const firstDateStr = (firstGame.match_date || firstGame.date || '').slice(5, 10).replace('-', '.');
-
-        const firstGameHtml = `
-          <div class="mb-2 p-2 rounded-2 bg-white border shadow-xs" style="border-color: #cbd5e1 !important;">
+        return `
+          <div id="box_teamRec_h2h_${uId}" class="team-rec-box mb-2 p-2 rounded-2 bg-white border shadow-xs" style="border-color: #cbd5e1 !important;">
             <!-- H2H Summary Bar -->
             <div class="p-2 mb-2 rounded-2 bg-dark text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
               <div class="d-flex align-items-center gap-1.5">
@@ -8784,24 +8719,9 @@ function getFullModalMatchList() {
                 승률: <span class="text-warning">${hWinPct}%</span> vs <span class="text-info">${aWinPct}%</span>
               </div>
             </div>
-
-            <!-- First Game Highlight -->
-            <div class="d-flex justify-content-between align-items-center mb-1.5 flex-wrap gap-1">
-              <div class="d-flex align-items-center gap-1">
-                <span class="badge bg-dark text-white px-1.5 py-0.5" style="font-size: 0.65rem;">⚔️ 직전 맞대결 1차전</span>
-                <strong class="text-dark" style="font-size: 0.78rem;">${hName} vs ${aName}</strong>
-                <span class="badge bg-light text-secondary border" style="font-size: 0.62rem;">${firstDateStr}</span>
-              </div>
-              <div>
-                <span class="badge ${firstIsWin ? 'bg-danger text-white' : (firstIsLoss ? 'bg-primary text-white' : 'bg-secondary text-white')} px-2 py-0.5" style="font-size: 0.70rem; font-weight: 800;">
-                  ${firstIsWin ? hName + ' 승리' : (firstIsLoss ? aName + ' 승리' : '무승부')} (${firstScoreStr})
-                </span>
-              </div>
-            </div>
-
-            <div class="rounded border bg-white" style="border-color: #e2e8f0; width:100%; overflow:hidden;">
+            <div class="rounded border bg-white" style="border-color: #e2e8f0; width:100%; overflow:hidden; max-height: 380px; overflow-y: auto;">
               <table class="table table-sm text-center align-middle mb-0" style="width: 100%; font-size: 0.72rem; table-layout: fixed;">
-                <thead style="background: #f1f5f9; color: #1e293b;">
+                <thead style="background: #f1f5f9; color: #1e293b; position:sticky; top:0; z-index:2;">
                   <tr style="height: 25px;">
                     <th style="width: 20%; padding:3px 2px;">일자</th>
                     <th style="width: 14%; padding:3px 2px;">구분</th>
@@ -8811,56 +8731,10 @@ function getFullModalMatchList() {
                   </tr>
                 </thead>
                 <tbody>
-                  ${renderH2HRow(firstGame, 0)}
+                  ${h2hList.slice(0, 10).map((g, idx) => renderH2HRow(g, idx)).join('')}
                 </tbody>
               </table>
             </div>
-          </div>
-        `;
-
-        // Other H2H Games (2~10)
-        const collapseId = `collapse_extra_rec_h2h_${uId}`;
-        const btnId = `btn_collapse_rec_h2h_${uId}`;
-
-        const otherGamesHtml = (otherGames.length > 0) ? `
-          <div class="mt-1">
-            <div class="text-center mb-1.5">
-              <button type="button" id="${btnId}" class="btn btn-xs btn-outline-secondary py-1 px-3 fw-bold rounded-pill shadow-xs" style="font-size: 0.70rem; border-color: #cbd5e1; background: #ffffff;" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="true" onclick="toggleRecentGamesBtnText('${btnId}', ${otherGames.length})">
-                <i class="bi bi-chevron-up me-1"></i>이전 2~10차전 공식 맞대결 일지 (${otherGames.length}경기)
-              </button>
-            </div>
-
-            <div class="collapse show" id="${collapseId}">
-              <div class="p-2 rounded-2 bg-white border mb-2" style="border-color: #e2e8f0;">
-                <div class="d-flex justify-content-between align-items-center text-muted small fw-bold mb-1" style="font-size: 0.68rem;">
-                  <span><i class="bi bi-shield-shaded me-1 text-warning"></i>${hName} vs ${aName} 2차전 ~ 10차전 공식 맞대결 일지</span>
-                  <span class="badge bg-success-subtle text-success border border-success-subtle px-1.5 py-0.5">공식 실데이터 10G 완비</span>
-                </div>
-                <div class="rounded border bg-white" style="border-color: #e2e8f0; width:100%; overflow:hidden; max-height: 320px;">
-                  <table class="table table-sm text-center align-middle mb-0" style="width: 100%; font-size: 0.72rem; table-layout: fixed;">
-                    <thead style="background: #f1f5f9; color: #334155; position:sticky; top:0; z-index:1;">
-                      <tr style="height: 25px;">
-                        <th style="width: 20%; padding:3px 2px;">일자</th>
-                        <th style="width: 14%; padding:3px 2px;">구분</th>
-                        <th style="width: 28%; padding:3px 2px;">매치업</th>
-                        <th style="width: 20%; padding:3px 2px;">스코어</th>
-                        <th style="width: 18%; padding:3px 2px;">결과</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${otherGames.map((og, idx) => renderH2HRow(og, idx + 1)).join('')}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        ` : '';
-
-        return `
-          <div id="box_teamRec_h2h_${uId}" class="team-rec-box">
-            ${firstGameHtml}
-            ${otherGamesHtml}
           </div>
         `;
       }
@@ -8874,36 +8748,36 @@ function getFullModalMatchList() {
           <!-- Card Header -->
           <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom flex-wrap gap-1" style="border-color:#f1f5f9 !important;">
             <div class="d-flex align-items-center gap-1.5">
-              <span class="badge bg-dark text-white px-2 py-0.5" style="font-size:0.72rem;"><i class="bi bi-trophy-fill text-warning me-1"></i>야구 최근 10경기 & 맞대결 상대전적 (공식 실데이터 10G)</span>
+              <span class="badge bg-dark text-white px-2 py-0.5" style="font-size:0.72rem;"><i class="bi bi-clock-history text-danger me-1"></i>오늘(2026.09.22) 기준 최근 10경기 & 상대전적 (공식 10G)</span>
               <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0.5 px-1.5" style="font-size:0.62rem; font-weight:700;"><i class="bi bi-arrow-repeat me-0.5"></i>자동 실시간 갱신</span>
             </div>
-            <!-- 3-Way Selector Buttons (상대전적 10G, 홈팀 10G, 원정팀 10G) -->
+            <!-- 3-Way Selector Buttons (홈팀 10G 우선 활성화, 원정팀 10G, 상대전적 10G) -->
             <div class="btn-group btn-group-sm" role="group">
-              <button type="button" id="btnRecTab_h2h_${uId}" class="btn btn-xs btn-dark text-warning fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#0f172a; border-color:#0f172a; color:#facc15;" onclick="switchRecentTab('${uId}', 'h2h')">
-                ⚔️ 맞대결 상대전적 (${h2hMatches.length || 10}G)
-              </button>
-              <button type="button" id="btnRecTab_home_${uId}" class="btn btn-xs btn-outline-danger fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#ffffff; border-color:#fca5a5; color:#dc2626;" onclick="switchRecentTab('${uId}', 'home')">
+              <button type="button" id="btnRecTab_home_${uId}" class="btn btn-xs btn-danger text-white fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#dc2626; border-color:#dc2626; color:#ffffff;" onclick="switchRecentTab('${uId}', 'home')">
                 🔴 홈 ${hName} (${hRecent.length || 10}G)
               </button>
               <button type="button" id="btnRecTab_away_${uId}" class="btn btn-xs btn-outline-primary fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#ffffff; border-color:#93c5fd; color:#1d4ed8;" onclick="switchRecentTab('${uId}', 'away')">
                 🔵 원정 ${aName} (${aRecent.length || 10}G)
               </button>
+              <button type="button" id="btnRecTab_h2h_${uId}" class="btn btn-xs btn-outline-dark fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#ffffff; border-color:#cbd5e1; color:#334155;" onclick="switchRecentTab('${uId}', 'h2h')">
+                ⚔️ 맞대결 (${h2hMatches.length || 10}G)
+              </button>
             </div>
           </div>
 
-          <!-- Head-to-Head (상대전적 10경기) Content (기본 활성화) -->
-          <div id="teamRecContainer_h2h_${uId}">
-            ${h2hRecBlock}
-          </div>
-
-          <!-- Home Team Recent Content -->
-          <div id="teamRecContainer_home_${uId}" style="display: none;">
+          <!-- Home Team Recent Content (기본 활성화) -->
+          <div id="teamRecContainer_home_${uId}">
             ${homeRecBlock}
           </div>
 
           <!-- Away Team Recent Content -->
           <div id="teamRecContainer_away_${uId}" style="display: none;">
             ${awayRecBlock}
+          </div>
+
+          <!-- Head-to-Head Content -->
+          <div id="teamRecContainer_h2h_${uId}" style="display: none;">
+            ${h2hRecBlock}
           </div>
         </div>
       `;
@@ -15400,7 +15274,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
         // 100% 공식 실시간 히스토리 비동기 로드 및 갱신
         if (!m.history) {
-          fetch(`/api/v1/live/match-history/${m.id}?max_games=3`)
+          fetch(`/api/v1/live/match-history/${m.id}?max_games=10`)
             .then(res => res.ok ? res.json() : null)
             .then(hist => {
               if (hist && (hist.home_recent || hist.away_recent)) {
@@ -18113,7 +17987,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
         // 백그라운드에서 실시간 상세 기록 보강
         try {
-          const resp = await fetch(`/api/v1/live/match-history/${matchId}?max_games=1`);
+          const resp = await fetch(`/api/v1/live/match-history/${matchId}?max_games=10`);
           if (resp.ok) {
             const remoteData = await resp.json();
             if (remoteData && remoteData.status === 'success') {

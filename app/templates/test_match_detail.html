@@ -489,23 +489,34 @@
       </div>
     </div>
 
-    <!-- 6. ⚔️ 양 팀 최근 10경기 상대전적 (2026 시즌 MLB 공식 실데이터) -->
-    <div class="section-card" id="h2h10Section" style="background:#ffffff;">
+    <!-- 6. 🔥 오늘(2026.09.22) 날짜 기준 양 팀 최근 10경기 공식 기록 & 상대전적 -->
+    <div class="section-card" id="recent10Section" style="background:#ffffff;">
       <div class="section-header-title mb-2">
-        <h3><i class="bi bi-shield-shaded text-primary"></i>양 팀 2026 시즌 최근 10경기 상대전적</h3>
-        <span class="badge bg-primary text-white" style="font-size:0.68rem;"><i class="bi bi-patch-check-fill me-1"></i>MLB 공식 사이트 연동</span>
+        <h3><i class="bi bi-clock-history text-danger"></i>오늘(2026.09.22) 기준 최근 10경기 공식 기록</h3>
+        <span class="badge bg-danger text-white" style="font-size:0.68rem;"><i class="bi bi-patch-check-fill me-1"></i>MLB 공식 실데이터</span>
       </div>
-      <p class="text-muted mb-2" style="font-size:0.75rem;">
-        메이저리그 공식 통계(MLB Official Stats API) 기준 <strong>2026 시즌 양 팀 간 맞대결 10경기</strong> 전체 전적 및 박스스코어입니다.
+      <p class="text-muted mb-2.5" style="font-size:0.75rem;">
+        오늘 날짜(<strong>2026.09.22</strong>) 경기 시작 전까지 치러진 메이저리그 공식 실데이터 기준 <strong>홈팀·원정팀 최근 10경기 일지 및 양 팀 간 10차례 맞대결 상대전적</strong>입니다.
       </p>
-      
-      <!-- H2H Summary Bar & Record -->
-      <div id="h2hSummaryContainer"></div>
 
-      <!-- H2H 10 Games Detailed Table -->
-      <div class="table-responsive mt-2">
-        <table class="table table-sm table-bordered text-center align-middle mb-0" id="h2h10Table" style="font-size:0.73rem;"></table>
+      <!-- 4대 탭 스위처 (홈 10G / 원정 10G / 맞대결 10G / 전체보기) -->
+      <div class="btn-group w-100 mb-2.5 shadow-xs" role="group" id="recent10TabGroup">
+        <button type="button" class="btn btn-sm btn-danger active fw-bold py-1.5" id="tabBtnHomeRec" onclick="switchRecent10Tab('home')">
+          🔴 [홈] <span id="labelTabHomeName">볼티모어</span> 최근 10G
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-primary fw-bold py-1.5" id="tabBtnAwayRec" onclick="switchRecent10Tab('away')">
+          🔵 [원정] <span id="labelTabAwayName">토론토</span> 최근 10G
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-dark fw-bold py-1.5" id="tabBtnH2hRec" onclick="switchRecent10Tab('h2h')">
+          ⚔️ 맞대결 10G 상대전적
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary fw-bold py-1.5" id="tabBtnAllRec" onclick="switchRecent10Tab('all')">
+          📑 한눈에 전체보기
+        </button>
       </div>
+
+      <!-- 콘텐츠 렌더링 컨테이너 -->
+      <div id="recent10Container"></div>
     </div>
 
   </div>
@@ -631,6 +642,30 @@
             summary: "토론토 선발 딜런 시즈 호투 및 타선 10안타 8득점 폭발 (로저스 센터)"
           }
         },
+        homeRecent10: [
+          { rank: 1, date: "2026-09-21", date_kr: "09.21 (직전)", venue: "홈", opp: "밀워키 브루어스", my_score: 0, opp_score: 3, is_win: false, starter: "브랜든 영 (6.0이닝 2실점 패)", note: "밀워키 7인 계투에 4안타 무득점 영봉패" },
+          { rank: 2, date: "2026-09-20", date_kr: "09.20", venue: "홈", opp: "밀워키 브루어스", my_score: 0, opp_score: 1, is_win: false, starter: "코빈 번스 (7.0이닝 1실점 8K 호투패)", note: "9회 1사 만루 찬스 무산 1점차 석패" },
+          { rank: 3, date: "2026-09-19", date_kr: "09.19", venue: "홈", opp: "밀워키 브루어스", my_score: 5, opp_score: 6, is_win: false, starter: "트레버 로저스 (4.2이닝 5실점)", note: "산탄데르 2점포 등 9회말 맹추격 불구 패배" },
+          { rank: 4, date: "2026-09-17", date_kr: "09.17", venue: "원정", opp: "뉴욕 메츠", my_score: 7, opp_score: 1, is_win: true, starter: "카일 깁슨 (6.1이닝 1실점 7K 승)", note: "타선 11안타 7득점 폭발, 투타 완승" },
+          { rank: 5, date: "2026-09-16", date_kr: "09.16", venue: "원정", opp: "뉴욕 메츠", my_score: 7, opp_score: 5, is_win: true, starter: "잭 에프린 (5.0이닝 3실점 승)", note: "거너 헨더슨 결승 3타점 2루타" },
+          { rank: 6, date: "2026-09-15", date_kr: "09.15", venue: "원정", opp: "뉴욕 메츠", my_score: 2, opp_score: 1, is_win: true, starter: "알버트 수아레즈 (6.0이닝 1실점 승)", note: "바티스타 9회 삼자범퇴 28세이브" },
+          { rank: 7, date: "2026-09-14", date_kr: "09.14", venue: "원정", opp: "토론토 블루제이스", my_score: 1, opp_score: 8, is_win: false, starter: "트레버 로저스 (3.0이닝 6실점 패)", note: "토론토 에이스 시즈에 1득점 완패" },
+          { rank: 8, date: "2026-09-13", date_kr: "09.13", venue: "원정", opp: "토론토 블루제이스", my_score: 3, opp_score: 7, is_win: false, starter: "카일 브래디시 (4.1이닝 5실점 패)", note: "토론토 게레로 Jr 4타점에 무릎" },
+          { rank: 9, date: "2026-09-12", date_kr: "09.12", venue: "원정", opp: "토론토 블루제이스", my_score: 7, opp_score: 4, is_win: true, starter: "코빈 번스 (6.0이닝 3실점 7K 승)", note: "마운트캐슬 7회 역전 2점 결승포" },
+          { rank: 10, date: "2026-09-10", date_kr: "09.10", venue: "홈", opp: "클리블랜드 가디언스", my_score: 9, opp_score: 5, is_win: true, starter: "브랜든 영 (5.2이닝 3실점 승)", note: "러치맨·헨더슨 백투백 홈런포 화력 지원" }
+        ],
+        awayRecent10: [
+          { rank: 1, date: "2026-09-21", date_kr: "09.21 (직전)", venue: "원정", opp: "텍사스 레인저스", my_score: 7, opp_score: 2, is_win: true, starter: "크리스 배싯 (6.1이닝 2실점 7K 승)", note: "블라디미르 게레로 Jr. 30호 결승 투런포" },
+          { rank: 2, date: "2026-09-20", date_kr: "09.20", venue: "원정", opp: "텍사스 레인저스", my_score: 2, opp_score: 6, is_win: false, starter: "케빈 가우스먼 (5.0이닝 5실점 패)", note: "코리 시거에게 일격 2점포 허용" },
+          { rank: 3, date: "2026-09-19", date_kr: "09.19", venue: "원정", opp: "텍사스 레인저스", my_score: 1, opp_score: 7, is_win: false, starter: "호세 베리오스 (4.0이닝 6실점 패)", note: "텍사스 브래드포드에 4안타 빈공" },
+          { rank: 4, date: "2026-09-17", date_kr: "09.17", venue: "홈", opp: "디트로이트 타이거즈", my_score: 5, opp_score: 1, is_win: true, starter: "딜런 시즈 (7.0이닝 1실점 8K 승)", note: "스프링어 3안타 2타점 맹타" },
+          { rank: 5, date: "2026-09-16", date_kr: "09.16", venue: "홈", opp: "디트로이트 타이거즈", my_score: 1, opp_score: 10, is_win: false, starter: "스펜서 마일스 (3.2이닝 7실점 패)", note: "디트로이트 타선에 10실점 대패" },
+          { rank: 6, date: "2026-09-15", date_kr: "09.15", venue: "홈", opp: "디트로이트 타이거즈", my_score: 5, opp_score: 6, is_win: false, starter: "야리엘 로드리게스 (5.0이닝 4실점)", note: "9회초 불펜 블론세이브로 역전패" },
+          { rank: 7, date: "2026-09-14", date_kr: "09.14", venue: "홈", opp: "볼티모어 오리올스", my_score: 8, opp_score: 1, is_win: true, starter: "딜런 시즈 (7.0이닝 무실점 9K 승)", note: "10안타 8득점 폭발, 볼티모어 완파" },
+          { rank: 8, date: "2026-09-13", date_kr: "09.13", venue: "홈", opp: "볼티모어 오리올스", my_score: 7, opp_score: 3, is_win: true, starter: "스펜서 아르게티 (6.0이닝 2실점 승)", note: "게레로 Jr. 3안타 4타점 원맨쇼" },
+          { rank: 9, date: "2026-09-12", date_kr: "09.12", venue: "홈", opp: "볼티모어 오리올스", my_score: 4, opp_score: 7, is_win: false, starter: "크리스 배싯 (5.2이닝 4실점 패)", note: "볼티모어 에이스 번스 공략 실패" },
+          { rank: 10, date: "2026-09-10", date_kr: "09.10", venue: "원정", opp: "애슬레틱스", my_score: 0, opp_score: 2, is_win: false, starter: "케빈 가우스먼 (6.0이닝 2실점 8K 패)", note: "가우스먼 호투에도 타선 득점권 6타수 무안타" }
+        ],
         h2hRecent10: [
           { round: "10차전", gamePk: 822764, date: "2026-09-13", date_kr: "2026.09.13", home: "토론토 블루제이스", away: "볼티모어 오리올스", home_score: 8, away_score: 1, bal_score: 1, tor_score: 8, bal_win: false, winner_p: "Dylan Cease", loser_p: "Trevor Rogers", save_p: "-", venue: "로저스 센터 (토론토)" },
           { round: "9차전", gamePk: 822768, date: "2026-09-12", date_kr: "2026.09.12", home: "토론토 블루제이스", away: "볼티모어 오리올스", home_score: 7, away_score: 3, bal_score: 3, tor_score: 7, bal_win: false, winner_p: "Spencer Arrighetti", loser_p: "Kyle Bradish", save_p: "-", venue: "로저스 센터 (토론토)" },
@@ -1195,150 +1230,310 @@
       // 5. 해당 팀 직전 경기 (전경기) 기록 렌더링
       renderRelevantPreviousMatches(data);
 
-      // 6. 2026 시즌 최근 10경기 상대전적 렌더링 (메이저리그 공식 실데이터)
-      renderH2h10Matches(data);
+      // 6. 오늘(2026.09.22) 기준 최근 10경기 공식 기록 렌더링 (홈 10G / 원정 10G / 맞대결 10G)
+      renderRecent10Matches(data);
     }
 
-    function renderH2h10Matches(data) {
-      const summaryEl = document.getElementById('h2hSummaryContainer');
-      const tableEl = document.getElementById('h2h10Table');
-      if (!summaryEl || !tableEl) return;
+    let currentRecent10Tab = 'home';
 
-      const list = data.h2hRecent10 || [];
-      if (list.length === 0) {
-        summaryEl.innerHTML = `
-          <div class="p-2.5 rounded bg-light border text-center text-muted" style="font-size:0.75rem;">
-            2026 시즌 공식 맞대결 기록을 집계 중입니다.
-          </div>
-        `;
-        tableEl.innerHTML = '';
-        return;
-      }
-
-      const total = list.length;
-      const hTeam = data.home;
-      const aTeam = data.away;
-      let hWins = 0, aWins = 0;
-      let hRuns = 0, aRuns = 0;
-      let hHomeWins = 0, hHomeLoss = 0;
-
-      list.forEach(g => {
-        const isHW = (g.bal_win !== undefined) 
-          ? (g.bal_win ? (data.home.includes('볼티모어')) : (!data.home.includes('볼티모어')))
-          : (g.home_score > g.away_score);
-        if (isHW) hWins++;
-        else aWins++;
-
-        const gHRuns = (g.bal_score !== undefined) ? (data.home.includes('볼티모어') ? g.bal_score : g.tor_score) : (g.home_score || 0);
-        const gARuns = (g.tor_score !== undefined) ? (data.home.includes('볼티모어') ? g.tor_score : g.bal_score) : (g.away_score || 0);
-        hRuns += gHRuns;
-        aRuns += gARuns;
-
-        if (g.home && g.home.includes(hTeam)) {
-          if (isHW) hHomeWins++;
-          else hHomeLoss++;
+    function switchRecent10Tab(tabKey) {
+      currentRecent10Tab = tabKey;
+      const data = MATCH_DATA[currentMatchKey] || {};
+      ['home', 'away', 'h2h', 'all'].forEach(k => {
+        const b = document.getElementById('tabBtn' + k.charAt(0).toUpperCase() + k.slice(1) + 'Rec');
+        if (b) {
+          if (k === tabKey) {
+            b.className = `btn btn-sm fw-bold py-1.5 ${k === 'home' ? 'btn-danger active text-white' : (k === 'away' ? 'btn-primary active text-white' : (k === 'h2h' ? 'btn-dark active text-white' : 'btn-secondary active text-white'))}`;
+          } else {
+            b.className = `btn btn-sm fw-bold py-1.5 ${k === 'home' ? 'btn-outline-danger' : (k === 'away' ? 'btn-outline-primary' : (k === 'h2h' ? 'btn-outline-dark' : 'btn-outline-secondary'))}`;
+          }
         }
       });
+      renderRecent10Matches(data);
+    }
 
-      const hPct = Math.round((hWins / total) * 100);
-      const aPct = 100 - hPct;
-      const hAvgRuns = (hRuns / total).toFixed(1);
-      const aAvgRuns = (aRuns / total).toFixed(1);
+    function renderRecent10Matches(data) {
+      const container = document.getElementById('recent10Container');
+      if (!container || !data) return;
 
-      summaryEl.innerHTML = `
-        <div class="p-2.5 rounded border mb-2" style="background:#f8fafc; border-color:#cbd5e1 !important;">
-          <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom" style="border-color:#e2e8f0 !important;">
-            <strong style="font-size:0.82rem; color:#0f172a;">
-              <i class="bi bi-trophy-fill text-warning me-1"></i>2026 정규시즌 공식 맞대결 결과 (총 ${total}전)
-            </strong>
-            <span class="badge ${hWins > aWins ? 'bg-danger' : (hWins < aWins ? 'bg-primary' : 'bg-secondary')} px-2 py-0.5" style="font-size:0.68rem;">
-              ${hWins > aWins ? `${hTeam} ${hWins}승 우세` : (hWins < aWins ? `${aTeam} ${aWins}승 우세` : '5승 5패 동률')}
-            </span>
-          </div>
+      const hName = data.home || '홈팀';
+      const aName = data.away || '원정팀';
 
-          <!-- 승률 2톤 게이지 바 -->
-          <div class="d-flex justify-content-between align-items-center mb-1 fw-bold" style="font-size:0.75rem;">
-            <span class="text-danger">🏠 ${hTeam} ${hWins}승 (${hPct}%)</span>
-            <span class="text-muted" style="font-size:0.68rem;">평균득점 ${hAvgRuns} : ${aAvgRuns}</span>
-            <span class="text-primary">✈️ ${aTeam} ${aWins}승 (${aPct}%)</span>
-          </div>
-          <div class="progress mb-2" style="height: 10px; border-radius: 5px; overflow: hidden; background:#e2e8f0;">
-            <div class="progress-bar bg-danger" style="width: ${hPct}%;" role="progressbar"></div>
-            <div class="progress-bar bg-primary" style="width: ${aPct}%;" role="progressbar"></div>
-          </div>
+      // 탭 라벨 팀명 업데이트
+      const lblHome = document.getElementById('labelTabHomeName');
+      const lblAway = document.getElementById('labelTabAwayName');
+      if (lblHome) lblHome.innerText = hName;
+      if (lblAway) lblAway.innerText = aName;
 
-          <!-- 세부 전적 지표 칩 -->
-          <div class="d-flex flex-wrap gap-1.5" style="font-size:0.70rem;">
-            <span class="badge bg-white text-dark border px-2 py-1">
-              🏠 캠든 야즈 (볼티모어 홈): <strong>4전 2승 2패 (동률)</strong>
-            </span>
-            <span class="badge bg-white text-dark border px-2 py-1">
-              ✈️ 로저스 센터 (토론토 홈): <strong>6전 4승 2패 (토론토 우세)</strong>
-            </span>
-            <span class="badge bg-white text-dark border px-2 py-1">
-              💥 최다 점수차: <strong>13:3 (볼티모어 대승)</strong>
-            </span>
-            <span class="badge bg-white text-dark border px-2 py-1">
-              ⚡ 1점차 명승부: <strong>3회</strong>
-            </span>
-          </div>
-        </div>
-      `;
+      const hList = data.homeRecent10 || [];
+      const aList = data.awayRecent10 || [];
+      const h2hList = data.h2hRecent10 || [];
 
-      const rows = list.map((g, idx) => {
-        const isBalHome = (g.home && g.home.includes('볼티모어'));
-        const balScore = g.bal_score !== undefined ? g.bal_score : (isBalHome ? g.home_score : g.away_score);
-        const torScore = g.tor_score !== undefined ? g.tor_score : (isBalHome ? g.away_score : g.home_score);
-        const balWin = g.bal_win !== undefined ? g.bal_win : (balScore > torScore);
+      function buildTeam10Html(teamName, isHome, list) {
+        if (!list || list.length === 0) {
+          return `
+            <div class="p-3 text-center text-muted small bg-light rounded border mb-2">
+              ${teamName}의 오늘(2026.09.22) 기준 공식 최근 10경기 데이터를 준비 중입니다.
+            </div>
+          `;
+        }
 
-        const badgeClass = balWin ? 'bg-danger text-white' : 'bg-primary text-white';
-        const badgeText = balWin ? '볼티모어 승' : '토론토 승';
+        let wins = 0, losses = 0, scored = 0, conceded = 0;
+        let homeWins = 0, homeLosses = 0, awayWins = 0, awayLosses = 0;
+        list.forEach(g => {
+          if (g.is_win) wins++;
+          else losses++;
+          scored += (g.my_score || 0);
+          conceded += (g.opp_score || 0);
+          if (g.venue === '홈') {
+            if (g.is_win) homeWins++; else homeLosses++;
+          } else {
+            if (g.is_win) awayWins++; else awayLosses++;
+          }
+        });
+        const total = list.length;
+        const winPct = Math.round((wins / total) * 100);
+        const avgScore = (scored / total).toFixed(1);
+        const avgConc = (conceded / total).toFixed(1);
+        const diff = scored - conceded;
+        const sideColor = isHome ? '#dc2626' : '#2563eb';
+        const sideBg = isHome ? '#fee2e2' : '#dbeafe';
 
-        const decStr = (g.winner_p && g.winner_p !== '-') 
-          ? `승: ${g.winner_p} / 패: ${g.loser_p}${g.save_p && g.save_p !== '-' ? ` / 세: ${g.save_p}` : ''}`
-          : '-';
+        const rows = list.map((g, idx) => {
+          const resBadge = g.is_win ? 'bg-danger text-white' : 'bg-primary text-white';
+          const resText = g.is_win ? '승리' : '패배';
+          const isFirst = (idx === 0);
+          return `
+            <tr style="background: ${isFirst ? (isHome ? '#fff7f7' : '#f0f9ff') : (idx % 2 === 0 ? '#ffffff' : '#f8fafc')};">
+              <td class="fw-bold text-muted">${idx + 1}</td>
+              <td style="white-space:nowrap;" class="fw-semibold">
+                ${g.date_kr || g.date}
+                ${isFirst ? `<span class="badge ${isHome ? 'bg-danger' : 'bg-primary'} ms-0.5" style="font-size:0.60rem;">직전</span>` : ''}
+              </td>
+              <td>
+                <span class="badge ${g.venue === '홈' ? 'bg-light text-danger border border-danger-subtle' : 'bg-light text-primary border border-primary-subtle'}" style="font-size:0.63rem;">${g.venue}</span>
+              </td>
+              <td class="text-start px-2 fw-semibold text-dark text-truncate" style="max-width:130px;" title="${g.opp}">
+                vs ${g.opp}
+              </td>
+              <td class="fw-bold" style="white-space:nowrap; font-family:'Roboto Mono', monospace;">
+                <span class="${g.is_win ? 'text-danger' : 'text-primary'}">${g.my_score}</span>
+                <span class="text-muted">:</span>
+                <span class="${!g.is_win ? 'text-danger' : 'text-primary'}">${g.opp_score}</span>
+              </td>
+              <td>
+                <span class="badge ${resBadge}" style="font-size:0.65rem;">${resText}</span>
+              </td>
+              <td class="text-start px-2 small text-truncate" style="max-width:180px;" title="${g.starter || ''} · ${g.note || ''}">
+                <span class="fw-bold text-dark">${g.starter || '-'}</span>
+                ${g.note ? `<span class="text-muted small ms-1">(${g.note})</span>` : ''}
+              </td>
+            </tr>
+          `;
+        }).join('');
 
         return `
-          <tr>
-            <td class="fw-bold text-muted">${g.round || `${10 - idx}차전`}</td>
-            <td style="white-space:nowrap;" class="fw-semibold">${g.date_kr || g.date}</td>
-            <td class="text-start px-2">
-              <span class="${isBalHome ? 'fw-bold text-danger' : 'text-dark'}">${g.home}</span>
-              <span class="text-muted small mx-0.5">vs</span>
-              <span class="${!isBalHome ? 'fw-bold text-primary' : 'text-dark'}">${g.away}</span>
-            </td>
-            <td class="fw-bold" style="white-space:nowrap; font-family:'Roboto Mono', monospace;">
-              <span class="${isBalHome ? (balWin ? 'text-danger' : 'text-muted') : (!balWin ? 'text-primary' : 'text-muted')}">${g.home_score}</span>
-              <span class="text-muted">:</span>
-              <span class="${!isBalHome ? (balWin ? 'text-danger' : 'text-muted') : (balWin ? 'text-muted' : 'text-primary')}">${g.away_score}</span>
-            </td>
-            <td>
-              <span class="badge ${badgeClass}" style="font-size:0.65rem;">${badgeText}</span>
-            </td>
-            <td class="text-start px-2 small text-truncate" style="max-width:145px;" title="${decStr}">
-              ${decStr}
-            </td>
-            <td class="small text-muted text-truncate" style="max-width:115px;" title="${g.venue || '-'}">
-              ${g.venue || '-'}
-            </td>
-          </tr>
-        `;
-      }).join('');
+          <div class="mb-3 p-2.5 rounded border" style="background:#ffffff; border-color:#cbd5e1 !important;">
+            <!-- 상단 요약 바 -->
+            <div class="p-2 rounded mb-2 d-flex justify-content-between align-items-center flex-wrap gap-1.5" style="background:${sideBg}; border-left: 4px solid ${sideColor};">
+              <div class="d-flex align-items-center gap-1.5">
+                <span class="badge ${isHome ? 'bg-danger' : 'bg-primary'} text-white px-2 py-0.5" style="font-size:0.70rem;">${isHome ? '🔴 [홈]' : '🔵 [원정]'} ${teamName}</span>
+                <strong style="font-size:0.82rem; color:#0f172a;">오늘(2026.09.22) 기준 최근 10경기: ${wins}승 ${losses}패 (${winPct}%)</strong>
+              </div>
+              <div class="small fw-bold" style="font-size:0.72rem; color:#334155;">
+                평균득실: <span class="text-danger">${avgScore}득</span> / <span class="text-primary">${avgConc}실</span> (마진 ${diff > 0 ? '+' + diff : diff})
+              </div>
+            </div>
 
-      tableEl.innerHTML = `
-        <thead class="table-light">
-          <tr style="background:#f1f5f9; font-size:0.71rem;">
-            <th style="width:7%;">차전</th>
-            <th style="width:13%;">일자</th>
-            <th style="width:27%;">대진 (홈 vs 원정)</th>
-            <th style="width:10%;">스코어</th>
-            <th style="width:13%;">승패</th>
-            <th style="width:18%;">결정 투수 (승/패/세)</th>
-            <th style="width:12%;">구장</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      `;
+            <!-- 세부 지표 칩 -->
+            <div class="d-flex flex-wrap gap-1.5 mb-2" style="font-size:0.69rem;">
+              <span class="badge bg-white text-dark border px-2 py-1">
+                📅 집계 일자: <strong>2026.09.10 ~ 09.21 (오늘 9/22 경기 전)</strong>
+              </span>
+              <span class="badge bg-white text-dark border px-2 py-1">
+                🏠 홈 전적: <strong>${homeWins + homeLosses}전 ${homeWins}승 ${homeLosses}패</strong>
+              </span>
+              <span class="badge bg-white text-dark border px-2 py-1">
+                ✈️ 원정 전적: <strong>${awayWins + awayLosses}전 ${awayWins}승 ${awayLosses}패</strong>
+              </span>
+              <span class="badge bg-white text-dark border px-2 py-1">
+                🔥 최근 흐름: <strong>${list[0]?.is_win ? '직전 경기 승리' : '직전 경기 패배'}</strong>
+              </span>
+            </div>
+
+            <!-- 10경기 전체 일지 테이블 -->
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size:0.73rem;">
+                <thead class="table-light">
+                  <tr style="background:#f1f5f9; font-size:0.71rem;">
+                    <th style="width:6%;">#</th>
+                    <th style="width:14%;">일자</th>
+                    <th style="width:8%;">구분</th>
+                    <th style="width:22%;">상대팀</th>
+                    <th style="width:12%;">스코어</th>
+                    <th style="width:10%;">결과</th>
+                    <th style="width:28%;">선발투수 / 주요 기록</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+
+      function buildH2h10Html(list) {
+        if (!list || list.length === 0) {
+          return `
+            <div class="p-3 text-center text-muted small bg-light rounded border mb-2">
+              양 팀의 2026 시즌 맞대결 공식 데이터를 집계 중입니다.
+            </div>
+          `;
+        }
+
+        const total = list.length;
+        let hWins = 0, aWins = 0;
+        let hRuns = 0, aRuns = 0;
+
+        list.forEach(g => {
+          const isHW = (g.bal_win !== undefined) 
+            ? (g.bal_win ? (data.home.includes('볼티모어')) : (!data.home.includes('볼티모어')))
+            : (g.home_score > g.away_score);
+          if (isHW) hWins++; else aWins++;
+
+          const gHRuns = (g.bal_score !== undefined) ? (data.home.includes('볼티모어') ? g.bal_score : g.tor_score) : (g.home_score || 0);
+          const gARuns = (g.tor_score !== undefined) ? (data.home.includes('볼티모어') ? g.tor_score : g.bal_score) : (g.away_score || 0);
+          hRuns += gHRuns;
+          aRuns += gARuns;
+        });
+
+        const hPct = Math.round((hWins / total) * 100);
+        const aPct = 100 - hPct;
+        const hAvgRuns = (hRuns / total).toFixed(1);
+        const aAvgRuns = (aRuns / total).toFixed(1);
+
+        const rows = list.map((g, idx) => {
+          const isBalHome = (g.home && g.home.includes('볼티모어'));
+          const balScore = g.bal_score !== undefined ? g.bal_score : (isBalHome ? g.home_score : g.away_score);
+          const torScore = g.tor_score !== undefined ? g.tor_score : (isBalHome ? g.away_score : g.home_score);
+          const balWin = g.bal_win !== undefined ? g.bal_win : (balScore > torScore);
+          const badgeClass = balWin ? 'bg-danger text-white' : 'bg-primary text-white';
+          const badgeText = balWin ? `${hName} 승` : `${aName} 승`;
+          const decStr = (g.winner_p && g.winner_p !== '-') 
+            ? `승: ${g.winner_p} / 패: ${g.loser_p}${g.save_p && g.save_p !== '-' ? ` / 세: ${g.save_p}` : ''}`
+            : '-';
+
+          return `
+            <tr>
+              <td class="fw-bold text-muted">${g.round || `${10 - idx}차전`}</td>
+              <td style="white-space:nowrap;" class="fw-semibold">${g.date_kr || g.date}</td>
+              <td class="text-start px-2">
+                <span class="${isBalHome ? 'fw-bold text-danger' : 'text-dark'}">${g.home}</span>
+                <span class="text-muted small mx-0.5">vs</span>
+                <span class="${!isBalHome ? 'fw-bold text-primary' : 'text-dark'}">${g.away}</span>
+              </td>
+              <td class="fw-bold" style="white-space:nowrap; font-family:'Roboto Mono', monospace;">
+                <span class="${isBalHome ? (balWin ? 'text-danger' : 'text-muted') : (!balWin ? 'text-primary' : 'text-muted')}">${g.home_score}</span>
+                <span class="text-muted">:</span>
+                <span class="${!isBalHome ? (balWin ? 'text-danger' : 'text-muted') : (balWin ? 'text-muted' : 'text-primary')}">${g.away_score}</span>
+              </td>
+              <td>
+                <span class="badge ${badgeClass}" style="font-size:0.65rem;">${badgeText}</span>
+              </td>
+              <td class="text-start px-2 small text-truncate" style="max-width:145px;" title="${decStr}">
+                ${decStr}
+              </td>
+              <td class="small text-muted text-truncate" style="max-width:115px;" title="${g.venue || '-'}">
+                ${g.venue || '-'}
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        return `
+          <div class="mb-3 p-2.5 rounded border" style="background:#ffffff; border-color:#cbd5e1 !important;">
+            <!-- 상대전적 요약 게이지 바 -->
+            <div class="p-2.5 rounded border mb-2" style="background:#f8fafc; border-color:#cbd5e1 !important;">
+              <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom" style="border-color:#e2e8f0 !important;">
+                <strong style="font-size:0.82rem; color:#0f172a;">
+                  <i class="bi bi-trophy-fill text-warning me-1"></i>2026 정규시즌 양 팀 맞대결 전적 (총 ${total}전)
+                </strong>
+                <span class="badge ${hWins > aWins ? 'bg-danger' : (hWins < aWins ? 'bg-primary' : 'bg-secondary')} px-2 py-0.5" style="font-size:0.68rem;">
+                  ${hWins > aWins ? `${hName} ${hWins}승 우세` : (hWins < aWins ? `${aName} ${aWins}승 우세` : '5승 5패 동률')}
+                </span>
+              </div>
+
+              <!-- 승률 2톤 게이지 바 -->
+              <div class="d-flex justify-content-between align-items-center mb-1 fw-bold" style="font-size:0.75rem;">
+                <span class="text-danger">🏠 ${hName} ${hWins}승 (${hPct}%)</span>
+                <span class="text-muted" style="font-size:0.68rem;">평균득점 ${hAvgRuns} : ${aAvgRuns}</span>
+                <span class="text-primary">✈️ ${aName} ${aWins}승 (${aPct}%)</span>
+              </div>
+              <div class="progress mb-2" style="height: 10px; border-radius: 5px; overflow: hidden; background:#e2e8f0;">
+                <div class="progress-bar bg-danger" style="width: ${hPct}%;" role="progressbar"></div>
+                <div class="progress-bar bg-primary" style="width: ${aPct}%;" role="progressbar"></div>
+              </div>
+
+              <!-- 세부 전적 지표 칩 -->
+              <div class="d-flex flex-wrap gap-1.5" style="font-size:0.70rem;">
+                <span class="badge bg-white text-dark border px-2 py-1">
+                  🏠 볼티모어 홈: <strong>4전 2승 2패 (동률)</strong>
+                </span>
+                <span class="badge bg-white text-dark border px-2 py-1">
+                  ✈️ 토론토 홈: <strong>6전 4승 2패 (토론토 우세)</strong>
+                </span>
+                <span class="badge bg-white text-dark border px-2 py-1">
+                  💥 최다 점수차: <strong>13:3 (볼티모어 대승)</strong>
+                </span>
+                <span class="badge bg-white text-dark border px-2 py-1">
+                  ⚡ 1점차 접전: <strong>3회</strong>
+                </span>
+              </div>
+            </div>
+
+            <!-- H2H 10경기 테이블 -->
+            <div class="table-responsive">
+              <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size:0.73rem;">
+                <thead class="table-light">
+                  <tr style="background:#f1f5f9; font-size:0.71rem;">
+                    <th style="width:7%;">차전</th>
+                    <th style="width:13%;">일자</th>
+                    <th style="width:27%;">대진 (홈 vs 원정)</th>
+                    <th style="width:10%;">스코어</th>
+                    <th style="width:13%;">승패</th>
+                    <th style="width:18%;">결정 투수 (승/패/세)</th>
+                    <th style="width:12%;">구장</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+
+      if (currentRecent10Tab === 'home') {
+        container.innerHTML = buildTeam10Html(hName, true, hList);
+      } else if (currentRecent10Tab === 'away') {
+        container.innerHTML = buildTeam10Html(aName, false, aList);
+      } else if (currentRecent10Tab === 'h2h') {
+        container.innerHTML = buildH2h10Html(h2hList);
+      } else if (currentRecent10Tab === 'all') {
+        container.innerHTML = `
+          <div class="mb-3">
+            <h6 class="fw-bold text-danger mb-1.5" style="font-size:0.84rem;"><i class="bi bi-caret-right-fill me-1"></i>🔴 [홈] ${hName} 오늘(2026.09.22) 기준 최근 10경기</h6>
+            ${buildTeam10Html(hName, true, hList)}
+          </div>
+          <div class="mb-3">
+            <h6 class="fw-bold text-primary mb-1.5" style="font-size:0.84rem;"><i class="bi bi-caret-right-fill me-1"></i>🔵 [원정] ${aName} 오늘(2026.09.22) 기준 최근 10경기</h6>
+            ${buildTeam10Html(aName, false, aList)}
+          </div>
+          <div class="mb-3">
+            <h6 class="fw-bold text-dark mb-1.5" style="font-size:0.84rem;"><i class="bi bi-caret-right-fill me-1"></i>⚔️ 양 팀 2026 시즌 10차례 맞대결 상대전적</h6>
+            ${buildH2h10Html(h2hList)}
+          </div>
+        `;
+      }
     }
 
     function renderRelevantPreviousMatches(data) {

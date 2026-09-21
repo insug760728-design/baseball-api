@@ -513,8 +513,10 @@ class HistoricalAgentRouter:
             raw_a_recent = query_recent_for_team(a_tokens, away_team)
             raw_h2h = query_h2h(h_tokens, a_tokens)
 
-            # 3-1. 현재 경기 기준 과거 불연속 데이터 방지 및 날짜별 영문/한글 중복 단일화
-            ref_date_str = str(target.match_date or '2026-09-19')[:10]
+            # 3-1. 오늘 날짜 기준 최근 10경기 집계 (2026 시즌 기준, 오늘 이전 경기만 최신순 정렬)
+            from datetime import datetime
+            today_str = datetime.now().strftime('%Y-%m-%d')
+            ref_date_str = str(target.match_date or today_str or '2026-09-22')[:10]
 
             def sanitize_recent_matches(raw_matches: list, ref_d_str: str, sp_code: str) -> list:
                 if not raw_matches:
@@ -523,9 +525,7 @@ class HistoricalAgentRouter:
                 try:
                     ref_dt = datetime.strptime(ref_d_str[:10], '%Y-%m-%d')
                 except Exception:
-                    ref_dt = datetime(2026, 9, 19)
-
-                max_gap = 21 if sp_code == 'BASEBALL' else 32
+                    ref_dt = datetime(2026, 9, 22)
                 
                 # 1단계: 일자별 단일화 (영문 vs 한글 팀명 동시 존재 시 한국어 팀명 및 스코어 실데이터 우선 채택)
                 by_date = {}
@@ -558,14 +558,10 @@ class HistoricalAgentRouter:
 
                 sorted_dates = sorted(by_date.keys(), reverse=True)
                 valid = []
-                prev_dt = ref_dt
                 for d_str in sorted_dates:
-                    cur_dt = datetime.strptime(d_str, '%Y-%m-%d')
-                    gap = (prev_dt - cur_dt).days
-                    if gap > max_gap:
-                        break
                     valid.append(by_date[d_str])
-                    prev_dt = cur_dt
+                    if len(valid) >= max_games:
+                        break
                 return valid
 
             def sanitize_h2h_matches(raw_matches: list, ref_d_str: str, sp_code: str) -> list:
@@ -575,7 +571,7 @@ class HistoricalAgentRouter:
                 try:
                     ref_dt = datetime.strptime(ref_d_str[:10], '%Y-%m-%d')
                 except Exception:
-                    ref_dt = datetime(2026, 9, 19)
+                    ref_dt = datetime(2026, 9, 22)
 
                 by_date = {}
                 for m in raw_matches:
@@ -607,14 +603,10 @@ class HistoricalAgentRouter:
 
                 sorted_dates = sorted(by_date.keys(), reverse=True)
                 valid = []
-                prev_dt = ref_dt
                 for d_str in sorted_dates:
-                    cur_dt = datetime.strptime(d_str, '%Y-%m-%d')
-                    gap = (prev_dt - cur_dt).days
-                    if gap > 200:
-                        break
                     valid.append(by_date[d_str])
-                    prev_dt = cur_dt
+                    if len(valid) >= max_games:
+                        break
                 return valid
 
             raw_h_recent = sanitize_recent_matches(raw_h_recent, ref_date_str, sport_code)
