@@ -17299,9 +17299,29 @@ function updateSlimPanel(matchId, type, contentHtml) {
             { ip: '6.0', ipNum: 6.0, er: 2, h: 4, hr: 0, bb: 2, so: 6, np: 90, isWin: true }
           ];
 
+          // ⚡ [날짜 복사/중복 방지 및 선발별 고유 로테이션 역산 계산]
+          let lastDateObj = new Date(now.getTime() - (((pSeed % 4) + 4) * 86400000));
+          if (startsList.length > 0) {
+            const lastSt = startsList[startsList.length - 1];
+            const rawD = String(lastSt.date || lastSt.match_date || '');
+            const mMatch = rawD.match(/(\d{1,2})[.-](\d{1,2})/);
+            if (mMatch) {
+              const prevM = parseInt(mMatch[1], 10) - 1;
+              const prevD = parseInt(mMatch[2], 10);
+              const testDt = new Date(now.getFullYear(), prevM, prevD);
+              if (!isNaN(testDt.getTime())) {
+                lastDateObj = testDt;
+              }
+            }
+          }
+
           for (let i = startsList.length; i < 10; i++) {
             const tmpl = startPerfTemplates[(pSeed + i) % startPerfTemplates.length];
-            const d = new Date(now.getTime() - (i + 1) * 6 * 86400000);
+            // 투수별 고유 5~7일 주기 역산
+            const stepDays = (((pSeed + i * 5) % 3) + 5);
+            const d = new Date(lastDateObj.getTime() - stepDays * 86400000);
+            lastDateObj = d;
+
             const mMonth = String(d.getMonth() + 1).padStart(2, '0');
             const mDate = String(d.getDate()).padStart(2, '0');
             const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
@@ -17391,28 +17411,42 @@ function updateSlimPanel(matchId, type, contentHtml) {
       function renderLogRowsHtml(startsList) {
         if (!startsList || startsList.length === 0) {
           return `
-            <tr style="height:26px; background:#ffffff; font-size:0.75rem; border-bottom:1px solid #e5e7eb;">
-              <td class="text-secondary fw-semibold text-center" style="white-space:nowrap; padding: 4px 6px;">선발등판</td>
-              <td class="text-dark fw-bold text-center text-truncate" style="white-space:nowrap; max-width:85px; padding: 4px 6px;">공식경기</td>
-              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">선발</td>
-              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">-</td>
-              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">-</td>
-              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">0</td>
-              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">-</td>
-              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">-</td>
-              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">-</td>
-              <td class="text-primary fw-bold text-center" style="white-space:nowrap; padding: 4px 6px;">등판예정</td>
+            <tr style="height:28px; background:#ffffff; font-size:0.72rem; border-bottom:1px solid #e5e7eb;">
+              <td colspan="6" class="text-secondary text-center py-2">등판 예정 (최근 선발기록 준비중)</td>
             </tr>
           `;
         }
 
         return startsList.map((st, sIdx) => {
-          const venueVal = st.venue || (st.is_home ? '홈' : '원');
-          const dateVal = st.date || st.match_date || '-';
-          const matchCol = `${venueVal} ${dateVal}`;
+          const isHomeVenue = st.venue === '홈' || st.is_home === true;
+          const venueBadge = isHomeVenue 
+            ? `<span style="display:inline-block; font-size:0.65rem; font-weight:700; color:#ef4444; background:#fee2e2; padding:0 3px; border-radius:3px; margin-right:2px;">홈</span>`
+            : `<span style="display:inline-block; font-size:0.65rem; font-weight:700; color:#2563eb; background:#dbeafe; padding:0 3px; border-radius:3px; margin-right:2px;">원</span>`;
+          
+          let rawD = String(st.date || st.match_date || '-');
+          let dateStr = rawD;
+          const dFullMatch = rawD.match(/(\d{4})[.-](\d{1,2})[.-](\d{1,2})/);
+          if (dFullMatch) {
+            dateStr = `${dFullMatch[2].padStart(2, '0')}.${dFullMatch[3].padStart(2, '0')}`;
+          } else {
+            const dShortMatch = rawD.match(/(\d{1,2})[.-](\d{1,2})/);
+            if (dShortMatch) {
+              dateStr = `${dShortMatch[1].padStart(2, '0')}.${dShortMatch[2].padStart(2, '0')}`;
+            }
+          }
+          const matchCol = `${venueBadge}<span class="text-secondary fw-semibold">${dateStr}</span>`;
+
           const oppVal = st.opponent || st.opp || '-';
           const ipVal = st.ip || st.innings || '-';
-          const bfVal = (st.bf !== undefined && st.bf !== null) ? st.bf : '-';
+          
+          let decVal = st.decision || (st.isWin === true ? '승' : (st.isWin === false ? '패' : ''));
+          let decBadge = '';
+          if (decVal === '승' || decVal === 'W') {
+            decBadge = `<span class="badge bg-danger text-white px-1 py-0" style="font-size:0.65rem; font-weight:700;">승</span> `;
+          } else if (decVal === '패' || decVal === 'L') {
+            decBadge = `<span class="badge bg-primary text-white px-1 py-0" style="font-size:0.65rem; font-weight:700;">패</span> `;
+          }
+
           const hitsVal = (st.h !== undefined && st.h !== null) ? st.h : ((st.hits !== undefined && st.hits !== null) ? st.hits : '-');
           const hrVal = (st.hr !== undefined && st.hr !== null) ? st.hr : 0;
           const bbVal = (st.bb !== undefined && st.bb !== null) ? st.bb : '-';
@@ -17429,17 +17463,13 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
           const isEven = (sIdx % 2 === 0);
           return `
-            <tr style="height:26px; background: ${isEven ? '#ffffff' : '#f9fafb'}; font-size:0.75rem; border-bottom:1px solid #e5e7eb;">
-              <td class="text-secondary fw-semibold text-center" style="white-space:nowrap; padding: 4px 6px;">${matchCol}</td>
-              <td class="text-dark fw-bold text-center text-truncate" style="white-space:nowrap; max-width:85px; padding: 4px 6px;" title="${oppVal}">${oppVal}</td>
-              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">${ipVal}</td>
-              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">${bfVal}</td>
-              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">${hitsVal}</td>
-              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">${hrVal}</td>
-              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">${bbVal}</td>
-              <td class="text-dark text-center" style="white-space:nowrap; padding: 4px 4px;">${soVal}</td>
-              <td class="${Number(erVal) > 2 ? 'text-danger fw-bold' : 'text-dark'} text-center" style="white-space:nowrap; padding: 4px 4px;">${erVal}</td>
-              <td class="text-secondary fw-bold text-center" style="white-space:nowrap; padding: 4px 6px;">${eraVal}</td>
+            <tr style="height:27px; background: ${isEven ? '#ffffff' : '#f9fafb'}; font-size:0.72rem; border-bottom:1px solid #e5e7eb;">
+              <td class="text-center" style="padding: 3px 2px; white-space:nowrap;">${matchCol}</td>
+              <td class="text-dark fw-bold text-center text-truncate" style="padding: 3px 2px; max-width:60px;" title="${oppVal}">${oppVal}</td>
+              <td class="text-dark text-center" style="padding: 3px 2px; white-space:nowrap;">${decBadge}<span class="fw-semibold">${ipVal}</span></td>
+              <td class="text-dark text-center" style="padding: 3px 2px; white-space:nowrap;">${hitsVal} <span class="text-secondary" style="font-size:0.65rem;">(${hrVal})</span></td>
+              <td class="text-dark text-center" style="padding: 3px 2px; white-space:nowrap;"><span class="fw-semibold text-primary">${soVal}</span> <span class="text-secondary" style="font-size:0.65rem;">(${bbVal})</span></td>
+              <td class="text-center" style="padding: 3px 2px; white-space:nowrap;"><span class="${Number(erVal) > 2 ? 'text-danger fw-bold' : 'text-dark fw-semibold'}">${erVal}</span> <span class="text-secondary" style="font-size:0.65rem;">(${eraVal})</span></td>
             </tr>
           `;
         }).join('');
@@ -17491,29 +17521,23 @@ function updateSlimPanel(matchId, type, contentHtml) {
               </div>
             </div>
 
-            <!-- 홈 투수 최근 10경기 테이블 (최근경기 토글 시 노출, Image 3) -->
-            <div id="tableBox_hStarts_${m.id}" class="pitcher-starts-table-box" style="display:none; border-top:1px solid #e5e7eb;">
-              <div class="table-responsive" style="overflow-x:auto;">
-                <table class="table table-sm text-center align-middle mb-0" style="width:100%; min-width:540px; font-size:0.72rem; border-collapse:collapse;">
-                  <thead style="background:#f3f4f6; color:#4b5563; border-bottom:1px solid #d1d5db;">
-                    <tr style="height:26px;">
-                      <th style="width:16%; font-weight:700;">최근경기</th>
-                      <th style="width:14%; font-weight:700;">상대</th>
-                      <th style="width:8%; font-weight:700;">이닝</th>
-                      <th style="width:8%; font-weight:700;">타자</th>
-                      <th style="width:8%; font-weight:700;">안타</th>
-                      <th style="width:8%; font-weight:700;">홈런</th>
-                      <th style="width:8%; font-weight:700;">볼넷</th>
-                      <th style="width:8%; font-weight:700;">삼진</th>
-                      <th style="width:8%; font-weight:700;">자책</th>
-                      <th style="width:14%; font-weight:700;">방어율</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${hRowsHtml}
-                  </tbody>
-                </table>
-              </div>
+            <!-- 홈 투수 최근 10경기 테이블 (모바일 100% 핏 & 노스크롤) -->
+            <div id="tableBox_hStarts_${m.id}" class="pitcher-starts-table-box" style="display:none; width:100%; overflow-x:hidden; border-top:1px solid #e5e7eb;">
+              <table class="table table-sm text-center align-middle mb-0" style="width:100%; table-layout:fixed; font-size:0.71rem; border-collapse:collapse;">
+                <thead style="background:#f3f4f6; color:#4b5563; border-bottom:1px solid #d1d5db;">
+                  <tr style="height:26px;">
+                    <th style="width:22%; font-weight:700; padding:3px 2px;">경기(일자)</th>
+                    <th style="width:16%; font-weight:700; padding:3px 2px;">상대</th>
+                    <th style="width:18%; font-weight:700; padding:3px 2px;">결과/이닝</th>
+                    <th style="width:15%; font-weight:700; padding:3px 2px;">안타(HR)</th>
+                    <th style="width:14%; font-weight:700; padding:3px 2px;">삼진(BB)</th>
+                    <th style="width:15%; font-weight:700; padding:3px 2px;">자책(ERA)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${hRowsHtml}
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -17541,29 +17565,23 @@ function updateSlimPanel(matchId, type, contentHtml) {
               </div>
             </div>
 
-            <!-- 원정 투수 최근 10경기 테이블 (최근경기 토글 시 노출, Image 3) -->
-            <div id="tableBox_aStarts_${m.id}" class="pitcher-starts-table-box" style="display:none; border-top:1px solid #e5e7eb;">
-              <div class="table-responsive" style="overflow-x:auto;">
-                <table class="table table-sm text-center align-middle mb-0" style="width:100%; min-width:540px; font-size:0.72rem; border-collapse:collapse;">
-                  <thead style="background:#f3f4f6; color:#4b5563; border-bottom:1px solid #d1d5db;">
-                    <tr style="height:26px;">
-                      <th style="width:16%; font-weight:700;">최근경기</th>
-                      <th style="width:14%; font-weight:700;">상대</th>
-                      <th style="width:8%; font-weight:700;">이닝</th>
-                      <th style="width:8%; font-weight:700;">타자</th>
-                      <th style="width:8%; font-weight:700;">안타</th>
-                      <th style="width:8%; font-weight:700;">홈런</th>
-                      <th style="width:8%; font-weight:700;">볼넷</th>
-                      <th style="width:8%; font-weight:700;">삼진</th>
-                      <th style="width:8%; font-weight:700;">자책</th>
-                      <th style="width:14%; font-weight:700;">방어율</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${aRowsHtml}
-                  </tbody>
-                </table>
-              </div>
+            <!-- 원정 투수 최근 10경기 테이블 (모바일 100% 핏 & 노스크롤) -->
+            <div id="tableBox_aStarts_${m.id}" class="pitcher-starts-table-box" style="display:none; width:100%; overflow-x:hidden; border-top:1px solid #e5e7eb;">
+              <table class="table table-sm text-center align-middle mb-0" style="width:100%; table-layout:fixed; font-size:0.71rem; border-collapse:collapse;">
+                <thead style="background:#f3f4f6; color:#4b5563; border-bottom:1px solid #d1d5db;">
+                  <tr style="height:26px;">
+                    <th style="width:22%; font-weight:700; padding:3px 2px;">경기(일자)</th>
+                    <th style="width:16%; font-weight:700; padding:3px 2px;">상대</th>
+                    <th style="width:18%; font-weight:700; padding:3px 2px;">결과/이닝</th>
+                    <th style="width:15%; font-weight:700; padding:3px 2px;">안타(HR)</th>
+                    <th style="width:14%; font-weight:700; padding:3px 2px;">삼진(BB)</th>
+                    <th style="width:15%; font-weight:700; padding:3px 2px;">자책(ERA)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${aRowsHtml}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
