@@ -13001,7 +13001,6 @@ function getFullModalMatchList() {
 
           // ⚽ 라이브 메인 화면 배경: 골 이벤트 5초 경과 후 즉시 메인 스타디움 배경으로 원복!
           let soccerBgImg = '/static/images/soccer_stadium_live.jpg';
-          const activeEv = (typeof window._activeLivePlayEvents !== 'undefined' && window._activeLivePlayEvents) ? window._activeLivePlayEvents[m.id] : null;
           if (activeEv && (activeEv.type === 'GOAL' || activeEv.type === 'SCORE')) {
             const goalImgIdx = activeEv.imgIdx || 1;
             soccerBgImg = `/static/images/soccer_goal_epic_${goalImgIdx}.jpg`;
