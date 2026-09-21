@@ -12993,71 +12993,13 @@ function getFullModalMatchList() {
     }
 
     function getMatchHighlightHtml(m, isFinished, isLive) {
+      // '경기요약', '라이브', '체크' 등 인위적인 뱃지 일체 없이 실제 경기 결과/하이라이트 내용만 순수 텍스트로 표출
       let highlightText = (m.custom_notes || m.summary || '').trim();
-      
-      if (!highlightText) {
-        if (isFinished) {
-          const hScore = Number(m.home_score ?? 0);
-          const aScore = Number(m.away_score ?? 0);
-          const hName = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : (m.home_team_name || '');
-          const aName = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : (m.away_team_name || '');
-          const diff = Math.abs(hScore - aScore);
-          if (hScore > aScore) {
-            const tag = diff >= 5 ? '대승' : (diff === 1 ? '1점차 신승' : '제압');
-            highlightText = `${hName} ${hScore}:${aScore} ${tag} · 선발 호투 및 투타 안정`;
-          } else if (aScore > hScore) {
-            const tag = diff >= 5 ? '대승' : (diff === 1 ? '1점차 역전승' : '승리');
-            highlightText = `${aName} ${aScore}:${hScore} ${tag} · 중심타선 집중타 활약`;
-          } else if (hScore === aScore && (hScore > 0 || aScore > 0)) {
-            highlightText = `치열한 접전 끝 ${hScore}:${aScore} 무승부 기록`;
-          }
-        } else if (isLive) {
-          highlightText = '실시간 치열한 공방전 진행 중';
-        } else {
-          // Scheduled
-          const starters = (typeof getMatchStarters === 'function') ? getMatchStarters(m) : null;
-          if (starters && (starters.homeStarter || starters.awayStarter)) {
-            const hS = starters.homeStarter || '미정';
-            const aS = starters.awayStarter || '미정';
-            highlightText = `선발: ${hS} vs ${aS}`;
-          } else if (m.prediction && m.prediction.predicted_winner) {
-            highlightText = `AI 승부예측: ${m.prediction.predicted_winner} 우세 전망`;
-          }
-        }
-      }
-
       if (!highlightText) return '';
 
-      let badgeLabel = '⚡ 승부처';
-      let badgeStyle = 'background: #0f172a; color: #ffffff;';
-      let barBg = '#f8fafc';
-      let barBorder = '#e2e8f0';
-      let textColor = '#1e293b';
-
-      if (isFinished) {
-        badgeLabel = '⚡ 경기요약';
-        badgeStyle = 'background: #1e293b; color: #ffffff;';
-        barBg = 'rgba(241, 245, 249, 0.9)';
-        barBorder = '#cbd5e1';
-        textColor = '#0f172a';
-      } else if (isLive) {
-        badgeLabel = '🔴 LIVE';
-        badgeStyle = 'background: #dc2626; color: #ffffff;';
-        barBg = '#fef2f2';
-        barBorder = '#fecaca';
-        textColor = '#991b1b';
-      } else {
-        badgeLabel = '⚾ 체크';
-        badgeStyle = 'background: #475569; color: #ffffff;';
-        barBg = '#f8fafc';
-        barBorder = '#e2e8f0';
-        textColor = '#475569';
-      }
-
       return `
-        <div class="slim-card-highlight-bar d-flex align-items-center mt-1 px-2 py-1 rounded" style="background:${barBg}; border:1px solid ${barBorder}; font-size:0.75rem; color:${textColor}; line-height:1.35; gap:6px;">
-          <span class="badge px-1.5 py-0.5" style="${badgeStyle} font-size:0.65rem; font-weight:800; flex-shrink:0; letter-spacing:-0.2px; border-radius:4px;">${badgeLabel}</span>
-          <span class="text-truncate fw-bold" style="letter-spacing:-0.3px;" title="${highlightText}">${highlightText}</span>
+        <div class="slim-card-highlight-bar text-truncate mt-1 px-2 py-1 rounded" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.75rem; font-weight:600; color:#1e293b; line-height:1.35;" title="${highlightText}">
+          ${highlightText}
         </div>
       `;
     }
