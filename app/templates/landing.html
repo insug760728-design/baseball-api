@@ -8530,6 +8530,9 @@ function getFullModalMatchList() {
         h2hMatches = buildDynamicH2HList(sportCode, hName, aName, m, 10);
       }
 
+      const fullHName = m.home_team_name || hName;
+      const fullAName = m.away_team_name || aName;
+
       function buildTeamRecentBlock(teamName, isHome, recList) {
         const sideKey = isHome ? 'home' : 'away';
         const sideBadge = isHome ? 'bg-danger text-white' : 'bg-primary text-white';
@@ -8581,7 +8584,7 @@ function getFullModalMatchList() {
           const mmdd = (rawDate.length >= 10) ? rawDate.slice(5, 10).replace('-', '.') : (rawDate.slice(-5).replace('-', '.') || '09.21');
           const isPastSeason = yyyy < '2026';
 
-          const oppDisplay = (typeof formatTeamName === 'function') ? formatTeamName(g.opponent) : (g.opponent || '상대팀');
+          const oppDisplay = g.opponent || ((typeof formatTeamName === 'function') ? formatTeamName(g.opponent) : '상대팀');
           const hTeam = isGameHome ? teamName : oppDisplay;
           const aTeam = isGameHome ? oppDisplay : teamName;
 
@@ -8706,8 +8709,12 @@ function getFullModalMatchList() {
             ? isSameTeamName(g.home_team_name, hName)
             : (g.home_team_name === hName);
           
-          const actualHomeTeam = isHomeVenue ? hName : aName;
-          const actualAwayTeam = isHomeVenue ? aName : hName;
+          const rawHTeam = g.home_team_name || g.home_team || g.home;
+          const rawATeam = g.away_team_name || g.away_team || g.away;
+
+          // 🛡️ 상대전적도 팀명을 생략하지 않고 풀네임(다 써서) 표기!
+          const actualHomeTeam = rawHTeam || (isHomeVenue ? fullHName : fullAName);
+          const actualAwayTeam = rawATeam || (isHomeVenue ? fullAName : fullHName);
           
           const actualHomeScore = Number(g.home_score !== undefined ? g.home_score : (isHomeVenue ? g.team_score : g.opp_score));
           const actualAwayScore = Number(g.away_score !== undefined ? g.away_score : (isHomeVenue ? g.opp_score : g.team_score));
@@ -8719,7 +8726,7 @@ function getFullModalMatchList() {
           const isLoss = !isNaN(hTeamScore) && !isNaN(aTeamScore) ? (hTeamScore < aTeamScore) : (g.result === 'LOSS' || g.result_kr === '패');
           
           const resBadge = isWin ? 'bg-danger text-white fw-bold' : (isLoss ? 'bg-primary text-white fw-bold' : 'bg-secondary text-white');
-          const resText = isWin ? `${hName} 승` : (isLoss ? `${aName} 승` : '무승부');
+          const resText = isWin ? `${fullHName} 승` : (isLoss ? `${fullAName} 승` : '무승부');
           
           const rawDate = g.match_date || g.date || '';
           const yyyy = (rawDate.length >= 4) ? rawDate.slice(0, 4) : '2026';
@@ -8772,9 +8779,9 @@ function getFullModalMatchList() {
               <div class="d-flex align-items-center gap-1.5">
                 <span class="badge bg-warning text-dark fw-bold px-1.5 py-0.5" style="font-size:0.68rem;">공식 상대전적</span>
                 <strong style="font-size:0.80rem;">최근 맞대결 전적 (과거 시즌 포함 최신순):</strong>
-                <span class="badge bg-danger text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">${hName} ${hWins}승</span>
+                <span class="badge bg-danger text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">${fullHName} ${hWins}승</span>
                 ${draws > 0 ? `<span class="badge bg-secondary text-white px-1.5 py-0.5" style="font-size:0.68rem;">${draws}무</span>` : ''}
-                <span class="badge bg-primary text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">${aName} ${aWins}승</span>
+                <span class="badge bg-primary text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">${fullAName} ${aWins}승</span>
               </div>
               <div class="small fw-bold" style="font-size:0.70rem; color:#cbd5e1;">
                 승률: <span class="text-warning">${hWinPct}%</span> vs <span class="text-info">${aWinPct}%</span>
@@ -8800,8 +8807,8 @@ function getFullModalMatchList() {
       }
 
       const h2hRecBlock = buildH2HRecentBlock(h2hMatches, h2hSummary);
-      const homeRecBlock = buildTeamRecentBlock(hName, true, hRecent);
-      const awayRecBlock = buildTeamRecentBlock(aName, false, aRecent);
+      const homeRecBlock = buildTeamRecentBlock(fullHName, true, hRecent);
+      const awayRecBlock = buildTeamRecentBlock(fullAName, false, aRecent);
 
       return `
         <div class="p-2.5 mb-2.5 rounded-3 bg-white border shadow-sm" style="border-color: #cbd5e1 !important;">
@@ -8814,10 +8821,10 @@ function getFullModalMatchList() {
             <!-- 3-Way Selector Buttons (홈팀 10G 우선 활성화, 원정팀 10G, 상대전적 10G) -->
             <div class="btn-group btn-group-sm" role="group">
               <button type="button" id="btnRecTab_home_${uId}" class="btn btn-xs btn-danger text-white fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#dc2626; border-color:#dc2626; color:#ffffff;" onclick="switchRecentTab('${uId}', 'home')">
-                🔴 홈 ${hName} (${hRecent.length || 10}G)
+                🔴 홈 ${fullHName} (${hRecent.length || 10}G)
               </button>
               <button type="button" id="btnRecTab_away_${uId}" class="btn btn-xs btn-outline-primary fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#ffffff; border-color:#93c5fd; color:#1d4ed8;" onclick="switchRecentTab('${uId}', 'away')">
-                🔵 원정 ${aName} (${aRecent.length || 10}G)
+                🔵 원정 ${fullAName} (${aRecent.length || 10}G)
               </button>
               <button type="button" id="btnRecTab_h2h_${uId}" class="btn btn-xs btn-outline-dark fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#ffffff; border-color:#cbd5e1; color:#334155;" onclick="switchRecentTab('${uId}', 'h2h')">
                 ⚔️ 맞대결 (${h2hMatches.length || 10}G)
