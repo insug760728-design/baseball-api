@@ -8470,6 +8470,79 @@ function getFullModalMatchList() {
         });
     };
 
+    function getFrontTeamName(rawName) {
+      if (!rawName) return '';
+      let name = String(rawName).trim();
+      name = name.replace(/\[.*?\]|\(.*?\)/g, '').trim();
+
+      const FRONT_MAP = {
+        '볼티모어 오리올스': '볼티모어', '볼티모어': '볼티모어', '볼티오리': '볼티모어',
+        '토론토 블루제이스': '토론토', '토론토': '토론토', '토론블루': '토론토',
+        '밀워키 브루어스': '밀워키', '밀워키': '밀워키', '밀워브루': '밀워키',
+        '애리조나 다이아몬드백스': '애리조나', '애리조나': '애리조나', '애리다이': '애리조나',
+        '뉴욕 양키스': '양키스', '뉴욕양키스': '양키스', 'NY양키스': '양키스', '뉴욕양키': '양키스',
+        '뉴욕 메츠': '메츠', '뉴욕메츠': '메츠', 'NY메츠': '메츠',
+        '보스턴 레드삭스': '보스턴', '보스턴': '보스턴', '보스레드': '보스턴',
+        'LA 다저스': '다저스', 'LA다저스': '다저스', '로스앤젤레스 다저스': '다저스',
+        'LA 에인절스': '에인절스', 'LA에인절스': '에인절스', '로스앤젤레스 에인절스': '에인절스',
+        '샌디에이고 파드리스': '샌디에이고', '샌디에이고': '샌디에이고',
+        '샌프란시스코 자이언츠': '샌프란시스코', '샌프란시스코': '샌프란시스코',
+        '텍사스 레인저스': '텍사스', '텍사스': '텍사스', '텍사레인': '텍사스',
+        '디트로이트 타이거스': '디트로이트', '디트로이트 타이거즈': '디트로이트', '디트로이트': '디트로이트', '디트타이': '디트로이트',
+        '클리블랜드 가디언스': '클리블랜드', '클리블랜드 가디언즈': '클리블랜드', '클리블랜드': '클리블랜드',
+        '시애틀 매리너스': '시애틀', '시애틀': '시애틀',
+        '필라델피아 필리스': '필라델피아', '필라델피아': '필라델피아', '필라필리': '필라델피아',
+        '애틀랜타 브레이브스': '애틀랜타', '애틀랜타': '애틀랜타',
+        '휴스턴 애스트로스': '휴스턴', '휴스턴': '휴스턴',
+        '시카고 컵스': '시카고C', '시카고컵스': '시카고C', '시카고C': '시카고C',
+        '시카고 화이트삭스': '시카고W', '시카고화이트삭스': '시카고W', '시카고W': '시카고W',
+        '미네소타 트윈스': '미네소타', '미네소타': '미네소타',
+        '세인트루이스 카디널스': '세인트루이스', '세인트루이스': '세인트루이스',
+        '콜로라도 로키스': '콜로라도', '콜로라도': '콜로라도',
+        '캔자스시티 로열스': '캔자스시티', '캔자스시티': '캔자스시티',
+        '오클랜드 애슬레틱스': '애슬레틱스', '오클랜드': '애슬레틱스', '애슬레틱스': '애슬레틱스',
+        '워싱턴 내셔널스': '워싱턴', '워싱턴': '워싱턴',
+        '신시내티 레즈': '신시내티', '신시내티': '신시내티',
+        '피츠버그 파이리츠': '피츠버그', '피츠버그': '피츠버그',
+        '탬파베이 레이스': '탬파베이', '탬파베이': '탬파베이',
+        '마이애미 말린스': '마이애미', '마이애미': '마이애미',
+        // NPB
+        '한신 타이거스': '한신', '한신 타이거즈': '한신', '한신': '한신', '한신타이': '한신',
+        '요코하마 DeNA 베이스타즈': '요코하마', '요코하마 DeNA': '요코하마', '요코하마': '요코하마', '요코베이': '요코하마',
+        '요미우리 자이언츠': '요미우리', '요미우리': '요미우리',
+        '도쿄 야쿠르트 스왈로스': '야쿠르트', '야쿠르트 스왈로스': '야쿠르트', '야쿠르트': '야쿠르트',
+        '주니치 드래곤즈': '주니치', '주니치': '주니치',
+        '히로시마 도요 카프': '히로시마', '히로시마 도요카프': '히로시마', '히로시마': '히로시마',
+        '후쿠오카 소프트뱅크 호크스': '소프트뱅크', '소프트뱅크 호크스': '소프트뱅크', '소프트뱅크': '소프트뱅크',
+        '오릭스 버펄로스': '오릭스', '오릭스': '오릭스',
+        '지바 롯데 마린스': '지바롯데', '지바 롯데': '지바롯데', '지바롯데': '지바롯데',
+        '도호쿠 라쿠텐 골든이글스': '라쿠텐', '라쿠텐 골든이글스': '라쿠텐', '라쿠텐': '라쿠텐',
+        '사이타마 세이부 라이온즈': '세이부', '세이부 라이온즈': '세이부', '세이부': '세이부',
+        '홋카이도 닛폰햄 파이터스': '닛폰햄', '닛폰햄 파이터스': '닛폰햄', '닛폰햄': '닛폰햄',
+        // KBO
+        'KIA 타이거즈': 'KIA', '기아 타이거즈': 'KIA', '기아': 'KIA', 'KIA': 'KIA',
+        '삼성 라이온즈': '삼성', '삼성': '삼성',
+        'LG 트윈스': 'LG', 'LG': 'LG',
+        '두산 베어스': '두산', '두산': '두산',
+        'KT 위즈': 'KT', 'KT': 'KT',
+        'SSG 랜더스': 'SSG', 'SSG': 'SSG',
+        'NC 다이노스': 'NC', 'NC': 'NC',
+        '한화 이글스': '한화', '한화': '한화',
+        '롯데 자이언츠': '롯데', '롯데': '롯데',
+        '키움 히어로즈': '키움', '키움': '키움'
+      };
+
+      if (FRONT_MAP[name]) return FRONT_MAP[name];
+
+      // 공백 기준 앞 단어(앞자리) 취득
+      const parts = name.split(/\s+/);
+      if (parts.length > 1) {
+        return parts[0];
+      }
+      return name;
+    }
+    window.getFrontTeamName = getFrontTeamName;
+
     function renderRecentTeamMatchesWidgetHtml(m) {
       if (!m) return '';
       const sportCode = ((m.sport_code || '').toUpperCase()) || 'BASEBALL';
@@ -8532,6 +8605,8 @@ function getFullModalMatchList() {
 
       const fullHName = m.home_team_name || hName;
       const fullAName = m.away_team_name || aName;
+      const shortH = getFrontTeamName(fullHName);
+      const shortA = getFrontTeamName(fullAName);
 
       function buildTeamRecentBlock(teamName, isHome, recList) {
         const sideKey = isHome ? 'home' : 'away';
@@ -8573,7 +8648,8 @@ function getFullModalMatchList() {
           const isWin = g.result === 'W' || g.result === '승' || g.result === 'WIN' || g.result_kr === '승';
           const isLoss = g.result === 'L' || g.result === '패' || g.result === 'LOSS' || g.result_kr === '패';
           const resBadge = isWin ? 'bg-danger text-white fw-bold' : (isLoss ? 'bg-primary text-white' : 'bg-secondary text-white');
-          const resText = isWin ? `${teamName} 승` : (isLoss ? `${teamName} 패` : '무승부');
+          const shortTeam = getFrontTeamName(teamName);
+          const resText = isWin ? `${shortTeam} 승` : (isLoss ? `${shortTeam} 패` : '무승부');
           
           let venueText = g.home_away || ((g.is_home_venue !== undefined) ? (g.is_home_venue ? '홈' : '원정') : (gIdx % 2 === 0 ? '홈' : '원정'));
           if (venueText === '원') venueText = '원정';
@@ -8584,9 +8660,9 @@ function getFullModalMatchList() {
           const mmdd = (rawDate.length >= 10) ? rawDate.slice(5, 10).replace('-', '.') : (rawDate.slice(-5).replace('-', '.') || '09.21');
           const isPastSeason = yyyy < '2026';
 
-          const oppDisplay = g.opponent || ((typeof formatTeamName === 'function') ? formatTeamName(g.opponent) : '상대팀');
-          const hTeam = isGameHome ? teamName : oppDisplay;
-          const aTeam = isGameHome ? oppDisplay : teamName;
+          const oppDisplay = getFrontTeamName(g.opponent || ((typeof formatTeamName === 'function') ? formatTeamName(g.opponent) : '상대팀'));
+          const hTeam = isGameHome ? shortTeam : oppDisplay;
+          const aTeam = isGameHome ? oppDisplay : shortTeam;
 
           let hScore, aScore;
           if (g.home_score !== undefined && g.away_score !== undefined) {
@@ -8606,9 +8682,9 @@ function getFullModalMatchList() {
                 <span class="text-secondary small">${yyyy}.</span><span>${mmdd}</span>${gIdx === 0 ? ' <span class="badge bg-danger ms-0.5" style="font-size:0.58rem;">직전</span>' : (isPastSeason ? ` <span class="badge bg-light text-secondary border ms-0.5" style="font-size:0.56rem;">${yyyy}</span>` : '')}
               </td>
               <td class="text-center text-truncate px-1" style="white-space:nowrap; padding:3px 2px;" title="${hTeam}(홈) vs ${aTeam}(원정)">
-                <span class="${hTeam === teamName ? 'fw-bold text-danger' : 'text-dark'}">${hTeam}</span><span class="text-danger small ms-0.5" style="font-size:0.60rem;">(홈)</span>
+                <span class="${hTeam === shortTeam ? 'fw-bold text-danger' : 'text-dark'}">${hTeam}</span><span class="text-danger small ms-0.5" style="font-size:0.60rem;">(홈)</span>
                 <span class="text-muted small mx-0.5">vs</span>
-                <span class="${aTeam === teamName ? 'fw-bold text-primary' : 'text-dark'}">${aTeam}</span><span class="text-primary small ms-0.5" style="font-size:0.60rem;">(원)</span>
+                <span class="${aTeam === shortTeam ? 'fw-bold text-primary' : 'text-dark'}">${aTeam}</span><span class="text-primary small ms-0.5" style="font-size:0.60rem;">(원)</span>
               </td>
               <td class="fw-black text-center" style="white-space:nowrap; font-family:monospace; font-size:0.76rem; padding:3px 2px;">
                 <span class="${hScore > aScore ? 'text-danger fw-bold' : ''}">${hScore}</span> : <span class="${aScore > hScore ? 'text-primary fw-bold' : ''}">${aScore}</span>
@@ -8622,7 +8698,7 @@ function getFullModalMatchList() {
           return `
             <div id="box_teamRec_${sideKey}_${uId}" class="team-rec-box">
               <div class="p-3 text-center text-secondary fw-semibold bg-white rounded border mb-2" style="font-size:0.75rem; border-color:#e2e8f0;">
-                ${teamName}의 최근 공식 경기 일지 준비 중입니다.
+                ${getFrontTeamName(teamName)}의 최근 공식 경기 일지 준비 중입니다.
               </div>
             </div>
           `;
@@ -8640,7 +8716,7 @@ function getFullModalMatchList() {
             <div class="p-2 mb-2 rounded-2 d-flex justify-content-between align-items-center flex-wrap gap-1" style="background:${isHome ? '#fee2e2' : '#dbeafe'}; border-left: 4px solid ${isHome ? '#dc2626' : '#2563eb'};">
               <div class="d-flex align-items-center gap-1.5">
                 <span class="badge ${sideBadge} px-1.5 py-0.5" style="font-size:0.65rem;">${sidePrefix}</span>
-                <strong class="text-dark" style="font-size:0.78rem;">${teamName} 오늘(2026.09.22) 기준 최근 10경기: ${wins}승 ${losses}패 (${winPct}%)</strong>
+                <strong class="text-dark" style="font-size:0.78rem;">${getFrontTeamName(teamName)} 오늘(2026.09.22) 기준 최근 10경기: ${wins}승 ${losses}패 (${winPct}%)</strong>
               </div>
               <span class="badge bg-white text-secondary border" style="font-size:0.62rem;">2026 시즌 공식 실데이터</span>
             </div>
@@ -8712,9 +8788,9 @@ function getFullModalMatchList() {
           const rawHTeam = g.home_team_name || g.home_team || g.home;
           const rawATeam = g.away_team_name || g.away_team || g.away;
 
-          // 🛡️ 상대전적도 팀명을 생략하지 않고 풀네임(다 써서) 표기!
-          const actualHomeTeam = rawHTeam || (isHomeVenue ? fullHName : fullAName);
-          const actualAwayTeam = rawATeam || (isHomeVenue ? fullAName : fullHName);
+          // 🛡️ 상대전적도 앞자리 팀명으로 간결하고 명확하게 표기!
+          const actualHomeTeam = getFrontTeamName(rawHTeam || (isHomeVenue ? shortH : shortA));
+          const actualAwayTeam = getFrontTeamName(rawATeam || (isHomeVenue ? shortA : shortH));
           
           const actualHomeScore = Number(g.home_score !== undefined ? g.home_score : (isHomeVenue ? g.team_score : g.opp_score));
           const actualAwayScore = Number(g.away_score !== undefined ? g.away_score : (isHomeVenue ? g.opp_score : g.team_score));
@@ -8726,7 +8802,7 @@ function getFullModalMatchList() {
           const isLoss = !isNaN(hTeamScore) && !isNaN(aTeamScore) ? (hTeamScore < aTeamScore) : (g.result === 'LOSS' || g.result_kr === '패');
           
           const resBadge = isWin ? 'bg-danger text-white fw-bold' : (isLoss ? 'bg-primary text-white fw-bold' : 'bg-secondary text-white');
-          const resText = isWin ? `${fullHName} 승` : (isLoss ? `${fullAName} 승` : '무승부');
+          const resText = isWin ? `${shortH} 승` : (isLoss ? `${shortA} 승` : '무승부');
           
           const rawDate = g.match_date || g.date || '';
           const yyyy = (rawDate.length >= 4) ? rawDate.slice(0, 4) : '2026';
@@ -8779,9 +8855,9 @@ function getFullModalMatchList() {
               <div class="d-flex align-items-center gap-1.5">
                 <span class="badge bg-warning text-dark fw-bold px-1.5 py-0.5" style="font-size:0.68rem;">공식 상대전적</span>
                 <strong style="font-size:0.80rem;">최근 맞대결 전적 (과거 시즌 포함 최신순):</strong>
-                <span class="badge bg-danger text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">${fullHName} ${hWins}승</span>
+                <span class="badge bg-danger text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">${shortH} ${hWins}승</span>
                 ${draws > 0 ? `<span class="badge bg-secondary text-white px-1.5 py-0.5" style="font-size:0.68rem;">${draws}무</span>` : ''}
-                <span class="badge bg-primary text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">${fullAName} ${aWins}승</span>
+                <span class="badge bg-primary text-white px-2 py-0.5 fw-bold" style="font-size:0.72rem;">${shortA} ${aWins}승</span>
               </div>
               <div class="small fw-bold" style="font-size:0.70rem; color:#cbd5e1;">
                 승률: <span class="text-warning">${hWinPct}%</span> vs <span class="text-info">${aWinPct}%</span>
@@ -8821,10 +8897,10 @@ function getFullModalMatchList() {
             <!-- 3-Way Selector Buttons (홈팀 10G 우선 활성화, 원정팀 10G, 상대전적 10G) -->
             <div class="btn-group btn-group-sm" role="group">
               <button type="button" id="btnRecTab_home_${uId}" class="btn btn-xs btn-danger text-white fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#dc2626; border-color:#dc2626; color:#ffffff;" onclick="switchRecentTab('${uId}', 'home')">
-                🔴 홈 ${fullHName} (${hRecent.length || 10}G)
+                🔴 홈 ${shortH} (${hRecent.length || 10}G)
               </button>
               <button type="button" id="btnRecTab_away_${uId}" class="btn btn-xs btn-outline-primary fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#ffffff; border-color:#93c5fd; color:#1d4ed8;" onclick="switchRecentTab('${uId}', 'away')">
-                🔵 원정 ${fullAName} (${aRecent.length || 10}G)
+                🔵 원정 ${shortA} (${aRecent.length || 10}G)
               </button>
               <button type="button" id="btnRecTab_h2h_${uId}" class="btn btn-xs btn-outline-dark fw-bold py-1 px-2.5" style="font-size:0.70rem; background:#ffffff; border-color:#cbd5e1; color:#334155;" onclick="switchRecentTab('${uId}', 'h2h')">
                 ⚔️ 맞대결 (${h2hMatches.length || 10}G)
@@ -16739,7 +16815,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
         if ((rawOpp === myTeamName || (rawOpp && myTeamName && (rawOpp.includes(myTeamName) || myTeamName.includes(rawOpp)))) && g.home_team_name && g.away_team_name) {
           rawOpp = (g.home_team_name === myTeamName || g.home_team_name.includes(myTeamName) || myTeamName.includes(g.home_team_name)) ? g.away_team_name : g.home_team_name;
         }
-        const oppName = (typeof formatTeamName === 'function') ? formatTeamName(rawOpp) : (rawOpp || '');
+        const oppName = getFrontTeamName((typeof formatTeamName === 'function') ? formatTeamName(rawOpp) : (rawOpp || ''));
         const scoreStr = g.score || `${g.team_score !== undefined ? g.team_score : '-'} : ${g.opp_score !== undefined ? g.opp_score : '-'}`;
         const res = g.result_kr || (g.result === 'WIN' ? '승' : (g.result === 'LOSS' ? '패' : '무'));
         const resCls = res === '승' ? 'bg-danger text-white' : (res === '무' ? 'bg-secondary text-white' : 'bg-primary text-white');
@@ -16761,8 +16837,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
       // H2H Table Row Generator
       function renderH2hMatchRow(g, idx) {
         const dateStr = (g.date || g.match_date || '').slice(0, 10).replace(/-/g, '.');
-        const hClub = (typeof formatTeamName === 'function') ? formatTeamName(g.home_team_name) : g.home_team_name;
-        const aClub = (typeof formatTeamName === 'function') ? formatTeamName(g.away_team_name) : g.away_team_name;
+        const hClub = getFrontTeamName((typeof formatTeamName === 'function') ? formatTeamName(g.home_team_name) : g.home_team_name);
+        const aClub = getFrontTeamName((typeof formatTeamName === 'function') ? formatTeamName(g.away_team_name) : g.away_team_name);
         const scoreStr = g.score || `${g.home_score} : ${g.away_score}`;
         const res = g.result_kr || (g.result === 'WIN' ? '승' : (g.result === 'LOSS' ? '패' : '무'));
         const resCls = res === '승' ? 'bg-danger text-white' : (res === '무' ? 'bg-secondary text-white' : 'bg-primary text-white');

@@ -1252,18 +1252,91 @@
       renderRecent10Matches(data);
     }
 
+    function getFrontTeamName(rawName) {
+      if (!rawName) return '';
+      let name = String(rawName).trim();
+      name = name.replace(/\[.*?\]|\(.*?\)/g, '').trim();
+
+      const FRONT_MAP = {
+        '볼티모어 오리올스': '볼티모어', '볼티모어': '볼티모어', '볼티오리': '볼티모어',
+        '토론토 블루제이스': '토론토', '토론토': '토론토', '토론블루': '토론토',
+        '밀워키 브루어스': '밀워키', '밀워키': '밀워키', '밀워브루': '밀워키',
+        '애리조나 다이아몬드백스': '애리조나', '애리조나': '애리조나', '애리다이': '애리조나',
+        '뉴욕 양키스': '양키스', '뉴욕양키스': '양키스', 'NY양키스': '양키스', '뉴욕양키': '양키스',
+        '뉴욕 메츠': '메츠', '뉴욕메츠': '메츠', 'NY메츠': '메츠',
+        '보스턴 레드삭스': '보스턴', '보스턴': '보스턴', '보스레드': '보스턴',
+        'LA 다저스': '다저스', 'LA다저스': '다저스', '로스앤젤레스 다저스': '다저스',
+        'LA 에인절스': '에인절스', 'LA에인절스': '에인절스', '로스앤젤레스 에인절스': '에인절스',
+        '샌디에이고 파드리스': '샌디에이고', '샌디에이고': '샌디에이고',
+        '샌프란시스코 자이언츠': '샌프란시스코', '샌프란시스코': '샌프란시스코',
+        '텍사스 레인저스': '텍사스', '텍사스': '텍사스', '텍사레인': '텍사스',
+        '디트로이트 타이거스': '디트로이트', '디트로이트 타이거즈': '디트로이트', '디트로이트': '디트로이트', '디트타이': '디트로이트',
+        '클리블랜드 가디언스': '클리블랜드', '클리블랜드 가디언즈': '클리블랜드', '클리블랜드': '클리블랜드',
+        '시애틀 매리너스': '시애틀', '시애틀': '시애틀',
+        '필라델피아 필리스': '필라델피아', '필라델피아': '필라델피아', '필라필리': '필라델피아',
+        '애틀랜타 브레이브스': '애틀랜타', '애틀랜타': '애틀랜타',
+        '휴스턴 애스트로스': '휴스턴', '휴스턴': '휴스턴',
+        '시카고 컵스': '시카고C', '시카고컵스': '시카고C', '시카고C': '시카고C',
+        '시카고 화이트삭스': '시카고W', '시카고화이트삭스': '시카고W', '시카고W': '시카고W',
+        '미네소타 트윈스': '미네소타', '미네소타': '미네소타',
+        '세인트루이스 카디널스': '세인트루이스', '세인트루이스': '세인트루이스',
+        '콜로라도 로키스': '콜로라도', '콜로라도': '콜로라도',
+        '캔자스시티 로열스': '캔자스시티', '캔자스시티': '캔자스시티',
+        '오클랜드 애슬레틱스': '애슬레틱스', '오클랜드': '애슬레틱스', '애슬레틱스': '애슬레틱스',
+        '워싱턴 내셔널스': '워싱턴', '워싱턴': '워싱턴',
+        '신시내티 레즈': '신시내티', '신시내티': '신시내티',
+        '피츠버그 파이리츠': '피츠버그', '피츠버그': '피츠버그',
+        '탬파베이 레이스': '탬파베이', '탬파베이': '탬파베이',
+        '마이애미 말린스': '마이애미', '마이애미': '마이애미',
+        // NPB
+        '한신 타이거스': '한신', '한신 타이거즈': '한신', '한신': '한신', '한신타이': '한신',
+        '요코하마 DeNA 베이스타즈': '요코하마', '요코하마 DeNA': '요코하마', '요코하마': '요코하마', '요코베이': '요코하마',
+        '요미우리 자이언츠': '요미우리', '요미우리': '요미우리',
+        '도쿄 야쿠르트 스왈로스': '야쿠르트', '야쿠르트 스왈로스': '야쿠르트', '야쿠르트': '야쿠르트',
+        '주니치 드래곤즈': '주니치', '주니치': '주니치',
+        '히로시마 도요 카프': '히로시마', '히로시마 도요카프': '히로시마', '히로시마': '히로시마',
+        '후쿠오카 소프트뱅크 호크스': '소프트뱅크', '소프트뱅크 호크스': '소프트뱅크', '소프트뱅크': '소프트뱅크',
+        '오릭스 버펄로스': '오릭스', '오릭스': '오릭스',
+        '지바 롯데 마린스': '지바롯데', '지바 롯데': '지바롯데', '지바롯데': '지바롯데',
+        '도호쿠 라쿠텐 골든이글스': '라쿠텐', '라쿠텐 골든이글스': '라쿠텐', '라쿠텐': '라쿠텐',
+        '사이타마 세이부 라이온즈': '세이부', '세이부 라이온즈': '세이부', '세이부': '세이부',
+        '홋카이도 닛폰햄 파이터스': '닛폰햄', '닛폰햄 파이터스': '닛폰햄', '닛폰햄': '닛폰햄',
+        // KBO
+        'KIA 타이거즈': 'KIA', '기아 타이거즈': 'KIA', '기아': 'KIA', 'KIA': 'KIA',
+        '삼성 라이온즈': '삼성', '삼성': '삼성',
+        'LG 트윈스': 'LG', 'LG': 'LG',
+        '두산 베어스': '두산', '두산': '두산',
+        'KT 위즈': 'KT', 'KT': 'KT',
+        'SSG 랜더스': 'SSG', 'SSG': 'SSG',
+        'NC 다이노스': 'NC', 'NC': 'NC',
+        '한화 이글스': '한화', '한화': '한화',
+        '롯데 자이언츠': '롯데', '롯데': '롯데',
+        '키움 히어로즈': '키움', '키움': '키움'
+      };
+
+      if (FRONT_MAP[name]) return FRONT_MAP[name];
+
+      const parts = name.split(/\s+/);
+      if (parts.length > 1) {
+        return parts[0];
+      }
+      return name;
+    }
+
     function renderRecent10Matches(data) {
       const container = document.getElementById('recent10Container');
       if (!container || !data) return;
 
       const hName = data.home || '홈팀';
       const aName = data.away || '원정팀';
+      const shortH = getFrontTeamName(hName);
+      const shortA = getFrontTeamName(aName);
 
       // 탭 라벨 팀명 업데이트
       const lblHome = document.getElementById('labelTabHomeName');
       const lblAway = document.getElementById('labelTabAwayName');
-      if (lblHome) lblHome.innerText = hName;
-      if (lblAway) lblAway.innerText = aName;
+      if (lblHome) lblHome.innerText = shortH;
+      if (lblAway) lblAway.innerText = shortA;
 
       const hList = data.homeRecent10 || [];
       const aList = data.awayRecent10 || [];
@@ -1273,10 +1346,11 @@
       }
 
       function buildTeam10Html(teamName, isHome, list) {
+        const shortTeam = getFrontTeamName(teamName);
         if (!list || list.length === 0) {
           return `
             <div class="p-3 text-center text-muted small bg-light rounded border mb-2">
-              ${teamName}의 오늘(2026.09.22) 기준 공식 최근 10경기 데이터를 준비 중입니다.
+              ${shortTeam}의 오늘(2026.09.22) 기준 공식 최근 10경기 데이터를 준비 중입니다.
             </div>
           `;
         }
@@ -1306,17 +1380,18 @@
         const rows = list.map((g, idx) => {
           const isWin = g.is_win;
           const resBadge = isWin ? 'bg-danger text-white' : 'bg-primary text-white';
-          const resText = isWin ? `${teamName} 승` : `${teamName} 패`;
+          const resText = isWin ? `${shortTeam} 승` : `${shortTeam} 패`;
           const isFirst = (idx === 0);
           const rawDate = g.date || '';
           const yyyy = (rawDate.length >= 4) ? rawDate.slice(0, 4) : '2026';
           const mmdd = (rawDate.length >= 10) ? rawDate.slice(5, 10).replace('-', '.') : (rawDate.slice(-5).replace('-', '.') || '09.21');
           const isPastSeason = yyyy < '2026';
 
-          // 🛡️ 항상 두 팀을 명확히 표기 (홈팀 vs 원정팀 - 홈 문자/상대팀 생략 완전 배제)
+          // 🛡️ 항상 두 팀을 명확히 앞자리 팀명으로 표기 (홈팀 vs 원정팀)
           const isGameHome = (g.venue === '홈' || g.home_away === '홈');
-          const hTeam = isGameHome ? teamName : (g.opp || g.opponent || g.home_team_name);
-          const aTeam = isGameHome ? (g.opp || g.opponent || g.away_team_name) : teamName;
+          const oppName = getFrontTeamName(g.opp || g.opponent || (isGameHome ? g.away_team_name : g.home_team_name) || '상대팀');
+          const hTeam = isGameHome ? shortTeam : oppName;
+          const aTeam = isGameHome ? oppName : shortTeam;
           const hScore = isGameHome ? g.my_score : g.opp_score;
           const aScore = isGameHome ? g.opp_score : g.my_score;
 
@@ -1327,9 +1402,9 @@
                 ${isFirst ? `<span class="badge ${isHome ? 'bg-danger' : 'bg-primary'} ms-1" style="font-size:0.60rem;">직전</span>` : (isPastSeason ? `<span class="badge bg-light text-muted border ms-1" style="font-size:0.58rem;">${yyyy}시즌</span>` : '')}
               </td>
               <td class="text-start px-2 text-truncate" style="max-width:210px;" title="${hTeam} vs ${aTeam}">
-                <span class="${hTeam === teamName ? 'fw-bold text-danger' : 'text-dark'}">${hTeam}</span><span class="text-danger small ms-0.5" style="font-size:0.62rem;">(홈)</span>
+                <span class="${hTeam === shortTeam ? 'fw-bold text-danger' : 'text-dark'}">${hTeam}</span><span class="text-danger small ms-0.5" style="font-size:0.62rem;">(홈)</span>
                 <span class="text-muted small mx-1">vs</span>
-                <span class="${aTeam === teamName ? 'fw-bold text-primary' : 'text-dark'}">${aTeam}</span><span class="text-primary small ms-0.5" style="font-size:0.62rem;">(원정)</span>
+                <span class="${aTeam === shortTeam ? 'fw-bold text-primary' : 'text-dark'}">${aTeam}</span><span class="text-primary small ms-0.5" style="font-size:0.62rem;">(원정)</span>
               </td>
               <td class="fw-bold" style="white-space:nowrap; font-family:'Roboto Mono', monospace;">
                 <span class="${hScore > aScore ? 'text-danger' : (hScore < aScore ? 'text-muted' : 'text-dark')}">${hScore}</span>
@@ -1352,8 +1427,8 @@
             <!-- 상단 요약 바 -->
             <div class="p-2 rounded mb-2 d-flex justify-content-between align-items-center flex-wrap gap-1.5" style="background:${sideBg}; border-left: 4px solid ${sideColor};">
               <div class="d-flex align-items-center gap-1.5">
-                <span class="badge ${isHome ? 'bg-danger' : 'bg-primary'} text-white px-2 py-0.5" style="font-size:0.70rem;">${isHome ? '🔴 [홈]' : '🔵 [원정]'} ${teamName}</span>
-                <strong style="font-size:0.82rem; color:#0f172a;">오늘(2026.09.22) 기준 최근 10경기: ${wins}승 ${losses}패 (${winPct}%)</strong>
+                <span class="badge ${isHome ? 'bg-danger' : 'bg-primary'} text-white px-2 py-0.5" style="font-size:0.70rem;">${isHome ? '🔴 [홈]' : '🔵 [원정]'} ${shortTeam}</span>
+                <strong style="font-size:0.82rem; color:#0f172a;">${shortTeam} 오늘(2026.09.22) 기준 최근 10경기: ${wins}승 ${losses}패 (${winPct}%)</strong>
               </div>
               <div class="small fw-bold" style="font-size:0.72rem; color:#334155;">
                 평균득실: <span class="text-danger">${avgScore}득</span> / <span class="text-primary">${avgConc}실</span> (마진 ${diff > 0 ? '+' + diff : diff})
@@ -1412,15 +1487,15 @@
         let maxDiff = -1, maxDiffStr = '-';
 
         list.forEach(g => {
-          const gHomeName = g.home || g.home_team_name || '';
-          const isHNameHome = (gHomeName.includes(hName) || hName.includes(gHomeName));
+          const rawGHome = g.home || g.home_team_name || '';
+          const isHNameHome = (rawGHome.includes(shortH) || shortH.includes(rawGHome) || rawGHome.includes(hName) || hName.includes(rawGHome));
 
           let gHScore = 0, gAScore = 0;
           if (g.home_score !== undefined && g.away_score !== undefined) {
             gHScore = Number(isHNameHome ? g.home_score : g.away_score);
             gAScore = Number(isHNameHome ? g.away_score : g.home_score);
           } else if (g.bal_score !== undefined && g.tor_score !== undefined) {
-            const isBalH = hName.includes('볼티모어');
+            const isBalH = shortH.includes('볼티모어') || hName.includes('볼티모어');
             gHScore = Number(isBalH ? g.bal_score : g.tor_score);
             gAScore = Number(isBalH ? g.tor_score : g.bal_score);
           }
@@ -1453,9 +1528,11 @@
         const aAvgRuns = total > 0 ? (aRuns / total).toFixed(1) : '0.0';
 
         const rows = list.map((g, idx) => {
-          const gHomeName = g.home || g.home_team_name || hName;
-          const gAwayName = g.away || g.away_team_name || aName;
-          const isHNameHome = (gHomeName.includes(hName) || hName.includes(gHomeName));
+          const rawHome = g.home || g.home_team_name || hName;
+          const rawAway = g.away || g.away_team_name || aName;
+          const gHomeName = getFrontTeamName(rawHome);
+          const gAwayName = getFrontTeamName(rawAway);
+          const isHNameHome = (gHomeName.includes(shortH) || shortH.includes(gHomeName) || rawHome.includes(hName) || hName.includes(rawHome));
 
           const gHomeScore = Number(g.home_score);
           const gAwayScore = Number(g.away_score);
@@ -1466,7 +1543,7 @@
           const aWin = !isNaN(hTeamScore) && !isNaN(aTeamScore) ? (aTeamScore > hTeamScore) : false;
 
           const badgeClass = hWin ? 'bg-danger text-white' : (aWin ? 'bg-primary text-white' : 'bg-secondary text-white');
-          const badgeText = hWin ? `${hName} 승` : (aWin ? `${aName} 승` : '무승부');
+          const badgeText = hWin ? `${shortH} 승` : (aWin ? `${shortA} 승` : '무승부');
 
           const decStr = (g.winner_p && g.winner_p !== '-') 
             ? `승: ${g.winner_p} / 패: ${g.loser_p}${g.save_p && g.save_p !== '-' ? ` / 세: ${g.save_p}` : ''}`
@@ -1537,15 +1614,15 @@
                   <i class="bi bi-trophy-fill text-warning me-1"></i>양 팀 최근 10경기 맞대결 전적 (과거 시즌 포함 최신순)
                 </strong>
                 <span class="badge ${hWins > aWins ? 'bg-danger' : (hWins < aWins ? 'bg-primary' : 'bg-secondary')} px-2 py-0.5" style="font-size:0.68rem;">
-                  ${hWins > aWins ? `${hName} ${hWins}승 우세` : (hWins < aWins ? `${aName} ${aWins}승 우세` : `${hWins}승 ${aWins}패 동률`)}
+                  ${hWins > aWins ? `${shortH} ${hWins}승 우세` : (hWins < aWins ? `${shortA} ${aWins}승 우세` : `${hWins}승 ${aWins}패 동률`)}
                 </span>
               </div>
 
               <!-- 승률 2톤 게이지 바 -->
               <div class="d-flex justify-content-between align-items-center mb-1 fw-bold" style="font-size:0.75rem;">
-                <span class="text-danger">🏠 ${hName} ${hWins}승 (${hPct}%)</span>
+                <span class="text-danger">🏠 ${shortH} ${hWins}승 (${hPct}%)</span>
                 <span class="text-muted" style="font-size:0.68rem;">평균득점 ${hAvgRuns} : ${aAvgRuns}</span>
-                <span class="text-primary">✈️ ${aName} ${aWins}승 (${aPct}%)</span>
+                <span class="text-primary">✈️ ${shortA} ${aWins}승 (${aPct}%)</span>
               </div>
               <div class="progress mb-2" style="height: 10px; border-radius: 5px; overflow: hidden; background:#e2e8f0;">
                 <div class="progress-bar bg-danger" style="width: ${hPct}%;" role="progressbar"></div>
@@ -1558,10 +1635,10 @@
                   📅 집계 기준: <strong>한 시즌 10경기 미달 시 작년·과거 시즌까지 최신순 연장 집계</strong>
                 </span>
                 <span class="badge bg-white text-dark border px-2 py-1">
-                  🏠 ${hName} 홈 구장 맞대결: <strong>${hAtHomeTotal}전 ${hAtHomeWins}승 ${hAtHomeTotal - hAtHomeWins}패</strong>
+                  🏠 ${shortH} 홈 구장 맞대결: <strong>${hAtHomeTotal}전 ${hAtHomeWins}승 ${hAtHomeTotal - hAtHomeWins}패</strong>
                 </span>
                 <span class="badge bg-white text-dark border px-2 py-1">
-                  ✈️ ${aName} 홈 구장 맞대결: <strong>${aAtHomeTotal}전 ${aAtHomeWins}승 ${aAtHomeTotal - aAtHomeWins}패</strong>
+                  ✈️ ${shortA} 홈 구장 맞대결: <strong>${aAtHomeTotal}전 ${aAtHomeWins}승 ${aAtHomeTotal - aAtHomeWins}패</strong>
                 </span>
                 <span class="badge bg-white text-dark border px-2 py-1">
                   💥 최다 점수차: <strong>${maxDiffStr}</strong>
@@ -1598,11 +1675,11 @@
       } else if (currentRecent10Tab === 'all') {
         container.innerHTML = `
           <div class="mb-3">
-            <h6 class="fw-bold text-danger mb-1.5" style="font-size:0.84rem;"><i class="bi bi-caret-right-fill me-1"></i>🔴 [홈] ${hName} 오늘(2026.09.22) 기준 최근 10경기</h6>
+            <h6 class="fw-bold text-danger mb-1.5" style="font-size:0.84rem;"><i class="bi bi-caret-right-fill me-1"></i>🔴 [홈] ${shortH} 오늘(2026.09.22) 기준 최근 10경기</h6>
             ${buildTeam10Html(hName, true, hList)}
           </div>
           <div class="mb-3">
-            <h6 class="fw-bold text-primary mb-1.5" style="font-size:0.84rem;"><i class="bi bi-caret-right-fill me-1"></i>🔵 [원정] ${aName} 오늘(2026.09.22) 기준 최근 10경기</h6>
+            <h6 class="fw-bold text-primary mb-1.5" style="font-size:0.84rem;"><i class="bi bi-caret-right-fill me-1"></i>🔵 [원정] ${shortA} 오늘(2026.09.22) 기준 최근 10경기</h6>
             ${buildTeam10Html(aName, false, aList)}
           </div>
           <div class="mb-3">
