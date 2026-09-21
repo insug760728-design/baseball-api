@@ -18183,19 +18183,13 @@ function updateSlimPanel(matchId, type, contentHtml) {
       
       let foundMlb = null;
       if (typeof MLB_OFFICIAL_YESTERDAY_GAMES !== 'undefined') {
+        // 오직 두 팀이 맞대결한 직전 경기일 때만 전광판 노출 (타 팀 경기 절대 노출 금지)
         foundMlb = MLB_OFFICIAL_YESTERDAY_GAMES.find(g => {
           const gh = g.home.replace(/[\s\.\-]/g, '').toLowerCase();
           const ga = g.away.replace(/[\s\.\-]/g, '').toLowerCase();
           return (gh.includes(cleanH) || cleanH.includes(gh) || ga.includes(cleanH) || cleanH.includes(ga)) &&
                  (gh.includes(cleanA) || cleanA.includes(gh) || ga.includes(cleanA) || cleanA.includes(ga));
         });
-        if (!foundMlb) {
-          foundMlb = MLB_OFFICIAL_YESTERDAY_GAMES.find(g => {
-            const gh = g.home.replace(/[\s\.\-]/g, '').toLowerCase();
-            const ga = g.away.replace(/[\s\.\-]/g, '').toLowerCase();
-            return (gh.includes(cleanH) || cleanH.includes(gh) || ga.includes(cleanH) || cleanH.includes(ga));
-          });
-        }
       }
 
       let scoreboardHtml = '';
@@ -18407,12 +18401,6 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 </tr>
               </tbody>
             </table>
-          </div>
-          ${scoreboardHtml ? '' : ''}
-          <div class="mt-2 pt-1 border-top" style="border-color:#e2e8f0 !important;">
-            <a href="/mlb" class="btn btn-sm btn-dark w-100 fw-bold text-white d-flex align-items-center justify-content-center gap-1.5 py-1.5" style="font-size:0.75rem; border-radius:5px; text-decoration:none;">
-              <i class="bi bi-display"></i>2026 공식 야구 전경기 전광판 전체 모아보기 (가로 스크롤 0%)
-            </a>
           </div>
         </div>
       `;

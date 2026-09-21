@@ -471,49 +471,24 @@
       </div>
     </div>
 
-    <!-- 5. 📋 2026.09.21 전경기 승부처 요약 모아보기 (총 22경기) -->
+    <!-- 5. 📋 해당 팀 직전 경기 (전경기) 기록 대조 -->
     <div class="section-card" style="background:#ffffff;">
       <div class="section-header-title mb-2">
-        <h3><i class="bi bi-card-checklist text-success"></i>2026.09.21 경기 결과 요약 (22경기)</h3>
-        <span class="badge bg-primary text-white" style="font-size:0.68rem;">전체 목록 동기화</span>
+        <h3><i class="bi bi-calendar2-check text-primary"></i>해당 팀 직전 경기 (전경기) 기록</h3>
+        <span class="badge bg-danger text-white" style="font-size:0.68rem;" id="badgeOnlyRelevant">해당 팀 전용</span>
       </div>
-      <p class="text-muted mb-3" style="font-size:0.75rem;">
-        프로그램 내 모든 경기 목록에 들어가는 <strong>경기 결과 요약 텍스트</strong>입니다. 각 항목을 클릭하면 해당 경기의 상세 분석으로 이동합니다.
+      <p class="text-muted mb-2.5" style="font-size:0.75rem;">
+        현재 선택된 경기의 <strong>홈팀 및 원정팀에 해당하는 직전 경기(전경기) 기록</strong>만 집중 대조합니다. (타 팀 경기 배제)
       </p>
 
-      <div class="all-matches-grid" id="allMatchesContainer">
-        <!-- JS -->
+      <div id="relevantPreviousMatchesContainer">
+        <!-- JS: 해당 두 팀의 직전 경기만 렌더링 -->
       </div>
     </div>
 
   </div>
 
   <script>
-    const ALL_22_MATCHES = [
-      { time: '08:20', league: 'MLB', home: '볼티모어', away: '밀워키', homeScore: 0, awayScore: 3, res: '밀워키 3:0 승', key: 'BAL', highlight: '밀워키 7인 계투 합작 영봉승 · 콘트레라스 18호 솔로포 및 볼티모어 7안타 봉쇄' },
-      { time: '05:10', league: 'MLB', home: '애리조나', away: '뉴욕 양키스', homeScore: 8, awayScore: 4, res: '애리조나 8:4 승', key: 'NYY', highlight: '5회말 아레나도 역전 만루홈런(27호) · 3회초 양키스 3홈런 폭발' },
-      { time: '03:35', league: 'MLB', home: '텍사스', away: '토론토', homeScore: 2, awayScore: 7, res: '토론토 7:2 승', key: 'TEX', highlight: '토론토 7:2 완승 · 텍사스 타선 4안타 빈공 및 선발 조기 강판' },
-      { time: '14:00', league: 'NPB', home: '한신', away: '요코하마', homeScore: 3, awayScore: 2, res: '한신 3:2 승', key: 'NPB', highlight: '한신 고시엔 3:2 진땀승 · 사이키 히로토 12승 역투 및 불펜 사수' },
-      { time: '05:10', league: 'MLB', home: 'LA 다저스', away: '샌프란시스코', homeScore: 3, awayScore: 1, res: '다저스 3:1 승', highlight: '다저스 3:1 제압 · 선발 호투 및 불펜 무실점 봉쇄' },
-      { time: '14:00', league: 'NPB', home: '주니치', away: '히로시마', homeScore: 10, awayScore: 0, res: '주니치 10:0 승', highlight: '주니치 10:0 대승 · 장단 14안타 폭발 및 히로시마 타선 영봉' },
-      { time: '14:00', league: 'NPB', home: '닛폰햄', away: '오릭스', homeScore: 5, awayScore: 3, res: '닛폰햄 5:3 승', highlight: '닛폰햄 5:3 역전승 · 후반 8회 집중 3타점 쐐기타' },
-      { time: '18:30', league: '아시안게임', home: '한국', away: '대만', homeScore: 5, awayScore: 0, res: '한국 5:0 승', highlight: '한국 5:0 대만 완파 · 완벽한 무실점 계투승 및 중심타선 폭발' },
-      { time: '18:30', league: '아시안게임', home: '중국', away: '일본', homeScore: 3, awayScore: 11, res: '일본 11:3 승', highlight: '일본 11:3 콜드급 대승 · 타선 15안타 폭격' },
-      { time: '02:10', league: 'MLB', home: '뉴욕 메츠', away: '필라델피아', homeScore: 2, awayScore: 7, res: '필라델피아 7:2 승', highlight: '필라델피아 7:2 승리 · 중심타선 집중타 및 선발 6이닝 1실점 호투' },
-      { time: '02:35', league: 'MLB', home: '피츠버그', away: '캔자스시티', homeScore: 4, awayScore: 3, res: '피츠버그 4:3 승', highlight: '피츠버그 4:3 1점차 신승 · 8회말 천금 결승 희생플라이' },
-      { time: '02:40', league: 'MLB', home: '탬파베이', away: '보스턴', homeScore: 5, awayScore: 1, res: '탬파베이 5:1 승', highlight: '탬파베이 5:1 완승 · 철벽 계투진 9K 무실점 릴레이' },
-      { time: '02:40', league: 'MLB', home: '클리블랜드', away: '애슬레틱스', homeScore: 1, awayScore: 0, res: '클리블랜드 1:0 승', highlight: '클리블랜드 1:0 투수전 승리 · 팽팽한 1점차 영봉승' },
-      { time: '02:40', league: 'MLB', home: '신시내티', away: '시카고 컵스', homeScore: 1, awayScore: 9, res: '시카고 컵스 9:1 승', highlight: '시카고 컵스 9:1 화력 폭발 대승 · 홈런 2방 포함 13안타' },
-      { time: '03:10', league: 'MLB', home: '휴스턴', away: '애틀랜타', homeScore: 2, awayScore: 4, res: '애틀랜타 4:2 승', highlight: '애틀랜타 4:2 신승 · 7회 역전 2루타 및 불펜 3이닝 완벽 봉쇄' },
-      { time: '03:10', league: 'MLB', home: '시카고 화이트삭스', away: '디트로이트', homeScore: 8, awayScore: 1, res: '화이트삭스 8:1 승', highlight: '화이트삭스 8:1 대승 · 타선 12안타 및 선발 7이닝 1실점 쾌투' },
-      { time: '03:15', league: 'MLB', home: '세인트루이스', away: '워싱턴', homeScore: 5, awayScore: 3, res: '세인트루이스 5:3 승', highlight: '세인트루이스 5:3 역전승 · 6회 빅이닝 3득점 역전' },
-      { time: '04:10', league: 'MLB', home: '콜로라도', away: '시애틀', homeScore: 1, awayScore: 2, res: '시애틀 2:1 승', highlight: '시애틀 2:1 팽팽한 투수전 끝 승리 · 마무리 1점차 세이브' },
-      { time: '05:07', league: 'MLB', home: 'LA 에인절스', away: '미네소타', homeScore: 0, awayScore: 8, res: '미네소타 8:0 승', highlight: '미네소타 8:0 영봉승 · 선발 7이닝 무실점 10K 압도적 역투' },
-      { time: '05:10', league: 'MLB', home: '샌디에이고', away: '마이애미', homeScore: 7, awayScore: 3, res: '샌디에이고 7:3 승', highlight: '샌디에이고 7:3 완승 · 중심타선 멀티히트 활약' },
-      { time: '13:00', league: 'NPB', home: '라쿠텐', away: '소프트뱅크', homeScore: 0, awayScore: 0, res: '우천순연', highlight: '우천 순연 (경기 일정 재편성 예정)' },
-      { time: '18:00', league: 'NPB', home: '지바롯데', away: '세이부', homeScore: 0, awayScore: 0, res: '우천순연', highlight: '우천 순연 (경기 일정 재편성 예정)' }
-    ];
-
     const MATCH_DATA = {
       BAL: {
         no: "#22354",
@@ -586,6 +561,38 @@
             starter: "브랜든 영(Brandon Young): 6.0이닝 3피안타(1피홈런) 3사사구 9탈삼진 2실점 (패전, 9승 5패)",
             decision: "불펜: 펠릭스 바티스타(0.2이닝 1실점 2K), 그랜트 울프람(1.1이닝 무실점)",
             batting: "타선: 4안타 3사사구 무득점 (밀워키 7인 계투진에 0:3 영봉패)"
+          }
+        },
+        teamPreviousMatches: {
+          homeLast: {
+            team: "볼티모어 오리올스",
+            role: "홈팀",
+            date: "2026.09.20 (직전경기)",
+            opp: "NY 메츠",
+            loc: "원정",
+            score: "7 : 1 승",
+            isWin: true,
+            starter: "크리스 배싯: 7.0이닝 4피안타 8탈삼진 1실점 (승리, 10승)",
+            bullpen: "불펜: 2.0이닝 무실점 완벽 계투",
+            batting: "타선: 9안타 1홈런 7득점 폭발 (러치맨 3타점, 헨더슨 솔로포)"
+          },
+          awayLast: {
+            team: "밀워키 브루어스",
+            role: "원정팀",
+            date: "2026.09.20 (직전경기)",
+            opp: "피츠버그",
+            loc: "홈",
+            score: "5 : 4 승",
+            isWin: true,
+            starter: "로건 헨더슨: 5.0이닝 5피안타 6탈삼진 2실점",
+            bullpen: "불펜: 페게로(홀드) - 데빈 윌리엄스(세이브)",
+            batting: "타선: 10안타 1홈런 5득점 (9회말 1사 만루 역전 끝내기 적시타)"
+          },
+          h2hLast: {
+            title: "양 팀 직전 맞대결",
+            date: "2026.09.19",
+            score: "볼티모어 2 : 4 밀워키 (밀워키 승)",
+            summary: "밀워키 불펜 무실점 계투승 및 콘트레라스 2타점 결승타"
           }
         }
       },
@@ -660,6 +667,38 @@
             decision: "승리투수: 저스틴 마르티네스(Justin Martinez) (1이닝 무실점 2탈삼진, 시즌 3승)",
             batting: "결승타: 놀란 아레나도 (5회말 역전 만루홈런)"
           }
+        },
+        teamPreviousMatches: {
+          homeLast: {
+            team: "애리조나 다이아몬드백스",
+            role: "홈팀",
+            date: "2026.09.20 (직전경기)",
+            opp: "마이애미",
+            loc: "원정",
+            score: "3 : 4 패",
+            isWin: false,
+            starter: "메릴 켈리: 6.0이닝 6피안타 7탈삼진 3실점 (QS)",
+            bullpen: "불펜: 8회말 1실점 결승 허용",
+            batting: "타선: 10안타 3득점 (잔루 8개로 타선 응집력 부진)"
+          },
+          awayLast: {
+            team: "뉴욕 양키스",
+            role: "원정팀",
+            date: "2026.09.20 (직전경기)",
+            opp: "미네소타",
+            loc: "홈",
+            score: "4 : 5 패",
+            isWin: false,
+            starter: "카를로스 로돈: 5.0이닝 5피안타 7탈삼진 3실점",
+            bullpen: "불펜: 2.0이닝 2실점",
+            batting: "타선: 9안타 2홈런 4득점 (애런 저지 52호 솔로포, 9회 1점차 분패)"
+          },
+          h2hLast: {
+            title: "양 팀 직전 맞대결",
+            date: "2026.09.19",
+            score: "애리조나 6 : 3 뉴욕 양키스 (애리조나 승)",
+            summary: "애리조나 4회 집중 4득점 빅이닝으로 기선 제압"
+          }
         }
       },
 
@@ -731,6 +770,38 @@
             decision: "불펜: 호세 르클럭(1.1이닝 2실점), 헤이넌(4.0이닝 무실점)",
             batting: "타선: 4안타 2득점 빈공 (토론토 선발 배싯에 완패)"
           }
+        },
+        teamPreviousMatches: {
+          homeLast: {
+            team: "텍사스 레인저스",
+            role: "홈팀",
+            date: "2026.09.20 (직전경기)",
+            opp: "보스턴",
+            loc: "원정",
+            score: "7 : 3 승",
+            isWin: true,
+            starter: "맥켄지 고어: 6.0이닝 4피안타 8탈삼진 2실점 (승리)",
+            bullpen: "불펜: 3.0이닝 1실점 4탈삼진 사수",
+            batting: "타선: 13안타 7득점 대폭발 (시거 3안타 2타점)"
+          },
+          awayLast: {
+            team: "토론토 블루제이스",
+            role: "원정팀",
+            date: "2026.09.20 (직전경기)",
+            opp: "디트로이트",
+            loc: "홈",
+            score: "5 : 1 승",
+            isWin: true,
+            starter: "맥스 슈어저: 6.0이닝 2피안타 9탈삼진 무실점 완벽투 (승리)",
+            bullpen: "불펜: 3.0이닝 1실점 계투",
+            batting: "타선: 9안타 1홈런 5득점 (게레로 Jr. 29호 투런)"
+          },
+          h2hLast: {
+            title: "양 팀 직전 맞대결",
+            date: "2026.09.19",
+            score: "텍사스 2 : 4 토론토 (토론토 승)",
+            summary: "토론토 8회 결승 2루타로 1점 차 승리"
+          }
         }
       },
 
@@ -799,6 +870,38 @@
             starter: "사이키 히로토: 7.0이닝 5피안타 1사사구 8탈삼진 1실점 (승리, 12승 4패)",
             decision: "세이브: 이와자키 스구루: 1.0이닝 무실점 1탈삼진 (시즌 24세이브)",
             batting: "결승타: 사토 테루아키 (3회말 2점 홈런)"
+          }
+        },
+        teamPreviousMatches: {
+          homeLast: {
+            team: "한신 타이거즈",
+            role: "홈팀",
+            date: "2026.09.20 (직전경기)",
+            opp: "히로시마",
+            loc: "원정",
+            score: "4 : 1 승",
+            isWin: true,
+            starter: "무라카미 쇼키: 7.0이닝 4피안타 7탈삼진 1실점 (승리, 11승)",
+            bullpen: "불펜: 2.0이닝 무실점 3탈삼진 (이와자키 23세이브)",
+            batting: "타선: 8안타 4득점 (치카모토 2안타 2도루 맹활약)"
+          },
+          awayLast: {
+            team: "요코하마 DeNA",
+            role: "원정팀",
+            date: "2026.09.20 (직전경기)",
+            opp: "요미우리",
+            loc: "홈",
+            score: "2 : 5 패",
+            isWin: false,
+            starter: "안드레 잭슨: 5.2이닝 6피안타 4실점 (패전)",
+            bullpen: "불펜: 3.1이닝 1실점",
+            batting: "타선: 6안타 2득점 (마키 슈고 솔로포 외 빈타)"
+          },
+          h2hLast: {
+            title: "양 팀 직전 맞대결",
+            date: "2026.09.19",
+            score: "한신 1 : 3 요코하마 (요코하마 승)",
+            summary: "요코하마 아즈마 8이닝 1실점 역투로 승리"
           }
         }
       }
@@ -935,32 +1038,65 @@
         document.getElementById('awayPitcherTable').innerHTML = renderLogsTable(data.pitchers.away.logs);
       }
 
-      // 5. 전경기 요약 리스트 렌더링
-      renderAll22Matches();
+      // 5. 해당 팀 직전 경기 (전경기) 기록 렌더링
+      renderRelevantPreviousMatches(data);
     }
 
-    function renderAll22Matches() {
-      const container = document.getElementById('allMatchesContainer');
-      if (!container) return;
-      container.innerHTML = ALL_22_MATCHES.map((m, idx) => {
-        const isPostponed = (m.res === '우천순연');
-        const scoreDisplay = isPostponed ? '<span class="text-muted">취소</span>' : `<span class="text-danger fw-black">${m.homeScore} : ${m.awayScore}</span>`;
-        return `
-          <div class="all-match-row" onclick="${m.key ? `switchTestMatch('${m.key}')` : ''}" title="${m.key ? '클릭하여 상세 보기' : ''}">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <div class="d-flex align-items-center gap-1.5">
-                <span class="badge bg-secondary" style="font-size:0.65rem;">${m.league}</span>
-                <span class="text-muted" style="font-size:0.72rem;"><i class="bi bi-clock me-0.5"></i>${m.time}</span>
-                <strong style="font-size:0.84rem; color:#0f172a;">${m.home} ${scoreDisplay} ${m.away}</strong>
+    function renderRelevantPreviousMatches(data) {
+      const container = document.getElementById('relevantPreviousMatchesContainer');
+      if (!container || !data.teamPreviousMatches) return;
+
+      const p = data.teamPreviousMatches;
+      const hLast = p.homeLast;
+      const aLast = p.awayLast;
+      const h2h = p.h2hLast;
+
+      container.innerHTML = `
+        <!-- 양 팀 각각의 직전 경기 카드 (2열 그리드) -->
+        <div class="row g-2 mb-2.5">
+          <div class="col-12 col-sm-6">
+            <div class="p-2.5 rounded border" style="background:#fff7f7; border-color:#fecaca !important;">
+              <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom" style="border-color:#fee2e2 !important;">
+                <span class="badge bg-danger text-white" style="font-size:0.68rem;">🏠 [홈] ${hLast.team} 직전경기</span>
+                <span class="fw-bold ${hLast.isWin ? 'text-danger' : 'text-secondary'}" style="font-size:0.78rem;">${hLast.score}</span>
               </div>
-              <span class="badge ${isPostponed ? 'bg-warning text-dark' : 'bg-primary text-white'}" style="font-size:0.65rem; font-weight:700;">${m.res}</span>
-            </div>
-            <div style="font-size:0.76rem; font-weight:600; color:#334155; margin-top:4px; line-height:1.4;">
-              ${m.highlight}
+              <div style="font-size:0.74rem; line-height:1.55; color:#334155;">
+                <div>• <strong>상대:</strong> ${hLast.opp} (${hLast.loc}) · <span class="text-muted">${hLast.date}</span></div>
+                <div>• <strong>선발:</strong> ${hLast.starter}</div>
+                <div>• <strong>불펜:</strong> ${hLast.bullpen}</div>
+                <div>• <strong>타선:</strong> ${hLast.batting}</div>
+              </div>
             </div>
           </div>
-        `;
-      }).join('');
+
+          <div class="col-12 col-sm-6">
+            <div class="p-2.5 rounded border" style="background:#f0f9ff; border-color:#bae6fd !important;">
+              <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom" style="border-color:#e0f2fe !important;">
+                <span class="badge bg-primary text-white" style="font-size:0.68rem;">✈️ [원정] ${aLast.team} 직전경기</span>
+                <span class="fw-bold ${aLast.isWin ? 'text-primary' : 'text-secondary'}" style="font-size:0.78rem;">${aLast.score}</span>
+              </div>
+              <div style="font-size:0.74rem; line-height:1.55; color:#334155;">
+                <div>• <strong>상대:</strong> ${aLast.opp} (${aLast.loc}) · <span class="text-muted">${aLast.date}</span></div>
+                <div>• <strong>선발:</strong> ${aLast.starter}</div>
+                <div>• <strong>불펜:</strong> ${aLast.bullpen}</div>
+                <div>• <strong>타선:</strong> ${aLast.batting}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 양 팀 직전 맞대결 요약 -->
+        ${h2h ? `
+          <div class="p-2 rounded bg-white border" style="border-left: 3.5px solid #4f46e5 !important;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <strong style="font-size:0.78rem; color:#4338ca;"><i class="bi bi-arrow-left-right me-1"></i>${h2h.title}</strong>
+              <span class="badge bg-light text-dark border" style="font-size:0.68rem;">${h2h.date}</span>
+            </div>
+            <div class="fw-bold text-dark mb-0.5" style="font-size:0.82rem;">${h2h.score}</div>
+            <div style="font-size:0.74rem; color:#64748b;">${h2h.summary}</div>
+          </div>
+        ` : ''}
+      `;
     }
 
     function switchTestMatch(key) {
