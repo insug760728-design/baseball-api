@@ -12840,7 +12840,7 @@ function getFullModalMatchList() {
           const outDots = (st.outs >= 2) ? '🔴🔴' : (st.outs === 1 ? '🔴⚪' : '⚪⚪');
           const eventBannerHtml = buildLiveBaseballEventTrackHtml(m, st, diffMin);
 
-          // ⚾ 역동적 실시간 야구 배경 이미지 (아웃, 안타, 홈런, 볼넷, 주자 상황 및 수동 트리거 즉각 반영)
+          // ⚾ 야구 상황별 자동 이미지 판별 (수동 버튼 없이 실시간 상황에 따라 100% 자동 표출)
           let baseballBgImg = '/static/images/baseball_stadium_live.jpg';
           const activeEv = (typeof window._activeLivePlayEvents !== 'undefined' && window._activeLivePlayEvents) ? window._activeLivePlayEvents[m.id] : null;
           if (activeEv) {
@@ -12857,12 +12857,24 @@ function getFullModalMatchList() {
             }
           } else if (window._matchLastStateImage && window._matchLastStateImage[m.id]) {
             baseballBgImg = window._matchLastStateImage[m.id];
-          } else if (st.base1 || st.base2 || st.base3) {
-            const hitIdx = (((Number(m.id) || 1) + (st.outs || 0)) % 4) + 1;
-            baseballBgImg = `/static/images/baseball_hit_epic_${hitIdx}.jpg`;
-          } else if (st.outs >= 1) {
-            const outIdx = (st.outs % 4) + 1;
-            baseballBgImg = `/static/images/baseball_out_epic_${outIdx}.jpg`;
+          } else {
+            const matchSeed = Number(m.id) || 1;
+            const hasRunners = (st.base1 || st.base2 || st.base3);
+            const outsCount = Number(st.outs) || 0;
+            const totalScore = hScore + aScore;
+
+            if (hasRunners) {
+              const hitIdx = ((matchSeed + (st.base2 ? 1 : 0) + (st.base3 ? 2 : 0)) % 4) + 1;
+              baseballBgImg = `/static/images/baseball_hit_epic_${hitIdx}.jpg`;
+            } else if (outsCount >= 1) {
+              const outIdx = ((matchSeed + outsCount) % 4) + 1;
+              baseballBgImg = `/static/images/baseball_out_epic_${outIdx}.jpg`;
+            } else if (totalScore > 0) {
+              const hrIdx = ((matchSeed + totalScore) % 4) + 1;
+              baseballBgImg = `/static/images/baseball_homerun_epic_${hrIdx}.jpg`;
+            } else {
+              baseballBgImg = '/static/images/baseball_stadium_live.jpg';
+            }
           }
 
           liveBroadcastStageHtml = `
@@ -12924,7 +12936,7 @@ function getFullModalMatchList() {
                   </div>
 
                   <!-- Middle: Diamond Graphic -->
-                  <div class="position-relative my-auto" style="cursor:pointer; pointer-events:auto;" onclick="event.stopPropagation(); toggleLiveBaseSim(${m.id});" title="클릭하여 1·2·3루 베이스 점등 및 아웃/안타 테스트">
+                  <div class="position-relative my-auto" style="cursor:pointer; pointer-events:auto;" onclick="event.stopPropagation(); toggleLiveBaseSim(${m.id});" title="1·2·3루 베이스 점등 상황">
                     <svg width="156" height="48" viewBox="0 0 156 48">
                       <polygon points="78,4 127,24 78,44 29,24" fill="rgba(6,78,59,0.35)" stroke="rgba(255,255,255,0.30)" stroke-width="1.2" stroke-dasharray="3,2" />
                       <ellipse cx="78" cy="24" rx="7.5" ry="3.8" fill="rgba(180,83,9,0.55)" stroke="rgba(255,255,255,0.3)" stroke-width="0.8" />
@@ -12938,17 +12950,11 @@ function getFullModalMatchList() {
                     </svg>
                   </div>
 
-                  <!-- Bottom: Action Buttons (홈런, 안타, 아웃 1~4번 사진 즉시 순환 변경) -->
-                  <div style="pointer-events:auto; display:flex; gap:4px; align-items:center; justify-content:center; width:100%;">
-                    <button type="button" class="btn btn-xs px-2 py-0.5 fw-bold text-dark border border-warning bg-warning rounded-pill shadow-sm" style="font-size:0.62rem; font-weight:800;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'HOMERUN');" title="누를 때마다 1~4번 홈런 사진이 순환하여 바뀝니다!">
-                      💥 홈런 (1~4 🔄)
-                    </button>
-                    <button type="button" class="btn btn-xs px-2 py-0.5 fw-bold text-white border border-success bg-success rounded-pill shadow-sm" style="font-size:0.62rem; font-weight:800;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'HIT');" title="누를 때마다 1~4번 안타 사진이 순환하여 바뀝니다!">
-                      ⚾ 안타 (1~4 🔄)
-                    </button>
-                    <button type="button" class="btn btn-xs px-2 py-0.5 fw-bold text-white border border-danger bg-danger rounded-pill shadow-sm" style="font-size:0.62rem; font-weight:800;" onclick="event.stopPropagation(); triggerBaseballEvent(${m.id}, 'OUT');" title="누를 때마다 1~4번 아웃 사진이 순환하여 바뀝니다!">
-                      ⚡ 아웃 (1~4 🔄)
-                    </button>
+                  <!-- Bottom: Live Situation Status Pill (100% Automatic) -->
+                  <div class="d-inline-flex align-items-center justify-content-center px-2.5 py-0.5 rounded-pill" style="background:rgba(15,23,42,0.82); border:1px solid rgba(255,255,255,0.25); backdrop-filter:blur(6px); box-shadow:0 2px 6px rgba(0,0,0,0.5);">
+                    <span style="font-size:0.64rem; font-weight:800; color:#f8fafc; letter-spacing:-0.2px;">
+                      ${st.base1 || st.base2 || st.base3 ? '⚡ 득점권 주자 진루 상황' : (st.outs >= 2 ? '🔥 투아웃 승부처' : (st.outs === 1 ? '⚡ 1아웃 접전 상황' : '⚾ 실시간 중계 진행중'))}
+                    </span>
                   </div>
                 </div>
 
@@ -13080,11 +13086,11 @@ function getFullModalMatchList() {
                     </svg>
                   </div>
 
-                  <!-- Bottom: Action Buttons -->
-                  <div style="pointer-events:auto; display:flex; gap:6px; align-items:center; justify-content:center; width:100%;">
-                    <button type="button" class="btn btn-xs px-3 py-1 fw-bold text-white border border-success bg-success rounded-pill shadow-sm" style="font-size:0.68rem; font-weight:800;" onclick="event.stopPropagation(); triggerSoccerGoalEvent(${m.id}, '${hScore >= aScore ? hName : aName}')" title="누를 때마다 1~4번 골 세리머니 사진이 순환하여 바뀝니다!">
-                      ⚽ 골 세리머니 (1~4번 순환 🔄)
-                    </button>
+                  <!-- Bottom: Live Situation Status Pill (100% Automatic) -->
+                  <div class="d-inline-flex align-items-center justify-content-center px-2.5 py-0.5 rounded-pill" style="background:rgba(15,23,42,0.82); border:1px solid rgba(255,255,255,0.25); backdrop-filter:blur(6px); box-shadow:0 2px 6px rgba(0,0,0,0.5);">
+                    <span style="font-size:0.64rem; font-weight:800; color:#86efac; letter-spacing:-0.2px;">
+                      ${(hScore + aScore) > 0 ? '⚽ 실시간 득점 경기 진행' : '⚔️ 치열한 전반 공방전'}
+                    </span>
                   </div>
                 </div>
 
@@ -21483,6 +21489,11 @@ function renderPredDetail(m, customDetailData = null) {
         const hScore = Number(m.home_score ?? 0);
         const aScore = Number(m.away_score ?? 0);
 
+        const curOuts = Number(m.outs ?? (m.team_stats && m.team_stats.outs) ?? 0);
+        const curB1 = !!(m.base1 || (m.team_stats && m.team_stats.base1));
+        const curB2 = !!(m.base2 || (m.team_stats && m.team_stats.base2));
+        const curB3 = !!(m.base3 || (m.team_stats && m.team_stats.base3));
+
         if (isSubscribed && isLive) {
           hasActiveSubscribedLive = true;
         }
@@ -21499,16 +21510,36 @@ function renderPredDetail(m, customDetailData = null) {
             }
           }
 
-          // 2. 실시간 득점/골 감지
+          // 2. 실시간 득점/골 감지 및 야구/축구 자동 이미지 트리거
           if ((homeScored || awayScored) && (isLive || isFin)) {
             const scoringSide = homeScored ? formatTeamName(m.home_team_name) : formatTeamName(m.away_team_name);
             if (m.sport_code === 'SOCCER') {
               if (typeof triggerSoccerGoalEvent === 'function') {
                 triggerSoccerGoalEvent(mId, scoringSide);
               }
+            } else if (m.sport_code === 'BASEBALL') {
+              if (typeof triggerBaseballEvent === 'function') {
+                const diff = (hScore - old.home) + (aScore - old.away);
+                if (diff >= 2) {
+                  triggerBaseballEvent(mId, 'HOMERUN', `💥 [${scoringSide}] ${diff}점 홈런 작렬!`);
+                } else {
+                  triggerBaseballEvent(mId, 'HIT', `⚾ [${scoringSide}] 적시타 득점 성공!`);
+                }
+              }
             }
             if (isSubscribed) {
               triggerMatchAlert('SCORE', m, { scoringSide, oldH: old.home, oldA: old.away, newH: hScore, newA: aScore });
+            }
+          } else if (m.sport_code === 'BASEBALL' && isLive) {
+            const oldOuts = old.outs || 0;
+            if (curOuts > oldOuts) {
+              if (typeof triggerBaseballEvent === 'function') {
+                triggerBaseballEvent(mId, 'OUT', { outs: curOuts, subtext: `⚡ ${curOuts}아웃 카운트 수비 완료!` });
+              }
+            } else if ((!old.b1 && curB1) || (!old.b2 && curB2) || (!old.b3 && curB3)) {
+              if (typeof triggerBaseballEvent === 'function') {
+                triggerBaseballEvent(mId, 'HIT', '⚾ 안타 출루 진루 성공!');
+              }
             }
           }
 
@@ -21524,7 +21555,11 @@ function renderPredDetail(m, customDetailData = null) {
         _lastKnownMatchScores.set(mId, {
           home: hScore,
           away: aScore,
-          status: m.status
+          status: m.status,
+          outs: curOuts,
+          b1: curB1,
+          b2: curB2,
+          b3: curB3
         });
       });
 
