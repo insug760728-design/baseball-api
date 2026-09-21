@@ -8393,10 +8393,14 @@ function getFullModalMatchList() {
           const dateStr = d.toISOString().slice(0, 10);
           const isHomeVenue = (seed + i) % 2 === 0;
           const [s1, s2] = SCORES[(seed + i) % SCORES.length];
-          const hScore = isHomeVenue ? s1 : s2;
-          const aScore = isHomeVenue ? s2 : s1;
-          const isWin = hScore > aScore;
-          const isDraw = hScore === aScore;
+          const actualHomeTeam = isHomeVenue ? homeTeam : awayTeam;
+          const actualAwayTeam = isHomeVenue ? awayTeam : homeTeam;
+          const hScore = s1; // score of actualHomeTeam
+          const aScore = s2; // score of actualAwayTeam
+          const myScore = isHomeVenue ? hScore : aScore;
+          const oppScore = isHomeVenue ? aScore : hScore;
+          const isWin = myScore > oppScore;
+          const isDraw = myScore === oppScore;
           const outcome = isWin ? 'WIN' : (isDraw ? 'DRAW' : 'LOSS');
           const resKr = isWin ? '승' : (isDraw ? '무' : '패');
           const resEmoji = isWin ? '✅' : (isDraw ? '🟰' : '❌');
@@ -8406,12 +8410,12 @@ function getFullModalMatchList() {
             date: dateStr,
             match_date: `${dateStr} 15:00`,
             home_away: isHomeVenue ? '홈' : '원정',
-            home_team_name: homeTeam,
-            away_team_name: awayTeam,
+            home_team_name: actualHomeTeam,
+            away_team_name: actualAwayTeam,
             home_score: hScore,
             away_score: aScore,
-            team_score: isHomeVenue ? hScore : aScore,
-            opp_score: isHomeVenue ? aScore : hScore,
+            team_score: myScore,
+            opp_score: oppScore,
             score: `${hScore} - ${aScore}`,
             opponent: isHomeVenue ? awayTeam : homeTeam,
             league_name: (match && match.league_name) || (isSoccer ? '정규리그' : '정규시즌'),
@@ -8722,9 +8726,28 @@ function getFullModalMatchList() {
           const mmdd = (rawDate.length >= 10) ? rawDate.slice(5, 10).replace('-', '.') : (rawDate.slice(-5).replace('-', '.') || '09.13');
           const isPastSeason = yyyy < '2026';
           
-          const scoreDisplay = (!isNaN(actualHomeScore) && !isNaN(actualAwayScore))
-            ? `<span class="${actualHomeScore > actualAwayScore ? 'text-danger fw-bold' : ''}">${actualHomeScore}</span> : <span class="${actualAwayScore > actualHomeScore ? 'text-primary fw-bold' : ''}">${actualAwayScore}</span>`
-            : (g.score || '-');
+          const homeTeamClass = isHomeVenue ? 'text-danger fw-bold' : 'text-primary fw-bold';
+          const homeTagClass = isHomeVenue ? 'text-danger' : 'text-primary';
+          const awayTeamClass = isHomeVenue ? 'text-primary fw-bold' : 'text-danger fw-bold';
+          const awayTagClass = isHomeVenue ? 'text-primary' : 'text-danger';
+
+          let homeScoreSpan, awayScoreSpan;
+          if (!isNaN(actualHomeScore) && !isNaN(actualAwayScore)) {
+            if (actualHomeScore > actualAwayScore) {
+              homeScoreSpan = `<span class="${isHomeVenue ? 'text-danger' : 'text-primary'} fw-bold">${actualHomeScore}</span>`;
+              awayScoreSpan = `<span class="text-muted">${actualAwayScore}</span>`;
+            } else if (actualAwayScore > actualHomeScore) {
+              homeScoreSpan = `<span class="text-muted">${actualHomeScore}</span>`;
+              awayScoreSpan = `<span class="${isHomeVenue ? 'text-primary' : 'text-danger'} fw-bold">${actualAwayScore}</span>`;
+            } else {
+              homeScoreSpan = `<span class="text-dark fw-bold">${actualHomeScore}</span>`;
+              awayScoreSpan = `<span class="text-dark fw-bold">${actualAwayScore}</span>`;
+            }
+          } else {
+            homeScoreSpan = '-';
+            awayScoreSpan = '-';
+          }
+          const scoreDisplay = `${homeScoreSpan} : ${awayScoreSpan}`;
 
           return `
             <tr style="height: 28px; background: ${gIdx % 2 === 0 ? '#ffffff' : '#f8fafc'}; font-size: 0.72rem;">
@@ -8732,9 +8755,9 @@ function getFullModalMatchList() {
                 <span class="text-secondary small">${yyyy}.</span><span>${mmdd}</span>${gIdx === 0 ? ' <span class="badge bg-secondary ms-0.5" style="font-size:0.58rem;">직전</span>' : (isPastSeason ? ` <span class="badge bg-light text-secondary border ms-0.5" style="font-size:0.56rem;">${yyyy}</span>` : '')}
               </td>
               <td class="text-center text-truncate px-1" style="white-space:nowrap; padding:3px 2px;" title="${actualHomeTeam}(홈) vs ${actualAwayTeam}(원정)">
-                <span class="${actualHomeTeam === hName ? 'text-danger fw-bold' : (actualHomeTeam === aName ? 'text-primary fw-bold' : 'text-dark')}">${actualHomeTeam}</span><span class="text-danger small ms-0.5" style="font-size:0.60rem;">(홈)</span>
+                <span class="${homeTeamClass}">${actualHomeTeam}</span><span class="${homeTagClass} small ms-0.5" style="font-size:0.60rem;">(홈)</span>
                 <span class="text-muted small mx-0.5">vs</span>
-                <span class="${actualAwayTeam === aName ? 'text-primary fw-bold' : (actualAwayTeam === hName ? 'text-danger fw-bold' : 'text-dark')}">${actualAwayTeam}</span><span class="text-primary small ms-0.5" style="font-size:0.60rem;">(원)</span>
+                <span class="${awayTeamClass}">${actualAwayTeam}</span><span class="${awayTagClass} small ms-0.5" style="font-size:0.60rem;">(원)</span>
               </td>
               <td class="fw-black text-center" style="white-space:nowrap; font-family:monospace; font-size:0.76rem; padding:3px 2px;">${scoreDisplay}</td>
               <td class="text-center" style="white-space:nowrap; padding:3px 2px;"><span class="badge ${resBadge} px-1.5 py-0.5" style="font-size:0.65rem;">${resText}</span></td>
