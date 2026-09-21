@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="screen-orientation" content="portrait">
+  <meta name="x5-orientation" content="portrait">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <script>
@@ -2348,9 +2350,62 @@
       margin-top: 0px !important;
       background-color: #ffffff !important;
     }
+
+    /* 📱 스마트폰 가로보기(Landscape) 완전 차단 & 세로 모드(Portrait) 고정 안내 */
+    @media screen and (orientation: landscape) and (max-height: 540px) and (pointer: coarse),
+           screen and (orientation: landscape) and (max-width: 950px) and (hover: none) and (pointer: coarse) {
+      #mobileLandscapeLockNotice {
+        display: flex !important;
+      }
+      #mainAppWrapper, .navbar-glass, footer, .modal, .offcanvas {
+        display: none !important;
+      }
+    }
+    #mobileLandscapeLockNotice {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #090d16;
+      color: #ffffff;
+      z-index: 99999999;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 24px;
+    }
+    @keyframes phoneRotateAnim {
+      0%, 15% { transform: rotate(90deg); }
+      50%, 70% { transform: rotate(0deg); }
+      90%, 100% { transform: rotate(90deg); }
+    }
+    .phone-rotate-icon {
+      font-size: 3.5rem;
+      color: #facc15;
+      display: inline-block;
+      animation: phoneRotateAnim 2.2s infinite ease-in-out;
+      margin-bottom: 14px;
+    }
   </style>
 </head>
 <body>
+
+  <!-- 📱 스마트폰 가로보기 차단 및 세로모드 고정 안내 오버레이 -->
+  <div id="mobileLandscapeLockNotice">
+    <div class="phone-rotate-icon">
+      <i class="bi bi-phone"></i>
+    </div>
+    <h4 style="font-weight: 800; margin-bottom: 8px; font-size: 1.15rem; color: #ffffff; letter-spacing: -0.3px;">
+      세로 모드로 이용해 주세요
+    </h4>
+    <p style="color: #94a3b8; font-size: 0.85rem; line-height: 1.5; margin: 0; word-break: keep-all;">
+      토케온은 스마트폰 세로 화면에 최적화되어 있습니다.<br>
+      원활한 이용을 위해 <strong>기기를 세로로 회전해 주세요.</strong>
+    </p>
+  </div>
 
 
 
@@ -2379,17 +2434,8 @@
           <i class="bi bi-broadcast me-1"></i>🔴 LIVE 중계 <span class="badge bg-white text-danger ms-0.5 fw-bold" id="topLiveCountBadge">0</span>
         </button>
 
-        <!-- Simple Auth Section, PC/Mobile View Switcher -->
+        <!-- Simple Auth Section -->
         <div id="navAuthContainer" class="d-flex align-items-center gap-1.5">
-          <div class="btn-group btn-group-sm" role="group" id="viewModeToggleGroup" style="border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden;">
-            <button type="button" class="btn btn btn-primary fw-bold px-2 py-1" id="btnModePC" onclick="setViewMode('pc')" title="PC 최적화 대화면 4분할 뷰">
-              <i class="bi bi-display me-1"></i><span class="d-none d-sm-inline">PC</span>버전
-            </button>
-            <button type="button" class="btn btn btn-outline-secondary fw-bold px-2 py-1" id="btnModeMobile" onclick="setViewMode('mobile')" title="스마트폰 모바일 최적화 뷰">
-              <i class="bi bi-phone me-1"></i><span class="d-none d-sm-inline">핸드폰</span>앱
-            </button>
-          </div>
-
           <button class="btn btn-sm btn-primary text-white fw-bold px-2.5 py-1" onclick="openLoginModal()" id="btnNavLogin" style="border-radius: 6px; font-size: 0.78rem; background: #1d4ed8; border: 1px solid #1d4ed8;">
             <i class="bi bi-box-arrow-in-right me-1"></i><span class="d-none d-sm-inline">간편 </span>로그인
           </button>
@@ -2406,7 +2452,7 @@
 
       <!-- 📱 Mobile Tab Bar (모바일 전용 탭 전환: 경기목록 / 채팅창 / 라이브중계) -->
       <div class="d-flex d-lg-none gap-1 mb-1.5 px-0" id="mobileDashboardTabBar">
-        <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5 active" id="mobTabSchedule" onclick="switchMobileTab('schedule')" style="border-radius: 6px; font-size: 0.80rem; background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8;">
+        <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5 active" id="mobTabSchedule" onclick="switchMobileTab('schedule'); if (typeof currentPredDate !== 'undefined' && currentPredDate !== 'ACTIVE') filterPredDate('ACTIVE');" style="border-radius: 6px; font-size: 0.80rem; background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8;">
           <i class="bi bi-calendar-check me-1"></i>경기목록
         </button>
         <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5" id="mobTabChat" onclick="switchMobileTab('chat')" style="border-radius: 6px; font-size: 0.80rem; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;">
@@ -2425,12 +2471,12 @@
           <div class="dash-card-column">
             
             <div class="dash-card-header pb-1 pt-0">
-              <!-- 📌 1열: [경기목록] [지난경기] [승무15패] [전경기 전광판] -->
+              <!-- 📌 1열: [경기목록] [지난경기] [승무15패] [전경기 전광판] (모바일에서는 상단 탭에 경기목록이 있으므로 하위 중복 경기목록 숨김) -->
               <div class="d-flex align-items-center gap-1.5 mb-1.5" id="scheduleModeSwitchGroup">
-                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill" id="btnTabActiveMatches" onclick="filterPredDate('ACTIVE')" style="border-radius: 6px; font-size: 0.78rem; background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8;">
+                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill d-none d-lg-inline-flex align-items-center justify-content-center" id="btnTabActiveMatches" onclick="filterPredDate('ACTIVE')" style="border-radius: 6px; font-size: 0.78rem; background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8;">
                   <i class="bi bi-calendar-check me-1"></i>경기목록
                 </button>
-                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill" id="btnTabFinishedMatches" onclick="filterPredDate('FINISHED')" style="border-radius: 6px; font-size: 0.78rem; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;">
+                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill" id="btnTabFinishedMatches" onclick="filterPredDate(typeof currentPredDate !== 'undefined' && currentPredDate === 'FINISHED' ? 'ACTIVE' : 'FINISHED')" style="border-radius: 6px; font-size: 0.78rem; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;">
                   <i class="bi bi-clock-history me-1 text-secondary"></i>지난경기
                 </button>
                 <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill border" onclick="openTotoModal('WDL')" style="background: #ffffff; color: #111827; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem;" title="클릭 시 배트맨 14경기 승무패/승1패/승5패 전용 팝업 오픈">
@@ -4025,14 +4071,6 @@
 
         if (navContainer) {
           navContainer.innerHTML = `
-            <div class="btn-group btn-group-sm" role="group" id="viewModeToggleGroup" style="border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden;">
-              <button type="button" class="btn ${currentViewMode === 'pc' ? 'btn-info text-dark' : 'btn-dark text-light'} fw-bold px-2 py-1" id="btnModePC" onclick="setViewMode('pc')" title="PC 최적화 대화면 4분할 뷰">
-                <i class="bi bi-display me-1"></i><span class="d-none d-sm-inline">PC</span>버전
-              </button>
-              <button type="button" class="btn ${currentViewMode === 'mobile' ? 'btn-warning text-dark' : 'btn-dark text-light'} fw-bold px-2 py-1" id="btnModeMobile" onclick="setViewMode('mobile')" title="스마트폰 모바일 최적화 뷰">
-                <i class="bi bi-phone me-1"></i><span class="d-none d-sm-inline">핸드폰</span>앱
-              </button>
-            </div>
             ${adminBtnHtml}
             <div class="d-flex align-items-center bg-dark border border-secondary px-2 py-1 rounded-2">
               <i class="bi bi-person-circle ${isAdmin ? 'text-warning' : 'text-info'} me-1"></i>
@@ -4058,14 +4096,6 @@
       } else {
         if (navContainer) {
           navContainer.innerHTML = `
-            <div class="btn-group btn-group-sm me-1" role="group" id="viewModeToggleGroup" style="border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden;">
-              <button type="button" class="btn ${currentViewMode === 'pc' ? 'btn-info text-dark' : 'btn-dark text-light'} fw-bold px-2 py-1" id="btnModePC" onclick="setViewMode('pc')" style="font-size: 0.72rem;">
-                <i class="bi bi-display me-1"></i>PC
-              </button>
-              <button type="button" class="btn ${currentViewMode === 'mobile' ? 'btn-warning text-dark' : 'btn-dark text-light'} fw-bold px-2 py-1" id="btnModeMobile" onclick="setViewMode('mobile')" style="font-size: 0.72rem;">
-                <i class="bi bi-phone me-1"></i>앱
-              </button>
-            </div>
             <button class="btn btn-sm btn-primary text-white fw-bold px-2.5 py-1" onclick="openLoginModal()" id="btnNavLogin" style="border-radius: 6px; font-size: 0.78rem; background: #1d4ed8; border: 1px solid #1d4ed8;">
               <i class="bi bi-box-arrow-in-right me-1"></i>로그인
             </button>
@@ -11416,10 +11446,12 @@ function getFullModalMatchList() {
           btnTabFinished.style.background = '#111827';
           btnTabFinished.style.color = '#ffffff';
           btnTabFinished.style.borderColor = '#111827';
+          btnTabFinished.innerHTML = '<i class="bi bi-arrow-left me-1 text-warning"></i>오늘/진행경기';
         } else {
           btnTabFinished.style.background = '#f8fafc';
           btnTabFinished.style.color = '#475569';
           btnTabFinished.style.borderColor = '#cbd5e1';
+          btnTabFinished.innerHTML = '<i class="bi bi-clock-history me-1 text-secondary"></i>지난경기';
         }
       }
 
@@ -22526,10 +22558,26 @@ function renderPredDetail(m, customDetailData = null) {
     // =============================================================
     let currentMobileTab = 'schedule';
 
+    function enforceMobilePortraitOrientation() {
+      if (window.screen && window.screen.orientation && typeof window.screen.orientation.lock === 'function') {
+        try {
+          window.screen.orientation.lock('portrait').catch(() => {});
+        } catch (e) {}
+      }
+    }
+    window.addEventListener('DOMContentLoaded', enforceMobilePortraitOrientation);
+    window.addEventListener('orientationchange', enforceMobilePortraitOrientation);
+    window.addEventListener('resize', () => {
+      const isMobileScreen = window.innerWidth <= 768;
+      const targetMode = isMobileScreen ? 'mobile' : 'pc';
+      if (typeof setViewMode === 'function' && targetMode !== currentViewMode) {
+        setViewMode(targetMode, false);
+      }
+    });
+
     function initViewMode() {
       const isMobileScreen = window.innerWidth <= 768;
-      const savedMode = localStorage.getItem('tokeon_view_mode');
-      const targetMode = isMobileScreen ? (savedMode === 'pc' ? 'pc' : 'mobile') : (savedMode || 'pc');
+      const targetMode = isMobileScreen ? 'mobile' : 'pc';
       setViewMode(targetMode, false);
       if (targetMode === 'mobile') {
         switchMobileTab('schedule');
