@@ -331,6 +331,14 @@ class SchedulerService:
             except Exception as se:
                 logger.warning(f"[Scheduler Daily] 선발투수 동기화 경고: {se}")
 
+            # KBO & NPB 공식 사이트 실시간 선발투수 2026 시즌 통계 및 최근경기 데이터셋 자동 동기화
+            try:
+                from app.services.pitcher_dataset_sync_service import PitcherDatasetSyncService
+                await asyncio.to_thread(PitcherDatasetSyncService.sync_all_official_pitchers)
+                logger.info("[Scheduler Daily] 공식 선발투수 실데이터(KBO/NPB) 최신화 완료")
+            except Exception as pe:
+                logger.warning(f"[Scheduler Daily] 공식 선발투수 데이터셋 동기화 경고: {pe}")
+
             end_time = get_now_kst()
             duration_sec = round((end_time - start_time).total_seconds(), 1)
             cls._last_run_info = {

@@ -230,9 +230,26 @@ def get_pitcher_profile_endpoint(
         except Exception:
             pass
 
-    # 1. Direct match in dataset (only if full quality: at least 5 starts)
-    if clean in dataset and len(dataset[clean].get("recent_starts", [])) >= 5:
+    # 1. Direct or alias match in official pitcher dataset
+    if clean in dataset:
         return dataset[clean]
+    clean_nospace = clean.replace(" ", "")
+    if clean_nospace in dataset:
+        return dataset[clean_nospace]
+    for k, prof in dataset.items():
+        if not prof:
+            continue
+        k_nospace = k.replace(" ", "")
+        if k_nospace == clean_nospace or k == clean:
+            return prof
+        if prof.get("name") and prof["name"].replace(" ", "") == clean_nospace:
+            return prof
+        if prof.get("name_kr") and prof["name_kr"].replace(" ", "") == clean_nospace:
+            return prof
+        if prof.get("name_raw") and prof["name_raw"].replace(" ", "") == clean_nospace:
+            return prof
+        if len(clean) >= 2 and (k.startswith(clean) or clean.startswith(k) or (clean in k and "vs" not in k)):
+            return prof
 
     # 2. 로컬 DB(PlayerMatchStat + Match)에서 100% 공식 실데이터 탐색 (KBO/NPB 등)
     db_prof = get_pitcher_profile_from_db(clean)

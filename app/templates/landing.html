@@ -3060,7 +3060,7 @@
         </div>
 
         <!-- Modal Body: Injected Tab Content -->
-        <div class="modal-body p-2 p-md-3" id="nextGenDetailModalBody" style="background: #f8fafc; min-height: 480px;">
+        <div class="modal-body p-2 p-md-3" id="nextGenDetailModalBody" style="background: #f8fafc; min-height: 480px; overflow-x: hidden; touch-action: pan-y; max-width: 100%; box-sizing: border-box;">
           <!-- Injected dynamically -->
         </div>
 
@@ -12820,7 +12820,24 @@ function getFullModalMatchList() {
     function lookupOfficialPitcher(name) {
       if (!name) return null;
       const clean = String(name).replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
+      if (!clean) return null;
       if (OFFICIAL_PITCHER_DATABASE[clean]) return { ...OFFICIAL_PITCHER_DATABASE[clean], cleanName: clean };
+      const noSpace = clean.replace(/\s+/g, '');
+      if (OFFICIAL_PITCHER_DATABASE[noSpace]) return { ...OFFICIAL_PITCHER_DATABASE[noSpace], cleanName: clean };
+
+      // 다국어/줄임말/팀명 포함 별칭 정밀 탐색 (동, 아즈마, 토고, 키타야마 등 매칭)
+      for (const [k, prof] of Object.entries(OFFICIAL_PITCHER_DATABASE)) {
+        if (!prof) continue;
+        const kClean = k.replace(/\s+/g, '');
+        if (kClean === noSpace || k === clean) return { ...prof, cleanName: prof.name || clean };
+        if (prof.name && prof.name.replace(/\s+/g, '') === noSpace) return { ...prof, cleanName: prof.name };
+        if (prof.name_kr && prof.name_kr.replace(/\s+/g, '') === noSpace) return { ...prof, cleanName: prof.name_kr };
+        if (prof.name_raw && prof.name_raw.replace(/\s+/g, '') === noSpace) return { ...prof, cleanName: prof.name || clean };
+        // 성씨 줄임말 매칭 (예: "아즈마", "토고", "키타야마")
+        if (clean.length >= 2 && (k.startsWith(clean) || kClean.startsWith(noSpace) || (k.includes(clean) && !k.includes('vs')))) {
+          return { ...prof, cleanName: prof.name || clean };
+        }
+      }
       return null;
     }
 
@@ -18124,7 +18141,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
           startsList = pOfficial.recent_starts.slice(0, 10);
         }
 
-        // [공식 히스토리 연동 폴백] startsList가 비어있을 경우 m.history에서 해당 투수 공식 선발등판 경기 자동 추출
+        // [공식 히스토리 연동 폴백] startsList가 비어있을 경우 m.history에서 해당 투수 공식 선발등판 실경기만 추출 (가짜 더미 절대 생성 금지)
         if (startsList.length === 0 && m && m.history) {
           const histList = isHome ? (m.history.home_recent || []) : (m.history.away_recent || []);
           for (const g of histList) {
@@ -18133,23 +18150,26 @@ function updateSlimPanel(matchId, type, contentHtml) {
             if (cleanSt && (cleanSt === cleanName || cleanName.includes(cleanSt) || cleanSt.includes(cleanName))) {
               const ps = g.perspective_starter || {};
               const bs = g.baseball_stats || {};
-              startsList.push({
-                date: (g.date || g.match_date || '').slice(0, 10).replace(/-/g, '.'),
-                match_date: (g.date || g.match_date || '').slice(0, 10).replace(/-/g, '.'),
-                venue: g.home_away === '홈' ? '홈' : '원',
-                is_home: g.home_away === '홈',
-                opponent: (typeof formatTeamName === 'function') ? formatTeamName(g.opponent) : (g.opponent || '상대팀'),
-                opp: (typeof formatTeamName === 'function') ? formatTeamName(g.opponent) : (g.opponent || '상대팀'),
-                ip: ps.ip || bs.starter_ip || '6.0',
-                bf: ps.np ? Math.round(parseFloat(ps.ip || '6.0') * 4) : 24,
-                h: ps.h ?? 5,
-                hr: ps.hr ?? 0,
-                bb: ps.bb ?? bs.starter_bb ?? 2,
-                so: ps.so ?? bs.starter_so ?? 6,
-                er: ps.er ?? bs.starter_er ?? 2,
-                era: '-',
-                decision: ps.decision || (g.result === 'WIN' ? '승' : (g.result === 'LOSS' ? '패' : '-'))
-              });
+              const realIp = ps.ip || bs.starter_ip;
+              if (realIp && realIp !== '-') {
+                startsList.push({
+                  date: (g.date || g.match_date || '').slice(0, 10).replace(/-/g, '.'),
+                  match_date: (g.date || g.match_date || '').slice(0, 10).replace(/-/g, '.'),
+                  venue: g.home_away === '홈' ? '홈' : '원',
+                  is_home: g.home_away === '홈',
+                  opponent: (typeof formatTeamName === 'function') ? formatTeamName(g.opponent) : (g.opponent || '상대팀'),
+                  opp: (typeof formatTeamName === 'function') ? formatTeamName(g.opponent) : (g.opponent || '상대팀'),
+                  ip: realIp,
+                  bf: ps.np || (ps.bf ?? '-'),
+                  h: (ps.h !== undefined && ps.h !== null) ? ps.h : (bs.starter_h ?? '-'),
+                  hr: (ps.hr !== undefined && ps.hr !== null) ? ps.hr : (bs.starter_hr ?? 0),
+                  bb: (ps.bb !== undefined && ps.bb !== null) ? ps.bb : (bs.starter_bb ?? '-'),
+                  so: (ps.so !== undefined && ps.so !== null) ? ps.so : (bs.starter_so ?? '-'),
+                  er: (ps.er !== undefined && ps.er !== null) ? ps.er : (bs.starter_er ?? '-'),
+                  era: ps.era || '-',
+                  decision: ps.decision || (g.result === 'WIN' ? '승' : (g.result === 'LOSS' ? '패' : '-'))
+                });
+              }
             }
           }
         }
@@ -18245,8 +18265,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
         return startsList.map((st, sIdx) => {
           const isHomeVenue = st.venue === '홈' || st.is_home === true;
           const venueBadge = isHomeVenue 
-            ? `<span style="display:inline-block; font-size:0.65rem; font-weight:700; color:#ef4444; background:#fee2e2; padding:0 3px; border-radius:3px; margin-right:2px;">홈</span>`
-            : `<span style="display:inline-block; font-size:0.65rem; font-weight:700; color:#2563eb; background:#dbeafe; padding:0 3px; border-radius:3px; margin-right:2px;">원</span>`;
+            ? `<span style="display:inline-block; font-size:0.62rem; font-weight:700; color:#ef4444; background:#fee2e2; padding:0 2px; border-radius:2px; margin-right:1px;">홈</span>`
+            : `<span style="display:inline-block; font-size:0.62rem; font-weight:700; color:#2563eb; background:#dbeafe; padding:0 2px; border-radius:2px; margin-right:1px;">원</span>`;
           
           let rawD = String(st.date || st.match_date || '-');
           let dateStr = rawD;
@@ -18259,7 +18279,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
               dateStr = `${dShortMatch[1].padStart(2, '0')}.${dShortMatch[2].padStart(2, '0')}`;
             }
           }
-          const matchCol = `${venueBadge}<span class="text-secondary fw-semibold">${dateStr}</span>`;
+          const matchCol = `${venueBadge}<span class="text-secondary fw-semibold" style="font-size:0.66rem;">${dateStr}</span>`;
 
           const oppVal = st.opponent || st.opp || '-';
           const ipVal = st.ip || st.innings || '-';
@@ -18267,9 +18287,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
           let decVal = st.decision || (st.isWin === true ? '승' : (st.isWin === false ? '패' : ''));
           let decBadge = '';
           if (decVal === '승' || decVal === 'W') {
-            decBadge = `<span class="badge bg-danger text-white px-1 py-0" style="font-size:0.65rem; font-weight:700;">승</span> `;
+            decBadge = `<span class="badge bg-danger text-white px-1 py-0" style="font-size:0.62rem; font-weight:700;">승</span> `;
           } else if (decVal === '패' || decVal === 'L') {
-            decBadge = `<span class="badge bg-primary text-white px-1 py-0" style="font-size:0.65rem; font-weight:700;">패</span> `;
+            decBadge = `<span class="badge bg-primary text-white px-1 py-0" style="font-size:0.62rem; font-weight:700;">패</span> `;
           }
 
           const hitsVal = (st.h !== undefined && st.h !== null) ? st.h : ((st.hits !== undefined && st.hits !== null) ? st.hits : '-');
@@ -18288,13 +18308,13 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
           const isEven = (sIdx % 2 === 0);
           return `
-            <tr style="height:27px; background: ${isEven ? '#ffffff' : '#f9fafb'}; font-size:0.72rem; border-bottom:1px solid #e5e7eb;">
-              <td class="text-center" style="padding: 3px 2px; white-space:nowrap;">${matchCol}</td>
-              <td class="text-dark fw-bold text-center text-truncate" style="padding: 3px 2px; max-width:60px;" title="${oppVal}">${oppVal}</td>
-              <td class="text-dark text-center" style="padding: 3px 2px; white-space:nowrap;">${decBadge}<span class="fw-semibold">${ipVal}</span></td>
-              <td class="text-dark text-center" style="padding: 3px 2px; white-space:nowrap;">${hitsVal} <span class="text-secondary" style="font-size:0.65rem;">(${hrVal})</span></td>
-              <td class="text-dark text-center" style="padding: 3px 2px; white-space:nowrap;"><span class="fw-semibold text-primary">${soVal}</span> <span class="text-secondary" style="font-size:0.65rem;">(${bbVal})</span></td>
-              <td class="text-center" style="padding: 3px 2px; white-space:nowrap;"><span class="${Number(erVal) > 2 ? 'text-danger fw-bold' : 'text-dark fw-semibold'}">${erVal}</span> <span class="text-secondary" style="font-size:0.65rem;">(${eraVal})</span></td>
+            <tr style="height:26px; background: ${isEven ? '#ffffff' : '#f9fafb'}; font-size:0.68rem; border-bottom:1px solid #e5e7eb;">
+              <td class="text-center text-truncate" style="padding: 2px 1px; white-space:nowrap; overflow:hidden;">${matchCol}</td>
+              <td class="text-dark fw-bold text-center text-truncate" style="padding: 2px 1px; overflow:hidden;" title="${oppVal}">${oppVal}</td>
+              <td class="text-dark text-center text-truncate" style="padding: 2px 1px; white-space:nowrap; overflow:hidden;">${decBadge}<span class="fw-semibold">${ipVal}</span></td>
+              <td class="text-dark text-center text-truncate" style="padding: 2px 1px; white-space:nowrap; overflow:hidden;">${hitsVal} <span class="text-secondary" style="font-size:0.62rem;">(${hrVal})</span></td>
+              <td class="text-dark text-center text-truncate" style="padding: 2px 1px; white-space:nowrap; overflow:hidden;"><span class="fw-semibold text-primary">${soVal}</span> <span class="text-secondary" style="font-size:0.62rem;">(${bbVal})</span></td>
+              <td class="text-center text-truncate" style="padding: 2px 1px; white-space:nowrap; overflow:hidden;"><span class="${Number(erVal) > 2 ? 'text-danger fw-bold' : 'text-dark fw-semibold'}">${erVal}</span> <span class="text-secondary" style="font-size:0.62rem;">(${eraVal})</span></td>
             </tr>
           `;
         }).join('');
@@ -18307,56 +18327,56 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const aRowsHtml = renderLogRowsHtml(aP.startsList, aP.isAnnounced);
 
       // -------------------------------------------------------------
-      // 🏆 와이즈토토/베트맨 공식 레이아웃 100% 일치 선발투수 대시보드
+      // 🏆 와이즈토토/베트맨 공식 레이아웃 100% 일치 선발투수 대시보드 (모바일 좌우 흔들림 완벽 고정)
       // -------------------------------------------------------------
       const startersSectionHtml = `
-        <div class="mb-2.5 rounded-2 overflow-hidden border shadow-sm" style="border-color:#cbd5e1; background:#ffffff;">
-          <!-- 상단 헤더 바 (다크 그레이 배경 + [최근경기] 토글 버튼) -->
-          <div class="d-flex justify-content-between align-items-center px-3 py-1.5" style="background:#374151; color:#ffffff;">
-            <span class="fw-bold" style="font-size:0.86rem; letter-spacing:-0.2px;">예상 선발투수</span>
+        <div class="mb-2.5 rounded-2 border shadow-sm" style="border-color:#cbd5e1; background:#ffffff; width:100%; max-width:100%; overflow-x:hidden; touch-action:pan-y; box-sizing:border-box;">
+          <!-- 상단 헤더 바 (다크 그레이 배경 + [최근선발 10경기] 토글 버튼) -->
+          <div class="d-flex justify-content-between align-items-center px-2.5 py-1.5" style="background:#374151; color:#ffffff; width:100%; box-sizing:border-box;">
+            <span class="fw-bold" style="font-size:0.84rem; letter-spacing:-0.2px;">예상 선발투수</span>
             <button type="button" id="btnToggleRecent_${m.id}" 
                     class="btn btn-xs fw-bold px-2 py-0.5 rounded" 
-                    style="font-size:0.72rem; color:#ffffff; border:1px solid #9ca3af; background:transparent; transition: all 0.2s;" 
+                    style="font-size:0.71rem; color:#ffffff; border:1px solid #9ca3af; background:transparent; transition: all 0.2s;" 
                     onclick="toggleStarterRecentLogs(${m.id})">
               최근선발 10경기
             </button>
           </div>
 
-          <!-- 홈 팀 선발투수 요약 행 (Image 2) -->
-          <div class="border-bottom" style="border-color:#e5e7eb;">
-            <div class="d-flex align-items-stretch" style="min-height:46px;">
-              <!-- 팀명 뱃지 (홈 = 연한 핑크/레드) -->
-              <div class="d-flex align-items-center justify-content-center px-2.5 fw-bold text-danger text-center" 
-                   style="width:90px; min-width:90px; background:#fee2e2; font-size:0.82rem; border-right:1px solid #fecaca;">
+          <!-- 홈 팀 선발투수 요약 행 -->
+          <div class="border-bottom" style="border-color:#e5e7eb; width:100%; overflow-x:hidden; box-sizing:border-box;">
+            <div class="d-flex align-items-stretch" style="min-height:44px; width:100%; box-sizing:border-box;">
+              <!-- 팀명 뱃지 -->
+              <div class="d-flex align-items-center justify-content-center px-1 fw-bold text-danger text-center text-truncate" 
+                   style="width:68px; min-width:68px; max-width:68px; background:#fee2e2; font-size:0.78rem; border-right:1px solid #fecaca; flex-shrink:0;">
                 ${hName}
               </div>
               <!-- 선수명 & 투구 유형 (R / L) -->
-              <div class="d-flex align-items-center px-3 flex-grow-1" style="font-size:0.88rem;">
-                <span class="fw-bold text-dark me-2">${hP.cleanName}</span>
-                <span class="fw-bold text-primary" style="font-size:0.85rem;">${hP.hand || 'R'}</span>
+              <div class="d-flex align-items-center px-2 flex-grow-1" style="font-size:0.85rem; min-width:0; overflow:hidden;">
+                <span class="fw-bold text-dark me-1 text-truncate" style="max-width:110px;">${hP.cleanName}</span>
+                <span class="fw-bold text-primary flex-shrink-0" style="font-size:0.82rem;">${hP.hand || 'R'}</span>
               </div>
               <!-- 전적 & 방어율 & 요약 스탯 (우측 정렬) -->
-              <div class="d-flex flex-column justify-content-center align-items-end pe-3 text-end" style="min-width:145px;">
-                <div class="fw-bold text-danger" style="font-size:0.86rem; line-height:1.2;">
+              <div class="d-flex flex-column justify-content-center align-items-end pe-2 text-end flex-shrink-0" style="min-width:0; max-width:140px;">
+                <div class="fw-bold text-danger text-truncate" style="font-size:0.82rem; line-height:1.2; max-width:100%;">
                   ${hP.displayRecordEra}
                 </div>
-                <div class="text-secondary" style="font-size:0.72rem; line-height:1.2;">
+                <div class="text-secondary text-truncate" style="font-size:0.70rem; line-height:1.2; max-width:100%;">
                   ${hP.summary}
                 </div>
               </div>
             </div>
 
-            <!-- 홈 투수 최근 10경기 테이블 (모바일 100% 핏 & 노스크롤) -->
-            <div id="tableBox_hStarts_${m.id}" class="pitcher-starts-table-box" style="display:none; width:100%; overflow-x:hidden; border-top:1px solid #e5e7eb;">
-              <table class="table table-sm text-center align-middle mb-0" style="width:100%; table-layout:fixed; font-size:0.71rem; border-collapse:collapse;">
+            <!-- 홈 투수 최근 10경기 테이블 (모바일 흔들림 방지: touch-action: pan-y, overflow-x: hidden) -->
+            <div id="tableBox_hStarts_${m.id}" class="pitcher-starts-table-box" style="display:none; width:100%; max-width:100%; overflow-x:hidden; touch-action:pan-y; border-top:1px solid #e5e7eb; box-sizing:border-box;">
+              <table class="table table-sm text-center align-middle mb-0" style="width:100%; max-width:100%; table-layout:fixed; font-size:0.68rem; border-collapse:collapse; margin:0;">
                 <thead style="background:#f3f4f6; color:#4b5563; border-bottom:1px solid #d1d5db;">
-                  <tr style="height:26px;">
-                    <th style="width:22%; font-weight:700; padding:3px 2px;">경기(일자)</th>
-                    <th style="width:16%; font-weight:700; padding:3px 2px;">상대</th>
-                    <th style="width:18%; font-weight:700; padding:3px 2px;">결과/이닝</th>
-                    <th style="width:15%; font-weight:700; padding:3px 2px;">안타(HR)</th>
-                    <th style="width:14%; font-weight:700; padding:3px 2px;">삼진(BB)</th>
-                    <th style="width:15%; font-weight:700; padding:3px 2px;">자책(ERA)</th>
+                  <tr style="height:25px;">
+                    <th style="width:23%; font-weight:700; padding:2px 1px; font-size:0.67rem;">경기(일자)</th>
+                    <th style="width:16%; font-weight:700; padding:2px 1px; font-size:0.67rem;">상대</th>
+                    <th style="width:17%; font-weight:700; padding:2px 1px; font-size:0.67rem;">결과/이닝</th>
+                    <th style="width:15%; font-weight:700; padding:2px 1px; font-size:0.67rem;">안타(HR)</th>
+                    <th style="width:14%; font-weight:700; padding:2px 1px; font-size:0.67rem;">삼진(BB)</th>
+                    <th style="width:15%; font-weight:700; padding:2px 1px; font-size:0.67rem;">자책(ERA)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -18366,41 +18386,41 @@ function updateSlimPanel(matchId, type, contentHtml) {
             </div>
           </div>
 
-          <!-- 원정 팀 선발투수 요약 행 (Image 2) -->
-          <div>
-            <div class="d-flex align-items-stretch" style="min-height:46px;">
+          <!-- 원정 팀 선발투수 요약 행 -->
+          <div style="width:100%; overflow-x:hidden; box-sizing:border-box;">
+            <div class="d-flex align-items-stretch" style="min-height:44px; width:100%; box-sizing:border-box;">
               <!-- 팀명 뱃지 (원정 = 연한 블루) -->
-              <div class="d-flex align-items-center justify-content-center px-2.5 fw-bold text-primary text-center" 
-                   style="width:90px; min-width:90px; background:#e0f2fe; font-size:0.82rem; border-right:1px solid #bfdbfe;">
+              <div class="d-flex align-items-center justify-content-center px-1 fw-bold text-primary text-center text-truncate" 
+                   style="width:68px; min-width:68px; max-width:68px; background:#e0f2fe; font-size:0.78rem; border-right:1px solid #bfdbfe; flex-shrink:0;">
                 ${aName}
               </div>
               <!-- 선수명 & 투구 유형 (R / L) -->
-              <div class="d-flex align-items-center px-3 flex-grow-1" style="font-size:0.88rem;">
-                <span class="fw-bold text-dark me-2">${aP.cleanName}</span>
-                <span class="fw-bold text-primary" style="font-size:0.85rem;">${aP.hand || 'R'}</span>
+              <div class="d-flex align-items-center px-2 flex-grow-1" style="font-size:0.85rem; min-width:0; overflow:hidden;">
+                <span class="fw-bold text-dark me-1 text-truncate" style="max-width:110px;">${aP.cleanName}</span>
+                <span class="fw-bold text-primary flex-shrink-0" style="font-size:0.82rem;">${aP.hand || 'R'}</span>
               </div>
               <!-- 전적 & 방어율 & 요약 스탯 (우측 정렬) -->
-              <div class="d-flex flex-column justify-content-center align-items-end pe-3 text-end" style="min-width:145px;">
-                <div class="fw-bold text-danger" style="font-size:0.86rem; line-height:1.2;">
+              <div class="d-flex flex-column justify-content-center align-items-end pe-2 text-end flex-shrink-0" style="min-width:0; max-width:140px;">
+                <div class="fw-bold text-danger text-truncate" style="font-size:0.82rem; line-height:1.2; max-width:100%;">
                   ${aP.displayRecordEra}
                 </div>
-                <div class="text-secondary" style="font-size:0.72rem; line-height:1.2;">
+                <div class="text-secondary text-truncate" style="font-size:0.70rem; line-height:1.2; max-width:100%;">
                   ${aP.summary}
                 </div>
               </div>
             </div>
 
-            <!-- 원정 투수 최근 10경기 테이블 (모바일 100% 핏 & 노스크롤) -->
-            <div id="tableBox_aStarts_${m.id}" class="pitcher-starts-table-box" style="display:none; width:100%; overflow-x:hidden; border-top:1px solid #e5e7eb;">
-              <table class="table table-sm text-center align-middle mb-0" style="width:100%; table-layout:fixed; font-size:0.71rem; border-collapse:collapse;">
+            <!-- 원정 투수 최근 10경기 테이블 (모바일 흔들림 방지: touch-action: pan-y, overflow-x: hidden) -->
+            <div id="tableBox_aStarts_${m.id}" class="pitcher-starts-table-box" style="display:none; width:100%; max-width:100%; overflow-x:hidden; touch-action:pan-y; border-top:1px solid #e5e7eb; box-sizing:border-box;">
+              <table class="table table-sm text-center align-middle mb-0" style="width:100%; max-width:100%; table-layout:fixed; font-size:0.68rem; border-collapse:collapse; margin:0;">
                 <thead style="background:#f3f4f6; color:#4b5563; border-bottom:1px solid #d1d5db;">
-                  <tr style="height:26px;">
-                    <th style="width:22%; font-weight:700; padding:3px 2px;">경기(일자)</th>
-                    <th style="width:16%; font-weight:700; padding:3px 2px;">상대</th>
-                    <th style="width:18%; font-weight:700; padding:3px 2px;">결과/이닝</th>
-                    <th style="width:15%; font-weight:700; padding:3px 2px;">안타(HR)</th>
-                    <th style="width:14%; font-weight:700; padding:3px 2px;">삼진(BB)</th>
-                    <th style="width:15%; font-weight:700; padding:3px 2px;">자책(ERA)</th>
+                  <tr style="height:25px;">
+                    <th style="width:23%; font-weight:700; padding:2px 1px; font-size:0.67rem;">경기(일자)</th>
+                    <th style="width:16%; font-weight:700; padding:2px 1px; font-size:0.67rem;">상대</th>
+                    <th style="width:17%; font-weight:700; padding:2px 1px; font-size:0.67rem;">결과/이닝</th>
+                    <th style="width:15%; font-weight:700; padding:2px 1px; font-size:0.67rem;">안타(HR)</th>
+                    <th style="width:14%; font-weight:700; padding:2px 1px; font-size:0.67rem;">삼진(BB)</th>
+                    <th style="width:15%; font-weight:700; padding:2px 1px; font-size:0.67rem;">자책(ERA)</th>
                   </tr>
                 </thead>
                 <tbody>
