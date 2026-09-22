@@ -1132,6 +1132,32 @@
       box-shadow: 0 0 10px rgba(220, 38, 38, 0.18) !important;
     }
 
+    /* 🏟️ 라이브 경기 이벤트 이미지 및 전광판 스테이지 - 경기바 영역 완벽 격리 (PC 전체화면 침범 원천 차단) */
+    .live-baseball-event-overlay,
+    .live-soccer-event-overlay,
+    .live-bball-event-overlay,
+    .live-vball-event-overlay {
+      position: absolute !important;
+      inset: 0 !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      overflow: hidden !important;
+      box-sizing: border-box !important;
+    }
+    .live-baseball-stage-wrapper,
+    .live-soccer-stage-wrapper,
+    .live-basketball-stage-wrapper,
+    .live-volleyball-stage-wrapper {
+      position: relative !important;
+      overflow: hidden !important;
+      max-width: 100% !important;
+    }
+    .baseball-live-center-box,
+    .live-focus-card {
+      position: relative !important;
+      overflow: hidden !important;
+    }
+
     /* 종료 경기 테두리 (차분한 그레이) */
     .pred-card-compact.card-status-finished,
     .pred-card-compact[data-match-status="FINISHED"] {
@@ -23431,10 +23457,9 @@ function renderPredDetail(m, customDetailData = null) {
 
       let sportSpecificHtml = '';
       if (m.sport_code === 'BASEBALL') {
-        const eventBannerHtml = isLive ? buildLiveBaseballEventTrackHtml(m, st) : '';
+        // 실시간 홈런/안타/볼넷/아웃 등 상황별 비주얼 이미지는 좌측 해당 경기바에만 표출되도록 우측 전광판에서는 제외
         sportSpecificHtml = `
-          <div class="baseball-live-center-box p-2 rounded mb-1" style="background:#ffffff; border:1px solid #e2e8f0;">
-            ${eventBannerHtml}
+          <div class="baseball-live-center-box position-relative overflow-hidden p-2 rounded mb-1" style="background:#ffffff; border:1px solid #e2e8f0;">
             <div class="d-flex align-items-center gap-2">
               <!-- Left: SVG Diamond (Lights up when runner on base) + Out LED -->
               <div class="text-center" style="flex:0 0 auto;">
