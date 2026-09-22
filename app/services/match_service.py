@@ -136,8 +136,18 @@ class MatchService:
                         ts["volleyball_stats"] = m_data["volleyball_stats"]
 
                     detail.team_stats = json.dumps(ts, ensure_ascii=False)
-                    if m_data.get("period_scores") and not detail.is_customized:
-                        detail.period_scores = json.dumps(m_data["period_scores"], ensure_ascii=False)
+                    if m_data.get("period_scores"):
+                        is_dummy_ps = False
+                        if detail.period_scores:
+                            try:
+                                curr_ps = json.loads(detail.period_scores)
+                                inns = curr_ps.get("innings", {})
+                                if all(v.get("away") == "-" and v.get("home") == "-" for v in inns.values()):
+                                    is_dummy_ps = True
+                            except Exception:
+                                is_dummy_ps = True
+                        if not detail.is_customized or is_dummy_ps or match.status == "LIVE":
+                            detail.period_scores = json.dumps(m_data["period_scores"], ensure_ascii=False)
                     db.commit()
                     try:
                         from app.api.v1.matches import clear_matches_cache, clear_match_full_cache
