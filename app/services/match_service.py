@@ -254,29 +254,40 @@ class MatchService:
 
     @classmethod
     def cleanup_stale_live_matches(cls, db: Session):
-        """경기 시작 시간 도래 시 SCHEDULED -> LIVE 자동 전환 및 3.5시간 경과 시 FINISHED 자동 전환 (Self-Healing)"""
+        """경기 시작 시간 도래 시 SCHEDULED -> LIVE 자동 전환 및 경기 시간 종료 시 FINISHED 자동 전환 (Self-Healing)"""
         try:
             now_kst = datetime.utcnow() + timedelta(hours=9)
             now_str = now_kst.strftime("%Y-%m-%d %H:%M")
-            cutoff = (now_kst - timedelta(hours=3, minutes=30)).strftime("%Y-%m-%d %H:%M")
+            cutoff_general = (now_kst - timedelta(hours=2, minutes=15)).strftime("%Y-%m-%d %H:%M")
+            cutoff_bb = (now_kst - timedelta(hours=3, minutes=10)).strftime("%Y-%m-%d %H:%M")
             past_1d_cutoff = (now_kst - timedelta(days=1)).strftime("%Y-%m-%d 00:00")
 
-            # 1. 시작 시간이 도래한 경기: SCHEDULED -> LIVE 자동 전환
+            # 1. 시작 시간이 도래한 경기: SCHEDULED -> LIVE 자동 전환 (시작 후 2시간 이내 경기만)
             live_candidates = db.query(Match).filter(
                 Match.status.in_(['SCHEDULED', 'NS']),
                 Match.match_date <= now_str,
-                Match.match_date >= cutoff
+                Match.match_date >= cutoff_general
             ).all()
             if live_candidates:
                 for m in live_candidates:
                     m.status = 'LIVE'
                 db.commit()
 
-            # 2. 시작 후 3.5시간 이상 경과한 경기: LIVE/SCHEDULED -> FINISHED 자동 전환
-            stale_matches = db.query(Match).filter(
-                Match.status.in_(['LIVE', 'IN_PLAY', '1H', '2H', 'HT', 'SCHEDULED', 'NS']),
-                Match.match_date < cutoff
+            # 2. 경기 시간 종료된 경기: FINISHED 자동 전환
+            # - 야구: 3시간 10분 이상 경과 시
+            # - 축구/농구/배구: 2시간 15분 이상 경과 시
+            stale_bb = db.query(Match).filter(
+                Match.sport_code == 'BASEBALL',
+                Match.status.in_(['LIVE', 'IN_PLAY', 'SCHEDULED', 'NS']),
+                Match.match_date < cutoff_bb
             ).all()
+            stale_other = db.query(Match).filter(
+                Match.sport_code != 'BASEBALL',
+                Match.status.in_(['LIVE', 'IN_PLAY', '1H', '2H', 'HT', 'SCHEDULED', 'NS']),
+                Match.match_date < cutoff_general
+            ).all()
+
+            stale_matches = stale_bb + stale_other
             if stale_matches:
                 for m in stale_matches:
                     m.status = 'FINISHED'
