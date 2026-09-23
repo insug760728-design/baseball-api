@@ -8097,7 +8097,7 @@ function getFullModalMatchList() {
             <div class="d-flex align-items-center gap-1.5">
               <span class="badge ${isLineupConfirmed ? 'bg-success' : 'bg-warning text-dark'} fw-bold" style="font-size:0.72rem;">
                 <i class="bi ${isLineupConfirmed ? 'bi-check-circle-fill' : 'bi-clock-history'} me-1"></i>
-                ${isLineupConfirmed ? '공식 확정 라인업 (상세 맨위)' : '예상 라인업 (상세 맨아래)'}
+                ${isLineupConfirmed ? '공식 확정 라인업' : '선발 예상 라인업'}
               </span>
               <span class="text-secondary fw-semibold d-none d-sm-inline" style="font-size:0.68rem;">
                 ${isLineupConfirmed ? '선발투수 & 1~9번 타순 확정' : '공식 발표 대기 중'}
@@ -8114,8 +8114,8 @@ function getFullModalMatchList() {
               <button type="button" class="btn btn-xs py-0.5 px-2 rounded-pill fw-bold ${isLineupConfirmed ? 'btn-outline-secondary' : 'btn-success text-white'}" 
                       style="font-size:0.65rem;" 
                       onclick="toggleMatchLineupConfirmed(${m.id})" 
-                      title="라인업 확정/미확정 상태를 토글하여 최상단/최하단 실시간 이동">
-                <i class="bi bi-arrow-down-up me-0.5"></i>${isLineupConfirmed ? '미확정 전환 (맨아래)' : '확정 전환 (맨위)'}
+                      title="라인업 확정/미확정 상태를 토글">
+                <i class="bi bi-arrow-down-up me-0.5"></i>${isLineupConfirmed ? '미확정 전환' : '확정 전환'}
               </button>
             </div>
           </div>
@@ -8126,12 +8126,12 @@ function getFullModalMatchList() {
               <i class="bi ${isLineupConfirmed ? 'bi-lightning-charge-fill text-success' : 'bi-hourglass-split text-warning'} flex-shrink-0"></i>
               <span class="text-truncate">
                 ${isLineupConfirmed 
-                  ? '<strong>[실시간 확정]</strong> 양 팀 공식 선발 라인업이 확정되어 <strong>상세 최상단</strong>에 실시간 표시 중입니다.' 
-                  : '<strong>[공식 발표 대기]</strong> 미확정 상태로 <strong>상세 최하단</strong>에 예상 라인업이 배치됩니다. 확정 시 즉시 최상단으로 자동 이동합니다.'}
+                  ? '<strong>[실시간 확정]</strong> 양 팀 공식 선발 라인업이 확정되어 상세 최상단에 표시 중입니다.' 
+                  : '<strong>[공식 발표 대기]</strong> 양 팀 선발투수 및 1~9번 예상 타순이 최상단에 표시 중입니다.'}
               </span>
             </div>
             <span class="badge ${isLineupConfirmed ? 'bg-success' : 'bg-warning text-dark'} py-0.5 px-1 ms-1 flex-shrink-0" style="font-size:0.60rem;">
-              ${isLineupConfirmed ? '최상단 배치' : '최하단 배치'}
+              ${isLineupConfirmed ? '공식 확정' : '예상 라인업'}
             </span>
           </div>
 
@@ -8188,7 +8188,7 @@ function getFullModalMatchList() {
       }
 
       if (typeof showMiniToast === 'function') {
-        showMiniToast(nextConfirmed ? '⚡ [라인업 확정] 상세 최상단으로 실시간 이동되었습니다.' : '⏳ [라인업 미확정] 상세 최하단으로 실시간 이동되었습니다.');
+        showMiniToast(nextConfirmed ? '⚡ [라인업 확정] 공식 확정 라인업 상태로 전환되었습니다.' : '⏳ [라인업 미확정] 예상 라인업 상태로 전환되었습니다.');
       }
     };
 
@@ -8261,10 +8261,8 @@ function getFullModalMatchList() {
     };
     
     function renderBaseballPitchingBattingWidgetHtml(m) {
-      if (!m) return '';
-      // [지침 준수] 메이저리그(MLB) 100% 공식 데이터 전용 렌더링 (KBO/NPB 공식 API 부재 및 왜곡 방지를 위해 완전 격리)
-      const isMlb = ((m.league_name || '').toUpperCase().includes('MLB')) || ((m.league_name || '').includes('메이저리그'));
-      if (!isMlb) return '';
+      // [사용자 요청 반영] 투수·타자 상세 기록 위젯 완전 삭제
+      return '';
 
       const hName = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : (m.home_team_name || '홈팀');
       const aName = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : (m.away_team_name || '원정팀');
@@ -10863,7 +10861,6 @@ function getFullModalMatchList() {
             </div>
           </div>
         </div>
-        ${renderBaseballPitchingBattingWidgetHtml(m)}
       `;
     }
 
@@ -18540,43 +18537,19 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
       const soccerAnalyticsHtml = isSoccer ? renderSoccerDetailAnalyticsWidgetHtml(m) : '';
       const apexChartsSectionHtml = renderApexAnalyticsCardHtml(m);
-      const pitchingBattingSectionHtml = isBaseball ? renderBaseballPitchingBattingWidgetHtml(m) : '';
       const recentMatchesSectionHtml = isBaseball ? renderRecentTeamMatchesWidgetHtml(m) : '';
       const liveLineupSectionHtml = isBaseball ? renderBaseballLiveLineupWidgetHtml(m, hP, aP) : '';
 
-      const isLineupConfirmed = !!(
-        m.is_lineup_confirmed === true ||
-        m.lineup_confirmed === true ||
-        m.lineup_status === 'CONFIRMED' ||
-        m.lineup_status === 'OFFICIAL' ||
-        m.status === 'LIVE' ||
-        m.status === 'FINISHED' ||
-        (m.home_lineup && m.home_lineup.length > 0 && m.lineup_status !== 'EXPECTED' && m.lineup_status !== 'UNCONFIRMED')
-      );
-
       let contentHtml = '';
       if (isBaseball) {
-        if (isLineupConfirmed) {
-          // 🎯 [확정 순간] 상세 최상단으로 배치 (startersSectionHtml 바로 위)
-          contentHtml = `
-            ${liveLineupSectionHtml}
-            ${startersSectionHtml}
-            ${pitchingBattingSectionHtml}
-            ${recentMatchesSectionHtml}
-            ${chatSectionHtml}
-            ${apexChartsSectionHtml}
-          `;
-        } else {
-          // 🎯 [미확정 상태] 상세 최하단으로 배치 (apexChartsSectionHtml 바로 아래)
-          contentHtml = `
-            ${startersSectionHtml}
-            ${pitchingBattingSectionHtml}
-            ${recentMatchesSectionHtml}
-            ${chatSectionHtml}
-            ${apexChartsSectionHtml}
-            ${liveLineupSectionHtml}
-          `;
-        }
+        // 🎯 [사용자 요청] 투수·타자 상세 기록 위젯 삭제 & 라인업 최상단 영구 배치
+        contentHtml = `
+          ${liveLineupSectionHtml}
+          ${startersSectionHtml}
+          ${recentMatchesSectionHtml}
+          ${chatSectionHtml}
+          ${apexChartsSectionHtml}
+        `;
       } else {
         contentHtml = `
           ${isSoccer ? soccerAnalyticsHtml : nonBaseballHtml}
