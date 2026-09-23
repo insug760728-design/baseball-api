@@ -12528,7 +12528,7 @@ function getFullModalMatchList() {
       const isMainLeagueMatch = (m) => {
         if (!m || !m.league_name) return false;
         const ln = m.league_name.toUpperCase();
-        const excluded = ['아시안게임', '일본 FA컵', '걸프컵', '아라비안', '호주 FA컵', '미국 FA컵', '친선경기', '클럽친선', 'ASEAN', '동남아시아', '2군', 'PREMIER LEAGUE 2', '리저브'];
+        const excluded = ['일본 FA컵', '걸프컵', '아라비안', '호주 FA컵', '미국 FA컵', '친선경기', '클럽친선', 'ASEAN', '동남아시아', '2군', 'PREMIER LEAGUE 2', '리저브'];
         for (let i = 0; i < excluded.length; i++) {
           if (ln.includes(excluded[i].toUpperCase())) return false;
         }
