@@ -8086,8 +8086,8 @@ function getFullModalMatchList() {
         `;
       }
 
-      const awayColHtml = renderLineupColHtml(aName, false, aP, aBatters);
       const homeColHtml = renderLineupColHtml(hName, true, hP, hBatters);
+      const awayColHtml = renderLineupColHtml(aName, false, aP, aBatters);
 
       return `
         <div class="lineup-section-card p-2.5 mb-2.5 rounded-3 border shadow-sm ${isLineupConfirmed ? 'lineup-confirmed' : 'lineup-unconfirmed'}" 
@@ -8135,13 +8135,13 @@ function getFullModalMatchList() {
             </span>
           </div>
 
-          <!-- 🎯 양 팀 라인업 그리드: 왼쪽 원정(Away), 오른쪽 홈(Home) 한눈에 배치 -->
+          <!-- 🎯 양 팀 라인업 그리드: 항상 앞(왼쪽)이 홈팀(Home), 뒤(오른쪽)가 원정팀(Away) -->
           <div class="row g-2">
             <div class="col-6">
-              ${awayColHtml}
+              ${homeColHtml}
             </div>
             <div class="col-6">
-              ${homeColHtml}
+              ${awayColHtml}
             </div>
           </div>
         </div>
