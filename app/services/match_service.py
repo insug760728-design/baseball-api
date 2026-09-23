@@ -20,13 +20,13 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 MAIN_LEAGUE_EXCLUDED = [
-    '일본 FA컵', '걸프컵', '아라비안', '호주 FA컵', '미국 FA컵',
+    '걸프컵', '아라비안', '호주 FA컵', '미국 FA컵',
     '클럽친선', '친선경기', '동남아시아', 'ASEAN', '엘리테세리엔', '캄페오네스',
     '2군', '리저브', 'PREMIER LEAGUE 2'
 ]
 
 MAIN_LEAGUE_KEYWORDS = [
-    '아시안게임',
+    '아시안게임', '일본 FA컵', '일왕배',
     'KBO', '한국 프로야구', '한국프로야구',
     'MLB', '메이저리그',
     'NPB', '일본 프로야구', '일본프로야구',

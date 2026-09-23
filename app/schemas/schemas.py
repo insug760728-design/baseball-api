@@ -95,6 +95,8 @@ class MatchResponse(MatchBase):
     summary: Optional[str] = None
     prediction: Optional[Dict[str, Any]] = None
     odds: Optional[Dict[str, Any]] = None
+    betman_main_odds: Optional[Dict[str, Any]] = None
+    betman_odds: Optional[List[Dict[str, Any]]] = None
     ou_line: Optional[str] = None
     ou_pick: Optional[str] = None
     home_starter_name: Optional[str] = None

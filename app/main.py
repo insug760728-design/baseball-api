@@ -247,11 +247,12 @@ def get_server_initial_matches_json() -> str:
             threading.Thread(target=refresh_server_matches_cache, daemon=True).start()
         return _SERVER_MATCHES_CACHE["json_str"]
     
-    # Non-blocking initial return: trigger background preload and return "[]" so first request never stalls
-    if not _SERVER_MATCHES_CACHE.get("is_refreshing"):
-        import threading
-        threading.Thread(target=refresh_server_matches_cache, daemon=True).start()
-    return "[]"
+    # Synchronously warm cache if empty so initial page load always has full match data
+    try:
+        refresh_server_matches_cache()
+    except Exception as e:
+        print(f"[WARN] Failed to warm initial matches cache synchronously: {e}")
+    return _SERVER_MATCHES_CACHE.get("json_str", "[]")
 
 def get_portal_html(target_path: str):
     if not os.path.exists(target_path):

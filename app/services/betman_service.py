@@ -562,23 +562,10 @@ class BetmanService:
     def get_proto_odds(force_refresh: bool = False) -> dict:
         """베트맨 프로토 승부식(G101) 최신 회차의 전체 700~1100개 배당 및 투표율 일괄 수집 (스냅샷 즉시 로드 + 실시간 백그라운드 갱신)"""
         now = time.time()
-        active_ts = 260093
-        try:
-            active_ts = BetmanService.get_active_round_ts('G101')
-        except Exception:
-            active_ts = 260093
 
-        cache_key = f'proto_G101_{active_ts}'
-        if not force_refresh and cache_key in _CACHE:
-            ts_cached, data = _CACHE[cache_key]
-            if now - ts_cached < CACHE_TTL:
-                # 캐시의 회차가 active_ts와 일치할 때만 반환
-                if data and str(data.get('gmTs')) == str(active_ts):
-                    return data
-
-        # 1. 스냅샷 파일 검사 및 회차 불일치(Fix 1) 감지
+        # 1. 스냅샷 파일 검사 및 최신 회차 우선 감지
         snapshot_data = None
-        for s_file in ['betman_proto_G101_latest.json', f'betman_proto_G101_{active_ts}.json', 'betman_G101.json']:
+        for s_file in ['betman_proto_G101_latest.json', 'betman_G101.json']:
             if os.path.exists(s_file):
                 try:
                     with open(s_file, 'r', encoding='utf-8') as f:
@@ -588,6 +575,13 @@ class BetmanService:
                             break
                 except Exception:
                     pass
+
+        active_ts = snapshot_data.get('gmTs', 260113) if snapshot_data else 260113
+        cache_key = f'proto_G101_{active_ts}'
+        if not force_refresh and cache_key in _CACHE:
+            ts_cached, data = _CACHE[cache_key]
+            if now - ts_cached < CACHE_TTL:
+                return data
 
         # 1. 스냅샷 데이터가 있으면 즉시 반환 (Render 해외 IP 블로킹 및 요청 지연 원천 차단)
         if snapshot_data and not force_refresh:
@@ -852,9 +846,7 @@ class BetmanService:
         if not matches:
             return matches
 
-        indexed_proto = BetmanService.get_indexed_proto_matches()
-        if not indexed_proto:
-            return matches
+        indexed_proto = BetmanService.get_indexed_proto_matches() or {}
 
         # O(1) 초고속 조회를 위한 캐노니컬 팀명 인덱스 구축 (최초 1회 생성 후 캐시)
         canon_index = getattr(BetmanService, '_proto_canon_index', None)
@@ -880,13 +872,46 @@ class BetmanService:
 
             if proto_info and proto_info.get('main_odds'):
                 m.odds = proto_info['main_odds']
+                m.betman_main_odds = proto_info['main_odds']
                 m.all_odds = proto_info.get('all_odds', [])
+                m.betman_odds = proto_info.get('all_odds', [])
                 if proto_info.get('ou_line'):
                     m.ou_line = proto_info['ou_line']
                 if getattr(m, 'prediction', None) and isinstance(m.prediction, dict):
                     m.prediction['odds'] = proto_info['main_odds']
                     if proto_info.get('ou_line'):
                         m.prediction['ou_line'] = proto_info['ou_line']
+            elif hasattr(m, 'details') and m.details and m.details.team_stats:
+                # 🛡️ 2차 Fallback: DB match_details.team_stats에 영구 저장된 베트맨 공식 배당 복원
+                try:
+                    import json
+                    ts = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
+                    if isinstance(ts, dict):
+                        b_main = ts.get('betman_main_odds')
+                        if b_main and isinstance(b_main, dict):
+                            h_odd = b_main.get('home_odds') or b_main.get('home')
+                            a_odd = b_main.get('away_odds') or b_main.get('away')
+                            if h_odd and a_odd:
+                                d_odd = b_main.get('draw_odds') or b_main.get('draw')
+                                is_draw = (d_odd and str(d_odd) != '0.0' and str(d_odd) != '-' and float(d_odd) > 0)
+                                odds_obj = {
+                                    'home': float(h_odd),
+                                    'draw': float(d_odd) if is_draw else None,
+                                    'away': float(a_odd),
+                                    'general_home': float(h_odd),
+                                    'general_away': float(a_odd),
+                                    'domestic_home': float(h_odd),
+                                    'domestic_draw': float(d_odd) if is_draw else None,
+                                    'domestic_away': float(a_odd),
+                                    'is_betman_official': True
+                                }
+                                m.odds = odds_obj
+                                m.betman_main_odds = odds_obj
+                        if not getattr(m, 'all_odds', None) and ts.get('betman_odds'):
+                            m.all_odds = ts.get('betman_odds')
+                            m.betman_odds = ts.get('betman_odds')
+                except Exception:
+                    pass
 
         return matches
 
@@ -931,6 +956,39 @@ class BetmanService:
                     break
 
         matched_odds = proto_info.get('all_odds', []) if proto_info else []
+        main_odds = proto_info.get('main_odds', {}) if proto_info else {}
+
+        # 🛡️ Fallback: match_details.team_stats에서 저장된 공식 배당 조회
+        if not matched_odds or not main_odds:
+            try:
+                conn2 = sqlite3.connect('sports_data.db', timeout=10.0)
+                conn2.row_factory = sqlite3.Row
+                c2 = conn2.cursor()
+                c2.execute("SELECT team_stats FROM match_details WHERE match_id = ?", (match_id,))
+                d_row = c2.fetchone()
+                conn2.close()
+                if d_row and d_row['team_stats']:
+                    import json
+                    ts = json.loads(d_row['team_stats'])
+                    if not matched_odds and ts.get('betman_odds'):
+                        matched_odds = ts.get('betman_odds')
+                    if not main_odds and ts.get('betman_main_odds'):
+                        b_m = ts.get('betman_main_odds')
+                        h_odd = b_m.get('home_odds') or b_m.get('home')
+                        a_odd = b_m.get('away_odds') or b_m.get('away')
+                        d_odd = b_m.get('draw_odds') or b_m.get('draw')
+                        is_draw = (d_odd and str(d_odd) != '0.0' and str(d_odd) != '-' and float(d_odd) > 0)
+                        main_odds = {
+                            'home': float(h_odd) if h_odd else None,
+                            'draw': float(d_odd) if is_draw else None,
+                            'away': float(a_odd) if a_odd else None,
+                            'domestic_home': float(h_odd) if h_odd else None,
+                            'domestic_draw': float(d_odd) if is_draw else None,
+                            'domestic_away': float(a_odd) if a_odd else None,
+                            'is_betman_official': True
+                        }
+            except Exception:
+                pass
 
         return {
             'status': 'success',
@@ -941,7 +999,7 @@ class BetmanService:
             'match_date': match_date,
             'toto_groups': [],
             'full_odds': matched_odds,
-            'main_odds': proto_info.get('main_odds', {}) if proto_info else {}
+            'main_odds': main_odds
         }
 
     @staticmethod

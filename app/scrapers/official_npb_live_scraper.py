@@ -169,12 +169,41 @@ class NpbOfficialScraper:
                 t_home = map_npb_team(home_raw_name)
                 t_away = map_npb_team(away_raw_name)
 
-                starter_texts = [t for t in all_texts if '(予)' in t or '予告' in t or '先発' in t]
+                starter_texts = [t for t in all_texts if any(k in t for k in ['(予)', '予告', '先発', '(投)', '(勝)', '(敗)'])]
                 p_h_raw = starter_texts[0] if len(starter_texts) > 0 else ''
                 p_a_raw = starter_texts[1] if len(starter_texts) > 1 else ''
 
-                clean_p_h = re.sub(r'\(予\)|\(예상\)|予告|先発|：|:', '', p_h_raw).strip()
-                clean_p_a = re.sub(r'\(予\)|\(예상\)|予告|先発|：|:', '', p_a_raw).strip()
+                clean_p_h = re.sub(r'\(予\)|\(예상\)|\(投\)|\(勝\)|\(敗\)|\(S\)|\(Ｓ\)|予告|先発|：|:', '', p_h_raw).strip()
+                clean_p_a = re.sub(r'\(予\)|\(예상\)|\(投\)|\(勝\)|\(敗\)|\(S\)|\(Ｓ\)|予告|先発|：|:', '', p_a_raw).strip()
+
+                # 경기 /text 상세 페이지에서 실시간 공식 선발투수 멘트(先発ピッチャーは...) 직접 추출
+                a_link = it.find('a', href=re.compile(r'/npb/game/(\d+)'))
+                if a_link and a_link.get('href'):
+                    try:
+                        gid_match = re.search(r'/npb/game/(\d+)', a_link['href'])
+                        if gid_match:
+                            gid = gid_match.group(1)
+                            text_url = f"https://baseball.yahoo.co.jp/npb/game/{gid}/text"
+                            text_html = self._fetch_html(text_url)
+                            t_soup = BeautifulSoup(text_html, 'html.parser')
+                            for p_tag in t_soup.find_all('p'):
+                                p_txt = p_tag.get_text(strip=True)
+                                if '先発' in p_txt:
+                                    mat = re.search(r'先発ピッチャーは(.+?)が(?:.+?[でる])?([^、,\s]+)[、,](.+?)が(?:.+?[でる])?([^\s]+)', p_txt)
+                                    if mat:
+                                        t1_r, p1_r, t2_r, p2_r = mat.groups()
+                                        if map_npb_team(t1_r) == t_home:
+                                            clean_p_h = p1_r.strip()
+                                            clean_p_a = p2_r.strip()
+                                        elif map_npb_team(t2_r) == t_home:
+                                            clean_p_h = p2_r.strip()
+                                            clean_p_a = p1_r.strip()
+                                        else:
+                                            clean_p_h = p1_r.strip()
+                                            clean_p_a = p2_r.strip()
+                                        break
+                    except Exception as ex:
+                        print(f"[NPB Scraper] Text commentary starter fetch error: {ex}")
 
                 p_h = translate_npb_player_name(clean_p_h)
                 p_a = translate_npb_player_name(clean_p_a)
@@ -182,7 +211,6 @@ class NpbOfficialScraper:
                 # 경기 프리뷰 상세 페이지에서 2026 실시간 공식 선발 방어율 및 성적 크롤링
                 p_h_detail = {}
                 p_a_detail = {}
-                a_link = it.find('a', href=re.compile(r'/npb/game/\d+/index'))
                 if a_link and a_link.get('href'):
                     try:
                         game_preview_url = "https://baseball.yahoo.co.jp" + a_link['href']
@@ -260,7 +288,23 @@ class NpbOfficialScraper:
             npb_url = "https://npb.jp/announcement/starter/"
             html = self._fetch_html(npb_url)
             soup = BeautifulSoup(html, 'html.parser')
-            units = soup.find_all('div', class_=re.compile(r'unit\s+(cl|pl)'))
+            
+            # npb.jp 공시 날짜 검증: 타겟 날짜와 다를 경우(예: 오늘 경기 중 내일 예고선발 공시) 덮어쓰기 방지
+            date_matches = True
+            page_text = soup.get_text()
+            announcement_match = re.search(r'(\d+)月(\d+)日', page_text)
+            if announcement_match and target_date:
+                try:
+                    parts = target_date.split('-')
+                    t_m, t_d = int(parts[1]), int(parts[2])
+                    a_m, a_d = int(announcement_match.group(1)), int(announcement_match.group(2))
+                    if (t_m, t_d) != (a_m, a_d):
+                        date_matches = False
+                        print(f"[NPB Scraper] npb.jp 공시 날짜({a_m}/{a_d})가 대상 경기 날짜({t_m}/{t_d})와 달라 덮어쓰기를 생략합니다.")
+                except Exception:
+                    pass
+
+            units = soup.find_all('div', class_=re.compile(r'unit\s+(cl|pl)')) if date_matches else []
 
             for u in units:
                 try:
