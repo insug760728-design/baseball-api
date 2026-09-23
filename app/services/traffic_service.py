@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
 import json
+import math
 import logging
-from datetime import datetime
-from typing import Dict, Any, List
+from datetime import datetime, timedelta
+from typing import Dict, Any, List, Optional
 
 logger = logging.getLogger("traffic_service")
 logger.setLevel(logging.INFO)
@@ -18,6 +19,65 @@ MEMBERS_FILE = os.path.join(os.getcwd(), "data", "members", "registered_users.js
 HOURLY_FILE = os.path.join(DATA_DIR, "hourly_traffic.json")
 
 class TrafficService:
+    # 24시간 실시간 접속자 타겟 앵커 포인트
+    # 자정 ~200명 -> 아침 순차 증가 -> 점심(12시) ~800명 -> 18시 ~900명 피크 -> 저녁 순차 감소 -> 자정 ~200명
+    ANCHORS = [
+        (0.0, 205),    # 00:00 자정 ~200명
+        (1.0, 195),
+        (2.0, 185),
+        (3.0, 178),
+        (4.0, 175),    # 새벽 최저점
+        (5.0, 188),
+        (6.0, 235),
+        (7.0, 320),
+        (8.0, 440),
+        (9.0, 560),
+        (10.0, 670),
+        (11.0, 745),
+        (12.0, 805),   # 12:00 점심시간 ~800명
+        (13.0, 825),
+        (14.0, 845),
+        (15.0, 865),
+        (16.0, 882),
+        (17.0, 896),
+        (18.0, 905),   # 18:00 오후 6시 ~900명 (피크)
+        (19.0, 850),   # 19:00 저녁 순차 감소
+        (20.0, 740),
+        (21.0, 595),
+        (22.0, 435),
+        (23.0, 295),
+        (24.0, 205),   # 다음날 자정으로 부드럽게 연결
+    ]
+
+    @classmethod
+    def get_realtime_active_count(cls, dt: Optional[datetime] = None) -> int:
+        """
+        현재 시간에 따른 100% 매끄러운 코사인 스무딩 실시간 접속자 수치 계산
+        자정(200) -> 점심(800) -> 오후6시(900) -> 저녁(점점 감소)
+        급격한 절벽 하락 없이 10초~분 단위 미세 파동(±2~4명) 포함
+        """
+        if dt is None:
+            dt = datetime.now()
+
+        hour_float = dt.hour + (dt.minute / 60.0) + (dt.second / 3600.0)
+        h = hour_float % 24.0
+
+        base_val = 205.0
+        for i in range(len(cls.ANCHORS) - 1):
+            t1, y1 = cls.ANCHORS[i]
+            t2, y2 = cls.ANCHORS[i + 1]
+            if t1 <= h <= t2:
+                frac = (h - t1) / (t2 - t1)
+                smooth = (1.0 - math.cos(frac * math.pi)) / 2.0
+                base_val = y1 + (y2 - y1) * smooth
+                break
+
+        # 미세 자연 파동 (3분 주기 완만한 파동 ±2~4명)
+        minute_phase = (dt.minute * 60 + dt.second) / 180.0
+        wave = math.sin(minute_phase * math.pi) * 3.0 + math.cos(minute_phase * 0.7 * math.pi) * 1.5
+
+        return max(150, round(base_val + wave))
+
     @classmethod
     def get_registered_member_count(cls) -> int:
         try:
@@ -31,34 +91,45 @@ class TrafficService:
 
     @classmethod
     def load_traffic_data(cls) -> Dict[str, Any]:
-        today_str = datetime.now().strftime("%Y-%m-%d")
+        now = datetime.now()
+        today_str = now.strftime("%Y-%m-%d")
+        cur_hour = now.hour
+
+        hourly_counts = {}
+        for h in range(24):
+            key = f"{h:02d}:00~{h+1:02d}:00"
+            if h <= cur_hour:
+                mid_dt = now.replace(hour=h, minute=30, second=0, microsecond=0)
+                hourly_counts[key] = cls.get_realtime_active_count(mid_dt)
+            else:
+                hourly_counts[key] = 0
+
+        current_active = cls.get_realtime_active_count(now)
+        cur_hour_key = f"{cur_hour:02d}:00~{cur_hour+1:02d}:00"
+        hourly_counts[cur_hour_key] = max(hourly_counts.get(cur_hour_key, 0), current_active)
+
+        peak_val = max([v for v in hourly_counts.values() if v > 0] or [current_active])
+
+        data = {
+            "date": today_str,
+            "hourly_counts": hourly_counts,
+            "peak_active": peak_val,
+            "total_visits_today": sum(v for v in hourly_counts.values() if v > 0) * 6,
+            "last_updated": now.strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        # If file exists and has today's data, preserve any existing higher peak
         if os.path.exists(HOURLY_FILE):
             try:
                 with open(HOURLY_FILE, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    if data.get("date") == today_str:
-                        return data
+                    saved = json.load(f)
+                    if saved.get("date") == today_str:
+                        if saved.get("peak_active", 0) > data["peak_active"]:
+                            data["peak_active"] = saved["peak_active"]
             except Exception:
                 pass
 
-        # Realistic hourly traffic distribution for 2026-09-06
-        cur_hour = datetime.now().hour
-        hourly_counts = {
-            "00:00~01:00": 312, "01:00~02:00": 218, "02:00~03:00": 156, "03:00~04:00": 114,
-            "04:00~05:00": 98,  "05:00~06:00": 145, "06:00~07:00": 284, "07:00~08:00": 412,
-            "08:00~09:00": 530, "09:00~10:00": 612, "10:00~11:00": 589, "11:00~12:00": 624,
-            "12:00~13:00": 648, "13:00~14:00": 635, "14:00~15:00": 652, "15:00~16:00": 658,
-            "16:00~17:00": 664, "17:00~18:00": 672, "18:00~19:00": 0,   "19:00~20:00": 0,
-            "20:00~21:00": 0,   "21:00~22:00": 0,   "22:00~23:00": 0,   "23:00~24:00": 0
-        }
-
-        return {
-            "date": today_str,
-            "hourly_counts": hourly_counts,
-            "peak_active": 718,
-            "total_visits_today": 8470,
-            "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
+        return data
 
     @classmethod
     def save_traffic_data(cls, data: Dict[str, Any]):
@@ -69,14 +140,17 @@ class TrafficService:
             logger.error(f"Failed to save traffic data: {e}")
 
     @classmethod
-    def update_and_export(cls, current_active: int = 672) -> Dict[str, Any]:
+    def update_and_export(cls, current_active: Optional[int] = None) -> Dict[str, Any]:
         """Update current stats and export both text report and HTML dashboard to Desktop"""
         now = datetime.now()
         cur_hour = now.hour
+        if current_active is None or current_active <= 0:
+            current_active = cls.get_realtime_active_count(now)
+
         data = cls.load_traffic_data()
 
         hour_key = f"{cur_hour:02d}:00~{cur_hour+1:02d}:00"
-        data["hourly_counts"][hour_key] = max(data["hourly_counts"].get(hour_key, 0), current_active)
+        data["hourly_counts"][hour_key] = current_active
         data["peak_active"] = max(data.get("peak_active", 0), current_active)
         data["last_updated"] = now.strftime("%Y-%m-%d %H:%M:%S")
 

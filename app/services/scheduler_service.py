@@ -520,7 +520,7 @@ class SchedulerService:
         try:
             from app.services.traffic_service import TrafficService
             from app.core.websocket_manager import manager
-            live_count = 664 + len(manager.active_connections)
+            live_count = TrafficService.get_realtime_active_count() + len(manager.active_connections)
             TrafficService.update_and_export(current_active=live_count)
         except Exception as e:
             logger.error(f"[Scheduler] 바탕화면 트래픽 갱신 오류: {e}")

@@ -22578,10 +22578,12 @@ function renderPredDetail(m, customDetailData = null) {
         const wsEl = document.getElementById('wsClientCount');
         const topEl = document.getElementById('topLiveUsersCount');
         // Synchronize both counters to the exact same live visitor count
-        const targetCount = (data.active_clients && data.active_clients >= 500) ? data.active_clients : currentLiveUsersCount;
+        const targetCount = (data.active_clients && data.active_clients >= 100) ? data.active_clients : currentLiveUsersCount;
         currentLiveUsersCount = targetCount;
         if (wsEl) wsEl.innerText = targetCount;
         if (topEl) topEl.innerText = targetCount;
+        const chatBadge = document.getElementById('chatOnlineBadge');
+        if (chatBadge) chatBadge.innerText = `🟢 ${targetCount}명 참여중`;
       } else if (data.type === 'NEW_COMMUNITY_MESSAGE') {
         const msg = data.message;
         communityMessages.push(msg);
@@ -23873,7 +23875,51 @@ function renderPredDetail(m, customDetailData = null) {
       }
     }
 
-    let currentLiveUsersCount = 664;
+    // 🟢 24시간 실시간 접속자 부드러운 순차 곡선 (자정 ~200명 -> 점심 ~800명 -> 18시 ~900명 피크 -> 저녁 순차 감소)
+    const LIVE_TRAFFIC_ANCHORS = [
+      [0.0, 205],   // 자정 (00:00) 200명대
+      [1.0, 195],
+      [2.0, 185],
+      [3.0, 178],
+      [4.0, 175],   // 새벽 최저점
+      [5.0, 188],
+      [6.0, 235],
+      [7.0, 320],
+      [8.0, 440],
+      [9.0, 560],
+      [10.0, 670],
+      [11.0, 745],
+      [12.0, 805],  // 점심때 (12:00) 800명
+      [13.0, 825],
+      [14.0, 845],
+      [15.0, 865],
+      [16.0, 882],
+      [17.0, 896],
+      [18.0, 905],  // 오후 6시 (18:00) 900명 (피크)
+      [19.0, 850],  // 저녁 서서히 빠짐
+      [20.0, 740],
+      [21.0, 595],
+      [22.0, 435],
+      [23.0, 295],
+      [24.0, 205]   // 다음날 자정으로 부드럽게 연결
+    ];
+
+    function calculateTargetLiveUsers(dateObj) {
+      const d = dateObj || new Date();
+      const h = (d.getHours() + d.getMinutes() / 60.0 + d.getSeconds() / 3600.0) % 24.0;
+      for (let i = 0; i < LIVE_TRAFFIC_ANCHORS.length - 1; i++) {
+        const [t1, y1] = LIVE_TRAFFIC_ANCHORS[i];
+        const [t2, y2] = LIVE_TRAFFIC_ANCHORS[i + 1];
+        if (h >= t1 && h <= t2) {
+          const frac = (h - t1) / (t2 - t1);
+          const smooth = (1 - Math.cos(frac * Math.PI)) / 2.0;
+          return Math.round(y1 + (y2 - y1) * smooth);
+        }
+      }
+      return 205;
+    }
+
+    let currentLiveUsersCount = calculateTargetLiveUsers();
     let liveUsersInterval = null;
 
     function syncLiveUserCounts() {
@@ -23881,21 +23927,33 @@ function renderPredDetail(m, customDetailData = null) {
       if (el) el.innerText = currentLiveUsersCount;
       const chatBadge = document.getElementById('chatOnlineBadge');
       if (chatBadge) chatBadge.innerText = `🟢 ${currentLiveUsersCount}명 참여중`;
+      const wsEl = document.getElementById('wsClientCount');
+      if (wsEl) wsEl.innerText = currentLiveUsersCount;
     }
 
     function startLiveUsersFluctuation() {
+      currentLiveUsersCount = calculateTargetLiveUsers();
       syncLiveUserCounts();
 
       if (liveUsersInterval) return;
 
       liveUsersInterval = setInterval(() => {
-        // Fluctuates by -3 to +3, staying strictly within [620, 745]
-        const delta = Math.floor(Math.random() * 7) - 3;
-        currentLiveUsersCount += delta;
-        if (currentLiveUsersCount < 620) currentLiveUsersCount = 625 + Math.floor(Math.random() * 15);
-        if (currentLiveUsersCount > 745) currentLiveUsersCount = 740 - Math.floor(Math.random() * 15);
+        const target = calculateTargetLiveUsers();
+        // 급격한 변화 없이 타겟 방향으로 부드럽게 순차 수렴 (절대 확 줄이거나 확 늘리지 않음)
+        const diff = target - currentLiveUsersCount;
+        let step = 0;
+        if (Math.abs(diff) > 10) {
+          step = diff > 0 ? 2 : -2;
+        } else if (Math.abs(diff) > 2) {
+          step = diff > 0 ? 1 : -1;
+        }
+        const microJitter = Math.floor(Math.random() * 3) - 1; // -1, 0, +1 자연스러운 미세 움직임
+        currentLiveUsersCount += step + microJitter;
+        // 안전 마진
+        if (currentLiveUsersCount < 160) currentLiveUsersCount = 175;
+        if (currentLiveUsersCount > 940) currentLiveUsersCount = 910;
         syncLiveUserCounts();
-      }, 10000); // every 10 seconds
+      }, 10000); // 10초마다 부드럽고 자연스럽게 순차 변동
     }
 
     // =============================================================

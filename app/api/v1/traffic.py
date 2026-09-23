@@ -7,7 +7,7 @@ router = APIRouter(prefix="/traffic", tags=["Traffic & Analytics"])
 
 @router.get("/status")
 def get_traffic_status():
-    live_count = 664 + len(manager.active_connections)
+    live_count = TrafficService.get_realtime_active_count() + len(manager.active_connections)
     return TrafficService.update_and_export(current_active=live_count)
 
 @router.get("/data")

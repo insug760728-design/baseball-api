@@ -121,11 +121,13 @@ async def websocket_live_endpoint(websocket: WebSocket):
     실시간 경기 스코어 업데이트 및 실시간 팬 커뮤니티 채팅 웹소켓 엔드포인트
     """
     await manager.connect(websocket)
-    # Send connection welcome and synchronized client count (664 + active connections)
+    # Send connection welcome and synchronized client count
+    from app.services.traffic_service import TrafficService
+    live_count = TrafficService.get_realtime_active_count() + len(manager.active_connections)
     await websocket.send_text(json.dumps({
         "type": "CONNECTION_ESTABLISHED",
         "message": "tokeon.kr 실시간 스포츠 & 커뮤니티 웹소켓에 정상 연결되었습니다.",
-        "active_clients": 664 + len(manager.active_connections)
+        "active_clients": live_count
     }, ensure_ascii=False))
 
     try:
