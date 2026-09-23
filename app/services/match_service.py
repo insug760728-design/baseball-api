@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_
+from sqlalchemy import or_, and_, not_
 
 from app.models.models import Match, MatchDetail, MatchEvent, PlayerMatchStat
 from app.scrapers.baseball_scraper import BaseballScraper
@@ -18,6 +18,46 @@ from app.services.betman_service import BetmanService, teams_match, clean_name, 
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+MAIN_LEAGUE_EXCLUDED = [
+    '아시안게임', '일본 FA컵', '걸프컵', '아라비안', '호주 FA컵', '미국 FA컵',
+    '클럽친선', '친선경기', '동남아시아', 'ASEAN', '엘리테세리엔', '캄페오네스',
+    '2군', '리저브', 'U23', 'U-23', 'U20', 'U-20', 'U19', 'U-19', 'PREMIER LEAGUE 2',
+    '선수권대회', '월드컵'
+]
+
+MAIN_LEAGUE_KEYWORDS = [
+    'KBO', '한국 프로야구', '한국프로야구',
+    'MLB', '메이저리그',
+    'NPB', '일본 프로야구', '일본프로야구',
+    'EPL', '프리미어리그', 'PREMIER LEAGUE',
+    '라리가', 'LA LIGA', 'LALIGA',
+    '분데스', 'BUNDESLIGA',
+    '세리에', 'SERIE',
+    '리그 1', '리그1', '리그앙', 'LIGUE 1', 'LIGUE1',
+    '챔피언스', 'UCL', 'CHAMPIONS LEAGUE',
+    '유로파', 'UEL', 'EUROPA',
+    'K리그', 'K-LEAGUE', 'K LEAGUE',
+    'J리그', 'J-LEAGUE', 'J1', 'J2', 'J.LEAGUE',
+    '챔피언십', 'CHAMPIONSHIP',
+    '에레디비시', 'EREDIVISIE',
+    'MLS', 'MAJOR LEAGUE SOCCER', '메이저리그 사커', '메이저리그사커',
+    '카라바오', 'CARABAO', 'EFL', '리그컵',
+    'NBA', 'KBL', '한국 프로농구', '미국 프로농구',
+    'KOVO', 'V-리그', 'V리그', '프로배구'
+]
+
+def is_main_league(league_name: Optional[str]) -> bool:
+    if not league_name:
+        return False
+    ln = league_name.upper().strip()
+    for ex in MAIN_LEAGUE_EXCLUDED:
+        if ex.upper() in ln:
+            return False
+    for mk in MAIN_LEAGUE_KEYWORDS:
+        if mk.upper() in ln:
+            return True
+    return False
 
 class MatchService:
 
@@ -380,13 +420,13 @@ class MatchService:
 
         if start_date:
             if start_date.upper() == "ALL":
-                # 전체 활성 경기 풀: 모든 LIVE 경기 + 모든 미래 SCHEDULED 경기 + 최근 3일 이내 경기
+                # 전체 활성 경기 풀: 오늘 이후의 LIVE/SCHEDULED 경기 + 최근 3일 이내 경기
                 past_3d = (now_kst - timedelta(days=3)).strftime("%Y-%m-%d 00:00")
                 if not status:
                     query = query.filter(
                         or_(
-                            Match.status == 'LIVE',
-                            Match.status == 'SCHEDULED',
+                            and_(Match.status == 'LIVE', Match.match_date >= f"{today_str} 00:00"),
+                            and_(Match.status == 'SCHEDULED', Match.match_date >= f"{today_str} 00:00"),
                             Match.match_date >= past_3d
                         )
                     )
@@ -401,13 +441,13 @@ class MatchService:
                 if not end_date:
                     query = query.filter(Match.match_date <= f"{today_str} 23:59")
             elif status == "SCHEDULED":
-                pass  # 모든 등록된 예정 경기 온전히 표출
+                query = query.filter(Match.status == "SCHEDULED", Match.match_date >= f"{today_str} 00:00")
             else:
-                # 기본 조회: 현재 LIVE 경기 + 모든 미래 SCHEDULED 경기 + 오늘(00:00 이후) 경기
+                # 기본 조회: 오늘(00:00) 이후의 LIVE, SCHEDULED 경기 및 오늘 경기 (과거 미진행/가짜 경기 원천 차단)
                 query = query.filter(
                     or_(
-                        Match.status == 'LIVE',
-                        Match.status == 'SCHEDULED',
+                        and_(Match.status == 'LIVE', Match.match_date >= f"{today_str} 00:00"),
+                        and_(Match.status == 'SCHEDULED', Match.match_date >= f"{today_str} 00:00"),
                         Match.match_date >= f"{today_str} 00:00"
                     )
                 )
@@ -423,6 +463,10 @@ class MatchService:
         # Render 안전: 최대 350경기로 확장하여 당일 및 향후 전체 예정 경기 온전히 표출
         target_limit = min(limit if (limit and limit > 0) else 350, 400)
         matches = q.limit(target_limit).all()
+        
+        # 특정 비주요 리그를 명시적으로 요청하지 않은 경우, 본경기(주요 리그)만 표출
+        if not league_name or league_name.upper() in ["ALL", ""]:
+            matches = [m for m in matches if is_main_league(m.league_name)]
         
         # High-Speed O(N) Deduplicate matches by canonical fixture key (sport, home, away, date)
         seen_keys = set()

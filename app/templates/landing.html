@@ -12525,7 +12525,17 @@ function getFullModalMatchList() {
 
       const isMatchTrulyLive = (m) => (typeof isRealTimeLive === 'function') ? isRealTimeLive(m) : false;
 
-      let list = [...allMatches];
+      const isMainLeagueMatch = (m) => {
+        if (!m || !m.league_name) return false;
+        const ln = m.league_name.toUpperCase();
+        const excluded = ['아시안게임', '일본 FA컵', '걸프컵', '아라비안', '호주 FA컵', '미국 FA컵', '친선경기', '클럽친선', 'ASEAN', '동남아시아', '2군', 'PREMIER LEAGUE 2', '리저브'];
+        for (let i = 0; i < excluded.length; i++) {
+          if (ln.includes(excluded[i].toUpperCase())) return false;
+        }
+        return true;
+      };
+
+      let list = [...allMatches].filter(isMainLeagueMatch);
 
       // 6대 스포츠 고정 필터 (전체, 축구, 야구, 농구, 하키, 배구)
       if (currentPredSport === 'SOCCER') {
@@ -12596,13 +12606,15 @@ function getFullModalMatchList() {
         list = list.filter(m => (m.match_date && m.match_date.startsWith(d1Str)));
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       } else {
-        // 📅 [경기목록 (진행/예정)]: LIVE 진행 중인 경기 + 오늘 및 향후 예정(SCHEDULED) 경기
+        // 📅 [경기목록 (진행/예정)]: LIVE 진행 중인 경기 + 오늘(D0) 및 내일(D1) 예정(SCHEDULED) 경기
         const liveMatches = list.filter(isMatchTrulyLive);
         const upcomingMatches = list.filter(m => {
           if (m.status === 'CANCELLED' || m.status === 'POSTPONED' || m.status === 'FINISHED') return false;
           if (isMatchTrulyLive(m)) return false;
           // 🛡️ 시간 가드: 시작시간 20분 이상 경과한 경기는 라이브가 아니면 진행/예정 목록 진입 불가 (자동 지난경기로 롤오버)
           if (m.match_date && m.match_date < bufferKstDateTime) return false;
+          // 오늘 경기(d0Str) 및 내일 경기(d1Str)만 경기목록 탭에 표출 (먼 미래 경기 혼입 방지)
+          if (m.match_date && !m.match_date.startsWith(d0Str) && !m.match_date.startsWith(d1Str)) return false;
           return true;
         });
 

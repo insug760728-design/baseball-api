@@ -1124,6 +1124,14 @@ class BetmanService:
                 ).first()
 
             if not match:
+                # 본경기(공식 주요 리그)가 아닌 비주요 대회는 신규 등록하지 않음
+                try:
+                    from app.services.match_service import is_main_league
+                    if not is_main_league(g_info.get('league_name')):
+                        continue
+                except Exception:
+                    pass
+
                 match = Match(
                     official_id=g_info['official_id'],
                     sport_code=g_info['sport_code'],
