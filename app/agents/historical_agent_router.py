@@ -782,6 +782,7 @@ class HistoricalAgentRouter:
 
                 # 100% 실데이터 투수 / 타자 / 불펜 추출 (PlayerMatchStat 연동)
                 perspective_starter = {}
+                opp_starter_info = {}
                 perspective_bullpen = {}
                 perspective_batting = {}
                 baseball_stats = {}

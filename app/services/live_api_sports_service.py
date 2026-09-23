@@ -51,7 +51,8 @@ VOLLEYBALL_STATUS_MAP = {
 # National / Asian Games / International Team Mapping (Basketball, Volleyball, etc.)
 NATIONAL_TEAM_MAP = {
     "korea": "한국", "south korea": "한국", "korea republic": "한국", "republic of korea": "한국",
-    "china": "중국", "pr china": "중국",
+    "china": "중국", "pr china": "중국", "china pr": "중국",
+    "korea dpr": "북한", "north korea": "북한", "dpr korea": "북한",
     "japan": "일본",
     "chinese taipei": "대만", "taiwan": "대만",
     "mongolia": "몽골",
@@ -59,7 +60,7 @@ NATIONAL_TEAM_MAP = {
     "kazakhstan": "카자흐스탄",
     "qatar": "카타르",
     "hong kong": "홍콩", "hong kong china": "홍콩",
-    "kyrgyzstan": "키르기스스탄",
+    "kyrgyzstan": "키르기스스탄", "kyrgyz republic": "키르기스스탄",
     "vietnam": "베트남",
     "thailand": "태국",
     "indonesia": "인도네시아",
@@ -72,6 +73,13 @@ NATIONAL_TEAM_MAP = {
     "bahrain": "바레인",
     "jordan": "요르단",
     "lebanon": "레바논",
+    "kuwait": "쿠웨이트",
+    "uae": "아랍에미리트", "united arab emirates": "아랍에미리트",
+    "bangladesh": "방글라데시",
+    "myanmar": "미얀마",
+    "oman": "오만",
+    "iraq": "이라크",
+    "syria": "시리아",
     "united states": "미국", "usa": "미국",
     "puerto rico": "푸에르토리코",
     "cuba": "쿠바",
@@ -220,19 +228,19 @@ TEAM_SYNONYMS = {
     "묀헨글라트바흐": ["borussia monchengladbach", "monchengladbach"],
     "함부르크": ["hamburg", "hamburger sv", "hsv"],
     "마인츠": ["mainz", "mainz 05", "fsv mainz 05", "마인츠05"],
-    "샬케04": ["schalke", "schalke 04", "샬케"],
-    "파리생제르맹": ["psg", "paris saint germain", "paris saint-germain", "파리생제르망", "파리"],
-    "마르세유": ["marseille", "olympique marseille"],
+    "샬케04": ["schalke", "schalke 04", "샬케", "샬케04"],
+    "파리생제르맹": ["psg", "paris saint germain", "paris saint-germain", "파리생제르망", "파리", "파리 생제르맹"],
+    "마르세유": ["marseille", "olympique marseille", "올랭피크드 마르세유", "올랭피크드마르세유"],
     "모나코": ["monaco", "as monaco"],
     "리옹": ["lyon", "olympique lyon"],
-    "릴": ["lille", "lille osc"],
+    "릴": ["lille", "lille osc", "릴 osc", "릴osc", "릴"],
     "랑스": ["lens", "rc lens"],
     "로리앙": ["lorient", "fc lorient"],
     "르아브르": ["le havre", "le havre ac", "havre"],
-    "브레스투": ["brest", "stade brestois 29", "브레스트"],
-    "니스": ["nice", "ogc nice"],
+    "브레스투": ["brest", "stade brestois 29", "브레스트", "브레스투아", "스타드 브레스투아29", "스타드브레스투아29"],
+    "니스": ["nice", "ogc nice", "ogc 니스", "ogc니스"],
     "르망": ["le mans", "le mans fc"],
-    "트루아": ["troyes", "estac troyes"],
+    "트루아": ["troyes", "estac troyes", "트루아 ac", "트루아ac"],
     "스트라스": ["strasbourg", "rc strasbourg", "스트라스부르"],
     "스타드렌": ["rennes", "stade rennais", "렌"],
 
@@ -252,7 +260,7 @@ TEAM_SYNONYMS = {
     "브리스톨c": ["bristol city", "브리스톨"],
     "프레스턴": ["preston", "preston north end"],
     "스완지": ["swansea", "swansea city"],
-    "QPR": ["qpr", "queens park rangers"],
+    "QPR": ["qpr", "queens park rangers", "퀸즈파크 레인저스", "퀸즈파크레인저스", "퀸즈파크", "퀸즈파크r"],
     "밀월": ["millwall"],
     "더비": ["derby", "derby county"],
     "포츠머스": ["portsmouth"],
@@ -313,8 +321,8 @@ TEAM_SYNONYMS = {
     # Soccer (J League)
     "고베": ["vissel kobe", "vissel", "비셀고베", "비셀 고베"],
     "산프레체": ["sanfrecce hiroshima", "sanfrecce", "산프레체 히로시마"],
-    "마치다": ["machida zelvia", "machida", "마치다젤비아"],
-    "요코하마M": ["yokohama f. marinos", "yokohama fm", "요코하마마리노스", "요코하마 f. 마리노스"],
+    "마치다": ["machida zelvia", "machida", "마치다젤비아", "마치다 젤비아", "fc마치다 젤비아", "fc마치다젤비아", "fc마치다", "fc 마치다"],
+    "요코하마M": ["yokohama f. marinos", "yokohama fm", "요코하마마리노스", "요코하마 f. 마리노스", "요코하마 f마리노스"],
     "가와사키": ["kawasaki frontale", "kawasaki", "가와사키 프론탈레"],
     "감바오사카": ["gamba osaka", "gamba", "감바 오사카"],
     "세레소오사카": ["cerezo osaka", "cerezo", "세레소 오사카"],
@@ -322,18 +330,41 @@ TEAM_SYNONYMS = {
     "나고야": ["nagoya grampus", "nagoya", "나고야 그램퍼스"],
     "가시마": ["kashima antlers", "kashima", "가시마 앤틀러스"],
     "도쿄": ["fc tokyo", "tokyo", "fc 도쿄", "fc도쿄"],
+    "가시와": ["kashiwa reysol", "kashiwa", "가시와 레이솔", "가시와레이솔", "가시와"],
+    "반포레고후": ["ventforet kofu", "kofu", "반포레 고후", "반포레고후", "방포레 고후", "방포레고후", "반포레", "방포레", "고후"],
+    "도쿠시마": ["tokushima vortis", "tokushima", "도쿠시마 보르티스", "도쿠시마보르티스", "도쿠시마"],
+    "후지에다": ["fujieda myfc", "fujieda", "후지에다 myfc", "후지에다myfc", "후지에다"],
+    "도치기": ["tochigi city", "tochigi sc", "tochigi", "도치기 시티fc", "도치기 시티", "도치기시티fc", "도치기시티", "도치기sc", "도치기"],
+    "교토상가": ["kyoto sanga", "kyoto", "교토 상가", "교토 상가fc", "교토상가fc", "교토상가", "교토"],
+    "이마바리": ["imabari", "fc imabari", "fc이마바리", "fc 이마바리", "이마바리"],
+    "사간도스": ["sagan tosu", "sagan", "사간 도스", "사간도스", "사간"],
+    "삿포로": ["consadole sapporo", "sapporo", "콘사도레 삿포로", "콘사도레", "콘사삿포"],
+    "후쿠오카": ["avispa fukuoka", "fukuoka", "아비스파 후쿠오카", "아비스파", "아비스후"],
+    "시미즈": ["shimizu s-pulse", "shimizu", "시미즈 에스펄스", "시미즈", "시미에스"],
+    "제프유나": ["jef united chiba", "jef united", "jef", "제프 유나이티드", "제프유나이티드", "제프치바"],
+    "나가사키": ["v-varen nagasaki", "v varen nagasaki", "nagasaki", "v바렌 나가사키", "v-나가사키", "나가사키", "v바렌나가"],
+    "오미야": ["omiya ardija", "omiya", "rb omiya", "rb오미야 아르디자", "오미야 아르디자", "오미야", "rb오미야"],
+    "오카야마": ["fagiano okayama", "okayama", "파지아노 오카야마", "오카야마", "파지오카"],
+    "도야마": ["kataller toyama", "toyama", "카탈레 도야마", "카탈레도야마", "카탈레", "도야마"],
+    "센다이": ["vegalta sendai", "sendai", "베갈타 센다이", "베갈타센다이", "베갈타", "센다이"],
+    "쇼난": ["shonan bellmare", "shonan", "쇼난 벨마레", "쇼난벨마레", "쇼난"],
+    "니가타": ["albirex niigata", "niigata", "알비렉스 니가타", "알비렉스니가타", "알비니가", "니가타"],
+    "이와타": ["jubilo iwata", "iwata", "주빌로 이와타", "주빌로이와타", "이와타"],
+    "야마가타": ["montedio yamagata", "yamagata", "몬테디오 야마가타", "몬테야마", "야마가타"],
+    "오이타": ["oita trinita", "oita", "오이타 트리니타", "오이타트리니타", "오이타"],
+    "미토": ["mito hollyhock", "mito", "미토 홀리호크", "미토홀리호크", "미토"],
 
     # Soccer (Dutch Eredivisie)
     "AZ알크마르": ["az alkmaar", "az", "az알크마", "알크마르", "az 알크마르"],
-    "빌럼II": ["willem ii", "willem", "빌레ii", "빌럼", "빌럼2", "빌럼 ii"],
-    "아약스": ["ajax", "afc ajax", "아약스 암스테르담"],
+    "빌럼II": ["willem ii", "willem", "빌레ii", "빌럼", "빌럼2", "빌럼 ii", "빌럼ii"],
+    "아약스": ["ajax", "afc ajax", "아약스 암스테르담", "afc아약스"],
     "페예노르트": ["feyenoord", "feyenoord rotterdam", "페예노르", "페예노르트 로테르담"],
     "PSV아인트호벤": ["psv", "psv eindhoven", "psv아인", "아인트호벤"],
     "위트레흐트": ["fc utrecht", "utrecht", "위트레흐"],
     "트벤테": ["fc twente", "twente", "트벤터"],
     "스파르타로테르담": ["sparta rotterdam", "sparta", "스파르타"],
     "헤이렌베인": ["sc heerenveen", "heerenveen", "헤이렌베"],
-    "포르투나시타르트": ["fortuna sittard", "fortuna", "포르투나"],
+    "포르투나시타르트": ["fortuna sittard", "fortuna", "포르투나", "포르투나 시타르트", "포르튀나 시타르트", "포르튀나"],
     "고어헤드이글스": ["go ahead eagles", "go ahead", "고어헤드"],
     "네이메헌": ["nec nijmegen", "nec", "nec네이", "네이메헨"],
     "즈볼레": ["pec zwolle", "zwolle"],
@@ -341,12 +372,25 @@ TEAM_SYNONYMS = {
     "헤라클레스": ["heracles almelo", "heracles", "헤라클레"],
     "발베이크": ["rkc waalwijk", "waalwijk", "발베이크"],
     "브레다": ["nac breda", "nac", "nac브레"],
+    "덴하흐": ["ado den haag", "den haag", "ado 덴하흐", "ado덴하흐", "덴하흐", "ado"],
+    "캄뷔르": ["sc cambuur", "cambuur", "sc 캄뷔르", "sc캄뷔르", "캄뷔르"],
 
-    # Additional German & English Betman aliases
+    # Additional German, English, French, International Betman aliases
     "우니온베를린": ["1. fc union berlin", "union berlin", "유니온베", "우니온 베를린", "유니온 베를린", "우니온베"],
     "빌레펠트": ["arminia bielefeld", "bielefeld", "아르미니아 빌레펠트"],
     "렉섬": ["wrexham", "wrexham afc", "렉섬 afc"],
     "웨스트햄": ["west ham", "west ham united", "웨스트햄 유나이티드"],
+    "프라이부르크": ["sc freiburg", "freiburg", "sc 프라이부르크", "sc프라이부르크", "프라이부르크", "프라이부"],
+    "브레멘": ["werder bremen", "werder", "베르더 브레멘", "베르더브레멘", "베르브레", "브레멘"],
+    "버밍엄": ["birmingham city", "birmingham", "버밍엄 시티", "버밍엄시티", "버밍엄"],
+    "앙제": ["angers sco", "angers", "앙제 sco", "앙제sco", "앙제"],
+    "볼턴": ["bolton wanderers", "bolton", "볼턴 원더러스", "볼턴원더러스", "볼튼", "볼턴"],
+    "오세르": ["aj auxerre", "auxerre", "aj 오세르", "aj오세르", "오세르", "오제르"],
+    "엘버스베르크": ["sv elversberg", "elversberg", "엘버스베르크", "엘버스베"],
+    "파더보른": ["sc paderborn 07", "paderborn", "sc 파더보른 07", "파더보른07", "파더보른", "파더보"],
+    "호펜하임": ["tsg hoffenheim", "tsg 1899 hoffenheim", "hoffenheim", "tsg1899 호펜하임", "tsg1899호펜하임", "호펜하임", "호펜하"],
+    "마멜로디": ["mamelodi sundowns", "sundowns", "마멜로디 선다운스", "마멜로디선다운스", "마멜로디"],
+    "알아흘리": ["al-ahli jeddah", "al ahli jeddah", "al-ahli", "al ahli", "알아흘리 사우디", "알아흘리사우디", "알아흘리"],
 
     # Soccer (USA - MLS)
     "DC유나이티드": ["dc united", "d.c. united", "dc united fc", "dc유나이티드", "dc 유나이티드", "디씨유나이티드", "디씨 유나이티드"],
@@ -1601,10 +1645,17 @@ class LiveApiSportsService:
             return {"status": "SKIPPED", "message": "API Key not configured"}
 
         now_dt = datetime.utcnow() + timedelta(hours=9)
-        d_today = date_str or now_dt.strftime("%Y-%m-%d")
-        d_yesterday = (now_dt - timedelta(days=1)).strftime("%Y-%m-%d")
-        d_tomorrow = (now_dt + timedelta(days=1)).strftime("%Y-%m-%d")
-        d_day_after = (now_dt + timedelta(days=2)).strftime("%Y-%m-%d")
+        if date_str:
+            try:
+                base_dt = datetime.strptime(date_str, "%Y-%m-%d")
+            except Exception:
+                base_dt = now_dt
+        else:
+            base_dt = now_dt
+        d_today = base_dt.strftime("%Y-%m-%d")
+        d_yesterday = (base_dt - timedelta(days=1)).strftime("%Y-%m-%d")
+        d_tomorrow = (base_dt + timedelta(days=1)).strftime("%Y-%m-%d")
+        d_day_after = (base_dt + timedelta(days=2)).strftime("%Y-%m-%d")
 
         if live_only:
             # ⚡ 5초 실시간 루프 전용 초고속 모드: 오직 현재 진행 중인 LIVE 경기만 0.4초 만에 즉시 수집
@@ -1771,9 +1822,16 @@ class LiveApiSportsService:
             return {"status": "SKIPPED", "message": "API Key not configured"}
 
         now_dt = datetime.utcnow() + timedelta(hours=9)
-        d_today = date_str or now_dt.strftime("%Y-%m-%d")
-        d_yesterday = (now_dt - timedelta(days=1)).strftime("%Y-%m-%d")
-        d_tomorrow = (now_dt + timedelta(days=1)).strftime("%Y-%m-%d")
+        if date_str:
+            try:
+                base_dt = datetime.strptime(date_str, "%Y-%m-%d")
+            except Exception:
+                base_dt = now_dt
+        else:
+            base_dt = now_dt
+        d_today = base_dt.strftime("%Y-%m-%d")
+        d_yesterday = (base_dt - timedelta(days=1)).strftime("%Y-%m-%d")
+        d_tomorrow = (base_dt + timedelta(days=1)).strftime("%Y-%m-%d")
 
         if live_only:
             # ⚡ 5초 실시간 루프 전용 초고속 모드: 당일 경기만 초고속 수집
