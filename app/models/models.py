@@ -1,8 +1,42 @@
 from datetime import datetime
 import json
+import re
+from typing import Optional, Any
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+
+def format_baseball_inning_ko(val: Any) -> Optional[str]:
+    if not val:
+        return None
+    s = str(val).strip()
+    if not s:
+        return None
+    if "회" in s:
+        return s
+    if s in ("진행중", "LIVE", "예정", "종료"):
+        return s
+    # Top 3rd, Top 3, 3rd Top
+    m_top = re.search(r'(?:top\s*(\d+)|(\d+)\s*(?:st|nd|rd|th)?\s*top)', s, re.I)
+    if m_top:
+        inn = m_top.group(1) or m_top.group(2)
+        return f"{inn}회초"
+    m_bot = re.search(r'(?:bot(?:tom)?\s*(\d+)|(\d+)\s*(?:st|nd|rd|th)?\s*bot(?:tom)?)', s, re.I)
+    if m_bot:
+        inn = m_bot.group(1) or m_bot.group(2)
+        return f"{inn}회말"
+    m_mid = re.search(r'(?:mid(?:dle)?\s*(\d+)|(\d+)\s*mid)', s, re.I)
+    if m_mid:
+        inn = m_mid.group(1) or m_mid.group(2)
+        return f"{inn}회말"
+    m_end = re.search(r'(?:end\s*(\d+)|(\d+)\s*end)', s, re.I)
+    if m_end:
+        inn = m_end.group(1) or m_end.group(2)
+        return f"{inn}회말"
+    m_num = re.search(r'^(\d+)(?:st|nd|rd|th)?(?:\s*inn(?:ing)?)?$', s, re.I)
+    if m_num:
+        return f"{m_num.group(1)}회"
+    return s
 
 class Match(Base):
     __tablename__ = 'matches'
@@ -111,18 +145,45 @@ class Match(Base):
     @property
     def current_inning(self):
         if hasattr(self, '_current_inning') and self._current_inning:
-            return self._current_inning
+            return format_baseball_inning_ko(self._current_inning) or self._current_inning
         if self.details:
             if hasattr(self.details, 'period_scores') and self.details.period_scores:
                 try:
                     ps = json.loads(self.details.period_scores) if isinstance(self.details.period_scores, str) else self.details.period_scores
-                    if isinstance(ps, dict) and ps.get("current_inning"):
-                        return ps["current_inning"]
+                    if isinstance(ps, dict):
+                        if ps.get("current_inning"):
+                            return format_baseball_inning_ko(ps["current_inning"]) or ps["current_inning"]
+                        # 라인스코어 기반 이닝 추론
+                        inns = ps.get("innings")
+                        if isinstance(inns, dict):
+                            last_inn = 0
+                            is_bot = False
+                            for k, v in sorted(inns.items(), key=lambda x: int(x[0]) if str(x[0]).isdigit() else 0):
+                                if str(k).isdigit():
+                                    ik = int(k)
+                                    a_val = v.get("away") if isinstance(v, dict) else None
+                                    h_val = v.get("home") if isinstance(v, dict) else None
+                                    a_has = (a_val is not None and str(a_val) != "-" and str(a_val).isdigit())
+                                    h_has = (h_val is not None and str(h_val) != "-" and str(h_val).isdigit())
+                                    if a_has or h_has:
+                                        last_inn = ik
+                                        is_bot = h_has
+                            if last_inn > 0:
+                                return f"{last_inn}회{'말' if is_bot else '초'}"
                 except Exception:
                     pass
             sb = self._get_scoreboard_data()
             if sb.get("current_inning"):
-                return sb["current_inning"]
+                return format_baseball_inning_ko(sb["current_inning"]) or sb["current_inning"]
+            if hasattr(self.details, 'team_stats') and self.details.team_stats:
+                try:
+                    ts = json.loads(self.details.team_stats) if isinstance(self.details.team_stats, str) else self.details.team_stats
+                    if isinstance(ts, dict) and ts.get("current_inning"):
+                        return format_baseball_inning_ko(ts["current_inning"]) or ts["current_inning"]
+                except Exception:
+                    pass
+        if getattr(self, "status", None) == "LIVE" and getattr(self, "sport_code", None) == "BASEBALL":
+            return "1회초"
         return None
 
     @current_inning.setter

@@ -508,6 +508,7 @@ class MatchService:
             h_confirmed = False
             a_confirmed = False
 
+            ps = {}
             if m.details:
                 if m.details.period_scores:
                     try:
@@ -563,6 +564,38 @@ class MatchService:
                                 m.away_starter_era = str(a_era_val)
                     except Exception:
                         pass
+
+            # 야구 이닝 라인스코어 기반 정밀 추론 및 포맷팅 (초/말 누락 방지)
+            if m.sport_code == "BASEBALL":
+                if (not m.current_inning or m.current_inning in ("진행중", "LIVE")) and isinstance(ps, dict):
+                    inns = ps.get("innings")
+                    if isinstance(inns, dict):
+                        last_inn = 0
+                        is_bot = False
+                        for k, v in sorted(inns.items(), key=lambda x: int(x[0]) if str(x[0]).isdigit() else 0):
+                            if str(k).isdigit():
+                                ik = int(k)
+                                a_val = v.get("away") if isinstance(v, dict) else None
+                                h_val = v.get("home") if isinstance(v, dict) else None
+                                a_has = (a_val is not None and str(a_val) != "-" and str(a_val).isdigit())
+                                h_has = (h_val is not None and str(h_val) != "-" and str(h_val).isdigit())
+                                if a_has or h_has:
+                                    last_inn = ik
+                                    is_bot = h_has
+                        if last_inn > 0:
+                            m.current_inning = f"{last_inn}회{'말' if is_bot else '초'}"
+                            m.inning_text = m.current_inning
+                if not m.current_inning and m.status == "LIVE":
+                    m.current_inning = "1회초"
+                    m.inning_text = "1회초"
+                elif not m.current_inning and m.status == "FINISHED":
+                    m.current_inning = "종료"
+                    m.inning_text = "종료"
+
+                from app.models.models import format_baseball_inning_ko
+                if m.current_inning:
+                    m.current_inning = format_baseball_inning_ko(m.current_inning) or m.current_inning
+                    m.inning_text = m.current_inning
 
             # 진행 중인 LIVE 야구 경기의 경우 player_match_stats 박스스코어에서 실제 등판 투수 식별
             if m.sport_code == "BASEBALL" and (not m.home_starter_name or not m.away_starter_name) and m.status == "LIVE":
@@ -1264,13 +1297,6 @@ class MatchService:
                 if m.status == "FINISHED":
                     curr_inn = "경기종료"
                     active_half = "FT"
-                elif m.status == "SCHEDULED":
-                    curr_inn = "경기예정"
-                    active_half = "PRE"
-                else:
-                    active_half = "초" if (m.id % 2 == 1) else "말"
-                    curr_inn = f"{max(1, last_played_inning)}회{active_half}"
-
                 real_sb = {}
                 real_ts = {}
                 if m.details and m.details.team_stats:
@@ -1279,6 +1305,21 @@ class MatchService:
                         real_sb = real_ts.get("scoreboard", {}) or real_ts
                     except Exception:
                         pass
+
+                if m.status == "FINISHED":
+                    curr_inn = "경기종료"
+                    active_half = "FT"
+                elif m.status == "SCHEDULED":
+                    curr_inn = "경기예정"
+                    active_half = "PRE"
+                else:
+                    live_inn = real_sb.get("current_inning") or real_ts.get("current_inning") or m.current_inning
+                    if live_inn and live_inn not in ("진행중", "LIVE", "예정", "종료"):
+                        curr_inn = live_inn
+                        active_half = "말" if "말" in live_inn else "초"
+                    else:
+                        active_half = "초" if (m.id % 2 == 1) else "말"
+                        curr_inn = f"{max(1, last_played_inning)}회{active_half}"
 
                 has_1b = bool(real_sb.get("base1") or real_sb.get("runner_1b") or real_sb.get("runner_on_1b") or real_sb.get("first_base") or real_sb.get("first")) if m.status == "LIVE" else False
                 has_2b = bool(real_sb.get("base2") or real_sb.get("runner_2b") or real_sb.get("runner_on_2b") or real_sb.get("second_base") or real_sb.get("second")) if m.status == "LIVE" else False

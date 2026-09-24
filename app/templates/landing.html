@@ -13921,6 +13921,7 @@ function getFullModalMatchList() {
         // Baseball Specific Live Stage: Live Scoreboard & Stadium Diamond Board
         let liveBroadcastStageHtml = '';
         if (m.sport_code === 'BASEBALL') {
+          const liveCardInning = st.inning_text || '1회초';
           const outDots = (st.outs >= 2) ? '🔴🔴' : (st.outs === 1 ? '🔴⚪' : '⚪⚪');
           const eventBannerHtml = buildLiveBaseballEventTrackHtml(m, st, diffMin);
 
@@ -13956,9 +13957,9 @@ function getFullModalMatchList() {
                   <span class="badge bg-dark bg-opacity-80 text-white border border-white border-opacity-25 px-2 py-1 fw-bold" style="font-size:0.72rem; backdrop-filter:blur(6px);">
                     ${sportIcon} ${m.league_name || m.sport_code}${sweepBadge}
                   </span>
-                  ${(st.inning_text && st.inning_text !== '진행중' && st.inning_text !== 'LIVE') ? `
+                  ${liveCardInning ? `
                   <span class="badge bg-warning text-dark px-2 py-1 fw-black shadow-sm" style="font-size:0.72rem; border-radius:6px;">
-                    ${st.inning_text}
+                    ${liveCardInning}
                   </span>` : ''}
                 </div>
                 <div class="d-flex align-items-center gap-1" style="flex-shrink:0;">
@@ -13989,7 +13990,7 @@ function getFullModalMatchList() {
                 <div class="position-absolute d-flex flex-column align-items-center justify-content-between" style="left:50%; top:44px; bottom:10px; transform:translateX(-50%); width:230px; z-index:4; pointer-events:none;">
                   <!-- Top: Score HUD -->
                   <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.3); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:28px; pointer-events:auto;">
-                    ${(st.inning_text && st.inning_text !== '진행중' && st.inning_text !== 'LIVE') ? `<span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center me-1" style="font-size:0.62rem; min-width:40px; border-radius:10px;">${st.inning_text}</span>` : ''}
+                    ${liveCardInning ? `<span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center me-1" style="font-size:0.62rem; min-width:40px; border-radius:10px;">${liveCardInning}</span>` : ''}
                     <div class="d-flex align-items-center justify-content-center px-2" style="font-family:'Roboto Mono', monospace; font-size:1.25rem; font-weight:900; line-height:1;">
                       <span style="color:#ef4444; min-width:14px; text-align:right; text-shadow:0 0 8px rgba(239,68,68,0.7);">${hScore}</span>
                       <span style="color:rgba(255,255,255,0.4); font-size:0.85rem; font-weight:400; margin:0 5px;">:</span>
@@ -23283,6 +23284,24 @@ function renderPredDetail(m, customDetailData = null) {
       } else if (!anyLiveMatches && syncIntervalSeconds !== 10) {
         startLiveAutoSync(10);
       }
+    function formatBaseballInningKo(txt) {
+      if (!txt) return '';
+      let s = String(txt).trim();
+      if (!s) return '';
+      if (s.includes('회')) return s;
+      if (s === '진행중' || s === 'LIVE' || s === '예정' || s === '종료') return s;
+      
+      let m = s.match(/(?:top\s*(\d+)|(\d+)\s*(?:st|nd|rd|th)?\s*top)/i);
+      if (m) return (m[1] || m[2]) + '회초';
+      m = s.match(/(?:bot(?:tom)?\s*(\d+)|(\d+)\s*(?:st|nd|rd|th)?\s*bot(?:tom)?)/i);
+      if (m) return (m[1] || m[2]) + '회말';
+      m = s.match(/(?:mid(?:dle)?\s*(\d+)|(\d+)\s*mid)/i);
+      if (m) return (m[1] || m[2]) + '회말';
+      m = s.match(/(?:end\s*(\d+)|(\d+)\s*end)/i);
+      if (m) return (m[1] || m[2]) + '회말';
+      m = s.match(/^(\d+)(?:st|nd|rd|th)?(?:\s*inn(?:ing)?)?$/i);
+      if (m) return m[1] + '회';
+      return s;
     }
 
     function getLiveMatchState(m) {
@@ -23327,8 +23346,46 @@ function renderPredDetail(m, customDetailData = null) {
         outs = Number(m.outs ?? 3);
       }
 
-      let inning_text = ts.current_inning || sb.current_inning || m.current_inning || '';
-      if (!inning_text) inning_text = isLive ? '진행중' : (m.status === 'FINISHED' ? '종료' : '예정');
+      let inning_text = ts.current_inning || sb.current_inning || m.current_inning || m.inning_text || '';
+      if (m.sport_code === 'BASEBALL') {
+        if (!inning_text || inning_text === '진행중' || inning_text === 'LIVE') {
+          // Linescore / period_scores 에서 정밀 추론
+          const ps = m.period_scores || (m.details && m.details.period_scores) || {};
+          let parsedPs = ps;
+          if (typeof ps === 'string') {
+            try { parsedPs = JSON.parse(ps) || {}; } catch(e) { parsedPs = {}; }
+          }
+          const inns = (parsedPs && parsedPs.innings) || parsedPs || {};
+          let lastInn = 0;
+          let isBot = false;
+          if (typeof inns === 'object' && inns !== null) {
+            for (let i = 1; i <= 15; i++) {
+              const row = inns[String(i)] || inns[i];
+              if (row && typeof row === 'object') {
+                const aVal = row.away;
+                const hVal = row.home;
+                const aHas = (aVal !== undefined && aVal !== null && aVal !== '-' && !isNaN(Number(aVal)));
+                const hHas = (hVal !== undefined && hVal !== null && hVal !== '-' && !isNaN(Number(hVal)));
+                if (aHas || hHas) {
+                  lastInn = i;
+                  isBot = hHas;
+                }
+              }
+            }
+          }
+          if (lastInn > 0) {
+            inning_text = `${lastInn}회${isBot ? '말' : '초'}`;
+          } else if (isLive) {
+            inning_text = '1회초';
+          }
+        }
+        if (inning_text) {
+          inning_text = formatBaseballInningKo(inning_text);
+        }
+      }
+      if (!inning_text) {
+        inning_text = isLive ? (m.sport_code === 'BASEBALL' ? '1회초' : '진행중') : (m.status === 'FINISHED' ? '종료' : '예정');
+      }
 
       let outs_text = outs === 0 ? '노아웃' : (outs === 1 ? '1아웃' : (outs === 2 ? '2아웃' : '3아웃'));
       let runners_list = [];
@@ -23509,6 +23566,7 @@ function renderPredDetail(m, customDetailData = null) {
       }
 
       const isBkOrVbPendingFocus = (m.sport_code === 'BASKETBALL' || m.sport_code === 'VOLLEYBALL') && isLive && hScore === 0 && aScore === 0;
+      const liveFocusInning = (m.sport_code === 'BASEBALL') ? (st.inning_text || '1회초') : ((st.inning_text && st.inning_text !== '진행중' && st.inning_text !== 'LIVE') ? st.inning_text : '');
 
       // ⚾ [야구 LIVE FOCUS] 경기목록과 100% 동일한 220px 대형 럭셔리 3D 스타디움 메인 스테이지 적용
       if (m.sport_code === 'BASEBALL') {
@@ -23549,9 +23607,9 @@ function renderPredDetail(m, customDetailData = null) {
                   <span class="badge bg-dark bg-opacity-80 text-white border border-white border-opacity-25 px-2 py-1 fw-bold" style="font-size:0.70rem; backdrop-filter:blur(6px);">
                     ⚾ ${m.league_name || 'MLB'}
                   </span>
-                  ${(st.inning_text && st.inning_text !== '진행중' && st.inning_text !== 'LIVE') ? `
+                  ${liveFocusInning ? `
                   <span class="badge bg-warning text-dark px-2 py-1 fw-black shadow-sm" style="font-size:0.70rem; border-radius:6px;">
-                    ${st.inning_text}
+                    ${liveFocusInning}
                   </span>` : ''}
                 </div>
                 <div class="d-flex align-items-center gap-1" style="flex-shrink:0;">
@@ -23587,7 +23645,7 @@ function renderPredDetail(m, customDetailData = null) {
                 <div class="position-absolute d-flex flex-column align-items-center justify-content-between" style="left:50%; top:42px; bottom:10px; transform:translateX(-50%); width:220px; z-index:4; pointer-events:none;">
                   <!-- Top: Score HUD (이미지 맨위의 실시간 전광판 점수판) -->
                   <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.3); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:28px; pointer-events:auto;">
-                    ${(st.inning_text && st.inning_text !== '진행중' && st.inning_text !== 'LIVE') ? `<span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center me-1" style="font-size:0.62rem; min-width:40px; border-radius:10px;">${st.inning_text}</span>` : ''}
+                    ${liveFocusInning ? `<span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center me-1" style="font-size:0.62rem; min-width:40px; border-radius:10px;">${liveFocusInning}</span>` : ''}
                     <div class="d-flex align-items-center justify-content-center px-2" style="font-family:'Roboto Mono', monospace; font-size:1.25rem; font-weight:900; line-height:1;">
                       <span style="color:#ef4444; min-width:14px; text-align:right; text-shadow:0 0 8px rgba(239,68,68,0.7);">${hScore}</span>
                       <span style="color:rgba(255,255,255,0.4); font-size:0.85rem; font-weight:400; margin:0 5px;">:</span>
@@ -23715,10 +23773,10 @@ function renderPredDetail(m, customDetailData = null) {
                   - : -
                 </div>
               ` : `
-                ${(st.inning_text && st.inning_text !== '진행중' && st.inning_text !== 'LIVE') ? `
+                ${liveFocusInning ? `
                 <div class="mb-0.5">
                   <span class="badge py-0.5 px-2" style="${inningBadgeStyle} font-size:0.68rem; font-weight:800; border-radius:4px; letter-spacing:0.2px;">
-                    ${st.inning_text}
+                    ${liveFocusInning}
                   </span>
                 </div>` : ''}
                 <div class="fw-bold px-2.5 py-0.5 rounded d-inline-flex align-items-center gap-1.5" style="background:#ffffff; border:1.5px solid #cbd5e1; font-size:1.25rem; font-family:'Roboto Mono', monospace; line-height:1; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
@@ -23785,7 +23843,7 @@ function renderPredDetail(m, customDetailData = null) {
       if (isPendingResult) {
         inningText = '집계대기';
       } else if (isLive) {
-        if (m.sport_code === 'BASEBALL') inningText = (st.inning_text && st.inning_text !== '진행중') ? st.inning_text : (m.current_inning || 'LIVE');
+        if (m.sport_code === 'BASEBALL') inningText = (st.inning_text && st.inning_text !== '진행중' && st.inning_text !== 'LIVE') ? st.inning_text : (m.current_inning || '1회초');
         else if (m.sport_code === 'SOCCER') inningText = (st.match_time && st.match_time !== '진행중') ? st.match_time : '전반';
         else if (m.sport_code === 'BASKETBALL') inningText = (st.quarter && st.quarter !== '진행중') ? st.quarter : 'LIVE';
         else if (m.sport_code === 'VOLLEYBALL') inningText = (st.set_score && st.set_score !== '진행중') ? st.set_score : 'LIVE';
