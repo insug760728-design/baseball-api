@@ -20,9 +20,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 MAIN_LEAGUE_EXCLUDED = [
-    '걸프컵', '아라비안', '호주 FA컵', '미국 FA컵',
-    '클럽친선', '친선경기', '동남아시아', 'ASEAN', '엘리테세리엔', '캄페오네스',
-    '2군', '리저브', 'PREMIER LEAGUE 2'
+    '호주 FA컵', '미국 FA컵',
+    '클럽친선', '2군', '리저브', 'PREMIER LEAGUE 2'
 ]
 
 MAIN_LEAGUE_KEYWORDS = [
@@ -37,12 +36,19 @@ MAIN_LEAGUE_KEYWORDS = [
     '리그 1', '리그1', '리그앙', 'LIGUE 1', 'LIGUE1',
     '챔피언스', 'UCL', 'CHAMPIONS LEAGUE',
     '유로파', 'UEL', 'EUROPA',
+    '컨퍼런스', 'CONFERENCE',
     'K리그', 'K-LEAGUE', 'K LEAGUE',
     'J리그', 'J-LEAGUE', 'J1', 'J2', 'J.LEAGUE',
     '챔피언십', 'CHAMPIONSHIP',
     '에레디비시', 'EREDIVISIE',
     'MLS', 'MAJOR LEAGUE SOCCER', '메이저리그 사커', '메이저리그사커',
     '카라바오', 'CARABAO', 'EFL', '리그컵',
+    '네이션스', 'NATIONS', 'NATIONS LEAGUE',
+    '국제친선', '친선경기', 'A매치', '국가대표', '평가전',
+    '월드컵', 'WORLD CUP',
+    '아시안컵', 'ASIAN CUP', '아세안', 'ASEAN',
+    '걸프컵', 'GULF CUP', '아라비안',
+    '코파', 'COPA', '유로', 'EURO',
     'NBA', 'KBL', '한국 프로농구', '미국 프로농구',
     'KOVO', 'V-리그', 'V리그', '프로배구'
 ]
@@ -470,9 +476,9 @@ class MatchService:
         target_limit = min(limit if (limit and limit > 0) else 350, 400)
         matches = q.limit(target_limit).all()
         
-        # 특정 비주요 리그를 명시적으로 요청하지 않은 경우, 본경기(주요 리그)만 표출
+        # 특정 비주요 리그를 명시적으로 요청하지 않은 경우, 본경기(주요 리그) 또는 배트맨 발매 경기 표출
         if not league_name or league_name.upper() in ["ALL", ""]:
-            matches = [m for m in matches if is_main_league(m.league_name)]
+            matches = [m for m in matches if is_main_league(m.league_name) or (m.official_id and m.official_id.startswith("BETMAN_"))]
         
         # High-Speed O(N) Deduplicate matches by canonical fixture key (sport, home, away, date)
         seen_keys = set()
