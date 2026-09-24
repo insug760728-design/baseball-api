@@ -23284,6 +23284,8 @@ function renderPredDetail(m, customDetailData = null) {
       } else if (!anyLiveMatches && syncIntervalSeconds !== 10) {
         startLiveAutoSync(10);
       }
+    }
+
     function formatBaseballInningKo(txt) {
       if (!txt) return '';
       let s = String(txt).trim();
