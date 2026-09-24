@@ -51,7 +51,9 @@ if os.path.exists(static_dir):
 app.include_router(api_v1_router, prefix="/api/v1")
 
 # Web Portal Root Route
-template_path = os.path.join(current_dir, "app", "templates", "index.html")
+template_path = os.path.join(root_dir, "app", "templates", "landing.html")
+if not os.path.exists(template_path):
+    template_path = os.path.join(current_dir, "app", "templates", "index.html")
 
 @app.get("/", response_class=HTMLResponse, summary="TOKEON 메인 포털")
 def read_root(request: Request):

@@ -45,8 +45,9 @@ async def lifespan(app: FastAPI):
     try:
         import asyncio
         ws_manager.set_event_loop(asyncio.get_running_loop())
-    except Exception:
-        pass
+        await ws_manager.init_redis()
+    except Exception as e:
+        print(f"[WARN] WebSocket Redis 초기화 오류: {e}")
     db = SessionLocal()
     try:
         match_count = db.query(models.Match).count()
@@ -152,11 +153,15 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # 서버 종료 시 스케줄러 정리
+    # 서버 종료 시 스케줄러 및 웹소켓 정리
     try:
         SchedulerService.shutdown_scheduler()
     except Exception as e:
         print(f"[WARN] 스케줄러 종료 중 오류: {e}")
+    try:
+        await ws_manager.close()
+    except Exception:
+        pass
 
 app = FastAPI(
     title="⚾ 야구 정밀 분석 & 데이터 관리 센터",
@@ -340,6 +345,10 @@ def mobile_portal(request: Request):
         )
     except Exception as e:
         return HTMLResponse(content=f"<h1>모바일 화면 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
+
+@app.get("/health", summary="TOKEON 서비스 헬스체크")
+def health_check():
+    return {"status": "ok", "service": "Sports-API", "timestamp": time.time()}
 
 @app.get("/", response_class=HTMLResponse, summary="TOKEON 스포츠 분석 전문 포털 (tokeon.co.kr)")
 def domain_portal(request: Request):

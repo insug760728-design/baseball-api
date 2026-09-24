@@ -303,7 +303,7 @@ class MlbOfficialScraper:
             prev_d = d
 
         # 한국 시각(KST) 기준 날짜 d의 경기는 미국 시차(-13~-16시간)로 인해 미국 날짜 prev_d(전날 저녁)와 d(당일)에 걸쳐 열림
-        url = f"{MLB_API_BASE}/schedule?sportId=1&season=2026&startDate={prev_d}&endDate={d}&hydrate=probablePitcher,linescore,team,lineups"
+        url = f"{MLB_API_BASE}/schedule?sportId=1&season=2026&startDate={prev_d}&endDate={d}&hydrate=probablePitcher,linescore,team,lineups(person)"
         logger.info(f"[MLB Scraper] Requesting official schedule for KST date {d} (US {prev_d}~{d}) -> {url}")
         
         try:
@@ -462,6 +462,11 @@ class MlbOfficialScraper:
                 curr_pitcher = defense.get("pitcher", {}).get("fullName")
                 curr_batter = offense.get("batter", {}).get("fullName")
 
+                linescore = {
+                    "home": [innings_dict.get(str(i), {}).get("home", "-") for i in range(1, 10)],
+                    "away": [innings_dict.get(str(i), {}).get("away", "-") for i in range(1, 10)]
+                }
+
                 scoreboard = {
                     "current_inning": inning_text,
                     "inning_num": curr_inn,
@@ -478,7 +483,9 @@ class MlbOfficialScraper:
                     "runner_2b": b2,
                     "runner_3b": b3,
                     "pitcher": curr_pitcher,
-                    "batter": curr_batter
+                    "batter": curr_batter,
+                    "linescore": linescore,
+                    "period_scores": period_scores
                 }
 
                 # 공식 1~9번 선발 라인업 추출 (MLB Stats API 실데이터)
@@ -487,39 +494,43 @@ class MlbOfficialScraper:
                 a_lineup_raw = lineups.get("awayPlayers", [])
 
                 home_lineup = []
-                for idx, p in enumerate(h_lineup_raw[:9]):
-                    p_en = p.get("fullName", "")
-                    p_ko = sanitize_player_name(translate_player_name(p_en))
-                    pos = p.get("primaryPosition", {}).get("abbreviation", "타자")
-                    home_lineup.append({
-                        "order": idx + 1,
-                        "pos": pos,
-                        "name": p_ko,
-                        "name_en": p_en,
-                        "id": p.get("id"),
-                        "hand": "R",
-                        "avg": ".270"
-                    })
+                if len(h_lineup_raw) >= 9:
+                    for idx, p in enumerate(h_lineup_raw[:9]):
+                        p_en = p.get("fullName", "")
+                        p_ko = sanitize_player_name(translate_player_name(p_en))
+                        pos = p.get("primaryPosition", {}).get("abbreviation", "타자")
+                        home_lineup.append({
+                            "order": idx + 1,
+                            "pos": pos,
+                            "name": p_ko or p_en,
+                            "name_en": p_en,
+                            "id": p.get("id"),
+                            "hand": p.get("batSide", {}).get("code") or "R",
+                            "avg": ""
+                        })
 
                 away_lineup = []
-                for idx, p in enumerate(a_lineup_raw[:9]):
-                    p_en = p.get("fullName", "")
-                    p_ko = sanitize_player_name(translate_player_name(p_en))
-                    pos = p.get("primaryPosition", {}).get("abbreviation", "타자")
-                    away_lineup.append({
-                        "order": idx + 1,
-                        "pos": pos,
-                        "name": p_ko,
-                        "name_en": p_en,
-                        "id": p.get("id"),
-                        "hand": "R",
-                        "avg": ".270"
-                    })
+                if len(a_lineup_raw) >= 9:
+                    for idx, p in enumerate(a_lineup_raw[:9]):
+                        p_en = p.get("fullName", "")
+                        p_ko = sanitize_player_name(translate_player_name(p_en))
+                        pos = p.get("primaryPosition", {}).get("abbreviation", "타자")
+                        away_lineup.append({
+                            "order": idx + 1,
+                            "pos": pos,
+                            "name": p_ko or p_en,
+                            "name_en": p_en,
+                            "id": p.get("id"),
+                            "hand": p.get("batSide", {}).get("code") or "R",
+                            "avg": ""
+                        })
 
-                is_lineup_confirmed = bool((len(home_lineup) >= 9 and len(away_lineup) >= 9) or (len(home_lineup) >= 9) or (status in ("LIVE", "FINISHED")))
+                is_lineup_confirmed = bool(len(home_lineup) >= 9 and len(away_lineup) >= 9)
 
                 team_stats = {
                     "scoreboard": scoreboard,
+                    "linescore": linescore,
+                    "period_scores": period_scores,
                     "current_inning": inning_text,
                     "hits": {"home": h_sum.get("hits", 0), "away": a_sum.get("hits", 0)},
                     "errors": {"home": h_sum.get("errors", 0), "away": a_sum.get("errors", 0)},
@@ -560,6 +571,7 @@ class MlbOfficialScraper:
                     "balls": balls,
                     "strikes": strikes,
                     "period_scores": period_scores,
+                    "linescore": linescore,
                     "scoreboard": scoreboard,
                     "team_stats": team_stats,
                     "home_lineup": home_lineup,
@@ -644,6 +656,11 @@ class MlbOfficialScraper:
         curr_pitcher = defense.get("pitcher", {}).get("fullName")
         curr_batter = offense.get("batter", {}).get("fullName")
 
+        linescore = {
+            "home": [innings_dict.get(str(i), {}).get("home", "-") for i in range(1, 10)],
+            "away": [innings_dict.get(str(i), {}).get("away", "-") for i in range(1, 10)]
+        }
+
         scoreboard = {
             "current_inning": inning_text,
             "inning_num": curr_inn,
@@ -660,7 +677,9 @@ class MlbOfficialScraper:
             "runner_2b": b2,
             "runner_3b": b3,
             "pitcher": curr_pitcher,
-            "batter": curr_batter
+            "batter": curr_batter,
+            "linescore": linescore,
+            "period_scores": period_scores
         }
 
         # 선발 투수 프로필 실시간 추출
@@ -681,6 +700,8 @@ class MlbOfficialScraper:
         # (2) 팀 스탯
         team_stats = {
             "scoreboard": scoreboard,
+            "linescore": linescore,
+            "period_scores": period_scores,
             "current_inning": inning_text,
             "hits": {"home": home_summary.get("hits", 0), "away": away_summary.get("hits", 0)},
             "errors": {"home": home_summary.get("errors", 0), "away": away_summary.get("errors", 0)},
@@ -964,110 +985,136 @@ class MlbOfficialScraper:
         away_starter = {}
         is_confirmed = False
 
-        if matched_game:
+        # 1. 1순위: 공식 gamePk 기준 박스스코어에서 실시간 확정 선발 라인업 및 당해 실제 시즌 타율/OPS/HR/좌우타 추출
+        if matched_game_pk:
+            try:
+                box_url = f"{MLB_API_BASE}/game/{matched_game_pk}/boxscore?hydrate=person"
+                box_data = self._fetch_json(box_url)
+                teams_box = box_data.get("teams", {})
+
+                for side, target_list in [("home", home_lineup), ("away", away_lineup)]:
+                    t_box = teams_box.get(side, {})
+                    p_box = t_box.get("players", {})
+                    starters = []
+                    for pid in t_box.get("batters", []):
+                        p_obj = p_box.get(f"ID{pid}")
+                        if not p_obj:
+                            continue
+                        b_order = p_obj.get("battingOrder")
+                        if b_order and b_order.endswith("00"):
+                            pers = p_obj.get("person", {})
+                            p_en = pers.get("fullName", "")
+                            p_ko = sanitize_player_name(translate_player_name(p_en))
+                            s_bat = p_obj.get("seasonStats", {}).get("batting", {})
+                            order_num = int(b_order) // 100
+                            starters.append({
+                                "order": order_num,
+                                "pos": p_obj.get("position", {}).get("abbreviation") or pers.get("primaryPosition", {}).get("abbreviation") or "타자",
+                                "name": p_ko or p_en,
+                                "name_en": p_en,
+                                "id": pid,
+                                "hand": pers.get("batSide", {}).get("code") or "R",
+                                "avg": s_bat.get("avg") or "",
+                                "ops": s_bat.get("ops") or "",
+                                "hr": s_bat.get("homeRuns", 0),
+                                "rbi": s_bat.get("rbi", 0)
+                            })
+                    starters.sort(key=lambda x: x["order"])
+                    target_list.extend(starters[:9])
+
+                    # 박스스코어 내 선발투수 정보
+                    pitchers = t_box.get("pitchers", [])
+                    if pitchers:
+                        sp_id = pitchers[0]
+                        sp_obj = p_box.get(f"ID{sp_id}", {})
+                        sp_pers = sp_obj.get("person", {})
+                        sp_en = sp_pers.get("fullName", "")
+                        sp_s_pitch = sp_obj.get("seasonStats", {}).get("pitching", {})
+                        sp_info = {
+                            "id": sp_id,
+                            "name": sanitize_player_name(translate_player_name(sp_en)) if sp_en else "선발투수",
+                            "name_en": sp_en,
+                            "hand": sp_pers.get("pitchHand", {}).get("code") or "R",
+                            "era": sp_s_pitch.get("era") or "",
+                            "wins": sp_s_pitch.get("wins", 0),
+                            "losses": sp_s_pitch.get("losses", 0),
+                            "confirmed": True
+                        }
+                        if side == "home":
+                            home_starter = sp_info
+                        else:
+                            away_starter = sp_info
+
+                if len(home_lineup) >= 9 and len(away_lineup) >= 9:
+                    is_confirmed = True
+            except Exception as be:
+                logger.warning(f"fetch_realtime_lineup boxscore fetch error: {be}")
+
+        # 2. 2순위: 박스스코어에 타순이 없으면 스케줄 lineups(person) 실데이터 확인
+        if (len(home_lineup) < 9 or len(away_lineup) < 9) and matched_game:
             lineups = matched_game.get("lineups", {})
             h_players = lineups.get("homePlayers", [])
             a_players = lineups.get("awayPlayers", [])
 
-            for idx, p in enumerate(h_players[:9]):
-                p_en = p.get("fullName", "")
-                p_ko = sanitize_player_name(translate_player_name(p_en))
-                pos = p.get("primaryPosition", {}).get("abbreviation", "타자")
-                home_lineup.append({
-                    "order": idx + 1,
-                    "pos": pos,
-                    "name": p_ko,
-                    "name_en": p_en,
-                    "id": p.get("id"),
-                    "hand": "R",
-                    "avg": ".270"
-                })
+            if len(h_players) >= 9 and len(home_lineup) < 9:
+                home_lineup.clear()
+                for idx, p in enumerate(h_players[:9]):
+                    p_en = p.get("fullName", "")
+                    p_ko = sanitize_player_name(translate_player_name(p_en))
+                    pos = p.get("primaryPosition", {}).get("abbreviation", "타자")
+                    home_lineup.append({
+                        "order": idx + 1,
+                        "pos": pos,
+                        "name": p_ko or p_en,
+                        "name_en": p_en,
+                        "id": p.get("id"),
+                        "hand": p.get("batSide", {}).get("code") or "R",
+                        "avg": ""
+                    })
 
-            for idx, p in enumerate(a_players[:9]):
-                p_en = p.get("fullName", "")
-                p_ko = sanitize_player_name(translate_player_name(p_en))
-                pos = p.get("primaryPosition", {}).get("abbreviation", "타자")
-                away_lineup.append({
-                    "order": idx + 1,
-                    "pos": pos,
-                    "name": p_ko,
-                    "name_en": p_en,
-                    "id": p.get("id"),
-                    "hand": "R",
-                    "avg": ".270"
-                })
+            if len(a_players) >= 9 and len(away_lineup) < 9:
+                away_lineup.clear()
+                for idx, p in enumerate(a_players[:9]):
+                    p_en = p.get("fullName", "")
+                    p_ko = sanitize_player_name(translate_player_name(p_en))
+                    pos = p.get("primaryPosition", {}).get("abbreviation", "타자")
+                    away_lineup.append({
+                        "order": idx + 1,
+                        "pos": pos,
+                        "name": p_ko or p_en,
+                        "name_en": p_en,
+                        "id": p.get("id"),
+                        "hand": p.get("batSide", {}).get("code") or "R",
+                        "avg": ""
+                    })
 
-            h_prob = matched_game.get("teams", {}).get("home", {}).get("probablePitcher", {})
-            a_prob = matched_game.get("teams", {}).get("away", {}).get("probablePitcher", {})
-            if h_prob:
-                h_p_en = h_prob.get("fullName", "")
-                home_starter = {
-                    "id": h_prob.get("id"),
-                    "name": sanitize_player_name(translate_player_name(h_p_en)) if h_p_en else "선발투수",
-                    "name_en": h_p_en,
-                    "hand": "R",
-                    "confirmed": True
-                }
-            if a_prob:
-                a_p_en = a_prob.get("fullName", "")
-                away_starter = {
-                    "id": a_prob.get("id"),
-                    "name": sanitize_player_name(translate_player_name(a_p_en)) if a_p_en else "선발투수",
-                    "name_en": a_p_en,
-                    "hand": "R",
-                    "confirmed": True
-                }
+            if len(home_lineup) >= 9 and len(away_lineup) >= 9:
+                is_confirmed = True
 
-            status_raw = matched_game.get("status", {}).get("abstractGameState", "")
-            is_confirmed = bool((len(home_lineup) >= 9 and len(away_lineup) >= 9) or (len(home_lineup) >= 9) or status_raw in ("Live", "Final"))
-
-        # feed/live fallback
-        if (len(home_lineup) == 0 or len(away_lineup) == 0) and matched_game_pk:
-            try:
-                feed_url = f"https://statsapi.mlb.com/api/v1.1/game/{matched_game_pk}/feed/live"
-                feed_data = self._fetch_json(feed_url)
-                box = feed_data.get("liveData", {}).get("boxscore", {}).get("teams", {})
-                game_data = feed_data.get("gameData", {})
-                players_data = game_data.get("players", {})
-
-                for side, target_list in [("home", home_lineup), ("away", away_lineup)]:
-                    if len(target_list) >= 9:
-                        continue
-                    t_box = box.get(side, {})
-                    b_ids = t_box.get("batters", [])
-                    p_box = t_box.get("players", {})
-                    order_idx = 0
-                    for bid in b_ids:
-                        p_obj = p_box.get(f"ID{bid}")
-                        if not p_obj:
-                            continue
-                        b_order = p_obj.get("battingOrder")
-                        if b_order and (b_order.endswith("00") or order_idx < 9):
-                            p_info = p_obj.get("person", {})
-                            p_meta = players_data.get(f"ID{bid}", {})
-                            p_en = p_info.get("fullName") or p_meta.get("fullName") or ""
-                            p_ko = sanitize_player_name(translate_player_name(p_en))
-                            pos = p_obj.get("position", {}).get("abbreviation", "타자")
-                            b_hand = p_meta.get("batSide", {}).get("code") or "R"
-                            s_bat = p_obj.get("seasonStats", {}).get("batting", {})
-                            avg_val = s_bat.get("avg") or ".270"
-                            target_list.append({
-                                "order": order_idx + 1,
-                                "pos": pos,
-                                "name": p_ko,
-                                "name_en": p_en,
-                                "id": bid,
-                                "hand": b_hand,
-                                "avg": avg_val
-                            })
-                            order_idx += 1
-                            if order_idx >= 9:
-                                break
-
-                if len(home_lineup) >= 9 or len(away_lineup) >= 9:
-                    is_confirmed = True
-            except Exception as fe:
-                logger.warning(f"fetch_realtime_lineup feed/live fallback error: {fe}")
+        # 선발투수 스케줄 보강
+        if matched_game:
+            if not home_starter:
+                h_prob = matched_game.get("teams", {}).get("home", {}).get("probablePitcher", {})
+                if h_prob:
+                    h_p_en = h_prob.get("fullName", "")
+                    home_starter = {
+                        "id": h_prob.get("id"),
+                        "name": sanitize_player_name(translate_player_name(h_p_en)) if h_p_en else "선발투수",
+                        "name_en": h_p_en,
+                        "hand": "R",
+                        "confirmed": True
+                    }
+            if not away_starter:
+                a_prob = matched_game.get("teams", {}).get("away", {}).get("probablePitcher", {})
+                if a_prob:
+                    a_p_en = a_prob.get("fullName", "")
+                    away_starter = {
+                        "id": a_prob.get("id"),
+                        "name": sanitize_player_name(translate_player_name(a_p_en)) if a_p_en else "선발투수",
+                        "name_en": a_p_en,
+                        "hand": "R",
+                        "confirmed": True
+                    }
 
         return {
             "game_pk": matched_game_pk,

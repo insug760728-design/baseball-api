@@ -509,18 +509,18 @@
       </div>
     </div>
 
-    <!-- 5. 📋 해당 팀 직전 경기 (전경기) 기록 대조 -->
+    <!-- 5. 👑 VVIP 전용 분석 (운영자 whathehas 전용) -->
     <div class="section-card" style="background:#ffffff;">
       <div class="section-header-title mb-2">
-        <h3><i class="bi bi-calendar2-check text-primary"></i>해당 팀 직전 경기 (전경기) 기록</h3>
-        <span class="badge bg-danger text-white" style="font-size:0.68rem;" id="badgeOnlyRelevant">해당 팀 전용</span>
+        <h3><i class="bi bi-crown-fill text-warning me-1"></i>👑 VVIP 전용 분석</h3>
+        <span class="badge bg-dark text-warning" style="font-size:0.68rem;" id="badgeOnlyRelevant">👑 VVIP</span>
       </div>
       <p class="text-muted mb-2.5" style="font-size:0.75rem;">
-        현재 선택된 경기의 <strong>홈팀 및 원정팀에 해당하는 직전 경기(전경기) 기록</strong>만 집중 대조합니다. (타 팀 경기 배제)
+        현재 선택된 경기의 <strong>홈팀 및 원정팀 VVIP 핵심 분석</strong>입니다.
       </p>
 
       <div id="relevantPreviousMatchesContainer">
-        <!-- JS: 해당 두 팀의 직전 경기만 렌더링 -->
+        <!-- JS: 운영자 whathehas만 열람 가능, 일반 유저는 비공개 잠금 -->
       </div>
     </div>
 
@@ -1903,6 +1903,26 @@
     function renderRelevantPreviousMatches(data) {
       const container = document.getElementById('relevantPreviousMatchesContainer');
       if (!container || !data.teamPreviousMatches) return;
+
+      // 👑 운영자(whathehas) 판별
+      let isAdmin = false;
+      try {
+        const u = JSON.parse(localStorage.getItem('tokeon_user') || localStorage.getItem('tokeon_simple_user') || '{}');
+        const nick = (u && u.nickname ? String(u.nickname).trim().toLowerCase() : '');
+        if (['whathehas', 'admin', '운영자', '관리자', 'master', 'root', 'tokeon'].includes(nick)) {
+          isAdmin = true;
+        }
+      } catch(e) {}
+
+      if (!isAdmin) {
+        container.innerHTML = `
+          <div class="p-3 text-center rounded border" style="background:#0f172a; border-color:rgba(251,191,36,0.3); color:#fbbf24;">
+            <div style="font-size:0.95rem; font-weight:800; margin-bottom:4px;"><i class="bi bi-lock-fill me-1"></i>👑 VVIP 회원 및 운영자 전용</div>
+            <div style="font-size:0.75rem; color:#94a3b8;">해당 분석 데이터는 VVIP 회원과 운영자(whathehas)만 열람할 수 있습니다.</div>
+          </div>
+        `;
+        return;
+      }
 
       const p = data.teamPreviousMatches;
       const hLast = p.homeLast;

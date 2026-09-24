@@ -23,10 +23,25 @@ if 'sqlite' in settings.DATABASE_URL:
             except Exception:
                 pass
 
-engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args={'check_same_thread': False, 'timeout': 15.0} if 'sqlite' in settings.DATABASE_URL else {}
-)
+db_url = settings.DATABASE_URL
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+if 'sqlite' in db_url:
+    engine = create_engine(
+        db_url,
+        connect_args={'check_same_thread': False, 'timeout': 15.0}
+    )
+else:
+    # 🚀 PostgreSQL / MySQL 고성능 커넥션 풀 (동시접속 3,000명 트래픽 대비)
+    engine = create_engine(
+        db_url,
+        pool_size=30,
+        max_overflow=50,
+        pool_timeout=30,
+        pool_recycle=1800,
+        pool_pre_ping=True
+    )
 
 if 'sqlite' in settings.DATABASE_URL:
     @event.listens_for(engine, "connect")

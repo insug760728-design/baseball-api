@@ -115,6 +115,11 @@ class MatchResponse(MatchBase):
     base_1: Optional[bool] = False
     base_2: Optional[bool] = False
     base_3: Optional[bool] = False
+    pitcher: Optional[str] = None
+    batter: Optional[str] = None
+    linescore: Optional[Dict[str, Any]] = None
+    period_scores: Optional[Dict[str, Any]] = None
+    team_stats: Optional[Dict[str, Any]] = None
     all_odds: Optional[List[Dict[str, Any]]] = None
     audit_status: Optional[Dict[str, Any]] = None
     created_at: Optional[datetime] = None

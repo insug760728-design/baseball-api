@@ -1240,8 +1240,9 @@ class MatchService:
                 inn_away = []
                 inn_home = []
                 last_played_inning = 1
+                inn_source = p_scores.get("innings", p_scores) if isinstance(p_scores, dict) else {}
                 for i in range(1, 10):
-                    val = p_scores.get(str(i))
+                    val = inn_source.get(str(i)) if isinstance(inn_source, dict) else None
                     if val is not None:
                         last_played_inning = i
                         if isinstance(val, dict):

@@ -497,7 +497,8 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
     if is_mlb and (force or not is_lineup_confirmed or not h_lineup or not a_lineup):
         try:
             from app.scrapers.official_mlb_live_scraper import MlbOfficialScraper
-            mlb_res = MlbOfficialScraper().fetch_realtime_lineup(m.away_team_name, m.home_team_name, m.match_date)
+            mlb_pk = int(m.official_id.replace("MLB_", "")) if (m.official_id and m.official_id.startswith("MLB_") and m.official_id.replace("MLB_", "").isdigit()) else None
+            mlb_res = MlbOfficialScraper().fetch_realtime_lineup(m.away_team_name, m.home_team_name, m.match_date, game_pk=mlb_pk)
             if mlb_res and (mlb_res.get("home_lineup") or mlb_res.get("away_lineup")):
                 if mlb_res.get("home_lineup"): h_lineup = mlb_res["home_lineup"]
                 if mlb_res.get("away_lineup"): a_lineup = mlb_res["away_lineup"]
@@ -606,7 +607,8 @@ def get_match_lineup(match_id: int, force: bool = False, db: Session = Depends(g
         try:
             from app.scrapers.official_mlb_live_scraper import MlbOfficialScraper
             mlb_scraper = MlbOfficialScraper()
-            res = mlb_scraper.fetch_realtime_lineup(m.away_team_name, m.home_team_name, m.match_date)
+            mlb_pk = int(m.official_id.replace("MLB_", "")) if (m.official_id and m.official_id.startswith("MLB_") and m.official_id.replace("MLB_", "").isdigit()) else None
+            res = mlb_scraper.fetch_realtime_lineup(m.away_team_name, m.home_team_name, m.match_date, game_pk=mlb_pk)
             if res and (res.get("home_lineup") or res.get("away_lineup")):
                 home_lineup = res.get("home_lineup", [])
                 away_lineup = res.get("away_lineup", [])

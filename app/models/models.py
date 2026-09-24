@@ -94,6 +94,211 @@ class Match(Base):
             except Exception:
                 pass
         return {"verdict": "PASS", "score": 100}
+
+    def _get_scoreboard_data(self):
+        if self.details and hasattr(self.details, 'team_stats') and self.details.team_stats:
+            try:
+                ts = json.loads(self.details.team_stats) if isinstance(self.details.team_stats, str) else self.details.team_stats
+                if isinstance(ts, dict):
+                    sb = ts.get("scoreboard")
+                    if isinstance(sb, dict):
+                        return sb
+                    return ts
+            except Exception:
+                pass
+        return {}
+
+    @property
+    def current_inning(self):
+        if hasattr(self, '_current_inning') and self._current_inning:
+            return self._current_inning
+        if self.details:
+            if hasattr(self.details, 'period_scores') and self.details.period_scores:
+                try:
+                    ps = json.loads(self.details.period_scores) if isinstance(self.details.period_scores, str) else self.details.period_scores
+                    if isinstance(ps, dict) and ps.get("current_inning"):
+                        return ps["current_inning"]
+                except Exception:
+                    pass
+            sb = self._get_scoreboard_data()
+            if sb.get("current_inning"):
+                return sb["current_inning"]
+        return None
+
+    @current_inning.setter
+    def current_inning(self, val):
+        self._current_inning = val
+
+    @property
+    def inning_text(self):
+        return self.current_inning
+
+    @inning_text.setter
+    def inning_text(self, val):
+        self._current_inning = val
+
+    @property
+    def outs(self):
+        if hasattr(self, '_outs') and self._outs is not None:
+            return self._outs
+        return self._get_scoreboard_data().get("outs")
+
+    @outs.setter
+    def outs(self, val):
+        self._outs = val
+
+    @property
+    def balls(self):
+        if hasattr(self, '_balls') and self._balls is not None:
+            return self._balls
+        return self._get_scoreboard_data().get("balls")
+
+    @balls.setter
+    def balls(self, val):
+        self._balls = val
+
+    @property
+    def strikes(self):
+        if hasattr(self, '_strikes') and self._strikes is not None:
+            return self._strikes
+        return self._get_scoreboard_data().get("strikes")
+
+    @strikes.setter
+    def strikes(self, val):
+        self._strikes = val
+
+    @property
+    def base1(self):
+        if hasattr(self, '_base1') and self._base1 is not None:
+            return self._base1
+        sb = self._get_scoreboard_data()
+        return bool(sb.get("base1") or sb.get("runner_1b") or sb.get("runner_on_1b") or sb.get("first_base") or sb.get("first") or sb.get("base_1"))
+
+    @base1.setter
+    def base1(self, val):
+        self._base1 = val
+
+    @property
+    def base2(self):
+        if hasattr(self, '_base2') and self._base2 is not None:
+            return self._base2
+        sb = self._get_scoreboard_data()
+        return bool(sb.get("base2") or sb.get("runner_2b") or sb.get("runner_on_2b") or sb.get("second_base") or sb.get("second") or sb.get("base_2"))
+
+    @base2.setter
+    def base2(self, val):
+        self._base2 = val
+
+    @property
+    def base3(self):
+        if hasattr(self, '_base3') and self._base3 is not None:
+            return self._base3
+        sb = self._get_scoreboard_data()
+        return bool(sb.get("base3") or sb.get("runner_3b") or sb.get("runner_on_3b") or sb.get("third_base") or sb.get("third") or sb.get("base_3"))
+
+    @base3.setter
+    def base3(self, val):
+        self._base3 = val
+
+    @property
+    def base_1(self):
+        return self.base1
+
+    @base_1.setter
+    def base_1(self, val):
+        self.base1 = val
+
+    @property
+    def base_2(self):
+        return self.base2
+
+    @base_2.setter
+    def base_2(self, val):
+        self.base2 = val
+
+    @property
+    def base_3(self):
+        return self.base3
+
+    @base_3.setter
+    def base_3(self, val):
+        self.base3 = val
+
+    @property
+    def pitcher(self):
+        if hasattr(self, '_pitcher') and self._pitcher:
+            return self._pitcher
+        sb = self._get_scoreboard_data()
+        return sb.get("pitcher") or self.home_starter_name
+
+    @pitcher.setter
+    def pitcher(self, val):
+        self._pitcher = val
+
+    @property
+    def batter(self):
+        if hasattr(self, '_batter') and self._batter:
+            return self._batter
+        sb = self._get_scoreboard_data()
+        return sb.get("batter")
+
+    @batter.setter
+    def batter(self, val):
+        self._batter = val
+
+    @property
+    def team_stats(self):
+        if hasattr(self, '_team_stats') and self._team_stats:
+            return self._team_stats
+        if self.details and hasattr(self.details, 'team_stats') and self.details.team_stats:
+            try:
+                return json.loads(self.details.team_stats) if isinstance(self.details.team_stats, str) else self.details.team_stats
+            except Exception:
+                pass
+        return {}
+
+    @team_stats.setter
+    def team_stats(self, val):
+        self._team_stats = val
+
+    @property
+    def period_scores(self):
+        if hasattr(self, '_period_scores') and self._period_scores:
+            return self._period_scores
+        if self.details and hasattr(self.details, 'period_scores') and self.details.period_scores:
+            try:
+                return json.loads(self.details.period_scores) if isinstance(self.details.period_scores, str) else self.details.period_scores
+            except Exception:
+                pass
+        return {}
+
+    @period_scores.setter
+    def period_scores(self, val):
+        self._period_scores = val
+
+    @property
+    def linescore(self):
+        if hasattr(self, '_linescore') and self._linescore:
+            return self._linescore
+        ts = self.team_stats or {}
+        if isinstance(ts, dict) and ts.get("linescore"):
+            return ts["linescore"]
+        sb = self._get_scoreboard_data()
+        if isinstance(sb, dict) and sb.get("linescore"):
+            return sb["linescore"]
+        ps = self.period_scores or {}
+        if isinstance(ps, dict):
+            inns = ps.get("innings", ps)
+            if isinstance(inns, dict) and len(inns) > 0:
+                return {
+                    "home": [inns.get(str(i), {}).get("home", "-") if isinstance(inns.get(str(i)), dict) else "-" for i in range(1, 10)],
+                    "away": [inns.get(str(i), {}).get("away", "-") if isinstance(inns.get(str(i)), dict) else "-" for i in range(1, 10)]
+                }
+        return None
+
+    @linescore.setter
+    def linescore(self, val):
+        self._linescore = val
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

@@ -877,22 +877,42 @@ class SchedulerService:
                             b1_val = False
                             b2_val = False
                             b3_val = False
+                            pitcher_val = None
+                            batter_val = None
+                            linescore_val = None
+                            period_scores_val = None
                             if m.details:
                                 if m.details.period_scores:
                                     try:
                                         ps = json.loads(m.details.period_scores) if isinstance(m.details.period_scores, str) else m.details.period_scores
+                                        period_scores_val = ps
                                         cur_inn = ps.get("current_inning")
+                                        if isinstance(ps, dict):
+                                            inns = ps.get("innings", {})
+                                            if inns:
+                                                linescore_val = {
+                                                    "home": [inns.get(str(i), {}).get("home", "-") for i in range(1, 10)],
+                                                    "away": [inns.get(str(i), {}).get("away", "-") for i in range(1, 10)]
+                                                }
                                     except Exception:
                                         pass
                                 if m.details.team_stats:
                                     try:
                                         ts = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
+                                        if not linescore_val and ts.get("linescore"):
+                                            linescore_val = ts["linescore"]
+                                        if not period_scores_val and ts.get("period_scores"):
+                                            period_scores_val = ts["period_scores"]
                                         sb = ts.get("scoreboard", {})
                                         if sb:
                                             cur_inn = sb.get("current_inning") or cur_inn
                                             outs_val = sb.get("outs")
                                             balls_val = sb.get("balls")
                                             strikes_val = sb.get("strikes")
+                                            pitcher_val = sb.get("pitcher")
+                                            batter_val = sb.get("batter")
+                                            if not linescore_val and sb.get("linescore"):
+                                                linescore_val = sb["linescore"]
                                             b1_val = bool(sb.get("base1") or sb.get("runner_1b") or sb.get("runner_on_1b") or sb.get("first_base") or sb.get("first") or sb.get("base_1"))
                                             b2_val = bool(sb.get("base2") or sb.get("runner_2b") or sb.get("runner_on_2b") or sb.get("second_base") or sb.get("second") or sb.get("base_2"))
                                             b3_val = bool(sb.get("base3") or sb.get("runner_3b") or sb.get("runner_on_3b") or sb.get("third_base") or sb.get("third") or sb.get("base_3"))
@@ -917,7 +937,11 @@ class SchedulerService:
                                 "base3": b3_val,
                                 "base_1": b1_val,
                                 "base_2": b2_val,
-                                "base_3": b3_val
+                                "base_3": b3_val,
+                                "pitcher": pitcher_val,
+                                "batter": batter_val,
+                                "linescore": linescore_val,
+                                "period_scores": period_scores_val
                             })
                     finally:
                         d_db.close()

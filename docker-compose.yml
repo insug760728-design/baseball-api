@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # 🚀 [PostgreSQL 16] 3,000명 동시접속 및 트랜잭션 병목 없는 고성능 RDBMS
+  db:
+    image: postgres:16-alpine
+    container_name: sports_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: sports_hub
+      POSTGRES_USER: sports_user
+      POSTGRES_PASSWORD: sports_secure_password_2026!
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    command: >
+      postgres -c max_connections=300
+               -c shared_buffers=512MB
+               -c effective_cache_size=1536MB
+               -c work_mem=16MB
+               -c maintenance_work_mem=128MB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sports_user -d sports_hub"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ⚡ [Redis 7] 초고속 분산 캐시 및 실시간 웹소켓 Pub/Sub 브로커
+  redis:
+    image: redis:7-alpine
+    container_name: sports_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 🌐 [FastAPI Web Service] Gunicorn 4워커 멀티프로세스 웹/API 서버
+  web:
+    build: .
+    container_name: sports_fastapi
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://sports_user:sports_secure_password_2026!@db:5432/sports_hub
+      - REDIS_URL=redis://redis:6379/0
+      - API_SPORTS_KEY=${API_SPORTS_KEY:-050a2debf0dc45ecf519ce236c9f46f5}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+
+volumes:
+  postgres_data:
+  redis_data:
