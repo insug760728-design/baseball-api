@@ -2278,7 +2278,12 @@ class LiveApiSportsService:
             'NBA': ['보스턴', '덴버', '미네소타', '오클라호마', 'LA클리퍼스', '댈러스', '밀워키', '뉴욕닉스', '필라델피아', '골든스테이트', 'LA레이커스', '피닉스', '마이애미'],
             'KBL': ['원주DB', '수원KT', '창원LG', '서울SK', '부산KCC', '울산현대모비스', '대구한국가스', '안양정관장', '고양소노', '서울삼성'],
             'WKBL': ['우리은행', 'KB스타즈', '삼성생명', '신한은행', '하나원큐', 'BNK썸'],
-            'KOVO': ['대한항공', '우리카드', 'OK금융그룹', '현대캐피탈', '삼성화재', 'KB손해보험', '한국전력', '흥국생명', '현대건설', '정관장', 'IBK기업은행', '한국도로공사', 'GS칼텍스', '페퍼저축은행']
+            'KOVO': ['대한항공', '우리카드', 'OK금융그룹', '현대캐피탈', '삼성화재', 'KB손해보험', '한국전력', '흥국생명', '현대건설', '정관장', 'IBK기업은행', '한국도로공사', 'GS칼텍스', '페퍼저축은행'],
+            'NATIONS_LEAGUE': ['독일', '네덜란드', '포르투갈', '스페인', '프랑스', '이탈리아', '덴마크', '노르웨이', '오스트리아', '스위스', '벨기에', '크로아티아', '웨일스', '세르비아', '그리스'],
+            'INTERNATIONAL': ['대한민국', '브라질', '우루과이', '아르헨티나', '일본', '호주', '에콰도르', '이란', '우즈베키스탄', '콜롬비아', '멕시코', '파나마'],
+            'GULF_CUP': ['사우디아라비아', '이라크', '카타르', '아랍에미리트', '오만', '바레인', '쿠웨이트', '예멘'],
+            'ASEAN_CUP': ['태국', '베트남', '인도네시아', '말레이시아', '싱가포르', '필리핀', '미얀마', '캄보디아'],
+            'ASIAN_GAMES': ['한국_남자', '사우디아라비아_남자', '베트남_남자', '우즈베키스탄_남자', '일본_남자', '이란_남자']
         }
 
         # 리그 감지
@@ -2301,7 +2306,17 @@ class LiveApiSportsService:
             else:
                 detected_league = 'KBL'
         elif sport_code == 'SOCCER':
-            if any(k in ln for k in ['EPL', '프리미어']) or any(k in tm for k in ['맨시티', '아스널', '리버풀', '토트넘', '첼시', '맨유', '뉴캐슬']):
+            if any(k in ln for k in ['네이션스', 'NATIONS']):
+                detected_league = 'NATIONS_LEAGUE'
+            elif any(k in ln for k in ['친선', 'A매치', '국제']):
+                detected_league = 'INTERNATIONAL'
+            elif any(k in ln for k in ['걸프컵', 'GULF', '아라비안']):
+                detected_league = 'GULF_CUP'
+            elif any(k in ln for k in ['아세안', 'ASEAN']):
+                detected_league = 'ASEAN_CUP'
+            elif any(k in ln for k in ['아시안게임']):
+                detected_league = 'ASIAN_GAMES'
+            elif any(k in ln for k in ['EPL', '프리미어']) or any(k in tm for k in ['맨시티', '아스널', '리버풀', '토트넘', '첼시', '맨유', '뉴캐슬']):
                 detected_league = 'EPL'
             elif any(k in ln for k in ['라리가', 'LALIGA']) or any(k in tm for k in ['레알', '바르셀로나', '아틀레티코', '소시에다드']):
                 detected_league = 'LALIGA'
@@ -2314,7 +2329,7 @@ class LiveApiSportsService:
             elif any(k in ln for k in ['J리그', 'J LEAGUE']) or any(k in tm for k in ['고베', '요코하마F', '가와사키', '우라와', '감바']):
                 detected_league = 'J_LEAGUE'
             else:
-                detected_league = 'EPL'
+                detected_league = 'INTERNATIONAL' if any(k in tm for k in ['한국', '에콰도르', '일본', '우루과이', '브라질', '호주', '독일', '네덜란드', '포르투갈', '웨일스']) else 'EPL'
         elif sport_code == 'VOLLEYBALL':
             detected_league = 'KOVO'
 
