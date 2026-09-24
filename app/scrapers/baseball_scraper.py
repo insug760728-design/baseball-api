@@ -34,9 +34,9 @@ class BaseballScraper(BaseScraper):
         if lid == "MLB":
             return self.mlb_live.scrape_schedule(d, fast_live=fast_live)
 
-        # 2. 한국 프로야구 (KBO) -> 공식 KBO 사이트 실시간 수집
+        # 2. 한국 프로야구 (KBO) -> 공식 KBO 사이트 실시간 수집 (fast_live 초저지연 지원)
         if lid == "KBO":
-            return self.kbo_live.scrape_schedule(target_date=d)
+            return self.kbo_live.scrape_schedule(target_date=d, fast_live=fast_live)
 
         # 3. 일본 프로야구 (NPB) -> 공식 NPB 사이트 실시간 수집
         if lid == "NPB":
@@ -45,7 +45,7 @@ class BaseballScraper(BaseScraper):
         # 4. 전체 야구 리그
         if lid == "ALL":
             mlb_games = self.mlb_live.scrape_schedule(d, fast_live=fast_live)
-            kbo_games = self.kbo_live.scrape_schedule(target_date=d)
+            kbo_games = self.kbo_live.scrape_schedule(target_date=d, fast_live=fast_live)
             npb_games = self.npb_live.scrape_schedule(target_date=d)
             return mlb_games + kbo_games + npb_games
 

@@ -64,8 +64,8 @@ class KboOfficialScraper:
                 return json.loads(text)
             return {}
 
-    def scrape_schedule(self, target_date: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None) -> List[Dict[str, Any]]:
-        """지정 기간 또는 특정 일자의 KBO 공식 경기 일정 및 결과 수집"""
+    def scrape_schedule(self, target_date: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None, fast_live: bool = False) -> List[Dict[str, Any]]:
+        """지정 기간 또는 특정 일자의 KBO 공식 경기 일정 및 결과 수집 (fast_live=True 시 0.2초 초고속 실시간 모드)"""
         d_ref = target_date or start_date or datetime.now().strftime("%Y-%m-%d")
         parts = d_ref.split('-')
         year = parts[0] if len(parts) > 0 else "2026"
@@ -99,17 +99,18 @@ class KboOfficialScraper:
         if not all_rows:
             return []
 
-        # 당일 공식 발표 선발투수 맵 수집
+        # 당일 공식 발표 선발투수 맵 수집 (fast_live 모드일 때는 2초 초고속 처리를 위해 생략)
         starters_map = {}
-        try:
-            starters_data = self.scrape_probable_starters(d_ref)
-            for s in starters_data:
-                g_id = s.get("game_id")
-                if g_id:
-                    starters_map[g_id] = (s.get("home_starter"), s.get("away_starter"))
-                starters_map[f"{s.get('home_team_name')}_{s.get('away_team_name')}"] = (s.get("home_starter"), s.get("away_starter"))
-        except Exception as e:
-            print(f"[KBO Scraper] Starters fetch error: {e}")
+        if not fast_live:
+            try:
+                starters_data = self.scrape_probable_starters(d_ref)
+                for s in starters_data:
+                    g_id = s.get("game_id")
+                    if g_id:
+                        starters_map[g_id] = (s.get("home_starter"), s.get("away_starter"))
+                    starters_map[f"{s.get('home_team_name')}_{s.get('away_team_name')}"] = (s.get("home_starter"), s.get("away_starter"))
+            except Exception as e:
+                print(f"[KBO Scraper] Starters fetch error: {e}")
 
         games = []
         cur_date_str = d_ref

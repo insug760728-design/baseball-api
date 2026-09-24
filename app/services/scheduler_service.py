@@ -960,16 +960,13 @@ class SchedulerService:
                     except Exception:
                         pass
 
-                # ⚡ [초저지연 실시간 튜닝] Render 512MB 환경 최적화
-                # MLB LIVE: 8초, KBO/NPB LIVE: 10초, 축구 LIVE: 15초, 시작 직전(Pre-Match): 30초, 대기: 60초
-                if mlb_live:
-                    sleep_sec = 8.0
-                elif kbo_npb_live:
-                    sleep_sec = 10.0
+                # ⚡ [초저지연 실시간 튜닝] MLB 및 KBO/NPB LIVE 경기 2초 초고속 동기화!
+                if mlb_live or kbo_npb_live:
+                    sleep_sec = 2.0
                 elif soccer_live:
-                    sleep_sec = 15.0
+                    sleep_sec = 10.0
                 elif has_imminent:
-                    sleep_sec = 30.0
+                    sleep_sec = 10.0
                 else:
                     sleep_sec = 60.0
 

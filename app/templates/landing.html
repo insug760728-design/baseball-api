@@ -13700,14 +13700,13 @@ function getFullModalMatchList() {
         return true;
       }
 
-      // SCHEDULED 상태인 경우: 시작 직후(최대 20분) 또는 라이브 진행 지표(점수/이닝)가 있는 경우에만 라이브 인정
+      // SCHEDULED 상태인 경우: 실제 점수(스코어)나 이닝 등 라이브 진행 지표가 있을 때만 라이브 인정 (유령 경기 깜빡임 방지)
       if (m.status === 'SCHEDULED' && m.match_date) {
         try {
           const mTime = new Date(m.match_date.replace(' ', 'T')).getTime();
           const diffMin = (nowTs - mTime) / (60 * 1000);
           const hasLiveScore = (m.home_score != null && Number(m.home_score) > 0) || (m.away_score != null && Number(m.away_score) > 0) || !!m.current_inning;
-          if (diffMin >= 0 && diffMin <= 20) return true;
-          if (diffMin > 20 && diffMin <= maxLiveMin && hasLiveScore) return true;
+          if (diffMin >= 0 && diffMin <= maxLiveMin && hasLiveScore) return true;
         } catch(e) {}
       }
       return false;

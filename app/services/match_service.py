@@ -131,6 +131,9 @@ class MatchService:
                         # Do not revert an already FINISHED or CANCELLED match back to SCHEDULED 0:0
                         if match.status in ["FINISHED", "CANCELLED"] and m_data.get("status") == "SCHEDULED":
                             pass
+                        # ⚡ 이미 점수가 난 실제 LIVE 경기는 외부 수집기가 SCHEDULED로 덮어쓰지 못하도록 방어
+                        elif match.status == "LIVE" and m_data.get("status") == "SCHEDULED" and ((match.home_score or 0) > 0 or (match.away_score or 0) > 0):
+                            pass
                         else:
                             match.home_score = m_data["home_score"]
                             match.away_score = m_data["away_score"]
@@ -302,11 +305,14 @@ class MatchService:
             cutoff_bb = (now_kst - timedelta(hours=3, minutes=10)).strftime("%Y-%m-%d %H:%M")
             past_1d_cutoff = (now_kst - timedelta(days=1)).strftime("%Y-%m-%d 00:00")
 
-            # 1. 시작 시간이 도래한 경기: SCHEDULED -> LIVE 자동 전환 (시작 후 2시간 이내 경기만)
+            # 1. 시작 시간이 도래한 경기 중 실제 점수(스코어)가 난 경기만 LIVE로 승격
+            # (점수가 0:0인 미시작/지연 경기는 SCHEDULED를 유지하여 깜빡임 및 증발 방지)
+            from sqlalchemy import or_
             live_candidates = db.query(Match).filter(
                 Match.status.in_(['SCHEDULED', 'NS']),
                 Match.match_date <= now_str,
-                Match.match_date >= cutoff_general
+                Match.match_date >= cutoff_general,
+                or_((Match.home_score or 0) > 0, (Match.away_score or 0) > 0)
             ).all()
             if live_candidates:
                 for m in live_candidates:
