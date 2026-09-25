@@ -242,7 +242,7 @@ def _record_access_log(user_dict: dict, ip: str = "127.0.0.1"):
     import threading
     threading.Thread(target=_do_write, daemon=True).start()
 
-@router.post("/login", summary="별명 + 나이 + 비밀번호 간편 로그인 & 접속 기록")
+@router.post("/login", summary="별명 + 비밀번호 회원 로그인 & 접속 기록")
 def login_user(payload: UserLoginPayload, request: Request):
     nickname = payload.nickname.strip()
     age = payload.age if (payload.age and payload.age > 0) else 30
@@ -258,54 +258,21 @@ def login_user(payload: UserLoginPayload, request: Request):
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     client_ip = request.client.host if request.client else "127.0.0.1"
 
-    # 계정이 없을 경우 즉시 간편 자동 가입 & 로그인 처리 (0초 접속)
+    # 미등록 회원의 무단 1초 로그인 차단 -> 초간단 회원가입 필수 유도
     if not existing:
-        new_id = (max([m.get("id", 0) for m in members if isinstance(m.get("id"), (int, float))], default=0)) + 1
-        clean_phone = _clean_phone_digits(nickname)
-        is_phone = len(clean_phone) >= 10
-
-        target_user = {
-            "id": new_id,
-            "nickname": nickname,
-            "phone": clean_phone if is_phone else "",
-            "age": age,
-            "password_hash": _hash_password(password),
-            "registered_at": now_str,
-            "login_count": 1,
-            "last_login_at": now_str
-        }
-        is_admin = _is_admin(nickname)
-        target_user["is_admin"] = is_admin
-        target_user["role"] = "admin" if is_admin else "user"
-        members.insert(0, target_user)
-        _save_members(members)
-        _record_access_log(target_user, client_ip)
-        _record_session_activity(nickname, client_ip, (request.headers.get("user-agent") or "웹")[:40])
-        logger.info(f"[Member Auto-Registered on Login] Nickname: {nickname}, Age: {age}, IsAdmin: {is_admin}")
-
-        user_info = {
-            "id": new_id,
-            "nickname": nickname,
-            "age": age,
-            "registered_at": now_str,
-            "login_count": 1,
-            "last_login_at": now_str,
-            "is_admin": is_admin,
-            "role": "admin" if is_admin else "user"
-        }
-        return {
-            "status": "success",
-            "message": f"'{nickname}'님 계정이 안전하게 등록되어 즉시 접속되었습니다!",
-            "user": user_info
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="등록되지 않은 별명입니다. 먼저 '초간단 회원가입'을 진행해주세요."
+        )
 
     hashed = _hash_password(password)
-    is_admin = _is_admin(existing.get("nickname", nickname))
-    
-    # 👑 모든 사용자(운영자 및 일반 사용자)는 비밀번호 분실/오타로 인한 접속 차단이 없도록 항상 최신 입력 비밀번호로 자동 연동 & 승인 (무중단 즉시 접속 보장)
-    existing["password_hash"] = hashed
-    logger.info(f"[Login PW Auto-Synced] Nickname: {existing.get('nickname')}, IsAdmin: {is_admin}")
+    stored_hash = existing.get("password_hash")
+    if stored_hash and stored_hash != hashed:
+        raise HTTPException(status_code=401, detail="비밀번호가 일치하지 않습니다. 다시 확인해주세요.")
+    elif not stored_hash:
+        existing["password_hash"] = hashed
 
+    is_admin = _is_admin(existing.get("nickname", nickname))
     existing["login_count"] = existing.get("login_count", 1) + 1
     existing["last_login_at"] = now_str
     if age and age > 0:
@@ -332,23 +299,25 @@ def login_user(payload: UserLoginPayload, request: Request):
         "is_admin": is_admin,
         "role": "admin" if is_admin else "user"
     }
-    logger.info(f"[Member Login Success] Nickname: {existing.get('nickname')}, Logins: {existing.get('login_count')}, IsAdmin: {is_admin}")
+    logger.info(f"[Member Login Success] Nickname: {existing.get('nickname')}, Logins: {existing.get('login_count')}, IsAdmin: {is_admin}, IP: {client_ip}")
     return {
         "status": "success",
         "message": f"'{existing.get('nickname')}'님 환영합니다! (누적 {existing.get('login_count')}회 접속)",
         "user": user_info
     }
 
-@router.post("/register-user", summary="별명 + 비밀번호 신규 가입")
+@router.post("/register-user", summary="별명 + 비밀번호 초간단 신규 가입")
 def register_user(payload: UserRegisterPayload, request: Request):
     nickname = payload.nickname.strip()
     age = payload.age if (payload.age and payload.age > 0) else 30
     password = payload.password.strip()
 
     if not nickname:
-        raise HTTPException(status_code=400, detail="별명을 입력해주세요.")
-    if len(nickname) > 30:
-        raise HTTPException(status_code=400, detail="별명은 최대 30자까지 가능합니다.")
+        raise HTTPException(status_code=400, detail="활동할 별명(닉네임)을 입력해주세요.")
+    if len(nickname) < 2:
+        raise HTTPException(status_code=400, detail="별명은 최소 2자리 이상이어야 합니다.")
+    if len(nickname) > 20:
+        raise HTTPException(status_code=400, detail="별명은 최대 20자까지 가능합니다.")
     if not password:
         raise HTTPException(status_code=400, detail="비밀번호를 입력해주세요.")
     if len(password) < 4:
@@ -358,16 +327,16 @@ def register_user(payload: UserRegisterPayload, request: Request):
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     client_ip = request.client.host if request.client else "127.0.0.1"
 
-    is_admin = _is_admin(nickname)
-
     existing = _find_member(members, nickname)
     if existing:
-        existing["password_hash"] = _hash_password(password)
+        stored_hash = existing.get("password_hash")
+        hashed = _hash_password(password)
+        if stored_hash and stored_hash != hashed:
+            raise HTTPException(status_code=409, detail="이미 다른 사용자가 가입한 별명입니다. 다른 별명으로 가입하시거나 기존 회원 로그인 탭을 이용해주세요.")
+        
+        # 비밀번호가 일치하면 기존 계정으로 접속 처리
         existing["last_login_at"] = now_str
         existing["login_count"] = existing.get("login_count", 1) + 1
-        existing["age"] = age
-        existing["is_admin"] = is_admin
-        existing["role"] = "admin" if is_admin else "user"
         _save_members(members)
         _record_access_log(existing, client_ip)
         _record_session_activity(existing["nickname"], client_ip, request.headers.get("user-agent", "웹")[:40])
@@ -378,18 +347,19 @@ def register_user(payload: UserRegisterPayload, request: Request):
             "registered_at": existing.get("registered_at", now_str),
             "login_count": existing["login_count"],
             "last_login_at": existing["last_login_at"],
-            "is_admin": is_admin,
-            "role": "admin" if is_admin else "user"
+            "is_admin": existing.get("is_admin", False),
+            "role": existing.get("role", "user")
         }
         return {
             "status": "success",
-            "message": f"'{existing['nickname']}'님 기존 등록 계정으로 즉시 로그인되었습니다.",
+            "message": f"'{existing['nickname']}'님 기존 가입 계정으로 로그인되어 즉시 입장합니다!",
             "user": user_info
         }
 
-    new_id = (max([m["id"] for m in members], default=0)) + 1
+    new_id = (max([m.get("id", 0) for m in members if isinstance(m.get("id"), (int, float))], default=0)) + 1
     clean_phone = _clean_phone_digits(nickname)
     is_phone = len(clean_phone) >= 10
+    is_admin = _is_admin(nickname)
 
     target_user = {
         "id": new_id,
@@ -408,7 +378,7 @@ def register_user(payload: UserRegisterPayload, request: Request):
     _save_members(members)
     _record_access_log(target_user, client_ip)
     _record_session_activity(nickname, client_ip, request.headers.get("user-agent", "웹")[:40])
-    logger.info(f"[Member Registered] Nickname: {nickname}, Total: {len(members)}, IsAdmin: {is_admin}")
+    logger.info(f"[New Member Registered] ID: #{new_id}, Nickname: {nickname}, IsAdmin: {is_admin}, IP: {client_ip}")
 
     user_info = {
         "id": new_id,
@@ -420,10 +390,9 @@ def register_user(payload: UserRegisterPayload, request: Request):
         "is_admin": is_admin,
         "role": "admin" if is_admin else "user"
     }
-
     return {
         "status": "success",
-        "message": f"'{nickname}'님 회원가입이 완료되었습니다!",
+        "message": f"'{nickname}'님 초간단 회원가입이 완료되었습니다! (회원번호 #{new_id})",
         "user": user_info
     }
 
