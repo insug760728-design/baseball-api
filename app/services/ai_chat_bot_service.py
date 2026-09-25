@@ -104,41 +104,6 @@ def get_next_match_result_message() -> Dict[str, Any]:
 
 
 async def start_ai_chat_bot_task():
-    """
-    4분(240초) 주기 실제 어제/오늘 종료 경기 결과 가볍고 산뜻하게 자동 브로드캐스트
-    (과거 2024년 정적 텍스트 배제 및 100% 실데이터 전일 스코어 기반)
-    """
-    global _bot_running
-    if _bot_running:
-        return
-    _bot_running = True
-    logger.info("[AIChatBot] 4-minute Real Finished Match Results broadcaster started.")
-
-    while True:
-        try:
-            await asyncio.sleep(240) # Exactly 4 minutes
-
-            from app.api.v1.community import COMMUNITY_MESSAGES, manager
-
-            chat_obj = get_next_match_result_message()
-            new_id = (max([m.get("id", 0) for m in COMMUNITY_MESSAGES], default=0)) + 1
-            chat_obj["id"] = new_id
-            COMMUNITY_MESSAGES.append(chat_obj)
-
-            # Keep buffer size clean
-            if len(COMMUNITY_MESSAGES) > 100:
-                del COMMUNITY_MESSAGES[:20]
-
-            # Broadcast to all connected clients
-            await manager.broadcast({
-                "type": "NEW_COMMUNITY_MESSAGE",
-                "message": chat_obj
-            })
-            logger.info(f"[AIChatBot] Broadcasted Result ({chat_obj['sport_tag']}): {chat_obj['author']} - {chat_obj['content']}")
-
-            # 메모리 정리
-            import gc
-            gc.collect()
-        except Exception as e:
-            logger.error(f"[AIChatBot] Error in 4-min match result broadcaster: {e}")
-            await asyncio.sleep(30)
+    """사용자 요청에 따라 중앙 채팅창 자동 등록 기능 영구 비활성화"""
+    logger.info("[AIChatBot] Automated match result broadcaster has been DISABLED by admin.")
+    return

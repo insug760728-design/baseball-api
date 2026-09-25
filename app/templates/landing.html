@@ -2784,8 +2784,9 @@
             <!-- Chat Message Feed Area (Scrollable) -->
             <div class="dash-card-body p-2" id="mainCommunityChatFeed" style="flex: 1 1 auto; overflow-y: auto; background: #f8fafc; display: flex; flex-direction: column; gap: 8px; min-height: 200px;">
               <div class="text-center py-5 px-3 text-muted">
-                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
-                <div class="small">실시간 응원 토크 불러오는 중...</div>
+                <div style="font-size: 1.8rem;" class="mb-2">💬</div>
+                <div class="fw-bold text-dark fs-6 mb-1">채팅창이 비워졌습니다.</div>
+                <div class="small text-muted">실시간 경기 응원이나 자유로운 의견을 남겨보세요.</div>
               </div>
             </div>
 
@@ -13274,9 +13275,9 @@ function getFullModalMatchList() {
       if (list.length === 0) {
         feed.innerHTML = `
           <div class="text-center py-5 px-3 text-muted">
-            <div style="font-size: 2rem;" class="mb-2">💬</div>
-            <div class="fw-bold text-dark fs-6 mb-1">등록된 응원 토크가 없습니다.</div>
-            <div class="small mb-3">첫 번째 실시간 경기 응원 메시지를 남겨보세요!</div>
+            <div style="font-size: 1.8rem;" class="mb-2">💬</div>
+            <div class="fw-bold text-dark fs-6 mb-1">채팅창이 깨끗하게 비워져 있습니다.</div>
+            <div class="small text-muted">실시간 경기 응원이나 자유로운 의견을 남겨보세요.</div>
           </div>
         `;
         return;
@@ -22501,14 +22502,9 @@ function renderPredDetail(m, customDetailData = null) {
         if (resp.ok) {
           communityMessages = await resp.json();
           renderCommunityFeed();
-        } else if (!communityMessages || communityMessages.length === 0) {
-          setTimeout(loadCommunityMessages, 3000);
         }
       } catch (e) {
         console.warn('Community load error:', e);
-        if (!communityMessages || communityMessages.length === 0) {
-          setTimeout(loadCommunityMessages, 3000);
-        }
       }
     }
 
@@ -22597,6 +22593,9 @@ function renderPredDetail(m, customDetailData = null) {
         if (topEl) topEl.innerText = targetCount;
         const chatBadge = document.getElementById('chatOnlineBadge');
         if (chatBadge) chatBadge.innerText = `🟢 ${targetCount}명 참여중`;
+      } else if (data.type === 'CLEAR_COMMUNITY_MESSAGES') {
+        communityMessages = [];
+        renderCommunityFeed();
       } else if (data.type === 'NEW_COMMUNITY_MESSAGE') {
         const msg = data.message;
         communityMessages.push(msg);
@@ -24144,32 +24143,8 @@ function renderPredDetail(m, customDetailData = null) {
     let aiChatPersonaIndex = 0;
 
     function start4MinAiChatTimer() {
-      // Automatically posts every 4 minutes (240,000 ms)
-      setInterval(() => {
-        const p = AI_CHAT_PERSONAS[aiChatPersonaIndex];
-        aiChatPersonaIndex = (aiChatPersonaIndex + 1) % AI_CHAT_PERSONAS.length;
-
-        const now = new Date();
-        const timeStr = (typeof getKstTimeFormatted === 'function') ? getKstTimeFormatted() : (String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'));
-
-        const newMsg = {
-          id: Date.now(),
-          author: p.author,
-          channel: p.channel,
-          sport_tag: p.tag,
-          content: p.text,
-          created_at: timeStr,
-          likes: Math.floor(Math.random() * 12) + 3
-        };
-
-        if (typeof communityMessages !== 'undefined') {
-          communityMessages.push(newMsg);
-          if (currentChatChannel === 'ALL' || newMsg.channel === currentChatChannel) {
-            appendMessageToFeed(newMsg);
-          }
-        }
-        console.log(`[AI 4분 자동 채팅] '${p.author}' 게시 완료: ${p.text.slice(0, 25)}...`);
-      }, 240000); // 4 minutes = 240,000 ms
+      // 사용자 요청에 따라 자동 채팅 메시지 등록 영구 비활성화
+      return;
     }
 
   
@@ -24288,7 +24263,6 @@ function renderPredDetail(m, customDetailData = null) {
       initPredictionSection(); // 0ms Instant Server Data Render
       initRealTimeSportsTicker();
       startLiveUsersFluctuation();
-      start4MinAiChatTimer();
       initCommunityAndWebSocket();
       // Instant Render + Immediate background sync (0ms wait, eliminating stale cache freeze)
       if (allMatches && allMatches.length > 0) {

@@ -105,13 +105,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[WARN] 시작 동기화 태스크 오류: {e}")
 
-    # 4분 주기 AI 자동 채팅 봇 백그라운드 시작 (각자 다른 닉네임으로 실시간 소통)
-    try:
-        import asyncio
-        from app.services.ai_chat_bot_service import start_ai_chat_bot_task
-        asyncio.create_task(start_ai_chat_bot_task())
-    except Exception as e:
-        print(f"[WARN] AI 채팅 봇 시작 중 오류: {e}")
+    # 4분 주기 AI 자동 채팅 봇 백그라운드 시작 (사용자 요청에 따라 영구 비활성화)
+    # try:
+    #     import asyncio
+    #     from app.services.ai_chat_bot_service import start_ai_chat_bot_task
+    #     asyncio.create_task(start_ai_chat_bot_task())
+    # except Exception as e:
+    #     print(f"[WARN] AI 채팅 봇 시작 중 오류: {e}")
 
     # 메모리 정리 (Render 512MB RAM 안전 최적화)
     try:
