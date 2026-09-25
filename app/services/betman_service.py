@@ -560,10 +560,10 @@ class BetmanService:
 
     @staticmethod
     def get_proto_odds(force_refresh: bool = False) -> dict:
-        """베트맨 프로토 승부식(G101) 최신 회차의 전체 700~1100개 배당 및 투표율 일괄 수집 (스냅샷 즉시 로드 + 실시간 백그라운드 갱신)"""
+        """베트맨 프로토 승부식(G101) 최신 회차의 전체 700~1100개 배당 및 투표율 일괄 수집 (신규 회차 동적 감지 + 스냅샷 즉시 로드 + 실시간 백그라운드 갱신)"""
         now = time.time()
 
-        # 1. 스냅샷 파일 검사 및 최신 회차 우선 감지
+        # 1. 스냅샷 파일 검사 및 우선 감지
         snapshot_data = None
         for s_file in ['betman_proto_G101_latest.json', 'betman_G101.json']:
             if os.path.exists(s_file):
@@ -576,24 +576,39 @@ class BetmanService:
                 except Exception:
                     pass
 
-        active_ts = snapshot_data.get('gmTs', 260113) if snapshot_data else 260113
+        active_ts = snapshot_data.get('gmTs', 260114) if snapshot_data else 260114
+
+        # 2. 베트맨 발매 가능 목록에서 실시간 최신 회차(gmTs) 동적 감지
+        detected_ts = None
+        try:
+            b_res = _SESSION.post(BETMAN_BUYABLE_URL, json={'_sbmInfo': {'debugMode': 'false'}}, timeout=3.0)
+            if b_res.status_code == 200:
+                b_data = b_res.json()
+                for pg in b_data.get('protoGames', []):
+                    if pg.get('gmId') == 'G101' and pg.get('gmTs'):
+                        detected_ts = int(pg.get('gmTs'))
+                        break
+        except Exception as e:
+            logger.debug(f"[Betman] Failed to detect active proto round: {e}")
+
+        # 신규 회차가 감지되었으면 active_ts를 신규 회차로 갱신
+        if detected_ts and detected_ts != active_ts:
+            logger.info(f"[Betman] 신규 프로토 회차 감지: {active_ts} -> {detected_ts}")
+            active_ts = detected_ts
+            force_refresh = True
+
         cache_key = f'proto_G101_{active_ts}'
         if not force_refresh and cache_key in _CACHE:
             ts_cached, data = _CACHE[cache_key]
             if now - ts_cached < CACHE_TTL:
                 return data
 
-        # 1. 스냅샷 데이터가 있으면 즉시 반환 (Render 해외 IP 블로킹 및 요청 지연 원천 차단)
-        if snapshot_data and not force_refresh:
+        # 스냅샷 데이터의 회차가 최신이고 force_refresh가 아니면 즉시 반환
+        if snapshot_data and not force_refresh and snapshot_data.get('gmTs') == active_ts:
             _CACHE[cache_key] = (now, snapshot_data)
             return snapshot_data
 
-        if not force_refresh:
-            if snapshot_data:
-                return snapshot_data
-            return {'gmTs': active_ts, 'total_lines': 0, 'keys': [], 'datas': [], 'votes': {}}
-
-        # 2. 실시간 라이브 페칭 시도 (회차 불일치 또는 force_refresh 시)
+        # 3. 실시간 라이브 페칭 시도 (신규 회차 또는 force_refresh 시)
         try:
             payload = {
                 "gmId": "G101",
@@ -601,7 +616,7 @@ class BetmanService:
                 "gameYear": "2026",
                 "_sbmInfo": {"_sbmInfo": {"debugMode": "false"}}
             }
-            r = _SESSION.post(BETMAN_INQ_URL, json=payload, timeout=2.5)
+            r = _SESSION.post(BETMAN_INQ_URL, json=payload, timeout=4.0)
             if r.status_code == 200:
                 data = r.json()
                 keys = data.get('compSchedules', {}).get('keys', [])
@@ -617,7 +632,7 @@ class BetmanService:
                         'votes': vote_dict
                     }
                     _CACHE[cache_key] = (now, parsed_result)
-                    # 새 회차 스냅샷 즉시 저장 (Fix 1)
+                    # 새 회차 스냅샷 파일 저장
                     for sf_name in ['betman_proto_G101_latest.json', f'betman_proto_G101_{active_ts}.json']:
                         try:
                             with open(sf_name, 'w', encoding='utf-8') as sf:
@@ -626,9 +641,9 @@ class BetmanService:
                             pass
                     return parsed_result
         except Exception as e:
-            pass
+            logger.warning(f"[Betman] Live fetch error for G101 {active_ts}: {e}")
 
-        # 3. 네트워크 실패 시 스냅샷 데이터 반환
+        # 4. 네트워크 실패 시 스냅샷 데이터 반환
         if snapshot_data and snapshot_data.get('datas'):
             _CACHE[cache_key] = (now, snapshot_data)
             return snapshot_data

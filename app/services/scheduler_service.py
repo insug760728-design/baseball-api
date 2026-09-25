@@ -171,10 +171,9 @@ class SchedulerService:
         logger.info(f"[Startup Sync] 서버 시작 즉시 전종목 및 베트맨 프로토 동기화 시작 (KST): {start_time.isoformat()}")
 
         yesterday_str = (start_time - timedelta(days=1)).strftime("%Y-%m-%d")
-        tomorrow_str = (start_time + timedelta(days=1)).strftime("%Y-%m-%d")
+        weekend_str = (start_time + timedelta(days=3)).strftime("%Y-%m-%d")
 
-        # 서버 부팅 시 512MB RAM 초과 방지를 위해 오늘 핵심 리그 및 베트맨 프로토만 신속 동기화
-        # (전 종목 및 14일치 전체 일정은 정기 크론 데몬이 수행)
+        # 서버 부팅 시 오늘 및 주말(금토일월) 핵심 리그 및 베트맨 프로토 신속 동기화
         sync_leagues = ["KBO", "NPB", "MLB"]
 
         summary = {}
@@ -193,7 +192,7 @@ class SchedulerService:
                 logger.warning(f"[Startup Sync] 베트맨 프로토 동기화 경고: {be}")
                 summary["BETMAN_PROTO"] = f"ERR: {str(be)[:60]}"
 
-            # 2. 핵심 야구 경기 일정 신속 동기화
+            # 2. 핵심 야구 경기 일정 신속 동기화 (금토일월 주말 전 경기)
             for lid in sync_leagues:
                 try:
                     db_league = SessionLocal()
@@ -203,7 +202,7 @@ class SchedulerService:
                             db=db_league,
                             league_id=lid,
                             start_date=yesterday_str,
-                            end_date=tomorrow_str
+                            end_date=weekend_str
                         )
                         summary[lid] = res.get("synced_matches_count", 0)
                     finally:
