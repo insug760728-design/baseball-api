@@ -12639,7 +12639,7 @@ function getFullModalMatchList() {
       // 2. 오늘/내일 예정 경기 (시간 오름차순: 빠른 예정순)
       const upcomingMatches = list.filter(m => {
         if (m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED') return false;
-        if (liveMatches.some(x => x.id === m.id)) return false;
+        if (liveMatches.some(x => String(x.id) === String(m.id))) return false;
         if ((m.match_date || '') >= nowKstStr) return true;
         return false;
       });
@@ -12647,7 +12647,7 @@ function getFullModalMatchList() {
 
       // 3. 가장 최근에 종료된 경기 (시간 내림차순: 최근 종료순)
       const recentFinishedMatches = list.filter(m => {
-        if (liveMatches.some(x => x.id === m.id) || upcomingMatches.some(x => x.id === m.id)) return false;
+        if (liveMatches.some(x => String(x.id) === String(m.id)) || upcomingMatches.some(x => String(x.id) === String(m.id))) return false;
         return true;
       });
       recentFinishedMatches.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
@@ -12655,19 +12655,31 @@ function getFullModalMatchList() {
       // 실시간 LIVE 경기 우선 배치 -> 부족할 경우 현재시간대 및 곧 시작할 예정 경기 -> 최근 종료 경기 순으로 보강
       let combined = [...liveMatches];
 
-      if (combined.length < 20) {
+      // 사용자가 특정 경기(예: 네이션스리그)의 중계를 클릭하여 지정한 경우, 해당 경기를 최우선으로 맨 앞에 배치!
+      if (typeof selectedLiveRelayMatchId !== 'undefined' && selectedLiveRelayMatchId && selectedLiveRelayMatchId !== 'ALL') {
+        const explicitTarget = (allMatches || matches).find(m => String(m.id) === String(selectedLiveRelayMatchId));
+        if (explicitTarget) {
+          const matchSport = (explicitTarget.sport_code || '').toUpperCase();
+          if (!sportFilter || sportFilter === 'ALL' || matchSport === sportFilter) {
+            combined = combined.filter(x => String(x.id) !== String(explicitTarget.id));
+            combined.unshift(explicitTarget);
+          }
+        }
+      }
+
+      if (combined.length < 35) {
         for (const m of upcomingMatches) {
-          if (combined.length >= 20) break;
-          if (!combined.some(x => x.id === m.id)) {
+          if (combined.length >= 35) break;
+          if (!combined.some(x => String(x.id) === String(m.id))) {
             combined.push(m);
           }
         }
       }
 
-      if (combined.length < 20) {
+      if (combined.length < 35) {
         for (const m of recentFinishedMatches) {
-          if (combined.length >= 20) break;
-          if (!combined.some(x => x.id === m.id)) {
+          if (combined.length >= 35) break;
+          if (!combined.some(x => String(x.id) === String(m.id))) {
             combined.push(m);
           }
         }
@@ -22459,9 +22471,10 @@ function renderPredDetail(m, customDetailData = null) {
     }
 
     function focusSingleMatchRelay(matchId) {
+      if (!matchId) return;
       selectedPredMatchId = matchId;
       selectedLiveRelayMatchId = matchId;
-      const target = (typeof allMatches !== 'undefined' && allMatches) ? allMatches.find(m => m.id === matchId) : null;
+      const target = (typeof allMatches !== 'undefined' && allMatches) ? allMatches.find(m => String(m.id) === String(matchId)) : null;
       if (target && target.sport_code && typeof setLiveRelaySport === 'function') {
         setLiveRelaySport(target.sport_code);
       }
@@ -22472,7 +22485,7 @@ function renderPredDetail(m, customDetailData = null) {
         renderRightColLiveRelay();
       }
       const rightCol = document.getElementById('rightColCommunity');
-      if (rightCol) {
+      if (rightCol && typeof currentViewMode !== 'undefined' && currentViewMode !== 'mobile') {
         rightCol.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
       if (typeof openLiveRelayHubModal === 'function') {
@@ -22780,17 +22793,23 @@ function renderPredDetail(m, customDetailData = null) {
 
     function setLiveRelaySport(sport) {
       selectedLiveRelaySport = sport;
+      if (selectedLiveRelayMatchId && selectedLiveRelayMatchId !== 'ALL' && sport !== 'ALL') {
+        const curM = (typeof allMatches !== 'undefined' && allMatches) ? allMatches.find(m => String(m.id) === String(selectedLiveRelayMatchId)) : null;
+        if (curM && (curM.sport_code || '').toUpperCase() !== sport) {
+          selectedLiveRelayMatchId = 'ALL';
+        }
+      }
       const sports = ['ALL', 'SOCCER', 'BASEBALL', 'BASKETBALL', 'VOLLEYBALL'];
       sports.forEach(s => {
         const btn = document.getElementById('btnLiveFilterSport' + s);
         const modalBtn = document.getElementById('modalLiveFilterSport' + s);
         if (btn) {
           if (s === sport) {
-            btn.className = 'btn btn-xs fw-bold px-2.5 py-1 text-white';
+            btn.className = 'btn btn-xs fw-bold px-2 py-0.5 text-white flex-fill text-nowrap';
             btn.style.background = '#1d4ed8';
             btn.style.borderColor = '#1d4ed8';
           } else {
-            btn.className = 'btn btn-xs fw-bold px-2.5 py-1 text-dark';
+            btn.className = 'btn btn-xs fw-bold px-2 py-0.5 text-dark flex-fill text-nowrap';
             btn.style.background = '#ffffff';
             btn.style.borderColor = '#cbd5e1';
           }
@@ -23732,6 +23751,120 @@ function renderPredDetail(m, customDetailData = null) {
         `;
       }
 
+      // ⚽ [축구 LIVE FOCUS] 경기목록과 동일한 220px 럭셔리 3D 스타디움 메인 스테이지
+      if (m.sport_code === 'SOCCER') {
+        const matchTimeText = (st.match_time && st.match_time !== '진행중' && st.match_time !== 'LIVE') ? st.match_time : (isLive ? '실시간 전반' : (isFin ? '경기종료' : ((m.match_date || '').slice(11, 16) ? (m.match_date || '').slice(11, 16) + ' 예정' : '경기예정')));
+        const activeEv = (typeof window._activeLivePlayEvents !== 'undefined' && window._activeLivePlayEvents) ? window._activeLivePlayEvents[m.id] : null;
+        let soccerBgImg = '/static/images/soccer_stadium_live.jpg';
+        if (activeEv && activeEv.imgUrl) {
+          soccerBgImg = activeEv.imgUrl;
+        } else if (activeEv && (activeEv.type === 'GOAL' || activeEv.type === 'SCORE')) {
+          const goalImgIdx = activeEv.imgIdx || 1;
+          soccerBgImg = `/static/images/soccer_goal_epic_${goalImgIdx}.jpg`;
+        }
+
+        return `
+          <div class="live-focus-card mb-2 rounded overflow-hidden shadow-sm" style="border: 1.5px solid rgba(255,255,255,0.18);">
+            <div class="live-soccer-stage-wrapper position-relative" style="height: 220px; min-height: 220px; max-height: 220px; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 18px rgba(0,0,0,0.35);">
+              <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0.02) 28%, rgba(0,0,0,0.02) 70%, rgba(0,0,0,0.70) 100%), url('${soccerBgImg}') center 45%/cover no-repeat; z-index:1;"></div>
+
+              <!-- Top Integrated HUD -->
+              <div class="position-absolute d-flex justify-content-between align-items-center w-100 px-3" style="top: 10px; left: 0; right: 0; z-index: 5;">
+                <div class="d-flex align-items-center gap-1.5" style="min-width:0; overflow:hidden;">
+                  <span class="badge ${isLive ? 'bg-danger' : (isFin ? 'bg-secondary' : 'bg-primary')} text-white py-1 px-2 fw-black shadow-sm" style="font-size:0.72rem; letter-spacing:0.5px; border-radius:6px; box-shadow:0 0 10px rgba(239,68,68,0.7);">
+                    ${isLive ? '<span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#fff;"></span>LIVE 중계' : (isFin ? '종료' : '경기예정')}
+                  </span>
+                  <span class="badge bg-dark bg-opacity-80 text-white border border-white border-opacity-25 px-2 py-1 fw-bold" style="font-size:0.70rem; backdrop-filter:blur(6px);">
+                    ⚽ ${m.league_name || '축구'}
+                  </span>
+                  ${matchTimeText ? `
+                  <span class="badge bg-warning text-dark px-2 py-1 fw-black shadow-sm" style="font-size:0.70rem; border-radius:6px;">
+                    ${matchTimeText}
+                  </span>` : ''}
+                </div>
+                <div class="d-flex align-items-center gap-1" style="flex-shrink:0;">
+                  <button type="button" class="btn btn-xs py-0.5 px-1.5 d-inline-flex align-items-center justify-content-center gap-1 rounded-pill" style="border:1px solid rgba(255,255,255,0.3); background:rgba(15,23,42,0.75); color:#ffffff; backdrop-filter:blur(6px); height:22px; font-size:0.68rem; font-weight:700;" onclick="event.stopPropagation(); toggleMatchScoreAlert(${m.id}, event);" title="실시간 득점 알림">
+                    <i class="bi ${bellIconClass}" style="${isSubscribed ? 'color:#facc15;' : 'color:#cbd5e1;'}"></i>
+                    <span>${isSubscribed ? '알림ON' : '알림'}</span>
+                  </button>
+                  <button type="button" class="btn btn-xs py-0.5 px-1.5 d-inline-flex align-items-center justify-content-center gap-0.5 rounded-pill btn-outline-light" style="backdrop-filter:blur(6px); height:22px; font-size:0.68rem; font-weight:700;" onclick="quickSendLiveToChat('${hName} vs ${aName}', '${matchTimeText}')">
+                    <i class="bi bi-chat-dots-fill me-0.5"></i>응원톡
+                  </button>
+                  <button type="button" class="btn btn-xs py-0.5 px-1.5 d-inline-flex align-items-center justify-content-center gap-0.5 rounded-pill btn-primary" style="backdrop-filter:blur(6px); height:22px; font-size:0.68rem; font-weight:700; background:#2563eb;" onclick="openNextGenDetailModal(${m.id})">
+                    <i class="bi bi-bar-chart-fill me-0.5"></i>분석실
+                  </button>
+                </div>
+              </div>
+
+              <!-- Main Content: Teams & Center HUD -->
+              <div class="position-relative h-100" style="z-index:3;">
+                <!-- Left: Home Team -->
+                <div class="position-absolute d-flex flex-column justify-content-between text-start" style="left:12px; top:44px; bottom:12px; width:115px; z-index:4;">
+                  <div>
+                    <span class="badge bg-danger bg-opacity-90 text-white py-0.5 px-2 fw-black mb-1 d-inline-block shadow-sm" style="font-size:0.60rem; letter-spacing:0.5px; border-radius:4px;">HOME</span>
+                    <div class="fw-black text-white text-truncate" style="font-size:1.05rem; text-shadow:0 2px 8px rgba(0,0,0,0.95), 0 0 12px rgba(0,0,0,0.8); line-height:1.2;" title="${m.home_team_name}">
+                      ${hName}
+                    </div>
+                  </div>
+                  <div class="text-truncate" style="font-size:0.70rem; color:#f1f5f9; line-height:1.2; text-shadow:0 1px 4px #000;">
+                    ⚽ <span style="color:#94a3b8;">전술:</span> <b class="text-white">공격 포메이션</b>
+                  </div>
+                </div>
+
+                <!-- Center: Scoreboard HUD & Pitch Graphic -->
+                <div class="position-absolute d-flex flex-column align-items-center justify-content-between" style="left:50%; top:42px; bottom:10px; transform:translateX(-50%); width:220px; z-index:4; pointer-events:none;">
+                  <!-- Top: Score HUD -->
+                  <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.3); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:28px; pointer-events:auto;">
+                    ${matchTimeText ? `<span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center me-1" style="font-size:0.62rem; min-width:40px; border-radius:10px;">${matchTimeText}</span>` : ''}
+                    <div class="d-flex align-items-center justify-content-center px-2" style="font-family:'Roboto Mono', monospace; font-size:1.25rem; font-weight:900; line-height:1;">
+                      <span style="color:#ef4444; min-width:14px; text-align:right; text-shadow:0 0 8px rgba(239,68,68,0.7);">${hScore}</span>
+                      <span style="color:rgba(255,255,255,0.4); font-size:0.85rem; font-weight:400; margin:0 5px;">:</span>
+                      <span style="color:#38bdf8; min-width:14px; text-align:left; text-shadow:0 0 8px rgba(56,189,248,0.7);">${aScore}</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-center bg-dark bg-opacity-75 px-1.5 py-0.5 rounded-pill border border-secondary border-opacity-50" style="height:19px; min-width:46px;">
+                      <span class="fw-bold text-warning" style="font-size:0.56rem; letter-spacing:-0.2px;">${st.possession ? `점유 ${st.possession}` : (isLive ? '실시간' : (isFin ? '종료' : '전력분석'))}</span>
+                    </div>
+                  </div>
+
+                  <!-- Middle: Soccer Pitch Graphic -->
+                  <div class="position-relative my-auto" style="pointer-events:auto;">
+                    <svg width="156" height="46" viewBox="0 0 156 46">
+                      <rect x="8" y="3" width="140" height="40" rx="3" fill="rgba(6,78,59,0.45)" stroke="rgba(255,255,255,0.40)" stroke-width="1.2" />
+                      <line x1="78" y1="3" x2="78" y2="43" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-dasharray="2,2" />
+                      <ellipse cx="78" cy="23" rx="16" ry="12" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.2" />
+                      <circle cx="78" cy="23" r="2.5" fill="#ffffff" />
+                      <rect x="8" y="10" width="18" height="26" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2" />
+                      <rect x="130" y="10" width="18" height="26" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2" />
+                      <text x="78" y="39" text-anchor="middle" font-size="7" font-weight="900" fill="rgba(255,255,255,0.75)" letter-spacing="0.5">SOCCER LIVE STADIUM</text>
+                    </svg>
+                  </div>
+
+                  <!-- Bottom: Situation Status Pill -->
+                  <div class="d-inline-flex align-items-center justify-content-center px-2.5 py-0.5 rounded-pill" style="background:rgba(15,23,42,0.82); border:1px solid rgba(255,255,255,0.25); backdrop-filter:blur(6px); box-shadow:0 2px 6px rgba(0,0,0,0.5);">
+                    <span style="font-size:0.64rem; font-weight:800; color:#f8fafc; letter-spacing:-0.2px;">
+                      ${isLive ? '🔥 실시간 공격 점유 공방 진행 중' : (isFin ? '✅ 공식 경기 결과 집계 완료' : '⚡ 킥오프 전력 분석 대기')}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Right: Away Team -->
+                <div class="position-absolute d-flex flex-column justify-content-between text-end" style="right:12px; top:44px; bottom:12px; width:115px; z-index:4;">
+                  <div>
+                    <span class="badge bg-primary bg-opacity-90 text-white py-0.5 px-2 fw-black mb-1 d-inline-block shadow-sm" style="font-size:0.60rem; letter-spacing:0.5px; border-radius:4px;">AWAY</span>
+                    <div class="fw-black text-white text-truncate" style="font-size:1.05rem; text-shadow:0 2px 8px rgba(0,0,0,0.95), 0 0 12px rgba(0,0,0,0.8); line-height:1.2;" title="${m.away_team_name}">
+                      ${aName}
+                    </div>
+                  </div>
+                  <div class="text-truncate" style="font-size:0.70rem; color:#f1f5f9; line-height:1.2; text-shadow:0 1px 4px #000;">
+                    ⚽ <span style="color:#94a3b8;">전술:</span> <b class="text-white">역습 포메이션</b>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
       let sportSpecificHtml = '';
       if (m.sport_code === 'BASKETBALL' || m.sport_code === 'VOLLEYBALL') {
         const sportKo = m.sport_code === 'BASKETBALL' ? '농구' : '배구';
@@ -23965,18 +24098,23 @@ function renderPredDetail(m, customDetailData = null) {
       // Find currently focused match
       let focusMatch = null;
       if (selectedLiveRelayMatchId && selectedLiveRelayMatchId !== 'ALL') {
-        focusMatch = matchList.find(m => m.id === selectedLiveRelayMatchId);
+        focusMatch = (typeof allMatches !== 'undefined' && allMatches ? allMatches.find(m => String(m.id) === String(selectedLiveRelayMatchId)) : null)
+                  || matchList.find(m => String(m.id) === String(selectedLiveRelayMatchId));
       }
       if (!focusMatch) {
-        focusMatch = matchList.find(m => m.status === 'LIVE') || matchList[0];
+        focusMatch = matchList.find(m => (typeof isRealTimeLive === 'function') ? isRealTimeLive(m) : (m.status === 'LIVE')) || matchList[0];
         if (focusMatch) selectedLiveRelayMatchId = focusMatch.id;
+      }
+      // If the focused match is not in matchList, unshift it so it appears in the table!
+      if (focusMatch && !matchList.some(m => String(m.id) === String(focusMatch.id))) {
+        matchList.unshift(focusMatch);
       }
 
       const showcaseHtml = buildLiveFocusShowcaseHtml(focusMatch);
 
       let rowsHtml = '';
       matchList.forEach((m, idx) => {
-        const isSelected = (focusMatch && m.id === focusMatch.id);
+        const isSelected = (focusMatch && String(m.id) === String(focusMatch.id));
         rowsHtml += buildTotoCanScoreboardRow(m, idx, isSelected);
       });
 
@@ -24025,8 +24163,12 @@ function renderPredDetail(m, customDetailData = null) {
     }
 
     function focusLiveRelayMatch(mid) {
-      selectedLiveRelayMatchId = mid;
-      openLiveRelayHubModal();
+      if (typeof focusSingleMatchRelay === 'function') {
+        focusSingleMatchRelay(mid);
+      } else {
+        selectedLiveRelayMatchId = mid;
+        openLiveRelayHubModal();
+      }
     }
 
     function focusLiveRelayHub() {
