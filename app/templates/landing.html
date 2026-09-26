@@ -2473,15 +2473,15 @@
       animation: phoneRotateAnim 2.2s infinite ease-in-out;
       margin-bottom: 14px;
     }
-    /* ⚡ 비회원 접근 전면 차단 (블러 및 조작 방지) */
+    /* ⚡ 비회원 접근 (화면은 선명하게 100% 노출, 클릭 시 회원가입 유도) */
     body.auth-locked {
-      overflow: hidden !important;
+      overflow-y: auto !important;
     }
     body.auth-locked #mainAppWrapper {
-      filter: blur(10px) grayscale(30%);
-      pointer-events: none !important;
-      user-select: none !important;
-      -webkit-user-select: none !important;
+      filter: none !important;
+      pointer-events: auto !important;
+      user-select: auto !important;
+      -webkit-user-select: auto !important;
     }
     /* ⚡ 로그인/가입 모달 및 비밀번호 입력창 완벽 터치/클릭 보장 */
     #simpleLoginModal {
@@ -3643,12 +3643,9 @@
         initInactivityTracker();
         startSessionHeartbeat();
       } else {
-        document.body.classList.add('auth-locked');
+        document.body.classList.remove('auth-locked');
         renderAuthUI();
-        // 비회원은 반드시 가입 또는 로그인해야만 플랫폼 이용 가능
-        setTimeout(() => {
-          openLoginModal('register');
-        }, 150);
+        // 비회원도 화면은 100% 정상 노출 (클릭 시에만 회원가입 팝업 호출)
       }
     }
 
@@ -3712,10 +3709,7 @@
       switchAuthTab(defaultTab);
       const closeBtn = document.getElementById('authModalCloseBtn');
       if (closeBtn) {
-        closeBtn.style.display = (currentUser && currentUser.nickname) ? 'block' : 'none';
-      }
-      if (!currentUser || !currentUser.nickname) {
-        document.body.classList.add('auth-locked');
+        closeBtn.style.display = 'block';
       }
       if (currentUser) {
         const nickEl = document.getElementById('loginNicknameInput');
@@ -3731,8 +3725,8 @@
           }
           if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
             const modal = (typeof bootstrap.Modal.getOrCreateInstance === 'function') 
-              ? bootstrap.Modal.getOrCreateInstance(modalEl, { backdrop: 'static', keyboard: false }) 
-              : new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
+              ? bootstrap.Modal.getOrCreateInstance(modalEl, { backdrop: true, keyboard: true }) 
+              : new bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
             modal.show();
           } else {
             modalEl.classList.add('show');
@@ -4022,7 +4016,7 @@
         localStorage.removeItem('tokeon_simple_user');
         localStorage.removeItem('tokeon_last_activity');
       } catch (e) {}
-      document.body.classList.add('auth-locked');
+      document.body.classList.remove('auth-locked');
       renderAuthUI();
       if (isAuto) {
         alert('⏱️ 일정 시간 동안 활동이 감지되지 않아 보안을 위해 자동으로 로그아웃되었습니다.');
@@ -4463,11 +4457,24 @@
       if (currentUser && currentUser.nickname && (currentUser.isLoggedIn !== false)) {
         return; // 로그인된 사용자: 모든 클릭 100% 정상 작동
       }
-      // 미가입/미로그인 상태: 회원가입/로그인 모달 내부 클릭만 허용하고 그 외 모든 화면 조작 원천 차단
+      
+      // 모달 내부 클릭 허용 (입력창, 가입/로그인 버튼, 탭 전환 등)
       const loginModal = document.getElementById('simpleLoginModal');
       if (loginModal && loginModal.contains(e.target)) return;
 
-      // 클릭 차단 & 회원가입 창 띄우기
+      // 모달 닫기 버튼(X)이나 백드롭 클릭 시 모달 닫기 정상 허용
+      if (e.target.closest('#authModalCloseBtn') || e.target.classList.contains('modal-backdrop')) {
+        closeLoginModalImmediately();
+        return;
+      }
+
+      // 모달이 이미 열려 있는 상태에서 바깥 영역을 클릭했을 때 모달을 닫고 화면 복귀
+      if (loginModal && (loginModal.classList.contains('show') || loginModal.style.display === 'block')) {
+        closeLoginModalImmediately();
+        return;
+      }
+
+      // 화면 내 경기 클릭, 배당 클릭, 분석 클릭 등 조작 시 차단 & 회원가입 창 띄우기
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
@@ -4476,16 +4483,11 @@
       openLoginModal('register');
     }, true);
 
-    // 미인증 상태에서 회원가입 모달 닫기 원천 차단
     document.addEventListener('DOMContentLoaded', function() {
       const modalEl = document.getElementById('simpleLoginModal');
       if (modalEl) {
-        modalEl.addEventListener('hide.bs.modal', function(e) {
-          if (!currentUser || !currentUser.nickname) {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-          }
+        modalEl.addEventListener('hidden.bs.modal', function() {
+          closeLoginModalImmediately();
         });
       }
     });
@@ -24870,7 +24872,7 @@ function renderPredDetail(m, customDetailData = null) {
   </div><!-- /#mainAppWrapper -->
 
   <!-- ⚡ Modal: 계정 접속 및 회원가입 (초간단 회원가입 필수 게이트 & 기존회원 로그인) -->
-  <div class="modal fade" id="simpleLoginModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false" style="z-index: 100000020 !important;">
+  <div class="modal fade" id="simpleLoginModal" tabindex="-1" aria-hidden="true" style="z-index: 100000020 !important;">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 440px; z-index: 100000021 !important; position: relative;">
       <div class="modal-content" style="background: #ffffff; color: #111827; border: 1px solid #cbd5e1; border-radius: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.35); pointer-events: auto !important;">
         <div class="modal-header border-bottom d-flex justify-content-between align-items-center" style="border-color: #e2e8f0 !important; background: #f8fafc; border-top-left-radius: 16px; border-top-right-radius: 16px;">
@@ -24883,7 +24885,7 @@ function renderPredDetail(m, customDetailData = null) {
               <div class="text-muted small" style="font-size: 0.72rem;">초간단 회원가입 후 즉시 무료 입장</div>
             </div>
           </div>
-          <button type="button" class="btn-close" id="authModalCloseBtn" data-bs-dismiss="modal" aria-label="Close" style="display: none;"></button>
+          <button type="button" class="btn-close" id="authModalCloseBtn" data-bs-dismiss="modal" onclick="closeLoginModalImmediately()" aria-label="Close" style="display: block;"></button>
         </div>
 
         <div class="modal-body p-4" style="pointer-events: auto !important;">
