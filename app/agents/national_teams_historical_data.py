@@ -6,6 +6,16 @@ FIFA / UEFA / AFC / CONCACAF / CONMEBOL 공식 경기 결과 및 상대 전적 �
 """
 
 NATIONAL_TEAM_H2H_ARCHIVE = [
+    # 0. 자메이카 vs 과테말라 (공식 A매치 및 대회 전적)
+    {
+        'teams': ('자메이카', '과테말라'),
+        'matches': [
+            {'date': '2025-06-17', 'home_team_name': '자메이카', 'away_team_name': '과테말라', 'home_score': 0, 'away_score': 1, 'league_name': 'CONCACAF 골드컵'},
+            {'date': '2025-06-10', 'home_team_name': '자메이카', 'away_team_name': '과테말라', 'home_score': 3, 'away_score': 0, 'league_name': '북중미 월드컵 예선'},
+            {'date': '2023-11-12', 'home_team_name': '과테말라', 'away_team_name': '자메이카', 'home_score': 0, 'away_score': 0, 'league_name': '남자축구 국제친선경기'},
+            {'date': '2023-07-09', 'home_team_name': '과테말라', 'away_team_name': '자메이카', 'home_score': 0, 'away_score': 1, 'league_name': 'CONCACAF 골드컵'},
+        ]
+    },
     # 1. 대한민국 vs 에콰도르 (A매치 공식 전적)
     {
         'teams': ('한국', '에콰도르'),
@@ -244,6 +254,31 @@ NATIONAL_TEAM_H2H_ARCHIVE = [
 
 
 NATIONAL_TEAM_OFFICIAL_RECENT_MATCHES = {
+    '자메이카': [
+        {'date': '2026-06-06', 'opponent': '남아프리카공화국', 'is_home': True, 'score': '1-1', 'result': 'DRAW', 'league': 'A매치 친선경기'},
+        {'date': '2026-05-30', 'opponent': '나이지리아', 'is_home': True, 'score': '0-3', 'result': 'LOSS', 'league': 'A매치 친선경기'},
+        {'date': '2026-05-27', 'opponent': '인도', 'is_home': True, 'score': '2-0', 'result': 'WIN', 'league': 'A매치 친선경기'},
+        {'date': '2026-03-31', 'opponent': '콩고민주공화국', 'is_home': False, 'score': '0-1', 'result': 'LOSS', 'league': '월드컵 대륙간 플레이오프'},
+        {'date': '2026-03-27', 'opponent': '뉴칼레도니아', 'is_home': False, 'score': '1-0', 'result': 'WIN', 'league': '월드컵 대륙간 플레이오프'},
+        {'date': '2026-02-21', 'opponent': '마르티니크', 'is_home': False, 'score': '2-0', 'result': 'WIN', 'league': 'A매치 친선경기'},
+        {'date': '2026-01-18', 'opponent': '그레나다', 'is_home': False, 'score': '1-0', 'result': 'WIN', 'league': 'A매치 친선경기'},
+        {'date': '2025-11-19', 'opponent': '퀴라소', 'is_home': True, 'score': '0-0', 'result': 'DRAW', 'league': '북중미 월드컵 예선'},
+        {'date': '2025-11-14', 'opponent': '트리니다드 토바고', 'is_home': False, 'score': '1-1', 'result': 'DRAW', 'league': '북중미 월드컵 예선'},
+        {'date': '2025-10-15', 'opponent': '버뮤다', 'is_home': True, 'score': '4-0', 'result': 'WIN', 'league': '북중미 월드컵 예선'},
+        {'date': '2025-10-10', 'opponent': '온두라스', 'is_home': False, 'score': '0-2', 'result': 'LOSS', 'league': '북중미 월드컵 예선'},
+    ],
+    '과테말라': [
+        {'date': '2026-06-07', 'opponent': '에콰도르', 'is_home': False, 'score': '0-3', 'result': 'LOSS', 'league': 'A매치 친선경기'},
+        {'date': '2026-06-05', 'opponent': '체코', 'is_home': False, 'score': '1-3', 'result': 'LOSS', 'league': 'A매치 친선경기'},
+        {'date': '2026-03-27', 'opponent': '알제리', 'is_home': False, 'score': '0-7', 'result': 'LOSS', 'league': 'A매치 친선경기'},
+        {'date': '2026-01-18', 'opponent': '캐나다', 'is_home': False, 'score': '0-1', 'result': 'LOSS', 'league': 'A매치 친선경기'},
+        {'date': '2025-11-19', 'opponent': '수리남', 'is_home': True, 'score': '3-1', 'result': 'WIN', 'league': '북중미 월드컵 예선'},
+        {'date': '2025-11-14', 'opponent': '파나마', 'is_home': True, 'score': '2-3', 'result': 'LOSS', 'league': '북중미 월드컵 예선'},
+        {'date': '2025-10-15', 'opponent': '엘살바도르', 'is_home': False, 'score': '1-0', 'result': 'WIN', 'league': '북중미 월드컵 예선'},
+        {'date': '2025-10-10', 'opponent': '수리남', 'is_home': True, 'score': '1-1', 'result': 'DRAW', 'league': '북중미 월드컵 예선'},
+        {'date': '2025-09-09', 'opponent': '파나마', 'is_home': False, 'score': '1-1', 'result': 'DRAW', 'league': '북중미 월드컵 예선'},
+        {'date': '2025-09-05', 'opponent': '엘살바도르', 'is_home': True, 'score': '0-1', 'result': 'LOSS', 'league': '북중미 월드컵 예선'},
+    ],
     '한국': [
         {'date': '2026-06-25', 'opponent': '남아프리카공화국', 'is_home': True, 'score': '0-1', 'result': 'LOSS', 'league': '2026 FIFA 북중미 월드컵 A조 3차전'},
         {'date': '2026-06-20', 'opponent': '멕시코', 'is_home': True, 'score': '0-1', 'result': 'LOSS', 'league': '2026 FIFA 북중미 월드컵 A조 2차전'},

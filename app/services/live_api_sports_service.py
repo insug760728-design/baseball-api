@@ -2279,6 +2279,7 @@ class LiveApiSportsService:
             'KBL': ['원주DB', '수원KT', '창원LG', '서울SK', '부산KCC', '울산현대모비스', '대구한국가스', '안양정관장', '고양소노', '서울삼성'],
             'WKBL': ['우리은행', 'KB스타즈', '삼성생명', '신한은행', '하나원큐', 'BNK썸'],
             'KOVO': ['대한항공', '우리카드', 'OK금융그룹', '현대캐피탈', '삼성화재', 'KB손해보험', '한국전력', '흥국생명', '현대건설', '정관장', 'IBK기업은행', '한국도로공사', 'GS칼텍스', '페퍼저축은행'],
+            'CONCACAF': ['미국', '멕시코', '캐나다', '코스타리카', '파나마', '온두라스', '엘살바도르', '자메이카', '과테말라', '수리남', '아이티', '퀴라소', '트리니다드 토바고', '니카라과', '버뮤다'],
             'NATIONS_LEAGUE': ['독일', '네덜란드', '포르투갈', '스페인', '프랑스', '이탈리아', '덴마크', '노르웨이', '오스트리아', '스위스', '벨기에', '크로아티아', '웨일스', '세르비아', '그리스'],
             'INTERNATIONAL': ['대한민국', '브라질', '우루과이', '아르헨티나', '일본', '호주', '에콰도르', '이란', '우즈베키스탄', '콜롬비아', '멕시코', '파나마'],
             'GULF_CUP': ['사우디아라비아', '이라크', '카타르', '아랍에미리트', '오만', '바레인', '쿠웨이트', '예멘'],
@@ -2306,8 +2307,13 @@ class LiveApiSportsService:
             else:
                 detected_league = 'KBL'
         elif sport_code == 'SOCCER':
-            if any(k in ln for k in ['네이션스', 'NATIONS']):
-                detected_league = 'NATIONS_LEAGUE'
+            if any(k in ln for k in ['CONCACAF', '골드컵', '북중미']) or any(k in tm for k in ['자메이카', '과테말라', '코스타리카', '파나마', '온두라스', '엘살바도르', '수리남', '아이티', '퀴라소', '트리니다드']):
+                detected_league = 'CONCACAF'
+            elif any(k in ln for k in ['네이션스', 'NATIONS']):
+                if 'CONCACAF' in ln or '북중미' in ln:
+                    detected_league = 'CONCACAF'
+                else:
+                    detected_league = 'NATIONS_LEAGUE'
             elif any(k in ln for k in ['친선', 'A매치', '국제']):
                 detected_league = 'INTERNATIONAL'
             elif any(k in ln for k in ['걸프컵', 'GULF', '아라비안']):
