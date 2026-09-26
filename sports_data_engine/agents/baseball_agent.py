@@ -199,6 +199,39 @@ class BaseballAgent:
                 if len(starts) >= 3:
                     break
 
+            if not starts:
+                try:
+                    from app.services.team_split_service import _lookup_official_pitcher
+                    prof = _lookup_official_pitcher(pitcher_name)
+                    if prof and prof.get('recent_starts'):
+                        raw_starts = prof['recent_starts'][:3]
+                        p_starts = []
+                        p_er = 0
+                        p_outs = 0
+                        for rs in raw_starts:
+                            ip_val = str(rs.get('ip', '6.0'))
+                            try:
+                                ip_p = ip_val.split('.')
+                                o = int(ip_p[0]) * 3 + (int(ip_p[1]) if len(ip_p) > 1 else 0)
+                            except Exception:
+                                o = 18
+                            er_v = int(rs.get('er', 2)) if str(rs.get('er', '')).isdigit() else 2
+                            p_er += er_v
+                            p_outs += o
+                            p_starts.append({
+                                'date': rs.get('date') or rs.get('match_date', ''),
+                                'opponent': rs.get('opponent') or rs.get('opp', ''),
+                                'ip': ip_val,
+                                'er': er_v,
+                                'np': rs.get('np', 85),
+                                'so': rs.get('so', 5),
+                                'result': f"({rs.get('decision') or rs.get('result') or '-'})"
+                            })
+                        p_era = f"{(p_er * 27.0 / max(1, p_outs)):.2f}" if (p_starts and p_outs > 0) else prof.get('season_era', '3.25')
+                        return {'starts': p_starts, 'era_3g': p_era}
+                except Exception:
+                    pass
+
             era = f"{(total_er * 27.0 / max(1, total_outs)):.2f}" if (starts and total_outs > 0) else "3.25"
             return {'starts': starts, 'era_3g': era}
         except Exception:

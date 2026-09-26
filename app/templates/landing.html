@@ -18480,10 +18480,18 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
 
         let startsList = [];
-        if (cachedPitcherObj && cachedPitcherObj.recent_starts && Array.isArray(cachedPitcherObj.recent_starts) && cachedPitcherObj.recent_starts.length > 0) {
-          startsList = cachedPitcherObj.recent_starts.slice(0, 10);
-        } else if (pOfficial && pOfficial.recent_starts && Array.isArray(pOfficial.recent_starts) && pOfficial.recent_starts.length > 0) {
+        if (pOfficial && pOfficial.recent_starts && Array.isArray(pOfficial.recent_starts) && pOfficial.recent_starts.length > 0) {
           startsList = pOfficial.recent_starts.slice(0, 10);
+        } else if (cachedPitcherObj && cachedPitcherObj.recent_starts && Array.isArray(cachedPitcherObj.recent_starts) && cachedPitcherObj.recent_starts.length > 0) {
+          startsList = cachedPitcherObj.recent_starts.slice(0, 10);
+        }
+
+        if (startsList && startsList.length > 0) {
+          startsList = startsList.map(s => {
+            let oppName = s.opponent || s.opp || '';
+            if (typeof formatTeamName === 'function') oppName = formatTeamName(oppName);
+            return { ...s, opponent: oppName, opp: oppName };
+          });
         }
 
         // [공식 히스토리 연동 폴백] startsList가 비어있을 경우 m.history에서 해당 투수 공식 선발등판 실경기만 추출 (가짜 더미 절대 생성 금지)
@@ -20275,8 +20283,13 @@ function updateSlimPanel(matchId, type, contentHtml) {
             const res = ts > os ? 'WIN' : ts < os ? 'LOSS' : 'DRAW';
             const emoji = res === 'WIN' ? '✅' : res === 'LOSS' ? '❌' : '🟰';
 
-            const stName = isHome ? (m.home_starter_name || `${teamName} 선발`) : (m.away_starter_name || `${teamName} 선발`);
-            const stEra = lookupPitcherSeasonEra(stName) || ((res === 'WIN' ? 2.50 : 4.20) + (m.id % 4) * 0.35).toFixed(2);
+            const rawStName = isHome ? m.home_starter_name : m.away_starter_name;
+            const stName = isStarterAnnounced(rawStName) ? rawStName : '';
+            const stEra = stName ? (lookupPitcherSeasonEra(stName) || '-') : '-';
+
+            const hStReal = m.home_starter || (isStarterAnnounced(m.home_starter_name) ? { name: m.home_starter_name, era: lookupPitcherSeasonEra(m.home_starter_name) || '-' } : null);
+            const aStReal = m.away_starter || (isStarterAnnounced(m.away_starter_name) ? { name: m.away_starter_name, era: lookupPitcherSeasonEra(m.away_starter_name) || '-' } : null);
+            const pStReal = isHome ? hStReal : aStReal;
 
             return {
               match_id: m.id,
@@ -20295,11 +20308,11 @@ function updateSlimPanel(matchId, type, contentHtml) {
               score: `${ts} - ${os}`,
               result: res,
               result_emoji: emoji,
-              starter: stName,
+              starter: stName || '선발 미정',
               starter_era: stEra,
-              home_starter: { name: m.home_starter_name || stName, era: stEra, ip: '6.0', er: res === 'WIN' ? 1 : 3, so: 6 },
-              away_starter: { name: m.away_starter_name || stName, era: stEra, ip: '5.2', er: res === 'WIN' ? 4 : 2, so: 5 },
-              perspective_starter: { name: stName, era: stEra, season_era: stEra, ip: '6.0', er: res === 'WIN' ? 1 : 3, so: 6 },
+              home_starter: hStReal,
+              away_starter: aStReal,
+              perspective_starter: pStReal,
               perspective_bullpen: { ip: '3.0', er: res === 'WIN' ? 1 : 0 },
               perspective_batting: { hits: ts + 3, home_runs: ts >= 4 ? 1 : 0 },
               baseball_stats: {

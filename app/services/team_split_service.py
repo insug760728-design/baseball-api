@@ -17,6 +17,8 @@ import random
 import time
 import hashlib
 import copy
+import re
+import unicodedata
 from datetime import datetime, timedelta
 import urllib.request
 import urllib.parse
@@ -7242,94 +7244,77 @@ def update_live_pitcher_stats(name: str, stats: dict) -> None:
 def _lookup_official_pitcher(name: str) -> dict:
     if not name:
         return {}
-    clean = str(name).replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
+    raw_norm = unicodedata.normalize('NFKC', str(name))
+    clean = re.sub(r"\([^\)]+\)", "", raw_norm).strip()
+    if not clean or clean in ("선발 미정", "미정", "None", "선발 예고 대기중"):
+        return {}
     
+    # 0. 알려진 별칭 정규화
+    if "모이네로" in clean:
+        clean = clean.replace("모이네로", "모이넬로")
+    if "モイネロ" in clean:
+        clean = "모이넬로"
+    if "エスピノーザ" in clean:
+        clean = "에스피노자"
+    if "高梨" in clean or "타카나시" in clean:
+        if "裕稔" in clean: clean = "타카나시 히로토시"
+    if "古謝" in clean:
+        clean = "코자 타츠키"
+
     # 1. 2026 실시간 스크래퍼 연동 최신 공식 성적 우선 조회
     if clean in _LIVE_PITCHER_STATS_CACHE:
         return _LIVE_PITCHER_STATS_CACHE[clean]
     if name in _LIVE_PITCHER_STATS_CACHE:
         return _LIVE_PITCHER_STATS_CACHE[name]
 
-    # 2. 348명 메이저리그/KBO/NPB 공식 실데이터셋 정확한 일치 조회 (Exact Match Only)
+    # 2. 공식 실데이터셋 조회 (정확한 일치 및 별칭 일치)
     dataset = _get_official_pitchers_dataset()
     if clean in dataset:
         return dataset[clean]
     if name in dataset:
         return dataset[name]
+    if raw_norm in dataset:
+        return dataset[raw_norm]
 
-    # 3. 로컬 프로필 사전 정확한 일치 (Exact Match Only - 잘못된 타 선수 복사 차단)
+    # 한글 번역명으로 조회
+    t_name = translate_player_name(clean)
+    if t_name and t_name in dataset:
+        return dataset[t_name]
+
+    # 영문/이니셜 접두어 제거 검색 (예: "L.모이넬로" -> "모이넬로", "A.에스피노자" -> "에스피노자", "S.젤리" -> "젤리")
+    no_init = re.sub(r'^[A-Za-z]\.\s*', '', clean).strip()
+    if no_init and no_init in dataset:
+        return dataset[no_init]
+    
+    clean_nospace = clean.replace(" ", "")
+    if clean_nospace in dataset:
+        return dataset[clean_nospace]
+    if no_init and no_init.replace(" ", "") in dataset:
+        return dataset[no_init.replace(" ", "")]
+
+    # 부분 일치 검색
+    target_key = no_init if (no_init and len(no_init) >= 2) else clean
+    for k, prof in dataset.items():
+        if not prof:
+            continue
+        if target_key and len(target_key) >= 2 and (target_key == k or target_key in k or k in target_key):
+            if prof.get("recent_starts"):
+                return prof
+
+    # 3. 로컬 프로필 사전 조회
     if clean in OFFICIAL_PITCHER_SEASON_PROFILES:
         return OFFICIAL_PITCHER_SEASON_PROFILES[clean]
     if name in OFFICIAL_PITCHER_SEASON_PROFILES:
         return OFFICIAL_PITCHER_SEASON_PROFILES[name]
+    if no_init in OFFICIAL_PITCHER_SEASON_PROFILES:
+        return OFFICIAL_PITCHER_SEASON_PROFILES[no_init]
 
     return {}
 
 
 def _build_default_pitcher_starts(pitcher_name: str, team_name: str, league_name: str, is_home: bool = True) -> list:
-    """선발투수 최근 10경기 등판 기록 보장 생성기 (공식 데이터 부재 시 0ms 즉각 제공)"""
-    seed = abs(sum(ord(c) for c in (pitcher_name or team_name or "선발")) * 31 + (13 if is_home else 29))
-    npb_teams = ['요미우리', '한신', '주니치', '야쿠르트', '요코하마', '히로시마', '소프트뱅크', '오릭스', '지바롯데', '라쿠텐', '닛폰햄', '세이부']
-    mlb_teams = ['다저스', '샌디에이고', '샌프란시스코', '애리조나', '콜로라도', '양키스', '보스턴', '볼티모어', '토론토', '필라델피아']
-    kbo_teams = ['LG', 'KT', 'KIA', 'NC', '두산', 'SSG', '롯데', '한화', '삼성', '키움']
-
-    t_str = str(team_name or "")
-    l_str = str(league_name or "")
-    if ("NPB" in l_str) or any(t in t_str for t in npb_teams):
-        opp_pool = [t for t in npb_teams if t not in t_str]
-    elif ("MLB" in l_str) or any(t in t_str for t in mlb_teams):
-        opp_pool = [t for t in mlb_teams if t not in t_str]
-    else:
-        opp_pool = [t for t in kbo_teams if t not in t_str]
-
-    if not opp_pool:
-        opp_pool = ['상대팀']
-
-    templates = [
-        {"ip": "6.0", "ip_num": 6.0, "er": 1, "h": 4, "hr": 0, "bb": 1, "so": 7, "np": 94, "win": True},
-        {"ip": "7.0", "ip_num": 7.0, "er": 2, "h": 5, "hr": 1, "bb": 2, "so": 8, "np": 102, "win": True},
-        {"ip": "5.2", "ip_num": 5.67, "er": 3, "h": 6, "hr": 1, "bb": 2, "so": 5, "np": 91, "win": False},
-        {"ip": "6.1", "ip_num": 6.33, "er": 0, "h": 3, "hr": 0, "bb": 1, "so": 6, "np": 96, "win": True},
-        {"ip": "5.0", "ip_num": 5.0, "er": 4, "h": 7, "hr": 1, "bb": 3, "so": 4, "np": 88, "win": False},
-        {"ip": "7.1", "ip_num": 7.33, "er": 1, "h": 4, "hr": 0, "bb": 0, "so": 9, "np": 105, "win": True},
-        {"ip": "6.0", "ip_num": 6.0, "er": 2, "h": 5, "hr": 0, "bb": 2, "so": 6, "np": 92, "win": True},
-        {"ip": "6.2", "ip_num": 6.67, "er": 3, "h": 6, "hr": 1, "bb": 1, "so": 7, "np": 98, "win": False},
-        {"ip": "5.1", "ip_num": 5.33, "er": 2, "h": 5, "hr": 0, "bb": 3, "so": 5, "np": 89, "win": True},
-        {"ip": "6.0", "ip_num": 6.0, "er": 2, "h": 4, "hr": 0, "bb": 2, "so": 6, "np": 90, "win": True}
-    ]
-
-    day_names = ['월', '화', '수', '목', '금', '토', '일']
-    now = datetime.now()
-    starts = []
-    for i in range(10):
-        tmpl = templates[(seed + i) % len(templates)]
-        dt = now - timedelta(days=(i + 1) * 6)
-        day_str = day_names[dt.weekday()]
-        date_str = f"{dt.strftime('%m.%d')}({day_str})"
-        venue = "홈" if (seed + i) % 2 == 0 else "원"
-        opp = opp_pool[(seed + i) % len(opp_pool)]
-        bf = int(round(tmpl["ip_num"] * 3 + tmpl["h"] + tmpl["bb"] + 1))
-        era_val = f"{(tmpl['er'] * 9.0 / tmpl['ip_num']):.2f}"
-        starts.append({
-            "date": date_str,
-            "match_date": date_str,
-            "venue": venue,
-            "is_home": venue == "홈",
-            "opponent": opp,
-            "opp": opp,
-            "ip": tmpl["ip"],
-            "bf": bf,
-            "h": tmpl["h"],
-            "hr": tmpl["hr"],
-            "bb": tmpl["bb"],
-            "so": tmpl["so"],
-            "er": tmpl["er"],
-            "era": era_val,
-            "np": tmpl["np"],
-            "result": "승" if tmpl["win"] else "패",
-            "decision": "승" if tmpl["win"] else "패"
-        })
-    return starts
+    """NO FAKE DATA: 가짜 더미 경기 생성 원천 금지 (공식 데이터만 노출)"""
+    return []
 
 
 def parse_ip_float(val: Any) -> float:
@@ -7490,7 +7475,7 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
     if is_valid_starter_name(home_name):
         home_name_clean = home_name.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
         h_prof = _lookup_official_pitcher(home_name_clean) or _lookup_official_pitcher(home_name)
-        home_name_ko = translate_player_name(home_name_clean) or h_prof.get("name") or home_name_clean
+        home_name_ko = h_prof.get("name") or translate_player_name(home_name_clean) or home_name_clean
         h_throws = h_st_dict.get("throws") or h_prof.get("style") or h_prof.get("throws") or home_throws or ("좌완" if "(좌)" in home_name or h_prof.get("hand") == "L" else "우완")
         h_hand = h_prof.get("hand") or ("L" if h_throws == "좌완" else "R")
         
@@ -7506,33 +7491,35 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
         h_bb = h_st_dict.get("season_bb") if h_st_dict.get("season_bb") is not None else h_prof.get("season_bb")
 
         if not h_recent_starts:
-            h_recent_starts = _build_default_pitcher_starts(home_name_clean, home_team, league_name, is_home=True)
+            h_recent_starts = []
 
         if (h_wins is None or h_losses is None) and h_recent_starts:
             w_cnt = sum(1 for s in h_recent_starts if s.get('decision') == '승' or s.get('result') == '승')
             l_cnt = sum(1 for s in h_recent_starts if s.get('decision') == '패' or s.get('result') == '패')
-            h_wins = w_cnt if (w_cnt + l_cnt > 0) else 6
-            h_losses = l_cnt if (w_cnt + l_cnt > 0) else 3
+            if w_cnt + l_cnt > 0:
+                h_wins = w_cnt
+                h_losses = l_cnt
             if not h_games:
                 h_games = len(h_recent_starts)
 
         if (h_era == "-" or not h_era) and h_recent_starts:
-            tot_ip = sum(float(s.get('ip', 6.0)) for s in h_recent_starts)
-            tot_er = sum(int(s.get('er', 2)) for s in h_recent_starts)
-            h_era = f"{(tot_er * 9.0 / max(1.0, tot_ip)):.2f}"
+            tot_ip = sum(float(s.get('ip', 0.0)) for s in h_recent_starts if str(s.get('ip', '')).replace('.', '').isdigit())
+            tot_er = sum(int(s.get('er', 0)) for s in h_recent_starts if str(s.get('er', '')).isdigit())
+            if tot_ip > 0:
+                h_era = f"{(tot_er * 9.0 / tot_ip):.2f}"
             if h_ip == "-":
                 h_ip = f"{tot_ip:.1f}"
             if h_so is None:
-                h_so = sum(int(s.get('so', 6)) for s in h_recent_starts)
+                h_so = sum(int(s.get('so', 0)) for s in h_recent_starts if str(s.get('so', '')).isdigit())
             if h_bb is None:
-                h_bb = sum(int(s.get('bb', 2)) for s in h_recent_starts)
+                h_bb = sum(int(s.get('bb', 0)) for s in h_recent_starts if str(s.get('bb', '')).isdigit())
 
         if h_wins is not None and h_losses is not None:
             h_record_str = f"{h_wins}승 {h_losses}패"
-        elif h_prof.get("record"):
+        elif h_prof.get("record") and h_prof.get("record") != "-":
             h_record_str = h_prof.get("record")
         else:
-            h_record_str = "6승 3패"
+            h_record_str = "선발 등판"
 
         summary_str = h_prof.get("summary") or h_prof.get("season_summary")
         if not summary_str or not isinstance(summary_str, str) or "시즌 첫 등판" in summary_str:
@@ -7616,7 +7603,7 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
     if is_valid_starter_name(away_name):
         away_name_clean = away_name.replace("(우)", "").replace("(좌)", "").replace("(언)", "").replace("(양)", "").strip()
         a_prof = _lookup_official_pitcher(away_name_clean) or _lookup_official_pitcher(away_name)
-        away_name_ko = translate_player_name(away_name_clean) or a_prof.get("name") or away_name_clean
+        away_name_ko = a_prof.get("name") or translate_player_name(away_name_clean) or away_name_clean
         a_throws = a_st_dict.get("throws") or a_prof.get("style") or a_prof.get("throws") or away_throws or ("좌완" if "(좌)" in away_name or a_prof.get("hand") == "L" else "우완")
         a_hand = a_prof.get("hand") or ("L" if a_throws == "좌완" else "R")
 
@@ -7632,33 +7619,35 @@ def _resolve_match_starters(conn: sqlite3.Connection, match_id: Optional[int], h
         a_bb = a_st_dict.get("season_bb") if a_st_dict.get("season_bb") is not None else a_prof.get("season_bb")
 
         if not a_recent_starts:
-            a_recent_starts = _build_default_pitcher_starts(away_name_clean, away_team, league_name, is_home=False)
+            a_recent_starts = []
 
         if (a_wins is None or a_losses is None) and a_recent_starts:
             w_cnt = sum(1 for s in a_recent_starts if s.get('decision') == '승' or s.get('result') == '승')
             l_cnt = sum(1 for s in a_recent_starts if s.get('decision') == '패' or s.get('result') == '패')
-            a_wins = w_cnt if (w_cnt + l_cnt > 0) else 5
-            a_losses = l_cnt if (w_cnt + l_cnt > 0) else 4
+            if w_cnt + l_cnt > 0:
+                a_wins = w_cnt
+                a_losses = l_cnt
             if not a_games:
                 a_games = len(a_recent_starts)
 
         if (a_era == "-" or not a_era) and a_recent_starts:
-            tot_ip = sum(float(s.get('ip', 6.0)) for s in a_recent_starts)
-            tot_er = sum(int(s.get('er', 2)) for s in a_recent_starts)
-            a_era = f"{(tot_er * 9.0 / max(1.0, tot_ip)):.2f}"
+            tot_ip = sum(float(s.get('ip', 0.0)) for s in a_recent_starts if str(s.get('ip', '')).replace('.', '').isdigit())
+            tot_er = sum(int(s.get('er', 0)) for s in a_recent_starts if str(s.get('er', '')).isdigit())
+            if tot_ip > 0:
+                a_era = f"{(tot_er * 9.0 / tot_ip):.2f}"
             if a_ip == "-":
                 a_ip = f"{tot_ip:.1f}"
             if a_so is None:
-                a_so = sum(int(s.get('so', 6)) for s in a_recent_starts)
+                a_so = sum(int(s.get('so', 0)) for s in a_recent_starts if str(s.get('so', '')).isdigit())
             if a_bb is None:
-                a_bb = sum(int(s.get('bb', 2)) for s in a_recent_starts)
+                a_bb = sum(int(s.get('bb', 0)) for s in a_recent_starts if str(s.get('bb', '')).isdigit())
 
         if a_wins is not None and a_losses is not None:
             a_record_str = f"{a_wins}승 {a_losses}패"
-        elif a_prof.get("record"):
+        elif a_prof.get("record") and a_prof.get("record") != "-":
             a_record_str = a_prof.get("record")
         else:
-            a_record_str = "5승 4패"
+            a_record_str = "선발 등판"
 
         summary_str = a_prof.get("summary") or a_prof.get("season_summary")
         if not summary_str or not isinstance(summary_str, str) or "시즌 첫 등판" in summary_str:

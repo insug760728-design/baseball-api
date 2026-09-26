@@ -221,6 +221,14 @@ def get_pitcher_profile_endpoint(
     if not clean or clean in ("선발 미정", "미정", "None", "선발 예고 대기중"):
         return {}
 
+    try:
+        from app.services.team_split_service import _lookup_official_pitcher
+        off_prof = _lookup_official_pitcher(name)
+        if off_prof and off_prof.get("recent_starts"):
+            return off_prof
+    except Exception:
+        pass
+
     json_path = os.path.join(os.path.dirname(__file__), "../../services/official_pitchers_dataset.json")
     dataset = {}
     if os.path.exists(json_path):
@@ -478,6 +486,15 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
                 a_starter = ps.get("player_name")
                 break
 
+    if not h_starter and matchup_analysis and isinstance(matchup_analysis, dict):
+        sp = matchup_analysis.get("starting_pitchers", {})
+        if sp and sp.get("home") and sp["home"].get("name") and sp["home"]["name"] not in ["선발 미정", "미정", "선발 예고", "선발 투수"]:
+            h_starter = sp["home"]["name"]
+    if not a_starter and matchup_analysis and isinstance(matchup_analysis, dict):
+        sp = matchup_analysis.get("starting_pitchers", {})
+        if sp and sp.get("away") and sp["away"].get("name") and sp["away"]["name"] not in ["선발 미정", "미정", "선발 예고", "선발 투수"]:
+            a_starter = sp["away"]["name"]
+
     h_lineup = None
     a_lineup = None
     is_lineup_confirmed = False
@@ -522,8 +539,8 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
         "away_team_name": m.away_team_name,
         "home_score": m.home_score,
         "away_score": m.away_score,
-        "home_starter_name": translate_player_name(h_starter) if h_starter else None,
-        "away_starter_name": translate_player_name(a_starter) if a_starter else None,
+        "home_starter_name": (translate_player_name(h_starter) or h_starter) if h_starter else None,
+        "away_starter_name": (translate_player_name(a_starter) or a_starter) if a_starter else None,
         "status": m.status,
         "is_customized": m.is_customized,
         "custom_notes": m.custom_notes,

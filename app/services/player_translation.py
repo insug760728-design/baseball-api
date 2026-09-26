@@ -55,7 +55,8 @@ def sanitize_player_name(raw: str) -> str:
     """Sanitize player names from external APIs, web scraping, and user queries."""
     if not raw or not isinstance(raw, str):
         return ""
-    text = sanitize_text(raw)
+    text = unicodedata.normalize('NFKC', str(raw))
+    text = sanitize_text(text)
     # Strip NPB win/loss/save/hold annotations: (勝), (敗), (S), (H), (セ), [勝], [敗]
     text = re.sub(r'[\(\[\{][勝敗SH세홀][\)\]\}]', '', text).strip()
     return text
@@ -207,6 +208,13 @@ FULL_NAMES = {
     # =============================================================
     # 🇯🇵 NPB 12개 구단 전체 투수/선발/주요 선수 일본 한자 & 가타카나 완벽 표기
     # =============================================================
+    "尾形 崇斗": "오가타 슈토", "尾形崇斗": "오가타 슈토", "尾形": "오가타 슈토", "Ogata Shuto": "오가타 슈토",
+    "菅井 信也": "스가이 신야", "菅井信也": "스가이 신야", "菅井": "스가이 신야", "Sugai Shinya": "스가이 신야",
+    "高梨 裕稔": "타카나시 히로토시", "高梨裕稔": "타카나시 히로토시", "타카나시 裕稔": "타카나시 히로토시", "高梨": "타카나시 히로토시", "Takanashi Hirotoshi": "타카나시 히로토시",
+    "涌井 秀章": "와쿠이 히데아키", "涌井秀章": "와쿠이 히데아키", "涌井": "와쿠이 히데아키", "Wakui Hideaki": "와쿠이 히데아키",
+    "古謝 樹": "코자 타츠키", "古謝樹": "코자 타츠키", "古謝 타츠키": "코자 타츠키", "古謝": "코자 타츠키", "Koja Tatsuki": "코자 타츠키",
+    "モイネロ": "L.모이넬로", "모이네로": "L.모이넬로", "L.모이네로": "L.모이넬로", "리반 모이넬로": "L.모이넬로", "Liván Moinelo": "L.모이넬로", "Livan Moinelo": "L.모이넬로", "Moinelo": "L.모이넬로",
+    "エスピノーザ": "A.에스피노자", "에스피노자": "A.에스피노자", "안데르손 에스피노자": "A.에스피노자", "Anderson Espinoza": "A.에스피노자", "Espinoza": "A.에스피노자",
     "仲地 礼亜": "나카치 레이아", "仲地礼亜": "나카치 레이아", "仲地": "나카치 레이아",
     "西舘 勇陽": "니시다테 유히", "西舘勇陽": "니시다테 유히", "西舘": "니시다테 유히",
     "竹丸 和幸": "타케마루 카즈키", "竹丸和幸": "타케마루 카즈키", "竹丸": "타케마루 카즈키",
@@ -785,8 +793,8 @@ def translate_player_name(raw: str) -> str:
     if re.search(r'[\u3040-\u309F\u30A0-\u30FF]', raw):
         return katakana_to_hangul(raw) + suffix
 
-    # Already Korean?
-    if re.search(r'^[가-힣\s\d._\-()]+$', raw):
+    # Already Korean (allow optional initial like 'A. ', 'L. ')
+    if re.search(r'^(?:[A-Za-z]\.?\s*)?[가-힣\s\d._\-()]+$', raw):
         return raw + suffix
     
     # Handle Jr., Sr., II, III, IV suffix
