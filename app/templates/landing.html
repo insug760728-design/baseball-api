@@ -4019,11 +4019,11 @@
       document.body.classList.remove('auth-locked');
       renderAuthUI();
       if (isAuto) {
-        alert('⏱️ 일정 시간 동안 활동이 감지되지 않아 보안을 위해 자동으로 로그아웃되었습니다.');
+        console.log('Session auto-expired due to inactivity');
       } else {
         alert('로그아웃되었습니다.');
       }
-      openLoginModal('login');
+      closeLoginModalImmediately();
     }
 
     // =============================================================
@@ -4458,23 +4458,41 @@
         return; // 로그인된 사용자: 모든 클릭 100% 정상 작동
       }
       
-      // 모달 내부 클릭 허용 (입력창, 가입/로그인 버튼, 탭 전환 등)
+      // 1. 모달 내부 조작 허용 (인풋 입력, 비밀번호 보기/숨기기, 탭 전환, 폼 제출 등)
       const loginModal = document.getElementById('simpleLoginModal');
       if (loginModal && loginModal.contains(e.target)) return;
 
-      // 모달 닫기 버튼(X)이나 백드롭 클릭 시 모달 닫기 정상 허용
+      // 2. 모달 닫기 버튼(X)이나 백드롭 클릭 시 모달 닫기 정상 허용
       if (e.target.closest('#authModalCloseBtn') || e.target.classList.contains('modal-backdrop')) {
         closeLoginModalImmediately();
         return;
       }
 
-      // 모달이 이미 열려 있는 상태에서 바깥 영역을 클릭했을 때 모달을 닫고 화면 복귀
+      // 3. 모달이 이미 열려 있는 상태에서 바깥 영역을 클릭했을 때 모달을 닫고 화면 복귀
       if (loginModal && (loginModal.classList.contains('show') || loginModal.style.display === 'block')) {
         closeLoginModalImmediately();
         return;
       }
 
-      // 화면 내 경기 클릭, 배당 클릭, 분석 클릭 등 조작 시 차단 & 회원가입 창 띄우기
+      // 4. 상단 로그인/회원가입 버튼 클릭은 자체 onclick에서 처리되므로 허용
+      if (e.target.closest('#btnNavLogin') || e.target.closest('[onclick*="openLoginModal"]')) {
+        return;
+      }
+
+      // 5. 비회원이 경기 분석/배당/배팅/채팅 등 실제 인터랙션 기능을 클릭했을 때만 회원가입 팝업 유도
+      const interactiveTarget = e.target.closest(
+        '.slim-match-card, .pred-card-compact, .modal-match-card, [data-match-id], ' +
+        '.odds-btn, .odds-cell, [data-odds], [data-bet], [data-outcome], ' +
+        '#betSlipContainer button, #chatForm, #chatMessageInput, #chatSendBtn, ' +
+        '[onclick*="openMatchDetailModal"], [onclick*="selectMatch"], [onclick*="openNextGenDetailModal"]'
+      );
+
+      if (!interactiveTarget) {
+        // 일반 화면 탐색, 스크롤, 스포츠 탭 전환, 빈 영역 클릭 등은 100% 자유롭게 허용 (모달 절대 안 뜸)
+        return;
+      }
+
+      // 핵심 기능 클릭 시 차단 & 회원가입 팝업 오픈
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
