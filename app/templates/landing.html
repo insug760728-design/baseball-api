@@ -13067,7 +13067,7 @@ function getFullModalMatchList() {
         const clean = String(name).replace(/\([우좌언양]\)/g, '').replace(/\(예상\)/g, '').trim();
         if (_attemptedPitcherFetches.has(clean)) return false;
         const off = lookupOfficialPitcher(clean);
-        if (off && off.recent_starts && off.recent_starts.length >= 8) return false;
+        if (off && off.recent_starts && off.recent_starts.length > 0) return false;
         _attemptedPitcherFetches.add(clean);
         return true;
       };
@@ -16468,12 +16468,19 @@ function updateSlimPanel(matchId, type, contentHtml) {
         openTestMatchModal('MLB');
         return;
       }
+      if (typeof matchId === 'object' && matchId !== null && matchId.id) {
+        match = matchId;
+        matchId = match.id;
+      }
       let match = null;
       if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
         match = allMatches.find(m => m.id == matchId || String(m.id) === String(matchId));
       }
       if (!match && typeof _currentMatchesList !== 'undefined' && Array.isArray(_currentMatchesList)) {
         match = _currentMatchesList.find(m => m.id == matchId || String(m.id) === String(matchId));
+      }
+      if (!match && typeof matchDetailCache !== 'undefined' && matchDetailCache) {
+        match = matchDetailCache.get(Number(matchId)) || matchDetailCache.get(matchId) || matchDetailCache.get(String(matchId));
       }
       if (!match && typeof getMatchById === 'function') {
         match = getMatchById(matchId);
@@ -16502,36 +16509,60 @@ function updateSlimPanel(matchId, type, contentHtml) {
           } catch(e) {}
         }
 
+        const showDetailError = (err) => {
+          if (container) {
+            container.innerHTML = `
+              <div class="p-4 my-4 text-center bg-white rounded-3 border shadow-sm" style="border-color: #fecaca !important;">
+                <div style="font-size: 2.2rem; color: #ef4444; margin-bottom: 8px;">⚠️</div>
+                <h5 class="fw-bold text-dark mb-1">경기 상세 정보를 불러올 수 없습니다</h5>
+                <p class="text-muted small mb-3">경기 번호: ${matchId} | 일시적 네트워크 지연 또는 존재하지 않는 경기입니다.</p>
+                <div class="d-flex justify-content-center gap-2">
+                  <button type="button" class="btn btn-sm btn-primary px-3 py-1.5 fw-bold" onclick="openNextGenDetailModal(${matchId})">
+                    <i class="bi bi-arrow-clockwise me-1"></i>다시 시도
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary px-3 py-1.5" data-bs-dismiss="modal">닫기</button>
+                </div>
+              </div>
+            `;
+          }
+        };
+
+        // 3초 안전 타임아웃: 네트워크 지연 시 스피너 무한 루프 원천 차단
+        let didComplete = false;
+        const fetchTimeout = setTimeout(() => {
+          if (!didComplete) {
+            didComplete = true;
+            showDetailError(new Error('Timeout'));
+          }
+        }, 3000);
+
         // Fallback: fetch directly from backend API
         deduplicatedFetch(`/api/v1/matches/${matchId}`)
           .then(data => {
+            if (didComplete) return;
+            didComplete = true;
+            clearTimeout(fetchTimeout);
             if (data && data.id) {
               if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
                 allMatches.push(data);
               }
+              if (typeof matchDetailCache !== 'undefined' && matchDetailCache) {
+                matchDetailCache.set(Number(data.id), data);
+              }
               openNextGenDetailModal(data.id, initialTab);
+            } else {
+              showDetailError(new Error('Match not found or empty'));
             }
           })
           .catch(err => {
+            if (didComplete) return;
+            didComplete = true;
+            clearTimeout(fetchTimeout);
             console.warn('openNextGenDetailModal: match not found for id', matchId, err);
             if (window.__reportClientError) {
               window.__reportClientError('DetailFetchError', `Match ${matchId} fetch failed: ${err.message}`, err.stack);
             }
-            if (container) {
-              container.innerHTML = `
-                <div class="p-4 my-4 text-center bg-white rounded-3 border shadow-sm" style="border-color: #fecaca !important;">
-                  <div style="font-size: 2.2rem; color: #ef4444; margin-bottom: 8px;">⚠️</div>
-                  <h5 class="fw-bold text-dark mb-1">경기 상세 정보를 불러올 수 없습니다</h5>
-                  <p class="text-muted small mb-3">경기 번호: ${matchId} | 일시적 네트워크 지연 또는 존재하지 않는 경기입니다.</p>
-                  <div class="d-flex justify-content-center gap-2">
-                    <button type="button" class="btn btn-sm btn-primary px-3 py-1.5 fw-bold" onclick="openNextGenDetailModal(${matchId})">
-                      <i class="bi bi-arrow-clockwise me-1"></i>다시 시도
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary px-3 py-1.5" data-bs-dismiss="modal">닫기</button>
-                  </div>
-                </div>
-              `;
-            }
+            showDetailError(err);
           });
         return;
       }
@@ -16642,26 +16673,29 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
       }
 
-      // Background detail fetch for rich player_stats & matchup_analysis (중복 요청 방지)
-      try {
-        deduplicatedFetch(`/api/v1/matches/${match.id}`)
-          .then(freshData => {
-            if (freshData && _ngActiveMatchId == match.id) {
-              if (match.history && match.history.home_recent && (!freshData.history || !freshData.history.home_recent)) {
-                freshData.history = match.history;
+      // Background detail fetch for rich player_stats & matchup_analysis (필요 시에만 요청)
+      const needsBackgroundFetch = !match.details || !match.matchup_analysis || match.status === 'LIVE';
+      if (needsBackgroundFetch) {
+        try {
+          deduplicatedFetch(`/api/v1/matches/${match.id}`)
+            .then(freshData => {
+              if (freshData && _ngActiveMatchId == match.id) {
+                if (match.history && match.history.home_recent && (!freshData.history || !freshData.history.home_recent)) {
+                  freshData.history = match.history;
+                }
+                Object.assign(match, freshData);
+                if (freshData.history && freshData.history.home_recent) {
+                  window._matchHistoryCache[match.id] = freshData.history;
+                }
+                window._currentOpenDetailMatch = match;
+                if (typeof matchDetailCache !== 'undefined' && matchDetailCache) {
+                  matchDetailCache.set(Number(match.id), freshData);
+                }
+                scheduleNextGenDetailUpdate(match);
               }
-              Object.assign(match, freshData);
-              if (freshData.history && freshData.history.home_recent) {
-                window._matchHistoryCache[match.id] = freshData.history;
-              }
-              window._currentOpenDetailMatch = match;
-              if (typeof matchDetailCache !== 'undefined' && matchDetailCache) {
-                matchDetailCache.set(Number(match.id), freshData);
-              }
-              scheduleNextGenDetailUpdate(match);
-            }
-          }).catch(()=>{});
-      } catch (e) {}
+            }).catch(()=>{});
+        } catch (e) {}
+      }
     }
 
     // 글로벌 바인딩

@@ -261,68 +261,18 @@ def get_pitcher_profile_endpoint(
 
     # 2. 로컬 DB(PlayerMatchStat + Match)에서 100% 공식 실데이터 탐색 (KBO/NPB 등)
     db_prof = get_pitcher_profile_from_db(clean)
-    if db_prof and len(db_prof.get("recent_starts", [])) >= 8:
-        return db_prof
-
-    # 3. KBO 리그 선발투수일 경우 KBO 공식 사이트 실시간 크롤링 우선
-    is_kbo = (isinstance(league, str) and "KBO" in league.upper()) or any(x in clean for x in ["쿠에바스", "원태인", "류현진", "엄상백", "고영표", "안우진", "문동주", "곽빈", "김광현", "양현종", "손주영", "엔스", "네일", "후라도", "헤이수스"])
-    if is_kbo:
-        try:
-            from app.scrapers.official_kbo_live_scraper import KboOfficialScraper
-            kbo_scraper = KboOfficialScraper()
-            kbo_prof = kbo_scraper.fetch_kbo_pitcher_profile(clean)
-            if kbo_prof and (kbo_prof.get("season_era") != '-' or kbo_prof.get("games") or kbo_prof.get("wins") is not None):
-                if db_prof and db_prof.get("recent_starts"):
-                    kbo_prof["recent_starts"] = db_prof["recent_starts"]
-                dataset[clean] = kbo_prof
-                try:
-                    with open(json_path, "w", encoding="utf-8") as f:
-                        json.dump(dataset, f, ensure_ascii=False, indent=2)
-                except Exception:
-                    pass
-                return kbo_prof
-        except Exception as e:
-            print(f"[Matches API] KBO Pitcher fetch error ({clean}): {e}")
-
-    # 4. Fallback to live MLB Stats API scraper
-    try:
-        from app.scrapers.official_mlb_live_scraper import MlbOfficialScraper
-        scraper = MlbOfficialScraper()
-        prof = scraper.search_and_fetch_pitcher(name)
-        if prof and (prof.get("recent_starts") or prof.get("season_era")):
-            dataset[clean] = prof
-            try:
-                with open(json_path, "w", encoding="utf-8") as f:
-                    json.dump(dataset, f, ensure_ascii=False, indent=2)
-            except Exception:
-                pass
-            return prof
-    except Exception as e:
-        print(f"[Matches API] MLB Pitcher profile fetch error ({name}): {e}")
-
-    # 5. KBO 일반 시도 (MLB에서 못 찾았을 경우)
-    if not is_kbo:
-        try:
-            from app.scrapers.official_kbo_live_scraper import KboOfficialScraper
-            kbo_scraper = KboOfficialScraper()
-            kbo_prof = kbo_scraper.fetch_kbo_pitcher_profile(clean)
-            if kbo_prof and (kbo_prof.get("season_era") != '-' or kbo_prof.get("games") or kbo_prof.get("wins") is not None):
-                if db_prof and db_prof.get("recent_starts"):
-                    kbo_prof["recent_starts"] = db_prof["recent_starts"]
-                dataset[clean] = kbo_prof
-                return kbo_prof
-        except Exception:
-            pass
-
     if db_prof and db_prof.get("recent_starts"):
         return db_prof
 
-    if clean in dataset and dataset[clean].get("recent_starts"):
+    # 3. 데이터셋 부분 일치 재확인
+    if clean in dataset:
         return dataset[clean]
-
     for k, v in dataset.items():
         if (clean == k or clean in k or k in clean) and v.get("recent_starts"):
             return v
+
+    if db_prof:
+        return db_prof
 
     return dataset.get(clean, {})
 
@@ -511,7 +461,7 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
         any(k in (m.home_team_name or "") for k in ["양키", "다저", "토론", "볼티", "보스", "디트", "워싱", "메츠", "필라", "컵스", "화삭", "자이", "파드", "브루", "카디"])
     )
 
-    if is_mlb and (force or not is_lineup_confirmed or not h_lineup or not a_lineup):
+    if is_mlb and m.status != "FINISHED" and m.home_score is None and (force or not is_lineup_confirmed or not h_lineup or not a_lineup):
         try:
             from app.scrapers.official_mlb_live_scraper import MlbOfficialScraper
             mlb_pk = int(m.official_id.replace("MLB_", "")) if (m.official_id and m.official_id.startswith("MLB_") and m.official_id.replace("MLB_", "").isdigit()) else None
@@ -526,6 +476,12 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
                     a_starter = mlb_res["away_starter"]["name"]
         except Exception:
             pass
+
+    hist_data = {}
+    try:
+        hist_data = HistoricalAgentRouter.get_match_history_by_agent(m.id, max_games=10)
+    except Exception as e:
+        print(f"[get_match_full] HistoricalAgentRouter error for match {m.id}: {e}")
 
     res = {
         "id": m.id,
@@ -549,7 +505,7 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
         "events": data["events"],
         "player_stats": data["player_stats"],
         "matchup_analysis": matchup_analysis,
-        "history": HistoricalAgentRouter.get_match_history_by_agent(m.id, max_games=10),
+        "history": hist_data,
         "home_lineup": h_lineup,
         "away_lineup": a_lineup,
         "is_lineup_confirmed": is_lineup_confirmed,
