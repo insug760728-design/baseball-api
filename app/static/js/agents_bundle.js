@@ -627,31 +627,43 @@ class DetailModalAgent {
           <i class="bi bi-list-ol me-1 text-primary"></i>${teamName} 최근 ${recentList.length}경기 공식 전적
         </div>
         <div class="table-responsive">
-          <table class="table table-sm table-hover mb-0 text-center align-middle" style="font-size:0.82rem;">
-            <thead class="table-light">
-              <tr>
-                <th>날짜</th>
-                <th>상대팀</th>
-                <th>장소</th>
-                <th>스코어</th>
-                <th>결과</th>
+          <table class="table table-sm table-hover mb-0 text-center align-middle" style="font-size:0.80rem;">
+            <thead>
+              <tr style="background:#1e293b; color:#ffffff; font-size:0.72rem;">
+                <th style="width:16%; text-align:center; color:#cbd5e1; font-weight:700;">일자</th>
+                <th style="width:34%; text-align:right; padding-right:12px; color:#ef4444; font-weight:800;">홈팀</th>
+                <th style="width:16%; text-align:center; color:#ffffff; font-weight:800;">점수</th>
+                <th style="width:34%; text-align:left; padding-left:12px; color:#3b82f6; font-weight:800;">원정팀</th>
               </tr>
             </thead>
             <tbody>
-              ${recentList.map(r => {
+              ${recentList.map((r, rIdx) => {
                 const rIsHome = (r.home_team === teamName || (r.home_team && r.home_team.includes(teamName)));
-                const rOpp = rIsHome ? r.away_team : r.home_team;
-                const rMy = rIsHome ? r.home_score : r.away_score;
-                const rOpS = rIsHome ? r.away_score : r.home_score;
-                const rRes = r.result || (rMy > rOpS ? '승' : (rMy < rOpS ? '패' : '무'));
-                const rBadgeClass = rRes.includes('승') ? 'bg-danger' : (rRes.includes('패') ? 'bg-primary' : 'bg-secondary');
+                const rHomeTeam = rIsHome ? teamName : (r.home_team || '상대팀');
+                const rAwayTeam = rIsHome ? (r.away_team || '상대팀') : teamName;
+                const rHomeScore = rIsHome ? (r.home_score ?? 0) : (r.away_score ?? 0);
+                const rAwayScore = rIsHome ? (r.away_score ?? 0) : (r.home_score ?? 0);
+
+                const isHomeWinner = Number(rHomeScore) > Number(rAwayScore);
+                const isAwayWinner = Number(rAwayScore) > Number(rHomeScore);
+                const homeScoreHtml = `<span style="color:${isHomeWinner ? '#dc2626' : '#111827'}; font-weight:800;">${rHomeScore}</span>`;
+                const awayScoreHtml = `<span style="color:${isAwayWinner ? '#dc2626' : '#111827'}; font-weight:800;">${rAwayScore}</span>`;
+
+                const dateStr = r.match_date ? (r.match_date.length > 10 ? r.match_date.slice(0, 10).replace(/-/g, '.') : r.match_date.replace(/-/g, '.')) : '-';
                 return `
-                  <tr>
-                    <td class="text-muted">${r.match_date ? r.match_date.slice(5, 10) : '-'}</td>
-                    <td class="fw-bold text-truncate" style="max-width:110px;">${rOpp}</td>
-                    <td><span class="badge bg-light text-muted border">${rIsHome ? '홈' : '원정'}</span></td>
-                    <td class="fw-bold">${rMy} - ${rOpS}</td>
-                    <td><span class="badge ${rBadgeClass}">${rRes}</span></td>
+                  <tr style="background:${rIdx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+                    <td class="text-secondary text-center font-monospace ps-2 small" style="width:16%; white-space:nowrap;">${dateStr}</td>
+                    <td class="text-end px-2 text-truncate" style="width:34%;" title="${rHomeTeam}">
+                      <span style="color:${isHomeWinner ? '#dc2626' : '#111827'}; font-weight:${isHomeWinner ? '800' : '600'}; font-size:0.78rem;">${rHomeTeam}</span>
+                    </td>
+                    <td class="fw-bold font-monospace text-center px-1" style="width:16%; white-space:nowrap; font-size:0.88rem;">
+                      <span class="px-2 py-0.5 rounded-pill font-monospace" style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:800; display:inline-block;">
+                        ${homeScoreHtml} <span style="color:#94a3b8; margin:0 2px;">:</span> ${awayScoreHtml}
+                      </span>
+                    </td>
+                    <td class="text-start px-2 text-truncate" style="width:34%;" title="${rAwayTeam}">
+                      <span style="color:${isAwayWinner ? '#dc2626' : '#111827'}; font-weight:${isAwayWinner ? '800' : '600'}; font-size:0.78rem;">${rAwayTeam}</span>
+                    </td>
                   </tr>
                 `;
               }).join('')}

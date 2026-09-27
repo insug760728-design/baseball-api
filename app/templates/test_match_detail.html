@@ -674,7 +674,7 @@
           h2hLast: {
             title: "양 팀 직전 맞대결 (3연전 3차전)",
             date: "2026.09.14",
-            score: "토론토 8 : 1 볼티모어 (토론토 승)",
+            score: "토론토 8 : 1 볼티모어",
             summary: "토론토 선발 딜런 시즈 호투 및 타선 10안타 8득점 폭발 (로저스 센터)"
           }
         },
@@ -817,7 +817,7 @@
           h2hLast: {
             title: "양 팀 직전 맞대결",
             date: "2026.09.19",
-            score: "볼티모어 2 : 4 밀워키 (밀워키 승)",
+            score: "볼티모어 2 : 4 밀워키",
             summary: "밀워키 불펜 무실점 계투승 및 콘트레라스 2타점 결승타"
           }
         }
@@ -923,7 +923,7 @@
           h2hLast: {
             title: "양 팀 직전 맞대결",
             date: "2026.09.19",
-            score: "애리조나 6 : 3 뉴욕 양키스 (애리조나 승)",
+            score: "애리조나 6 : 3 뉴욕 양키스",
             summary: "애리조나 4회 집중 4득점 빅이닝으로 기선 제압"
           }
         }
@@ -1027,7 +1027,7 @@
           h2hLast: {
             title: "양 팀 직전 맞대결",
             date: "2026.09.19",
-            score: "텍사스 2 : 4 토론토 (토론토 승)",
+            score: "텍사스 2 : 4 토론토",
             summary: "토론토 8회 결승 2루타로 1점 차 승리"
           }
         }
@@ -1129,14 +1129,14 @@
           h2hLast: {
             title: "양 팀 직전 맞대결",
             date: "2026.09.19",
-            score: "한신 1 : 3 요코하마 (요코하마 승)",
+            score: "한신 1 : 3 요코하마",
             summary: "요코하마 아즈마 8이닝 1실점 역투로 승리"
           }
         }
       }
     };
 
-    let currentMatchKey = 'BAL';
+    currentMatchKey = 'BAL';
 
     function renderAll() {
       const data = MATCH_DATA[currentMatchKey];
@@ -1593,9 +1593,19 @@
           const resText = isWin ? `${shortTeam} 승` : `${shortTeam} 패`;
           const isFirst = (idx === 0);
           const rawDate = g.date || '';
-          const yyyy = (rawDate.length >= 4) ? rawDate.slice(0, 4) : '2026';
-          const mmdd = (rawDate.length >= 10) ? rawDate.slice(5, 10).replace('-', '.') : (rawDate.slice(-5).replace('-', '.') || '09.21');
-          const isPastSeason = yyyy < '2026';
+          let dateDisplay = '';
+          const dFullMatch = String(rawDate).match(/(\d{4})[.-](\d{1,2})[.-](\d{1,2})/);
+          if (dFullMatch) {
+            dateDisplay = `${dFullMatch[1]}.${dFullMatch[2].padStart(2, '0')}.${dFullMatch[3].padStart(2, '0')}`;
+          } else {
+            const dShortMatch = String(rawDate).match(/(\d{1,2})[.-](\d{1,2})/);
+            if (dShortMatch) {
+              dateDisplay = `2026.${dShortMatch[1].padStart(2, '0')}.${dShortMatch[2].padStart(2, '0')}`;
+            } else {
+              dateDisplay = rawDate || '2026.09.21';
+            }
+          }
+          const isPastSeason = dateDisplay < '2026';
 
           // 🛡️ 항상 두 팀을 명확히 앞자리 팀명으로 표기 (홈팀 vs 원정팀)
           const isGameHome = (g.venue === '홈' || g.home_away === '홈');
@@ -1605,28 +1615,27 @@
           const hScore = isGameHome ? g.my_score : g.opp_score;
           const aScore = isGameHome ? g.opp_score : g.my_score;
 
+          const isHWin = Number(hScore) > Number(aScore);
+          const isAWin = Number(aScore) > Number(hScore);
+
           return `
-            <tr style="background: ${isFirst ? (isHome ? '#fff7f7' : '#f0f9ff') : (idx % 2 === 0 ? '#ffffff' : '#f8fafc')};">
-              <td style="white-space:nowrap;" class="fw-bold text-dark">
-                <span class="text-secondary small">${yyyy}.</span><span class="fw-bold">${mmdd}</span>
-                ${isFirst ? `<span class="badge ${isHome ? 'bg-danger' : 'bg-primary'} ms-1" style="font-size:0.60rem;">직전</span>` : (isPastSeason ? `<span class="badge bg-light text-muted border ms-1" style="font-size:0.58rem;">${yyyy}시즌</span>` : '')}
+            <tr style="height:28px; background: ${isFirst ? (isHome ? '#fff7f7' : '#f0f9ff') : (idx % 2 === 0 ? '#ffffff' : '#f8fafc')};" title="${g.starter ? `선발: ${g.starter}` : ''} ${g.note ? `(${g.note})` : ''}">
+              <td style="width:15%; white-space:nowrap;" class="text-secondary font-monospace text-center">
+                <span>${dateDisplay}</span>
+                ${isFirst ? `<span class="badge ${isHome ? 'bg-danger' : 'bg-primary'} ms-1" style="font-size:0.60rem;">직전</span>` : ''}
               </td>
-              <td class="text-start px-2 text-truncate" style="max-width:210px;" title="${hTeam} vs ${aTeam}">
-                <span class="${hTeam === shortTeam ? 'fw-bold text-danger' : 'text-dark'}">${hTeam}</span><span class="text-danger small ms-0.5" style="font-size:0.62rem;">(홈)</span>
-                <span class="text-muted small mx-1">vs</span>
-                <span class="${aTeam === shortTeam ? 'fw-bold text-primary' : 'text-dark'}">${aTeam}</span><span class="text-primary small ms-0.5" style="font-size:0.62rem;">(원정)</span>
+              <td class="text-truncate px-2 text-end" style="width:35%;" title="${hTeam}">
+                <span style="color:${isHWin ? '#dc2626' : '#111827'}; font-weight:${isHWin ? '800' : '600'}; font-size:0.78rem;">${hTeam}</span>
               </td>
-              <td class="fw-bold" style="white-space:nowrap; font-family:'Roboto Mono', monospace;">
-                <span class="${hScore > aScore ? 'text-danger' : (hScore < aScore ? 'text-muted' : 'text-dark')}">${hScore}</span>
-                <span class="text-muted">:</span>
-                <span class="${aScore > hScore ? 'text-primary' : (aScore < hScore ? 'text-muted' : 'text-dark')}">${aScore}</span>
+              <td class="fw-bold text-center font-monospace" style="width:16%; white-space:nowrap; font-size:0.88rem; padding:3px 2px;">
+                <span class="px-2 py-0.5 rounded-pill font-monospace" style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:800; font-size:0.88rem; display:inline-block;">
+                  <span style="color:${isHWin ? '#dc2626' : '#1e293b'}; font-weight:800;">${hScore}</span>
+                  <span style="color:#94a3b8; margin:0 2px;">:</span>
+                  <span style="color:${isAWin ? '#dc2626' : '#1e293b'}; font-weight:800;">${aScore}</span>
+                </span>
               </td>
-              <td>
-                <span class="badge ${resBadge}" style="font-size:0.65rem;">${resText}</span>
-              </td>
-              <td class="text-start px-2 small text-truncate" style="max-width:180px;" title="${g.starter || ''} · ${g.note || ''}">
-                <span class="fw-bold text-dark">${g.starter || '-'}</span>
-                ${g.note ? `<span class="text-muted small ms-1">(${g.note})</span>` : ''}
+              <td class="text-truncate px-2 text-start" style="width:34%;" title="${aTeam}">
+                <span style="color:${isAWin ? '#dc2626' : '#111827'}; font-weight:${isAWin ? '800' : '600'}; font-size:0.78rem;">${aTeam}</span>
               </td>
             </tr>
           `;
@@ -1637,8 +1646,8 @@
             <!-- 상단 요약 바 -->
             <div class="p-2 rounded mb-2 d-flex justify-content-between align-items-center flex-wrap gap-1.5" style="background:${sideBg}; border-left: 4px solid ${sideColor};">
               <div class="d-flex align-items-center gap-1.5">
-                <span class="badge ${isHome ? 'bg-danger' : 'bg-primary'} text-white px-2 py-0.5" style="font-size:0.70rem;">${isHome ? '🔴 [홈]' : '🔵 [원정]'} ${shortTeam}</span>
-                <strong style="font-size:0.82rem; color:#0f172a;">${shortTeam} 오늘(2026.09.22) 기준 최근 10경기: ${wins}승 ${losses}패 (${winPct}%)</strong>
+                <span class="badge ${isHome ? 'bg-danger' : 'bg-primary'} text-white px-2 py-0.5" style="font-size:0.70rem;">${isHome ? '홈' : '원정'} ${shortTeam}</span>
+                <strong style="font-size:0.82rem; color:#0f172a;">${shortTeam} 최근 10경기: ${wins}승 ${losses}패 (${winPct}%)</strong>
               </div>
               <div class="small fw-bold" style="font-size:0.72rem; color:#334155;">
                 평균득실: <span class="text-danger">${avgScore}득</span> / <span class="text-primary">${avgConc}실</span> (마진 ${diff > 0 ? '+' + diff : diff})
@@ -1648,7 +1657,7 @@
             <!-- 세부 지표 칩 -->
             <div class="d-flex flex-wrap gap-1.5 mb-2" style="font-size:0.69rem;">
               <span class="badge bg-white text-dark border px-2 py-1">
-                📅 집계 일자: <strong>2026.09.10 ~ 09.21 (오늘 9/22 경기 전)</strong>
+                📅 집계 일자: <strong>${list[list.length-1]?.date || '과거'} ~ ${list[0]?.date || '최신'}</strong>
               </span>
               <span class="badge bg-white text-dark border px-2 py-1">
                 🏠 홈 전적: <strong>${homeWins + homeLosses}전 ${homeWins}승 ${homeLosses}패</strong>
@@ -1665,12 +1674,11 @@
             <div class="table-responsive">
               <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size:0.73rem;">
                 <thead class="table-light">
-                  <tr style="background:#f1f5f9; font-size:0.71rem;">
-                    <th style="width:18%;">시즌 경기일자</th>
-                    <th style="width:34%;">경기 대진 (홈팀 vs 원정팀)</th>
-                    <th style="width:11%;">스코어</th>
-                    <th style="width:11%;">결과</th>
-                    <th style="width:26%;">선발투수 / 주요 기록</th>
+                  <tr style="background:#1e293b; color:#ffffff; font-size:0.70rem;">
+                    <th style="width:15%; text-align:center; color:#cbd5e1; font-weight:700;">일자</th>
+                    <th style="width:35%; text-align:right; padding-right:12px; color:#ef4444; font-weight:800;">홈팀</th>
+                    <th style="width:16%; text-align:center; color:#ffffff; font-weight:800;">점수</th>
+                    <th style="width:34%; text-align:left; padding-left:12px; color:#3b82f6; font-weight:800;">원정팀</th>
                   </tr>
                 </thead>
                 <tbody>${rows}</tbody>
@@ -1759,9 +1767,19 @@
             ? `승: ${g.winner_p} / 패: ${g.loser_p}${g.save_p && g.save_p !== '-' ? ` / 세: ${g.save_p}` : ''}`
             : '-';
           const rawDate = g.date || '';
-          const yyyy = (rawDate.length >= 4) ? rawDate.slice(0, 4) : '2026';
-          const mmdd = (rawDate.length >= 10) ? rawDate.slice(5, 10).replace('-', '.') : (rawDate.slice(-5).replace('-', '.') || '09.13');
-          const isPastSeason = yyyy < '2026';
+          let dateDisplay = '';
+          const dFullMatch = String(rawDate).match(/(\d{4})[.-](\d{1,2})[.-](\d{1,2})/);
+          if (dFullMatch) {
+            dateDisplay = `${dFullMatch[1]}.${dFullMatch[2].padStart(2, '0')}.${dFullMatch[3].padStart(2, '0')}`;
+          } else {
+            const dShortMatch = String(rawDate).match(/(\d{1,2})[.-](\d{1,2})/);
+            if (dShortMatch) {
+              dateDisplay = `2026.${dShortMatch[1].padStart(2, '0')}.${dShortMatch[2].padStart(2, '0')}`;
+            } else {
+              dateDisplay = rawDate || '2026.09.13';
+            }
+          }
+          const isPastSeason = dateDisplay < '2026';
 
           // 팀별 고유 색상 일치 (hName: 빨강, aName: 파랑)
           const homeTeamClass = isHNameHome ? 'text-danger fw-bold' : 'text-primary fw-bold';
@@ -1769,47 +1787,38 @@
           const awayTeamClass = isHNameHome ? 'text-primary fw-bold' : 'text-danger fw-bold';
           const awayTagClass = isHNameHome ? 'text-primary' : 'text-danger';
 
+          const isHomeWinner = !isNaN(gHomeScore) && !isNaN(gAwayScore) && gHomeScore > gAwayScore;
+          const isAwayWinner = !isNaN(gHomeScore) && !isNaN(gAwayScore) && gAwayScore > gHomeScore;
+
           let homeScoreSpan, awayScoreSpan;
           if (!isNaN(gHomeScore) && !isNaN(gAwayScore)) {
-            if (gHomeScore > gAwayScore) {
-              homeScoreSpan = `<span class="${isHNameHome ? 'text-danger' : 'text-primary'} fw-bold">${gHomeScore}</span>`;
-              awayScoreSpan = `<span class="text-muted">${gAwayScore}</span>`;
-            } else if (gAwayScore > gHomeScore) {
-              homeScoreSpan = `<span class="text-muted">${gHomeScore}</span>`;
-              awayScoreSpan = `<span class="${isHNameHome ? 'text-primary' : 'text-danger'} fw-bold">${gAwayScore}</span>`;
-            } else {
-              homeScoreSpan = `<span class="text-dark">${gHomeScore}</span>`;
-              awayScoreSpan = `<span class="text-dark">${gAwayScore}</span>`;
-            }
+            homeScoreSpan = `<span style="color:${isHomeWinner ? '#dc2626' : '#111827'}; font-weight:800;">${gHomeScore}</span>`;
+            awayScoreSpan = `<span style="color:${isAwayWinner ? '#dc2626' : '#111827'}; font-weight:800;">${gAwayScore}</span>`;
           } else {
             homeScoreSpan = '-';
             awayScoreSpan = '-';
           }
 
+          const homeTeamSpan = `<span style="color:${isHomeWinner ? '#dc2626' : '#111827'}; font-weight:${isHomeWinner ? '800' : '600'}; font-size:0.78rem;">${gHomeName}</span>`;
+          const awayTeamSpan = `<span style="color:${isAwayWinner ? '#dc2626' : '#111827'}; font-weight:${isAwayWinner ? '800' : '600'}; font-size:0.78rem;">${gAwayName}</span>`;
+          const dateSpan = `<span style="color:#64748b; font-family:'Roboto Mono', monospace; font-size:0.72rem;">${dateDisplay}</span>`;
+
           return `
-            <tr>
-              <td style="white-space:nowrap;" class="fw-bold text-dark">
-                <span class="text-secondary small">${yyyy}.</span><span class="fw-bold">${mmdd}</span>
+            <tr style="height:28px; background:${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};" title="${decStr !== '-' ? decStr : ''}">
+              <td class="text-center font-monospace" style="width:15%; white-space:nowrap;">
+                ${dateSpan}
                 ${idx === 0 ? `<span class="badge bg-secondary ms-1" style="font-size:0.60rem;">직전</span>` : (isPastSeason ? `<span class="badge bg-light text-muted border ms-1" style="font-size:0.58rem;">${yyyy}시즌</span>` : '')}
               </td>
-              <td class="text-start px-2 text-truncate" style="max-width:210px;" title="${gHomeName} vs ${gAwayName}">
-                <span class="${homeTeamClass}">${gHomeName}</span><span class="${homeTagClass} small ms-0.5" style="font-size:0.62rem;">(홈)</span>
-                <span class="text-muted small mx-1">vs</span>
-                <span class="${awayTeamClass}">${gAwayName}</span><span class="${awayTagClass} small ms-0.5" style="font-size:0.62rem;">(원정)</span>
+              <td class="text-end px-2 text-truncate" style="width:35%;" title="${gHomeName}">
+                ${homeTeamSpan}
               </td>
-              <td class="fw-bold" style="white-space:nowrap; font-family:'Roboto Mono', monospace;">
-                ${homeScoreSpan}
-                <span class="text-muted">:</span>
-                ${awayScoreSpan}
+              <td class="fw-bold text-center font-monospace" style="width:16%; white-space:nowrap; font-size:0.88rem; padding:3px 2px;">
+                <span class="px-2 py-0.5 rounded-pill font-monospace" style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:800; font-size:0.88rem; display:inline-block;">
+                  ${homeScoreSpan} <span style="color:#94a3b8; margin:0 2px;">:</span> ${awayScoreSpan}
+                </span>
               </td>
-              <td>
-                <span class="badge ${badgeClass}" style="font-size:0.65rem;">${badgeText}</span>
-              </td>
-              <td class="text-start px-2 small text-truncate" style="max-width:145px;" title="${decStr}">
-                ${decStr}
-              </td>
-              <td class="small text-muted text-truncate" style="max-width:115px;" title="${g.venue || '-'}">
-                ${g.venue || '-'}
+              <td class="text-start px-2 text-truncate" style="width:34%;" title="${gAwayName}">
+                ${awayTeamSpan}
               </td>
             </tr>
           `;
@@ -1856,21 +1865,23 @@
               </div>
             </div>
 
-            <!-- H2H 10경기 테이블 -->
+            <!-- H2H 10경기 테이블 (참고 스크린샷 4열 레이아웃: 일자 | 홈팀 | 스코어 | 원정팀) -->
             <div class="table-responsive">
               <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size:0.73rem;">
                 <thead class="table-light">
-                  <tr style="background:#f1f5f9; font-size:0.71rem;">
-                    <th style="width:18%;">시즌 경기일자</th>
-                    <th style="width:34%;">경기 대진 (홈팀 vs 원정팀)</th>
-                    <th style="width:11%;">스코어</th>
-                    <th style="width:11%;">승패</th>
-                    <th style="width:16%;">결정 투수 (승/패/세)</th>
-                    <th style="width:10%;">구장</th>
+                  <tr style="background:#1e293b; color:#ffffff; font-size:0.71rem;">
+                    <th style="width:15%; text-align:center; color:#cbd5e1; font-weight:700;">일자</th>
+                    <th style="width:35%; text-align:right; padding-right:12px; color:#ef4444; font-weight:800;">홈팀</th>
+                    <th style="width:16%; text-align:center; color:#ffffff; font-weight:800;">점수</th>
+                    <th style="width:34%; text-align:left; padding-left:12px; color:#3b82f6; font-weight:800;">원정팀</th>
                   </tr>
                 </thead>
                 <tbody>${rows}</tbody>
               </table>
+            </div>
+            <!-- 하단 요약 바 -->
+            <div class="py-1 px-2 bg-light text-dark fw-bold text-center border border-top-0 rounded-bottom" style="font-size:0.74rem;">
+              최근 10경기 맞대결: <span style="color:#dc2626; font-weight:800;">${shortH} ${hWins}승</span> ${draws > 0 ? `<span style="color:#64748b; font-weight:800;">${draws}무</span> ` : ''}<span style="color:#0284c7; font-weight:800;">${shortA} ${aWins}패</span>
             </div>
           </div>
         `;
@@ -1929,17 +1940,64 @@
       const aLast = p.awayLast;
       const h2h = p.h2hLast;
 
+      const parseTeamCard = (item) => {
+        if (!item) return null;
+        let myScore = 0, oppScore = 0;
+        const sMatch = String(item.score).match(/(\d+)\s*[:\-]\s*(\d+)/);
+        if (sMatch) {
+          myScore = Number(sMatch[1]);
+          oppScore = Number(sMatch[2]);
+        }
+        const isLocHome = (item.loc === '홈');
+        const finalHTeam = getFrontTeamName(isLocHome ? item.team : item.opp);
+        const finalATeam = getFrontTeamName(isLocHome ? item.opp : item.team);
+        const finalHScore = isLocHome ? myScore : oppScore;
+        const finalAScore = isLocHome ? oppScore : myScore;
+        const isHWin = finalHScore > finalAScore;
+        const isAWin = finalAScore > finalHScore;
+        return { finalHTeam, finalATeam, finalHScore, finalAScore, isHWin, isAWin };
+      };
+      const hCardParsed = parseTeamCard(hLast);
+      const aCardParsed = parseTeamCard(aLast);
+
+      let h2hHome = '', h2hAway = '', h2hHScore = 0, h2hAScore = 0, isH2hHWin = false, isH2hAWin = false;
+      if (h2h) {
+        const mParts = String(h2h.score).match(/([가-힣a-zA-Z\s]+?)\s*(\d+)\s*[:\-]\s*(\d+)\s*([가-힣a-zA-Z\s]+)/);
+        if (mParts) {
+          h2hHome = getFrontTeamName(mParts[1].trim());
+          h2hHScore = Number(mParts[2]);
+          h2hAScore = Number(mParts[3]);
+          h2hAway = getFrontTeamName(mParts[4].replace(/\(.*\)/, '').trim());
+          isH2hHWin = h2hHScore > h2hAScore;
+          isH2hAWin = h2hAScore > h2hHScore;
+        } else {
+          h2hHome = getFrontTeamName(data.home);
+          h2hAway = getFrontTeamName(data.away);
+          h2hHScore = 0;
+          h2hAScore = 0;
+        }
+      }
+
       container.innerHTML = `
         <!-- 양 팀 각각의 직전 경기 카드 (2열 그리드) -->
         <div class="row g-2 mb-2.5">
           <div class="col-12 col-sm-6">
             <div class="p-2.5 rounded border" style="background:#fff7f7; border-color:#fecaca !important;">
               <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom" style="border-color:#fee2e2 !important;">
-                <span class="badge bg-danger text-white" style="font-size:0.68rem;">🏠 [홈] ${hLast.team} 직전경기</span>
-                <span class="fw-bold ${hLast.isWin ? 'text-danger' : 'text-secondary'}" style="font-size:0.78rem;">${hLast.score}</span>
+                <span class="badge bg-danger text-white" style="font-size:0.68rem;">${hLast.team} 직전경기</span>
+                ${hCardParsed ? `
+                <div class="d-flex align-items-center gap-1">
+                  <span class="text-secondary font-monospace pe-1" style="font-size:0.70rem; white-space:nowrap;">${hLast.date}</span>
+                  <span class="fw-bold" style="font-size:0.75rem; color:${hCardParsed.isHWin ? '#dc2626' : '#1e293b'};">${hCardParsed.finalHTeam}</span>
+                  <span class="px-1.5 py-0.2 rounded-pill font-monospace" style="background:#ffffff; border:1px solid #cbd5e1; font-weight:800; font-size:0.80rem;">
+                    <span style="color:${hCardParsed.isHWin ? '#dc2626' : '#1e293b'};">${hCardParsed.finalHScore}</span>:<span style="color:${hCardParsed.isAWin ? '#dc2626' : '#1e293b'};">${hCardParsed.finalAScore}</span>
+                  </span>
+                  <span class="fw-bold" style="font-size:0.75rem; color:${hCardParsed.isAWin ? '#dc2626' : '#1e293b'};">${hCardParsed.finalATeam}</span>
+                </div>
+                ` : `<span class="fw-bold ${hLast.isWin ? 'text-danger' : 'text-secondary'}" style="font-size:0.78rem;">${hLast.score}</span>`}
               </div>
               <div style="font-size:0.74rem; line-height:1.55; color:#334155;">
-                <div>• <strong>상대:</strong> ${hLast.opp} (${hLast.loc}) · <span class="text-muted">${hLast.date}</span></div>
+                <div>• <strong>상대:</strong> ${hLast.opp} (${hLast.loc})</div>
                 <div>• <strong>선발:</strong> ${hLast.starter}</div>
                 <div>• <strong>불펜:</strong> ${hLast.bullpen}</div>
                 <div>• <strong>타선:</strong> ${hLast.batting}</div>
@@ -1950,11 +2008,20 @@
           <div class="col-12 col-sm-6">
             <div class="p-2.5 rounded border" style="background:#f0f9ff; border-color:#bae6fd !important;">
               <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom" style="border-color:#e0f2fe !important;">
-                <span class="badge bg-primary text-white" style="font-size:0.68rem;">✈️ [원정] ${aLast.team} 직전경기</span>
-                <span class="fw-bold ${aLast.isWin ? 'text-primary' : 'text-secondary'}" style="font-size:0.78rem;">${aLast.score}</span>
+                <span class="badge bg-primary text-white" style="font-size:0.68rem;">${aLast.team} 직전경기</span>
+                ${aCardParsed ? `
+                <div class="d-flex align-items-center gap-1">
+                  <span class="text-secondary font-monospace pe-1" style="font-size:0.70rem; white-space:nowrap;">${aLast.date}</span>
+                  <span class="fw-bold" style="font-size:0.75rem; color:${aCardParsed.isHWin ? '#dc2626' : '#1e293b'};">${aCardParsed.finalHTeam}</span>
+                  <span class="px-1.5 py-0.2 rounded-pill font-monospace" style="background:#ffffff; border:1px solid #cbd5e1; font-weight:800; font-size:0.80rem;">
+                    <span style="color:${aCardParsed.isHWin ? '#dc2626' : '#1e293b'};">${aCardParsed.finalHScore}</span>:<span style="color:${aCardParsed.isAWin ? '#dc2626' : '#1e293b'};">${aCardParsed.finalAScore}</span>
+                  </span>
+                  <span class="fw-bold" style="font-size:0.75rem; color:${aCardParsed.isAWin ? '#dc2626' : '#1e293b'};">${aCardParsed.finalATeam}</span>
+                </div>
+                ` : `<span class="fw-bold ${aLast.isWin ? 'text-primary' : 'text-secondary'}" style="font-size:0.78rem;">${aLast.score}</span>`}
               </div>
               <div style="font-size:0.74rem; line-height:1.55; color:#334155;">
-                <div>• <strong>상대:</strong> ${aLast.opp} (${aLast.loc}) · <span class="text-muted">${aLast.date}</span></div>
+                <div>• <strong>상대:</strong> ${aLast.opp} (${aLast.loc})</div>
                 <div>• <strong>선발:</strong> ${aLast.starter}</div>
                 <div>• <strong>불펜:</strong> ${aLast.bullpen}</div>
                 <div>• <strong>타선:</strong> ${aLast.batting}</div>
@@ -1968,9 +2035,26 @@
           <div class="p-2 rounded bg-white border" style="border-left: 3.5px solid #4f46e5 !important;">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <strong style="font-size:0.78rem; color:#4338ca;"><i class="bi bi-arrow-left-right me-1"></i>${h2h.title}</strong>
-              <span class="badge bg-light text-dark border" style="font-size:0.68rem;">${h2h.date}</span>
+              <span class="badge bg-light text-dark border" style="font-size:0.68rem;">최근 맞대결</span>
             </div>
-            <div class="fw-bold text-dark mb-0.5" style="font-size:0.82rem;">${h2h.score}</div>
+            <div class="d-flex align-items-center justify-content-between p-1.5 rounded mb-1" style="background:#f8fafc; border:1px solid #e2e8f0;">
+              <div class="text-secondary font-monospace text-start" style="width:20%; min-width:65px; font-size:0.72rem; white-space:nowrap;">
+                ${h2h.date}
+              </div>
+              <div class="text-truncate text-end pe-2" style="width:34%; font-weight:700; font-size:0.82rem; color:${isH2hHWin ? '#dc2626' : '#1e293b'};" title="${h2hHome}">
+                ${h2hHome}
+              </div>
+              <div class="text-center" style="width:18%; min-width:55px;">
+                <span class="px-2 py-0.5 rounded-pill font-monospace" style="background:#ffffff; border:1px solid #cbd5e1; font-weight:800; font-size:0.88rem; display:inline-block;">
+                  <span style="color:${isH2hHWin ? '#dc2626' : '#1e293b'};">${h2hHScore}</span>
+                  <span style="color:#94a3b8; margin:0 2px;">:</span>
+                  <span style="color:${isH2hAWin ? '#dc2626' : '#1e293b'};">${h2hAScore}</span>
+                </span>
+              </div>
+              <div class="text-truncate text-start ps-2" style="width:34%; font-weight:700; font-size:0.82rem; color:${isH2hAWin ? '#dc2626' : '#1e293b'};" title="${h2hAway}">
+                ${h2hAway}
+              </div>
+            </div>
             <div style="font-size:0.74rem; color:#64748b;">${h2h.summary}</div>
           </div>
         ` : ''}

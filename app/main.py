@@ -339,7 +339,7 @@ def mobile_portal(request: Request):
         return HTMLResponse(
             content=content,
             headers={
-                "Cache-Control": "public, max-age=5, stale-while-revalidate=15",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
                 "ETag": etag
             }
         )
@@ -366,7 +366,7 @@ def domain_portal(request: Request):
         return HTMLResponse(
             content=content, 
             headers={
-                "Cache-Control": "public, max-age=5, stale-while-revalidate=15",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
                 "ETag": etag
             }
         )
@@ -642,3 +642,5 @@ app.include_router(community_router)
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+
+# touch reload

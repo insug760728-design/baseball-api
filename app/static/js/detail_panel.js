@@ -622,19 +622,33 @@ const DetailPanel = (() => {
           `;
         }
 
+        const isHomeWinner = Number(score1) > Number(score2);
+        const isAwayWinner = Number(score2) > Number(score1);
+
+        const homeScoreHtml = `<span style="color:${isHomeWinner ? '#dc2626' : '#111827'}; font-weight:800;">${score1}</span>`;
+        const awayScoreHtml = `<span style="color:${isAwayWinner ? '#dc2626' : '#111827'}; font-weight:800;">${score2}</span>`;
+        const homeTeamHtml = `<span style="color:${isHomeWinner ? '#dc2626' : '#111827'}; font-weight:${isHomeWinner ? '800' : '600'}; font-size:0.82rem;">${team1}</span>`;
+        const awayTeamHtml = `<span style="color:${isAwayWinner ? '#dc2626' : '#111827'}; font-weight:${isAwayWinner ? '800' : '600'}; font-size:0.82rem;">${team2}</span>`;
+
+        const dateStr = (date || '').slice(0, 10).replace(/-/g, '.');
+
         return `
-          <div class="p-2 mb-2 rounded bg-white border">
-            <div class="d-flex justify-content-between align-items-center">
-              <div class="d-flex align-items-center gap-1.5">
-                <span class="badge bg-dark text-white font-monospace" style="font-size:0.65rem;">#${idx + 1}${idx === 0 ? ' (최신)' : ''}</span>
-                <span class="text-muted font-monospace small">${date}</span>
+          <div class="p-1.5 mb-1.5 rounded bg-white border shadow-xs" style="font-size:0.75rem;">
+            <div class="d-flex align-items-center">
+              <div class="text-secondary font-monospace text-center pe-1" style="width:18%; min-width:65px; font-size:0.72rem; white-space:nowrap;">
+                ${dateStr}
               </div>
-              <div class="d-flex align-items-center gap-2">
-                <span class="fw-bold text-dark">${team1}</span>
-                <span class="fw-bold font-monospace px-2 py-0.5 rounded bg-light border text-danger" style="font-size: 0.95rem;">${score1} : ${score2}</span>
-                <span class="fw-bold text-dark">${team2}</span>
+              <div class="text-end text-truncate px-1" style="width:33%;" title="${team1}">
+                ${homeTeamHtml}
               </div>
-              <span class="badge bg-light text-secondary border" style="font-size:0.65rem;">공식 맞대결</span>
+              <div class="fw-bold font-monospace text-center px-1" style="width:16%; min-width:55px; white-space:nowrap; font-size:0.88rem;">
+                <span class="px-2 py-0.5 rounded-pill font-monospace" style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:800; display:inline-block;">
+                  ${homeScoreHtml} <span style="color:#94a3b8; margin:0 2px;">:</span> ${awayScoreHtml}
+                </span>
+              </div>
+              <div class="text-start text-truncate px-1" style="width:33%;" title="${team2}">
+                ${awayTeamHtml}
+              </div>
             </div>
             ${breakdownHtml}
           </div>
@@ -654,6 +668,12 @@ const DetailPanel = (() => {
             <button type="button" class="btn btn-xs ${_h2hLimit === 5 ? 'btn-primary' : 'btn-outline-secondary'}" onclick="DetailPanel.setH2HLimit(5)">최근 5G</button>
             <button type="button" class="btn btn-xs ${_h2hLimit === 'all' ? 'btn-primary' : 'btn-outline-secondary'}" onclick="DetailPanel.setH2HLimit('all')">전체보기 (${totalCount})</button>
           </div>
+        </div>
+        <div class="d-flex align-items-center px-2 py-1 mb-1.5 rounded bg-dark text-white fw-bold" style="font-size:0.72rem;">
+          <div style="width:18%; min-width:65px; text-align:center; color:#cbd5e1;">일자</div>
+          <div style="width:33%; text-align:right; padding-right:8px; color:#ef4444;">홈팀</div>
+          <div style="width:16%; min-width:55px; text-align:center; color:#ffffff;">점수</div>
+          <div style="width:33%; text-align:left; padding-left:8px; color:#3b82f6;">원정팀</div>
         </div>
         ${cardsHtml}
       </div>
@@ -748,16 +768,49 @@ const DetailPanel = (() => {
           }
         }
 
+        const myName = CommonUtils.formatTeamName(myTeam);
+        const homeTeamDisplay = isHome ? myName : opp;
+        const awayTeamDisplay = isHome ? opp : myName;
+        const homeScoreDisplay = isHome ? myScore : oppScore;
+        const awayScoreDisplay = isHome ? oppScore : myScore;
+
+        const isHomeWinner = Number(homeScoreDisplay) > Number(awayScoreDisplay);
+        const isAwayWinner = Number(awayScoreDisplay) > Number(homeScoreDisplay);
+
+        const homeScoreHtml = `<span style="color:${isHomeWinner ? '#dc2626' : '#111827'}; font-weight:800;">${homeScoreDisplay}</span>`;
+        const awayScoreHtml = `<span style="color:${isAwayWinner ? '#dc2626' : '#111827'}; font-weight:800;">${awayScoreDisplay}</span>`;
+
+        const homeTeamColor = isHome ? '#111827' : '#0284c7';
+        const awayTeamColor = !isHome ? '#111827' : '#0284c7';
+        const homeTeamWeight = isHome ? '800' : '600';
+        const awayTeamWeight = !isHome ? '800' : '600';
+
+        const badgeBg = isWin ? '#ea580c' : (isDraw ? '#64748b' : '#0284c7');
+        const badgeLabel = isWin ? '승' : (isDraw ? '무' : '패');
+        const badgeHtml = `
+          <span style="color:#94a3b8; font-size:0.65rem; margin-right:2px;">⊙</span>
+          <span style="background:${badgeBg}; color:#fff; font-weight:700; font-size:0.68rem; padding:1px 5px; border-radius:3px; min-width:18px; text-align:center; display:inline-block;">${badgeLabel}</span>
+        `;
+
+        const dateStr = (g.date || '').slice(0, 10).replace(/-/g, '.');
+
         return `
-          <div class="p-2.5 mb-2 rounded bg-white border">
-            <div class="d-flex justify-content-between align-items-center">
-              <div class="d-flex align-items-center gap-1.5">
-                <span class="badge bg-dark text-white font-monospace" style="font-size:0.65rem;">#${idx + 1}${idx === 0 ? ' (최신)' : ''}</span>
-                ${resBadge}
-                <span class="text-muted font-monospace small">${g.date || ''}</span>
-                <span class="text-dark fw-bold small ms-1">vs ${opp}</span>
+          <div class="p-1.5 mb-1.5 rounded bg-white border shadow-xs" style="font-size:0.75rem;">
+            <div class="d-flex align-items-center">
+              <div class="text-secondary font-monospace text-center pe-1" style="width:18%; min-width:65px; font-size:0.72rem; white-space:nowrap;">
+                ${dateStr}
               </div>
-              <span class="fw-bold font-monospace fs-6 ${resColor}">${myScore} : ${oppScore}</span>
+              <div class="text-end text-truncate px-1" style="width:33%;" title="${homeTeamDisplay}">
+                <span style="color:${isHomeWinner ? '#dc2626' : '#111827'}; font-weight:${isHomeWinner ? '800' : '600'}; font-size:0.80rem;">${homeTeamDisplay}</span>
+              </div>
+              <div class="fw-bold font-monospace text-center px-1" style="width:16%; min-width:55px; white-space:nowrap; font-size:0.88rem;">
+                <span class="px-2 py-0.5 rounded-pill font-monospace" style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:800; display:inline-block;">
+                  ${homeScoreHtml} <span style="color:#94a3b8; margin:0 2px;">:</span> ${awayScoreHtml}
+                </span>
+              </div>
+              <div class="text-start text-truncate px-1" style="width:33%;" title="${awayTeamDisplay}">
+                <span style="color:${isAwayWinner ? '#dc2626' : '#111827'}; font-weight:${isAwayWinner ? '800' : '600'}; font-size:0.80rem;">${awayTeamDisplay}</span>
+              </div>
             </div>
             ${breakdownHtml}
           </div>
@@ -781,16 +834,28 @@ const DetailPanel = (() => {
         <div class="row g-2">
           <div class="col-12 col-md-6">
             <div class="p-2 rounded bg-light border">
-              <div class="fw-bold text-dark mb-2 pb-1 border-bottom d-flex align-items-center justify-content-between">
+              <div class="fw-bold text-dark mb-1 pb-1 border-bottom d-flex align-items-center justify-content-between">
                 <span><span class="badge bg-danger text-white me-1">${homeName}</span>경기 이력 (${homeRecent.length}경기 기록됨)</span>
+              </div>
+              <div class="d-flex align-items-center px-2 py-1 mb-1.5 rounded bg-dark text-white fw-bold" style="font-size:0.72rem;">
+                <div style="width:18%; min-width:65px; text-align:center; color:#cbd5e1;">일자</div>
+                <div style="width:33%; text-align:right; padding-right:8px; color:#ef4444;">홈팀</div>
+                <div style="width:16%; min-width:55px; text-align:center; color:#ffffff;">점수</div>
+                <div style="width:33%; text-align:left; padding-left:8px; color:#3b82f6;">원정팀</div>
               </div>
               ${renderRecentGameCards(hList, homeName)}
             </div>
           </div>
           <div class="col-12 col-md-6">
             <div class="p-2 rounded bg-light border">
-              <div class="fw-bold text-dark mb-2 pb-1 border-bottom d-flex align-items-center justify-content-between">
+              <div class="fw-bold text-dark mb-1 pb-1 border-bottom d-flex align-items-center justify-content-between">
                 <span><span class="badge bg-primary text-white me-1">${awayName}</span>경기 이력 (${awayRecent.length}경기 기록됨)</span>
+              </div>
+              <div class="d-flex align-items-center px-2 py-1 mb-1.5 rounded bg-dark text-white fw-bold" style="font-size:0.72rem;">
+                <div style="width:18%; min-width:65px; text-align:center; color:#cbd5e1;">일자</div>
+                <div style="width:33%; text-align:right; padding-right:8px; color:#ef4444;">홈팀</div>
+                <div style="width:16%; min-width:55px; text-align:center; color:#ffffff;">점수</div>
+                <div style="width:33%; text-align:left; padding-left:8px; color:#3b82f6;">원정팀</div>
               </div>
               ${renderRecentGameCards(aList, awayName)}
             </div>

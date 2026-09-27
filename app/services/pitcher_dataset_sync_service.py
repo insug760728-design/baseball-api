@@ -260,7 +260,7 @@ class PitcherDatasetSyncService:
                     recent_starts.append({
                         "date": date_str,
                         "match_date": f"2026.{date_str.replace('/', '.')}",
-                        "venue": "홈",
+                        "venue": "",
                         "opponent": opp,
                         "opp": opp,
                         "ip": ip_val,

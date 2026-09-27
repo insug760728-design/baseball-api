@@ -1292,16 +1292,9 @@ class HistoricalAgentRouter:
                     t1, t2 = entry['teams']
                     if ((t1 in home_team or teams_match(t1, home_team)) and (t2 in away_team or teams_match(t2, away_team))) or \
                        ((t2 in home_team or teams_match(t2, home_team)) and (t1 in away_team or teams_match(t1, away_team))):
-                        # 아카이브 매치도 2025년 이전 구형 데이터가 있으면 연도를 현재 2026 시즌으로 보정하여 연결
                         arch_dtos = []
-                        is_nat_match = any(w in (league_name or '') for w in ['네이션스', '친선', 'A매치', '국제', '걸프컵', '아세안', '아시안게임'])
                         for m_idx, arc_m in enumerate(entry['matches']):
                             m_dto = format_archive_dto(arc_m, home_team)
-                            # 국가대표전은 공식 역사적 일자를 100% 그대로 유지하고, 클럽 승강 경기만 연도 보정
-                            if not is_nat_match and str(m_dto.get('date', '')) < '2025':
-                                fake_d = (datetime(2026, 7, 20) - timedelta(days=m_idx * 90)).strftime('%Y-%m-%d')
-                                m_dto['date'] = fake_d
-                                m_dto['match_date'] = f"{fake_d} 15:00"
                             arch_dtos.append(m_dto)
                         formatted_h2h = arch_dtos
                         break
@@ -1388,8 +1381,7 @@ class HistoricalAgentRouter:
                         break
 
                 clean_dtos = sorted(seen_dtos.values(), key=lambda m: str(m.get('date') or (m.get('match_date') or '')), reverse=True)
-                if len(clean_dtos) >= target_count:
-                    return clean_dtos[:target_count]
+                return clean_dtos[:target_count]
 
                 from datetime import datetime, timedelta
                 
@@ -1671,103 +1663,7 @@ class HistoricalAgentRouter:
                             })
                             existing_dates.add(d_str)
 
-                # 2. 목표치(target_count) 미달 시 종목별 정밀 시뮬레이션 기반 과거 맞대결 이력 생성
-                if len(res) < target_count:
-                    # 🛡️ 국가대표팀(A매치)은 공식 경기 횟수가 적으므로, 이미 실제 공식 맞대결 기록이 1경기 이상 존재하면 가짜 경기 날조를 하지 않고 100% 공식 기록만 표기!
-                    if is_national_match and len(res) >= 1:
-                        pass
-                    else:
-                        needed = target_count - len(res)
-                        seed = sum(ord(c) for c in (h_team + a_team))
-                        if sp_code == 'SOCCER':
-                            SCORES = [(1, 0), (2, 1), (1, 1), (0, 0), (2, 0), (0, 1), (1, 2), (2, 2), (3, 1), (0, 2)]
-                        elif sp_code == 'BASEBALL':
-                            SCORES = [(4, 2), (5, 3), (3, 1), (6, 4), (2, 5), (7, 4), (1, 3), (8, 6), (5, 2), (2, 4)]
-                        elif sp_code == 'BASKETBALL':
-                            SCORES = [(88, 82), (94, 91), (79, 85), (102, 98), (86, 89), (91, 84)]
-                        else:
-                            SCORES = [(2, 1), (1, 0), (1, 1), (0, 2), (3, 1)]
-
-                        # 기준 날짜: res의 가장 이른 날짜, 없으면 ref_date_str - 10일
-                        if res:
-                            min_d = min(str(m.get('date') or (m.get('match_date') or '')[:10]) for m in res if (m.get('date') or m.get('match_date')))
-                            try:
-                                h2h_base_dt = datetime.strptime(min_d, '%Y-%m-%d')
-                            except Exception:
-                                h2h_base_dt = datetime(2026, 8, 25)
-                        else:
-                            try:
-                                h2h_base_dt = datetime.strptime(ref_date_str, '%Y-%m-%d') - timedelta(days=12)
-                            except Exception:
-                                h2h_base_dt = datetime(2026, 8, 25)
-
-                        for i in range(1, needed + 1):
-                            if sp_code == 'BASEBALL':
-                                # 야구는 동일 2026 시즌 내 2연전 시리즈 배치 (14~18일 간격)
-                                cycle = (i - 1) // 2 + 1
-                                sub_offset = (i - 1) % 2
-                                dt = h2h_base_dt - timedelta(days=cycle * 16 + sub_offset)
-                            elif sp_code == 'BASKETBALL':
-                                dt = h2h_base_dt - timedelta(days=i * 25)
-                            else:
-                                # 축구는 시즌당 홈/원정 2경기 (약 95~110일 간격)
-                                dt = h2h_base_dt - timedelta(days=i * 105)
-
-                            d_str = dt.strftime('%Y-%m-%d')
-                            while d_str in existing_dates:
-                                dt = dt - timedelta(days=1 if sp_code == 'BASEBALL' else 7)
-                                d_str = dt.strftime('%Y-%m-%d')
-                            existing_dates.add(d_str)
-
-                            is_home = ((seed + i) % 2 == 0)
-                            s_idx = (seed + i * 3) % len(SCORES)
-                            h_score, a_score = SCORES[s_idx]
-
-                            my_score = h_score if is_home else a_score
-                            opp_score = a_score if is_home else h_score
-
-                            outcome = 'WIN' if my_score > opp_score else ('LOSS' if my_score < opp_score else 'DRAW')
-                            res_kr = '승' if outcome == 'WIN' else ('패' if outcome == 'LOSS' else '무')
-                            emoji = '✅' if outcome == 'WIN' else ('❌' if outcome == 'LOSS' else '🟰')
-
-                            b_calc = compute_baseball_stats(my_score, opp_score, is_home, seed + i) if sp_code == 'BASEBALL' else {}
-
-                            res.append({
-                                'match_id': 990000 + (seed % 10000) + i,
-                                'date': d_str,
-                                'match_date': (f"{d_str} 18:30" if sp_code == 'BASEBALL' else f"{d_str} 15:00"),
-                                'home_away': '홈' if is_home else '원정',
-                                'perspective_team': h_team,
-                                'home_team_name': h_team if is_home else a_team,
-                                'away_team_name': a_team if is_home else h_team,
-                                'home_team': h_team if is_home else a_team,
-                                'away_team': a_team if is_home else h_team,
-                                'home_score': h_score,
-                                'away_score': a_score,
-                                'team_score': my_score,
-                                'opp_score': opp_score,
-                                'score': f"{h_score} - {a_score}",
-                                'league_name': l_name,
-                                'opponent': a_team,
-                                'result': outcome,
-                                'result_kr': res_kr,
-                                'result_emoji': emoji,
-                                'period_scores': {'1H': {'home': h_score // 2, 'away': a_score // 2}, '2H': {'home': h_score - h_score // 2, 'away': a_score - a_score // 2}} if sp_code == 'SOCCER' else {},
-                                'team_stats': {'possession': {'home': 51, 'away': 49}} if sp_code == 'SOCCER' else {},
-                                'starter': f"선발 {b_calc.get('starter_ip', '6.0')}이닝 {b_calc.get('starter_er', 2)}자책" if sp_code == 'BASEBALL' else '',
-                                'perspective_starter': {'name': '선발', 'ip': b_calc.get('starter_ip', '6.0'), 'er': b_calc.get('starter_er', 2), 'result': res_kr} if sp_code == 'BASEBALL' else {},
-                                'perspective_bullpen': {'ip': b_calc.get('bullpen_ip', '3.0'), 'er': b_calc.get('bullpen_er', 0)} if sp_code == 'BASEBALL' else {},
-                                'perspective_batting': {'hits': b_calc.get('hits', 7), 'home_runs': b_calc.get('home_runs', 0), 'runs': my_score} if sp_code == 'BASEBALL' else {},
-                                'baseball_stats': {
-                                    'starter_ip': b_calc.get('starter_ip', '6.0'),
-                                    'starter_er': b_calc.get('starter_er', 2),
-                                    'bullpen_ip': b_calc.get('bullpen_ip', '3.0'),
-                                    'bullpen_er': b_calc.get('bullpen_er', 0),
-                                    'home_hits': b_calc.get('hits', 7) if is_home else (opp_score + 3),
-                                    'away_hits': b_calc.get('hits', 7) if not is_home else (opp_score + 3)
-                                } if sp_code == 'BASEBALL' else {}
-                            })
-
+                # 2. 100% 공식 실제 데이터만 반환 (가짜 시뮬레이션 맞대결 생성 전면 금지)
                 res.sort(key=lambda m: str(m.get('date') or (m.get('match_date') or '')), reverse=True)
                 return res[:target_count]
 
