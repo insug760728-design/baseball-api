@@ -379,7 +379,58 @@ class HistoricalAgentRouter:
                 '대만': ['대만', 'taiwan'],
                 '홍콩': ['홍콩', 'hong kong'],
                 '미얀마': ['미얀마', 'myanmar'],
-                '키르기스스탄': ['키르기스스탄', 'kyrgyzstan']
+                '키르기스스탄': ['키르기스스탄', 'kyrgyzstan'],
+                '잉글랜드': ['잉글랜드', 'england'],
+                '스페인': ['스페인', 'spain'],
+                '프랑스': ['프랑스', 'france'],
+                '이탈리아': ['이탈리아', 'italy'],
+                '체코': ['체코', 'czechia', 'czech republic'],
+                '크로아티아': ['크로아티아', 'croatia'],
+                '스위스': ['스위스', 'switzerland'],
+                '벨기에': ['벨기에', 'belgium'],
+                '스웨덴': ['스웨덴', 'sweden'],
+                '폴란드': ['폴란드', 'poland'],
+                '튀르키예': ['튀르키예', '터키', 'türkiye', 'turkey'],
+                '슬로바키아': ['슬로바키아', 'slovakia'],
+                '슬로베니아': ['슬로베니아', 'slovenia'],
+                '루마니아': ['루마니아', 'romania'],
+                '불가리아': ['불가리아', 'bulgaria'],
+                '헝가리': ['헝가리', 'hungary'],
+                '아일랜드공화국': ['아일랜드공화국', '아일랜드', 'ireland', 'rep. of ireland'],
+                '아일랜드': ['아일랜드공화국', '아일랜드', 'ireland', 'rep. of ireland'],
+                '북아일랜드': ['북아일랜드', 'northern ireland'],
+                '스코틀랜드': ['스코틀랜드', 'scotland'],
+                '핀란드': ['핀란드', 'finland'],
+                '아이슬란드': ['아이슬란드', 'iceland'],
+                '알바니아': ['알바니아', 'albania'],
+                '몬테네그로': ['몬테네그로', 'montenegro'],
+                '보스니아 헤르체고비나': ['보스니아 헤르체고비나', '보스니아', 'bosnia'],
+                '보스니아': ['보스니아 헤르체고비나', '보스니아', 'bosnia'],
+                '키프로스': ['키프로스', 'cyprus'],
+                '카자흐스탄': ['카자흐스탄', 'kazakhstan'],
+                '조지아': ['조지아', 'georgia'],
+                '에스토니아': ['에스토니아', 'estonia'],
+                '라트비아': ['라트비아', 'latvia'],
+                '몰도바': ['몰도바', 'moldova'],
+                '지브롤터': ['지브롤터', 'gibraltar'],
+                '벨라루스': ['벨라루스', 'belarus'],
+                '룩셈부르크': ['룩셈부르크', 'luxembourg'],
+                '우크라이나': ['우크라이나', 'ukraine'],
+                '아르메니아': ['아르메니아', 'armenia'],
+                '페로제도': ['페로제도', 'faroe islands'],
+                '북마케도니아': ['북마케도니아', 'macedonia', 'fyr macedonia'],
+                '자메이카': ['자메이카', 'jamaica'],
+                '과테말라': ['과테말라', 'guatemala'],
+                '온두라스': ['온두라스', 'honduras'],
+                '엘살바도르': ['엘살바도르', 'el salvador'],
+                '수리남': ['수리남', 'suriname'],
+                '가이아나': ['가이아나', 'guyana'],
+                '마르티니크': ['마르티니크', 'martinique'],
+                '과들루프': ['과들루프', 'guadeloupe'],
+                '버뮤다': ['버뮤다', 'bermuda'],
+                '캐나다': ['캐나다', 'canada'],
+                '미국': ['미국', 'usa', 'united states'],
+                '멕시코': ['멕시코', 'mexico']
             }
 
             from app.agents.national_teams_historical_data import NATIONAL_TEAM_H2H_ARCHIVE, NATIONAL_TEAM_OFFICIAL_RECENT_MATCHES
@@ -571,7 +622,15 @@ class HistoricalAgentRouter:
                 Match.league_name.notilike('%J리그%'),
                 Match.league_name.notilike('%FA컵%'),
                 Match.league_name.notilike('%카라바오%'),
-                Match.league_name.notilike('%코파델레이%')
+                Match.league_name.notilike('%코파델레이%'),
+                Match.league_name.notilike('%메이저리그사커%'),
+                Match.league_name.notilike('%MLS%'),
+                Match.league_name.notilike('%에레디비시%'),
+                Match.league_name.notilike('%리그1%'),
+                Match.league_name.notilike('%터키%'),
+                Match.league_name.notilike('%사우디%'),
+                Match.league_name.notilike('%챔피언십%'),
+                Match.league_name.notilike('%EFL%')
             ]
             nat_excludes = [
                 Match.league_name.notilike('%네이션스%'),
@@ -587,8 +646,14 @@ class HistoricalAgentRouter:
             def query_recent_for_team(tokens: list, tm_name: str) -> list:
                 conds = []
                 for t in tokens:
-                    conds.append(Match.home_team_name.ilike(f"%{t}%"))
-                    conds.append(Match.away_team_name.ilike(f"%{t}%"))
+                    if is_national_match:
+                        conds.append(Match.home_team_name == t)
+                        conds.append(Match.away_team_name == t)
+                        conds.append(Match.home_team_name == f"{t}_남자")
+                        conds.append(Match.away_team_name == f"{t}_남자")
+                    else:
+                        conds.append(Match.home_team_name.ilike(f"%{t}%"))
+                        conds.append(Match.away_team_name.ilike(f"%{t}%"))
 
                 is_women_target = ('여자' in (tm_name or ''))
                 gender_filters = []
@@ -637,10 +702,16 @@ class HistoricalAgentRouter:
 
             # 3. 1:1 맞대결 (H2H) 조회
             def query_h2h(ht_tokens: list, at_tokens: list) -> list:
-                h_side1 = or_(*[Match.home_team_name.ilike(f"%{t}%") for t in ht_tokens])
-                a_side1 = or_(*[Match.away_team_name.ilike(f"%{t}%") for t in at_tokens])
-                h_side2 = or_(*[Match.away_team_name.ilike(f"%{t}%") for t in ht_tokens])
-                a_side2 = or_(*[Match.home_team_name.ilike(f"%{t}%") for t in at_tokens])
+                if is_national_match:
+                    h_side1 = or_(*[or_(Match.home_team_name == t, Match.home_team_name == f"{t}_남자") for t in ht_tokens])
+                    a_side1 = or_(*[or_(Match.away_team_name == t, Match.away_team_name == f"{t}_남자") for t in at_tokens])
+                    h_side2 = or_(*[or_(Match.away_team_name == t, Match.away_team_name == f"{t}_남자") for t in ht_tokens])
+                    a_side2 = or_(*[or_(Match.home_team_name == t, Match.home_team_name == f"{t}_남자") for t in at_tokens])
+                else:
+                    h_side1 = or_(*[Match.home_team_name.ilike(f"%{t}%") for t in ht_tokens])
+                    a_side1 = or_(*[Match.away_team_name.ilike(f"%{t}%") for t in at_tokens])
+                    h_side2 = or_(*[Match.away_team_name.ilike(f"%{t}%") for t in ht_tokens])
+                    a_side2 = or_(*[Match.home_team_name.ilike(f"%{t}%") for t in at_tokens])
 
                 q = db.query(Match).filter(
                     Match.sport_code == sport_code,

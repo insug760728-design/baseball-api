@@ -18,18 +18,14 @@ const DetailPanel = (() => {
     _currentMatch = match;
     const targetMatchId = match.id;
 
-    // 🔑 항상 스켈레톤을 먼저 즉시 표시 — 이전 경기 데이터가 순간적으로 보이는 문제 방지
+    // Immediately render header and basic skeleton
     renderSkeleton(match);
 
     // Fetch deep match history and details asynchronously
     try {
       let data = _detailCache.get(targetMatchId);
 
-      if (data) {
-        // 캐시 히트: 스켈레톤이 화면에 그려진 뒤 다음 프레임에 콘텐츠를 바꿔치기
-        // (동기 렌더 시 이전 match 데이터가 순간 보이는 flicker 방지)
-        await new Promise(resolve => requestAnimationFrame(resolve));
-      } else {
+      if (!data) {
         const [detailRes, histRes, oddsRes] = await Promise.all([
           fetch(`/api/v1/matches/${targetMatchId}`).then(r => r.ok ? r.json() : null),
           fetch(`/api/v1/live/match-history/${targetMatchId}?max_games=50`).then(r => r.ok ? r.json() : null),
@@ -167,14 +163,52 @@ const DetailPanel = (() => {
     const activeTab = _currentTab || 'past_games';
 
     bodyContainer.innerHTML = `
-      <!-- 전체 세로 스크롤 통합 상세 뷰 (버튼식 탭 전환 없이 한눈에 스크롤) -->
-      <div class="detail-scroll-flow">
-        ${pitchersHtml}
+      <!-- Sub-Tab Navigation Bar ([전경기분석] / [상세보기]) -->
+      <div class="d-flex gap-1.5 mb-3 p-1.5 detail-sub-nav">
+        <button type="button" class="btn btn-sm detail-sub-tab ${activeTab === 'past_games' ? 'active' : ''}" data-tab="past_games" onclick="DetailPanel.switchTab('past_games')">
+          <i class="bi bi-clock-history text-danger me-1"></i>전경기분석 (직전경기/상대전적/최근경기)
+        </button>
+        <button type="button" class="btn btn-sm detail-sub-tab ${activeTab === 'overview' ? 'active' : ''}" data-tab="overview" onclick="DetailPanel.switchTab('overview')">
+          <i class="bi bi-window-stack text-primary me-1"></i>상세보기 (배당 & 스코어)
+        </button>
+        ${isBaseball ? `
+          <button type="button" class="btn btn-sm detail-sub-tab ${activeTab === 'pitchers' ? 'active' : ''}" data-tab="pitchers" onclick="DetailPanel.switchTab('pitchers')">
+            <i class="bi bi-person-badge-fill text-dark me-1"></i>선발투수 등판일지
+          </button>
+        ` : ''}
+        <button type="button" class="btn btn-sm detail-sub-tab ${activeTab === 'all' ? 'active' : ''}" data-tab="all" onclick="DetailPanel.switchTab('all')">
+          <i class="bi bi-grid-fill me-1"></i>전체보기
+        </button>
+      </div>
+
+      <!-- Tab 1: 전경기분석 (직전 1경기 핵심비교 + 상대전적 + 각 팀 최근 경기 상세 분석) -->
+      <div id="tabContent-past_games" class="detail-tab-pane" style="display: ${activeTab === 'past_games' ? 'block' : 'none'};">
+        ${lastMatchCompareHtml}
+        ${h2hHtml}
+        ${recentHtml}
+      </div>
+
+      <!-- Tab 2: 공식 배당 & 스코어보드 -->
+      <div id="tabContent-overview" class="detail-tab-pane" style="display: ${activeTab === 'overview' ? 'block' : 'none'};">
+        ${dualOddsHtml}
+        ${scoreboardHtml}
+      </div>
+
+      <!-- Tab 3: 선발투수 등판일지 (야구) -->
+      ${isBaseball ? `
+        <div id="tabContent-pitchers" class="detail-tab-pane" style="display: ${activeTab === 'pitchers' ? 'block' : 'none'};">
+          ${pitchersHtml}
+        </div>
+      ` : ''}
+
+      <!-- Tab 4: 전체 한눈에 보기 -->
+      <div id="tabContent-all" class="detail-tab-pane" style="display: ${activeTab === 'all' ? 'block' : 'none'};">
         ${lastMatchCompareHtml}
         ${dualOddsHtml}
         ${scoreboardHtml}
         ${h2hHtml}
         ${recentHtml}
+        ${pitchersHtml}
       </div>
     `;
   }
@@ -392,16 +426,16 @@ const DetailPanel = (() => {
       const tScore = g.team_score !== undefined ? g.team_score : (isHome ? g.home_score : g.away_score) ?? 0;
       const oScore = g.opp_score !== undefined ? g.opp_score : (isHome ? g.away_score : g.home_score) ?? 0;
 
-      let res = g.result;
-      if (!res) {
-        res = Number(tScore) > Number(oScore) ? 'W' : (Number(tScore) < Number(oScore) ? 'L' : 'D');
-      }
-      const resText = (res === 'W' || res === 'WIN') ? '승' : ((res === 'D' || res === 'DRAW') ? '무' : '패');
-      const resBg = (res === 'W' || res === 'WIN') ? '#dc2626' : ((res === 'D' || res === 'DRAW') ? '#4b5563' : '#2563eb');
+      const hTeam = isHome ? myName : opp;
+      const aTeam = isHome ? opp : myName;
+      const hSc = isHome ? tScore : oScore;
+      const aSc = isHome ? oScore : tScore;
+      const gDate = (g.date || g.match_date || '').slice(0, 10).replace(/-/g, '.');
 
-      const title = isHome ? `${myName} vs ${opp}` : `${opp} vs ${myName}`;
-      const score = isHome ? `<b>${tScore}</b> : ${oScore}` : `${oScore} : <b>${tScore}</b>`;
-      const badge = `<span class="badge py-0.5 px-1.5 text-white fw-bold" style="background:${resBg}; font-size:0.62rem;">${isHome ? '홈' : '원정'} ${resText}</span>`;
+      // 토토켄 표준: [일자] [홈팀] [점수] [원정팀]
+      const title = `${gDate ? gDate + ' ' : ''}${hTeam} ${hSc} : ${aSc} ${aTeam}`;
+      const score = `${hSc} : ${aSc}`;
+      const badge = '';
 
       if (isBaseball) {
         const hBat = g.home_batting || {};
@@ -540,22 +574,14 @@ const DetailPanel = (() => {
           <table class="table table-bordered table-sm text-center mb-0" style="table-layout: fixed; width: 100%; font-size: 0.74rem; background: #ffffff; border-color: #e2e8f0;">
             <thead style="background: #f8fafc;">
               <tr>
-                <th style="width: 38%; padding: 4px 2px;" class="text-primary text-truncate">
-                  <div class="fw-bold text-truncate" style="font-size:0.82rem; color:#0f172a;">[${hData.title}]</div>
-                  <div class="mt-0.5 d-flex align-items-center justify-content-center gap-1">
-                    ${hData.badge}
-                    <span class="badge" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; font-size:0.62rem;">홈 : 원정</span>
-                  </div>
+                <th style="width: 40%; padding: 6px 4px;" class="text-truncate">
+                  <div class="fw-bold text-truncate" style="font-size:0.80rem; color:#dc2626;">${hData.title}</div>
                 </th>
-                <th style="width: 24%; padding: 4px 2px; background: #f1f5f9; color: #334155; font-size: 0.72rem; vertical-align: middle;">
+                <th style="width: 20%; padding: 6px 2px; background: #f1f5f9; color: #334155; font-size: 0.72rem; vertical-align: middle;">
                   <span class="badge" style="background:#0f172a; color:#ffffff; font-size:0.68rem; padding:3px 6px;">수치</span>
                 </th>
-                <th style="width: 38%; padding: 4px 2px;" class="text-danger text-truncate">
-                  <div class="fw-bold text-truncate" style="font-size:0.82rem; color:#0f172a;">[${aData.title}]</div>
-                  <div class="mt-0.5 d-flex align-items-center justify-content-center gap-1">
-                    ${aData.badge}
-                    <span class="badge" style="background:#fef2f2; color:#b91c1c; border:1px solid #fecaca; font-size:0.62rem;">홈 : 원정</span>
-                  </div>
+                <th style="width: 40%; padding: 6px 4px;" class="text-truncate">
+                  <div class="fw-bold text-truncate" style="font-size:0.80rem; color:#2563eb;">${aData.title}</div>
                 </th>
               </tr>
             </thead>
@@ -626,15 +652,13 @@ const DetailPanel = (() => {
           `;
         }
 
-        const isHomeWinner = Number(score1) > Number(score2);
-        const isAwayWinner = Number(score2) > Number(score1);
-
-        const homeScoreHtml = `<span style="color:${isHomeWinner ? '#dc2626' : '#111827'}; font-weight:800;">${score1}</span>`;
-        const awayScoreHtml = `<span style="color:${isAwayWinner ? '#dc2626' : '#111827'}; font-weight:800;">${score2}</span>`;
-        const homeTeamHtml = `<span style="color:${isHomeWinner ? '#dc2626' : '#111827'}; font-weight:${isHomeWinner ? '800' : '600'}; font-size:0.82rem;">${team1}</span>`;
-        const awayTeamHtml = `<span style="color:${isAwayWinner ? '#dc2626' : '#111827'}; font-weight:${isAwayWinner ? '800' : '600'}; font-size:0.82rem;">${team2}</span>`;
-
-        const dateStr = (date || '').slice(0, 10).replace(/-/g, '.');
+        const dateStr = (item.date || item.match_date || '').slice(0, 10).replace(/-/g, '.');
+        const isHWin = Number(score1) > Number(score2);
+        const isAWin = Number(score2) > Number(score1);
+        const homeScoreHtml = `<span style="color:${isHWin ? '#dc2626' : '#111827'}; font-weight:800;">${score1}</span>`;
+        const awayScoreHtml = `<span style="color:${isAWin ? '#dc2626' : '#111827'}; font-weight:800;">${score2}</span>`;
+        const homeTeamHtml = `<span style="color:${isHWin ? '#dc2626' : '#111827'}; font-weight:${isHWin ? '800' : '600'}; font-size:0.80rem;">${team1}</span>`;
+        const awayTeamHtml = `<span style="color:${isAWin ? '#dc2626' : '#111827'}; font-weight:${isAWin ? '800' : '600'}; font-size:0.80rem;">${team2}</span>`;
 
         return `
           <div class="p-1.5 mb-1.5 rounded bg-white border shadow-xs" style="font-size:0.75rem;">
@@ -700,14 +724,22 @@ const DetailPanel = (() => {
         const opp = CommonUtils.formatTeamName(g.opponent || (isHome ? g.away_team_name : g.home_team_name) || '상대팀');
         const myScore = g.team_score ?? (isHome ? g.home_score : g.away_score) ?? 0;
         const oppScore = g.opp_score ?? (isHome ? g.away_score : g.home_score) ?? 0;
-        const res = g.result || (myScore > oppScore ? 'W' : (myScore < oppScore ? 'L' : 'D'));
 
-        const isWin = res === 'WIN' || res === 'W';
-        const isDraw = res === 'DRAW' || res === 'D';
-        const resBadge = isWin
-          ? '<span class="badge bg-danger text-white">승</span>'
-          : (isDraw ? '<span class="badge bg-secondary text-white">무</span>' : '<span class="badge bg-primary text-white">패</span>');
-        const resColor = isWin ? 'text-danger' : (isDraw ? 'text-secondary' : 'text-primary');
+        const myName = CommonUtils.formatTeamName(myTeam);
+        const homeTeamDisplay = CommonUtils.formatTeamName(g.home_team_name || g.home_team || (isHome ? myName : opp));
+        const awayTeamDisplay = CommonUtils.formatTeamName(g.away_team_name || g.away_team || (isHome ? opp : myName));
+        const homeScoreDisplay = (g.home_score !== undefined && g.home_score !== null) ? g.home_score : (isHome ? myScore : oppScore);
+        const awayScoreDisplay = (g.away_score !== undefined && g.away_score !== null) ? g.away_score : (isHome ? oppScore : myScore);
+
+        const isHomeWinner = Number(homeScoreDisplay) > Number(awayScoreDisplay);
+        const isAwayWinner = Number(awayScoreDisplay) > Number(homeScoreDisplay);
+
+        const homeScoreHtml = `<span style="color:${isHomeWinner ? '#dc2626' : '#111827'}; font-weight:800;">${homeScoreDisplay}</span>`;
+        const awayScoreHtml = `<span style="color:${isAwayWinner ? '#dc2626' : '#111827'}; font-weight:800;">${awayScoreDisplay}</span>`;
+        const homeTeamHtml = `<span style="color:${isHomeWinner ? '#dc2626' : '#111827'}; font-weight:${isHomeWinner ? '800' : '600'}; font-size:0.80rem;">${homeTeamDisplay}</span>`;
+        const awayTeamHtml = `<span style="color:${isAwayWinner ? '#dc2626' : '#111827'}; font-weight:${isAwayWinner ? '800' : '600'}; font-size:0.80rem;">${awayTeamDisplay}</span>`;
+
+        const dateStr = (g.date || '').slice(0, 10).replace(/-/g, '.');
 
         const st = g.perspective_starter || g.starter_info || {};
         const bp = g.perspective_bullpen || {};
@@ -729,20 +761,20 @@ const DetailPanel = (() => {
                   <div class="d-flex align-items-center mb-1 text-dark">
                     <span class="badge bg-secondary text-white me-1 px-1 py-0.5" style="font-size: 0.62rem;">선발</span>
                     <span class="fw-bold text-truncate me-1">${CommonUtils.formatPlayerKorean(st.name)}</span>
-                    <span class="text-muted ms-auto font-monospace">${st.ip ? `${st.ip}이닝 ${st.h !== undefined && st.h !== null ? `${st.h}피안타 ` : ''}${st.er ?? 0}자책 ${st.so ?? 0}K ${st.bb ?? 0}사사구 ${st.np ? `(${st.np}구)` : ''}` : (st.era && st.era !== '-' ? `시즌 ERA ${st.era}` : '선발 등판')} ${st.decision ? `<span class="badge bg-light text-dark border ms-1">${st.decision}</span>` : ''}</span>
+                    <span class="text-muted ms-auto font-monospace">${st.ip ? `${st.ip}이닝 ${st.er ?? 0}자책 ${st.so ?? 0}K ${st.bb ?? 0}사사구 ${st.np ? `(${st.np}구)` : ''}` : (st.era && st.era !== '-' ? `시즌 ERA ${st.era}` : '선발 등판')} ${st.decision ? `<span class="badge bg-light text-dark border ms-1">${st.decision}</span>` : ''}</span>
                   </div>
                 ` : ''}
                 ${hasBp ? `
                   <div class="d-flex align-items-center mb-1 text-dark">
                     <span class="badge bg-light text-dark border me-1 px-1 py-0.5" style="font-size: 0.62rem;">불펜</span>
                     <span class="text-secondary me-1">${bp.count}명 투입</span>
-                    <span class="text-muted ms-auto font-monospace">${bp.ip}이닝 ${bp.er ?? 0}자책 ${bp.so ?? 0}K ${bp.bb ?? 0}사사구</span>
+                    <span class="text-muted ms-auto font-monospace">${bp.ip}이닝 ${bp.er ?? 0}실점 ${bp.so ?? 0}K ${bp.bb ?? 0}사사구</span>
                   </div>
                 ` : ''}
                 ${hasBat ? `
                   <div class="d-flex align-items-center text-dark">
                     <span class="badge bg-primary text-white me-1 px-1 py-0.5" style="font-size: 0.62rem;">타격</span>
-                    <span class="text-dark font-monospace fw-bold me-1">${bat.hits}안타 ${bat.home_runs ? `<span class="text-danger">(${bat.home_runs}홈런)</span>` : '(0홈런)'}</span>
+                    <span class="text-dark font-monospace fw-bold me-1">${bat.hits}안타 ${bat.home_runs ? `<b>${bat.home_runs}홈런</b>` : '0홈런'}</span>
                     <span class="text-muted ms-auto font-monospace">${bat.walks ?? 0}사사구 ${bat.strikeouts ?? 0}삼진 ${bat.runs ?? myScore}득점</span>
                   </div>
                 ` : ''}
@@ -751,15 +783,12 @@ const DetailPanel = (() => {
           }
         } else if (isSoccer) {
           const hasScorers = scorers.length > 0;
-          const hasStats = stats.possession != null || stats.shots != null;
+          const hasStats = stats.shots || stats.corners;
 
           if (hasScorers || hasStats) {
             breakdownHtml = `
-              <div class="mt-1.5 pt-1.5 border-top" style="font-size: 0.72rem;">
-                <div class="d-flex align-items-center mb-1 text-dark">
-                  <span class="badge bg-success text-white me-1 px-1 py-0.5" style="font-size: 0.62rem;">득점</span>
-                  <span class="text-truncate fw-bold text-dark">${scorers.join(', ') || '무득점'}</span>
-                </div>
+              <div class="mt-1.5 pt-1.5 border-top text-secondary" style="font-size: 0.72rem;">
+                ${hasScorers ? `<div class="text-truncate mb-0.5"><span class="badge bg-success text-white py-0 px-1 me-1" style="font-size:0.62rem;">득점</span>${scorers.join(', ')}</div>` : ''}
                 ${hasStats ? `
                   <div class="d-flex align-items-center text-muted justify-content-between font-monospace" style="font-size: 0.70rem;">
                     <span>점유율 <b class="text-dark">${stats.possession || '-'}%</b></span>
@@ -772,32 +801,6 @@ const DetailPanel = (() => {
           }
         }
 
-        const myName = CommonUtils.formatTeamName(myTeam);
-        const homeTeamDisplay = isHome ? myName : opp;
-        const awayTeamDisplay = isHome ? opp : myName;
-        const homeScoreDisplay = isHome ? myScore : oppScore;
-        const awayScoreDisplay = isHome ? oppScore : myScore;
-
-        const isHomeWinner = Number(homeScoreDisplay) > Number(awayScoreDisplay);
-        const isAwayWinner = Number(awayScoreDisplay) > Number(homeScoreDisplay);
-
-        const homeScoreHtml = `<span style="color:${isHomeWinner ? '#dc2626' : '#111827'}; font-weight:800;">${homeScoreDisplay}</span>`;
-        const awayScoreHtml = `<span style="color:${isAwayWinner ? '#dc2626' : '#111827'}; font-weight:800;">${awayScoreDisplay}</span>`;
-
-        const homeTeamColor = isHome ? '#111827' : '#0284c7';
-        const awayTeamColor = !isHome ? '#111827' : '#0284c7';
-        const homeTeamWeight = isHome ? '800' : '600';
-        const awayTeamWeight = !isHome ? '800' : '600';
-
-        const badgeBg = isWin ? '#ea580c' : (isDraw ? '#64748b' : '#0284c7');
-        const badgeLabel = isWin ? '승' : (isDraw ? '무' : '패');
-        const badgeHtml = `
-          <span style="color:#94a3b8; font-size:0.65rem; margin-right:2px;">⊙</span>
-          <span style="background:${badgeBg}; color:#fff; font-weight:700; font-size:0.68rem; padding:1px 5px; border-radius:3px; min-width:18px; text-align:center; display:inline-block;">${badgeLabel}</span>
-        `;
-
-        const dateStr = (g.date || '').slice(0, 10).replace(/-/g, '.');
-
         return `
           <div class="p-1.5 mb-1.5 rounded bg-white border shadow-xs" style="font-size:0.75rem;">
             <div class="d-flex align-items-center">
@@ -805,7 +808,7 @@ const DetailPanel = (() => {
                 ${dateStr}
               </div>
               <div class="text-end text-truncate px-1" style="width:33%;" title="${homeTeamDisplay}">
-                <span style="color:${isHomeWinner ? '#dc2626' : '#111827'}; font-weight:${isHomeWinner ? '800' : '600'}; font-size:0.80rem;">${homeTeamDisplay}</span>
+                ${homeTeamHtml}
               </div>
               <div class="fw-bold font-monospace text-center px-1" style="width:16%; min-width:55px; white-space:nowrap; font-size:0.88rem;">
                 <span class="px-2 py-0.5 rounded-pill font-monospace" style="background:#f1f5f9; border:1px solid #cbd5e1; font-weight:800; display:inline-block;">
@@ -813,7 +816,7 @@ const DetailPanel = (() => {
                 </span>
               </div>
               <div class="text-start text-truncate px-1" style="width:33%;" title="${awayTeamDisplay}">
-                <span style="color:${isAwayWinner ? '#dc2626' : '#111827'}; font-weight:${isAwayWinner ? '800' : '600'}; font-size:0.80rem;">${awayTeamDisplay}</span>
+                ${awayTeamHtml}
               </div>
             </div>
             ${breakdownHtml}

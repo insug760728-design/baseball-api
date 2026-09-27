@@ -726,10 +726,10 @@ const DetailPanel = (() => {
         const oppScore = g.opp_score ?? (isHome ? g.away_score : g.home_score) ?? 0;
 
         const myName = CommonUtils.formatTeamName(myTeam);
-        const homeTeamDisplay = isHome ? myName : opp;
-        const awayTeamDisplay = isHome ? opp : myName;
-        const homeScoreDisplay = isHome ? myScore : oppScore;
-        const awayScoreDisplay = isHome ? oppScore : myScore;
+        const homeTeamDisplay = CommonUtils.formatTeamName(g.home_team_name || g.home_team || (isHome ? myName : opp));
+        const awayTeamDisplay = CommonUtils.formatTeamName(g.away_team_name || g.away_team || (isHome ? opp : myName));
+        const homeScoreDisplay = (g.home_score !== undefined && g.home_score !== null) ? g.home_score : (isHome ? myScore : oppScore);
+        const awayScoreDisplay = (g.away_score !== undefined && g.away_score !== null) ? g.away_score : (isHome ? oppScore : myScore);
 
         const isHomeWinner = Number(homeScoreDisplay) > Number(awayScoreDisplay);
         const isAwayWinner = Number(awayScoreDisplay) > Number(homeScoreDisplay);

@@ -16015,10 +16015,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
       isDraw = teamScore === oppScore;
 
       const isPastHome = pMatch ? (pMatch.perspective_team ? (pMatch.perspective_team === curTeam) : ((typeof formatTeamName === 'function' ? formatTeamName(pMatch.home_team_name) : pMatch.home_team_name) === curTeam)) : isHome;
-      const pastHomeTeam = isPastHome ? curTeam : oppTeam;
-      const pastAwayTeam = isPastHome ? oppTeam : curTeam;
-      const pastHomeScore = isPastHome ? teamScore : oppScore;
-      const pastAwayScore = isPastHome ? oppScore : teamScore;
+      const pastHomeTeam = (pMatch && (pMatch.home_team_name || pMatch.home_team)) ? (typeof formatTeamName === 'function' ? formatTeamName(pMatch.home_team_name || pMatch.home_team) : (pMatch.home_team_name || pMatch.home_team)) : (isPastHome ? curTeam : oppTeam);
+      const pastAwayTeam = (pMatch && (pMatch.away_team_name || pMatch.away_team)) ? (typeof formatTeamName === 'function' ? formatTeamName(pMatch.away_team_name || pMatch.away_team) : (pMatch.away_team_name || pMatch.away_team)) : (isPastHome ? oppTeam : curTeam);
+      const pastHomeScore = (pMatch && pMatch.home_score !== undefined && pMatch.home_score !== null) ? Number(pMatch.home_score) : (isPastHome ? teamScore : oppScore);
+      const pastAwayScore = (pMatch && pMatch.away_score !== undefined && pMatch.away_score !== null) ? Number(pMatch.away_score) : (isPastHome ? oppScore : teamScore);
       const pastDateDisplay = (pMatch && (pMatch.date || pMatch.match_date)) ? (pMatch.date || pMatch.match_date).slice(0, 10).replace(/-/g, '.') : '2026.09.23';
 
       const cardBorder = isHome ? '#fecaca' : '#bfdbfe';
@@ -20287,26 +20287,33 @@ function updateSlimPanel(matchId, type, contentHtml) {
           // 1. 경기 기본 정보 (일자 4자리 연도 YYYY.MM.DD & 홈팀 - 스코어 - 원정팀 - 결과 표준화)
           const dateRaw = g.date || (g.match_date ? g.match_date.slice(0, 10) : '');
           const dateDisplay = (dateRaw && dateRaw.length >= 10) ? dateRaw.slice(0, 10).replace(/-/g, '.') : (dateRaw || `경기 ${idx + 1}`);
-          const loc = g.home_away || (isSameTeamName(g.home_team_name, teamName, 'BASEBALL', 'BASEBALL') ? '홈' : '원정');
-          const isLocHome = (loc === '홈');
-          
-          const oppName = formatTeamName(g.opponent || (isLocHome ? g.away_team_name : g.home_team_name) || '상대팀');
-          
-          const myScore = Number(g.team_score ?? (isLocHome ? g.home_score : g.away_score) ?? 0);
-          const oppScore = Number(g.opp_score ?? (isLocHome ? g.away_score : g.home_score) ?? 0);
-          const isWin = myScore > oppScore;
-          const isDraw = myScore === oppScore;
+          // 팀명 & 점수 (점수 뒤바뀜 원천 방지: g.home_team_name, g.away_team_name, g.home_score, g.away_score 직접 바인딩)
+          let hTeamDisplay = '';
+          let aTeamDisplay = '';
+          let hScoreVal = 0;
+          let aScoreVal = 0;
 
-          const hTeamDisplay = isLocHome ? teamName : oppName;
-          const aTeamDisplay = isLocHome ? oppName : teamName;
-          const hScoreVal = isLocHome ? myScore : oppScore;
-          const aScoreVal = isLocHome ? oppScore : myScore;
-          
-          const resultBadge = isWin 
-            ? `<span class="badge bg-danger text-white px-2 py-1" style="font-size:0.75rem; font-weight:800;">${teamName} 승</span>`
-            : (isDraw 
-                ? `<span class="badge bg-secondary text-white px-2 py-1" style="font-size:0.75rem; font-weight:800;">무승부</span>`
-                : `<span class="badge bg-primary text-white px-2 py-1" style="font-size:0.75rem; font-weight:800;">${teamName} 패</span>`);
+          if (g.home_team_name && g.away_team_name && g.home_score != null && g.away_score != null) {
+            hTeamDisplay = formatTeamName(g.home_team_name);
+            aTeamDisplay = formatTeamName(g.away_team_name);
+            hScoreVal = Number(g.home_score);
+            aScoreVal = Number(g.away_score);
+          } else if (g.home_team && g.away_team && g.home_score != null && g.away_score != null) {
+            hTeamDisplay = formatTeamName(g.home_team);
+            aTeamDisplay = formatTeamName(g.away_team);
+            hScoreVal = Number(g.home_score);
+            aScoreVal = Number(g.away_score);
+          } else {
+            const loc = g.home_away || (isSameTeamName(g.home_team_name, teamName, match?.sport_code || 'SOCCER', match?.sport_code || 'SOCCER') ? '홈' : '원정');
+            const isLocHome = (loc === '홈');
+            const oppName = formatTeamName(g.opponent || (isLocHome ? g.away_team_name : g.home_team_name) || '상대팀');
+            const myScore = Number(g.team_score ?? (isLocHome ? g.home_score : g.away_score) ?? 0);
+            const oppScore = Number(g.opp_score ?? (isLocHome ? g.away_score : g.home_score) ?? 0);
+            hTeamDisplay = isLocHome ? teamName : oppName;
+            aTeamDisplay = isLocHome ? oppName : teamName;
+            hScoreVal = isLocHome ? myScore : oppScore;
+            aScoreVal = isLocHome ? oppScore : myScore;
+          }
 
           // 2. ★ 선발투수 정보 및 방어율(ERA)
           const stObj = g.perspective_starter || (isLocHome ? g.home_starter : g.away_starter) || {};
