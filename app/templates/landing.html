@@ -9366,15 +9366,8 @@ function getFullModalMatchList() {
           }).catch(() => { m._isFetchingHistory = false; });
       }
 
-      if (!hRecent.length && typeof buildDynamicTeamRecentList === 'function') {
-        hRecent = buildDynamicTeamRecentList(sportCode, hName, true, m, 10);
-      }
-      if (!aRecent.length && typeof buildDynamicTeamRecentList === 'function') {
-        aRecent = buildDynamicTeamRecentList(sportCode, aName, false, m, 10);
-      }
-      if (!h2hMatches.length && typeof buildDynamicH2HList === 'function') {
-        h2hMatches = buildDynamicH2HList(sportCode, hName, aName, m, 10);
-      }
+      // 100% 공식 실데이터만 사용 (비동기 로딩 전 가짜 경기 노출 및 깜빡임 원천 차단)
+
 
       const fullHName = m.home_team_name || hName;
       const fullAName = m.away_team_name || aName;
@@ -9399,20 +9392,7 @@ function getFullModalMatchList() {
           `;
         }
 
-        // 중복 제거 후 10경기 미만일 때 보강하여 항상 온전한 10경기 일지 유지
         let fullList = [...cleanList];
-        if (fullList.length < 10 && typeof buildDynamicTeamRecentList === 'function') {
-          const fallbackList = buildDynamicTeamRecentList(sportCode, teamName, isHome, m, 10);
-          const seenDates = new Set(fullList.map(g => (g.match_date || g.date || '').slice(0, 10)));
-          for (const fg of fallbackList) {
-            const d = (fg.match_date || fg.date || '').slice(0, 10);
-            if (!seenDates.has(d)) {
-              fullList.push(fg);
-              seenDates.add(d);
-            }
-            if (fullList.length >= 10) break;
-          }
-        }
 
         const firstGame = fullList[0];
         const otherGames = fullList.slice(1, 10); // 2차전부터 10차전까지 전체 10경기!
@@ -17619,17 +17599,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
           h2hMatches = mutual;
         }
       }
-      if (h2hMatches.length === 0 && typeof buildDynamicH2HList === 'function') {
-        h2hMatches = buildDynamicH2HList('SOCCER', hName, aName, m, 6);
-      }
+      // 100% 공식 실데이터만 사용 (비동기 로딩 전 가짜 경기 노출 및 깜빡임 원천 차단)
 
-      // 만약 homeRecent / awayRecent가 비어있으면 즉시 buildDynamicTeamRecentList 폴백 연동 (0경기 0% 원천 방지)
-      if (!homeRecent.length && typeof buildDynamicTeamRecentList === 'function') {
-        homeRecent = buildDynamicTeamRecentList('SOCCER', hName, true, m, 10);
-      }
-      if (!awayRecent.length && typeof buildDynamicTeamRecentList === 'function') {
-        awayRecent = buildDynamicTeamRecentList('SOCCER', aName, false, m, 10);
-      }
 
       // Auto-fetch if history is missing from DB (중복 방지 & 디바운스 업데이트)
       if ((!hist.home_recent || !hist.away_recent) && !m._isFetchingHistory && !window._matchHistoryCache[m.id]) {
