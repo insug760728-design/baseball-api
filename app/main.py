@@ -183,7 +183,11 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 async def add_cache_headers_middleware(request: Request, call_next):
     response = await call_next(request)
     if request.url.path.startswith("/static/"):
-        response.headers["Cache-Control"] = "public, max-age=604800"
+        # JS/CSS: 1시간 캐시 (배포 즉시 반영되도록 604800→3600)
+        if request.url.path.endswith(".js") or request.url.path.endswith(".css"):
+            response.headers["Cache-Control"] = "public, max-age=3600"
+        else:
+            response.headers["Cache-Control"] = "public, max-age=604800"
     return response
 
 from fastapi.staticfiles import StaticFiles
@@ -219,6 +223,14 @@ def refresh_server_matches_cache() -> str:
         today_str = now_kst.strftime("%Y-%m-%d")
         matches = MatchService.get_matches(db, start_date=today_str, limit=350, order='asc')
         if not matches:
+            # 오늘 경기 없으면 3일 이내 가장 가까운 미래 경기 우선 표시 (과거 완료 경기 X)
+            for days_ahead in [1, 2, 3]:
+                future_str = (now_kst + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
+                matches = MatchService.get_matches(db, start_date=future_str, limit=350, order='asc')
+                if matches:
+                    break
+        if not matches:
+            # 그래도 없으면 최신 200경기 (가장 최근 날짜 기준 내림차순)
             matches = MatchService.get_matches(db, limit=200, order='desc')
         serialized = [MatchResponse.model_validate(m).model_dump(mode="json") for m in matches]
         json_str = json.dumps(serialized, ensure_ascii=False)

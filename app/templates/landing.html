@@ -9071,73 +9071,7 @@ function getFullModalMatchList() {
         }
       }
 
-      // 3. 비동기 로딩 대기 중에도 스피너 멈춤 없이 0ms 즉시 렌더링되도록 10경기 즉시 완비
-      if (list.length < count) {
-        const seed = Math.abs(((homeTeam || '').charCodeAt(0) || 1) * 31 + ((awayTeam || '').charCodeAt(0) || 2) * 17);
-        const isSoccer = (sportCode === 'SOCCER');
-        const isBaseball = (sportCode === 'BASEBALL');
-        const isBasketball = (sportCode === 'BASKETBALL');
-
-        const SCORES = isSoccer
-          ? [[1, 0], [2, 1], [1, 1], [0, 0], [2, 0], [1, 2], [2, 2], [0, 1], [3, 1], [0, 2]]
-          : (isBasketball
-              ? [[88, 82], [94, 91], [79, 85], [102, 98], [86, 89], [91, 84], [98, 95], [83, 89], [95, 90], [89, 93]]
-              : [[4, 2], [5, 3], [3, 1], [6, 4], [2, 5], [1, 4], [7, 3], [3, 6], [5, 2], [2, 3]]);
-
-        const now = new Date();
-        for (let i = list.length; i < count; i++) {
-          const d = new Date(now.getTime() - (i + 1) * (isSoccer ? 45 : 7) * 86400000);
-          const dateStr = d.toISOString().slice(0, 10);
-          const isHomeVenue = (seed + i) % 2 === 0;
-          const [s1, s2] = SCORES[(seed + i) % SCORES.length];
-          const actualHomeTeam = isHomeVenue ? homeTeam : awayTeam;
-          const actualAwayTeam = isHomeVenue ? awayTeam : homeTeam;
-          const hScore = s1; // score of actualHomeTeam
-          const aScore = s2; // score of actualAwayTeam
-          const myScore = isHomeVenue ? hScore : aScore;
-          const oppScore = isHomeVenue ? aScore : hScore;
-          const isWin = myScore > oppScore;
-          const isDraw = myScore === oppScore;
-          const outcome = isWin ? 'WIN' : (isDraw ? 'DRAW' : 'LOSS');
-          const resKr = isWin ? '승' : (isDraw ? '무' : '패');
-          const resEmoji = isWin ? '✅' : (isDraw ? '🟰' : '❌');
-
-          list.push({
-            match_id: 990000 + i,
-            date: dateStr,
-            match_date: `${dateStr} 15:00`,
-            home_away: isHomeVenue ? '홈' : '원정',
-            home_team_name: actualHomeTeam,
-            away_team_name: actualAwayTeam,
-            home_score: hScore,
-            away_score: aScore,
-            team_score: myScore,
-            opp_score: oppScore,
-            score: `${hScore} - ${aScore}`,
-            opponent: isHomeVenue ? awayTeam : homeTeam,
-            league_name: (match && match.league_name) || (isSoccer ? '정규리그' : '정규시즌'),
-            result: outcome,
-            result_kr: resKr,
-            result_emoji: resEmoji,
-            period_scores: isSoccer ? {
-              '1H': { home: Math.floor(hScore / 2), away: Math.floor(aScore / 2) },
-              '2H': { home: hScore - Math.floor(hScore / 2), away: aScore - Math.floor(aScore / 2) }
-            } : {},
-            team_stats: isSoccer ? {
-              possession: { home: 51, away: 49 }
-            } : {},
-            starter: isBaseball ? '선발 6.0이닝 2자책' : '',
-            baseball_stats: isBaseball ? {
-              starter_ip: '6.0',
-              starter_er: 2,
-              bullpen_ip: '3.0',
-              home_hits: isHomeVenue ? 8 : 6,
-              away_hits: isHomeVenue ? 6 : 8
-            } : {}
-          });
-        }
-      }
-
+      // 3. 공식 실데이터만 반환 (가짜 임의 더미 경기 생성 원천 차단으로 이상한 경기 깜빡임 방지)
       return list;
     }
     window.buildDynamicH2HList = buildDynamicH2HList;
@@ -22841,6 +22775,17 @@ function renderPredDetail(m, customDetailData = null) {
             </div>
           `}
 
+          <!-- 🏆 [선발 라인업 최우선 배치] 선발 라인업/출전선수 명단이 확정/등록되어 있으면 상세내역 맨 위로 이동 -->
+          ${playerStatsHtml ? `
+            <div class="mb-3 p-2 rounded-2" style="background: #eff6ff; border: 1.5px solid #3b82f6;">
+              <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom" style="border-color: #bfdbfe !important;">
+                <span class="fw-bold text-primary" style="font-size: 0.88rem;"><i class="bi bi-shield-fill-check me-1"></i>공식 선발 라인업 (출전 명단)</span>
+                <span class="badge bg-primary text-white" style="font-size: 0.72rem;">공식 발표 완료</span>
+              </div>
+              ${playerStatsHtml}
+            </div>
+          ` : ''}
+
           <!-- Probabilistic Big Data Consensus Callout (100% Synced) -->
           ${buildConsensusBoxHtml(m, matchup)}
 
@@ -22868,10 +22813,6 @@ function renderPredDetail(m, customDetailData = null) {
           ${defenseSecHtml}
           ${playSecHtml}
           ${disciplineSecHtml}
-
-          <!-- Player Match Stats (Lineup/Boxscore) -->
-          ${playerStatsHtml}
-
         </div>
       `;
 
