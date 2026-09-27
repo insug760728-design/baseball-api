@@ -20288,32 +20288,34 @@ function updateSlimPanel(matchId, type, contentHtml) {
           const dateRaw = g.date || (g.match_date ? g.match_date.slice(0, 10) : '');
           const dateDisplay = (dateRaw && dateRaw.length >= 10) ? dateRaw.slice(0, 10).replace(/-/g, '.') : (dateRaw || `경기 ${idx + 1}`);
           // 팀명 & 점수 (점수 뒤바뀜 원천 방지: g.home_team_name, g.away_team_name, g.home_score, g.away_score 직접 바인딩)
+          const rawHomeTeam = g.home_team_name || g.home_team || '';
+          const rawAwayTeam = g.away_team_name || g.away_team || '';
+          const isLocHome = g.home_away ? (g.home_away === '홈') : (rawHomeTeam ? (typeof isSameTeamName === 'function' ? isSameTeamName(rawHomeTeam, teamName, match?.sport_code || 'SOCCER', match?.sport_code || 'SOCCER') : (rawHomeTeam === teamName)) : true);
+
           let hTeamDisplay = '';
           let aTeamDisplay = '';
           let hScoreVal = 0;
           let aScoreVal = 0;
 
-          if (g.home_team_name && g.away_team_name && g.home_score != null && g.away_score != null) {
-            hTeamDisplay = formatTeamName(g.home_team_name);
-            aTeamDisplay = formatTeamName(g.away_team_name);
-            hScoreVal = Number(g.home_score);
-            aScoreVal = Number(g.away_score);
-          } else if (g.home_team && g.away_team && g.home_score != null && g.away_score != null) {
-            hTeamDisplay = formatTeamName(g.home_team);
-            aTeamDisplay = formatTeamName(g.away_team);
+          if (rawHomeTeam && rawAwayTeam && g.home_score != null && g.away_score != null) {
+            hTeamDisplay = typeof formatTeamName === 'function' ? formatTeamName(rawHomeTeam) : rawHomeTeam;
+            aTeamDisplay = typeof formatTeamName === 'function' ? formatTeamName(rawAwayTeam) : rawAwayTeam;
             hScoreVal = Number(g.home_score);
             aScoreVal = Number(g.away_score);
           } else {
-            const loc = g.home_away || (isSameTeamName(g.home_team_name, teamName, match?.sport_code || 'SOCCER', match?.sport_code || 'SOCCER') ? '홈' : '원정');
-            const isLocHome = (loc === '홈');
-            const oppName = formatTeamName(g.opponent || (isLocHome ? g.away_team_name : g.home_team_name) || '상대팀');
-            const myScore = Number(g.team_score ?? (isLocHome ? g.home_score : g.away_score) ?? 0);
-            const oppScore = Number(g.opp_score ?? (isLocHome ? g.away_score : g.home_score) ?? 0);
+            const oppName = typeof formatTeamName === 'function' ? formatTeamName(g.opponent || (isLocHome ? (rawAwayTeam || '상대팀') : (rawHomeTeam || '상대팀'))) : (g.opponent || '상대팀');
+            const myScoreFallback = Number(g.team_score ?? (isLocHome ? g.home_score : g.away_score) ?? 0);
+            const oppScoreFallback = Number(g.opp_score ?? (isLocHome ? g.away_score : g.home_score) ?? 0);
             hTeamDisplay = isLocHome ? teamName : oppName;
             aTeamDisplay = isLocHome ? oppName : teamName;
-            hScoreVal = isLocHome ? myScore : oppScore;
-            aScoreVal = isLocHome ? oppScore : myScore;
+            hScoreVal = isLocHome ? myScoreFallback : oppScoreFallback;
+            aScoreVal = isLocHome ? oppScoreFallback : myScoreFallback;
           }
+
+          const myScore = isLocHome ? hScoreVal : aScoreVal;
+          const oppScore = isLocHome ? aScoreVal : hScoreVal;
+          const isWin = myScore > oppScore;
+          const isDraw = myScore === oppScore;
 
           // 2. ★ 선발투수 정보 및 방어율(ERA)
           const stObj = g.perspective_starter || (isLocHome ? g.home_starter : g.away_starter) || {};

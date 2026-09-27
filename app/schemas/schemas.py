@@ -67,17 +67,17 @@ class MatchDetailResponse(MatchDetailBase):
 # --- Match Schemas ---
 class MatchBase(BaseModel):
     official_id: Optional[str] = None
-    sport_code: str = 'BASEBALL'
-    league_name: str
-    season: str = '2026'
+    sport_code: Optional[str] = 'BASEBALL'
+    league_name: Optional[str] = ''
+    season: Optional[str] = '2026'
     round_name: Optional[str] = None
-    match_date: str
+    match_date: Optional[str] = None
     stadium: Optional[str] = None
-    home_team_name: str
-    away_team_name: str
-    home_score: int = 0
-    away_score: int = 0
-    status: str = 'SCHEDULED'
+    home_team_name: Optional[str] = ''
+    away_team_name: Optional[str] = ''
+    home_score: Optional[int] = 0
+    away_score: Optional[int] = 0
+    status: Optional[str] = 'SCHEDULED'
 
 class MatchUpdate(BaseModel):
     home_score: Optional[int] = None
@@ -90,7 +90,7 @@ class MatchUpdate(BaseModel):
 
 class MatchResponse(MatchBase):
     id: int
-    is_customized: bool = False
+    is_customized: Optional[bool] = False
     custom_notes: Optional[str] = None
     summary: Optional[str] = None
     prediction: Optional[Dict[str, Any]] = None

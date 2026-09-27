@@ -5,8 +5,11 @@ import time
 import os
 import sqlite3
 import re
+import logging
 from datetime import datetime, timezone, timedelta
 from functools import lru_cache
+
+logger = logging.getLogger("BetmanService")
 
 BETMAN_TOTO_URL = 'https://www.betman.co.kr/buyPsblGame/totoGameData.do'
 BETMAN_BUYABLE_URL = 'https://www.betman.co.kr/buyPsblGame/inqCacheBuyAbleGameInfoList.do'
