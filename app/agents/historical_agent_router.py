@@ -13,6 +13,7 @@ import re
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 from sqlalchemy import or_, and_, desc
+from sqlalchemy.orm import joinedload
 
 from app.core.database import SessionLocal
 from app.models.models import Match, MatchDetail, PlayerMatchStat
@@ -642,6 +643,15 @@ class HistoricalAgentRouter:
             ]
             cross_competition_filters = club_excludes if is_national_match else nat_excludes
 
+            today_str = datetime.now().strftime('%Y-%m-%d')
+            ref_date_str = str(target.match_date or today_str or '2026-09-22')[:10]
+            try:
+                ref_dt = datetime.strptime(ref_date_str[:10], '%Y-%m-%d')
+            except Exception:
+                ref_dt = datetime(2026, 9, 22)
+            min_date_threshold = f"{ref_dt.year - 4}-01-01" if is_national_match else f"{ref_dt.year - 2}-01-01"
+            min_h2h_threshold = f"{ref_dt.year - 6}-01-01" if is_national_match else f"{ref_dt.year - 4}-01-01"
+
             # 2. 최근 경기 조회 (해당 팀의 공식 완료 경기)
             def query_recent_for_team(tokens: list, tm_name: str) -> list:
                 conds = []
@@ -669,8 +679,9 @@ class HistoricalAgentRouter:
 
                 # 1차: 동일 리그 내에서 조회 (중복 제거 감안하여 충분한 수량 확보)
                 fetch_limit = max(max_games * 4, 40)
-                q = db.query(Match).filter(
+                q = db.query(Match).options(joinedload(Match.details)).filter(
                     Match.sport_code == sport_code,
+                    Match.match_date >= min_date_threshold,
                     or_(*league_filters),
                     Match.status == 'FINISHED',
                     Match.id != match_id,
@@ -683,8 +694,9 @@ class HistoricalAgentRouter:
 
                 # 2차: 동일 종목 내(승강/컵대회 포함) 보강 조회
                 existing_ids = {m.id for m in res}
-                q_fb = db.query(Match).filter(
+                q_fb = db.query(Match).options(joinedload(Match.details)).filter(
                     Match.sport_code == sport_code,
+                    Match.match_date >= min_date_threshold,
                     Match.status == 'FINISHED',
                     Match.id != match_id,
                     *cross_competition_filters,
@@ -713,8 +725,9 @@ class HistoricalAgentRouter:
                     h_side2 = or_(*[Match.away_team_name.ilike(f"%{t}%") for t in ht_tokens])
                     a_side2 = or_(*[Match.home_team_name.ilike(f"%{t}%") for t in at_tokens])
 
-                q = db.query(Match).filter(
+                q = db.query(Match).options(joinedload(Match.details)).filter(
                     Match.sport_code == sport_code,
+                    Match.match_date >= min_h2h_threshold,
                     or_(*league_filters),
                     Match.status == 'FINISHED',
                     Match.id != match_id,
@@ -729,8 +742,9 @@ class HistoricalAgentRouter:
 
                 # 2차: 동일 종목 전체(과거 J1/J2 승강전, 인터리그, 컵대회, 과거 시즌 등) 크로스 H2H 검색
                 existing_ids = {m.id for m in res}
-                q_fb = db.query(Match).filter(
+                q_fb = db.query(Match).options(joinedload(Match.details)).filter(
                     Match.sport_code == sport_code,
+                    Match.match_date >= min_h2h_threshold,
                     Match.status == 'FINISHED',
                     Match.id != match_id,
                     *cross_competition_filters,
@@ -751,14 +765,10 @@ class HistoricalAgentRouter:
             raw_h2h = query_h2h(h_tokens, a_tokens)
 
             # 3-1. 오늘 날짜 기준 최근 10경기 집계 (2026 시즌 기준, 오늘 이전 경기만 최신순 정렬)
-            from datetime import datetime
-            today_str = datetime.now().strftime('%Y-%m-%d')
-            ref_date_str = str(target.match_date or today_str or '2026-09-22')[:10]
 
             def sanitize_recent_matches(raw_matches: list, ref_d_str: str, sp_code: str) -> list:
                 if not raw_matches:
                     return []
-                from datetime import datetime
                 try:
                     ref_dt = datetime.strptime(ref_d_str[:10], '%Y-%m-%d')
                 except Exception:
@@ -809,7 +819,6 @@ class HistoricalAgentRouter:
             def sanitize_h2h_matches(raw_matches: list, ref_d_str: str, sp_code: str) -> list:
                 if not raw_matches:
                     return []
-                from datetime import datetime
                 try:
                     ref_dt = datetime.strptime(ref_d_str[:10], '%Y-%m-%d')
                 except Exception:

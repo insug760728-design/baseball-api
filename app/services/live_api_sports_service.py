@@ -439,6 +439,11 @@ for _k, _aliases in TEAM_SYNONYMS.items():
 
 # Sort canonical keys by length descending so specific full names match before short ambiguous substrings
 _CANONICAL_KEYS_SORTED: List[str] = sorted(_CANONICAL_LOOKUP.keys(), key=len, reverse=True)
+# Pre-filter valid keys (len >= 4 or len >= 2 with Korean) to avoid 100k+ generator allocations per query
+_CANONICAL_KEYS_FILTERED: List[str] = [
+    k for k in _CANONICAL_KEYS_SORTED
+    if len(k) >= 4 or (len(k) >= 2 and any('\uac00' <= ch <= '\ud7a3' for ch in k))
+]
 
 @lru_cache(maxsize=8192)
 def clean_team_tokens(n: str) -> str:
@@ -450,7 +455,7 @@ def clean_team_tokens(n: str) -> str:
             s = s[len(stop):]
     return s
 
-@lru_cache(maxsize=8192)
+@lru_cache(maxsize=16384)
 def get_canonical(n: str) -> str:
     norm = normalize_name(n)
     if not norm:
@@ -460,12 +465,11 @@ def get_canonical(n: str) -> str:
     clean = clean_team_tokens(norm)
     if clean and clean in _CANONICAL_LOOKUP:
         return _CANONICAL_LOOKUP[clean]
-    for k in _CANONICAL_KEYS_SORTED:
-        if len(k) >= 4 and k in norm:
-            return _CANONICAL_LOOKUP[k]
-        elif len(k) >= 2 and any('\uac00' <= ch <= '\ud7a3' for ch in k) and k in norm:
+    for k in _CANONICAL_KEYS_FILTERED:
+        if k in norm:
             return _CANONICAL_LOOKUP[k]
     return norm
+
 
 
 # =============================================================

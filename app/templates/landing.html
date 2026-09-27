@@ -14772,7 +14772,7 @@ function getFullModalMatchList() {
         }
 
         return `
-          <div class="slim-match-card pred-card-compact card-status-live ${sportClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" data-match-score="${m.home_score ?? 0}-${m.away_score ?? 0}" data-match-time="${(st.match_time || st.quarter || st.inning_text || '')}" onclick="selectPredMatch(${m.id}, true)" style="padding:0 !important; overflow:hidden !important; border-radius:12px !important; border:2px solid #ef4444 !important; background:#0b1329 !important; box-shadow:0 6px 20px rgba(239,68,68,0.25) !important;">
+          <div class="slim-match-card pred-card-compact card-status-live ${sportClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" data-match-score="${m.home_score ?? 0}-${m.away_score ?? 0}" data-match-time="${(st.match_time || st.quarter || st.inning_text || '')}" onmouseenter="prefetchMatchDetails(${m.id})" ontouchstart="prefetchMatchDetails(${m.id})" onclick="selectPredMatch(${m.id}, true)" style="padding:0 !important; overflow:hidden !important; border-radius:12px !important; border:2px solid #ef4444 !important; background:#0b1329 !important; box-shadow:0 6px 20px rgba(239,68,68,0.25) !important;">
 
             <!-- Live Broadcast Stage (Scoreboard & Diamond <-> Event Animation Switcher) -->
             ${liveBroadcastStageHtml}
@@ -14901,7 +14901,7 @@ function getFullModalMatchList() {
       const highlightBadgeHtml = getMatchHighlightHtml(m, isFinished, isLive);
 
       return `
-        <div class="slim-match-card pred-card-compact ${sportClass} ${statusClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" data-match-score="${m.home_score ?? 0}-${m.away_score ?? 0}" data-match-time="" onclick="selectPredMatch(${m.id}, true)">
+        <div class="slim-match-card pred-card-compact ${sportClass} ${statusClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" data-match-score="${m.home_score ?? 0}-${m.away_score ?? 0}" data-match-time="" onmouseenter="prefetchMatchDetails(${m.id})" ontouchstart="prefetchMatchDetails(${m.id})" onclick="selectPredMatch(${m.id}, true)">
           <div class="d-flex justify-content-between align-items-center mb-1.5" style="gap: 6px;">
             <div class="d-flex align-items-center gap-1 text-truncate" style="min-width:0; flex:1 1 auto; overflow:hidden;">
               <span class="slim-card-sport-time text-truncate" style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${sportIcon} ${m.league_name || m.sport_code} · ${timeStr}${sweepBadge}</span>
@@ -15224,6 +15224,13 @@ function getFullModalMatchList() {
           window.scrollTo(0, prevWindowScrollY);
         }
       }
+
+      // 백그라운드 프리패치 트리거
+      try {
+        if (typeof idlePrefetchTopMatches === 'function') {
+          idlePrefetchTopMatches();
+        }
+      } catch(e) {}
     }
 function updateSlimPanel(matchId, type, contentHtml) {
       const stateObj = { type, loaded: true, html: contentHtml };
@@ -16886,10 +16893,21 @@ function updateSlimPanel(matchId, type, contentHtml) {
     }
     window.prefetchMatchDetails = prefetchMatchDetails;
 
+    let _idlePrefetchDone = false;
     function idlePrefetchTopMatches() {
-      // 🚀 Render 512MB RAM 및 연결 풀 고갈 방지: 전경기 대량 사전 요청 전면 비활성화 (마우스 호버 시 1경기만 개별 프리페치)
-      return;
+      if (_idlePrefetchDone) return;
+      if (typeof allMatches === 'undefined' || !Array.isArray(allMatches) || allMatches.length === 0) return;
+      _idlePrefetchDone = true;
+      const topList = allMatches.slice(0, 6);
+      topList.forEach((m, idx) => {
+        setTimeout(() => {
+          if (typeof prefetchMatchDetails === 'function') {
+            prefetchMatchDetails(m.id);
+          }
+        }, 600 + idx * 350);
+      });
     }
+    window.idlePrefetchTopMatches = idlePrefetchTopMatches;
 
     function scrollToNgSection(secName) {
       _ngActiveTab = secName;
@@ -18487,10 +18505,18 @@ function updateSlimPanel(matchId, type, contentHtml) {
               <div class="col-12 col-lg-6" id="soccerRecentColHome_${m.id}">
                 <div class="p-2 rounded-2 bg-white border shadow-xs h-100" style="border-color:#cbd5e1;">
                   <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom" style="border-color:#fecaca !important;">
-                    <span class="fw-bold text-danger" style="font-size:0.78rem;">🔴 ${hName} 최근 ${homeRecent.length}경기 전적</span>
-                    <span class="badge bg-light text-danger border border-danger-subtle px-1.5 py-0.5" style="font-size:0.64rem;">
-                      ${hWins}승 ${hDraws}무 ${hLosses}패 (${hWinRate}%)
-                    </span>
+                    <span class="fw-bold text-danger" style="font-size:0.78rem;">🔴 ${hName} ${homeRecent.length > 0 ? `최근 ${homeRecent.length}경기 전적` : '최근 공식 전적'}</span>
+                    ${homeRecent.length > 0 ? `
+                      <span class="badge bg-light text-danger border border-danger-subtle px-1.5 py-0.5" style="font-size:0.64rem;">
+                        ${hWins}승 ${hDraws}무 ${hLosses}패 (${hWinRate}%)
+                      </span>
+                    ` : (m._isFetchingHistory ? `
+                      <span class="badge bg-light text-danger border border-danger-subtle px-1.5 py-0.5" style="font-size:0.64rem;">
+                        <span class="spinner-border spinner-border-sm me-1" style="width:0.60rem; height:0.60rem;" role="status"></span>동기화 중...
+                      </span>
+                    ` : `
+                      <span class="badge bg-light text-muted border border-secondary-subtle px-1.5 py-0.5" style="font-size:0.64rem;">기록 없음</span>
+                    `)}
                   </div>
                   ${homeRecent.length > 0 ? `
                     <div class="table-responsive rounded border bg-white" style="border-color:#e2e8f0; max-height:280px; overflow-y:auto;">
@@ -18512,9 +18538,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
                       최근 ${homeRecent.length}경기 <span class="text-danger fw-bold">${hWins}승</span> <span class="text-dark fw-bold">${hDraws}무</span> <span class="text-primary fw-bold">${hLosses}패</span>
                     </div>
                   ` : (m._isFetchingHistory ? `
-                    <div class="p-3 text-center text-muted small bg-light rounded border d-flex align-items-center justify-content-center gap-2">
+                    <div class="p-3 text-center text-muted small bg-light rounded border d-flex flex-column align-items-center justify-content-center gap-1.5" style="min-height:100px;">
                       <div class="spinner-border spinner-border-sm text-danger" role="status"></div>
-                      <span>${hName} 최근 전적 동기화 중...</span>
+                      <span class="fw-bold text-dark" style="font-size:0.76rem;">${hName} 공식 최근 경기 전적을 불러오는 중입니다...</span>
+                      <span class="text-muted" style="font-size:0.67rem;">공식 대회 및 리그 데이터를 실시간 매칭 중입니다</span>
                     </div>
                   ` : `
                     <div class="p-3 text-center text-muted small bg-light rounded border">
@@ -18528,10 +18555,18 @@ function updateSlimPanel(matchId, type, contentHtml) {
               <div class="col-12 col-lg-6" id="soccerRecentColAway_${m.id}">
                 <div class="p-2 rounded-2 bg-white border shadow-xs h-100" style="border-color:#cbd5e1;">
                   <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom" style="border-color:#bfdbfe !important;">
-                    <span class="fw-bold text-primary" style="font-size:0.78rem;">🔵 ${aName} 최근 ${awayRecent.length}경기 전적</span>
-                    <span class="badge bg-light text-primary border border-primary-subtle px-1.5 py-0.5" style="font-size:0.64rem;">
-                      ${aWins}승 ${aDraws}무 ${aLosses}패 (${aWinRate}%)
-                    </span>
+                    <span class="fw-bold text-primary" style="font-size:0.78rem;">🔵 ${aName} ${awayRecent.length > 0 ? `최근 ${awayRecent.length}경기 전적` : '최근 공식 전적'}</span>
+                    ${awayRecent.length > 0 ? `
+                      <span class="badge bg-light text-primary border border-primary-subtle px-1.5 py-0.5" style="font-size:0.64rem;">
+                        ${aWins}승 ${aDraws}무 ${aLosses}패 (${aWinRate}%)
+                      </span>
+                    ` : (m._isFetchingHistory ? `
+                      <span class="badge bg-light text-primary border border-primary-subtle px-1.5 py-0.5" style="font-size:0.64rem;">
+                        <span class="spinner-border spinner-border-sm me-1" style="width:0.60rem; height:0.60rem;" role="status"></span>동기화 중...
+                      </span>
+                    ` : `
+                      <span class="badge bg-light text-muted border border-secondary-subtle px-1.5 py-0.5" style="font-size:0.64rem;">기록 없음</span>
+                    `)}
                   </div>
                   ${awayRecent.length > 0 ? `
                     <div class="table-responsive rounded border bg-white" style="border-color:#e2e8f0; max-height:280px; overflow-y:auto;">
@@ -18553,9 +18588,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
                       최근 ${awayRecent.length}경기 <span class="text-danger fw-bold">${aWins}승</span> <span class="text-dark fw-bold">${aDraws}무</span> <span class="text-primary fw-bold">${aLosses}패</span>
                     </div>
                   ` : (m._isFetchingHistory ? `
-                    <div class="p-3 text-center text-muted small bg-light rounded border d-flex align-items-center justify-content-center gap-2">
+                    <div class="p-3 text-center text-muted small bg-light rounded border d-flex flex-column align-items-center justify-content-center gap-1.5" style="min-height:100px;">
                       <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                      <span>${aName} 최근 전적 동기화 중...</span>
+                      <span class="fw-bold text-dark" style="font-size:0.76rem;">${aName} 공식 최근 경기 전적을 불러오는 중입니다...</span>
+                      <span class="text-muted" style="font-size:0.67rem;">공식 대회 및 리그 데이터를 실시간 매칭 중입니다</span>
                     </div>
                   ` : `
                     <div class="p-3 text-center text-muted small bg-light rounded border">
