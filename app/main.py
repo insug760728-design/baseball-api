@@ -221,22 +221,21 @@ def refresh_server_matches_cache() -> str:
         # Initial payload focuses on today's active/upcoming matches (~140 matches) for instant 0ms First Paint
         now_kst = datetime.utcnow() + timedelta(hours=9)
         today_str = now_kst.strftime("%Y-%m-%d")
-        matches = MatchService.get_matches(db, start_date=today_str, limit=350, order='asc')
+        matches = MatchService.get_matches(db, start_date=today_str, limit=150, order='asc')
         if not matches:
             # 오늘 경기 없으면 3일 이내 가장 가까운 미래 경기 우선 표시 (과거 완료 경기 X)
             for days_ahead in [1, 2, 3]:
                 future_str = (now_kst + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
-                matches = MatchService.get_matches(db, start_date=future_str, limit=350, order='asc')
+                matches = MatchService.get_matches(db, start_date=future_str, limit=150, order='asc')
                 if matches:
                     break
         if not matches:
-            # 그래도 없으면 최신 200경기 (가장 최근 날짜 기준 내림차순)
-            matches = MatchService.get_matches(db, limit=200, order='desc')
+            # 그래도 없으면 최신 100경기 (가장 최근 날짜 기준 내림차순)
+            matches = MatchService.get_matches(db, limit=100, order='desc')
         serialized = [MatchResponse.model_validate(m).model_dump(mode="json") for m in matches]
         json_str = json.dumps(serialized, ensure_ascii=False)
         _SERVER_MATCHES_CACHE["json_str"] = json_str
         _SERVER_MATCHES_CACHE["updated_at"] = time.time()
-        _PORTAL_COMBINED_CACHE.clear()
         return json_str
     except Exception as e:
         print(f"[WARN] Failed to refresh server matches cache: {e}")
@@ -258,8 +257,8 @@ def get_server_initial_matches_json() -> str:
     global _SERVER_MATCHES_CACHE
     now = time.time()
     if _SERVER_MATCHES_CACHE["json_str"] != "[]":
-        # If cache is older than 30 seconds, trigger async background refresh without blocking current request
-        if (now - _SERVER_MATCHES_CACHE["updated_at"] > 30.0) and not _SERVER_MATCHES_CACHE.get("is_refreshing"):
+        # 180초(3분) 캐시 TTL: 백그라운드 비동기 갱신으로 사용자 요청 지연 0ms 보장
+        if (now - _SERVER_MATCHES_CACHE["updated_at"] > 180.0) and not _SERVER_MATCHES_CACHE.get("is_refreshing"):
             import threading
             threading.Thread(target=refresh_server_matches_cache, daemon=True).start()
         return _SERVER_MATCHES_CACHE["json_str"]
@@ -276,8 +275,9 @@ def get_portal_html(target_path: str):
         return "", ""
     
     mtime = os.path.getmtime(target_path)
+    now = time.time()
     combined = _PORTAL_COMBINED_CACHE.get(target_path)
-    if combined and combined.get("mtime") == mtime and combined.get("matches_updated_at") == _SERVER_MATCHES_CACHE["updated_at"]:
+    if combined and combined.get("mtime") == mtime and (now - combined.get("created_at", 0) < 180.0):
         return combined["content"], combined["etag"]
 
     if target_path not in _PORTAL_HTML_CACHE or _PORTAL_HTML_CACHE[target_path].get("mtime") != mtime:
@@ -303,7 +303,7 @@ def get_portal_html(target_path: str):
     etag = f'"{hashlib.md5(content.encode("utf-8")).hexdigest()}"'
     _PORTAL_COMBINED_CACHE[target_path] = {
         "mtime": mtime,
-        "matches_updated_at": _SERVER_MATCHES_CACHE["updated_at"],
+        "created_at": time.time(),
         "content": content,
         "etag": etag
     }
@@ -351,7 +351,7 @@ def mobile_portal(request: Request):
         return HTMLResponse(
             content=content,
             headers={
-                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Cache-Control": "no-cache, must-revalidate",
                 "ETag": etag
             }
         )
@@ -374,11 +374,11 @@ def domain_portal(request: Request):
 
         content, etag = get_portal_html(target)
         if request.headers.get("if-none-match") == etag:
-            return Response(status_code=304)
+            return Response(status_code=304, headers={"ETag": etag, "Cache-Control": "no-cache, must-revalidate"})
         return HTMLResponse(
             content=content, 
             headers={
-                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Cache-Control": "no-cache, must-revalidate",
                 "ETag": etag
             }
         )
@@ -423,8 +423,8 @@ def analytics_portal(request: Request):
         content, etag = get_portal_html(landing_path)
         client_etag = request.headers.get("if-none-match")
         if client_etag and client_etag == etag:
-            return Response(status_code=304, headers={"ETag": etag, "Cache-Control": "no-cache, no-store, must-revalidate"})
-        return HTMLResponse(content=content, headers={"ETag": etag, "Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
+            return Response(status_code=304, headers={"ETag": etag, "Cache-Control": "no-cache, must-revalidate"})
+        return HTMLResponse(content=content, headers={"ETag": etag, "Cache-Control": "no-cache, must-revalidate"})
     except Exception as e:
         return HTMLResponse(content=f"<h1>분석 포털 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
 
@@ -436,7 +436,7 @@ def test_match_portal(request: Request):
         if os.path.exists(test_match_path):
             with open(test_match_path, "r", encoding="utf-8") as f:
                 content = f.read()
-            return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
+            return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, must-revalidate"})
         return HTMLResponse(content="<h1>테스트 페이지를 찾을 수 없습니다.</h1>", status_code=404)
     except Exception as e:
         return HTMLResponse(content=f"<h1>테스트 뷰어 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
@@ -446,7 +446,7 @@ def admin_dashboard(request: Request):
     try:
         with open(dashboard_path, "r", encoding="utf-8") as f:
             content = f.read()
-        return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"})
+        return HTMLResponse(content=content, headers={"Cache-Control": "no-cache, must-revalidate"})
     except Exception as e:
         return HTMLResponse(content=f"<h1>대시보드 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
 
@@ -458,8 +458,8 @@ def live_center_portal(request: Request):
         content, etag = get_portal_html(target)
         client_etag = request.headers.get("if-none-match")
         if client_etag and client_etag == etag:
-            return Response(status_code=304, headers={"ETag": etag, "Cache-Control": "no-cache, no-store, must-revalidate"})
-        return HTMLResponse(content=content, headers={"ETag": etag, "Cache-Control": "no-cache, no-store, must-revalidate"})
+            return Response(status_code=304, headers={"ETag": etag, "Cache-Control": "no-cache, must-revalidate"})
+        return HTMLResponse(content=content, headers={"ETag": etag, "Cache-Control": "no-cache, must-revalidate"})
     except Exception as e:
         return HTMLResponse(content=f"<h1>라이브 센터 로딩 오류</h1><p>{str(e)}</p>", status_code=500)
 

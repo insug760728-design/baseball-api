@@ -8483,7 +8483,226 @@ function getFullModalMatchList() {
         }
       }, 700);
     };
-    
+
+    // -------------------------------------------------------------
+    // ⚽ [축구 공식 실시간 선발 라인업 & 팀 뉴스 위젯 (Starting XI & Team News)]
+    // -------------------------------------------------------------
+    function renderSoccerLiveLineupWidgetHtml(m) {
+      if (!m) return '';
+
+      const isLineupConfirmed = !!(
+        m.is_lineup_confirmed === true ||
+        m.lineup_confirmed === true ||
+        m.lineup_status === 'CONFIRMED' ||
+        m.status === 'LIVE' ||
+        m.status === 'FINISHED' ||
+        (m.home_lineup && m.home_lineup.length >= 7 && m.lineup_status !== 'EXPECTED')
+      );
+
+      const hName = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : (m.home_team_name || '홈팀');
+      const aName = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : (m.away_team_name || '원정팀');
+
+      const soccerData = m.soccer_lineup || (m.details && m.details.team_stats && m.details.team_stats.soccer_lineup) || {};
+      const hData = soccerData.home || {};
+      const aData = soccerData.away || {};
+
+      const hXI = (hData.starting_xi && hData.starting_xi.length > 0) ? hData.starting_xi : (m.home_lineup || []);
+      const aXI = (aData.starting_xi && aData.starting_xi.length > 0) ? aData.starting_xi : (m.away_lineup || []);
+      const hSubs = hData.substitutes || [];
+      const aSubs = aData.substitutes || [];
+      const hInjuries = hData.injuries || [];
+      const aInjuries = aData.injuries || [];
+
+      const hForm = hData.formation || (m.details && m.details.tactical_analysis && m.details.tactical_analysis.formations && m.details.tactical_analysis.formations.home) || '4-3-3';
+      const aForm = aData.formation || (m.details && m.details.tactical_analysis && m.details.tactical_analysis.formations && m.details.tactical_analysis.formations.away) || '4-2-3-1';
+      const hCoachName = hData.coach?.name || (m.details && m.details.tactical_analysis && m.details.tactical_analysis.home_manager && m.details.tactical_analysis.home_manager.name_kr) || '';
+      const aCoachName = aData.coach?.name || (m.details && m.details.tactical_analysis && m.details.tactical_analysis.away_manager && m.details.tactical_analysis.away_manager.name_kr) || '';
+
+      const statusBadge = isLineupConfirmed
+        ? '<span class="badge bg-success text-white fw-bold" style="font-size:0.70rem; padding:3px 8px;"><i class="bi bi-check-circle-fill me-1"></i>선발 확정 발표</span>'
+        : '<span class="badge text-dark fw-bold" style="font-size:0.70rem; padding:3px 8px; background:#fef3c7; border:1px solid #f59e0b;"><i class="bi bi-clock-history me-1 text-warning"></i>선발 발표 대기 (예상 라인업)</span>';
+
+      const newsText = soccerData.news || (isLineupConfirmed
+        ? '공식 선발 라인업 발표 완료 (협회 및 연맹 공식 제출 명단)'
+        : '공식 선발 명단 발표 대기 중 (경기 시작 약 1시간 전 최종 확정 발표)');
+
+      function getPosBadge(pos) {
+        const p = String(pos || '').toUpperCase();
+        if (p.includes('GK') || p.includes('골')) return '<span class="badge" style="background:#eab308; color:#000; font-size:0.60rem; padding:1px 4px; font-weight:800;">GK</span>';
+        if (p.includes('DF') || p.includes('수비') || ['CB', 'LB', 'RB', 'LWB', 'RWB'].includes(p)) return '<span class="badge" style="background:#0284c7; color:#fff; font-size:0.60rem; padding:1px 4px; font-weight:800;">DF</span>';
+        if (p.includes('MF') || p.includes('미드') || ['CM', 'DM', 'AM', 'LM', 'RM'].includes(p)) return '<span class="badge" style="background:#10b981; color:#fff; font-size:0.60rem; padding:1px 4px; font-weight:800;">MF</span>';
+        if (p.includes('FW') || p.includes('공격') || ['ST', 'CF', 'RW', 'LW'].includes(p)) return '<span class="badge" style="background:#ef4444; color:#fff; font-size:0.60rem; padding:1px 4px; font-weight:800;">FW</span>';
+        return '<span class="badge" style="background:#64748b; color:#fff; font-size:0.60rem; padding:1px 4px; font-weight:800;">선수</span>';
+      }
+
+      function renderTeamCol(teamName, isHome, form, coach, xiList, subList, injList) {
+        const borderClass = isHome ? 'home' : 'away';
+        const badgeBg = isHome ? 'bg-danger' : 'bg-primary';
+        const roleLabel = isHome ? '홈' : '원정';
+        const roleColor = isHome ? '#dc2626' : '#2563eb';
+        const roleBg = isHome ? '#fef2f2' : '#eff6ff';
+
+        const coachHtml = coach ? `
+          <div class="d-flex align-items-center justify-content-between p-1.5 mb-2 rounded-2" style="background:${roleBg}; border:1px solid ${roleColor}33; font-size:0.72rem;">
+            <div class="d-flex align-items-center gap-1">
+              <i class="bi bi-person-badge-fill" style="color:${roleColor}; font-size:0.85rem;"></i>
+              <span class="fw-bold text-dark text-truncate" style="max-width:130px;">감독: ${coach}</span>
+            </div>
+            <span class="badge bg-white text-dark border fw-bold" style="font-size:0.65rem;">포메이션: ${form}</span>
+          </div>
+        ` : `
+          <div class="d-flex align-items-center justify-content-between p-1.5 mb-2 rounded-2" style="background:${roleBg}; border:1px solid ${roleColor}33; font-size:0.72rem;">
+            <span class="fw-semibold text-secondary">전술 포메이션</span>
+            <span class="badge bg-white text-dark border fw-bold" style="font-size:0.65rem;">${form}</span>
+          </div>
+        `;
+
+        const xiRowsHtml = (xiList && xiList.length > 0) ? xiList.map((p, idx) => {
+          const pName = (typeof formatPlayerKorean === 'function') ? formatPlayerKorean(p.name) : (p.name || '-');
+          const pNum = p.number ? `#${p.number}` : `#${idx + 1}`;
+          const posBadge = getPosBadge(p.pos);
+
+          return `
+            <div class="d-flex align-items-center justify-content-between py-1 px-1.5 mb-1 rounded" style="background:#f8fafc; border:1px solid #f1f5f9; font-size:0.78rem;">
+              <div class="d-flex align-items-center gap-1.5 text-truncate" style="max-width:78%;">
+                <span class="text-secondary fw-bold" style="font-size:0.70rem; min-width:22px;">${pNum}</span>
+                ${posBadge}
+                <strong class="text-dark text-truncate" style="font-size:0.80rem;" title="${pName}">${pName}</strong>
+              </div>
+              <span class="text-muted small fw-semibold" style="font-size:0.68rem;">${p.pos || '선수'}</span>
+            </div>
+          `;
+        }).join('') : `
+          <div class="py-4 text-center text-muted" style="font-size:0.75rem; background:#f8fafc; border-radius:8px; border:1px dashed #cbd5e1; margin:8px 0;">
+            <i class="bi bi-clock-history me-1 text-secondary"></i>공식 선발 라인업 발표 대기 중<br>
+            <span style="font-size:0.68rem; color:#94a3b8;">(경기 시작 약 1시간 전 확정 공시)</span>
+          </div>
+        `;
+
+        const subsHtml = (subList && subList.length > 0) ? `
+          <div class="mt-2 pt-2 border-top">
+            <div class="fw-bold text-secondary mb-1" style="font-size:0.68rem;"><i class="bi bi-arrow-left-right me-1"></i>교체 대기 명단 (${subList.length}명)</div>
+            <div class="d-flex flex-wrap gap-1">
+              ${subList.map(s => {
+                const sName = (typeof formatPlayerKorean === 'function') ? formatPlayerKorean(s.name) : (s.name || '-');
+                return `<span class="badge bg-white text-dark border" style="font-size:0.68rem; font-weight:600; padding:2px 5px;"><span class="text-secondary me-0.5">#${s.number || ''}</span>${sName}</span>`;
+              }).join('')}
+            </div>
+          </div>
+        ` : '';
+
+        const injHtml = (injList && injList.length > 0) ? `
+          <div class="mt-2 p-2 rounded-2" style="background:#fef2f2; border:1px solid #fecaca;">
+            <div class="fw-bold text-danger mb-1 d-flex align-items-center" style="font-size:0.70rem;">
+              <i class="bi bi-hospital me-1"></i>부상 / 결장 명단 (${injList.length}명)
+            </div>
+            ${injList.map(inj => `
+              <div class="d-flex justify-content-between align-items-center py-0.5" style="font-size:0.68rem;">
+                <span class="fw-semibold text-dark text-truncate" style="max-width:140px;">${inj.name}</span>
+                <span class="badge bg-danger-subtle text-danger" style="font-size:0.62rem; padding:1px 4px;">${inj.reason || inj.type || '부상/결장'}</span>
+              </div>
+            `).join('')}
+          </div>
+        ` : '';
+
+        return `
+          <div class="lineup-team-card ${borderClass}" style="flex:1; min-width:270px; background:#ffffff; border-radius:10px; border:1.5px solid ${isHome ? '#fca5a5' : '#bfdbfe'}; overflow:hidden;">
+            <div class="d-flex justify-content-between align-items-center px-2 py-1.5" style="background:${isHome ? '#fee2e2' : '#dbeafe'}; border-bottom:1px solid ${isHome ? '#fca5a5' : '#bfdbfe'};">
+              <span class="badge ${badgeBg} text-white fw-bold" style="font-size:0.75rem; padding:3px 8px;">
+                [${roleLabel}] ${teamName}
+              </span>
+              <span class="fw-bold" style="font-size:0.70rem; color:${roleColor};">선발 11명 (Starting XI)</span>
+            </div>
+            <div class="p-2">
+              ${coachHtml}
+              ${xiRowsHtml}
+              ${subsHtml}
+              ${injHtml}
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="card mb-3 shadow-sm" id="ngSoccerLineupSectionCard_${m.id}" style="border:1.5px solid #0284c7; border-radius:12px; overflow:hidden;">
+          <div class="card-header d-flex justify-content-between align-items-center" style="background:#f0f9ff; border-bottom:1.5px solid #bae6fd; padding:8px 12px;">
+            <div class="d-flex align-items-center gap-1.5 flex-wrap">
+              <i class="bi bi-shield-shaded text-primary" style="font-size:1.05rem;"></i>
+              <strong class="text-dark" style="font-size:0.86rem; letter-spacing:-0.2px;">⚽ 공식 선발 라인업 & 팀 뉴스 (Starting XI & Team News)</strong>
+              ${statusBadge}
+            </div>
+            <div class="d-flex align-items-center gap-1">
+              <button class="btn btn-sm btn-outline-primary fw-bold" id="btnRefreshSoccerLineup_${m.id}" onclick="refreshSoccerLineupRealtime(${m.id})" style="font-size:0.72rem; padding:2px 8px; border-radius:5px;">
+                <i class="bi bi-arrow-clockwise me-0.5"></i>실시간 갱신
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-2" style="background:#fafafa;">
+            <!-- 실시간 뉴스 배너 -->
+            <div class="p-2 mb-2 rounded-2 d-flex align-items-center gap-1.5" style="background:#f0fdf4; border:1px solid #bbf7d0; font-size:0.74rem; color:#166534;">
+              <i class="bi bi-megaphone-fill text-success" style="font-size:0.85rem;"></i>
+              <span class="fw-semibold text-truncate">${newsText}</span>
+            </div>
+
+            <!-- 홈팀 vs 원정팀 선발 2단 배치 -->
+            <div class="d-flex flex-wrap gap-2">
+              ${renderTeamCol(hName, true, hForm, hCoachName, hXI, hSubs, hInjuries)}
+              ${renderTeamCol(aName, false, aForm, aCoachName, aXI, aSubs, aInjuries)}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    window.renderSoccerLiveLineupWidgetHtml = renderSoccerLiveLineupWidgetHtml;
+
+    function fetchSoccerLineupRealtime(matchId, force = false) {
+      if (!matchId) return;
+      const targetMatch = (typeof allMatches !== 'undefined' && Array.isArray(allMatches) ? allMatches.find(m => String(m.id) === String(matchId)) : null)
+        || (window.allMatchesList || []).find(m => String(m.id) === String(matchId))
+        || (window._currentOpenDetailMatch && String(window._currentOpenDetailMatch.id) === String(matchId) ? window._currentOpenDetailMatch : null);
+      if (!targetMatch) return;
+
+      fetch(`/api/v1/matches/${matchId}/lineup${force ? '?force=true' : ''}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (!data) return;
+          targetMatch.soccer_lineup = data;
+          if (data.home && data.home.starting_xi) {
+            targetMatch.home_lineup = data.home.starting_xi;
+          }
+          if (data.away && data.away.starting_xi) {
+            targetMatch.away_lineup = data.away.starting_xi;
+          }
+          if (data.is_lineup_confirmed !== undefined) {
+            targetMatch.is_lineup_confirmed = data.is_lineup_confirmed;
+            targetMatch.lineup_status = data.lineup_status || (data.is_lineup_confirmed ? 'CONFIRMED' : 'EXPECTED');
+          }
+
+          if (window._currentOpenDetailMatch && String(window._currentOpenDetailMatch.id) === String(matchId)) {
+            Object.assign(window._currentOpenDetailMatch, targetMatch);
+            if (typeof scheduleNextGenDetailUpdate === 'function') {
+              scheduleNextGenDetailUpdate(window._currentOpenDetailMatch);
+            } else if (typeof renderNextGenDetail === 'function') {
+              renderNextGenDetail(window._currentOpenDetailMatch);
+            }
+          }
+        })
+        .catch(err => console.warn('fetchSoccerLineupRealtime err:', err));
+    }
+    window.fetchSoccerLineupRealtime = fetchSoccerLineupRealtime;
+
+    window.refreshSoccerLineupRealtime = function(matchId) {
+      const btn = document.getElementById(`btnRefreshSoccerLineup_${matchId}`);
+      if (btn) btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1 spin-icon"></i>확인 중...';
+      fetchSoccerLineupRealtime(matchId, true);
+      setTimeout(() => {
+        if (btn) btn.innerHTML = '<i class="bi bi-arrow-clockwise me-0.5"></i>실시간 갱신';
+        if (typeof showMiniToast === 'function') {
+          showMiniToast('⚽ [축구 공식 라인업] 실시간 공식 선발 라인업 및 팀 뉴스를 갱신하였습니다.');
+        }
+      }, 700);
+    };
+
     function renderBaseballPitchingBattingWidgetHtml(m) {
       // [사용자 요청 반영] 투수·타자 상세 기록 위젯 완전 삭제
       return '';
@@ -16589,6 +16808,32 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
       }
 
+      // ⚽ 축구 경기일 경우 즉시 공식 실시간 선발 라인업 & 팀 뉴스 호출 & 60초 주기 자동 폴링
+      if (match.sport_code === 'SOCCER' && typeof fetchSoccerLineupRealtime === 'function') {
+        fetchSoccerLineupRealtime(match.id);
+
+        if (window._lineupPollInterval) {
+          clearInterval(window._lineupPollInterval);
+          window._lineupPollInterval = null;
+        }
+        if (!match.is_lineup_confirmed) {
+          window._lineupPollInterval = setInterval(() => {
+            if (document.hidden) return;
+            if (!modalEl.classList.contains('show')) {
+              clearInterval(window._lineupPollInterval);
+              window._lineupPollInterval = null;
+              return;
+            }
+            if (window._currentOpenDetailMatch && !window._currentOpenDetailMatch.is_lineup_confirmed) {
+              fetchSoccerLineupRealtime(window._currentOpenDetailMatch.id);
+            } else {
+              clearInterval(window._lineupPollInterval);
+              window._lineupPollInterval = null;
+            }
+          }, 60000); // 60초 주기
+        }
+      }
+
       // Background detail fetch for rich player_stats & matchup_analysis (필요 시에만 요청)
       const needsBackgroundFetch = !match.details || !match.matchup_analysis || match.status === 'LIVE';
       if (needsBackgroundFetch) {
@@ -18875,8 +19120,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
       `;
 
       // Assemble: For baseball: Starting Pitcher Analysis + Lineup + Recent/H2H matches
-      // For soccer: Soccer Detail Analytics Widget (Recent 10 Games & H2H)
+      // For soccer: Starting XI & Team News Lineup + Soccer Detail Analytics Widget (Recent 10 Games & H2H)
       // For other sports (basketball, volleyball, etc.): Recent/H2H 10-Game Totoken standard widget
+      const soccerLiveLineupHtml = isSoccer ? renderSoccerLiveLineupWidgetHtml(m) : '';
       const soccerAnalyticsHtml = isSoccer ? renderSoccerDetailAnalyticsWidgetHtml(m) : '';
       const apexChartsSectionHtml = renderApexAnalyticsCardHtml(m);
       const recentMatchesSectionHtml = renderRecentTeamMatchesWidgetHtml(m);
@@ -18893,7 +19139,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
           ${apexChartsSectionHtml}
         `;
       } else if (isSoccer) {
+        // ⚽ [사용자 요청] 축구 공식 선발 라인업 & 팀 뉴스 최상단 실시간 배치
         contentHtml = `
+          ${soccerLiveLineupHtml}
           ${soccerAnalyticsHtml}
           ${chatSectionHtml}
           ${apexChartsSectionHtml}

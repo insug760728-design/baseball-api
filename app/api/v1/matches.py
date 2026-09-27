@@ -614,6 +614,19 @@ def get_match_lineup(match_id: int, force: bool = False, db: Session = Depends(g
         except Exception as e:
             logging.getLogger("MatchAPI").warning(f"get_match_lineup MLB error: {e}")
 
+    # ⚽ 축구(SOCCER) 공식 선발 라인업 & 결장/부상 실시간 연동
+    if m.sport_code == "SOCCER":
+        try:
+            from app.services.live_api_sports_service import LiveApiSportsService
+            soccer_res = LiveApiSportsService.get_soccer_lineup(match=m, dt=dt, ts=ts, db=db, force=force)
+            if soccer_res:
+                # 하위 호환성을 위해 home_lineup, away_lineup 루트 키도 함께 제공
+                soccer_res["home_lineup"] = soccer_res.get("home", {}).get("starting_xi", [])
+                soccer_res["away_lineup"] = soccer_res.get("away", {}).get("starting_xi", [])
+                return soccer_res
+        except Exception as e:
+            logging.getLogger("MatchAPI").warning(f"get_match_lineup SOCCER error: {e}")
+
     return {
         "match_id": m.id,
         "is_lineup_confirmed": db_confirmed,
