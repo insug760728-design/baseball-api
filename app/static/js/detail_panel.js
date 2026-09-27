@@ -18,14 +18,18 @@ const DetailPanel = (() => {
     _currentMatch = match;
     const targetMatchId = match.id;
 
-    // Immediately render header and basic skeleton
+    // 🔑 항상 스켈레톤을 먼저 즉시 표시 — 이전 경기 데이터가 순간적으로 보이는 문제 방지
     renderSkeleton(match);
 
     // Fetch deep match history and details asynchronously
     try {
       let data = _detailCache.get(targetMatchId);
 
-      if (!data) {
+      if (data) {
+        // 캐시 히트: 스켈레톤이 화면에 그려진 뒤 다음 프레임에 콘텐츠를 바꿔치기
+        // (동기 렌더 시 이전 match 데이터가 순간 보이는 flicker 방지)
+        await new Promise(resolve => requestAnimationFrame(resolve));
+      } else {
         const [detailRes, histRes, oddsRes] = await Promise.all([
           fetch(`/api/v1/matches/${targetMatchId}`).then(r => r.ok ? r.json() : null),
           fetch(`/api/v1/live/match-history/${targetMatchId}?max_games=50`).then(r => r.ok ? r.json() : null),
@@ -165,12 +169,12 @@ const DetailPanel = (() => {
     bodyContainer.innerHTML = `
       <!-- 전체 세로 스크롤 통합 상세 뷰 (버튼식 탭 전환 없이 한눈에 스크롤) -->
       <div class="detail-scroll-flow">
+        ${pitchersHtml}
         ${lastMatchCompareHtml}
         ${dualOddsHtml}
         ${scoreboardHtml}
         ${h2hHtml}
         ${recentHtml}
-        ${pitchersHtml}
       </div>
     `;
   }
