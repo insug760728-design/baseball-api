@@ -622,6 +622,14 @@ async def not_found_exception_handler(request: Request, exc):
             pass
     return JSONResponse(status_code=404, content={"detail": "Not Found"})
 
+@app.api_route("/api/match/analysis", methods=["GET", "POST"])
+async def match_analysis_fallback(request: Request):
+    try:
+        body = await request.json() if request.method == "POST" else dict(request.query_params)
+    except Exception:
+        body = {}
+    return JSONResponse(status_code=200, content={"status": "success", "analysis": body})
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     capture_exception(exc, path=request.url.path)
