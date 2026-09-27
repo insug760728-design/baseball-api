@@ -16253,62 +16253,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
       }
 
-      // 3. 만약 10경기 미만일 경우 현실적이고 결정론적인(deterministic) 일지 보강 (무한 스피너 및 0경기 0% 원천 방지)
-      if (list.length < count && teamName) {
-        const needed = count - list.length;
-        const seed = teamName.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-        const otherTeams = Array.from(new Set(
-          sourceList
-            .filter(m => (m.sport_code || 'BASEBALL').toUpperCase() === sportCode)
-            .flatMap(m => [m.home_team_name, m.away_team_name])
-            .filter(name => name && !isSameTeamName(name, teamName, sportCode, sportCode))
-        ));
-        const defaultOpponents = sportCode === 'SOCCER'
-          ? ['코스타리카', '온두라스', '파나마', '엘살바도르', '캐나다', '수리남', '아이티', '과테말라', '자메이카', '퀴라소']
-          : ['시카고 화이트삭스', '미네소타 트윈스', '클리블랜드 가디언스', '캔자스시티 로열스', '토론토 블루제이스', '디트로이트 타이거스'];
-        const oppPool = otherTeams.length >= 3 ? otherTeams : defaultOpponents;
-
-        let baseDate = new Date();
-        if (match && match.match_date) {
-          const parsed = new Date(match.match_date.replace(/\./g, '-'));
-          if (!isNaN(parsed.getTime())) baseDate = parsed;
-        }
-
-        for (let i = 0; i < needed; i++) {
-          const gameDay = new Date(baseDate);
-          gameDay.setDate(baseDate.getDate() - ((i + 1 + list.length) * (sportCode === 'SOCCER' ? 4 : 2)));
-          const oppTeam = oppPool[(seed + (i + list.length) * 3) % oppPool.length];
-          const isWin = ((seed + (i + list.length) * 7) % 10) < 5;
-          const isDraw = (sportCode === 'SOCCER' && ((seed + (i + list.length) * 11) % 10) === 0);
-          let myScore, oppScore;
-          if (sportCode === 'SOCCER') {
-            if (isDraw) { myScore = 1; oppScore = 1; }
-            else if (isWin) { myScore = 1 + ((seed + i) % 3); oppScore = Math.max(0, myScore - 1 - ((seed + i) % 2)); }
-            else { oppScore = 1 + ((seed + i) % 3); myScore = Math.max(0, oppScore - 1 - ((seed + i) % 2)); }
-          } else {
-            if (isWin) { myScore = 4 + ((seed + i) % 5); oppScore = Math.max(0, myScore - 1 - ((seed + i) % 3)); }
-            else { oppScore = 4 + ((seed + i) % 5); myScore = Math.max(0, oppScore - 1 - ((seed + i) % 3)); }
-          }
-          const res = myScore > oppScore ? 'W' : (myScore < oppScore ? 'L' : 'D');
-          const month = String(gameDay.getMonth() + 1).padStart(2, '0');
-          const day = String(gameDay.getDate()).padStart(2, '0');
-          list.push({
-            match_id: `fallback_${teamName}_${i}`,
-            match_date: `${month}.${day}`,
-            date: `${gameDay.getFullYear()}-${month}-${day}`,
-            opponent: (typeof formatTeamName === 'function') ? formatTeamName(oppTeam) : oppTeam,
-            result: res,
-            result_kr: res === 'W' ? '승' : (res === 'L' ? '패' : '무'),
-            team_score: myScore,
-            opp_score: oppScore,
-            home_score: isHomeTeam ? myScore : oppScore,
-            away_score: isHomeTeam ? oppScore : myScore,
-            home_away: (i % 2 === 0) ? '홈' : '원정',
-            is_fallback: true
-          });
-        }
-      }
-
+      // 3. 실제 공식 경기 기록만 반환 (가짜 더미 경기 생성 원천 차단)
       return list;
     }
 
