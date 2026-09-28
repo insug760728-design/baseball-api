@@ -139,52 +139,6 @@ async def sync_soccer(date: Optional[str] = None):
             except Exception as be:
                 debug_info["betman_proto_sync_err"] = str(be)
 
-            try:
-                s = SoccerScraper("NATIONS_LEAGUE")
-                scraped = s.scrape_matches(target_d)
-                debug_info["nations_league_scraped_count"] = len(scraped)
-                debug_info["api_code"] = s.api_code
-                debug_info["dates_queried"] = getattr(s, "last_dates_queried", [])
-                debug_info["fetch_errors"] = getattr(s, "last_errors", [])
-                debug_info["nations_league_samples"] = [
-                    f"{m['home_team_name']} vs {m['away_team_name']} ({m['match_date']}) - {m['status']} {m['home_score']}:{m['away_score']}"
-                    for m in scraped[:5]
-                ]
-
-                m_trace = []
-                from app.models.models import Match
-                from app.services.betman_service import teams_match
-                from sqlalchemy import or_
-
-                # 1. Search for any match in DB with Armenia or Montenegro or Georgia or Latvia
-                raw_found = db.query(Match).filter(
-                    or_(
-                        Match.home_team_name.contains("아르메니아"),
-                        Match.away_team_name.contains("아르메니아"),
-                        Match.home_team_name.contains("몬테네그로"),
-                        Match.away_team_name.contains("몬테네그로"),
-                        Match.home_team_name.contains("조지아"),
-                        Match.home_team_name.contains("라트비아")
-                    )
-                ).all()
-                m_trace.append(f"DB national team matches found: {len(raw_found)}")
-                for rf in raw_found:
-                    m_trace.append(f"id={rf.id}, sport={rf.sport_code}, league={rf.league_name}, match_date={repr(rf.match_date)}, home={repr(rf.home_team_name)}, away={repr(rf.away_team_name)}, status={rf.status}")
-
-                # 2. Also check all soccer matches today
-                all_soccer_today = db.query(Match).filter(
-                    Match.sport_code == "SOCCER",
-                    Match.match_date >= f"{target_d} 00:00",
-                    Match.match_date <= f"{target_d} 23:59"
-                ).all()
-                m_trace.append(f"all_soccer_today count (>= 00:00, <= 23:59): {len(all_soccer_today)}")
-                for st in all_soccer_today[:5]:
-                    m_trace.append(f"st_id={st.id}, date={repr(st.match_date)}, home={repr(st.home_team_name)}, away={repr(st.away_team_name)}, status={st.status}")
-
-                debug_info["match_matching_trace"] = m_trace
-            except Exception as se:
-                debug_info["scraper_error"] = str(se)
-
             for el in ["NATIONS_LEAGUE", "CONCACAF_NATIONS", "INTL_FRIENDLY", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS"]:
                 try:
                     s_res = MatchService.sync_from_official_site(db, league_id=el, target_date=target_d, sync_boxscore=False)
@@ -195,7 +149,7 @@ async def sync_soccer(date: Optional[str] = None):
                     details[el] = f"error: {ex}"
             if total_synced > 0:
                 clear_matches_cache()
-            return {"total_synced": total_synced, "target_date": target_d, "debug": debug_info, "details": details}
+            return {"total_synced": total_synced, "target_date": target_d, "details": details}
         finally:
             db.close()
 
