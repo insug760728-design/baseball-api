@@ -129,6 +129,17 @@ async def sync_soccer(date: Optional[str] = None):
         debug_info = {}
         try:
             try:
+                from app.services.betman_service import BetmanService
+                b_res = BetmanService.sync_betman_proto_matches(db=db)
+                debug_info["betman_proto_sync"] = {
+                    "synced": b_res.get("synced_count", 0),
+                    "updated": b_res.get("updated_count", 0),
+                    "round": b_res.get("round")
+                }
+            except Exception as be:
+                debug_info["betman_proto_sync_err"] = str(be)
+
+            try:
                 s = SoccerScraper("NATIONS_LEAGUE")
                 scraped = s.scrape_matches(target_d)
                 debug_info["nations_league_scraped_count"] = len(scraped)

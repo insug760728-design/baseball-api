@@ -129,8 +129,24 @@ class MatchService:
                             break
 
                 if not match:
-                    # 베트맨 등록 경기 외 임의 외부 경기 중복 추가 차단
-                    continue
+                    # 공식 리그(축구 5대리그/네이션스/친선/MLS 등) 경기 실시간 신규 자동 등록
+                    match = Match(
+                        official_id=m_data.get("official_id"),
+                        sport_code=m_data.get("sport_code", scraper.get_sport_code()),
+                        league_name=m_data.get("league_name", scraper.get_league_name()),
+                        season=m_data.get("season", "2026"),
+                        round_name=m_data.get("round_name", "정규시즌"),
+                        match_date=m_data.get("match_date"),
+                        stadium=m_data.get("stadium", "스타디움"),
+                        home_team_name=m_data["home_team_name"],
+                        away_team_name=m_data["away_team_name"],
+                        home_score=m_data.get("home_score", 0),
+                        away_score=m_data.get("away_score", 0),
+                        status=m_data.get("status", "SCHEDULED")
+                    )
+                    db.add(match)
+                    db.commit()
+                    db.refresh(match)
                 else:
                     if not match.is_customized:
                         match.stadium = m_data.get("stadium") or match.stadium
