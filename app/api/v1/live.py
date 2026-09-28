@@ -70,12 +70,14 @@ async def force_sync_live():
     import asyncio
     
     def _sync_free_sports():
+        from datetime import datetime, timedelta
+        now_kst_str = (datetime.utcnow() + timedelta(hours=9)).strftime("%Y-%m-%d")
         db = SessionLocal()
         try:
             espn_soccer_count = 0
             for el in ["NATIONS_LEAGUE", "CONCACAF_NATIONS", "INTL_FRIENDLY", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS"]:
                 try:
-                    s_res = MatchService.sync_from_official_site(db, league_id=el, sync_boxscore=False)
+                    s_res = MatchService.sync_from_official_site(db, league_id=el, target_date=now_kst_str, sync_boxscore=False)
                     espn_soccer_count += s_res.get("synced_matches_count", 0)
                 except Exception:
                     pass
@@ -109,20 +111,37 @@ async def force_sync_live():
     }
 
 @router.api_route("/sync-soccer", methods=["GET", "POST"], summary="실시간 축구(네이션스리그/EPL/라리가/세리에/분데스/MLS 등) 강제 동기화")
-async def sync_soccer():
+async def sync_soccer(date: Optional[str] = None):
     """ESPN 무료 무제한 API 기반 축구 전 리그 실시간 스코어 강제 동기화"""
     import asyncio
+    from datetime import datetime, timedelta
     from app.services.match_service import MatchService
+    from app.scrapers.soccer_scraper import SoccerScraper
     from app.api.v1.matches import clear_matches_cache
     
+    now_kst = datetime.utcnow() + timedelta(hours=9)
+    target_d = date or now_kst.strftime("%Y-%m-%d")
+
     def _run_sync():
         db = SessionLocal()
         total_synced = 0
         details = {}
+        debug_info = {}
         try:
+            try:
+                s = SoccerScraper("NATIONS_LEAGUE")
+                scraped = s.scrape_matches(target_d)
+                debug_info["nations_league_scraped_count"] = len(scraped)
+                debug_info["nations_league_samples"] = [
+                    f"{m['home_team_name']} vs {m['away_team_name']} ({m['match_date']}) - {m['status']} {m['home_score']}:{m['away_score']}"
+                    for m in scraped[:5]
+                ]
+            except Exception as se:
+                debug_info["scraper_error"] = str(se)
+
             for el in ["NATIONS_LEAGUE", "CONCACAF_NATIONS", "INTL_FRIENDLY", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS"]:
                 try:
-                    s_res = MatchService.sync_from_official_site(db, league_id=el, sync_boxscore=False)
+                    s_res = MatchService.sync_from_official_site(db, league_id=el, target_date=target_d, sync_boxscore=False)
                     cnt = s_res.get("synced_matches_count", 0)
                     total_synced += cnt
                     details[el] = cnt
@@ -130,7 +149,7 @@ async def sync_soccer():
                     details[el] = f"error: {ex}"
             if total_synced > 0:
                 clear_matches_cache()
-            return {"total_synced": total_synced, "details": details}
+            return {"total_synced": total_synced, "target_date": target_d, "debug": debug_info, "details": details}
         finally:
             db.close()
 
