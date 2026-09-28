@@ -21,8 +21,16 @@ SOCCER_LEAGUE_CODES = {
     "CHAMPIONSHIP": "eng.2",
     "UCL": "uefa.champions",
     "UEL": "uefa.europa",
+    "UECL": "uefa.europa.conf",
+    "NATIONS_LEAGUE": "uefa.nations",
+    "UEFA_NATIONS": "uefa.nations",
+    "CONCACAF_NATIONS": "concacaf.nations.league",
+    "INTL_FRIENDLY": "fifa.friendly",
     "LIBERTADORES": "conmebol.libertadores",
-    "MLS": "usa.1"
+    "MLS": "usa.1",
+    "K_LEAGUE_1": "kor.1",
+    "K_LEAGUE_2": "kor.2",
+    "J_LEAGUE": "jpn.1",
 }
 
 SOCCER_LEAGUE_NAMES = {
@@ -35,8 +43,41 @@ SOCCER_LEAGUE_NAMES = {
     "CHAMPIONSHIP": "잉글랜드 챔피언십 (Championship)",
     "UCL": "UEFA 챔피언스리그 (UCL)",
     "UEL": "UEFA 유로파리그 (UEL)",
+    "UECL": "UEFA 유로파 컨퍼런스리그 (UECL)",
+    "NATIONS_LEAGUE": "UEFA 네이션스리그",
+    "UEFA_NATIONS": "UEFA 네이션스리그",
+    "CONCACAF_NATIONS": "CONCACAF 네이션스리그",
+    "INTL_FRIENDLY": "국제친선경기",
     "LIBERTADORES": "코파 리베르타도레스 (Copa Libertadores)",
-    "MLS": "미국 메이저리그 사커 (MLS)"
+    "MLS": "미국 메이저리그 사커 (MLS)",
+    "K_LEAGUE_1": "K리그 1",
+    "K_LEAGUE_2": "K리그 2",
+    "J_LEAGUE": "일본 J리그",
+}
+
+NATIONAL_TEAM_TRANSLATION = {
+    "Armenia": "아르메니아", "Montenegro": "몬테네그로", "Georgia": "조지아", "Ukraine": "우크라이나",
+    "Latvia": "라트비아", "Cyprus": "키프로스", "Belgium": "벨기에", "France": "프랑스",
+    "Northern Ireland": "북아일랜드", "Hungary": "헝가리", "Romania": "루마니아",
+    "Bosnia and Herzegovina": "보스니아 헤르체고비나", "Bosnia-Herzegovina": "보스니아 헤르체고비나", "Bosnia": "보스니아 헤르체고비나",
+    "Sweden": "스웨덴", "Poland": "폴란드", "Türkiye": "튀르키예", "Turkey": "튀르키예", "Italy": "이탈리아",
+    "Germany": "독일", "Spain": "스페인", "Portugal": "포르투갈", "Croatia": "크로아티아",
+    "Netherlands": "네덜란드", "England": "잉글랜드", "Scotland": "스코틀랜드", "Wales": "웨일스",
+    "Denmark": "덴마크", "Switzerland": "스위스", "Austria": "오스트리아", "Norway": "노르웨이",
+    "Serbia": "세르비아", "Slovakia": "슬로바키아", "Slovenia": "슬로베니아", "Czech Republic": "체코", "Czechia": "체코",
+    "Greece": "그리스", "Finland": "핀란드", "Republic of Ireland": "아일랜드", "Ireland": "아일랜드",
+    "Iceland": "아이슬란드", "Albania": "알바니아", "North Macedonia": "북마케도니아", "Macedonia": "북마케도니아",
+    "Kosovo": "코소보", "Luxembourg": "룩셈부르크", "Kazakhstan": "카자흐스탄", "Azerbaijan": "아제르바이잔",
+    "Estonia": "에스토니아", "Belarus": "벨라루스", "Lithuania": "리투아니아", "Faroe Islands": "페로 제도",
+    "Moldova": "몰도바", "Malta": "몰타", "Gibraltar": "지브롤터", "San Marino": "산마리노",
+    "Liechtenstein": "리히텐슈타인", "Andorra": "안도라", "Israel": "이스라엘",
+    "Suriname": "수리남", "Martinique": "마르티니크", "Jamaica": "자메이카", "Honduras": "온두라스",
+    "Guatemala": "과테말라", "El Salvador": "엘살바도르", "Brazil": "브라질", "Argentina": "아르헨티나",
+    "Colombia": "콜롬비아", "Uruguay": "우루과이", "Chile": "칠레", "Ecuador": "에콰도르",
+    "Paraguay": "파라과이", "Peru": "페루", "Venezuela": "베네수엘라", "Bolivia": "볼리비아",
+    "United States": "미국", "USA": "미국", "Mexico": "멕시코", "Canada": "캐나다",
+    "Japan": "일본", "South Korea": "한국", "Korea Republic": "한국", "Australia": "호주",
+    "Saudi Arabia": "사우디", "Iran": "이란", "Qatar": "카타르", "Thailand": "태국", "Vietnam": "베트남", "Philippines": "필리핀"
 }
 
 MLS_TEAM_TRANSLATION = {
@@ -75,6 +116,11 @@ MLS_TEAM_TRANSLATION = {
 def translate_soccer_team_name(name: str) -> str:
     if not name: return ""
     clean_name = name.strip()
+    if clean_name in NATIONAL_TEAM_TRANSLATION:
+        return NATIONAL_TEAM_TRANSLATION[clean_name]
+    for eng, kor in NATIONAL_TEAM_TRANSLATION.items():
+        if eng.lower() == clean_name.lower():
+            return kor
     if clean_name in MLS_TEAM_TRANSLATION:
         return MLS_TEAM_TRANSLATION[clean_name]
     for eng, kor in MLS_TEAM_TRANSLATION.items():
@@ -118,15 +164,30 @@ class SoccerScraper(BaseScraper):
         """
         d = target_date or datetime.now().strftime("%Y-%m-%d")
         d_clean = d.replace("-", "")
-        url = f"https://site.api.espn.com/apis/site/v2/sports/soccer/{self.api_code}/scoreboard?dates={d_clean}"
 
+        # ⚡ UTC 시차(한국시간 자정/새벽 01:00~06:00 경기) 완벽 대응:
+        # UTC 기준으로는 전일(yesterday)에 편성되므로 전일과 당일을 모두 조회하여 합산
         try:
-            data = self._fetch_json(url)
-        except Exception as e:
-            logger.error(f"[SoccerScraper] {self.league_id} {d} 경기 목록 조회 실패: {e}")
-            return []
+            target_dt = datetime.strptime(d, "%Y-%m-%d")
+            prev_d_clean = (target_dt - timedelta(days=1)).strftime("%Y%m%d")
+            dates_to_query = [prev_d_clean, d_clean]
+        except Exception:
+            dates_to_query = [d_clean]
 
-        events = data.get("events", [])
+        events = []
+        seen_event_ids = set()
+        for dc in dates_to_query:
+            url = f"https://site.api.espn.com/apis/site/v2/sports/soccer/{self.api_code}/scoreboard?dates={dc}"
+            try:
+                data = self._fetch_json(url)
+                for ev in data.get("events", []):
+                    ev_id = ev.get("id")
+                    if ev_id and ev_id not in seen_event_ids:
+                        seen_event_ids.add(ev_id)
+                        events.append(ev)
+            except Exception as e:
+                logger.error(f"[SoccerScraper] {self.league_id} {dc} 경기 목록 조회 실패: {e}")
+
         result = []
 
         for ev in events:

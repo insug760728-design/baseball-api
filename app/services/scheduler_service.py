@@ -612,6 +612,45 @@ class SchedulerService:
         await asyncio.to_thread(_run_starters)
 
     @classmethod
+    def _detect_soccer_league(cls, lname: str) -> Optional[str]:
+        if not lname:
+            return None
+        u = lname.upper()
+        if "네이션스" in lname or "NATIONS" in u:
+            if "CONCACAF" in u:
+                return "CONCACAF_NATIONS"
+            return "NATIONS_LEAGUE"
+        if "친선" in lname or "FRIENDLY" in u:
+            return "INTL_FRIENDLY"
+        if "라리가" in lname or "LALIGA" in u:
+            return "LALIGA"
+        if "EPL" in u or "프리미어" in lname:
+            return "EPL"
+        if "세리에" in lname or "SERIE" in u:
+            return "SERIE_A"
+        if "분데스" in lname or "BUNDESLIGA" in u:
+            return "BUNDESLIGA"
+        if "리그 1" in lname or "리그1" in lname or "LIGUE" in u:
+            return "LIGUE_1"
+        if "챔피언스" in lname or "UCL" in u:
+            return "UCL"
+        if "유로파" in lname or "UEL" in u:
+            return "UEL"
+        if "컨퍼런스" in lname or "UECL" in u:
+            return "UECL"
+        if "챔피언십" in lname or "CHAMPIONSHIP" in u:
+            return "CHAMPIONSHIP"
+        if "메이저" in lname or "MLS" in u:
+            return "MLS"
+        if "에레디비시" in lname or "EREDIVISIE" in u:
+            return "EREDIVISIE"
+        if "K리그" in lname or "K LEAGUE" in u:
+            return "K_LEAGUE_1"
+        if "J리그" in lname or "J LEAGUE" in u or "일본" in lname:
+            return "J_LEAGUE"
+        return None
+
+    @classmethod
     async def _run_live_5sec_dynamic_loop(cls):
         """🧠 스마트 경기 상태별 수집 루프 (Smart State-Aware Polling)
         - ⚪ 비경기 시간대 (IDLE): 진행 중인 경기도 없고 시작 5분 전 경기도 없을 때 -> API 호출 0회 (60초 완전 대기)
@@ -660,15 +699,11 @@ class SchedulerService:
                             elif m.sport_code == "SOCCER":
                                 soccer_live = True
                                 lname = m.league_name or ""
-                                if "라리가" in lname or "LALIGA" in lname.upper(): active_soccer_leagues.add("LALIGA")
-                                elif "EPL" in lname.upper() or "프리미어" in lname: active_soccer_leagues.add("EPL")
-                                elif "세리에" in lname or "SERIE" in lname.upper(): active_soccer_leagues.add("SERIE_A")
-                                elif "분데스" in lname or "BUNDESLIGA" in lname.upper(): active_soccer_leagues.add("BUNDESLIGA")
-                                elif "리그 1" in lname or "리그1" in lname or "LIGUE" in lname.upper(): active_soccer_leagues.add("LIGUE_1")
-                                elif "챔피언스" in lname or "UCL" in lname.upper(): active_soccer_leagues.add("UCL")
-                                elif "유로파" in lname or "UEL" in lname.upper(): active_soccer_leagues.add("UEL")
-                                elif "챔피언십" in lname or "CHAMPIONSHIP" in lname.upper(): active_soccer_leagues.add("CHAMPIONSHIP")
-                                elif "메이저" in lname or "MLS" in lname.upper(): active_soccer_leagues.add("MLS")
+                                detected = cls._detect_soccer_league(lname)
+                                if detected:
+                                    active_soccer_leagues.add(detected)
+                                else:
+                                    active_soccer_leagues.update(["NATIONS_LEAGUE", "CONCACAF_NATIONS", "INTL_FRIENDLY", "EPL", "LALIGA", "SERIE_A", "LIGUE_1", "BUNDESLIGA", "MLS"])
                             elif m.sport_code == "BASKETBALL":
                                 basketball_live = True
                             elif m.sport_code == "VOLLEYBALL":
@@ -690,15 +725,11 @@ class SchedulerService:
                             elif m.sport_code == "SOCCER":
                                 soccer_imminent = True
                                 lname = m.league_name or ""
-                                if "라리가" in lname or "LALIGA" in lname.upper(): active_soccer_leagues.add("LALIGA")
-                                elif "EPL" in lname.upper() or "프리미어" in lname: active_soccer_leagues.add("EPL")
-                                elif "세리에" in lname or "SERIE" in lname.upper(): active_soccer_leagues.add("SERIE_A")
-                                elif "분데스" in lname or "BUNDESLIGA" in lname.upper(): active_soccer_leagues.add("BUNDESLIGA")
-                                elif "리그 1" in lname or "리그1" in lname or "LIGUE" in lname.upper(): active_soccer_leagues.add("LIGUE_1")
-                                elif "챔피언스" in lname or "UCL" in lname.upper(): active_soccer_leagues.add("UCL")
-                                elif "유로파" in lname or "UEL" in lname.upper(): active_soccer_leagues.add("UEL")
-                                elif "챔피언십" in lname or "CHAMPIONSHIP" in lname.upper(): active_soccer_leagues.add("CHAMPIONSHIP")
-                                elif "메이저" in lname or "MLS" in lname.upper(): active_soccer_leagues.add("MLS")
+                                detected = cls._detect_soccer_league(lname)
+                                if detected:
+                                    active_soccer_leagues.add(detected)
+                                else:
+                                    active_soccer_leagues.update(["NATIONS_LEAGUE", "CONCACAF_NATIONS", "INTL_FRIENDLY", "EPL", "LALIGA", "SERIE_A", "LIGUE_1", "BUNDESLIGA", "MLS"])
                             elif m.sport_code == "BASKETBALL":
                                 basketball_imminent = True
                             elif m.sport_code == "VOLLEYBALL":
@@ -753,7 +784,7 @@ class SchedulerService:
                         def _sync_free_soccer():
                             d_db = SessionLocal()
                             cnt = 0
-                            leagues_to_sync = active_soccer_leagues or {"LALIGA", "SERIE_A", "LIGUE_1", "EPL", "BUNDESLIGA"}
+                            leagues_to_sync = active_soccer_leagues or {"NATIONS_LEAGUE", "CONCACAF_NATIONS", "INTL_FRIENDLY", "EPL", "LALIGA", "SERIE_A", "LIGUE_1", "BUNDESLIGA", "MLS"}
                             try:
                                 for lid in leagues_to_sync:
                                     res = MatchService.sync_from_official_site(d_db, league_id=lid, target_date=today_str, sync_boxscore=False)

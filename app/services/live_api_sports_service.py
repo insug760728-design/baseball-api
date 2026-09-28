@@ -48,9 +48,9 @@ VOLLEYBALL_STATUS_MAP = {
     "NS": "SCHEDULED", "POST": "CANCELLED", "CANC": "CANCELLED"
 }
 
-# National / Asian Games / International Team Mapping (Basketball, Volleyball, etc.)
+# National / Asian Games / International Team Mapping (Basketball, Volleyball, Soccer, etc.)
 NATIONAL_TEAM_MAP = {
-    "korea": "한국", "south korea": "한국", "korea republic": "한국", "republic of korea": "한국",
+    "korea": "한국", "south korea": "한국", "korea republic": "한국", "republic of korea": "한국", "대한민국": "한국",
     "china": "중국", "pr china": "중국", "china pr": "중국",
     "korea dpr": "북한", "north korea": "북한", "dpr korea": "북한",
     "japan": "일본",
@@ -89,12 +89,73 @@ NATIONAL_TEAM_MAP = {
     "italy": "이탈리아",
     "poland": "폴란드",
     "serbia": "세르비아",
-    "turkey": "튀르키예",
+    "turkey": "튀르키예", "türkiye": "튀르키예",
     "france": "프랑스",
     "germany": "독일",
     "canada": "캐나다",
     "australia": "호주",
-    "spain": "스페인"
+    "spain": "스페인",
+    "armenia": "아르메니아",
+    "montenegro": "몬테네그로",
+    "georgia": "조지아",
+    "ukraine": "우크라이나",
+    "latvia": "라트비아",
+    "cyprus": "키프로스",
+    "belgium": "벨기에",
+    "northern ireland": "북아일랜드",
+    "hungary": "헝가리",
+    "romania": "루마니아",
+    "bosnia and herzegovina": "보스니아 헤르체고비나", "bosnia-herzegovina": "보스니아 헤르체고비나", "bosnia": "보스니아 헤르체고비나",
+    "sweden": "스웨덴",
+    "portugal": "포르투갈",
+    "croatia": "크로아티아",
+    "netherlands": "네덜란드",
+    "england": "잉글랜드",
+    "scotland": "스코틀랜드",
+    "wales": "웨일스",
+    "denmark": "덴마크",
+    "switzerland": "스위스",
+    "austria": "오스트리아",
+    "norway": "노르웨이",
+    "slovakia": "슬로바키아",
+    "slovenia": "슬로베니아",
+    "czech republic": "체코", "czechia": "체코",
+    "greece": "그리스",
+    "finland": "핀란드",
+    "republic of ireland": "아일랜드", "ireland": "아일랜드",
+    "iceland": "아이슬란드",
+    "albania": "알바니아",
+    "north macedonia": "북마케도니아", "macedonia": "북마케도니아",
+    "kosovo": "코소보",
+    "luxembourg": "룩셈부르크",
+    "azerbaijan": "아제르바이잔",
+    "estonia": "에스토니아",
+    "belarus": "벨라루스",
+    "lithuania": "리투아니아",
+    "faroe islands": "페로 제도",
+    "moldova": "몰도바",
+    "malta": "몰타",
+    "gibraltar": "지브롤터",
+    "san marino": "산마리노",
+    "liechtenstein": "리히텐슈타인",
+    "andorra": "안도라",
+    "israel": "이스라엘",
+    "bulgaria": "불가리아",
+    "suriname": "수리남",
+    "martinique": "마르티니크",
+    "jamaica": "자메이카",
+    "honduras": "온두라스",
+    "guatemala": "과테말라",
+    "el salvador": "엘살바도르",
+    "colombia": "콜롬비아",
+    "uruguay": "우루과이",
+    "chile": "칠레",
+    "ecuador": "에콰도르",
+    "paraguay": "파라과이",
+    "peru": "페루",
+    "venezuela": "베네수엘라",
+    "bolivia": "볼리비아",
+    "mexico": "멕시코"
 }
 
 # Comprehensive Korean <-> English / International Team Synonyms
@@ -1094,12 +1155,14 @@ def translate_soccer_team(name: str) -> str:
     if not name:
         return ""
     trimmed = str(name).strip()
+    trimmed_lower = trimmed.lower()
+    if trimmed_lower in NATIONAL_TEAM_MAP:
+        return NATIONAL_TEAM_MAP[trimmed_lower]
     if trimmed in SOCCER_TEAM_KO_MAP:
         return SOCCER_TEAM_KO_MAP[trimmed]
     norm = normalize_name(trimmed)
     if norm in _NORM_SOCCER_TEAM_KO_MAP:
         return _NORM_SOCCER_TEAM_KO_MAP[norm]
-    trimmed_lower = trimmed.lower()
     for k in _SOCCER_KO_SUBSTR_KEYS:
         if k.lower() in trimmed_lower:
             return SOCCER_TEAM_KO_MAP[k]
@@ -1694,6 +1757,29 @@ class LiveApiSportsService:
                 if fid:
                     all_fixtures_dict[fid] = f
             all_fixtures = list(all_fixtures_dict.values())
+
+        if not all_fixtures:
+            logger.info("[LiveApiSports] API-Sports returned 0 fixtures or quota exhausted. Falling back to ESPN SoccerScraper...")
+            db = SessionLocal()
+            try:
+                from app.services.match_service import MatchService
+                espn_leagues = ["NATIONS_LEAGUE", "CONCACAF_NATIONS", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "UCL", "UEL", "MLS", "INTL_FRIENDLY"]
+                updated = 0
+                for el in espn_leagues:
+                    for target_d in [d_yesterday, d_today]:
+                        res = MatchService.sync_from_official_site(db, league_id=el, target_date=target_d, sync_boxscore=False)
+                        updated += res.get("synced_matches_count", 0)
+                return {
+                    "status": "SUCCESS",
+                    "source": "ESPN_FALLBACK",
+                    "total_fixtures": updated,
+                    "updated_db_matches": updated
+                }
+            except Exception as e:
+                logger.error(f"[LiveApiSports] ESPN fallback error: {e}")
+                return {"status": "ERROR", "message": str(e)}
+            finally:
+                db.close()
 
         updated = 0
         db = SessionLocal()

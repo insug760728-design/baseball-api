@@ -59,22 +59,33 @@ def set_live_api_key(payload: ApiKeyPayload):
     result = LiveApiSportsService.set_api_key(key=payload.key, provider=payload.provider or "api_sports")
     return result
 
-@router.post("/sync-now", summary="실시간 전종목(축구, 야구, 농구, 배구, 아시안게임) 경기 결과 즉시 강제 동기화")
+@router.api_route("/sync-now", methods=["GET", "POST"], summary="실시간 전종목(축구, 야구, 농구, 배구, 아시안게임) 경기 결과 즉시 강제 동기화")
 async def force_sync_live():
     res = await LiveApiSportsService.sync_all_async()
 
-    # ⚡ 무료 공식 실시간 농구 및 배구 동기화
+    # ⚡ 무료 공식 실시간 축구, 농구, 배구 및 아시안게임 동기화
     from app.services.match_service import MatchService
     from app.services.asian_games_service import AsianGamesService
+    from app.api.v1.matches import clear_matches_cache
     import asyncio
     
     def _sync_free_sports():
         db = SessionLocal()
         try:
+            espn_soccer_count = 0
+            for el in ["NATIONS_LEAGUE", "CONCACAF_NATIONS", "INTL_FRIENDLY", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS"]:
+                try:
+                    s_res = MatchService.sync_from_official_site(db, league_id=el, sync_boxscore=False)
+                    espn_soccer_count += s_res.get("synced_matches_count", 0)
+                except Exception:
+                    pass
+
             bk_res = MatchService.sync_from_official_site(db, league_id="BASKETBALL")
             vb_res = MatchService.sync_from_official_site(db, league_id="VOLLEYBALL")
             ag_res = AsianGamesService.sync_asian_games_to_db()
+            clear_matches_cache()
             return {
+                "soccer_synced": espn_soccer_count,
                 "basketball_synced": bk_res.get("synced_matches_count", 0),
                 "volleyball_synced": vb_res.get("synced_matches_count", 0),
                 "asian_games_synced": ag_res.get("updated_count", 0)
@@ -92,9 +103,42 @@ async def force_sync_live():
     now_kst = datetime.utcnow() + timedelta(hours=9)
     return {
         "status": "SUCCESS",
-        "message": "실시간 데이터 동기화 완료 (농구/배구/아시안게임 공식 결과 포함)",
+        "message": "실시간 데이터 동기화 완료 (축구/농구/배구/아시안게임 공식 결과 포함)",
         "details": res,
         "timestamp": now_kst.strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+@router.api_route("/sync-soccer", methods=["GET", "POST"], summary="실시간 축구(네이션스리그/EPL/라리가/세리에/분데스/MLS 등) 강제 동기화")
+async def sync_soccer():
+    """ESPN 무료 무제한 API 기반 축구 전 리그 실시간 스코어 강제 동기화"""
+    import asyncio
+    from app.services.match_service import MatchService
+    from app.api.v1.matches import clear_matches_cache
+    
+    def _run_sync():
+        db = SessionLocal()
+        total_synced = 0
+        details = {}
+        try:
+            for el in ["NATIONS_LEAGUE", "CONCACAF_NATIONS", "INTL_FRIENDLY", "EPL", "LALIGA", "BUNDESLIGA", "SERIE_A", "LIGUE_1", "MLS"]:
+                try:
+                    s_res = MatchService.sync_from_official_site(db, league_id=el, sync_boxscore=False)
+                    cnt = s_res.get("synced_matches_count", 0)
+                    total_synced += cnt
+                    details[el] = cnt
+                except Exception as ex:
+                    details[el] = f"error: {ex}"
+            if total_synced > 0:
+                clear_matches_cache()
+            return {"total_synced": total_synced, "details": details}
+        finally:
+            db.close()
+
+    res = await asyncio.to_thread(_run_sync)
+    return {
+        "status": "SUCCESS",
+        "message": f"실시간 축구 동기화 완료 ({res['total_synced']}건 갱신)",
+        "result": res
     }
 
 @router.api_route("/sync-asian-games", methods=["GET", "POST"], summary="아시안게임 및 베트맨 공식 경기결과 실시간 동기화")
