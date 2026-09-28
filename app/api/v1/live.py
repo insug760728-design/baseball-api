@@ -141,25 +141,35 @@ async def sync_soccer(date: Optional[str] = None):
                 ]
 
                 m_trace = []
-                test_m_data = scraped[0] if scraped else None
-                if test_m_data:
-                    from app.models.models import Match
-                    from app.services.betman_service import teams_match
-                    from sqlalchemy import or_
-                    m_date_part = (test_m_data.get("match_date") or "")[:10]
-                    target_dates = {target_d}
-                    if m_date_part:
-                        target_dates.add(m_date_part)
-                    date_filters = [Match.match_date.like(f"{d}%") for d in target_dates]
-                    candidates = db.query(Match).filter(
-                        Match.sport_code == "SOCCER",
-                        or_(*date_filters)
-                    ).all()
-                    m_trace.append(f"target_dates={target_dates}, candidates_count={len(candidates)}")
-                    for dm in candidates[:10]:
-                        h_m = teams_match(dm.home_team_name, test_m_data["home_team_name"])
-                        a_m = teams_match(dm.away_team_name, test_m_data["away_team_name"])
-                        m_trace.append(f"DB[{dm.id}] '{dm.home_team_name}' vs '{dm.away_team_name}' <-> '{test_m_data['home_team_name']}' vs '{test_m_data['away_team_name']}' => H:{h_m}, A:{a_m}")
+                from app.models.models import Match
+                from app.services.betman_service import teams_match
+                from sqlalchemy import or_
+
+                # 1. Search for any match in DB with Armenia or Montenegro or Georgia or Latvia
+                raw_found = db.query(Match).filter(
+                    or_(
+                        Match.home_team_name.contains("아르메니아"),
+                        Match.away_team_name.contains("아르메니아"),
+                        Match.home_team_name.contains("몬테네그로"),
+                        Match.away_team_name.contains("몬테네그로"),
+                        Match.home_team_name.contains("조지아"),
+                        Match.home_team_name.contains("라트비아")
+                    )
+                ).all()
+                m_trace.append(f"DB national team matches found: {len(raw_found)}")
+                for rf in raw_found:
+                    m_trace.append(f"id={rf.id}, sport={rf.sport_code}, league={rf.league_name}, match_date={repr(rf.match_date)}, home={repr(rf.home_team_name)}, away={repr(rf.away_team_name)}, status={rf.status}")
+
+                # 2. Also check all soccer matches today
+                all_soccer_today = db.query(Match).filter(
+                    Match.sport_code == "SOCCER",
+                    Match.match_date >= f"{target_d} 00:00",
+                    Match.match_date <= f"{target_d} 23:59"
+                ).all()
+                m_trace.append(f"all_soccer_today count (>= 00:00, <= 23:59): {len(all_soccer_today)}")
+                for st in all_soccer_today[:5]:
+                    m_trace.append(f"st_id={st.id}, date={repr(st.match_date)}, home={repr(st.home_team_name)}, away={repr(st.away_team_name)}, status={st.status}")
+
                 debug_info["match_matching_trace"] = m_trace
             except Exception as se:
                 debug_info["scraper_error"] = str(se)
