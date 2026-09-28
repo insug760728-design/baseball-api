@@ -8573,64 +8573,6 @@ function getFullModalMatchList() {
     }
     window.cleanSoccerPlayerName = cleanSoccerPlayerName;
 
-    function renderSoccerLiveLineupWidgetHtml(m) {
-      if (!m) return '';
-
-      const isLineupConfirmed = !!(
-        m.is_lineup_confirmed === true ||
-        m.lineup_confirmed === true ||
-        m.lineup_status === 'CONFIRMED' ||
-        m.status === 'LIVE' ||
-        m.status === 'FINISHED' ||
-        (m.home_lineup && m.home_lineup.length >= 7 && m.lineup_status !== 'EXPECTED')
-      );
-
-      const hName = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : (m.home_team_name || '홈팀');
-      const aName = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : (m.away_team_name || '원정팀');
-      const hFlagImg = getTeamFlagImg(m.home_team_name, 18, 12);
-      const aFlagImg = getTeamFlagImg(m.away_team_name, 18, 12);
-
-      const soccerData = m.soccer_lineup || (m.details && m.details.team_stats && m.details.team_stats.soccer_lineup) || {};
-      const hData = soccerData.home || {};
-      const aData = soccerData.away || {};
-
-      const hXI = (hData.starting_xi && hData.starting_xi.length > 0) ? hData.starting_xi : (m.home_lineup || []);
-      const aXI = (aData.starting_xi && aData.starting_xi.length > 0) ? aData.starting_xi : (m.away_lineup || []);
-      const hSubs = hData.substitutes || [];
-      const aSubs = aData.substitutes || [];
-
-      const eventsList = soccerData.events_timeline || [];
-      const statsObj = soccerData.match_stats || null;
-      const summaryObj = soccerData.stats_summary || null;
-
-      // H2H 및 과거 경기 추출
-      const hist = m.history || (m.details && m.details.history) || (window._matchHistoryCache && window._matchHistoryCache[m.id]) || {};
-      let h2hMatches = Array.isArray(hist.h2h_matches) ? hist.h2h_matches : [];
-      let h2hSummary = hist.h2h_summary || null;
-      let homeRecent = Array.isArray(hist.home_recent) ? hist.home_recent : [];
-
-      if (h2hMatches.length === 0 && homeRecent.length > 0) {
-        homeRecent.forEach(g => {
-          const opp = g.opponent || g.away_team_name || g.home_team_name || '';
-          if (opp.includes(aName) || aName.includes(opp)) {
-            h2hMatches.push(g);
-          }
-        });
-      }
-
-      // 배당 데이터
-      let curHOdds = '1.93', curDOdds = '3.54', curAOdds = '3.76';
-      if (m.odds_history && Array.isArray(m.odds_history) && m.odds_history.length > 0) {
-        const lastOdds = m.odds_history[m.odds_history.length - 1];
-        if (lastOdds.home_odds) curHOdds = String(lastOdds.home_odds);
-        if (lastOdds.draw_odds) curDOdds = String(lastOdds.draw_odds);
-        if (lastOdds.away_odds) curAOdds = String(lastOdds.away_odds);
-      } else if (m.current_odds) {
-        if (m.current_odds.home) curHOdds = String(m.current_odds.home);
-        if (m.current_odds.draw) curDOdds = String(m.current_odds.draw);
-        if (m.current_odds.away) curAOdds = String(m.current_odds.away);
-      }
-
     // -------------------------------------------------------------
     // ⚽ H2H 맞대결 경기별 인터랙티브 아코디언 & Match Box 관리
     // -------------------------------------------------------------
