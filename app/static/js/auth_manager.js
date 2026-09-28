@@ -167,6 +167,11 @@ const AuthManager = (() => {
     }
   }
 
+  function handleLogin(event) {
+    if (event) event.preventDefault();
+    submitLogin();
+  }
+
   function logout() {
     if (confirm('로그아웃 하시겠습니까?')) {
       localStorage.removeItem(STORAGE_KEY);
@@ -299,6 +304,7 @@ const AuthManager = (() => {
     getCurrentUser,
     openLoginModal,
     submitLogin,
+    handleLogin,
     logout,
     openAdminModal
   };

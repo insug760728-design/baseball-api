@@ -21765,67 +21765,340 @@ function updateSlimPanel(matchId, type, contentHtml) {
       }
     }
 
-    function openTotoMatchDetail(dbMatchId, homeName, awayName) {
-      const totoModalEl = document.getElementById('totoBetmanModal');
+    // -------------------------------------------------------------
+    // ⚽ 토토 회차 모달 전용: 경기별 인플레이스(In-Place) 아코디언 드로어 관리
+    // -------------------------------------------------------------
+    window._activeTotoDrawerSeq = window._activeTotoDrawerSeq || {};
 
-      const launchDetail = () => {
-        let target = null;
-        if (dbMatchId && typeof allMatches !== 'undefined' && allMatches) {
-          target = allMatches.find(m => m.id == dbMatchId);
-        }
-        if (!target && (homeName || awayName) && typeof allMatches !== 'undefined' && allMatches) {
-          const cleanH = (homeName || '').replace(/[\s\.\-]/g, '').toLowerCase();
-          const cleanA = (awayName || '').replace(/[\s\.\-]/g, '').toLowerCase();
-          target = allMatches.find(m => {
-            const mh = (m.home_team_name || '').replace(/[\s\.\-]/g, '').toLowerCase();
-            const ma = (m.away_team_name || '').replace(/[\s\.\-]/g, '').toLowerCase();
-            return (mh.includes(cleanH) || cleanH.includes(mh)) && (ma.includes(cleanA) || cleanA.includes(ma));
-          });
-        }
+    function findDbMatchForToto(dbMatchId, homeName, awayName) {
+      if (typeof allMatches === 'undefined' || !Array.isArray(allMatches) || allMatches.length === 0) return null;
+      if (dbMatchId) {
+        const byId = allMatches.find(x => x.id == dbMatchId || (x.official_id && x.official_id.endsWith('_' + dbMatchId)));
+        if (byId) return byId;
+      }
+      if (homeName && awayName) {
+        const cleanH = homeName.replace(/[\s\.\-]/g, '').toLowerCase();
+        const cleanA = awayName.replace(/[\s\.\-]/g, '').toLowerCase();
+        return allMatches.find(x => {
+          const xh = (x.home_team_name || '').replace(/[\s\.\-]/g, '').toLowerCase();
+          const xa = (x.away_team_name || '').replace(/[\s\.\-]/g, '').toLowerCase();
+          return (xh.includes(cleanH) || cleanH.includes(xh)) && (xa.includes(cleanA) || cleanA.includes(xa));
+        });
+      }
+      return null;
+    }
 
-        const allList = (typeof getFullModalMatchList === 'function') ? getFullModalMatchList() : [];
-        if (!target && allList.length > 0) {
-          target = allList.find(x => (dbMatchId && (x.id == dbMatchId || (x.toto_match && x.toto_match.db_match_id == dbMatchId))) ||
-                                     (homeName && awayName && ((x.home_team_name == homeName && x.away_team_name == awayName) || (x.toto_match && x.toto_match.home == homeName && x.toto_match.away == awayName))) ||
-                                     (!awayName && homeName && (x.home_team_name == homeName || (x.toto_match && x.toto_match.home == homeName))));
-        }
+    function renderTotoDrawerContentHtml(totoKey, seq, dbMatchId, homeName, awayName, dbMatch, totoMatch) {
+      if (!totoMatch) {
+        const targetTs = currentBetmanTs;
+        const toto = TOTO_DATA[totoKey + '_' + targetTs] || 
+                     (TOTO_DATA[totoKey + '_LIVE'] && TOTO_DATA[totoKey + '_LIVE'].gmTs === targetTs ? TOTO_DATA[totoKey + '_LIVE'] : null) || 
+                     TOTO_DATA[totoKey + '_LIVE'] || 
+                     TOTO_DATA[totoKey];
+        totoMatch = (toto && toto.matches) ? toto.matches.find(x => x.seq === seq) : null;
+      }
+      const h = homeName || (totoMatch ? totoMatch.home : (dbMatch ? dbMatch.home_team_name : '홈팀'));
+      const a = awayName || (totoMatch ? totoMatch.away : (dbMatch ? dbMatch.away_team_name : '원정팀'));
+      const mDate = (totoMatch && totoMatch.time) ? totoMatch.time : ((dbMatch && dbMatch.match_date) ? dbMatch.match_date : '일정 예정');
+      const lName = (totoMatch && totoMatch.league) ? totoMatch.league : ((dbMatch && dbMatch.league_name) ? dbMatch.league_name : '공식 리그');
+      const stadium = (dbMatch && dbMatch.stadium) ? dbMatch.stadium : '';
 
-        if (target) {
-          switchCenterView('DETAIL');
-          selectPredMatch(target.id);
-          openNextGenDetailModal(target.id);
-        } else {
-          // Synthesize match object so analysis never fails!
-          const synth = {
-            id: dbMatchId || ('synth_' + Date.now()),
-            seq: 1,
-            sport_code: (currentTotoRound === 'WDL') ? 'SOCCER' : ((currentTotoRound === 'W1L') ? 'BASEBALL' : 'BASKETBALL'),
-            league_name: (currentTotoRound === 'WDL') ? '축구' : ((currentTotoRound === 'W1L') ? '야구' : '농구'),
-            home_team_name: homeName || '홈팀',
-            away_team_name: awayName || '원정팀',
-            home_score: 0,
-            away_score: 0,
-            status: 'SCHEDULED',
-            match_date: new Date().toISOString().slice(0, 16).replace('T', ' ')
-          };
-          if (typeof allMatches !== 'undefined' && allMatches) {
-            allMatches.push(synth);
-          }
-          openNextGenDetailModal(synth.id);
-        }
+      const hist = (dbMatch && dbMatch.history) || (dbMatch && window._matchHistoryCache && window._matchHistoryCache[dbMatch.id]) || {};
+      const h2h = Array.isArray(hist.h2h_matches) ? hist.h2h_matches : [];
+      const homeRecent = Array.isArray(hist.home_recent) ? hist.home_recent : [];
+      const awayRecent = Array.isArray(hist.away_recent) ? hist.away_recent : [];
+
+      let hWins = 0, hDraws = 0, hLosses = 0;
+      h2h.forEach(g => {
+        const r = g.result_kr || (g.result === 'WIN' ? '승' : (g.result === 'LOSS' ? '패' : '무'));
+        if (r === '승') hWins++;
+        else if (r === '무') hDraws++;
+        else if (r === '패') hLosses++;
+      });
+
+      const h2hSummaryText = h2h.length > 0 
+        ? `최근 맞대결 ${h2h.length}경기 (${h} 기준 ${hWins}승 ${hDraws}무 ${hLosses}패)`
+        : '공식 상대전적 기록 대기 중 (최근 맞대결 없음)';
+
+      const h2hRowsHtml = h2h.length > 0 ? h2h.slice(0, 5).map(g => {
+        const dateStr = (g.date || g.match_date || '').slice(0, 10).replace(/-/g, '.');
+        const sc = g.score || `${g.home_score ?? 0} : ${g.away_score ?? 0}`;
+        const isHW = (g.home_team_name === h || (g.home && g.home === h)) ? (g.home_score > g.away_score) : (g.away_score > g.home_score);
+        return `
+          <div class="d-flex align-items-center justify-content-between py-1 px-2 mb-1 rounded bg-white border" style="font-size:0.72rem;">
+            <span class="text-muted font-monospace" style="font-size:0.68rem;">${dateStr}</span>
+            <span class="fw-bold text-dark text-truncate" style="max-width:110px;">${g.home_team_name || g.home || h}</span>
+            <span class="badge px-1.5 py-0.5 rounded font-monospace fw-bold" style="background:#1e293b; color:#ffffff; font-size:0.75rem;">${sc}</span>
+            <span class="fw-bold text-dark text-truncate" style="max-width:110px;">${g.away_team_name || g.away || a}</span>
+            <span class="badge ${isHW ? 'bg-danger text-white' : 'bg-secondary text-white'}" style="font-size:0.65rem;">${g.result_kr || (isHW ? '승' : '패')}</span>
+          </div>
+        `;
+      }).join('') : `
+        <div class="p-2 text-center text-muted bg-white rounded border small" style="font-size:0.72rem;">
+          공식 맞대결 기록이 없습니다.
+        </div>
+      `;
+
+      const renderMiniForm = (list, teamNm) => {
+        if (!list || list.length === 0) return '<span class="text-muted small">기록 대기 중</span>';
+        return list.slice(0, 5).map(g => {
+          const res = g.result_kr || (g.result === 'WIN' ? '승' : (g.result === 'LOSS' ? '패' : '무'));
+          const bg = res === '승' ? 'bg-danger text-white' : (res === '무' ? 'bg-secondary text-white' : 'bg-primary text-white');
+          const sc = g.score || `${g.home_score ?? 0}:${g.away_score ?? 0}`;
+          return `<span class="badge ${bg} fw-bold" style="font-size:0.65rem; padding:2px 5px;" title="${sc}">${res}</span>`;
+        }).join(' ');
       };
 
-      if (totoModalEl && totoModalEl.classList.contains('show')) {
-        totoModalEl.setAttribute('data-reopen', 'true');
-        totoModalEl.addEventListener('hidden.bs.modal', function onTotoHidden() {
-          launchDetail();
-        }, { once: true });
-        const totoInst = bootstrap.Modal.getInstance(totoModalEl);
-        if (totoInst) totoInst.hide();
-        else launchDetail();
-      } else {
-        launchDetail();
+      const drawLabel = (totoKey === 'W1L') ? '1점차' : ((totoKey === 'W5L') ? '5점이내' : '무승부');
+      const pW = totoMatch ? totoMatch.pW : 45.0;
+      const pD = totoMatch ? totoMatch.pD : 25.0;
+      const pL = totoMatch ? totoMatch.pL : 30.0;
+      const aiPickText = totoMatch ? (totoMatch.aiPick === 'W' ? '홈승' : (totoMatch.aiPick === 'D' ? drawLabel : '원정승')) : '홈승';
+
+      return `
+        <div class="p-2.5 rounded bg-white border shadow-sm" style="border-color:#93c5fd !important; animation: fadeIn 0.15s ease;">
+          <!-- 헤더 -->
+          <div class="d-flex align-items-center justify-content-between pb-1.5 mb-2 border-bottom">
+            <div class="d-flex align-items-center gap-1.5 flex-wrap">
+              <span class="badge bg-primary text-white font-monospace fw-bold" style="font-size:0.70rem;">NO.${seq}</span>
+              <span class="fw-bold text-dark" style="font-size:0.82rem;">${h} VS ${a}</span>
+              <span class="badge bg-light text-primary border" style="font-size:0.66rem;">${lName}</span>
+              <span class="text-muted small font-monospace" style="font-size:0.68rem;">${mDate}</span>
+              ${stadium ? `<span class="text-secondary small">[${stadium}]</span>` : ''}
+            </div>
+            <div class="d-flex align-items-center gap-1">
+              <button type="button" class="btn btn-xs btn-outline-primary fw-bold px-2 py-0.5" style="font-size:0.68rem;" onclick="event.stopPropagation(); openTotoMatchDetailBySeq('${totoKey}', ${seq})">
+                <i class="bi bi-box-arrow-up-right me-0.5"></i>정밀 분석실↗
+              </button>
+              <button type="button" class="btn btn-xs btn-outline-secondary py-0.5 px-1.5" style="font-size:0.68rem;" onclick="event.stopPropagation(); toggleTotoRowDrawer('${totoKey}', ${seq})">
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <!-- 베트맨 공식 투표율 & AI 분석 분포 -->
+          <div class="mb-2 p-1.5 rounded bg-light border">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="fw-bold text-dark" style="font-size:0.72rem;"><i class="bi bi-pie-chart-fill text-warning me-1"></i>베트맨 공식 투표 분포</span>
+              <span class="badge bg-white border text-primary font-monospace fw-bold" style="font-size:0.68rem;">AI 추천: ${aiPickText}</span>
+            </div>
+            <div class="d-flex align-items-center gap-1 text-center" style="font-size:0.70rem;">
+              <div class="flex-fill p-1 bg-white rounded border">
+                <span class="text-muted d-block" style="font-size:0.62rem;">승</span>
+                <span class="fw-bold text-primary font-monospace">${pW}%</span>
+              </div>
+              <div class="flex-fill p-1 bg-white rounded border">
+                <span class="text-muted d-block" style="font-size:0.62rem;">${drawLabel}</span>
+                <span class="fw-bold text-secondary font-monospace">${pD}%</span>
+              </div>
+              <div class="flex-fill p-1 bg-white rounded border">
+                <span class="text-muted d-block" style="font-size:0.62rem;">패</span>
+                <span class="fw-bold text-danger font-monospace">${pL}%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 상대전적 -->
+          <div class="mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="fw-bold text-dark" style="font-size:0.75rem;"><i class="bi bi-clock-history text-primary me-1"></i>상대전적 (H2H)</span>
+              <span class="text-secondary small fw-medium" style="font-size:0.68rem;">${h2hSummaryText}</span>
+            </div>
+            ${h2hRowsHtml}
+          </div>
+
+          <!-- 최근 5경기 폼 -->
+          <div class="mb-1">
+            <div class="fw-bold text-dark mb-1" style="font-size:0.75rem;"><i class="bi bi-calendar2-check text-success me-1"></i>최근 공식 경기 전적</div>
+            <div class="row g-1">
+              <div class="col-6">
+                <div class="p-1.5 rounded bg-light border" style="font-size:0.70rem;">
+                  <span class="fw-bold text-dark text-truncate d-block mb-1">${h}</span>
+                  <div class="d-flex align-items-center gap-1 flex-wrap">${renderMiniForm(homeRecent, h)}</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="p-1.5 rounded bg-light border" style="font-size:0.70rem;">
+                  <span class="fw-bold text-dark text-truncate d-block mb-1">${a}</span>
+                  <div class="d-flex align-items-center gap-1 flex-wrap">${renderMiniForm(awayRecent, a)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    window.openTotoMatchDetailBySeq = function(totoKey, seq) {
+      const targetTs = currentBetmanTs;
+      const toto = TOTO_DATA[totoKey + '_' + targetTs] || 
+                   (TOTO_DATA[totoKey + '_LIVE'] && TOTO_DATA[totoKey + '_LIVE'].gmTs === targetTs ? TOTO_DATA[totoKey + '_LIVE'] : null) || 
+                   TOTO_DATA[totoKey + '_LIVE'] || 
+                   TOTO_DATA[totoKey];
+      const m = (toto && toto.matches) ? toto.matches.find(x => x.seq === seq) : null;
+      if (!m) return;
+      openTotoMatchDetail(m.db_match_id, m.home, m.away);
+    };
+
+    window.toggleTotoRowDrawer = function(totoKey, seq, dbMatchId = null, homeName = null, awayName = null) {
+      const targetTs = currentBetmanTs;
+      const toto = TOTO_DATA[totoKey + '_' + targetTs] || 
+                   (TOTO_DATA[totoKey + '_LIVE'] && TOTO_DATA[totoKey + '_LIVE'].gmTs === targetTs ? TOTO_DATA[totoKey + '_LIVE'] : null) || 
+                   TOTO_DATA[totoKey + '_LIVE'] || 
+                   TOTO_DATA[totoKey];
+      const m = (toto && toto.matches) ? toto.matches.find(x => x.seq === seq) : null;
+      if (m) {
+        if (!dbMatchId) dbMatchId = m.db_match_id;
+        if (!homeName) homeName = m.home;
+        if (!awayName) awayName = m.away;
       }
+
+      const curSeq = window._activeTotoDrawerSeq[totoKey];
+      const isClosing = (curSeq === seq);
+      const nextSeq = isClosing ? null : seq;
+      window._activeTotoDrawerSeq[totoKey] = nextSeq;
+
+      // 이전 열려있던 드로어 닫기
+      if (curSeq && curSeq !== seq) {
+        const oldRow = document.getElementById(`totoDrawerRow_${totoKey}_${curSeq}`);
+        const oldMob = document.getElementById(`totoMobileDrawer_${totoKey}_${curSeq}`);
+        const oldBtn = document.getElementById(`totoDrawerBtn_${totoKey}_${curSeq}`);
+        const oldMobBtn = document.getElementById(`totoMobDrawerBtn_${totoKey}_${curSeq}`);
+        if (oldRow) oldRow.remove();
+        if (oldMob) oldMob.remove();
+        if (oldBtn) {
+          oldBtn.className = 'btn btn-xs btn-outline-primary fw-bold';
+          oldBtn.innerHTML = '<i class="bi bi-bar-chart-fill me-0.5"></i>경기기록 ▾';
+        }
+        if (oldMobBtn) {
+          oldMobBtn.className = 'btn btn-xs btn-outline-primary fw-bold p-1';
+          oldMobBtn.innerHTML = '기록 ▾';
+        }
+      }
+
+      const rowTarget = document.getElementById(`totoRow_${totoKey}_${seq}`);
+      const mobCardTarget = document.getElementById(`totoMobCard_${totoKey}_${seq}`);
+      const btn = document.getElementById(`totoDrawerBtn_${totoKey}_${seq}`);
+      const mobBtn = document.getElementById(`totoMobDrawerBtn_${totoKey}_${seq}`);
+
+      if (isClosing) {
+        const curRow = document.getElementById(`totoDrawerRow_${totoKey}_${seq}`);
+        const curMob = document.getElementById(`totoMobileDrawer_${totoKey}_${seq}`);
+        if (curRow) curRow.remove();
+        if (curMob) curMob.remove();
+        if (btn) {
+          btn.className = 'btn btn-xs btn-outline-primary fw-bold';
+          btn.innerHTML = '<i class="bi bi-bar-chart-fill me-0.5"></i>경기기록 ▾';
+        }
+        if (mobBtn) {
+          mobBtn.className = 'btn btn-xs btn-outline-primary fw-bold p-1';
+          mobBtn.innerHTML = '기록 ▾';
+        }
+        return;
+      }
+
+      // 새 드로어 열기
+      if (btn) {
+        btn.className = 'btn btn-xs btn-primary fw-bold text-white';
+        btn.innerHTML = '<i class="bi bi-bar-chart-fill me-0.5"></i>기록접기 ▴';
+      }
+      if (mobBtn) {
+        mobBtn.className = 'btn btn-xs btn-primary fw-bold text-white p-1';
+        mobBtn.innerHTML = '접기 ▴';
+      }
+
+      // 대상 매치 데이터 탐색
+      const dbMatch = findDbMatchForToto(dbMatchId, homeName, awayName);
+      const drawerHtml = renderTotoDrawerContentHtml(totoKey, seq, dbMatchId, homeName, awayName, dbMatch, m);
+
+      // PC 테이블: 행 바로 아래에 TR 삽입
+      if (rowTarget) {
+        const existingRow = document.getElementById(`totoDrawerRow_${totoKey}_${seq}`);
+        if (existingRow) existingRow.remove();
+        const tr = document.createElement('tr');
+        tr.id = `totoDrawerRow_${totoKey}_${seq}`;
+        tr.style.background = '#f8fafc';
+        tr.style.borderBottom = '2px solid #cbd5e1';
+        tr.innerHTML = `<td colspan="7" class="p-2.5">${drawerHtml}</td>`;
+        rowTarget.parentNode.insertBefore(tr, rowTarget.nextSibling);
+      }
+
+      // 모바일 뷰: 카드 바로 아래에 DIV 삽입
+      if (mobCardTarget) {
+        const existingMob = document.getElementById(`totoMobileDrawer_${totoKey}_${seq}`);
+        if (existingMob) existingMob.remove();
+        const div = document.createElement('div');
+        div.id = `totoMobileDrawer_${totoKey}_${seq}`;
+        div.className = 'p-2 border-top';
+        div.style.background = '#f8fafc';
+        div.innerHTML = drawerHtml;
+        mobCardTarget.appendChild(div);
+      }
+
+      // 배경 비동기 히스토리 보강 (필요한 경우 0ms 표시 후 부드럽게 업데이트)
+      if (dbMatch && (!dbMatch.history || !dbMatch.history.h2h_matches) && !window._matchHistoryCache[dbMatch.id]) {
+        deduplicatedFetch(`/api/v1/live/match-history/${dbMatch.id}?max_games=10`)
+          .then(hist => {
+            if (hist && window._activeTotoDrawerSeq[totoKey] === seq) {
+              dbMatch.history = hist;
+              window._matchHistoryCache[dbMatch.id] = hist;
+              const refreshedHtml = renderTotoDrawerContentHtml(totoKey, seq, dbMatchId, homeName, awayName, dbMatch, m);
+              const curRowTd = document.querySelector(`#totoDrawerRow_${totoKey}_${seq} td`);
+              const curMobDiv = document.getElementById(`totoMobileDrawer_${totoKey}_${seq}`);
+              if (curRowTd) curRowTd.innerHTML = refreshedHtml;
+              if (curMobDiv) curMobDiv.innerHTML = refreshedHtml;
+            }
+          }).catch(()=>{});
+      }
+    };
+
+    function openTotoMatchDetail(dbMatchId, homeName, awayName) {
+      let target = (typeof findDbMatchForToto === 'function') ? findDbMatchForToto(dbMatchId, homeName, awayName) : null;
+      if (!target && dbMatchId && typeof allMatches !== 'undefined' && allMatches) {
+        target = allMatches.find(m => m.id == dbMatchId);
+      }
+      if (!target && (homeName || awayName) && typeof allMatches !== 'undefined' && allMatches) {
+        const cleanH = (homeName || '').replace(/[\s\.\-]/g, '').toLowerCase();
+        const cleanA = (awayName || '').replace(/[\s\.\-]/g, '').toLowerCase();
+        target = allMatches.find(m => {
+          const mh = (m.home_team_name || '').replace(/[\s\.\-]/g, '').toLowerCase();
+          const ma = (m.away_team_name || '').replace(/[\s\.\-]/g, '').toLowerCase();
+          return (mh.includes(cleanH) || cleanH.includes(mh)) && (ma.includes(cleanA) || cleanA.includes(ma));
+        });
+      }
+
+      const allList = (typeof getFullModalMatchList === 'function') ? getFullModalMatchList() : [];
+      if (!target && allList.length > 0) {
+        target = allList.find(x => (dbMatchId && (x.id == dbMatchId || (x.toto_match && x.toto_match.db_match_id == dbMatchId))) ||
+                                   (homeName && awayName && ((x.home_team_name == homeName && x.away_team_name == awayName) || (x.toto_match && x.toto_match.home == homeName && x.toto_match.away == awayName))) ||
+                                   (!awayName && homeName && (x.home_team_name == homeName || (x.toto_match && x.toto_match.home == homeName))));
+      }
+
+      const targetId = target ? target.id : (dbMatchId || ('synth_' + Date.now()));
+      if (!target) {
+        const synth = {
+          id: targetId,
+          seq: 1,
+          sport_code: (currentTotoRound === 'WDL') ? 'SOCCER' : ((currentTotoRound === 'W1L') ? 'BASEBALL' : 'BASKETBALL'),
+          league_name: (currentTotoRound === 'WDL') ? '축구' : ((currentTotoRound === 'W1L') ? '야구' : '농구'),
+          home_team_name: homeName || '홈팀',
+          away_team_name: awayName || '원정팀',
+          home_score: 0,
+          away_score: 0,
+          status: 'SCHEDULED',
+          match_date: new Date().toISOString().slice(0, 16).replace('T', ' ')
+        };
+        if (typeof allMatches !== 'undefined' && allMatches) {
+          allMatches.push(synth);
+        }
+      }
+
+      // 🚀 [초고속 0ms 즉각 전환] 기존 토토 모달창을 닫지 않고 그 위에 정밀 분석 모달을 바로 띄움
+      const nextGenEl = document.getElementById('nextGenDetailModal');
+      if (nextGenEl) {
+        nextGenEl.style.zIndex = '1070';
+      }
+      openNextGenDetailModal(targetId);
     }
 
     function toggleTotoChoice(totoKey, matchSeq, choice) {
@@ -22055,48 +22328,60 @@ function updateSlimPanel(matchId, type, contentHtml) {
         const probH = m.db_prob_home || (Math.round((Number(m.pW) || 45) * 1.05));
         const probA = m.db_prob_away || (100 - probH);
 
-        // Mobile Compact Row View (< 768px): Ultra slim, zero scroll fatigue, fits smoothly
+        const activeDrawerSeq = window._activeTotoDrawerSeq ? window._activeTotoDrawerSeq[totoKey] : null;
+        const isDrawerOpen = (activeDrawerSeq === m.seq);
+        const dbMatch = (typeof findDbMatchForToto === 'function') ? findDbMatchForToto(m.db_match_id, m.home, m.away) : null;
+        const drawerHtml = isDrawerOpen ? renderTotoDrawerContentHtml(totoKey, m.seq, m.db_match_id, m.home, m.away, dbMatch, m) : '';
+
+        // Mobile Compact Row View (< 768px): Ultra slim with In-Place Accordion Drawer
         mobileCardsHtml += `
-          <div class="d-flex align-items-center justify-content-between py-1 px-1.5 mb-1 bg-white border rounded ${hasPick ? 'border-primary' : 'border-slate-200'}" style="font-size: 0.74rem;">
-            <div class="d-flex align-items-center gap-1" style="min-width: 26px;">
-              <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 800; font-size: 0.68rem; padding: 2px 3px; border-radius: 3px;">
-                ${String(m.seq).padStart(2, '0')}
-              </span>
-            </div>
-            <div class="d-flex flex-column" style="width: 36%; min-width: 90px; cursor: pointer;" onclick="openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')">
-              <div class="d-flex align-items-center justify-content-between">
-                <span class="fw-bold text-dark text-truncate" style="font-size: 0.76rem; max-width: 60px;" title="${m.home}">${m.home}</span>
-                <span class="text-muted" style="font-size: 0.60rem;">vs</span>
-                <span class="fw-bold text-dark text-truncate text-end" style="font-size: 0.76rem; max-width: 60px;" title="${m.away}">${m.away}</span>
+          <div class="mb-1 bg-white border rounded ${hasPick ? 'border-primary' : 'border-slate-200'}" id="totoMobCard_${totoKey}_${m.seq}" style="font-size: 0.74rem; overflow:hidden;">
+            <div class="d-flex align-items-center justify-content-between py-1 px-1.5" style="cursor: pointer; background:${isDrawerOpen ? '#eff6ff' : '#ffffff'};" onclick="toggleTotoRowDrawer('${totoKey}', ${m.seq})">
+              <div class="d-flex align-items-center gap-1" style="min-width: 26px;">
+                <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 800; font-size: 0.68rem; padding: 2px 3px; border-radius: 3px;">
+                  ${String(m.seq).padStart(2, '0')}
+                </span>
               </div>
-              <div class="d-flex align-items-center justify-content-between text-muted" style="font-size: 0.58rem;">
-                <span class="text-primary">${probH}%</span>
-                <span>${m.league}</span>
-                <span class="text-danger">${probA}%</span>
+              <div class="d-flex flex-column" style="width: 36%; min-width: 90px;">
+                <div class="d-flex align-items-center justify-content-between">
+                  <span class="fw-bold text-dark text-truncate" style="font-size: 0.76rem; max-width: 60px;" title="${m.home}">${m.home}</span>
+                  <span class="text-muted" style="font-size: 0.60rem;">vs</span>
+                  <span class="fw-bold text-dark text-truncate text-end" style="font-size: 0.76rem; max-width: 60px;" title="${m.away}">${m.away}</span>
+                </div>
+                <div class="d-flex align-items-center justify-content-between text-muted" style="font-size: 0.58rem;">
+                  <span class="text-primary">${probH}%</span>
+                  <span>${m.league}</span>
+                  <span class="text-danger">${probA}%</span>
+                </div>
               </div>
+              <div class="d-flex align-items-center gap-1" style="flex: 1; max-width: 175px;" onclick="event.stopPropagation()">
+                <button type="button" class="betman-slip-btn ${isMarkW ? 'marked' : ''} ${isAiW ? 'ai-rec' : ''}" onclick="toggleTotoModalChoice('${totoKey}', ${m.seq}, 'W')" style="flex: 1; height: 28px !important; font-size: 0.68rem !important; padding: 1px 2px !important;" title="홈승 (${m.pW}%)">
+                  <span class="b-label" style="font-size: 0.70rem;">승</span>
+                  <span class="b-pct" style="font-size: 0.56rem;">${m.pW}%</span>
+                </button>
+                <button type="button" class="betman-slip-btn ${isMarkD ? 'marked' : ''} ${isAiD ? 'ai-rec' : ''}" onclick="toggleTotoModalChoice('${totoKey}', ${m.seq}, 'D')" style="flex: 1; height: 28px !important; font-size: 0.68rem !important; padding: 1px 2px !important;" title="${drawDesc} (${m.pD}%)">
+                  <span class="b-label" style="font-size: 0.70rem;">${drawLabel}</span>
+                  <span class="b-pct" style="font-size: 0.56rem;">${m.pD}%</span>
+                </button>
+                <button type="button" class="betman-slip-btn ${isMarkL ? 'marked' : ''} ${isAiL ? 'ai-rec' : ''}" onclick="toggleTotoModalChoice('${totoKey}', ${m.seq}, 'L')" style="flex: 1; height: 28px !important; font-size: 0.68rem !important; padding: 1px 2px !important;" title="원정승 (${m.pL}%)">
+                  <span class="b-label" style="font-size: 0.70rem;">패</span>
+                  <span class="b-pct" style="font-size: 0.56rem;">${m.pL}%</span>
+                </button>
+              </div>
+              <button type="button" class="btn btn-xs ${isDrawerOpen ? 'btn-primary text-white' : 'btn-outline-primary'} fw-bold p-1" id="totoMobDrawerBtn_${totoKey}_${m.seq}" onclick="event.stopPropagation(); toggleTotoRowDrawer('${totoKey}', ${m.seq})" style="font-size: 0.64rem; border-radius: 4px;" title="경기기록 보기">
+                ${isDrawerOpen ? '접기 ▴' : '기록 ▾'}
+              </button>
             </div>
-            <div class="d-flex align-items-center gap-1" style="flex: 1; max-width: 175px;">
-              <button type="button" class="betman-slip-btn ${isMarkW ? 'marked' : ''} ${isAiW ? 'ai-rec' : ''}" onclick="toggleTotoModalChoice('${totoKey}', ${m.seq}, 'W')" style="flex: 1; height: 28px !important; font-size: 0.68rem !important; padding: 1px 2px !important;" title="홈승 (${m.pW}%)">
-                <span class="b-label" style="font-size: 0.70rem;">승</span>
-                <span class="b-pct" style="font-size: 0.56rem;">${m.pW}%</span>
-              </button>
-              <button type="button" class="betman-slip-btn ${isMarkD ? 'marked' : ''} ${isAiD ? 'ai-rec' : ''}" onclick="toggleTotoModalChoice('${totoKey}', ${m.seq}, 'D')" style="flex: 1; height: 28px !important; font-size: 0.68rem !important; padding: 1px 2px !important;" title="${drawDesc} (${m.pD}%)">
-                <span class="b-label" style="font-size: 0.70rem;">${drawLabel}</span>
-                <span class="b-pct" style="font-size: 0.56rem;">${m.pD}%</span>
-              </button>
-              <button type="button" class="betman-slip-btn ${isMarkL ? 'marked' : ''} ${isAiL ? 'ai-rec' : ''}" onclick="toggleTotoModalChoice('${totoKey}', ${m.seq}, 'L')" style="flex: 1; height: 28px !important; font-size: 0.68rem !important; padding: 1px 2px !important;" title="원정승 (${m.pL}%)">
-                <span class="b-label" style="font-size: 0.70rem;">패</span>
-                <span class="b-pct" style="font-size: 0.56rem;">${m.pL}%</span>
-              </button>
-            </div>
-            <button type="button" class="btn btn-xs p-1 text-dark" onclick="openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="font-size: 0.62rem; border: 1px solid #cbd5e1; border-radius: 3px; background: #fff;" title="세부분석">
-              지표↗
-            </button>
+            ${isDrawerOpen ? `
+              <div id="totoMobileDrawer_${totoKey}_${m.seq}" class="p-2 border-top" style="background:#f8fafc;">
+                ${drawerHtml}
+              </div>
+            ` : ''}
           </div>
         `;
 
         rowsHtml += `
-          <tr class="toto-modal-row ${hasPick ? 'row-has-pick' : ''}" onclick="openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
+          <tr class="toto-modal-row ${hasPick ? 'row-has-pick' : ''}" id="totoRow_${totoKey}_${m.seq}" onclick="toggleTotoRowDrawer('${totoKey}', ${m.seq})" style="cursor: pointer; border-bottom: 1px solid #f1f5f9; background:${isDrawerOpen ? '#eff6ff' : '#ffffff'}; transition: background 0.15s ease;">
             <td class="text-center py-0.5 px-1" style="width: 38px;">
               <span class="badge" style="background:#eff6ff; color:#1d4ed8; border: 1px solid #bfdbfe; font-weight:800; font-size:0.70rem; border-radius:3px; padding: 2px 4px;">
                 ${String(m.seq).padStart(2, '0')}
@@ -22140,12 +22425,19 @@ function updateSlimPanel(matchId, type, contentHtml) {
             <td class="py-0.5 px-1 text-center" style="width: 60px;">
               ${resultBadge}
             </td>
-            <td class="py-0.5 px-1 text-center" style="width: 50px;">
-              <button type="button" class="btn btn-xs fw-bold text-dark" onclick="event.stopPropagation(); openTotoMatchDetail(${m.db_match_id || 'null'}, '${m.home}', '${m.away}')" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:3px; font-size:0.65rem; padding: 1px 4px; white-space:nowrap;" title="1:1 분석">
-                지표↗
+            <td class="py-0.5 px-1 text-center" style="width: 68px;" onclick="event.stopPropagation()">
+              <button type="button" class="btn btn-xs ${isDrawerOpen ? 'btn-primary text-white' : 'btn-outline-primary'} fw-bold" id="totoDrawerBtn_${totoKey}_${m.seq}" onclick="event.stopPropagation(); toggleTotoRowDrawer('${totoKey}', ${m.seq})" style="font-size:0.65rem; padding: 2px 6px; white-space:nowrap;" title="상대전적 및 기록">
+                <i class="bi bi-bar-chart-fill me-0.5"></i>${isDrawerOpen ? '기록접기 ▴' : '경기기록 ▾'}
               </button>
             </td>
           </tr>
+          ${isDrawerOpen ? `
+            <tr id="totoDrawerRow_${totoKey}_${m.seq}" style="background:#f8fafc; border-bottom:2px solid #cbd5e1;">
+              <td colspan="7" class="p-2.5">
+                ${drawerHtml}
+              </td>
+            </tr>
+          ` : ''}
         `;
       });
 
@@ -22210,13 +22502,27 @@ function updateSlimPanel(matchId, type, contentHtml) {
       }
     }
 
-    // Modal restore hook: when matchModal closes, restore totoBetmanModal if opened from it; and return to schedule on mobile
+    // Modal restore hook: when nextGenDetailModal or matchModal closes, preserve body scroll for totoBetmanModal if still open
     function initModalRestoreHook() {
+      const nextGenEl = document.getElementById('nextGenDetailModal');
+      if (nextGenEl && !nextGenEl._hasTotoRestoreHook) {
+        nextGenEl._hasTotoRestoreHook = true;
+        nextGenEl.addEventListener('hidden.bs.modal', function () {
+          const totoModalEl = document.getElementById('totoBetmanModal');
+          if (totoModalEl && totoModalEl.classList.contains('show')) {
+            document.body.classList.add('modal-open');
+          }
+        });
+      }
+
       const matchModalEl = document.getElementById('matchModal');
       if (matchModalEl && !matchModalEl._hasRestoreHook) {
         matchModalEl._hasRestoreHook = true;
         matchModalEl.addEventListener('hidden.bs.modal', function () {
           const totoModalEl = document.getElementById('totoBetmanModal');
+          if (totoModalEl && totoModalEl.classList.contains('show')) {
+            document.body.classList.add('modal-open');
+          }
           if (totoModalEl && totoModalEl.getAttribute('data-reopen') === 'true') {
             totoModalEl.removeAttribute('data-reopen');
             setTimeout(() => {
