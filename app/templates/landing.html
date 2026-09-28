@@ -8495,7 +8495,9 @@ function getFullModalMatchList() {
       if (!teamName) return '';
       const n = String(teamName).toLowerCase();
       let code = '';
-      if (n.includes('아르메니')) code = 'am';
+      if (n.includes('조지아') || n.includes('georgia')) code = 'ge';
+      else if (n.includes('우크라이나') || n.includes('ukraine')) code = 'ua';
+      else if (n.includes('아르메니')) code = 'am';
       else if (n.includes('몬테네그')) code = 'me';
       else if (n.includes('한국') || n.includes('대한민국') || n.includes('korea')) code = 'kr';
       else if (n.includes('일본') || n.includes('japan')) code = 'jp';
@@ -8504,23 +8506,57 @@ function getFullModalMatchList() {
       else if (n.includes('브라질') || n.includes('brazil')) code = 'br';
       else if (n.includes('독일') || n.includes('germany')) code = 'de';
       else if (n.includes('잉글랜드') || n.includes('england')) code = 'gb-eng';
+      else if (n.includes('스코틀랜드') || n.includes('scotland')) code = 'gb-sct';
+      else if (n.includes('웨일스') || n.includes('wales')) code = 'gb-wls';
       else if (n.includes('스페인') || n.includes('spain')) code = 'es';
       else if (n.includes('프랑스') || n.includes('france')) code = 'fr';
       else if (n.includes('이탈리아') || n.includes('italy')) code = 'it';
       else if (n.includes('네덜란드') || n.includes('netherlands')) code = 'nl';
       else if (n.includes('포르투갈') || n.includes('portugal')) code = 'pt';
+      else if (n.includes('덴마크') || n.includes('denmark')) code = 'dk';
+      else if (n.includes('오스트리아') || n.includes('austria')) code = 'at';
+      else if (n.includes('코소보') || n.includes('kosovo')) code = 'xk';
+      else if (n.includes('그리스') || n.includes('greece')) code = 'gr';
+      else if (n.includes('노르웨이') || n.includes('norway')) code = 'no';
+      else if (n.includes('스웨덴') || n.includes('sweden')) code = 'se';
+      else if (n.includes('핀란드') || n.includes('finland')) code = 'fi';
+      else if (n.includes('폴란드') || n.includes('poland')) code = 'pl';
+      else if (n.includes('벨기에') || n.includes('belgium')) code = 'be';
+      else if (n.includes('튀르키예') || n.includes('터키') || n.includes('turkey')) code = 'tr';
+      else if (n.includes('크로아티아') || n.includes('croatia')) code = 'hr';
+      else if (n.includes('체코') || n.includes('czech')) code = 'cz';
+      else if (n.includes('스위스') || n.includes('switzerland')) code = 'ch';
+      else if (n.includes('세르비아') || n.includes('serbia')) code = 'rs';
+      else if (n.includes('슬로바키아') || n.includes('slovakia')) code = 'sk';
+      else if (n.includes('슬로베니아') || n.includes('slovenia')) code = 'si';
+      else if (n.includes('헝가리') || n.includes('hungary')) code = 'hu';
+      else if (n.includes('루마니아') || n.includes('romania')) code = 'ro';
+      else if (n.includes('알바니아') || n.includes('albania')) code = 'al';
+      else if (n.includes('북마케도니아') || n.includes('macedonia')) code = 'mk';
+      else if (n.includes('아일랜드') || n.includes('ireland')) code = 'ie';
       else if (n.includes('사우디') || n.includes('saudi')) code = 'sa';
       else if (n.includes('이라크') || n.includes('iraq')) code = 'iq';
       else if (n.includes('오만') || n.includes('oman')) code = 'om';
       else if (n.includes('쿠웨이트') || n.includes('kuwait')) code = 'kw';
+      else if (n.includes('카타르') || n.includes('qatar')) code = 'qa';
       else if (n.includes('불가리아') || n.includes('bulgaria')) code = 'bg';
       else if (n.includes('우루과이') || n.includes('uruguay')) code = 'uy';
       else if (n.includes('칠레') || n.includes('chile')) code = 'cl';
       else if (n.includes('콜롬비아') || n.includes('colombia')) code = 'co';
+      else if (n.includes('페루') || n.includes('peru')) code = 'pe';
+      else if (n.includes('베네수엘라') || n.includes('venezuela')) code = 've';
+      else if (n.includes('파라과이') || n.includes('paraguay')) code = 'py';
+      else if (n.includes('에콰도르') || n.includes('ecuador')) code = 'ec';
       else if (n.includes('미국') || n.includes('usa')) code = 'us';
+      else if (n.includes('멕시코') || n.includes('mexico')) code = 'mx';
+      else if (n.includes('캐나다') || n.includes('canada')) code = 'ca';
+      else if (n.includes('호주') || n.includes('오스트레일리아') || n.includes('australia')) code = 'au';
+      else if (n.includes('모로코') || n.includes('morocco')) code = 'ma';
+      else if (n.includes('세네갈') || n.includes('senegal')) code = 'sn';
+      else if (n.includes('이집트') || n.includes('egypt')) code = 'eg';
 
       if (!code) {
-        return `<span style="display:inline-block; width:${width}px; height:${height}px; background:#ef4444; border-radius:1px; vertical-align:middle; margin-right:3px;"></span>`;
+        return `<span style="display:inline-block; font-size:11px; vertical-align:middle; margin-right:3px;">⚽</span>`;
       }
       return `<img src="https://flagcdn.com/w20/${code}.png" srcset="https://flagcdn.com/w40/${code}.png 2x" width="${width}" height="${height}" alt="" style="vertical-align:middle; border-radius:1px; border:1px solid rgba(0,0,0,0.18); margin-right:3px; object-fit:cover; display:inline-block;" onerror="this.style.display='none'">`;
     }
@@ -8744,21 +8780,30 @@ function getFullModalMatchList() {
       }
 
       // 선발 11명 테이블
-      const maxRows = Math.max(hXI.length, aXI.length, 11);
       let xiRowsHtml = '';
-      for (let i = 0; i < maxRows; i++) {
-        const hp = hXI[i] || null;
-        const ap = aXI[i] || null;
-        xiRowsHtml += `
-          <div class="d-flex" style="border-bottom:1px solid #f1f5f9;">
-            <div style="width:50%; border-right:1px solid #cbd5e1;">
-              ${renderPlayerRow(hp, true)}
-            </div>
-            <div style="width:50%;">
-              ${renderPlayerRow(ap, false)}
-            </div>
+      if (hXI.length === 0 && aXI.length === 0) {
+        xiRowsHtml = `
+          <div class="py-4 text-center text-secondary fw-semibold" style="font-size:0.78rem; background:#ffffff;">
+            <span class="spinner-border spinner-border-sm me-1.5 text-primary" role="status" style="width:14px; height:14px; border-width:2px;"></span>
+            공식 선발 라인업 및 경기 데이터를 실시간 조회 중입니다...
           </div>
         `;
+      } else {
+        const maxRows = Math.max(hXI.length, aXI.length);
+        for (let i = 0; i < maxRows; i++) {
+          const hp = hXI[i] || null;
+          const ap = aXI[i] || null;
+          xiRowsHtml += `
+            <div class="d-flex" style="border-bottom:1px solid #f1f5f9;">
+              <div style="width:50%; border-right:1px solid #cbd5e1;">
+                ${renderPlayerRow(hp, true)}
+              </div>
+              <div style="width:50%;">
+                ${renderPlayerRow(ap, false)}
+              </div>
+            </div>
+          `;
+        }
       }
 
       // 교체 명단 테이블
