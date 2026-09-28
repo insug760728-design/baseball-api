@@ -24,9 +24,9 @@ logger.setLevel(logging.INFO)
 
 class HistoricalAgentRouter:
 
-    # 초고속 5분 인메모리 캐시 (Render 512MB RAM 및 CPU 과부하 원천 방지)
+    # 초고속 30분 인메모리 & Redis 캐시 (Render 과부하 원천 방지)
     _MATCH_HISTORY_CACHE: Dict[str, Any] = {}
-    _CACHE_TTL = 300  # 5분
+    _CACHE_TTL = 1800  # 30분
 
     # 종목별/리그별 대표 카테고리 매핑
     LEAGUE_CATEGORY_MAP = {
@@ -89,6 +89,12 @@ class HistoricalAgentRouter:
             cached_time, cached_val = cls._MATCH_HISTORY_CACHE[cache_key]
             if (now_ts - cached_time) < cls._CACHE_TTL:
                 return cached_val
+
+        from app.core.cache import cache_get_json, cache_set_json
+        cached_json = cache_get_json(f"hist:{cache_key}")
+        if cached_json:
+            cls._MATCH_HISTORY_CACHE[cache_key] = (now_ts, cached_json)
+            return cached_json
 
         db = SessionLocal()
         try:
@@ -678,7 +684,7 @@ class HistoricalAgentRouter:
                     ]
 
                 # 1차: 동일 리그 내에서 조회 (중복 제거 감안하여 충분한 수량 확보)
-                fetch_limit = max(max_games * 4, 40)
+                fetch_limit = min(max_games * 2, 20)
                 q = db.query(Match).options(joinedload(Match.details)).filter(
                     Match.sport_code == sport_code,
                     Match.match_date >= min_date_threshold,
@@ -689,7 +695,7 @@ class HistoricalAgentRouter:
                     or_(*conds)
                 ).order_by(desc(Match.match_date)).limit(fetch_limit)
                 res = q.all()
-                if len(res) >= fetch_limit:
+                if len(res) >= 5 or is_national_match:
                     return res
 
                 # 2차: 동일 종목 내(승강/컵대회 포함) 보강 조회
@@ -714,6 +720,13 @@ class HistoricalAgentRouter:
 
             # 3. 1:1 맞대결 (H2H) 조회
             def query_h2h(ht_tokens: list, at_tokens: list) -> list:
+                # 공식 과거 전적 아카이브에 이미 존재하는지 먼저 확인 (0ms 초고속)
+                for entry in HISTORICAL_H2H_ARCHIVE:
+                    t1, t2 = entry['teams']
+                    if ((t1 in home_team or teams_match(t1, home_team)) and (t2 in away_team or teams_match(t2, away_team))) or \
+                       ((t2 in home_team or teams_match(t2, home_team)) and (t1 in away_team or teams_match(t1, away_team))):
+                        return []
+
                 if is_national_match:
                     h_side1 = or_(*[or_(Match.home_team_name == t, Match.home_team_name == f"{t}_남자") for t in ht_tokens])
                     a_side1 = or_(*[or_(Match.away_team_name == t, Match.away_team_name == f"{t}_남자") for t in at_tokens])
@@ -735,12 +748,15 @@ class HistoricalAgentRouter:
                         and_(h_side1, a_side1),
                         and_(h_side2, a_side2)
                     )
-                ).order_by(desc(Match.match_date)).limit(max(max_games * 6, 60))
+                ).order_by(desc(Match.match_date)).limit(max(max_games * 2, 20))
                 res = q.all()
-                if res and len(res) >= max_games:
+                if res and (len(res) >= 3 or is_national_match):
                     return res
 
-                # 2차: 동일 종목 전체(과거 J1/J2 승강전, 인터리그, 컵대회, 과거 시즌 등) 크로스 H2H 검색
+                # 2차: 동일 종목 전체 크로스 H2H 검색 (국가대표는 제외하여 9초 지연 원천 차단)
+                if is_national_match:
+                    return res
+
                 existing_ids = {m.id for m in res}
                 q_fb = db.query(Match).options(joinedload(Match.details)).filter(
                     Match.sport_code == sport_code,
@@ -752,7 +768,7 @@ class HistoricalAgentRouter:
                         and_(h_side1, a_side1),
                         and_(h_side2, a_side2)
                     )
-                ).order_by(desc(Match.match_date)).limit(max(max_games * 6, 60))
+                ).order_by(desc(Match.match_date)).limit(max(max_games * 2, 20))
                 fb_res = q_fb.all()
                 for fm in fb_res:
                     if fm.id not in existing_ids:
@@ -1642,6 +1658,11 @@ class HistoricalAgentRouter:
                 'tactical_analysis': tactical_analysis
             }
             cls._MATCH_HISTORY_CACHE[cache_key] = (now_ts, res_data)
+            try:
+                from app.core.cache import cache_set_json
+                cache_set_json(f"hist:{cache_key}", res_data, ttl_seconds=1800)
+            except Exception:
+                pass
             return res_data
         finally:
             db.close()

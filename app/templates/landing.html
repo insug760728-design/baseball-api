@@ -17236,13 +17236,13 @@ function updateSlimPanel(matchId, type, contentHtml) {
         openTestMatchModal('MLB');
         return;
       }
+      let match = null;
       if (typeof matchId === 'object' && matchId !== null && matchId.id) {
         match = matchId;
         matchId = match.id;
       }
-      let match = null;
       if (typeof allMatches !== 'undefined' && Array.isArray(allMatches)) {
-        match = allMatches.find(m => m.id == matchId || String(m.id) === String(matchId));
+        match = match || allMatches.find(m => m.id == matchId || String(m.id) === String(matchId));
       }
       if (!match && typeof _currentMatchesList !== 'undefined' && Array.isArray(_currentMatchesList)) {
         match = _currentMatchesList.find(m => m.id == matchId || String(m.id) === String(matchId));
@@ -17295,14 +17295,14 @@ function updateSlimPanel(matchId, type, contentHtml) {
           }
         };
 
-        // 3초 안전 타임아웃: 네트워크 지연 시 스피너 무한 루프 원천 차단
+        // 8초 안전 타임아웃: 네트워크 지연 시 스피너 무한 루프 원천 차단
         let didComplete = false;
         const fetchTimeout = setTimeout(() => {
           if (!didComplete) {
             didComplete = true;
             showDetailError(new Error('Timeout'));
           }
-        }, 3000);
+        }, 8000);
 
         // Fallback: fetch directly from backend API
         deduplicatedFetch(`/api/v1/matches/${matchId}`)
@@ -17370,8 +17370,11 @@ function updateSlimPanel(matchId, type, contentHtml) {
         } catch(e) {}
       }
 
-      // 2. 최근 10경기 히스토리 비동기 요청 (중복 제거)
-      if (!match.history || !match.history.home_recent) {
+      // Background detail fetch for rich player_stats & matchup_analysis (필요 시에만 요청)
+      const needsBackgroundFetch = !match.details || !match.matchup_analysis || match.status === 'LIVE';
+
+      // 2. 최근 10경기 히스토리 비동기 요청 (matches API 호출 시 이미 포함되므로 중복 호출 원천 차단)
+      if ((!match.history || !match.history.home_recent) && !needsBackgroundFetch) {
         try {
           deduplicatedFetch(`/api/v1/live/match-history/${match.id}?max_games=10`)
             .then(hist => {
@@ -17468,7 +17471,6 @@ function updateSlimPanel(matchId, type, contentHtml) {
       }
 
       // Background detail fetch for rich player_stats & matchup_analysis (필요 시에만 요청)
-      const needsBackgroundFetch = !match.details || !match.matchup_analysis || match.status === 'LIVE';
       if (needsBackgroundFetch) {
         try {
           deduplicatedFetch(`/api/v1/matches/${match.id}`)

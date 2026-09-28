@@ -395,7 +395,7 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
             return cached_res
         if match_id in _MATCH_FULL_CACHE:
             cache_time, cached_res = _MATCH_FULL_CACHE[match_id]
-            ttl = 10 if (cached_res.get("status") == "LIVE") else (180 if cached_res.get("status") == "SCHEDULED" else 1800)
+            ttl = 30 if (cached_res.get("status") == "LIVE") else (1800 if cached_res.get("status") == "SCHEDULED" else 3600)
             if now - cache_time < ttl:
                 response.headers["Cache-Control"] = "public, max-age=10, s-maxage=30"
                 return cached_res
@@ -512,7 +512,7 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
         "is_lineup_confirmed": is_lineup_confirmed or (details_ts.get("soccer_lineup", {}).get("is_lineup_confirmed", False) if isinstance(details_ts, dict) else False),
         "lineup_status": "CONFIRMED" if (is_lineup_confirmed or (details_ts.get("soccer_lineup", {}).get("is_lineup_confirmed", False) if isinstance(details_ts, dict) else False)) else "EXPECTED"
     }
-    ttl = 10 if (res.get("status") == "LIVE") else (180 if res.get("status") == "SCHEDULED" else 1800)
+    ttl = 30 if (res.get("status") == "LIVE") else (1800 if res.get("status") == "SCHEDULED" else 3600)
     cache_set_json(ckey, res, ttl_seconds=ttl)
     _MATCH_FULL_CACHE[match_id] = (now, res)
     response.headers["Cache-Control"] = "public, max-age=10, s-maxage=30"
