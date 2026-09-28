@@ -154,11 +154,7 @@ class SoccerScraper(BaseScraper):
         return self.league_name
 
     def _fetch_json(self, url: str) -> Dict[str, Any]:
-        req = urllib.request.Request(url, headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            "Accept": "application/json, text/plain, */*",
-            "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7"
-        })
+        req = urllib.request.Request(url, headers={"User-Agent": "curl/7.88.1"})
         with urllib.request.urlopen(req, timeout=12) as resp:
             return json.loads(resp.read().decode("utf-8"))
 
@@ -167,15 +163,20 @@ class SoccerScraper(BaseScraper):
         특정 일자(YYYY-MM-DD)의 해당 리그 전 경기 일정 및 결과 수집
         """
         self.last_errors = []
-        d = target_date or datetime.now().strftime("%Y-%m-%d")
+        if not target_date:
+            now_kst = datetime.utcnow() + timedelta(hours=9)
+            d = now_kst.strftime("%Y-%m-%d")
+        else:
+            d = target_date
         d_clean = d.replace("-", "")
 
         # ⚡ UTC 시차(한국시간 자정/새벽 01:00~06:00 경기) 완벽 대응:
-        # UTC 기준으로는 전일(yesterday)에 편성되므로 전일과 당일을 모두 조회하여 합산
+        # 전일(yesterday), 당일(today), 익일(tomorrow)을 모두 조회하여 시차 누락 방지
         try:
             target_dt = datetime.strptime(d, "%Y-%m-%d")
             prev_d_clean = (target_dt - timedelta(days=1)).strftime("%Y%m%d")
-            dates_to_query = [prev_d_clean, d_clean]
+            next_d_clean = (target_dt + timedelta(days=1)).strftime("%Y%m%d")
+            dates_to_query = [prev_d_clean, d_clean, next_d_clean]
         except Exception:
             dates_to_query = [d_clean]
 
