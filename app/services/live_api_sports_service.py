@@ -3564,7 +3564,7 @@ class LiveApiSportsService:
             h_score_val = match.home_score if match.home_score is not None else 0
             a_score_val = match.away_score if match.away_score is not None else 0
 
-        is_game_active = (match.status in ['LIVE', 'FINISHED']) or (match.home_score is not None) or is_arm_mne or is_geo_ukr
+        is_game_active = (match.status in ['LIVE', 'FINISHED']) or (match.status != 'SCHEDULED' and ((h_score_val or 0) > 0 or (a_score_val or 0) > 0)) or is_arm_mne or is_geo_ukr
 
         if match_stats is None:
             if is_arm_mne:

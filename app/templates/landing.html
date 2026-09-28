@@ -8786,10 +8786,8 @@ function getFullModalMatchList() {
       if (!m) return '';
 
       const isLiveOrFinished = !!(
-        m.status === 'LIVE' ||
-        m.status === 'FINISHED' ||
-        m.status === 'IN_PLAY' ||
-        (m.home_score !== null && m.home_score !== undefined && m.home_score !== '')
+        (m.status === 'LIVE' || m.status === 'FINISHED' || m.status === 'IN_PLAY') ||
+        (m.status !== 'SCHEDULED' && m.home_score !== null && m.home_score !== undefined && m.home_score !== '' && Number(m.home_score) > 0)
       );
 
       const isLineupConfirmed = !!(
