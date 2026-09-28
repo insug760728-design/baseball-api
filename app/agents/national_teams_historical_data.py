@@ -100,6 +100,26 @@ NATIONAL_TEAM_H2H_ARCHIVE = [
             {'date': '2019-03-24', 'home_team_name': '이스라엘', 'away_team_name': '오스트리아', 'home_score': 4, 'away_score': 2, 'league_name': 'UEFA 유로 예선'},
         ]
     },
+    # 9-1. 루마니아 vs 보스니아 헤르체고비나 (UEFA 네이션스리그 & 유로 예선)
+    {
+        'teams': ('루마니아', '보스니아'),
+        'matches': [
+            {'date': '2022-09-26', 'home_team_name': '루마니아', 'away_team_name': '보스니아 헤르체고비나', 'home_score': 4, 'away_score': 1, 'league_name': 'UEFA 네이션스리그'},
+            {'date': '2022-06-07', 'home_team_name': '보스니아 헤르체고비나', 'away_team_name': '루마니아', 'home_score': 1, 'away_score': 0, 'league_name': 'UEFA 네이션스리그'},
+            {'date': '2011-06-03', 'home_team_name': '루마니아', 'away_team_name': '보스니아 헤르체고비나', 'home_score': 3, 'away_score': 0, 'league_name': 'UEFA 유로 예선'},
+            {'date': '2011-03-26', 'home_team_name': '보스니아 헤르체고비나', 'away_team_name': '루마니아', 'home_score': 2, 'away_score': 1, 'league_name': 'UEFA 유로 예선'},
+        ]
+    },
+    # 9-2. 조지아 vs 우크라이나 (UEFA 네이션스리그)
+    {
+        'teams': ('조지아', '우크라이나'),
+        'matches': [
+            {'date': '2024-11-16', 'home_team_name': '조지아', 'away_team_name': '우크라이나', 'home_score': 1, 'away_score': 1, 'league_name': 'UEFA 네이션스리그'},
+            {'date': '2024-10-11', 'home_team_name': '우크라이나', 'away_team_name': '조지아', 'home_score': 1, 'away_score': 0, 'league_name': 'UEFA 네이션스리그'},
+            {'date': '2015-06-09', 'home_team_name': '조지아', 'away_team_name': '우크라이나', 'home_score': 1, 'away_score': 2, 'league_name': '남자축구 국제친선경기'},
+            {'date': '2007-09-08', 'home_team_name': '조지아', 'away_team_name': '우크라이나', 'home_score': 1, 'away_score': 1, 'league_name': 'UEFA 유로 예선'},
+        ]
+    },
     # 9. 안도라 vs 몰타
     {
         'teams': ('안도라', '몰타'),

@@ -3128,6 +3128,102 @@ class LiveApiSportsService:
                         ("벤투", 12, "SUB"), ("가브리에우 마갈량이스", 4, "SUB"), ("페페", 22, "SUB")
                     ]
                 },
+                "루마니아": {
+                    "xi": [
+                        ("F.니차", 1, "GK"), ("A.라치우", 2, "DF"), ("R.드라구신", 3, "DF"),
+                        ("A.부르카", 15, "DF"), ("N.반쿠", 11, "DF"), ("M.마린", 6, "MF"),
+                        ("R.마린", 18, "MF"), ("N.스탄치우", 10, "MF"), ("D.만", 20, "FW"),
+                        ("D.드라구시", 19, "FW"), ("V.미하일라", 17, "FW")
+                    ],
+                    "subs": [
+                        ("H.몰도반", 12, "SUB"), ("B.루스", 4, "SUB"), ("I.네델체아루", 5, "SUB"),
+                        ("D.올라루", 14, "SUB"), ("N.모루탄", 21, "SUB"), ("G.푸스카스", 9, "SUB")
+                    ]
+                },
+                "보스니아": {
+                    "xi": [
+                        ("N.바실리", 1, "GK"), ("N.카티치", 4, "DF"), ("E.비차크치치", 3, "DF"),
+                        ("A.바리시치", 16, "DF"), ("A.데디치", 7, "DF"), ("D.후세인바시치", 8, "MF"),
+                        ("B.타히로비치", 18, "MF"), ("H.하이 라디노비치", 20, "MF"), ("J.가치베고비치", 21, "MF"),
+                        ("E.제코", 11, "FW"), ("E.데미로비치", 10, "FW")
+                    ],
+                    "subs": [
+                        ("K.피리치", 12, "SUB"), ("S.콜라시나츠", 5, "SUB"), ("D.하드지카두니치", 6, "SUB"),
+                        ("A.무야키치", 15, "SUB"), ("D.사리치", 17, "SUB"), ("H.타바코비치", 23, "SUB")
+                    ]
+                },
+                "세르비아": {
+                    "xi": [
+                        ("V.밀린코비치사비치", 23, "GK"), ("N.밀렌코비치", 4, "DF"), ("S.파블로비치", 2, "DF"),
+                        ("K.네델코비치", 16, "DF"), ("S.루키치", 22, "MF"), ("I.일리치", 17, "MF"),
+                        ("A.지브코비치", 14, "MF"), ("V.비르만체비치", 7, "MF"), ("L.사마르지치", 10, "MF"),
+                        ("A.미트로비치", 9, "FW"), ("D.블라호비치", 18, "FW")
+                    ],
+                    "subs": [
+                        ("L.요비치", 19, "SUB"), ("P.라트코프", 11, "SUB"), ("M.일리치", 1, "SUB"),
+                        ("S.바비치", 15, "SUB"), ("M.그루이치", 6, "SUB")
+                    ]
+                },
+                "스위스": {
+                    "xi": [
+                        ("G.코벨", 1, "GK"), ("M.아칸지", 5, "DF"), ("R.로드리게스", 13, "DF"),
+                        ("E.비드머", 3, "DF"), ("R.프로일러", 8, "MF"), ("G.자카", 10, "MF"),
+                        ("M.애비셔", 20, "MF"), ("F.리더", 26, "MF"), ("R.바르가스", 17, "FW"),
+                        ("B.엠볼로", 7, "FW"), ("Z.암두니", 25, "FW")
+                    ],
+                    "subs": [
+                        ("D.은도예", 19, "SUB"), ("X.샤키리", 23, "SUB"), ("I.음보고", 12, "SUB"),
+                        ("C.체시거", 4, "SUB"), ("D.자카리아", 6, "SUB")
+                    ]
+                },
+                "체코": {
+                    "xi": [
+                        ("M.코바르", 1, "GK"), ("L.크레이치", 4, "DF"), ("M.비틱", 2, "DF"),
+                        ("V.초우팔", 5, "DF"), ("T.홀레시", 3, "DF"), ("T.소우체크", 22, "MF"),
+                        ("L.프로보드", 14, "MF"), ("P.술츠", 25, "MF"), ("V.체르니", 17, "FW"),
+                        ("P.시크", 10, "FW"), ("T.호리", 19, "FW")
+                    ],
+                    "subs": [
+                        ("A.흘로제크", 9, "SUB"), ("M.유라세크", 11, "SUB"), ("A.만두스", 16, "SUB"),
+                        ("D.도우데라", 15, "SUB"), ("L.칼바흐", 21, "SUB")
+                    ]
+                },
+                "슬로바키아": {
+                    "xi": [
+                        ("M.두브라브카", 1, "GK"), ("P.페카릭", 2, "DF"), ("D.한츠코", 16, "DF"),
+                        ("M.슈크리니아르", 14, "DF"), ("N.기욤베르", 6, "DF"), ("S.로보트카", 22, "MF"),
+                        ("O.두다", 8, "MF"), ("P.흐로소프스키", 13, "MF"), ("L.하라슬린", 17, "FW"),
+                        ("T.수슬로프", 7, "FW"), ("D.스트렐레츠", 18, "FW")
+                    ],
+                    "subs": [
+                        ("R.보제니크", 9, "SUB"), ("L.베네스", 11, "SUB"), ("M.로닥", 12, "SUB"),
+                        ("L.사트카", 4, "SUB"), ("M.베로", 21, "SUB")
+                    ]
+                },
+                "슬로베니아": {
+                    "xi": [
+                        ("J.오블락", 1, "GK"), ("J.비욜", 6, "DF"), ("V.드르쿠시치", 21, "DF"),
+                        ("Z.카르니치니크", 2, "DF"), ("E.얀자", 13, "DF"), ("A.체린", 22, "MF"),
+                        ("T.엘스니크", 10, "MF"), ("P.스토야노비치", 20, "MF"), ("J.믈라카르", 17, "FW"),
+                        ("B.세슈코", 11, "FW"), ("A.슈포라르", 9, "FW")
+                    ],
+                    "subs": [
+                        ("Z.첼라르", 19, "SUB"), ("J.일리치치", 26, "SUB"), ("V.베베츠", 12, "SUB"),
+                        ("D.브레칼로", 4, "SUB"), ("J.고렌츠 스탄코비치", 5, "SUB")
+                    ]
+                },
+                "헝가리": {
+                    "xi": [
+                        ("P.굴라시", 1, "GK"), ("W.오르반", 6, "DF"), ("M.다르다이", 4, "DF"),
+                        ("E.보트카", 21, "DF"), ("M.케르케즈", 11, "DF"), ("A.샤퍼", 13, "MF"),
+                        ("A.나기", 8, "MF"), ("B.볼라", 14, "MF"), ("D.소보슬라이", 10, "MF"),
+                        ("R.셜러이", 20, "FW"), ("B.바르가", 19, "FW")
+                    ],
+                    "subs": [
+                        ("M.아담", 9, "SUB"), ("L.클라인하이스러", 15, "SUB"), ("D.디부스", 12, "SUB"),
+                        ("B.발로그", 3, "SUB"), ("Z.너지", 18, "SUB")
+                    ]
+                },
                 "대한민국": {
                     "xi": [
                         ("조현우", 21, "GK"), ("설영우", 22, "DF"), ("김민재", 4, "DF"),
@@ -3515,7 +3611,7 @@ class LiveApiSportsService:
                     "yellow_cards": {"home": 1 if is_geo_home else 3, "away": 3 if is_geo_home else 1},
                     "red_cards": {"home": 0, "away": 0}
                 }
-            else:
+            elif is_game_active:
                 score_diff = h_score_val - a_score_val
                 base_poss_h = 51 + min(max(score_diff * 3, -15), 15)
                 base_poss_a = 100 - base_poss_h
@@ -3538,6 +3634,8 @@ class LiveApiSportsService:
                     "yellow_cards": {"home": 1, "away": 2},
                     "red_cards": {"home": 0, "away": 0}
                 }
+            else:
+                match_stats = None
 
         if stats_summary is None:
             if is_arm_mne:
@@ -3584,27 +3682,29 @@ class LiveApiSportsService:
                         "penalties": 0
                     }
                 }
-            else:
+            elif is_game_active:
                 stats_summary = {
                     "home": {
                         "team_name": home_name,
                         "score_1h": min(h_score_val, 1),
                         "score_2h": max(0, h_score_val - 1) if h_score_val > 1 else 0,
-                        "yellow_cards": match_stats.get("yellow_cards", {}).get("home", 1),
+                        "yellow_cards": match_stats.get("yellow_cards", {}).get("home", 1) if match_stats else 0,
                         "red_cards": 0,
-                        "corners": match_stats.get("corners", {}).get("home", 5),
+                        "corners": match_stats.get("corners", {}).get("home", 5) if match_stats else 0,
                         "penalties": 0
                     },
                     "away": {
                         "team_name": away_name,
                         "score_1h": min(a_score_val, 1),
                         "score_2h": max(0, a_score_val - 1) if a_score_val > 1 else 0,
-                        "yellow_cards": match_stats.get("yellow_cards", {}).get("away", 2),
+                        "yellow_cards": match_stats.get("yellow_cards", {}).get("away", 2) if match_stats else 0,
                         "red_cards": 0,
-                        "corners": match_stats.get("corners", {}).get("away", 6),
+                        "corners": match_stats.get("corners", {}).get("away", 6) if match_stats else 0,
                         "penalties": 0
                     }
                 }
+            else:
+                stats_summary = None
 
         # 9. 타임라인 이벤트 스마트 생성 (토토켄 원본 100% 매칭)
         if len(events_timeline) == 0:
