@@ -132,6 +132,9 @@ async def sync_soccer(date: Optional[str] = None):
                 s = SoccerScraper("NATIONS_LEAGUE")
                 scraped = s.scrape_matches(target_d)
                 debug_info["nations_league_scraped_count"] = len(scraped)
+                debug_info["api_code"] = s.api_code
+                debug_info["dates_queried"] = getattr(s, "last_dates_queried", [])
+                debug_info["fetch_errors"] = getattr(s, "last_errors", [])
                 debug_info["nations_league_samples"] = [
                     f"{m['home_team_name']} vs {m['away_team_name']} ({m['match_date']}) - {m['status']} {m['home_score']}:{m['away_score']}"
                     for m in scraped[:5]

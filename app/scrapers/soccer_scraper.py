@@ -154,14 +154,19 @@ class SoccerScraper(BaseScraper):
         return self.league_name
 
     def _fetch_json(self, url: str) -> Dict[str, Any]:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7"
+        })
+        with urllib.request.urlopen(req, timeout=12) as resp:
             return json.loads(resp.read().decode("utf-8"))
 
     def scrape_matches(self, target_date: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         특정 일자(YYYY-MM-DD)의 해당 리그 전 경기 일정 및 결과 수집
         """
+        self.last_errors = []
         d = target_date or datetime.now().strftime("%Y-%m-%d")
         d_clean = d.replace("-", "")
 
@@ -174,6 +179,7 @@ class SoccerScraper(BaseScraper):
         except Exception:
             dates_to_query = [d_clean]
 
+        self.last_dates_queried = dates_to_query
         events = []
         seen_event_ids = set()
         for dc in dates_to_query:
@@ -186,6 +192,7 @@ class SoccerScraper(BaseScraper):
                         seen_event_ids.add(ev_id)
                         events.append(ev)
             except Exception as e:
+                self.last_errors.append(f"{url} -> {type(e).__name__}: {e}")
                 logger.error(f"[SoccerScraper] {self.league_id} {dc} 경기 목록 조회 실패: {e}")
 
         result = []
