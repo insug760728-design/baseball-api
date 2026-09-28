@@ -8632,54 +8632,63 @@ function getFullModalMatchList() {
       }
 
     // -------------------------------------------------------------
-    // ⚽ [토토켄 100% 동일] H2H 맞대결 토글 & Match Box 상태 관리
+    // ⚽ H2H 맞대결 경기별 인터랙티브 아코디언 & Match Box 관리
     // -------------------------------------------------------------
     window._totokenActiveH2hMatch = window._totokenActiveH2hMatch || {};
     window._totokenH2hDataCache = window._totokenH2hDataCache || {};
 
     window.toggleTotokenH2hMatch = function(matchId, idx) {
       const cur = window._totokenActiveH2hMatch[matchId];
-      if (cur === idx) {
-        // 이미 열린 항목 클릭 시 닫기 ("지금창도 클릭하면 닫아지고")
-        window._totokenActiveH2hMatch[matchId] = null;
-      } else {
-        // 다른 경기 클릭 시 해당 경기 상세 열기 ("앞에 점표시랑 동그라미 표시는 그경기를 클릭하면 상세 보기나 나오는거야")
-        window._totokenActiveH2hMatch[matchId] = idx;
-      }
-      const box = document.getElementById(`totokenH2hDetailBox_${matchId}`);
       const h2hMatches = window._totokenH2hDataCache[matchId] || [];
-      const activeIdx = window._totokenActiveH2hMatch[matchId];
+      const isClosing = (cur === idx);
+      const nextIdx = isClosing ? null : idx;
+      window._totokenActiveH2hMatch[matchId] = nextIdx;
 
-      // 각 행의 ◉ / ○ 및 상세 ∧/∨ 표시 업데이트
-      h2hMatches.forEach((_, i) => {
-        const ind = document.getElementById(`totokenH2hInd_${matchId}_${i}`);
-        const btn = document.getElementById(`totokenH2hBtn_${matchId}_${i}`);
+      h2hMatches.forEach((g, i) => {
+        const card = document.getElementById(`totokenH2hCard_${matchId}_${i}`);
         const row = document.getElementById(`totokenH2hRow_${matchId}_${i}`);
-        const isThisActive = (activeIdx === i);
-        if (ind) {
-          ind.textContent = isThisActive ? '◉' : '○';
-          ind.style.color = isThisActive ? '#2563eb' : '#94a3b8';
-        }
-        if (btn) {
-          btn.textContent = `상세 ${isThisActive ? '∧' : '∨'}`;
+        const btn = document.getElementById(`totokenH2hBtn_${matchId}_${i}`);
+        const box = document.getElementById(`totokenH2hDetailBox_${matchId}_${i}`);
+        const isThisActive = (nextIdx === i);
+
+        if (card) {
+          card.style.borderColor = isThisActive ? '#3b82f6' : '#e2e8f0';
+          card.style.boxShadow = isThisActive ? '0 2px 8px rgba(37,99,235,0.12)' : 'none';
         }
         if (row) {
-          row.style.background = isThisActive ? '#f1f5f9' : '#ffffff';
+          row.style.background = isThisActive ? '#eff6ff' : '#ffffff';
+          row.style.borderLeft = isThisActive ? '3px solid #2563eb' : '3px solid transparent';
+        }
+        if (btn) {
+          if (isThisActive) {
+            btn.className = 'badge rounded-pill';
+            btn.style.background = '#2563eb';
+            btn.style.color = '#ffffff';
+            btn.style.border = '1px solid #2563eb';
+            btn.style.boxShadow = '0 1px 3px rgba(37,99,235,0.3)';
+            btn.innerHTML = '<i class="bi bi-bar-chart-fill me-1"></i>기록접기 ▴';
+          } else {
+            btn.className = 'badge rounded-pill';
+            btn.style.background = '#ffffff';
+            btn.style.color = '#2563eb';
+            btn.style.border = '1px solid #93c5fd';
+            btn.style.boxShadow = 'none';
+            btn.innerHTML = '<i class="bi bi-bar-chart-fill me-1"></i>경기기록 ▾';
+          }
+        }
+        if (box) {
+          if (isThisActive) {
+            box.style.display = 'block';
+            box.innerHTML = renderTotokenH2hMatchBoxHtml(matchId, g, i);
+          } else {
+            box.style.display = 'none';
+            box.innerHTML = '';
+          }
         }
       });
-
-      if (box) {
-        if (activeIdx === null || activeIdx === undefined || !h2hMatches[activeIdx]) {
-          box.style.display = 'none';
-          box.innerHTML = '';
-        } else {
-          box.style.display = 'block';
-          box.innerHTML = renderTotokenH2hMatchBoxHtml(matchId, h2hMatches[activeIdx]);
-        }
-      }
     };
 
-    function renderTotokenH2hMatchBoxHtml(matchId, g) {
+    function renderTotokenH2hMatchBoxHtml(matchId, g, idx) {
       if (!g) return '';
       const hScore = g.home_score ?? 0;
       const aScore = g.away_score ?? 0;
@@ -8697,15 +8706,15 @@ function getFullModalMatchList() {
       const score2H_a = aScore - score1H_a;
 
       return `
-        <div class="border rounded p-2.5 mb-2 shadow-sm" style="background:#f8fafc; border-color:#cbd5e1 !important; animation: fadeIn 0.2s ease;">
+        <div class="p-2.5 border-top" style="background:#f8fafc; border-color:#e2e8f0 !important; animation: fadeIn 0.2s ease;">
           <div class="d-flex align-items-center justify-content-between pb-1.5 mb-2 border-bottom" style="border-color:#e2e8f0 !important;">
             <div class="d-flex align-items-center gap-1.5 flex-wrap">
               <span style="font-size:0.85rem;">🏆</span>
-              <span class="fw-bold text-dark" style="font-size:0.78rem;">[해당 경기 1:1 공식 경기 기록 (Match Box)]</span>
+              <span class="fw-bold text-dark" style="font-size:0.78rem;">공식 경기 기록지 (Match Box)</span>
               <span class="text-secondary small fw-medium">(${g.date} ${g.league})</span>
             </div>
-            <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1.5" style="font-size:0.65rem;" onclick="toggleTotokenH2hMatch('${matchId}', ${window._totokenActiveH2hMatch[matchId]})">
-              닫기 ✕
+            <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2" style="font-size:0.65rem;" onclick="event.stopPropagation(); toggleTotokenH2hMatch('${matchId}', ${idx})">
+              기록 닫기 ✕
             </button>
           </div>
 
@@ -9125,58 +9134,63 @@ function getFullModalMatchList() {
 
       const h2hListRowsHtml = listToRender.map((g, idx) => {
         const isThisActive = (activeIdx === idx);
+        const activeMatchBoxHtml = isThisActive ? renderTotokenH2hMatchBoxHtml(m.id, g, idx) : '';
         return `
-          <div class="d-flex align-items-center justify-content-between py-1.5 px-2 border-bottom"
-               id="totokenH2hRow_${m.id}_${idx}"
-               onclick="toggleTotokenH2hMatch('${m.id}', ${idx})"
-               style="background:${isThisActive ? '#f1f5f9' : '#ffffff'}; font-size:0.74rem; cursor:pointer; user-select:none; transition:background 0.15s ease;">
-            <div class="d-flex align-items-center gap-1.5 text-truncate" style="max-width:70%;">
-              <span id="totokenH2hInd_${m.id}_${idx}" class="fw-bold" style="font-size:0.85rem; color:${isThisActive ? '#2563eb' : '#94a3b8'}; min-width:14px; text-align:center;">
-                ${isThisActive ? '◉' : '○'}
-              </span>
-              <span class="fw-bold ${g.home === hName ? 'text-danger' : 'text-dark'} text-truncate" style="max-width:110px;">${g.home}</span>
-              <span class="fw-bold text-dark px-1">${g.score}</span>
-              <span class="fw-semibold ${g.away === aName ? 'text-primary' : 'text-secondary'} text-truncate" style="max-width:110px;">${g.away}</span>
+          <div class="h2h-item-card mb-1.5 rounded border"
+               id="totokenH2hCard_${m.id}_${idx}"
+               style="overflow:hidden; border-color:${isThisActive ? '#3b82f6' : '#e2e8f0'}; box-shadow:${isThisActive ? '0 2px 8px rgba(37,99,235,0.12)' : 'none'}; transition:all 0.2s ease;">
+            <!-- 매치 요약 바 (경기 클릭 시 아코디언 토글) -->
+            <div class="d-flex align-items-center justify-content-between p-2"
+                 id="totokenH2hRow_${m.id}_${idx}"
+                 onclick="toggleTotokenH2hMatch('${m.id}', ${idx})"
+                 style="background:${isThisActive ? '#eff6ff' : '#ffffff'}; border-left:${isThisActive ? '3px solid #2563eb' : '3px solid transparent'}; font-size:0.75rem; cursor:pointer; user-select:none; transition:background 0.15s ease;">
+              
+              <!-- 좌측: 날짜 & 리그 배지 + 팀 매치업 -->
+              <div class="d-flex align-items-center gap-1.5 text-truncate" style="max-width:75%;">
+                <span class="badge bg-light text-secondary border px-1.5 py-0.5 font-monospace" style="font-size:0.67rem; font-weight:600;">${g.date}</span>
+                <span class="badge bg-light text-primary border px-1.5 py-0.5 d-none d-sm-inline" style="font-size:0.65rem; border-color:#bfdbfe !important;">${g.league}</span>
+                <span class="fw-bold ${g.home === hName ? 'text-danger' : 'text-dark'} text-truncate ms-1" style="max-width:105px;">${g.home}</span>
+                <span class="badge px-2 py-0.5 rounded font-monospace fw-bold" style="background:${isThisActive ? '#2563eb' : '#1e293b'}; color:#ffffff; font-size:0.78rem; letter-spacing:0.5px;">${g.score}</span>
+                <span class="fw-semibold ${g.away === aName ? 'text-primary' : 'text-secondary'} text-truncate" style="max-width:105px;">${g.away}</span>
+              </div>
+
+              <!-- 우측: 모던 경기기록 토글 버튼 (원형 점 대체) -->
+              <div class="d-flex align-items-center">
+                <span id="totokenH2hBtn_${m.id}_${idx}"
+                      class="badge rounded-pill"
+                      style="background:${isThisActive ? '#2563eb' : '#ffffff'}; color:${isThisActive ? '#ffffff' : '#2563eb'}; border:1px solid ${isThisActive ? '#2563eb' : '#93c5fd'}; font-size:0.68rem; padding:3px 8px; box-shadow:${isThisActive ? '0 1px 3px rgba(37,99,235,0.3)' : 'none'}; transition:all 0.15s ease;">
+                  <i class="bi bi-bar-chart-fill me-1"></i>${isThisActive ? '기록닫기 ▴' : '기록보기 ▾'}
+                </span>
+              </div>
             </div>
-            <div class="d-flex align-items-center gap-1.5 text-secondary small fw-medium" style="font-size:0.68rem;">
-              <span class="d-none d-sm-inline">${g.league}</span>
-              <span>${g.date}</span>
-              <span id="totokenH2hBtn_${m.id}_${idx}" class="badge bg-light text-secondary border ms-1" style="font-size:0.65rem; padding:2px 5px;">
-                상세 ${isThisActive ? '∧' : '∨'}
-              </span>
+
+            <!-- 클릭된 경기 바로 아래에 펼쳐지는 Match Box -->
+            <div id="totokenH2hDetailBox_${m.id}_${idx}" style="${isThisActive ? 'display:block;' : 'display:none;'}">
+              ${activeMatchBoxHtml}
             </div>
           </div>
         `;
       }).join('');
 
-      const activeMatchBoxHtml = (activeIdx !== null && listToRender[activeIdx])
-        ? renderTotokenH2hMatchBoxHtml(m.id, listToRender[activeIdx])
-        : '';
-
       const h2hSectionHtml = `
         <div class="p-2 border-top" style="background:#ffffff;">
-          <!-- 토토켄 H2H 리스트 헤더 -->
-          <div class="d-flex justify-content-between align-items-center mb-1.5 px-1">
-            <span class="fw-bold text-dark" style="font-size:0.78rem;">
+          <!-- H2H 헤더 -->
+          <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+            <span class="fw-bold text-dark" style="font-size:0.80rem;">
               <i class="bi bi-clock-history me-1 text-primary"></i>상대전적 (H2H)
             </span>
             <span class="text-secondary small fw-medium" style="font-size:0.68rem;">
-              클릭 시 해당 경기 공식 기록지 열림 / 닫힘
+              경기를 클릭하면 해당 경기 공식 기록지가 바로 펼쳐집니다
             </span>
           </div>
 
-          <!-- 클릭 시 동적으로 펼쳐지는 Match Box 컨테이너 -->
-          <div id="totokenH2hDetailBox_${m.id}" style="${activeMatchBoxHtml ? '' : 'display:none;'}">
-            ${activeMatchBoxHtml}
-          </div>
-
-          <!-- 맞대결 과거 경기 목록 -->
-          <div class="d-flex flex-column gap-0.5 mb-2 rounded border" style="overflow:hidden; border-color:#e2e8f0;">
+          <!-- 맞대결 과거 경기 아코디언 리스트 -->
+          <div class="d-flex flex-column gap-1 mb-2">
             ${h2hListRowsHtml}
           </div>
 
-          <!-- 토토켄 공식 전적 통계 요약 배너 (실제 전적으로 자동 계산) -->
-          <div class="p-1.5 rounded text-center fw-bold" style="background:#f1f5f9; border:1px solid #e2e8f0; font-size:0.75rem; color:#334155;">
+          <!-- 공식 전적 통계 요약 배너 -->
+          <div class="p-2 rounded text-center fw-bold" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.75rem; color:#334155;">
             홈팀 <span class="text-danger fw-bold">${hName}</span> 기준 
             <span class="text-danger fw-bold">${hWins}승</span> 
             <span class="text-dark fw-bold">${hDraws}무</span> 
