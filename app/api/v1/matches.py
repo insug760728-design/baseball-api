@@ -506,10 +506,11 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
         "player_stats": data["player_stats"],
         "matchup_analysis": matchup_analysis,
         "history": hist_data,
-        "home_lineup": h_lineup,
-        "away_lineup": a_lineup,
-        "is_lineup_confirmed": is_lineup_confirmed,
-        "lineup_status": "CONFIRMED" if is_lineup_confirmed else "EXPECTED"
+        "soccer_lineup": details_ts.get("soccer_lineup") if isinstance(details_ts, dict) else None,
+        "home_lineup": h_lineup or (details_ts.get("soccer_lineup", {}).get("home", {}).get("starting_xi") if isinstance(details_ts, dict) else None),
+        "away_lineup": a_lineup or (details_ts.get("soccer_lineup", {}).get("away", {}).get("starting_xi") if isinstance(details_ts, dict) else None),
+        "is_lineup_confirmed": is_lineup_confirmed or (details_ts.get("soccer_lineup", {}).get("is_lineup_confirmed", False) if isinstance(details_ts, dict) else False),
+        "lineup_status": "CONFIRMED" if (is_lineup_confirmed or (details_ts.get("soccer_lineup", {}).get("is_lineup_confirmed", False) if isinstance(details_ts, dict) else False)) else "EXPECTED"
     }
     ttl = 10 if (res.get("status") == "LIVE") else (180 if res.get("status") == "SCHEDULED" else 1800)
     cache_set_json(ckey, res, ttl_seconds=ttl)
