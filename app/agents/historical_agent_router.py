@@ -248,6 +248,18 @@ class HistoricalAgentRouter:
             away_team = target.away_team_name
             league_code = cls.resolve_league_code(league_name, sport_code)
 
+            # 🏐 배구 (KOVO V-리그): 작년(2024-2025) 공식 API 데이터 우선 직결
+            if sport_code == 'VOLLEYBALL' or league_code == 'KOVO':
+                kovo_res = cls._get_kovo_volleyball_history(match_id, home_team, away_team, league_name, max_games)
+                if kovo_res:
+                    cls._MATCH_HISTORY_CACHE[cache_key] = (now_ts, kovo_res)
+                    try:
+                        from app.core.cache import cache_set_json
+                        cache_set_json(f"hist:{cache_key}", kovo_res, ttl_seconds=1800)
+                    except Exception:
+                        pass
+                    return kovo_res
+
             # 1. 팀명 동의어 및 세부 토큰 추출 (전체 매트릭스 활용)
             from app.services.betman_service import TEAM_SYNONYMS as BS
             from app.services.live_api_sports_service import TEAM_SYNONYMS as LS
@@ -1802,3 +1814,149 @@ class HistoricalAgentRouter:
             return res_data
         finally:
             db.close()
+
+    @classmethod
+    def _get_kovo_volleyball_history(cls, match_id: int, home_team: str, away_team: str, league_name: str, max_games: int = 10) -> Optional[Dict[str, Any]]:
+        """KOVO V-리그 작년(2024-2025) 공식 API 실데이터 기반 H2H/최근경기/분석지표 정밀 생성"""
+        KOVO_NAME_TO_CODE = {
+            '대한항공': '1001', '대한항공점보스': '1001', '점보스': '1001',
+            '삼성화재': '1002', '삼성화재블루팡스': '1002', '블루팡스': '1002',
+            'KB손해보험': '1004', 'KB손보': '1004', 'KB손해보험스타즈': '1004', 'KB스타즈': '1004',
+            '현대캐피탈': '1005', '현대캐피탈스카이워커스': '1005', '스카이워커스': '1005',
+            '한국전력': '1006', '한국전력빅스톰': '1006', '빅스톰': '1006', '한전': '1006',
+            'OK금융그룹': '1008', 'OK저축은행': '1008', 'OK금융': '1008', '루키즈': '1008', '안산OK': '1008',
+            '우리카드': '1009', '우리카드우리WON': '1009', '우리WON': '1009',
+            '흥국생명': '2001', '흥국생명핑크스파이더스': '2001', '핑크스파이더스': '2001',
+            '한국도로공사': '2002', '도로공사': '2002', '하이패스': '2002',
+            '현대건설': '2003', '현대건설힐스테이트': '2003', '힐스테이트': '2003',
+            'GS칼텍스': '2005', 'GS칼텍스서울KIXX': '2005', 'KIXX': '2005', 'kixx': '2005',
+            'IBK기업은행': '2006', '기업은행': '2006', 'IBK': '2006', '알토스': '2006',
+            '페퍼저축은행': '2007', '페퍼저축': '2007', '페퍼': '2007', 'AI PEPPERS': '2007',
+            '정관장': '2004', '정관장레드스파크스': '2004',
+        }
+        def _resolve(n):
+            cl = (n or '').replace(' ', '').replace('_', '').replace('·', '').replace('-', '')
+            for k, v in KOVO_NAME_TO_CODE.items():
+                if k in cl or cl in k: return v
+            return None
+
+        h_code = _resolve(home_team)
+        a_code = _resolve(away_team)
+        if not h_code or not a_code:
+            return None
+
+        try:
+            import sys, os
+            root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            vb_dir = os.path.join(root, "volleyball_server")
+            if vb_dir not in sys.path:
+                sys.path.insert(0, vb_dir)
+            import kovo_service as kovo
+
+            # 2024-2025(작년 기준 공식 시즌 코드 '021')
+            h2h_data = kovo.get_h2h_with_analytics(h_code, a_code, season_code='021')
+            h_rec_data = kovo.get_recent_results(h_code, season_code='021', limit=max_games)
+            a_rec_data = kovo.get_recent_results(a_code, season_code='021', limit=max_games)
+
+            formatted_h2h = []
+            for g in h2h_data.get('games', []):
+                h_sets = g.get('home_sets', 0)
+                a_sets = g.get('away_sets', 0)
+                is_h_win = h_sets > a_sets
+                formatted_h2h.append({
+                    'match_id': 880000 + abs(hash(str(g.get('date', '')) + str(g.get('home_team', '')))) % 10000,
+                    'date': g.get('date', ''),
+                    'match_date': (g.get('date', '') + ' 19:00') if g.get('date') else '',
+                    'home_team_name': g.get('home_team', ''),
+                    'away_team_name': g.get('away_team', ''),
+                    'home_team': g.get('home_team', ''),
+                    'away_team': g.get('away_team', ''),
+                    'home_score': h_sets,
+                    'away_score': a_sets,
+                    'score': g.get('score_display', f"{h_sets} - {a_sets}"),
+                    'league_name': g.get('season', 'KOVO V-리그'),
+                    'opponent': g.get('away_team', '') if g.get('home_team') == home_team else g.get('home_team', ''),
+                    'result': 'WIN' if is_h_win else 'LOSS',
+                    'result_kr': '승' if is_h_win else '패',
+                    'result_emoji': '✅' if is_h_win else '❌',
+                    'set_scores': g.get('set_scores', []),
+                    'place': g.get('place', ''),
+                    'volleyball_stats': {
+                        'set_scores': g.get('set_scores', []),
+                        'home_sets': h_sets,
+                        'away_sets': a_sets
+                    }
+                })
+
+            def _fmt_recent(rec_list, my_tname):
+                out = []
+                for rg in rec_list:
+                    h_sets = rg.get('home_sets', 0)
+                    a_sets = rg.get('away_sets', 0)
+                    is_w = rg.get('my_result') == 'W'
+                    out.append({
+                        'match_id': 890000 + abs(hash(str(rg.get('date', '')) + str(rg.get('home_team', '')))) % 10000,
+                        'date': rg.get('date', ''),
+                        'match_date': (rg.get('date', '') + ' 19:00') if rg.get('date') else '',
+                        'home_away': '홈' if rg.get('is_home') else '원정',
+                        'perspective_team': my_tname,
+                        'home_team_name': rg.get('home_team', ''),
+                        'away_team_name': rg.get('away_team', ''),
+                        'home_team': rg.get('home_team', ''),
+                        'away_team': rg.get('away_team', ''),
+                        'home_score': h_sets,
+                        'away_score': a_sets,
+                        'team_score': rg.get('my_sets', 0),
+                        'opp_score': rg.get('opp_sets', 0),
+                        'score': rg.get('score_display', f"{h_sets} - {a_sets}"),
+                        'league_name': rg.get('season', 'KOVO V-리그'),
+                        'opponent': rg.get('opp_team', ''),
+                        'result': 'WIN' if is_w else 'LOSS',
+                        'result_kr': '승' if is_w else '패',
+                        'result_emoji': '✅' if is_w else '❌',
+                        'set_scores': rg.get('set_scores', []),
+                        'place': rg.get('place', ''),
+                        'volleyball_stats': {
+                            'set_scores': rg.get('set_scores', []),
+                            'my_sets': rg.get('my_sets', 0),
+                            'opp_sets': rg.get('opp_sets', 0)
+                        }
+                    })
+                return out
+
+            formatted_h_recent = _fmt_recent(h_rec_data.get('games', []), home_team)
+            formatted_a_recent = _fmt_recent(a_rec_data.get('games', []), away_team)
+
+            h_wins = h2h_data.get('team1_wins', 0)
+            a_wins = h2h_data.get('team2_wins', 0)
+
+            return {
+                'status': 'success',
+                'match_id': match_id,
+                'sport_code': 'VOLLEYBALL',
+                'league_name': league_name or 'KOVO V-리그',
+                'league_code': 'KOVO',
+                'home_team': home_team,
+                'away_team': away_team,
+                'home_team_name': home_team,
+                'away_team_name': away_team,
+                'home_recent': formatted_h_recent,
+                'away_recent': formatted_a_recent,
+                'h2h_matches': formatted_h2h,
+                'h2h_summary': {
+                    'total_matches': len(formatted_h2h),
+                    'home_wins': h_wins,
+                    'draws': 0,
+                    'away_wins': a_wins,
+                    'summary_text': f"{h_wins}승 {a_wins}패"
+                },
+                'volleyball_analytics': {
+                    'season': '2024~2025 V-리그 (작년 공식)',
+                    'team1': h2h_data.get('team1_analytics', {}),
+                    'team2': h2h_data.get('team2_analytics', {})
+                }
+            }
+        except Exception as e:
+            logger.error(f"[KOVO] Error loading volleyball history: {e}")
+            return None
+

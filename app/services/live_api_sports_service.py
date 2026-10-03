@@ -3567,8 +3567,8 @@ class LiveApiSportsService:
         if len(away_xi) < 7:
             away_xi, away_subs = _get_smart_squad(away_name, False)
 
-        # 시작 전 경기(SCHEDULED)는 경기 개시 약 40~60분 전 심판 확정 전까지 '선발 발표 대기(EXPECTED)' 유지
-        if not fixture_id or (match and match.status == 'SCHEDULED'):
+        # 시작 전 경기(SCHEDULED)이거나 라인업이 불완전(7명 미만)할 경우 심판/연맹 공식 발표 전까지 '선발 발표 대기(EXPECTED)' 유지
+        if not fixture_id or (match and match.status == 'SCHEDULED') or len(home_xi) < 7 or len(away_xi) < 7:
             is_confirmed = False
 
         # 6. 선수별 이벤트 필드 초기화 (골, 카드, 교체 IN/OUT)
@@ -4058,32 +4058,8 @@ class LiveApiSportsService:
                 _find_and_tag(ukr_s, "나자렌코", sub_in="86'")
 
             elif is_game_active and (h_score_val > 0 or a_score_val > 0):
-                # 다른 경기의 일반 스마트 이벤트 생성
-                h_fw_list = [p for p in home_xi if p.get("pos") in ["FW", "MF"]] or home_xi
-                h_goal_times = [f"{t}'" for t in [12, 53, 78, 86][:h_score_val]]
-                for g_idx, g_time in enumerate(h_goal_times):
-                    scorer = h_fw_list[g_idx % len(h_fw_list)]
-                    scorer["goals"].append(g_time)
-                    events_timeline.append({
-                        "time": g_time, "elapsed": int(g_time.replace("'", "")), "type": "Goal",
-                        "detail": "Normal Goal", "icon": "⚽", "team_side": "home",
-                        "team_name": home_name, "player_name": scorer["name"], "assist_name": "",
-                        "display_text": f"{g_time} - ⚽ ({home_name}) {scorer['name']}"
-                    })
-
-                a_fw_list = [p for p in away_xi if p.get("pos") in ["FW", "MF"]] or away_xi
-                a_goal_times = [f"{t}'" for t in [5, 34, 71, 90][:a_score_val]]
-                for g_idx, g_time in enumerate(a_goal_times):
-                    scorer = a_fw_list[g_idx % len(a_fw_list)]
-                    scorer["goals"].append(g_time)
-                    events_timeline.append({
-                        "time": g_time, "elapsed": int(g_time.replace("'", "")), "type": "Goal",
-                        "detail": "Normal Goal", "icon": "⚽", "team_side": "away",
-                        "team_name": away_name, "player_name": scorer["name"], "assist_name": "",
-                        "display_text": f"{g_time} - ⚽ ({away_name}) {scorer['name']}"
-                    })
-
-                events_timeline.sort(key=lambda x: x.get("elapsed", 0))
+                # 🛡️ 공식 API 이벤트가 없을 경우 허구의 득점자/시간 조작 원천 차단 (스코어보드 수치만 유지)
+                pass
 
         news_text = "공식 선발 라인업 발표 완료 (협회 및 연맹 공식 제출 명단)" if is_confirmed else "공식 선발 발표 대기 중 (경기 시작 약 1시간 전 최종 확정 발표)"
         if home_injuries or away_injuries:

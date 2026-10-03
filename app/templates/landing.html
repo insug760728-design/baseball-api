@@ -8771,14 +8771,6 @@ function getFullModalMatchList() {
         (m.status !== 'SCHEDULED' && m.home_score !== null && m.home_score !== undefined && m.home_score !== '' && Number(m.home_score) > 0)
       );
 
-      const isLineupConfirmed = !!(
-        m.is_lineup_confirmed === true ||
-        m.lineup_confirmed === true ||
-        m.lineup_status === 'CONFIRMED' ||
-        isLiveOrFinished ||
-        (m.home_lineup && m.home_lineup.length >= 7 && m.lineup_status !== 'EXPECTED')
-      );
-
       const hName = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : (m.home_team_name || '홈팀');
       const aName = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : (m.away_team_name || '원정팀');
       const hFlagImg = getTeamFlagImg(m.home_team_name, 18, 12);
@@ -8792,6 +8784,15 @@ function getFullModalMatchList() {
       const aXI = (aData.starting_xi && aData.starting_xi.length > 0) ? aData.starting_xi : (m.away_lineup || []);
       const hSubs = hData.substitutes || [];
       const aSubs = aData.substitutes || [];
+
+      // 🛡️ [엄격 검증] 선발 명단이 실제로 7명 이상 있고, 상태가 CONFIRMED인 경우에만 '선발확정'으로 표기 (가짜 확정 원천 차단)
+      const isLineupConfirmed = !!(
+        (m.is_lineup_confirmed === true || m.lineup_confirmed === true || m.lineup_status === 'CONFIRMED' || soccerData.is_lineup_confirmed === true) &&
+        m.lineup_status !== 'EXPECTED' &&
+        m.lineup_status !== 'UNCONFIRMED' &&
+        (hXI && hXI.length >= 7) &&
+        (aXI && aXI.length >= 7)
+      );
 
       const eventsList = soccerData.events_timeline || [];
       const statsObj = soccerData.match_stats || null;
@@ -8986,9 +8987,9 @@ function getFullModalMatchList() {
       let xiRowsHtml = '';
       if (hXI.length === 0 && aXI.length === 0) {
         xiRowsHtml = `
-          <div class="py-4 text-center text-secondary fw-semibold" style="font-size:0.78rem; background:#ffffff;">
-            <span class="spinner-border spinner-border-sm me-1.5 text-primary" role="status" style="width:14px; height:14px; border-width:2px;"></span>
-            공식 선발 라인업 및 경기 데이터를 실시간 조회 중입니다...
+          <div class="py-4 text-center text-secondary fw-semibold" style="font-size:0.76rem; background:#f8fafc; border:1px dashed #cbd5e1; margin:10px 8px; border-radius:8px;">
+            <i class="bi bi-clock-history me-1 text-primary"></i>공식 선발 라인업 발표 대기 중<br>
+            <span style="font-size:0.68rem; color:#94a3b8; font-weight:normal;">(경기 시작 약 40~60분 전 주최측 및 양 구단 공식 제출 시 실시간 자동 반영됩니다)</span>
           </div>
         `;
       } else {
@@ -9073,14 +9074,8 @@ function getFullModalMatchList() {
           { home: '아르메니아', away: '몬테네그로', home_score: 3, away_score: 2, score: '3 : 2', league: 'WC예선', date: '2016.11.11', poss_h: 47, poss_a: 53, shots_h: '11 (5)', shots_a: '13 (6)', yellow_h: 3, yellow_a: 2, corner_h: 5, corner_a: 6 }
         ];
       } else {
-        const seed = Array.from(hName + aName).reduce((acc, c) => acc + c.charCodeAt(0), 0);
-        const lName = m.league_name || '국제대회';
-        const s1_h = (seed % 3), s1_a = ((seed + 1) % 2);
-        const s2_h = ((seed + 2) % 3), s2_a = ((seed + 3) % 4);
-        listToRender = [
-          { home: hName, away: aName, home_score: s1_h, away_score: s1_a, score: `${s1_h} : ${s1_a}`, league: lName, date: '2024.06.10', poss_h: 50 + (seed % 10) - 5, poss_a: 50 - ((seed % 10) - 5), shots_h: `${s1_h + 4} (${s1_h + 2})`, shots_a: `${s1_a + 4} (${s1_a + 2})`, yellow_h: 1, yellow_a: 2, corner_h: 5, corner_a: 4 },
-          { home: aName, away: hName, home_score: s2_h, away_score: s2_a, score: `${s2_h} : ${s2_a}`, league: lName, date: '2023.11.18', poss_h: 50 + ((seed + 3) % 10) - 5, poss_a: 50 - (((seed + 3) % 10) - 5), shots_h: `${s2_h + 4} (${s2_h + 2})`, shots_a: `${s2_a + 4} (${s2_a + 2})`, yellow_h: 2, yellow_a: 1, corner_h: 4, corner_a: 6 }
-        ];
+        // 🛡️ 공식 맞대결 데이터가 없을 경우 가짜 경기 일자/스코어 생성 원천 차단
+        listToRender = [];
       }
 
       // 캐시에 저장하여 클릭 토글 이벤트 시 즉각 활용 (초기화 보장으로 TypeError 방지)
@@ -9106,7 +9101,7 @@ function getFullModalMatchList() {
       window._totokenActiveH2hMatch = window._totokenActiveH2hMatch || {};
       const activeIdx = (window._totokenActiveH2hMatch[m.id] !== undefined) ? window._totokenActiveH2hMatch[m.id] : null;
 
-      const h2hListRowsHtml = listToRender.map((g, idx) => {
+      const h2hListRowsHtml = listToRender.length > 0 ? listToRender.map((g, idx) => {
         const isThisActive = (activeIdx === idx);
         const activeMatchBoxHtml = isThisActive ? renderTotokenH2hMatchBoxHtml(m.id, g, idx) : '';
         return `
@@ -9144,7 +9139,11 @@ function getFullModalMatchList() {
             </div>
           </div>
         `;
-      }).join('');
+      }).join('') : `
+        <div class="py-3 px-2 text-center text-muted" style="font-size:0.74rem; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:6px; margin:4px 0;">
+          <i class="bi bi-info-circle me-1 text-secondary"></i>최근 양 팀 공식 맞대결 기록이 없습니다 (첫 공식 맞대결)
+        </div>
+      `;
 
       const h2hSectionHtml = `
         <div class="p-2 border-top" style="background:#ffffff;">
@@ -9154,7 +9153,7 @@ function getFullModalMatchList() {
               <i class="bi bi-clock-history me-1 text-primary"></i>상대전적 (H2H)
             </span>
             <span class="text-secondary small fw-medium" style="font-size:0.68rem;">
-              경기를 클릭하면 해당 경기 공식 기록지가 바로 펼쳐집니다
+              ${listToRender.length > 0 ? '경기를 클릭하면 해당 경기 공식 기록지가 바로 펼쳐집니다' : '공식 데이터베이스 기준'}
             </span>
           </div>
 
@@ -9165,12 +9164,16 @@ function getFullModalMatchList() {
 
           <!-- 공식 전적 통계 요약 배너 -->
           <div class="p-2 rounded text-center fw-bold" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.75rem; color:#334155;">
-            홈팀 <span class="text-danger fw-bold">${hName}</span> 기준 
-            <span class="text-danger fw-bold">${hWins}승</span> 
-            <span class="text-dark fw-bold">${hDraws}무</span> 
-            <span class="text-primary fw-bold">${hLosses}패</span> 
-            <span class="text-danger ms-1">${avgScored}득</span> 
-            <span class="text-primary">${avgConceded}실</span>
+            ${listToRender.length > 0 ? `
+              홈팀 <span class="text-danger fw-bold">${hName}</span> 기준 
+              <span class="text-danger fw-bold">${hWins}승</span> 
+              <span class="text-dark fw-bold">${hDraws}무</span> 
+              <span class="text-primary fw-bold">${hLosses}패</span> 
+              <span class="text-danger ms-1">${avgScored}득</span> 
+              <span class="text-primary">${avgConceded}실</span>
+            ` : `
+              <span class="text-secondary fw-semibold">최근 공식 맞대결 전적 기록 없음 (첫 공식 맞대결)</span>
+            `}
           </div>
         </div>
       `;
@@ -9189,7 +9192,7 @@ function getFullModalMatchList() {
                   ? `<span class="badge ${m.status === 'LIVE' ? 'bg-danger' : 'bg-secondary'} text-white fw-bold" style="font-size:0.65rem; padding:2px 6px;">${m.status === 'LIVE' ? 'LIVE 진행중' : '경기종료'}</span>`
                   : (isLineupConfirmed
                       ? '<span class="badge bg-success text-white fw-bold" style="font-size:0.65rem; padding:2px 6px;">선발확정</span>'
-                      : '<span class="badge bg-warning text-dark fw-bold" style="font-size:0.65rem; padding:2px 6px;">선발대기</span>')}
+                      : '<span class="badge bg-secondary text-white fw-bold" style="font-size:0.65rem; padding:2px 6px;">선발대기</span>')}
               </div>
               <div class="d-flex align-items-center gap-1">
                 <button class="btn btn-sm btn-outline-secondary fw-bold" id="btnRefreshSoccerLineup_${m.id}" onclick="refreshSoccerLineupRealtime(${m.id})" style="font-size:0.70rem; padding:2px 8px; border-radius:4px;">
@@ -9235,7 +9238,7 @@ function getFullModalMatchList() {
             ${!isLineupConfirmed ? `
               <div class="px-2 py-1.5 text-center border-bottom d-flex align-items-center justify-content-center gap-1.5" style="background:#f8fafc; font-size:0.71rem; color:#475569;">
                 <span class="badge bg-secondary-subtle text-secondary border py-0.5 px-1.5" style="font-size:0.64rem;">공식 발표 대기</span>
-                <span>경기 개시 약 40~60분 전 대회 공식 선발 라인업 발표 시 자동 확정 갱신됩니다 (현재: 국가대표팀 엔트리).</span>
+                <span>경기 개시 약 40~60분 전 연맹 및 구단 공식 선발 라인업 제출 시 실시간 확정 반영됩니다.</span>
               </div>
             ` : ''}
 
@@ -17966,54 +17969,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
     // ⚡ [정적 모듈 로드됨] REAL_TEAM_ROSTERS 는 /static/data/rosters_master.js 로 분리 캐싱됨
 
 
-    // Generic Foreign Soccer Players Database (Realistic Korean Translated Foreign Player Names)
-    const FOREIGN_SOCCER_NAMES_POOL = [
-      { name: '다비드 마르티네스', r1: '선방률 76%', r2: '클린시트 11회', ops: '평점 7.3' },
-      { name: '토마스 카르발류', r1: '태클 80%', r2: '가로채기 35회', ops: '평점 7.2' },
-      { name: '마르틴 슐츠', r1: '경합승리 82%', r2: '클리어링 80회', ops: '평점 7.4' },
-      { name: '루카스 실바', r1: '태클 78%', r2: '가로채기 40회', ops: '평점 7.3' },
-      { name: '알렉스 모레노', r1: '3도움', r2: '크로스 30%', ops: '평점 7.2' },
-      { name: '마테오 로드리게스', r1: '패스성공 89%', r2: '가로채기 52회', ops: '평점 7.5' },
-      { name: '세바스티안 로페즈', r1: '4골 7도움', r2: '키패스 42회', ops: '평점 7.6' },
-      { name: '니콜라스 산체스', r1: '8골 9도움', r2: '기회창출 50회', ops: '평점 7.8' },
-      { name: '가브리엘 코스타', r1: '11골 7도움', r2: '드리블 45회', ops: '평점 7.7' },
-      { name: '안토니오 페레즈', r1: '12골 6도움', r2: '유효슈팅 40회', ops: '평점 7.8' },
-      { name: '마르쿠스 페르난데스', r1: '16골 5도움', r2: '골결정력 25%', ops: '평점 8.0' }
-    ];
+    // 🛡️ 가짜 더미 선수 생성 풀 완전 제거 (오직 공식 데이터베이스 및 실시간 API 데이터만 사용)
 
-    // Generic NBA Basketball Players Database
-    const FOREIGN_BASKETBALL_NAMES_POOL = [
-      { name: '타일러 잭슨', r1: '18.4점', r2: '7.2어시', ops: 'FG 46.5%' },
-      { name: '제이든 브룩스', r1: '19.2점', r2: '4.1리바', ops: '3점 39.8%' },
-      { name: '브랜든 카터', r1: '21.5점', r2: '6.2리바', ops: 'FG 49.0%' },
-      { name: '자비에 윌리엄스', r1: '16.8점', r2: '8.8리바', ops: 'FG 52.4%' },
-      { name: '마커스 홀', r1: '14.5점', r2: '11.2리바', ops: '1.9블록' }
-    ];
-
-    // Generic Korean Player Names Database
-    const KOREAN_ROSTER_NAMES_POOL = [
-      { name: '김도현', r1: '.288', r2: '15홈런', ops: '18도루' },
-      { name: '이현우', r1: '.275', r2: '12홈런', ops: '24도루' },
-      { name: '박준호', r1: '.305', r2: '24홈런', ops: '85타점' },
-      { name: '최민석', r1: '.312', r2: '28홈런', ops: '96타점' },
-      { name: '강태훈', r1: '.268', r2: '16홈런', ops: '68타점' },
-      { name: '정성우', r1: '.255', r2: '10홈런', ops: '출루 .345' },
-      { name: '윤도현', r1: '.262', r2: '8홈런', ops: '수비특급' },
-      { name: '송민규', r1: '.248', r2: '11홈런', ops: '도루저지 35%' },
-      { name: '한재원', r1: '.270', r2: '14홈런', ops: 'OPS .790' }
-    ];
-
-    const FOREIGN_ROSTER_NAMES_POOL = [
-      { name: '마커스 윌슨', r1: '.282', r2: '18도루', ops: '출루 .345' },
-      { name: '카를로스 로페즈', r1: '.268', r2: '12도루', ops: '수비율 .985' },
-      { name: '데이비드 밀러', r1: '.295', r2: '22홈런', ops: 'OPS .865' },
-      { name: '알렉스 로드리게스', r1: '.305', r2: '32홈런', ops: '98타점' },
-      { name: '제임스 앤더슨', r1: '.272', r2: '16홈런', ops: '70타점' },
-      { name: '루카스 마르티네스', r1: '.258', r2: '14홈런', ops: 'OPS .780' },
-      { name: '타일러 브라운', r1: '.252', r2: '8홈런', ops: '작전수행' },
-      { name: '크리스찬 디아즈', r1: '.245', r2: '10홈런', ops: '도루저지 34%' },
-      { name: '라이언 테일러', r1: '.260', r2: '15홈런', ops: 'OPS .810' }
-    ];
 
     // Dynamic Team Roster Generator (10-Player Baseball / 5-Player Basketball / 11-Player Soccer)
     function getDynamicTeamRoster(teamName, sportCode, starterName) {
@@ -18036,143 +17993,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
       }
 
-      // 2. High-Quality Sport-Specific Realistic Korean/Foreign Name Generation
-      if (isBaseball) {
-        const pName = starterName || `${name} 선발`;
-        const isKoreanTeam = ['KIA','삼성','LG','두산','KT','SSG','NC','한화','롯데','키움'].some(k => name.includes(k));
-        const pool = isKoreanTeam ? KOREAN_ROSTER_NAMES_POOL : FOREIGN_ROSTER_NAMES_POOL;
-        
-        const posList = [
-          { pos: 'CF', posKr: '중견수', top: '14%', left: '50%', badge: '1번·CF' },
-          { pos: 'SS', posKr: '유격수', top: '40%', left: '36%', badge: '2번·SS' },
-          { pos: 'RF', posKr: '우익수', top: '22%', left: '80%', badge: '3번·RF' },
-          { pos: '1B', posKr: '1루수', top: '56%', left: '78%', badge: '4번·1B' },
-          { pos: '3B', posKr: '3루수', top: '56%', left: '22%', badge: '5번·3B' },
-          { pos: 'LF', posKr: '좌익수', top: '22%', left: '20%', badge: '6번·LF' },
-          { pos: '2B', posKr: '2루수', top: '40%', left: '64%', badge: '7번·2B' },
-          { pos: 'C', posKr: '포수', top: '82%', left: '50%', badge: '8번·C' },
-          { pos: 'DH', posKr: '지명타자', top: '92%', left: '50%', badge: '9번·DH' }
-        ];
-
-        return [
-          { order: '선발', no: 11, name: pName, pos: 'P', posKr: '선발투수', g: 26, r1: '10승 5패', r2: 'ERA 2.85', ops: 'WHIP 1.05', top: '15%', left: '50%', badge: '⚾ 선발P' },
-          ...posList.map((pInfo, idx) => {
-            const playerInfo = pool[idx % pool.length];
-            return {
-              order: idx + 1,
-              no: (idx * 7 + 3) % 99 + 1,
-              name: playerInfo.name,
-              pos: pInfo.pos,
-              posKr: pInfo.posKr,
-              g: 115 + (idx * 3),
-              r1: playerInfo.r1,
-              r2: playerInfo.r2,
-              ops: playerInfo.ops,
-              top: pInfo.top,
-              left: pInfo.left,
-              badge: pInfo.badge
-            };
-          })
-        ];
-      }
-
-      if (isBasketball) {
-        const isKoreanTeam = ['KCC', 'DB', 'SK', 'LG', 'KT', '삼성', '정관장', '가스공사', '현대모비스', '소노', '우리은행', 'KB스타즈', '하나은행', '신한은행', 'BNK', '삼성생명'].some(k => name.includes(k));
-        const bbNames = isKoreanTeam 
-          ? ['김선형', '이정현', '허훈', '강상재', '라건아']
-          : ['타일러 잭슨', '제이든 브룩스', '브랜든 카터', '자비에 윌리엄스', '마커스 홀'];
-        
-        const bbPositions = [
-          { pos: 'PG', posKr: '포인트가드', top: '80%', left: '50%', badge: 'PG 리딩' },
-          { pos: 'SG', posKr: '슈팅가드', top: '65%', left: '22%', badge: 'SG 슈터' },
-          { pos: 'SF', posKr: '스몰포워드', top: '48%', left: '26%', badge: 'SF 에이스' },
-          { pos: 'PF', posKr: '파워포워드', top: '48%', left: '74%', badge: 'PF 포워드' },
-          { pos: 'C', posKr: '센터', top: '28%', left: '50%', badge: 'C 골밑수문장' }
-        ];
-        return bbPositions.map((p, idx) => {
-          const poolItem = (!isKoreanTeam) ? FOREIGN_BASKETBALL_NAMES_POOL[idx] : null;
-          return {
-            order: idx + 1,
-            no: (idx * 11 + 3) % 50 + 1,
-            name: bbNames[idx],
-            pos: p.pos,
-            posKr: p.posKr,
-            g: 54,
-            r1: poolItem ? poolItem.r1 : `${14 + idx * 3}점`,
-            r2: poolItem ? poolItem.r2 : `${4 + idx * 2}리바`,
-            ops: poolItem ? poolItem.ops : `FG ${45 + idx * 2}%`,
-            top: p.top,
-            left: p.left,
-            badge: p.badge
-          };
-        });
-      }
-
-      // Soccer: 11 Players (Proper foreign/Korean player names and realistic positional stats)
-      const isKoreanSoccer = ['울산', '전북', '서울', '포항', '광주', '대전', '수원', '인천', '제주', '강원', '김천', '대구', '대한민국', '한국'].some(k => name.includes(k));
-      const scPositions = [
-        { pos: 'GK', posKr: '골키퍼', top: '88%', left: '50%', badge: 'GK 골키퍼' },
-        { pos: 'RB', posKr: '우측수비', top: '70%', left: '84%', badge: 'RB 풀백' },
-        { pos: 'CB', posKr: '중앙수비', top: '74%', left: '62%', badge: 'CB 수비' },
-        { pos: 'CB', posKr: '중앙수비', top: '74%', left: '38%', badge: 'CB 주장' },
-        { pos: 'LB', posKr: '좌측수비', top: '70%', left: '16%', badge: 'LB 풀백' },
-        { pos: 'CDM', posKr: '수비MF', top: '56%', left: '72%', badge: 'CDM 앵커' },
-        { pos: 'CM', posKr: '중앙MF', top: '48%', left: '28%', badge: 'CM 중원' },
-        { pos: 'CAM', posKr: '공격형MF', top: '42%', left: '50%', badge: 'CAM 조율' },
-        { pos: 'RW', posKr: '우측공격', top: '22%', left: '80%', badge: 'RW 윙어' },
-        { pos: 'LW', posKr: '좌측공격', top: '22%', left: '20%', badge: 'LW 에이스' },
-        { pos: 'FW', posKr: '원톱스트라이커', top: '16%', left: '50%', badge: 'FW 득점원' }
-      ];
-
-      if (isKoreanSoccer) {
-        const scKrNames = ['조현우', '설영우', '김민재', '김영권', '이명재', '황인범', '박용우', '이재성', '이강인', '손흥민', '조규성'];
-        const scKrStats = [
-          { r1: '선방률 79%', r2: '클린시트 12회', ops: '평점 7.4' },
-          { r1: '1골 4도움', r2: '태클 78%', ops: '평점 7.2' },
-          { r1: '경합승리 88%', r2: '가로채기 65회', ops: '평점 7.8' },
-          { r1: '태클 80%', r2: '클리어링 70회', ops: '평점 7.3' },
-          { r1: '3도움', r2: '패스 86%', ops: '평점 7.2' },
-          { r1: '패스성공 91%', r2: '가로채기 50회', ops: '평점 7.6' },
-          { r1: '패스 88%', r2: '활동량 11.5km', ops: '평점 7.3' },
-          { r1: '5골 6도움', r2: '키패스 48회', ops: '평점 7.6' },
-          { r1: '8골 8도움', r2: '기회창출 60회', ops: '평점 7.9' },
-          { r1: '15골 9도움', r2: '캡틴·에이스', ops: '평점 8.2' },
-          { r1: '12골 3도움', r2: '공중볼승리 68%', ops: '평점 7.7' }
-        ];
-        return scPositions.map((p, idx) => ({
-          order: idx + 1,
-          no: (idx === 9 ? 7 : (idx === 8 ? 10 : (idx === 10 ? 9 : idx + 1))),
-          name: scKrNames[idx],
-          pos: p.pos,
-          posKr: p.posKr,
-          g: 32,
-          r1: scKrStats[idx].r1,
-          r2: scKrStats[idx].r2,
-          ops: scKrStats[idx].ops,
-          top: p.top,
-          left: p.left,
-          badge: p.badge
-        }));
-      }
-
-      // Foreign Soccer fallback
-      return scPositions.map((p, idx) => {
-        const poolItem = FOREIGN_SOCCER_NAMES_POOL[idx] || FOREIGN_SOCCER_NAMES_POOL[0];
-        return {
-          order: idx + 1,
-          no: (idx + 1),
-          name: poolItem.name,
-          pos: p.pos,
-          posKr: p.posKr,
-          g: 34,
-          r1: poolItem.r1,
-          r2: poolItem.r2,
-          ops: poolItem.ops,
-          top: p.top,
-          left: p.left,
-          badge: p.badge
-        };
-      });
+      // 🛡️ 공식 등록 로스터가 없을 경우 가짜 선수 이름 생성 원천 차단 (공식 발표 대기 유지)
+      return [];
     }
 
     function renderVisualFieldHtml(roster, isBaseball, isBasketball, teamColor, teamName) {

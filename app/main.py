@@ -75,24 +75,6 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[WARN] 초기 경기 캐시 프리로드 오류: {e}")
 
-    # ⏱️ Render Hobby 플랜은 24시간 상시 가동(Never Sleeps)되므로 외부 핑 불필요
-    # 내부 루프백(127.0.0.1) 상태 점검만 수행하여 대역폭 소모 0Byte 달성
-    async def _keep_alive_daemon():
-        import urllib.request
-        while True:
-            try:
-                port_val = os.getenv('PORT', '9050')
-                ping_url = f"http://127.0.0.1:{port_val}/health"
-                req = urllib.request.Request(ping_url, headers={"User-Agent": "TOKEON-InternalHealth/1.0"})
-                with urllib.request.urlopen(req, timeout=5) as resp:
-                    pass
-            except Exception:
-                pass
-    try:
-        import asyncio
-        asyncio.create_task(_keep_alive_daemon())
-    except Exception as e:
-        print(f"[WARN] Keep-Alive 데몬 등록 오류: {e}")
 
     # 🔄 서버 시작 90초 후 전종목 신속 동기화 (부팅 직후 DB 락 및 512MB RAM 스파이크 완벽 방지)
     try:
