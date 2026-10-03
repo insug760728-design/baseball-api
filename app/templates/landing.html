@@ -20414,8 +20414,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
           hVal: `${errH}개`,
           aVal: `${errA}개`,
           unit: '경기당 실책',
-          badge: (Number(errH) < Number(errA)) ? `[홈] ${hName} 범실 억제 우수` : (Number(errH) > Number(errA)) ? `[원정] ${aName} 범실 억제 우수` : '범실 호각세'),
-          badgeClass: (Number(errH) < Number(errA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(errH) > Number(errA)) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
+          badge: (Number(errH) < Number(errA)) ? `[홈] ${hName} 범실 억제 우수` : (Number(errH) > Number(errA)) ? `[원정] ${aName} 범실 억제 우수` : '범실 호각세',
+          badgeClass: (Number(errH) < Number(errA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(errH) > Number(errA)) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle',
           desc: (Number(errH) < Number(errA))
             ? `세트 후반 집중력 우위로 경기당 무리한 범실 -${Math.abs(Number(errH) - Number(errA))}개 억제. 결정적 20점 이후 접전 시 안정성 탁월`
             : (Number(errH) > Number(errA))
