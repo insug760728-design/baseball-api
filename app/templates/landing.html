@@ -19702,6 +19702,108 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const rebA = (38.0 + (seedA % 6)).toFixed(1);
       const astToH = (1.8 + ((seedH % 5) * 0.15)).toFixed(2);
       const astToA = (1.7 + ((seedA % 5) * 0.15)).toFixed(2);
+      const ftH = (78.2 + ((seedH % 7) * 1.1)).toFixed(1);
+      const ftA = (77.5 + ((seedA % 7) * 1.1)).toFixed(1);
+
+      // 🏀 현대 농구 6대 AI 전술 정밀 텍스트 지표 정의
+      const bballMetrics = [
+        {
+          id: 'pace',
+          name: '공격 템포 (Pace)',
+          icon: 'bi-speedometer2',
+          iconColor: '#3b82f6',
+          hVal: `${paceH}회`,
+          aVal: `${paceA}회`,
+          unit: '48분당 포제션',
+          badge: (Number(paceH) > Number(paceA)) ? `[홈] ${hName} 업템포 우세` : (Number(paceH) < Number(paceA) ? `[원정] ${aName} 템포 장악` : '템포 호각세'),
+          badgeClass: (Number(paceH) > Number(paceA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(paceH) < Number(paceA) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
+          desc: (Number(paceH) > Number(paceA)) 
+            ? `빠른 트랜지션 얼리 오펜스로 상대 수비 정렬 전 손쉬운 속공 득점 창출 유리 (+${(Number(paceH) - Number(paceA)).toFixed(1)}회 빠른 전환)`
+            : (Number(paceH) < Number(paceA) 
+              ? `하프코트 세트플레이 유도로 실책을 줄이고 경기 흐름을 안정적으로 통제 (+${(Number(paceA) - Number(paceH)).toFixed(1)}회 템포 지연 우위)`
+              : '양 팀 유사한 페이스로 4쿼터 내내 팽팽한 전환 속도 공방전 전개 예상')
+        },
+        {
+          id: 'ortg',
+          name: '공격 효율성 (ORtg)',
+          icon: 'bi-bullseye',
+          iconColor: '#ef4444',
+          hVal: `${ortgH}점`,
+          aVal: `${ortgA}점`,
+          unit: '100포제션 기대득점',
+          badge: (Number(ortgH) > Number(ortgA)) ? `[홈] ${hName} 화력 우위` : (Number(ortgH) < Number(ortgA) ? `[원정] ${aName} 화력 우위` : '화력 대등'),
+          badgeClass: (Number(ortgH) > Number(ortgA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(ortgH) < Number(ortgA) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
+          desc: (Number(ortgH) > Number(ortgA))
+            ? `100회 공격 시 기대득점 +${(Number(ortgH) - Number(ortgA)).toFixed(1)}점 우세. 정교한 슛 셀렉션과 효율적인 인사이드 공략 강점`
+            : (Number(ortgH) < Number(ortgA))
+              ? `외곽 및 페인트존 득점 기대치 +${(Number(ortgA) - Number(ortgH)).toFixed(1)}점 우위. 클러치 공격 효율에서 앞섬`
+              : '양 팀 공격 효율 기대득점이 대등하여 당일 슛 컨디션에 따른 승부 분수령 예상'
+        },
+        {
+          id: 'fg3',
+          name: '3점 외곽 화력 (3PT%)',
+          icon: 'bi-fire',
+          iconColor: '#f97316',
+          hVal: `${fg3H}%`,
+          aVal: `${fg3A}%`,
+          unit: '성공률',
+          badge: (Number(fg3H) > Number(fg3A)) ? `[홈] ${hName} 외곽 우세` : (Number(fg3H) < Number(fg3A) ? `[원정] ${aName} 외곽 우세` : '외곽 호각세'),
+          badgeClass: (Number(fg3H) > Number(fg3A)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(fg3H) < Number(fg3A) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
+          desc: (Number(fg3H) > Number(fg3A))
+            ? `코너 3점 스페이싱 및 캐치앤슛 성공률 +${(Number(fg3H) - Number(fg3A)).toFixed(1)}% 우세. 공간 창출을 통한 폭발적인 득점력 기대`
+            : (Number(fg3H) < Number(fg3A))
+              ? `탑/윙 3점 성공률 +${(Number(fg3A) - Number(fg3H)).toFixed(1)}% 우위. 상대 드롭백 수비를 외곽포로 무너뜨릴 역량 보유`
+              : '외곽 슛 성공률 편차 1% 미만의 팽팽한 3점 대결 구도 형성'
+        },
+        {
+          id: 'reb',
+          name: '골밑 장악 & 리바운드 (REB)',
+          icon: 'bi-shield-shaded',
+          iconColor: '#8b5cf6',
+          hVal: `${rebH}개`,
+          aVal: `${rebA}개`,
+          unit: '경기당',
+          badge: (Number(rebH) > Number(rebA)) ? `[홈] ${hName} 높이 우위` : (Number(rebH) < Number(rebA) ? `[원정] ${aName} 높이 우위` : '제공권 백중세'),
+          badgeClass: (Number(rebH) > Number(rebA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(rebH) < Number(rebA) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
+          desc: (Number(rebH) > Number(rebA))
+            ? `공격 리바운드 +${(Number(rebH) - Number(rebA)).toFixed(1)}개 우세. 세컨드 찬스 풋백 득점 및 포제션 추가 확보 경쟁력 탁월`
+            : (Number(rebH) < Number(rebA))
+              ? `수비 리바운드 단속력 +${(Number(rebA) - Number(rebH)).toFixed(1)}개 우위. 제공권 우위를 통한 빠른 1선 아웃렛 패스 전개 유리`
+              : '골밑 박스아웃과 세컨 볼 경합에서 양 팀 대등한 리바운드 수치 유지'
+        },
+        {
+          id: 'astTo',
+          name: '볼 케어 & 패스 연계 (AST/TO)',
+          icon: 'bi-share-fill',
+          iconColor: '#10b981',
+          hVal: `${astToH}`,
+          aVal: `${astToA}`,
+          unit: '어시스트/실책비',
+          badge: (Number(astToH) > Number(astToA)) ? `[홈] ${hName} 볼케어 우수` : (Number(astToH) < Number(astToA) ? `[원정] ${aName} 볼케어 우수` : '안정성 대등'),
+          badgeClass: (Number(astToH) > Number(astToA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(astToH) < Number(astToA) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
+          desc: (Number(astToH) > Number(astToA))
+            ? `어시스트/턴오버 비율 +${(Number(astToH) - Number(astToA)).toFixed(2)} 우세. 실책에 의한 속공 실점 억제 및 안정적인 볼 공유`
+            : (Number(astToH) < Number(astToA))
+              ? `정교한 킥아웃 패스 워크와 턴오버 마진 +${(Number(astToA) - Number(astToH)).toFixed(2)} 우위. 상대 압박 수비에 대한 대처 우수`
+              : '양 팀 볼핸들러의 패스 안정성과 턴오버 억제력이 비슷한 수준'
+        },
+        {
+          id: 'ft',
+          name: '클러치 집중력 & 자유투 (FT%)',
+          icon: 'bi-trophy-fill',
+          iconColor: '#eab308',
+          hVal: `${ftH}%`,
+          aVal: `${ftA}%`,
+          unit: '자유투 성공률',
+          badge: (Number(ftH) > Number(ftA)) ? `[홈] ${hName} 클러치 안정` : (Number(ftH) < Number(ftA) ? `[원정] ${aName} 클러치 안정` : '클러치 호각세'),
+          badgeClass: (Number(ftH) > Number(ftA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(ftH) < Number(ftA) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
+          desc: (Number(ftH) > Number(ftA))
+            ? `팀 자유투 성공률 +${(Number(ftH) - Number(ftA)).toFixed(1)}% 우위. 4쿼터 원포제션 접전 시 파울 작전 및 클러치 슈팅 침착성 우세`
+            : (Number(ftH) < Number(ftA))
+              ? `승부처 자유투 득점 성공률 +${(Number(ftA) - Number(ftH)).toFixed(1)}% 우세. 접전 시 림 어택을 통한 자유투 득점 생산성 탁월`
+              : '4쿼터 클러치 자유투 성공률 80% 내외로 양 팀 모두 승부처 집중력 유지'
+        }
+      ];
 
       // 4. 감독/사령탑 전술 성향 & 스타일
       const hMgr = {
@@ -19824,76 +19926,42 @@ function updateSlimPanel(matchId, type, contentHtml) {
             </div>
           </div>
 
-          <!-- 🎯 [섹션 3] 팀 전술 지표 & 세이버메트릭스 매트릭스 (Advanced Metrics) -->
+          <!-- 🎯 [섹션 3] 현대 농구 6대 AI 전술 정밀 텍스트 지표 (Advanced Tactical Text Metrics) -->
           <div class="p-2.5 mb-2.5 rounded-3 border bg-white shadow-sm" style="border-color: #cbd5e1 !important;">
             <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: #f1f5f9 !important;">
-              <strong style="font-size: 0.80rem; color: #1e293b;"><i class="bi bi-speedometer2 text-danger me-1"></i>현대 농구 어드밴스드 5대 전술 지표 (Pace · ORtg · 3P · REB)</strong>
-              <span class="small text-muted" style="font-size: 0.68rem;">세이버메트릭스 비교</span>
+              <strong style="font-size: 0.80rem; color: #1e293b;">
+                <i class="bi bi-cpu-fill text-danger me-1"></i>현대 농구 6대 AI 전술 정밀 텍스트 지표 (Pace · ORtg · 3P · REB · AST/TO · FT)
+              </strong>
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.65rem;">정밀 텍스트 매트릭스</span>
             </div>
 
-            <!-- 1. 페이스 (Pace) -->
-            <div class="mb-2">
-              <div class="d-flex justify-content-between small fw-bold mb-0.5" style="font-size: 0.73rem;">
-                <span class="text-primary">[홈] ${paceH} (공격권/48분)</span>
-                <span class="text-dark">공격 템포 (Pace)</span>
-                <span class="text-danger">${paceA} [원정]</span>
-              </div>
-              <div class="progress" style="height: 7px; background: #e2e8f0;">
-                <div class="progress-bar bg-primary" style="width: 50%;"></div>
-                <div class="progress-bar bg-danger" style="width: 50%;"></div>
-              </div>
-            </div>
-
-            <!-- 2. 공격 효율 (ORtg) -->
-            <div class="mb-2">
-              <div class="d-flex justify-content-between small fw-bold mb-0.5" style="font-size: 0.73rem;">
-                <span class="text-primary">[홈] ${ortgH} (100포제션 기대득점)</span>
-                <span class="text-dark">공격 효율 (ORtg)</span>
-                <span class="text-danger">${ortgA} [원정]</span>
-              </div>
-              <div class="progress" style="height: 7px; background: #e2e8f0;">
-                <div class="progress-bar bg-primary" style="width: 50%;"></div>
-                <div class="progress-bar bg-danger" style="width: 50%;"></div>
-              </div>
-            </div>
-
-            <!-- 3. 3점슛 성공률 (3PT%) -->
-            <div class="mb-2">
-              <div class="d-flex justify-content-between small fw-bold mb-0.5" style="font-size: 0.73rem;">
-                <span class="text-primary">[홈] ${fg3H}%</span>
-                <span class="text-dark">3점슛 화력 (3PT%)</span>
-                <span class="text-danger">${fg3A}% [원정]</span>
-              </div>
-              <div class="progress" style="height: 7px; background: #e2e8f0;">
-                <div class="progress-bar bg-primary" style="width: 50%;"></div>
-                <div class="progress-bar bg-danger" style="width: 50%;"></div>
-              </div>
-            </div>
-
-            <!-- 4. 리바운드 장악력 (REB) -->
-            <div class="mb-2">
-              <div class="d-flex justify-content-between small fw-bold mb-0.5" style="font-size: 0.73rem;">
-                <span class="text-primary">[홈] ${rebH}개 (골밑 장악)</span>
-                <span class="text-dark">리바운드 (REB)</span>
-                <span class="text-danger">${rebA}개 [원정]</span>
-              </div>
-              <div class="progress" style="height: 7px; background: #e2e8f0;">
-                <div class="progress-bar bg-primary" style="width: 50%;"></div>
-                <div class="progress-bar bg-danger" style="width: 50%;"></div>
-              </div>
-            </div>
-
-            <!-- 5. 어시스트 대비 턴오버 비율 (AST/TO) -->
-            <div>
-              <div class="d-flex justify-content-between small fw-bold mb-0.5" style="font-size: 0.73rem;">
-                <span class="text-primary">[홈] ${astToH} (볼 케어 우수)</span>
-                <span class="text-dark">어시스트/실책비 (AST/TO)</span>
-                <span class="text-danger">${astToA} [원정]</span>
-              </div>
-              <div class="progress" style="height: 7px; background: #e2e8f0;">
-                <div class="progress-bar bg-primary" style="width: 50%;"></div>
-                <div class="progress-bar bg-danger" style="width: 50%;"></div>
-              </div>
+            <div class="d-flex flex-column gap-2">
+              ${bballMetrics.map(bm => `
+                <div class="p-2 rounded-2 border" style="background:#f8fafc; border-color:#e2e8f0 !important;">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-bold" style="font-size:0.72rem; padding: 2px 7px;">
+                      [홈] ${bm.hVal}
+                    </span>
+                    <span class="fw-bold text-dark d-flex align-items-center gap-1" style="font-size:0.76rem;">
+                      <i class="bi ${bm.icon}" style="color:${bm.iconColor};"></i>
+                      <span>${bm.name}</span>
+                    </span>
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold" style="font-size:0.72rem; padding: 2px 7px;">
+                      ${bm.aVal} [원정]
+                    </span>
+                  </div>
+                  <div class="p-1.5 rounded bg-white border" style="border-color:#e2e8f0 !important;">
+                    <div class="d-flex align-items-center justify-content-between gap-1 mb-0.5">
+                      <div class="d-flex align-items-center gap-1">
+                        <span class="badge ${bm.badgeClass}" style="font-size:0.64rem; padding: 2px 5px;">${bm.badge}</span>
+                        <strong class="text-dark" style="font-size:0.69rem;">전술 진단</strong>
+                      </div>
+                      <span class="text-muted" style="font-size:0.62rem;">기준: ${bm.unit}</span>
+                    </div>
+                    <div class="text-secondary small" style="font-size:0.68rem; line-height:1.45;">${bm.desc}</div>
+                  </div>
+                </div>
+              `).join('')}
             </div>
           </div>
 
@@ -20231,6 +20299,90 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const errH = (18 + (seedH % 5));
       const errA = (19 + (seedA % 5));
 
+      // 🏐 배구 5대 AI 전술 정밀 텍스트 지표 정의
+      const vballMetrics = [
+        {
+          id: 'atk',
+          name: '공격 성공률 (Attack Success)',
+          icon: 'bi-lightning-charge-fill',
+          iconColor: '#f97316',
+          hVal: `${atkH}%`,
+          aVal: `${atkA}%`,
+          unit: '공격성공률',
+          badge: (Number(atkH) > Number(atkA)) ? `[홈] ${hName} 화력 우위` : (Number(atkH) < Number(atkA) ? `[원정] ${aName} 화력 우위` : '공격력 호각세'),
+          badgeClass: (Number(atkH) > Number(atkA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(atkH) < Number(atkA) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
+          desc: (Number(atkH) > Number(atkA))
+            ? `오픈 및 퀵오픈 성공률 +${(Number(atkH) - Number(atkA)).toFixed(1)}% 우세. 외국인 주포와 날개 공격수의 높은 타점 강점`
+            : (Number(atkH) < Number(atkA))
+              ? `중앙 C속공 및 파이프 후위공격 성공률 +${(Number(atkA) - Number(atkH)).toFixed(1)}% 우위. 다채로운 공격 루트 보유`
+              : '양 팀 주포 공격 성공률 47% 내외로 세터의 토스 배분력에 따른 승부 분수령'
+        },
+        {
+          id: 'blk',
+          name: '블로킹 높이 & 차단력 (Blocking)',
+          icon: 'bi-shield-fill',
+          iconColor: '#3b82f6',
+          hVal: `세트당 ${blkH}개`,
+          aVal: `세트당 ${blkA}개`,
+          unit: '세트당 블로킹',
+          badge: (Number(blkH) > Number(blkA)) ? `[홈] ${hName} 높이 장악` : (Number(blkH) < Number(blkA) ? `[원정] ${aName} 높이 장악` : '블로킹 대등'),
+          badgeClass: (Number(blkH) > Number(blkA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(blkH) < Number(blkA) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
+          desc: (Number(blkH) > Number(blkA))
+            ? `세트당 킬블록 +${(Number(blkH) - Number(blkA)).toFixed(2)}개 우세. 미들블로커 사이드 스텝 및 유효 블로킹 반격권 확보 탁월`
+            : (Number(blkH) < Number(blkA))
+              ? `네트 상단 손모양 밀착도 및 블로킹 마진 +${(Number(blkA) - Number(blkH)).toFixed(2)}개 우위. 상대 날개 오픈 공격 완벽 견제`
+              : '양 팀 전위 블로킹 높이가 대등하여 터치아웃 판정과 쳐내기 공방전 예상'
+        },
+        {
+          id: 'srv',
+          name: '서브 파괴력 & 에이스 (Serve Threat)',
+          icon: 'bi-fire',
+          iconColor: '#ef4444',
+          hVal: `세트당 ${srvH}개`,
+          aVal: `세트당 ${srvA}개`,
+          unit: '세트당 에이스',
+          badge: (Number(srvH) > Number(srvA)) ? `[홈] ${hName} 서브 강세` : (Number(srvH) < Number(srvA) ? `[원정] ${aName} 서브 강세` : '서브 호각세'),
+          badgeClass: (Number(srvH) > Number(srvA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(srvH) < Number(srvA) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
+          desc: (Number(srvH) > Number(srvA))
+            ? `스파이크 서브 및 플로터 목적타 에이스 +${(Number(srvH) - Number(srvA)).toFixed(2)}개 우세. 상대 리시브 라인을 강하게 흔드는 능력 탁월`
+            : (Number(srvH) < Number(srvA))
+              ? `공격적 서브 득점 및 2단 연결 유도 능력 +${(Number(srvA) - Number(srvH)).toFixed(2)}개 우위. 초반 기선 제압에 유리`
+              : '서브 범실 최소화와 목적타 타깃 공략에서 팽팽한 수 싸움 전개'
+        },
+        {
+          id: 'rec',
+          name: '리시브 효율 & 수비 안정 (Receive %)',
+          icon: 'bi-check2-circle',
+          iconColor: '#10b981',
+          hVal: `${recH}%`,
+          aVal: `${recA}%`,
+          unit: '리시브 효율',
+          badge: (Number(recH) > Number(recA)) ? `[홈] ${hName} 수비 안정` : (Number(recH) < Number(recA) ? `[원정] ${aName} 수비 안정` : '수비력 대등'),
+          badgeClass: (Number(recH) > Number(recA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(recH) < Number(recA) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
+          desc: (Number(recH) > Number(recA))
+            ? `리베로 및 아웃사이드 히터의 완벽한 서브 리시브 효율 +${(Number(recH) - Number(recA)).toFixed(1)}% 우세. 빠른 세트플레이 속공 전개 보장`
+            : (Number(recH) < Number(recA))
+              ? `견고한 서브 리시브 라인과 디그 구출률 +${(Number(recA) - Number(recH)).toFixed(1)}% 우위. 상대 강서브에 대한 흔들림 최소화`
+              : '양 팀 리베로 중심의 탄탄한 그물망 수비력으로 긴 랠리 공방전 예상'
+        },
+        {
+          id: 'err',
+          name: '경기당 범실 억제력 (Errors)',
+          icon: 'bi-exclamation-triangle-fill',
+          iconColor: '#eab308',
+          hVal: `${errH}개`,
+          aVal: `${errA}개`,
+          unit: '경기당 실책',
+          badge: (Number(errH) < Number(errA)) ? `[홈] ${hName} 범실 억제 우수` : (Number(errH) > Number(errA)) ? `[원정] ${aName} 범실 억제 우수` : '범실 호각세'),
+          badgeClass: (Number(errH) < Number(errA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(errH) > Number(errA)) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
+          desc: (Number(errH) < Number(errA))
+            ? `세트 후반 집중력 우위로 경기당 무리한 범실 -${Math.abs(Number(errH) - Number(errA))}개 억제. 결정적 20점 이후 접전 시 안정성 탁월`
+            : (Number(errH) > Number(errA))
+              ? `공격 및 서브 실책 관리력 -${Math.abs(Number(errA) - Number(errH))}개 우위. 자멸하지 않는 끈끈한 조직력 강점`
+              : '양 팀 범실 편차가 적어 20점 이후 듀스 클러치 상황에서의 집중력이 승부 결정'
+        }
+      ];
+
       // 4. 감독 성향 & 장단점
       const hMgr = {
         name: `${hName} 사령탑`,
@@ -20353,76 +20505,42 @@ function updateSlimPanel(matchId, type, contentHtml) {
             </div>
           </div>
 
-          <!-- 🎯 [섹션 3] 팀 전술 지표 5대 축 (공격성공률 · 블로킹 · 서브 · 리시브 · 범실) -->
+          <!-- 🎯 [섹션 3] 배구 5대 AI 전술 정밀 텍스트 지표 (Advanced Tactical Text Metrics) -->
           <div class="p-2.5 mb-2.5 rounded-3 border bg-white shadow-sm" style="border-color: #cbd5e1 !important;">
             <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: #f1f5f9 !important;">
-              <strong style="font-size: 0.80rem; color: #1e293b;"><i class="bi bi-speedometer2 text-danger me-1"></i>배구 5대 핵심 전술 매트릭스</strong>
-              <span class="small text-muted" style="font-size: 0.68rem;">공격·블로킹·서브 비교</span>
+              <strong style="font-size: 0.80rem; color: #1e293b;">
+                <i class="bi bi-cpu-fill text-danger me-1"></i>배구 5대 AI 전술 정밀 텍스트 지표 (공격 · 블로킹 · 서브 · 리시브 · 범실)
+              </strong>
+              <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.65rem;">정밀 텍스트 매트릭스</span>
             </div>
 
-            <!-- 1. 공격 성공률 -->
-            <div class="mb-2">
-              <div class="d-flex justify-content-between small fw-bold mb-0.5" style="font-size: 0.73rem;">
-                <span class="text-primary">[홈] ${atkH}%</span>
-                <span class="text-dark">공격 성공률 (Attack Success)</span>
-                <span class="text-danger">${atkA}% [원정]</span>
-              </div>
-              <div class="progress" style="height: 7px; background: #e2e8f0;">
-                <div class="progress-bar bg-primary" style="width: 50%;"></div>
-                <div class="progress-bar bg-danger" style="width: 50%;"></div>
-              </div>
-            </div>
-
-            <!-- 2. 블로킹 벽 (Blocking) -->
-            <div class="mb-2">
-              <div class="d-flex justify-content-between small fw-bold mb-0.5" style="font-size: 0.73rem;">
-                <span class="text-primary">[홈] 세트당 ${blkH}개</span>
-                <span class="text-dark">블로킹 높이 (Blocking)</span>
-                <span class="text-danger">${blkA}개 [원정]</span>
-              </div>
-              <div class="progress" style="height: 7px; background: #e2e8f0;">
-                <div class="progress-bar bg-primary" style="width: 50%;"></div>
-                <div class="progress-bar bg-danger" style="width: 50%;"></div>
-              </div>
-            </div>
-
-            <!-- 3. 서브 에이스 (Serve Threat) -->
-            <div class="mb-2">
-              <div class="d-flex justify-content-between small fw-bold mb-0.5" style="font-size: 0.73rem;">
-                <span class="text-primary">[홈] 세트당 ${srvH}개</span>
-                <span class="text-dark">서브 파괴력 (Serve Ace)</span>
-                <span class="text-danger">${srvA}개 [원정]</span>
-              </div>
-              <div class="progress" style="height: 7px; background: #e2e8f0;">
-                <div class="progress-bar bg-primary" style="width: 50%;"></div>
-                <div class="progress-bar bg-danger" style="width: 50%;"></div>
-              </div>
-            </div>
-
-            <!-- 4. 리시브 효율 (Receive Efficiency) -->
-            <div class="mb-2">
-              <div class="d-flex justify-content-between small fw-bold mb-0.5" style="font-size: 0.73rem;">
-                <span class="text-primary">[홈] ${recH}%</span>
-                <span class="text-dark">리시브 효율 (Receive %)</span>
-                <span class="text-danger">${recA}% [원정]</span>
-              </div>
-              <div class="progress" style="height: 7px; background: #e2e8f0;">
-                <div class="progress-bar bg-primary" style="width: 50%;"></div>
-                <div class="progress-bar bg-danger" style="width: 50%;"></div>
-              </div>
-            </div>
-
-            <!-- 5. 경기당 범실 관리 (Errors) -->
-            <div>
-              <div class="d-flex justify-content-between small fw-bold mb-0.5" style="font-size: 0.73rem;">
-                <span class="text-primary">[홈] ${errH}개 (범실 억제 우수)</span>
-                <span class="text-dark">경기당 범실 (Errors)</span>
-                <span class="text-danger">${errA}개 [원정]</span>
-              </div>
-              <div class="progress" style="height: 7px; background: #e2e8f0;">
-                <div class="progress-bar bg-primary" style="width: 50%;"></div>
-                <div class="progress-bar bg-danger" style="width: 50%;"></div>
-              </div>
+            <div class="d-flex flex-column gap-2">
+              ${vballMetrics.map(vm => `
+                <div class="p-2 rounded-2 border" style="background:#f8fafc; border-color:#e2e8f0 !important;">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-bold" style="font-size:0.72rem; padding: 2px 7px;">
+                      [홈] ${vm.hVal}
+                    </span>
+                    <span class="fw-bold text-dark d-flex align-items-center gap-1" style="font-size:0.76rem;">
+                      <i class="bi ${vm.icon}" style="color:${vm.iconColor};"></i>
+                      <span>${vm.name}</span>
+                    </span>
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold" style="font-size:0.72rem; padding: 2px 7px;">
+                      ${vm.aVal} [원정]
+                    </span>
+                  </div>
+                  <div class="p-1.5 rounded bg-white border" style="border-color:#e2e8f0 !important;">
+                    <div class="d-flex align-items-center justify-content-between gap-1 mb-0.5">
+                      <div class="d-flex align-items-center gap-1">
+                        <span class="badge ${vm.badgeClass}" style="font-size:0.64rem; padding: 2px 5px;">${vm.badge}</span>
+                        <strong class="text-dark" style="font-size:0.69rem;">전술 진단</strong>
+                      </div>
+                      <span class="text-muted" style="font-size:0.62rem;">기준: ${vm.unit}</span>
+                    </div>
+                    <div class="text-secondary small" style="font-size:0.68rem; line-height:1.45;">${vm.desc}</div>
+                  </div>
+                </div>
+              `).join('')}
             </div>
           </div>
 
