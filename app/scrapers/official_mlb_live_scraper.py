@@ -198,7 +198,8 @@ class MlbOfficialScraper:
                     "er": er_val,
                     "era": game_era,
                     "np": int(st.get("numberOfPitches", 0)),
-                    "result": res_label
+                    "result": res_label,
+                    "decision": res_label
                 })
 
             wins = season_stat.get("wins")

@@ -62,6 +62,90 @@ def sanitize_player_name(raw: str) -> str:
     return text
 
 
+try:
+    import pykakasi
+    _kks = pykakasi.kakasi()
+except Exception:
+    _kks = None
+
+SPECIAL_NPB_READINGS = {
+    "中村 優斗": "나카무라 유토",
+    "中村優斗": "나카무라 유토",
+    "東松 快征": "히가시마츠 카이세이",
+    "東松快征": "히가시마츠 카이세이",
+    "玉村 昇悟": "타마무라 쇼고",
+    "玉村昇悟": "타마무라 쇼고",
+    "吉川 悠斗": "요시카와 유토",
+    "吉川悠斗": "요시카와 유토",
+    "伊藤 樹": "이토 타츠키",
+    "伊藤樹": "이토 타츠키",
+    "大竹 耕太郎": "오오타케 코타로",
+    "大竹耕太郎": "오오타케 코타로",
+    "戸郷 翔征": "토고 쇼세이",
+    "戸郷翔征": "토고 쇼세이",
+    "平良 海馬": "타이라 카이마",
+    "平良海馬": "타이라 카이마",
+    "才木 浩人": "사이키 히로토",
+    "才木浩人": "사이키 히로토",
+    "今井 達也": "이마이 타츠야",
+    "今井達也": "이마이 타츠야",
+    "早川 隆久": "하야카와 타카히사",
+    "早川隆久": "하야카와 타카히사",
+    "宮城 大弥": "미야기 히로야",
+    "宮城大弥": "미야기 히로야",
+    "佐々木 朗希": "사사키 로키",
+    "佐々木朗希": "사사키 로키",
+    "菅野 智之": "스가노 토모유키",
+    "菅野智之": "스가노 토모유키",
+    "高橋 宏斗": "타카하시 히로토",
+    "高橋宏斗": "타카하시 히로토",
+    "伊藤 大海": "이토 히로미",
+    "伊藤大海": "이토 히로미",
+    "古林 睿煬": "구린 루이양",
+    "古林睿煬": "구린 루이양",
+    "九里 亜蓮": "쿠리 아렌",
+    "九里亜蓮": "쿠리 아렌",
+    "北斗": "호쿠토",
+    "博志": "히로시",
+    "大瀬良 大地": "오오세라 다이치",
+    "大瀬良大地": "오오세라 다이치",
+    "入山 海斗": "이리야마 카이토",
+    "入山海斗": "이리야마 카이토",
+    "古田島 成龍": "코타지마 세이류",
+    "古田島成龍": "코타지마 세이류",
+    "大勢": "타이세이",
+    "大聖": "타이세이",
+    "孫 易磊": "쑨이레이",
+    "孫易磊": "쑨이레이",
+    "宋 家豪": "송자하오",
+    "宋家豪": "송자하오",
+    "大野 雄大": "오오노 유다이",
+    "大野雄大": "오오노 유다이",
+    "大野 稼頭央": "오오노 카즈오",
+    "大野稼頭央": "오오노 카즈오",
+    "奥川 恭伸": "오쿠가와 야스노부",
+    "奥川恭伸": "오쿠가와 야스노부",
+    "宮西 尚生": "미야니시 나오키",
+    "宮西尚生": "미야니시 나오키",
+    "宮﨑 颯": "미야자키 하야테",
+    "宮崎 颯": "미야자키 하야테",
+    "塹江 敦哉": "호리에 아츠야",
+    "塹江敦哉": "호리에 아츠야",
+    "選手名": "선수명",
+    "アドゥワ 誠": "아두와 마코토",
+    "スチュワート・ジュニア": "스튜어트 주니어",
+    "ボー・タカハシ": "보 타카하시"
+}
+
+def clean_korean_phonetics(hangeul: str) -> str:
+    if not hangeul or not isinstance(hangeul, str):
+        return ""
+    h = hangeul
+    h = re.sub(r'([가-힣])우([가-힣]*)', lambda m: m.group(1) + m.group(2) if m.group(1) in '토코오쇼도노호모로요소조포고' else m.group(0), h)
+    h = h.replace('  ', ' ').strip()
+    return h
+
+
 # =============================================================
 # ⚾ 1. MLB / 해외 주요 선수 풀네임 공식 한글 표준 표기 사전
 # =============================================================
@@ -741,16 +825,20 @@ def translate_player_name(raw: str) -> str:
     if raw.upper() in PROTECTED_TERMS or re.match(r'^[A-Z0-9_-]{1,5}$', raw):
         return raw + suffix
     
+    # 0. Check Special NPB Readings
+    if raw in SPECIAL_NPB_READINGS:
+        return SPECIAL_NPB_READINGS[raw] + suffix
+    no_space = raw.replace(" ", "").replace("　", "")
+    if no_space in SPECIAL_NPB_READINGS:
+        return SPECIAL_NPB_READINGS[no_space] + suffix
+
     # 1. Check Full Dictionary (MLB + NPB)
     if raw in FULL_NAMES:
         return FULL_NAMES[raw] + suffix
-    
-    # 2. Check Unspaced Kanji / Japanese characters
-    no_space = raw.replace(" ", "").replace("　", "")
     if no_space in FULL_NAMES:
         return FULL_NAMES[no_space] + suffix
     
-    # 3. Check NPB Family Names
+    # 2. Check NPB Family Names
     if raw in NPB_FAMILY_NAME_MAP:
         return NPB_FAMILY_NAME_MAP[raw] + suffix
     if no_space in NPB_FAMILY_NAME_MAP:
@@ -759,20 +847,23 @@ def translate_player_name(raw: str) -> str:
         fam_ko = NPB_FAMILY_NAME_MAP[fam]
         if raw.startswith(fam) and len(raw) > len(fam):
             rem = raw[len(fam):].strip()
-            rem_ko = NPB_GIVEN_NAME_MAP.get(rem) or NPB_FAMILY_NAME_MAP.get(rem) or (katakana_to_hangul(rem) if re.search(r'[\u3040-\u309F\u30A0-\u30FF]', rem) else rem)
+            rem_ko = SPECIAL_NPB_READINGS.get(rem) or NPB_GIVEN_NAME_MAP.get(rem) or NPB_FAMILY_NAME_MAP.get(rem) or (katakana_to_hangul(rem) if re.search(r'[\u3040-\u309F\u30A0-\u30FF]', rem) else rem)
             return f"{fam_ko} {rem_ko}".strip() + suffix
         if no_space.startswith(fam) and len(no_space) > len(fam):
             rem = no_space[len(fam):].strip()
-            rem_ko = NPB_GIVEN_NAME_MAP.get(rem) or NPB_FAMILY_NAME_MAP.get(rem) or (katakana_to_hangul(rem) if re.search(r'[\u3040-\u309F\u30A0-\u30FF]', rem) else rem)
+            rem_ko = SPECIAL_NPB_READINGS.get(rem) or NPB_GIVEN_NAME_MAP.get(rem) or NPB_FAMILY_NAME_MAP.get(rem) or (katakana_to_hangul(rem) if re.search(r'[\u3040-\u309F\u30A0-\u30FF]', rem) else rem)
             return f"{fam_ko} {rem_ko}".strip() + suffix
 
-    # 3-1. Mixed Korean + CJK / Kanji / Katakana translation (e.g. "마츠모토 健吾", "키타야마 亘基", "이토 樹")
+    # 3. Mixed Korean + CJK / Kanji / Katakana translation (e.g. "마츠모토 健吾", "키타야마 亘基", "이토 樹")
     if any('\u4e00' <= ch <= '\u9fff' or '\u3040' <= ch <= '\u30ff' for ch in raw):
         tokens = raw.split()
         converted_tokens = []
         any_converted = False
         for tok in tokens:
-            if tok in NPB_GIVEN_NAME_MAP:
+            if tok in SPECIAL_NPB_READINGS:
+                converted_tokens.append(SPECIAL_NPB_READINGS[tok])
+                any_converted = True
+            elif tok in NPB_GIVEN_NAME_MAP:
                 converted_tokens.append(NPB_GIVEN_NAME_MAP[tok])
                 any_converted = True
             elif tok in NPB_FAMILY_NAME_MAP:
@@ -786,12 +877,34 @@ def translate_player_name(raw: str) -> str:
                 any_converted = True
             else:
                 converted_tokens.append(tok)
+        res = " ".join(converted_tokens).strip()
+        # If all CJK/Kana characters were resolved, return cleaned result
+        if not any('\u4e00' <= ch <= '\u9fff' or '\u3040' <= ch <= '\u30ff' for ch in res):
+            return clean_korean_phonetics(res) + suffix
+
+        # 3-1. Automatic Kanji -> Katakana -> Hangul fallback via pykakasi
+        if _kks:
+            try:
+                conv = _kks.convert(raw)
+                parts = []
+                for item in conv:
+                    kana = item.get('kana', '').strip()
+                    if kana:
+                        parts.append(katakana_to_hangul(kana))
+                if parts:
+                    kakasi_res = " ".join(parts).strip()
+                    kakasi_res = clean_korean_phonetics(kakasi_res)
+                    if kakasi_res and not any('\u4e00' <= ch <= '\u9fff' or '\u3040' <= ch <= '\u30ff' for ch in kakasi_res):
+                        return kakasi_res + suffix
+            except Exception:
+                pass
+
         if any_converted:
-            return " ".join(converted_tokens).strip() + suffix
+            return clean_korean_phonetics(res) + suffix
 
     # 4. Japanese Katakana / Hiragana automatic transliteration
     if re.search(r'[\u3040-\u309F\u30A0-\u30FF]', raw):
-        return katakana_to_hangul(raw) + suffix
+        return clean_korean_phonetics(katakana_to_hangul(raw)) + suffix
 
     # Already Korean (allow optional initial like 'A. ', 'L. ')
     if re.search(r'^(?:[A-Za-z]\.?\s*)?[가-힣\s\d._\-()]+$', raw):

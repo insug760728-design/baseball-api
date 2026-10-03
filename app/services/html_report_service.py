@@ -128,7 +128,7 @@ def generate_standalone_scoreboard_html(match_dict: dict, detail_dict: dict, out
           <p class="text-white-50 mb-0">일시: {m['match_date']} | 구장: {m['stadium']} | 공식 Game ID: {m['official_id']}</p>
         </div>
         <div>
-          <a href="http://localhost:8000/" target="_blank" class="btn btn-warning text-dark fw-bold px-4 py-2">
+          <a href="http://localhost:9050/" target="_blank" class="btn btn-warning text-dark fw-bold px-4 py-2">
             <i class="bi bi-sliders me-1"></i>웹 관리 센터 바로가기
           </a>
         </div>
@@ -284,7 +284,7 @@ def generate_standalone_scoreboard_html(match_dict: dict, detail_dict: dict, out
       <h6 class="fw-bold mb-1">앱(모바일/웹) 연동용 데이터가 'exports/MLB/' 디렉토리에 자동 생성되었습니다.</h6>
       <p class="text-muted small mb-3">각 구단별 폴더 안에 타자별, 투수별, 경기별 JSON 파일이 생성되어 즉시 연동 가능합니다.</p>
       <div>
-        <a href="http://localhost:8000/api/v1/content/download-zip/MLB" class="btn btn-primary fw-bold px-4 py-2">
+        <a href="http://localhost:9050/api/v1/content/download-zip/MLB" class="btn btn-primary fw-bold px-4 py-2">
           <i class="bi bi-file-earmark-zip-fill me-1"></i>전체 구단/선수 JSON 압축파일(ZIP) 다운로드
         </a>
       </div>

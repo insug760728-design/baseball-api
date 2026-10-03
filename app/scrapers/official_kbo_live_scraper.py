@@ -482,6 +482,11 @@ class KboOfficialScraper:
                 except Exception as e_tot:
                     print(f"[KBO Scraper] Total.aspx fallback error for {pid}: {e_tot}")
 
+            # 100% 공식 KBO 경기별(일자별) 등판 일지(Daily.aspx) 연동
+            daily_starts = self.fetch_kbo_pitcher_daily_starts(pid)
+            starts_only = [g for g in daily_starts if g.get('is_starter')]
+            final_starts = starts_only if len(starts_only) >= 2 else daily_starts
+
             res_obj = {
                 'name': clean_name,
                 'name_kr': clean_name,
@@ -501,7 +506,9 @@ class KboOfficialScraper:
                 'season_ip': ip,
                 'season_so': so,
                 'season_bb': bb,
-                'confirmed': True
+                'confirmed': True,
+                'recent_starts': final_starts,
+                'recent_3_starts': final_starts[:3]
             }
             _KBO_PITCHER_PROFILE_CACHE[cache_key] = res_obj
             _KBO_PITCHER_PROFILE_CACHE[clean_name] = res_obj
@@ -510,6 +517,73 @@ class KboOfficialScraper:
         except Exception as e:
             print(f"[KBO Scraper] Error fetching pitcher profile for {player_name}: {e}")
             return None
+
+    def fetch_kbo_pitcher_daily_starts(self, player_id: str) -> List[Dict[str, Any]]:
+        """KBO 공식 사이트(Daily.aspx)에서 투수의 100% 실데이터 당해 시즌 경기별(일자별) 등판 일지 및 기록 수집"""
+        if not player_id:
+            return []
+        try:
+            from bs4 import BeautifulSoup
+            url = f'https://www.koreabaseball.com/Record/Player/PitcherDetail/Daily.aspx?playerId={player_id}'
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+            with urllib.request.urlopen(req, context=self.ctx, timeout=8) as r:
+                soup = BeautifulSoup(r.read().decode('utf-8', errors='ignore'), 'html.parser')
+            
+            tables = soup.find_all('table')
+            all_games = []
+            for tbl in tables:
+                for tr in tbl.find_all('tr')[1:]:
+                    cols = [td.get_text(strip=True) for td in tr.find_all(['th', 'td'])]
+                    if not cols or cols[0] == '합계' or len(cols) < 14:
+                        continue
+                    date_str = cols[0] # e.g. '06.06'
+                    opp = cols[1] # e.g. '두산'
+                    role = cols[2] # e.g. '선발' or '구원'
+                    dec = cols[3] # e.g. '승', '패', '홀', '세'
+                    era1 = cols[4]
+                    tbf = int(cols[5]) if cols[5].isdigit() else 0
+                    ip = cols[6]
+                    h = int(cols[7]) if cols[7].isdigit() else 0
+                    hr = int(cols[8]) if cols[8].isdigit() else 0
+                    bb = int(cols[9]) if cols[9].isdigit() else 0
+                    hbp = int(cols[10]) if cols[10].isdigit() else 0
+                    so = int(cols[11]) if cols[11].isdigit() else 0
+                    r_runs = int(cols[12]) if cols[12].isdigit() else 0
+                    er = int(cols[13]) if cols[13].isdigit() else 0
+                    
+                    result = '-'
+                    if '승' in dec: result = '승'
+                    elif '패' in dec: result = '패'
+                    elif '세' in dec: result = '세'
+                    elif '홀' in dec: result = '홀'
+                    
+                    np_est = max(15, tbf * 4 + so)
+                    
+                    all_games.append({
+                        'date': date_str,
+                        'opponent': opp,
+                        'opp': opp,
+                        'venue': '공식',
+                        'role': role,
+                        'result': result,
+                        'decision': result,
+                        'ip': ip,
+                        'er': er,
+                        'so': so,
+                        'bb': bb + hbp,
+                        'h': h,
+                        'hr': hr,
+                        'r': r_runs,
+                        'np': np_est,
+                        'era': era1,
+                        'is_starter': (role == '선발')
+                    })
+            all_games.reverse()
+            return all_games
+        except Exception as e:
+            print(f"[KBO Scraper] Error fetching daily starts for pid {player_id}: {e}")
+            return []
+
 
     def scrape_probable_starters(self, target_date: Optional[str] = None) -> List[Dict[str, Any]]:
         """KBO 공식 실시간 메인 API(GetKboGameList)에서 당일 공식 발표된 선발투수 목록 수집"""

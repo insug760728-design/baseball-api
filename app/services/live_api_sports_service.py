@@ -678,7 +678,47 @@ def are_city_rivals(s1: str, s2: str) -> bool:
     is_inter_2 = ('인터밀란' in n2 or '인테르' in n2 or 'intermilan' in n2)
     is_acm_1 = ('ac밀란' in n1 or 'acmilan' in n1)
     is_acm_2 = ('ac밀란' in n2 or 'acmilan' in n2)
-    if (is_inter_1 and is_acm_2) or (is_inter_1 and is_acm_2):
+    if (is_inter_1 and is_acm_2) or (is_acm_1 and is_inter_2):
+        return True
+
+    # 7. 일본 요코하마 축구: 요코하마 F.마리노스 vs 요코하마FC
+    is_marinos_1 = any(x in n1 for x in ['마리노스', 'f마리노스', 'f.마리노스', 'fmarinos', 'marinos'])
+    is_marinos_2 = any(x in n2 for x in ['마리노스', 'f마리노스', 'f.마리노스', 'fmarinos', 'marinos'])
+    is_yokofc_1 = ('요코하마fc' in n1 or 'yokohamafc' in n1) or (n1 == '요코하마' and not is_marinos_1)
+    is_yokofc_2 = ('요코하마fc' in n2 or 'yokohamafc' in n2) or (n2 == '요코하마' and not is_marinos_2)
+    if (is_marinos_1 and is_yokofc_2) or (is_marinos_2 and is_yokofc_1):
+        return True
+
+    # 8. 일본 도쿄 축구: FC도쿄 vs 도쿄 베르디
+    is_fctokyo_1 = ('fc도쿄' in n1 or 'fctokyo' in n1)
+    is_fctokyo_2 = ('fc도쿄' in n2 or 'fctokyo' in n2)
+    is_verdy_1 = ('베르디' in n1 or 'verdy' in n1)
+    is_verdy_2 = ('베르디' in n2 or 'verdy' in n2)
+    if (is_fctokyo_1 and is_verdy_2) or (is_fctokyo_2 and is_verdy_1):
+        return True
+
+    # 9. 일본 오사카 축구: 감바 오사카 vs 세레소 오사카
+    is_gamba_1 = ('감바' in n1 or 'gamba' in n1)
+    is_gamba_2 = ('감바' in n2 or 'gamba' in n2)
+    is_cerezo_1 = ('세레소' in n1 or 'cerezo' in n1)
+    is_cerezo_2 = ('세레소' in n2 or 'cerezo' in n2)
+    if (is_gamba_1 and is_cerezo_2) or (is_gamba_2 and is_cerezo_1):
+        return True
+
+    # 10. 일본 도치기 축구: 도치기SC vs 도치기 시티FC
+    is_tochigicity_1 = ('도치기시티' in n1 or 'tochigicity' in n1)
+    is_tochigicity_2 = ('도치기시티' in n2 or 'tochigicity' in n2)
+    is_tochigisc_1 = ('도치기sc' in n1 or 'tochigisc' in n1) or (('도치기' in n1 or 'tochigi' in n1) and not is_tochigicity_1)
+    is_tochigisc_2 = ('도치기sc' in n2 or 'tochigisc' in n2) or (('도치기' in n2 or 'tochigi' in n2) and not is_tochigicity_2)
+    if (is_tochigicity_1 and is_tochigisc_2) or (is_tochigicity_2 and is_tochigisc_1):
+        return True
+
+    # 11. 한국 수원 축구: 수원 삼성 vs 수원FC
+    is_suwon_samsung_1 = any(x in n1 for x in ['수원삼성', '블루윙즈', 'suwonsamsung'])
+    is_suwon_samsung_2 = any(x in n2 for x in ['수원삼성', '블루윙즈', 'suwonsamsung'])
+    is_suwon_fc_1 = ('수원fc' in n1 or 'suwonfc' in n1)
+    is_suwon_fc_2 = ('수원fc' in n2 or 'suwonfc' in n2)
+    if (is_suwon_samsung_1 and is_suwon_fc_2) or (is_suwon_samsung_2 and is_suwon_fc_1):
         return True
 
     return False
@@ -2927,6 +2967,7 @@ class LiveApiSportsService:
 
         # 5-2. 전경기 100% 대응을 위한 스마트 공식 선수단(Starting XI + 교체명단) 자동 보강
         def _get_smart_squad(t_name, is_home):
+            nonlocal home_formation, away_formation, home_coach, away_coach
             nm = t_name.strip()
             # 국가대표 및 주요 클럽별 대표 라인업 (토토켄 공식 데이터셋 100% 매칭)
             squad_map = {
@@ -3357,6 +3398,120 @@ class LiveApiSportsService:
                         ("M.모레노", 19, "SUB"), ("J.추라", 20, "SUB"), ("B.쿠엘라르", 8, "SUB"),
                         ("H.바카", 6, "SUB"), ("G.무스티", 12, "SUB")
                     ]
+                },
+                "북한_여자": {
+                    "xi": [
+                        ("김운휘", 1, "GK"), ("리명금", 2, "DF"), ("리금향", 3, "DF"),
+                        ("봉성애", 4, "DF"), ("송춘심", 5, "DF"), ("명유정", 6, "MF"),
+                        ("리수정", 8, "MF"), ("주효심", 10, "MF"), ("채금옥", 12, "MF"),
+                        ("승향심", 7, "FW"), ("김경영", 13, "FW")
+                    ],
+                    "subs": [
+                        ("유손금", 18, "SUB"), ("박주미", 21, "SUB"), ("손옥주", 16, "SUB"),
+                        ("리혜경", 20, "SUB"), ("김정미", 14, "SUB"), ("김정심", 15, "SUB"),
+                        ("김혜영", 17, "SUB"), ("리학", 9, "SUB"), ("홍성옥", 11, "SUB")
+                    ],
+                    "coach": "리유일",
+                    "formation": "4-4-2"
+                },
+                "북한": {
+                    "xi": [
+                        ("강주혁", 1, "GK"), ("장국철", 3, "DF"), ("김유성", 4, "DF"),
+                        ("김성혜", 5, "DF"), ("조광명", 2, "DF"), ("강국철", 6, "MF"),
+                        ("김국범", 8, "MF"), ("백충성", 10, "MF"), ("리운철", 15, "MF"),
+                        ("정일관", 9, "FW"), ("한광성", 11, "FW")
+                    ],
+                    "subs": [
+                        ("유광민", 18, "SUB"), ("신태성", 21, "SUB"), ("최옥철", 16, "SUB"),
+                        ("김범혁", 14, "SUB"), ("계탐", 7, "SUB"), ("리조국", 17, "SUB"),
+                        ("김국진", 19, "SUB")
+                    ],
+                    "coach": "신영남",
+                    "formation": "4-4-2"
+                },
+                "중국_여자": {
+                    "xi": [
+                        ("주위", 1, "GK"), ("리멍원", 2, "DF"), ("왕산산", 8, "DF"),
+                        ("야오웨이", 5, "DF"), ("천차오주", 15, "DF"), ("장루이", 10, "MF"),
+                        ("양리나", 13, "MF"), ("야오링웨이", 16, "MF"), ("장린옌", 19, "MF"),
+                        ("왕솽", 7, "FW"), ("우청수", 6, "FW")
+                    ],
+                    "subs": [
+                        ("쉬환", 12, "SUB"), ("판린린", 22, "SUB"), ("왕린린", 3, "SUB"),
+                        ("도우자싱", 4, "SUB"), ("옌진진", 17, "SUB"), ("샤오지친", 9, "SUB"),
+                        ("러우자후이", 11, "SUB"), ("선멍위", 14, "SUB")
+                    ],
+                    "coach": "안테 밀리치치",
+                    "formation": "4-2-3-1"
+                },
+                "중국": {
+                    "xi": [
+                        ("옌쥔링", 1, "GK"), ("장린펑", 5, "DF"), ("주천제", 2, "DF"),
+                        ("장광타이", 3, "DF"), ("류양", 19, "DF"), ("왕상위안", 6, "MF"),
+                        ("리위안이", 8, "MF"), ("셰펑페이", 10, "MF"), ("페이난둬", 17, "MF"),
+                        ("우레이", 7, "FW"), ("장위닝", 9, "FW")
+                    ],
+                    "subs": [
+                        ("왕다레이", 23, "SUB"), ("가오준이", 4, "SUB"), ("웨이스하오", 11, "SUB"),
+                        ("베흐람 압두웨리", 20, "SUB"), ("린량밍", 14, "SUB"), ("청진", 18, "SUB")
+                    ],
+                    "coach": "브란코 이반코비치",
+                    "formation": "4-4-2"
+                },
+                "우즈베키스탄_여자": {
+                    "xi": [
+                        ("M.조니모바", 1, "GK"), ("I.자리포바", 2, "DF"), ("U.보보후자예바", 3, "DF"),
+                        ("M.쇼이모바", 5, "DF"), ("S.나비예바", 4, "DF"), ("D.하비불라예바", 7, "MF"),
+                        ("F.투르디보예바", 10, "MF"), ("U.쿠드라토바", 11, "MF"), ("A.아미로바", 8, "MF"),
+                        ("L.카라치크", 9, "FW"), ("N.자르마토바", 17, "FW")
+                    ],
+                    "subs": [
+                        ("E.바흐리디노바", 12, "SUB"), ("Z.카라보예바", 16, "SUB"), ("M.에르가셰바", 15, "SUB")
+                    ],
+                    "coach": "미도리 혼다",
+                    "formation": "4-4-2"
+                },
+                "우즈베키스탄": {
+                    "xi": [
+                        ("U.유수포프", 1, "GK"), ("H.알리쿨로프", 2, "DF"), ("A.후사노프", 3, "DF"),
+                        ("R.아슈르마토프", 5, "DF"), ("F.사이피예프", 4, "DF"), ("O.슈쿠로프", 7, "MF"),
+                        ("O.함로베코프", 9, "MF"), ("A.파이줄라예프", 10, "MF"), ("J.마샤리포프", 11, "MF"),
+                        ("E.쇼무로도프", 14, "FW"), ("H.우루노프", 17, "FW")
+                    ],
+                    "subs": [
+                        ("A.네마토프", 12, "SUB"), ("A.압둘라예프", 18, "SUB"), ("A.투르군보예프", 8, "SUB"),
+                        ("B.압디홀리코프", 20, "SUB"), ("J.이스칸데로프", 15, "SUB")
+                    ],
+                    "coach": "스레치코 카타네츠",
+                    "formation": "4-2-3-1"
+                },
+                "한국_여자": {
+                    "xi": [
+                        ("김정미", 18, "GK"), ("김혜리", 20, "DF"), ("심서연", 4, "DF"),
+                        ("임선주", 5, "DF"), ("장슬기", 16, "DF"), ("조소현", 8, "MF"),
+                        ("지소연", 10, "MF"), ("이금민", 9, "MF"), ("강채림", 19, "MF"),
+                        ("최유리", 11, "FW"), ("케이시 페어", 13, "FW")
+                    ],
+                    "subs": [
+                        ("류지수", 1, "SUB"), ("추효주", 2, "SUB"), ("이영주", 6, "SUB"),
+                        ("천가람", 14, "SUB"), ("문미라", 15, "SUB"), ("전은하", 7, "SUB")
+                    ],
+                    "coach": "신상우",
+                    "formation": "4-2-3-1"
+                },
+                "일본_여자": {
+                    "xi": [
+                        ("야마시타 아야카", 1, "GK"), ("시미즈 리사", 2, "DF"), ("쿠마가이 사키", 4, "DF"),
+                        ("미나미 모에카", 3, "DF"), ("기타가와 히카루", 13, "DF"), ("하세가와 유이", 14, "MF"),
+                        ("나가노 후카", 10, "MF"), ("후지노 아오바", 15, "MF"), ("미야자와 히나타", 7, "MF"),
+                        ("세이케 기코", 17, "FW"), ("다나카 미나", 11, "FW")
+                    ],
+                    "subs": [
+                        ("히라오 치카", 18, "SUB"), ("다카하시 하나", 5, "SUB"), ("모리야 미야비", 20, "SUB"),
+                        ("하야시 호노카", 16, "SUB"), ("다니카와 모모코", 8, "SUB"), ("치바 레미나", 19, "SUB")
+                    ],
+                    "coach": "이케다 후토시",
+                    "formation": "4-3-3"
                 }
             }
 
@@ -3370,24 +3525,20 @@ class LiveApiSportsService:
             if matched_data:
                 base_list = matched_data["xi"]
                 sub_base = matched_data.get("subs", [])
+                if matched_data.get("formation"):
+                    if is_home:
+                        home_formation = matched_data["formation"]
+                    else:
+                        away_formation = matched_data["formation"]
+                if matched_data.get("coach"):
+                    if is_home:
+                        home_coach = {"name": matched_data["coach"]}
+                    else:
+                        away_coach = {"name": matched_data["coach"]}
             else:
-                # 🛡️ 가짜 'GK', '수비1' 이름 절대 노출 금지: 공통 국가/클럽 축구 선수 실존 스타일 네이밍
-                first_initials = ["A.", "M.", "D.", "J.", "S.", "K.", "R.", "L.", "P.", "T.", "C.", "N.", "E.", "G.", "V.", "F."]
-                surnames = ["실바", "산체스", "페르난데스", "로페스", "마르티네스", "고메스", "디아스", "카르발류", "슈미트", "뮐러", "베르네르", "마이어", "호프만", "이바노프", "포포프", "코바치", "노바크", "로시", "비앙키", "모레티", "닐센", "라르센", "안데르센", "스미스", "윌리엄스", "존슨"]
-                seed_offset = sum(ord(c) for c in nm) % len(surnames)
-                nums = [1, 2, 4, 5, 23, 6, 8, 10, 14, 9, 11]
-                pos_list = ["GK", "DF", "DF", "DF", "DF", "MF", "MF", "MF", "MF", "FW", "FW"]
+                # 🛡️ 가짜 외인 이름 생성 원천 차단: 등록되지 않은 팀은 빈 배열 반환하여 '공식 발표 대기' 상태 유지
                 base_list = []
-                for idx in range(11):
-                    init = first_initials[(seed_offset + idx) % len(first_initials)]
-                    surn = surnames[(seed_offset + idx * 2) % len(surnames)]
-                    base_list.append((f"{init}{surn}", nums[idx], pos_list[idx]))
-                
                 sub_base = []
-                for s_idx in range(7):
-                    init = first_initials[(seed_offset + 11 + s_idx) % len(first_initials)]
-                    surn = surnames[(seed_offset + 11 + s_idx * 2) % len(surnames)]
-                    sub_base.append((f"{init}{surn}", 12 + s_idx, "SUB"))
 
             xi = []
             for idx, (p_n, p_no, p_pos) in enumerate(base_list):
@@ -3412,11 +3563,13 @@ class LiveApiSportsService:
 
         if len(home_xi) < 7:
             home_xi, home_subs = _get_smart_squad(home_name, True)
-            is_confirmed = True
 
         if len(away_xi) < 7:
             away_xi, away_subs = _get_smart_squad(away_name, False)
-            is_confirmed = True
+
+        # 시작 전 경기(SCHEDULED)는 경기 개시 약 40~60분 전 심판 확정 전까지 '선발 발표 대기(EXPECTED)' 유지
+        if not fixture_id or (match and match.status == 'SCHEDULED'):
+            is_confirmed = False
 
         # 6. 선수별 이벤트 필드 초기화 (골, 카드, 교체 IN/OUT)
         for p in (home_xi + away_xi + home_subs + away_subs):

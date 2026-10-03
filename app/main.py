@@ -81,8 +81,8 @@ async def lifespan(app: FastAPI):
         import urllib.request
         while True:
             try:
-                await asyncio.sleep(600)  # 10분 주기
-                ping_url = "http://127.0.0.1:8000/health"
+                port_val = os.getenv('PORT', '9050')
+                ping_url = f"http://127.0.0.1:{port_val}/health"
                 req = urllib.request.Request(ping_url, headers={"User-Agent": "TOKEON-InternalHealth/1.0"})
                 with urllib.request.urlopen(req, timeout=5) as resp:
                     pass
@@ -661,6 +661,7 @@ app.include_router(community_router)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.getenv("PORT", 9050))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
 
 # touch reload

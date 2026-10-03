@@ -1214,6 +1214,136 @@ class MatchService:
         return results
 
     @classmethod
+    def get_soccer_board_dict(cls, m: Any, t_stats: Optional[Dict[str, Any]] = None, p_scores: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """축구 경기 실시간 전광판 및 상세 모달 전용 통합 스코어보드 객체 반환"""
+        if not t_stats:
+            t_stats = {}
+            if getattr(m, "details", None) and getattr(m.details, "team_stats", None):
+                try:
+                    t_stats = json.loads(m.details.team_stats) if isinstance(m.details.team_stats, str) else m.details.team_stats
+                except Exception:
+                    t_stats = {}
+        if not p_scores:
+            p_scores = {}
+            if getattr(m, "details", None) and getattr(m.details, "period_scores", None):
+                try:
+                    p_scores = json.loads(m.details.period_scores) if isinstance(m.details.period_scores, str) else m.details.period_scores
+                except Exception:
+                    p_scores = {}
+
+        seed = ((getattr(m, "id", 1) or 1) * 23) % 100
+        status = getattr(m, "status", "SCHEDULED") or "SCHEDULED"
+
+        # 경기 시간 / 회차 추론
+        live_clock = None
+        if isinstance(p_scores, dict):
+            live_clock = p_scores.get("current_inning")
+        if not live_clock and isinstance(t_stats, dict):
+            live_clock = t_stats.get("scoreboard", {}).get("current_inning") or t_stats.get("current_inning")
+        if not live_clock:
+            live_clock = getattr(m, "current_inning", None)
+
+        if status == "FINISHED":
+            match_time_str = "경기종료"
+            period_str = "FT"
+        elif status == "SCHEDULED":
+            match_time_str = "경기전"
+            period_str = "PRE"
+        else:
+            if live_clock and live_clock not in ("진행중", "LIVE", "예정", "종료"):
+                match_time_str = live_clock
+                period_str = "후반" if ("후반" in live_clock or "FT" in live_clock or "2H" in live_clock) else "전반"
+            else:
+                minute = 15 + (seed % 75)
+                period_str = "전반" if minute <= 45 else "후반"
+                match_time_str = f"{minute}' ({period_str})"
+
+        # 실제 통계 추출
+        h_st = t_stats.get("home", {}) if isinstance(t_stats.get("home"), dict) else {}
+        a_st = t_stats.get("away", {}) if isinstance(t_stats.get("away"), dict) else {}
+
+        # 1. 점유율
+        poss_h = 50 + (seed % 21) - 10
+        raw_ph = h_st.get("possessionPct")
+        if raw_ph and str(raw_ph).replace("%", "").isdigit():
+            poss_h = int(str(raw_ph).replace("%", ""))
+        poss_a = 100 - poss_h
+
+        # 2. 슈팅 & 유효슈팅
+        shots_h = max((getattr(m, "home_score", 0) or 0) * 3, 6 + (seed % 8))
+        raw_sh = h_st.get("shotsTotal") or h_st.get("shots")
+        if raw_sh and str(raw_sh).isdigit():
+            shots_h = int(raw_sh)
+        shots_a = max((getattr(m, "away_score", 0) or 0) * 3, 4 + ((seed + 3) % 8))
+        raw_sa = a_st.get("shotsTotal") or a_st.get("shots")
+        if raw_sa and str(raw_sa).isdigit():
+            shots_a = int(raw_sa)
+
+        sot_h = max((getattr(m, "home_score", 0) or 0), 3 + (seed % 4))
+        raw_soth = h_st.get("shotsOnTarget")
+        if raw_soth and str(raw_soth).isdigit():
+            sot_h = int(raw_soth)
+        sot_a = max((getattr(m, "away_score", 0) or 0), 2 + ((seed + 2) % 4))
+        raw_sota = a_st.get("shotsOnTarget")
+        if raw_sota and str(raw_sota).isdigit():
+            sot_a = int(raw_sota)
+
+        # 3. 코너킥 (세트피스)
+        corners_h = 3 + (seed % 6)
+        raw_ch = h_st.get("corners")
+        if raw_ch and str(raw_ch).isdigit():
+            corners_h = int(raw_ch)
+        corners_a = 2 + ((seed + 1) % 5)
+        raw_ca = a_st.get("corners")
+        if raw_ca and str(raw_ca).isdigit():
+            corners_a = int(raw_ca)
+
+        # 4. 파울
+        fouls_h = 8 + (seed % 7)
+        raw_fh = h_st.get("foulsCommitted") or h_st.get("fouls")
+        if raw_fh and str(raw_fh).isdigit():
+            fouls_h = int(raw_fh)
+        fouls_a = 9 + ((seed + 2) % 6)
+        raw_fa = a_st.get("foulsCommitted") or a_st.get("fouls")
+        if raw_fa and str(raw_fa).isdigit():
+            fouls_a = int(raw_fa)
+
+        # 5. 카드
+        yc_h = 1 if (seed % 3 == 0) else 0
+        raw_ych = h_st.get("yellowCards")
+        if raw_ych and str(raw_ych).isdigit():
+            yc_h = int(raw_ych)
+        rc_h = 0
+        raw_rch = h_st.get("redCards")
+        if raw_rch and str(raw_rch).isdigit():
+            rc_h = int(raw_rch)
+
+        yc_a = 1 if ((seed + 1) % 3 == 0) else 0
+        raw_yca = a_st.get("yellowCards")
+        if raw_yca and str(raw_yca).isdigit():
+            yc_a = int(raw_yca)
+        rc_a = 0
+        raw_rca = a_st.get("redCards")
+        if raw_rca and str(raw_rca).isdigit():
+            rc_a = int(raw_rca)
+
+        return {
+            "match_time": match_time_str,
+            "period": period_str,
+            "possession": {"home": poss_h, "away": poss_a},
+            "shots": {"home": shots_h, "away": shots_a},
+            "shots_on_target": {"home": sot_h, "away": sot_a},
+            "corners": {"home": corners_h, "away": corners_a},
+            "fouls": {"home": fouls_h, "away": fouls_a},
+            "cards": {
+                "home_yellow": yc_h,
+                "home_red": rc_h,
+                "away_yellow": yc_a,
+                "away_red": rc_a
+            }
+        }
+
+    @classmethod
     def get_live_scoreboard_boards(cls, db: Session, sport: Optional[str] = None, limit: int = 16) -> List[Dict[str, Any]]:
         """실시간 전광판 화면에 특화된 고성능 종합 경기 보드 데이터 생성 (구장/주자/볼카운트/이닝/스코어)"""
         # 1. LIVE 경기 우선 조회
@@ -1388,35 +1518,7 @@ class MatchService:
 
             # 축구 전광판 세부 지표
             elif m.sport_code == "SOCCER":
-                seed = (m.id * 23) % 100
-                if m.status == "FINISHED":
-                    match_time_str = "경기종료"
-                    period_str = "FT"
-                elif m.status == "SCHEDULED":
-                    match_time_str = "경기전"
-                    period_str = "PRE"
-                else:
-                    minute = 15 + (seed % 75)
-                    period_str = "전반" if minute <= 45 else "후반"
-                    match_time_str = f"{minute}' ({period_str})"
-
-                poss_h = 50 + (seed % 21) - 10
-                poss_a = 100 - poss_h
-                board["soccer"] = {
-                    "match_time": match_time_str,
-                    "period": period_str,
-                    "possession": {"home": poss_h, "away": poss_a},
-                    "shots": {"home": max((m.home_score or 0) * 3, 6 + (seed % 8)), "away": max((m.away_score or 0) * 3, 4 + ((seed + 3) % 8))},
-                    "shots_on_target": {"home": max((m.home_score or 0), 3 + (seed % 4)), "away": max((m.away_score or 0), 2 + ((seed + 2) % 4))},
-                    "corners": {"home": 3 + (seed % 6), "away": 2 + ((seed + 1) % 5)},
-                    "fouls": {"home": 8 + (seed % 7), "away": 9 + ((seed + 2) % 6)},
-                    "cards": {
-                        "home_yellow": 1 if (seed % 3 == 0) else 0,
-                        "home_red": 0,
-                        "away_yellow": 1 if ((seed + 1) % 3 == 0) else 0,
-                        "away_red": 0
-                    }
-                }
+                board["soccer"] = cls.get_soccer_board_dict(m, t_stats=t_stats, p_scores=p_scores)
 
             # 농구 전광판 세부 지표
             elif m.sport_code == "BASKETBALL":

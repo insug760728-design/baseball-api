@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.services.match_service import MatchService
-from app.services.team_split_service import TeamSplitService
+from app.services.team_split_service import TeamSplitService, _lookup_official_pitcher
 from app.services.player_translation import translate_player_name
 from app.schemas.schemas import MatchResponse, MatchUpdate, DateRangeSyncRequest, PlayerMatchStatUpdate
 from app.core.cache import cache_get, cache_set, cache_get_json, cache_set_json, cache_delete
@@ -97,6 +97,25 @@ def get_pitcher_profile_from_db(clean_name: str) -> Optional[dict]:
 
     db = SessionLocal()
     try:
+        from app.models.models import MatchDetail
+        # 1. match_details.team_stats.starters 에서 실시간 정밀 등판 일지 우선 탐색
+        md_rows = db.query(MatchDetail).join(Match, MatchDetail.match_id == Match.id).filter(
+            Match.sport_code == 'BASEBALL'
+        ).order_by(Match.match_date.desc()).limit(60).all()
+        for md in md_rows:
+            if not md.team_stats: continue
+            try:
+                ts = json.loads(md.team_stats) if isinstance(md.team_stats, str) else md.team_stats
+                st_dict = ts.get('starters', {})
+                for s_key in ('home', 'away'):
+                    p_obj = st_dict.get(s_key, {})
+                    p_name = p_obj.get('name') or ''
+                    if any(a in p_name or p_name in a for a in aliases) and p_obj.get('recent_starts'):
+                        if len(p_obj.get('recent_starts', [])) >= 3:
+                            return p_obj
+            except Exception:
+                pass
+
         conds = [PlayerMatchStat.player_name.ilike(f"%{a}%") for a in aliases]
         stats = db.query(PlayerMatchStat, Match).join(
             Match, PlayerMatchStat.match_id == Match.id
@@ -221,10 +240,17 @@ def get_pitcher_profile_endpoint(
     if not clean or clean in ("선발 미정", "미정", "None", "선발 예고 대기중"):
         return {}
 
+    # 1. 로컬 DB(MatchDetail 및 PlayerMatchStat) 실시간 실데이터 우선 조회
+    db_prof = get_pitcher_profile_from_db(clean)
+    if db_prof and db_prof.get("recent_starts") and len(db_prof.get("recent_starts", [])) >= 3:
+        return db_prof
+
     try:
         from app.services.team_split_service import _lookup_official_pitcher
         off_prof = _lookup_official_pitcher(name)
         if off_prof and off_prof.get("recent_starts"):
+            if db_prof and len(db_prof.get("recent_starts", [])) >= len(off_prof.get("recent_starts", [])):
+                return db_prof
             return off_prof
     except Exception:
         pass
@@ -445,6 +471,61 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
         if sp and sp.get("away") and sp["away"].get("name") and sp["away"]["name"] not in ["선발 미정", "미정", "선발 예고", "선발 투수"]:
             a_starter = sp["away"]["name"]
 
+    # ⚾ 야구 선발투수 100% 공식 데이터셋 및 최근 등판 일지(recent_starts) 실시간 보강
+    is_baseball = (m.sport_code == "BASEBALL") or any(
+        k in (m.league_name or "") for k in ["MLB", "KBO", "NPB"]
+    )
+    if is_baseball and isinstance(details_ts, dict):
+        if "starters" not in details_ts or not isinstance(details_ts["starters"], dict):
+            details_ts["starters"] = {}
+        
+        # 홈 선발투수 정밀 보강
+        h_obj = details_ts["starters"].get("home", {})
+        if not isinstance(h_obj, dict): h_obj = {}
+        h_name = h_obj.get("name") or h_starter
+        if h_name and h_name not in ["선발 미정", "미정", "선발 예고", "선발 투수"]:
+            h_obj["name"] = translate_player_name(h_name) or h_name
+            if not h_starter:
+                h_starter = h_obj["name"]
+            if not h_obj.get("recent_starts") or len(h_obj.get("recent_starts", [])) == 0:
+                p_prof = _lookup_official_pitcher(h_name)
+                if p_prof and p_prof.get("recent_starts"):
+                    h_obj["recent_starts"] = p_prof["recent_starts"]
+                    if not h_obj.get("era") and p_prof.get("era"):
+                        h_obj["era"] = p_prof.get("era")
+                    if not h_obj.get("wins") and p_prof.get("wins"):
+                        h_obj["wins"] = p_prof.get("wins")
+                    if not h_obj.get("losses") and p_prof.get("losses"):
+                        h_obj["losses"] = p_prof.get("losses")
+                    if not h_obj.get("recent_3_starts"):
+                        h_obj["recent_3_starts"] = p_prof.get("recent_3_starts") or p_prof["recent_starts"][:3]
+            details_ts["starters"]["home"] = h_obj
+
+        # 원정 선발투수 정밀 보강
+        a_obj = details_ts["starters"].get("away", {})
+        if not isinstance(a_obj, dict): a_obj = {}
+        a_name = a_obj.get("name") or a_starter
+        if a_name and a_name not in ["선발 미정", "미정", "선발 예고", "선발 투수"]:
+            a_obj["name"] = translate_player_name(a_name) or a_name
+            if not a_starter:
+                a_starter = a_obj["name"]
+            if not a_obj.get("recent_starts") or len(a_obj.get("recent_starts", [])) == 0:
+                p_prof = _lookup_official_pitcher(a_name)
+                if p_prof and p_prof.get("recent_starts"):
+                    a_obj["recent_starts"] = p_prof["recent_starts"]
+                    if not a_obj.get("era") and p_prof.get("era"):
+                        a_obj["era"] = p_prof.get("era")
+                    if not a_obj.get("wins") and p_prof.get("wins"):
+                        a_obj["wins"] = p_prof.get("wins")
+                    if not a_obj.get("losses") and p_prof.get("losses"):
+                        a_obj["losses"] = p_prof.get("losses")
+                    if not a_obj.get("recent_3_starts"):
+                        a_obj["recent_3_starts"] = p_prof.get("recent_3_starts") or p_prof["recent_starts"][:3]
+            details_ts["starters"]["away"] = a_obj
+
+        if data.get("details"):
+            data["details"]["team_stats"] = details_ts
+
     h_lineup = None
     a_lineup = None
     is_lineup_confirmed = False
@@ -497,6 +578,7 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
         "away_score": m.away_score,
         "home_starter_name": (translate_player_name(h_starter) or h_starter) if h_starter else None,
         "away_starter_name": (translate_player_name(a_starter) or a_starter) if a_starter else None,
+        "starters": details_ts.get("starters", {}) if isinstance(details_ts, dict) else {},
         "status": m.status,
         "is_customized": m.is_customized,
         "custom_notes": m.custom_notes,
@@ -506,6 +588,7 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
         "player_stats": data["player_stats"],
         "matchup_analysis": matchup_analysis,
         "history": hist_data,
+        "soccer": MatchService.get_soccer_board_dict(m, t_stats=details_ts) if m.sport_code == "SOCCER" else None,
         "soccer_lineup": details_ts.get("soccer_lineup") if isinstance(details_ts, dict) else None,
         "home_lineup": h_lineup or (details_ts.get("soccer_lineup", {}).get("home", {}).get("starting_xi") if isinstance(details_ts, dict) else None),
         "away_lineup": a_lineup or (details_ts.get("soccer_lineup", {}).get("away", {}).get("starting_xi") if isinstance(details_ts, dict) else None),

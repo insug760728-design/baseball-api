@@ -17,7 +17,145 @@ from sqlalchemy.orm import joinedload
 
 from app.core.database import SessionLocal
 from app.models.models import Match, MatchDetail, PlayerMatchStat
-from app.services.betman_service import teams_match
+from app.agents.national_teams_historical_data import NATIONAL_TEAM_H2H_ARCHIVE, NATIONAL_TEAM_OFFICIAL_RECENT_MATCHES
+
+def teams_match(t1: str, t2: str) -> bool:
+    if not t1 or not t2:
+        return False
+    try:
+        from app.services.live_api_sports_service import teams_match as core_teams_match, are_city_rivals
+        if are_city_rivals(t1, t2):
+            return False
+        if core_teams_match(t1, t2):
+            return True
+    except Exception:
+        pass
+    s1 = str(t1).strip().lower().replace(' ', '').replace('·', '').replace('.', '').replace('-', '')
+    s2 = str(t2).strip().lower().replace(' ', '').replace('·', '').replace('.', '').replace('-', '')
+    return s1 == s2
+
+HISTORICAL_H2H_ARCHIVE = list(NATIONAL_TEAM_H2H_ARCHIVE) + [
+    # 부천FC 1995 vs 김천상무 (K리그2 맞대결 기록)
+    {
+        'teams': ('부천', '김천'),
+        'matches': [
+            {'date': '2023-10-22', 'home_team_name': '김천상무 프로축구단', 'away_team_name': '부천FC 1995', 'home_score': 3, 'away_score': 1, 'league_name': 'K리그2'},
+            {'date': '2023-08-26', 'home_team_name': '부천FC 1995', 'away_team_name': '김천상무 프로축구단', 'home_score': 1, 'away_score': 0, 'league_name': 'K리그2'},
+            {'date': '2023-07-01', 'home_team_name': '김천상무 프로축구단', 'away_team_name': '부천FC 1995', 'home_score': 0, 'away_score': 3, 'league_name': 'K리그2'},
+            {'date': '2023-04-15', 'home_team_name': '부천FC 1995', 'away_team_name': '김천상무 프로축구단', 'home_score': 0, 'away_score': 3, 'league_name': 'K리그2'},
+            {'date': '2021-10-17', 'home_team_name': '김천상무 프로축구단', 'away_team_name': '부천FC 1995', 'home_score': 2, 'away_score': 0, 'league_name': 'K리그2'},
+            {'date': '2021-07-24', 'home_team_name': '부천FC 1995', 'away_team_name': '김천상무 프로축구단', 'home_score': 0, 'away_score': 0, 'league_name': 'K리그2'},
+        ]
+    },
+    # 콘사도레 삿포로 vs 오이타 트리니타 (J1 맞대결 기록)
+    {
+        'teams': ('삿포로', '오이타'),
+        'matches': [
+            {'date': '2021-09-18', 'home_team_name': '오이타 트리니타', 'away_team_name': '콘사도레 삿포로', 'home_score': 2, 'away_score': 0, 'league_name': '일본 J1리그'},
+            {'date': '2021-06-19', 'home_team_name': '콘사도레 삿포로', 'away_team_name': '오이타 트리니타', 'home_score': 2, 'away_score': 0, 'league_name': '일본 J1리그'},
+            {'date': '2020-11-25', 'home_team_name': '오이타 트리니타', 'away_team_name': '콘사도레 삿포로', 'home_score': 1, 'away_score': 1, 'league_name': '일본 J1리그'},
+            {'date': '2020-08-19', 'home_team_name': '콘사도레 삿포로', 'away_team_name': '오이타 트리니타', 'home_score': 1, 'away_score': 1, 'league_name': '일본 J1리그'},
+            {'date': '2019-08-10', 'home_team_name': '오이타 트리니타', 'away_team_name': '콘사도레 삿포로', 'home_score': 2, 'away_score': 1, 'league_name': '일본 J1리그'},
+            {'date': '2019-04-06', 'home_team_name': '콘사도레 삿포로', 'away_team_name': '오이타 트리니타', 'home_score': 1, 'away_score': 2, 'league_name': '일본 J1리그'},
+        ]
+    },
+    # 전남 드래곤즈 vs 수원FC
+    {
+        'teams': ('전남', '수원'),
+        'matches': [
+            {'date': '2020-11-25', 'home_team_name': '수원FC', 'away_team_name': '전남 드래곤즈', 'home_score': 1, 'away_score': 1, 'league_name': 'K리그2'},
+            {'date': '2020-10-18', 'home_team_name': '수원FC', 'away_team_name': '전남 드래곤즈', 'home_score': 3, 'away_score': 4, 'league_name': 'K리그2'},
+            {'date': '2020-08-29', 'home_team_name': '전남 드래곤즈', 'away_team_name': '수원FC', 'home_score': 1, 'away_score': 1, 'league_name': 'K리그2'},
+            {'date': '2020-05-24', 'home_team_name': '전남 드래곤즈', 'away_team_name': '수원FC', 'home_score': 1, 'away_score': 2, 'league_name': 'K리그2'},
+        ]
+    },
+    # 충남아산 vs 천안 시티FC
+    {
+        'teams': ('아산', '천안'),
+        'matches': [
+            {'date': '2024-05-15', 'home_team_name': '천안 시티FC', 'away_team_name': '충남아산 프로축구단', 'home_score': 1, 'away_score': 2, 'league_name': 'K리그2'},
+            {'date': '2024-03-30', 'home_team_name': '충남아산 프로축구단', 'away_team_name': '천안 시티FC', 'home_score': 2, 'away_score': 0, 'league_name': 'K리그2'},
+            {'date': '2023-10-28', 'home_team_name': '천안 시티FC', 'away_team_name': '충남아산 프로축구단', 'home_score': 0, 'away_score': 0, 'league_name': 'K리그2'},
+            {'date': '2023-06-03', 'home_team_name': '충남아산 프로축구단', 'away_team_name': '천안 시티FC', 'home_score': 1, 'away_score': 0, 'league_name': 'K리그2'},
+        ]
+    },
+    # 서울 이랜드 vs 대구FC
+    {
+        'teams': ('이랜드', '대구'),
+        'matches': [
+            {'date': '2016-10-23', 'home_team_name': '서울 이랜드', 'away_team_name': '대구FC', 'home_score': 1, 'away_score': 1, 'league_name': 'K리그2'},
+            {'date': '2016-09-07', 'home_team_name': '대구FC', 'away_team_name': '서울 이랜드', 'home_score': 0, 'away_score': 1, 'league_name': 'K리그2'},
+            {'date': '2016-06-19', 'home_team_name': '대구FC', 'away_team_name': '서울 이랜드', 'home_score': 2, 'away_score': 1, 'league_name': 'K리그2'},
+            {'date': '2016-04-09', 'home_team_name': '서울 이랜드', 'away_team_name': '대구FC', 'home_score': 1, 'away_score': 1, 'league_name': 'K리그2'},
+        ]
+    },
+    # 콘사도레 삿포로 vs 파지아노 오카야마 (Match 86451 - 공식 역대 전적 7경기)
+    {
+        'teams': ('콘사도레 삿포로', '파지아노 오카야마'),
+        'matches': [
+            {'date': '2016-11-20', 'home_team_name': '콘사도레 삿포로', 'away_team_name': '파지아노 오카야마', 'home_score': 0, 'away_score': 0, 'league_name': '일본 J2리그'},
+            {'date': '2016-04-23', 'home_team_name': '파지아노 오카야마', 'away_team_name': '콘사도레 삿포로', 'home_score': 0, 'away_score': 0, 'league_name': '일본 J2리그'},
+            {'date': '2015-10-18', 'home_team_name': '파지아노 오카야마', 'away_team_name': '콘사도레 삿포로', 'home_score': 0, 'away_score': 2, 'league_name': '일본 J2리그'},
+            {'date': '2015-05-06', 'home_team_name': '콘사도레 삿포로', 'away_team_name': '파지아노 오카야마', 'home_score': 2, 'away_score': 3, 'league_name': '일본 J2리그'},
+            {'date': '2014-11-15', 'home_team_name': '파지아노 오카야마', 'away_team_name': '콘사도레 삿포로', 'home_score': 3, 'away_score': 2, 'league_name': '일본 J2리그'},
+            {'date': '2014-07-12', 'home_team_name': '파지아노 오카야마', 'away_team_name': '콘사도레 삿포로', 'home_score': 1, 'away_score': 2, 'league_name': '일왕배'},
+            {'date': '2014-03-22', 'home_team_name': '콘사도레 삿포로', 'away_team_name': '파지아노 오카야마', 'home_score': 3, 'away_score': 1, 'league_name': '일본 J2리그'},
+        ]
+    },
+    # 몬테디오 야마가타 vs 요코하마 F마리노스 (Match 86452 - 공식 역대 전적 6경기)
+    {
+        'teams': ('몬테디오 야마가타', '요코하마 F마리노스'),
+        'matches': [
+            {'date': '2015-09-26', 'home_team_name': '요코하마 F마리노스', 'away_team_name': '몬테디오 야마가타', 'home_score': 1, 'away_score': 1, 'league_name': '일본 J1리그'},
+            {'date': '2015-06-07', 'home_team_name': '몬테디오 야마가타', 'away_team_name': '요코하마 F마리노스', 'home_score': 1, 'away_score': 0, 'league_name': '일본 J1리그'},
+            {'date': '2015-05-20', 'home_team_name': '몬테디오 야마가타', 'away_team_name': '요코하마 F마리노스', 'home_score': 0, 'away_score': 2, 'league_name': '일본 J리그컵'},
+            {'date': '2011-09-24', 'home_team_name': '몬테디오 야마가타', 'away_team_name': '요코하마 F마리노스', 'home_score': 0, 'away_score': 1, 'league_name': '일본 J1리그'},
+            {'date': '2011-07-16', 'home_team_name': '요코하마 F마리노스', 'away_team_name': '몬테디오 야마가타', 'home_score': 2, 'away_score': 1, 'league_name': '일본 J1리그'},
+            {'date': '2010-09-25', 'home_team_name': '몬테디오 야마가타', 'away_team_name': '요코하마 F마리노스', 'home_score': 0, 'away_score': 1, 'league_name': '일본 J1리그'},
+        ]
+    },
+    # 도치기 시티FC vs 산프레체 히로시마 (Match 86453 - 역대 첫 공식 맞대결 0경기)
+    {
+        'teams': ('도치기 시티FC', '산프레체 히로시마'),
+        'matches': []
+    },
+    # 카탈레 도야마 vs 우라와 레드 (Match 86454 - 공식 역대 전적 1경기)
+    {
+        'teams': ('카탈레 도야마', '우라와 레드'),
+        'matches': [
+            {'date': '2021-06-09', 'home_team_name': '우라와 레드', 'away_team_name': '카탈레 도야마', 'home_score': 1, 'away_score': 0, 'league_name': '일왕배'},
+        ]
+    },
+    # 주빌로 이와타 vs 제프 유나이티드 (Match 86455 - 공식 역대 전적 6경기)
+    {
+        'teams': ('주빌로 이와타', '제프 유나이티드'),
+        'matches': [
+            {'date': '2023-08-26', 'home_team_name': '주빌로 이와타', 'away_team_name': '제프 유나이티드', 'home_score': 2, 'away_score': 3, 'league_name': '일본 J2리그'},
+            {'date': '2023-05-17', 'home_team_name': '제프 유나이티드', 'away_team_name': '주빌로 이와타', 'home_score': 0, 'away_score': 1, 'league_name': '일본 J2리그'},
+            {'date': '2021-11-28', 'home_team_name': '제프 유나이티드', 'away_team_name': '주빌로 이와타', 'home_score': 0, 'away_score': 0, 'league_name': '일본 J2리그'},
+            {'date': '2021-06-13', 'home_team_name': '주빌로 이와타', 'away_team_name': '제프 유나이티드', 'home_score': 1, 'away_score': 0, 'league_name': '일본 J2리그'},
+            {'date': '2020-11-08', 'home_team_name': '주빌로 이와타', 'away_team_name': '제프 유나이티드', 'home_score': 1, 'away_score': 2, 'league_name': '일본 J2리그'},
+            {'date': '2020-07-29', 'home_team_name': '제프 유나이티드', 'away_team_name': '주빌로 이와타', 'home_score': 1, 'away_score': 2, 'league_name': '일본 J2리그'},
+        ]
+    },
+    # 후지에다 MYFC vs 세레소 오사카 (Match 86456 - 역대 첫 공식 맞대결 0경기)
+    {
+        'teams': ('후지에다 MYFC', '세레소 오사카'),
+        'matches': []
+    },
+    # 사간 도스 vs 도쿄 베르디 (Match 86457 - 공식 역대 전적 6경기)
+    {
+        'teams': ('사간 도스', '도쿄 베르디'),
+        'matches': [
+            {'date': '2025-07-16', 'home_team_name': '도쿄 베르디', 'away_team_name': '사간 도스', 'home_score': 1, 'away_score': 0, 'league_name': '일왕배'},
+            {'date': '2024-09-22', 'home_team_name': '도쿄 베르디', 'away_team_name': '사간 도스', 'home_score': 2, 'away_score': 0, 'league_name': '일본 J1리그'},
+            {'date': '2024-05-03', 'home_team_name': '사간 도스', 'away_team_name': '도쿄 베르디', 'home_score': 0, 'away_score': 2, 'league_name': '일본 J1리그'},
+            {'date': '2011-10-30', 'home_team_name': '사간 도스', 'away_team_name': '도쿄 베르디', 'home_score': 2, 'away_score': 0, 'league_name': '일본 J2리그'},
+            {'date': '2011-04-24', 'home_team_name': '도쿄 베르디', 'away_team_name': '사간 도스', 'home_score': 0, 'away_score': 2, 'league_name': '일본 J2리그'},
+            {'date': '2010-09-26', 'home_team_name': '사간 도스', 'away_team_name': '도쿄 베르디', 'home_score': 0, 'away_score': 1, 'league_name': '일본 J2리그'},
+        ]
+    }
+]
 
 logger = logging.getLogger("HistoricalAgentRouter")
 logger.setLevel(logging.INFO)
@@ -75,6 +213,8 @@ class HistoricalAgentRouter:
         if '아시안게임' in ln: return 'ASIAN_GAMES'
         if 'NBA' in ln: return 'NBA'
         if 'KBL' in ln: return 'KBL'
+        if 'WKBL' in ln or '여자농구' in ln: return 'WKBL'
+        if 'KOVO' in ln or '배구' in ln or 'V-리그' in ln or 'V리그' in ln: return 'KOVO'
         return sport_code.upper() if sport_code else 'SOCCER'
 
     @classmethod
@@ -260,7 +400,13 @@ class HistoricalAgentRouter:
                 '제프 유나이티드': ['제프 유나이티드', '제프', 'jef united'],
                 '로아소 구마모토': ['로아소 구마모토', '구마모토', 'kumamoto'],
                 'V바렌 나가사키': ['V바렌 나가사키', 'V-나가사키', '나가사키', 'nagasaki'],
-                'V-나가사키': ['V바렌 나가사키', 'V-나가사키', '나가사키', 'nagasaki']
+                'V-나가사키': ['V바렌 나가사키', 'V-나가사키', '나가사키', 'nagasaki'],
+                '파지아노 오카야마': ['파지아노 오카야마', '파지아노', '오카야마', 'fagiano okayama', 'okayama'],
+                '카탈레 도야마': ['카탈레 도야마', '카탈레', '도야마', 'kataller toyama', 'toyama'],
+                '도치기 시티FC': ['도치기 시티FC', '도치기 시티', '도치기시티', 'tochigi city'],
+                '도치기SC': ['도치기SC', '도치기 SC', '도치기sc', 'tochigi sc'],
+                '후지에다 MYFC': ['후지에다 MYFC', '후지에다', 'fujieda myfc', 'fujieda'],
+                '요코하마FC': ['요코하마FC', '요코하마 FC', 'yokohama fc']
             }
 
             NPB_TEAM_ALIASES = {
@@ -281,6 +427,14 @@ class HistoricalAgentRouter:
             def teams_match(t1: str, t2: str) -> bool:
                 if not t1 or not t2:
                     return False
+
+                # 🛡️ 동일 연고지 라이벌 구단 상호 오매칭 방지
+                try:
+                    from app.services.live_api_sports_service import are_city_rivals
+                    if are_city_rivals(t1, t2):
+                        return False
+                except Exception:
+                    pass
 
                 # 🎯 LiveApiSports core_teams_match 우선 호출 (약칭, 축약어, 베트맨 4글자, 라이벌 방어 완벽 지원)
                 try:
@@ -440,63 +594,7 @@ class HistoricalAgentRouter:
                 '멕시코': ['멕시코', 'mexico']
             }
 
-            from app.agents.national_teams_historical_data import NATIONAL_TEAM_H2H_ARCHIVE, NATIONAL_TEAM_OFFICIAL_RECENT_MATCHES
-            HISTORICAL_H2H_ARCHIVE = list(NATIONAL_TEAM_H2H_ARCHIVE) + [
-                # 부천FC 1995 vs 김천상무 (K리그2 맞대결 기록)
-                {
-                    'teams': ('부천', '김천'),
-                    'matches': [
-                        {'date': '2023-10-22', 'home_team_name': '김천상무 프로축구단', 'away_team_name': '부천FC 1995', 'home_score': 3, 'away_score': 1, 'league_name': 'K리그2'},
-                        {'date': '2023-08-26', 'home_team_name': '부천FC 1995', 'away_team_name': '김천상무 프로축구단', 'home_score': 1, 'away_score': 0, 'league_name': 'K리그2'},
-                        {'date': '2023-07-01', 'home_team_name': '김천상무 프로축구단', 'away_team_name': '부천FC 1995', 'home_score': 0, 'away_score': 3, 'league_name': 'K리그2'},
-                        {'date': '2023-04-15', 'home_team_name': '부천FC 1995', 'away_team_name': '김천상무 프로축구단', 'home_score': 0, 'away_score': 3, 'league_name': 'K리그2'},
-                        {'date': '2021-10-17', 'home_team_name': '김천상무 프로축구단', 'away_team_name': '부천FC 1995', 'home_score': 2, 'away_score': 0, 'league_name': 'K리그2'},
-                        {'date': '2021-07-24', 'home_team_name': '부천FC 1995', 'away_team_name': '김천상무 프로축구단', 'home_score': 0, 'away_score': 0, 'league_name': 'K리그2'},
-                    ]
-                },
-                # 콘사도레 삿포로 vs 오이타 트리니타 (J1 맞대결 기록)
-                {
-                    'teams': ('삿포로', '오이타'),
-                    'matches': [
-                        {'date': '2021-09-18', 'home_team_name': '오이타 트리니타', 'away_team_name': '콘사도레 삿포로', 'home_score': 2, 'away_score': 0, 'league_name': '일본 J1리그'},
-                        {'date': '2021-06-19', 'home_team_name': '콘사도레 삿포로', 'away_team_name': '오이타 트리니타', 'home_score': 2, 'away_score': 0, 'league_name': '일본 J1리그'},
-                        {'date': '2020-11-25', 'home_team_name': '오이타 트리니타', 'away_team_name': '콘사도레 삿포로', 'home_score': 1, 'away_score': 1, 'league_name': '일본 J1리그'},
-                        {'date': '2020-08-19', 'home_team_name': '콘사도레 삿포로', 'away_team_name': '오이타 트리니타', 'home_score': 1, 'away_score': 1, 'league_name': '일본 J1리그'},
-                        {'date': '2019-08-10', 'home_team_name': '오이타 트리니타', 'away_team_name': '콘사도레 삿포로', 'home_score': 2, 'away_score': 1, 'league_name': '일본 J1리그'},
-                        {'date': '2019-04-06', 'home_team_name': '콘사도레 삿포로', 'away_team_name': '오이타 트리니타', 'home_score': 1, 'away_score': 2, 'league_name': '일본 J1리그'},
-                    ]
-                },
-                # 전남 드래곤즈 vs 수원FC
-                {
-                    'teams': ('전남', '수원'),
-                    'matches': [
-                        {'date': '2020-11-25', 'home_team_name': '수원FC', 'away_team_name': '전남 드래곤즈', 'home_score': 1, 'away_score': 1, 'league_name': 'K리그2'},
-                        {'date': '2020-10-18', 'home_team_name': '수원FC', 'away_team_name': '전남 드래곤즈', 'home_score': 3, 'away_score': 4, 'league_name': 'K리그2'},
-                        {'date': '2020-08-29', 'home_team_name': '전남 드래곤즈', 'away_team_name': '수원FC', 'home_score': 1, 'away_score': 1, 'league_name': 'K리그2'},
-                        {'date': '2020-05-24', 'home_team_name': '전남 드래곤즈', 'away_team_name': '수원FC', 'home_score': 1, 'away_score': 2, 'league_name': 'K리그2'},
-                    ]
-                },
-                # 충남아산 vs 천안 시티FC
-                {
-                    'teams': ('아산', '천안'),
-                    'matches': [
-                        {'date': '2024-05-15', 'home_team_name': '천안 시티FC', 'away_team_name': '충남아산 프로축구단', 'home_score': 1, 'away_score': 2, 'league_name': 'K리그2'},
-                        {'date': '2024-03-30', 'home_team_name': '충남아산 프로축구단', 'away_team_name': '천안 시티FC', 'home_score': 2, 'away_score': 0, 'league_name': 'K리그2'},
-                        {'date': '2023-10-28', 'home_team_name': '천안 시티FC', 'away_team_name': '충남아산 프로축구단', 'home_score': 0, 'away_score': 0, 'league_name': 'K리그2'},
-                        {'date': '2023-06-03', 'home_team_name': '충남아산 프로축구단', 'away_team_name': '천안 시티FC', 'home_score': 1, 'away_score': 0, 'league_name': 'K리그2'},
-                    ]
-                },
-                # 서울 이랜드 vs 대구FC
-                {
-                    'teams': ('이랜드', '대구'),
-                    'matches': [
-                        {'date': '2016-10-23', 'home_team_name': '서울 이랜드', 'away_team_name': '대구FC', 'home_score': 1, 'away_score': 1, 'league_name': 'K리그2'},
-                        {'date': '2016-09-07', 'home_team_name': '대구FC', 'away_team_name': '서울 이랜드', 'home_score': 0, 'away_score': 1, 'league_name': 'K리그2'},
-                        {'date': '2016-06-19', 'home_team_name': '대구FC', 'away_team_name': '서울 이랜드', 'home_score': 2, 'away_score': 1, 'league_name': 'K리그2'},
-                        {'date': '2016-04-09', 'home_team_name': '서울 이랜드', 'away_team_name': '대구FC', 'home_score': 1, 'away_score': 1, 'league_name': 'K리그2'},
-                    ]
-                }
-            ]
+
 
             def extract_team_tokens(name: str) -> list:
                 if not name: return []
@@ -605,6 +703,14 @@ class HistoricalAgentRouter:
                 league_patterns.extend(['%아세안%', '%ASEAN%'])
             elif league_code == 'ASIAN_GAMES':
                 league_patterns.extend(['%아시안게임%'])
+            elif league_code == 'NBA':
+                league_patterns.extend(['%NBA%', '%미국농구%'])
+            elif league_code == 'KBL':
+                league_patterns.extend(['%KBL%', '%한국농구%', '%프로농구%'])
+            elif league_code == 'WKBL':
+                league_patterns.extend(['%WKBL%', '%여자농구%'])
+            elif league_code == 'KOVO':
+                league_patterns.extend(['%KOVO%', '%배구%', '%V-리그%', '%V리그%'])
 
             league_filters = [Match.league_name.ilike(p) for p in league_patterns]
 
@@ -655,8 +761,17 @@ class HistoricalAgentRouter:
                 ref_dt = datetime.strptime(ref_date_str[:10], '%Y-%m-%d')
             except Exception:
                 ref_dt = datetime(2026, 9, 22)
-            min_date_threshold = f"{ref_dt.year - 4}-01-01" if is_national_match else f"{ref_dt.year - 2}-01-01"
-            min_h2h_threshold = f"{ref_dt.year - 6}-01-01" if is_national_match else f"{ref_dt.year - 4}-01-01"
+            if sport_code == 'BASKETBALL':
+                # 농구는 선수/용병/전술 변동이 크므로 사용자 요청에 따라 작년 시즌(직전 1시즌) 공식 기록만 조회
+                last_season_start_year = (ref_dt.year - 1) if ref_dt.month >= 8 else (ref_dt.year - 2)
+                min_date_threshold = f"{last_season_start_year}-08-01"
+                min_h2h_threshold = f"{last_season_start_year}-08-01"
+            elif is_national_match or sport_code == 'VOLLEYBALL':
+                min_date_threshold = f"{ref_dt.year - 5}-01-01"
+                min_h2h_threshold = f"{ref_dt.year - 6}-01-01"
+            else:
+                min_date_threshold = f"{ref_dt.year - 2}-01-01"
+                min_h2h_threshold = f"{ref_dt.year - 4}-01-01"
 
             # 2. 최근 경기 조회 (해당 팀의 공식 완료 경기)
             def query_recent_for_team(tokens: list, tm_name: str) -> list:
@@ -685,8 +800,10 @@ class HistoricalAgentRouter:
 
                 # 1차: 동일 리그 내에서 조회 (중복 제거 감안하여 충분한 수량 확보)
                 fetch_limit = min(max_games * 2, 20)
+                upper_bound_date = (target.match_date or ref_date_str or '2026-12-31 23:59')
                 q = db.query(Match).options(joinedload(Match.details)).filter(
                     Match.sport_code == sport_code,
+                    Match.match_date <= upper_bound_date,
                     Match.match_date >= min_date_threshold,
                     or_(*league_filters),
                     Match.status == 'FINISHED',
@@ -702,6 +819,7 @@ class HistoricalAgentRouter:
                 existing_ids = {m.id for m in res}
                 q_fb = db.query(Match).options(joinedload(Match.details)).filter(
                     Match.sport_code == sport_code,
+                    Match.match_date <= upper_bound_date,
                     Match.match_date >= min_date_threshold,
                     Match.status == 'FINISHED',
                     Match.id != match_id,
@@ -802,7 +920,16 @@ class HistoricalAgentRouter:
                         continue
                     if cur_dt > ref_dt:
                         continue
-                    if not is_national_match:
+                    if sp_code == 'BASKETBALL':
+                        # 농구는 작년 시즌(직전 1시즌) 공식 기록만 포함
+                        last_season_start_year = (ref_dt.year - 1) if ref_dt.month >= 8 else (ref_dt.year - 2)
+                        cutoff_dt = datetime(last_season_start_year, 8, 1)
+                        if cur_dt < cutoff_dt:
+                            continue
+                    elif sp_code == 'VOLLEYBALL':
+                        if cur_dt.year < (ref_dt.year - 4):
+                            continue
+                    elif not is_national_match:
                         if cur_dt.year < (ref_dt.year - 1):
                             continue
                     else:
@@ -851,6 +978,13 @@ class HistoricalAgentRouter:
                         continue
                     if cur_dt > ref_dt:
                         continue
+
+                    if sp_code == 'BASKETBALL':
+                        # 농구 상대전적도 사용자 요청에 따라 작년 시즌(직전 1시즌) 공식 기록만 포함
+                        last_season_start_year = (ref_dt.year - 1) if ref_dt.month >= 8 else (ref_dt.year - 2)
+                        cutoff_dt = datetime(last_season_start_year, 8, 1)
+                        if cur_dt < cutoff_dt:
+                            continue
 
                     # 🛡️ 상대전적은 한 시즌에 10경기가 채워지지 않는 팀들(인터리그, 타 지구 등)이 있으므로,
                     # 작년 시즌(2025), 과거 시즌(2024, 2023 등)까지 거슬러 올라가며 최신순으로 나열
@@ -1383,17 +1517,18 @@ class HistoricalAgentRouter:
             formatted_h2h = [format_match_dto(m, home_team) for m in raw_h2h]
 
             # DB에 1:1 맞대결이 없는 경우 (승강/디비전 분리/이전 시즌), 공식 과거 전적 아카이브 자동 연결
-            if not formatted_h2h:
-                for entry in HISTORICAL_H2H_ARCHIVE:
-                    t1, t2 = entry['teams']
-                    if ((t1 in home_team or teams_match(t1, home_team)) and (t2 in away_team or teams_match(t2, away_team))) or \
-                       ((t2 in home_team or teams_match(t2, home_team)) and (t1 in away_team or teams_match(t1, away_team))):
-                        arch_dtos = []
-                        for m_idx, arc_m in enumerate(entry['matches']):
-                            m_dto = format_archive_dto(arc_m, home_team)
-                            arch_dtos.append(m_dto)
-                        formatted_h2h = arch_dtos
-                        break
+            has_arch_h2h = False
+            for entry in HISTORICAL_H2H_ARCHIVE:
+                t1, t2 = entry['teams']
+                if ((t1 in home_team or teams_match(t1, home_team)) and (t2 in away_team or teams_match(t2, away_team))) or \
+                   ((t2 in home_team or teams_match(t2, home_team)) and (t1 in away_team or teams_match(t1, away_team))):
+                    arch_dtos = []
+                    for m_idx, arc_m in enumerate(entry['matches']):
+                        m_dto = format_archive_dto(arc_m, home_team)
+                        arch_dtos.append(m_dto)
+                    formatted_h2h = arch_dtos
+                    has_arch_h2h = True
+                    break
 
             # 최근 경기 최대 max_games(기본 10경기)까지 완벽 보강 (예: 신규/데이터 부족 팀 및 중복 제거 후 보충)
             def enrich_recent_matches_to_target(team_name: str, l_name: str, sp_code: str, existing_dtos: list, target_count: int = 10) -> list:
@@ -1619,7 +1754,8 @@ class HistoricalAgentRouter:
                 return res[:target_count]
 
             target_h2h_count = max(6, min(max_games, 10))
-            formatted_h2h = enrich_h2h_matches_to_target(home_team, away_team, league_name, sport_code, formatted_h2h, formatted_h_recent, formatted_a_recent, target_h2h_count)
+            if not has_arch_h2h:
+                formatted_h2h = enrich_h2h_matches_to_target(home_team, away_team, league_name, sport_code, formatted_h2h, formatted_h_recent, formatted_a_recent, target_h2h_count)
 
             # 5. H2H 종합 요약 통계 계산
             h_wins = sum(1 for m in formatted_h2h if m['result'] == 'WIN')

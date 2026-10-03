@@ -995,6 +995,8 @@ class SchedulerService:
                     sleep_sec = 2.0
                 elif soccer_live:
                     sleep_sec = 10.0
+                elif basketball_live or volleyball_live:
+                    sleep_sec = 10.0
                 elif has_imminent:
                     sleep_sec = 10.0
                 else:
