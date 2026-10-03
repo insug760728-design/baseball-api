@@ -18978,99 +18978,132 @@ function updateSlimPanel(matchId, type, contentHtml) {
           </div>
 
           <!-- ========================================================= -->
-          <!-- 🎯 [섹션 2] 팀 성향 & 롱볼·세트피스·역습·압박·제공권 매트릭스 -->
+          <!-- 🎯 [섹션 2] 축구 5대 핵심 전술 텍스트 지표 (막대표 대체 정밀 텍스트 매트릭스) -->
           <!-- ========================================================= -->
           <div class="p-2.5 border-bottom bg-white" style="border-color:#e2e8f0 !important;">
             <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
               <div class="d-flex align-items-center gap-1.5">
                 <span class="badge bg-primary text-white px-2 py-0.5" style="font-size:0.70rem;">
-                  <i class="bi bi-diagram-3-fill me-1"></i>팀 성향 분석
+                  <i class="bi bi-file-text-fill me-1"></i>정밀 텍스트 지표
                 </span>
-                <strong class="text-dark" style="font-size:0.82rem;">양 팀 전술 성향 (롱볼 · 세트피스 · 역습 · 압박 · 제공권)</strong>
+                <strong class="text-dark" style="font-size:0.82rem;">축구 5대 AI 전술 정밀 텍스트 분석 (롱볼 · 세트피스 · 역습 · 압박 · 제공권)</strong>
               </div>
               <div class="d-flex gap-2 small fw-bold" style="font-size:0.70rem;">
-                <span class="text-danger">🔴 ${hName}</span>
+                <span class="text-danger">🔴 [홈] ${hName}</span>
                 <span class="text-muted">vs</span>
-                <span class="text-primary">🔵 ${aName}</span>
+                <span class="text-primary">🔵 [원정] ${aName}</span>
               </div>
             </div>
 
-            <!-- Tactical Traits Comparison Rows -->
+            <!-- Tactical Traits Comparison Text Cards -->
             <div class="d-flex flex-column gap-2 mb-1">
               ${[
                 {
                   key: 'long_ball',
-                  title: '⚽ 롱볼 전술 (Long Balls & Direct Play)',
+                  title: '롱볼 전술 (Long Balls)',
                   icon: 'bi-arrow-up-right-circle-fill',
+                  iconColor: '#3b82f6',
+                  badge: '빌드업 & 전방전환',
+                  unit: '뒷공간 직접 타격 / 롱패스 배급',
                   h: hTend.long_ball || { score: 65, label: '다이렉트 롱패스', desc: '배후 뒷공간 직접 타격' },
                   a: aTend.long_ball || { score: 55, label: '상황별 롱패스', desc: '중원 압박에 따른 전환' }
                 },
                 {
                   key: 'set_piece',
-                  title: '🎯 세트피스 & 코너킥 위협도 (Set Pieces & Corners)',
+                  title: '세트피스 & 코너킥 위협도',
                   icon: 'bi-crosshair',
+                  iconColor: '#ef4444',
+                  badge: '데드볼 주 득점루트',
+                  unit: '코너킥·프리킥 득점력 & 전담키커',
                   h: hTend.set_piece || { score: 82, label: '세트피스 최상위 위협', desc: '약속된 코너킥·프리킥 득점력 상위' },
                   a: aTend.set_piece || { score: 72, label: '세트피스 강점', desc: '정교한 킥 배급 및 제공권 활용' }
                 },
                 {
                   key: 'counter_attack',
-                  title: '⚡ 역습 전개 속도 (Counter Attack & Transitions)',
+                  title: '역습 전개 속도 (Counter)',
                   icon: 'bi-lightning-charge-fill',
+                  iconColor: '#f59e0b',
+                  badge: '초고속 공수 전환',
+                  unit: '볼 탈취 후 침투 템포',
                   h: hTend.counter_attack || { score: 76, label: '초고속 카운터어택', desc: '3~4회 터치 이내 빠른 침투' },
                   a: aTend.counter_attack || { score: 80, label: '템포 조율형 역습', desc: '2선 지원을 동반한 속공' }
                 },
                 {
                   key: 'pressing',
-                  title: '🛡️ 전방 압박 강도 (High Pressing & Defensive Block)',
+                  title: '전방 압박 강도 (Pressing)',
                   icon: 'bi-shield-shaded',
+                  iconColor: '#10b981',
+                  badge: '게겐프레싱 & 수비라인',
+                  unit: '1차 빌드업 저지 및 블록 높이',
                   h: hTend.pressing || { score: 84, label: '초고강도 하이라인 압박', desc: '1차 빌드업 저지 게겐프레싱' },
                   a: aTend.pressing || { score: 70, label: '미들서드 차단 블록', desc: '두 줄 수비 블록 형성' }
                 },
                 {
                   key: 'aerial_duel',
-                  title: '✈️ 공중볼 제공권 (Aerial Duels & Target Man)',
+                  title: '공중볼 제공권 (Aerial Duels)',
                   icon: 'bi-arrows-expand',
+                  iconColor: '#8b5cf6',
+                  badge: '높이 & 타깃맨 경합',
+                  unit: '헤더 경합 성공률 및 세컨볼 회수',
                   h: hTend.aerial_duel || { score: 78, label: '공중볼 제공권 장악', desc: '타깃맨과 센터백의 강력한 헤더' },
                   a: aTend.aerial_duel || { score: 68, label: '지상 볼 경합 중심', desc: '그라운드 패스워크와 세컨볼 회수' }
                 }
               ].map(trait => {
-                const total = (trait.h.score + trait.a.score) || 100;
-                const hPct = Math.round((trait.h.score / total) * 100);
-                const aPct = 100 - hPct;
-                const hLead = trait.h.score > trait.a.score;
-                const aLead = trait.a.score > trait.h.score;
+                const diff = trait.h.score - trait.a.score;
+                const hLead = diff > 0;
+                const aLead = diff < 0;
+
+                let advantageTag = '';
+                if (Math.abs(diff) >= 8) {
+                  advantageTag = hLead
+                    ? `<span class="badge bg-danger text-white py-0.5 px-1.5 fw-bold" style="font-size:0.62rem;">👑 홈 압도 (+${diff}점)</span>`
+                    : `<span class="badge bg-primary text-white py-0.5 px-1.5 fw-bold" style="font-size:0.62rem;">👑 원정 압도 (+${Math.abs(diff)}점)</span>`;
+                } else if (Math.abs(diff) >= 3) {
+                  advantageTag = hLead
+                    ? `<span class="badge bg-danger-subtle text-danger border border-danger-subtle py-0.5 px-1.5 fw-bold" style="font-size:0.62rem;">홈 우세 (+${diff}점)</span>`
+                    : `<span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0.5 px-1.5 fw-bold" style="font-size:0.62rem;">원정 우세 (+${Math.abs(diff)}점)</span>`;
+                } else {
+                  advantageTag = `<span class="badge bg-secondary-subtle text-secondary py-0.5 px-1.5 fw-bold" style="font-size:0.62rem;">🤝 호각세</span>`;
+                }
 
                 return `
-                  <div class="p-2 rounded-2 border bg-light shadow-2xs" style="border-color:#f1f5f9 !important;">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                      <span class="fw-bold text-dark" style="font-size:0.75rem;">
-                        <i class="bi ${trait.icon} text-secondary me-1"></i>${trait.title}
+                  <div class="p-2 rounded-2 border" style="background:#f8fafc; border-color:#e2e8f0 !important;">
+                    <!-- 1. Header: [Home] Value vs Name vs Value [Away] -->
+                    <div class="d-flex justify-content-between align-items-center mb-1.5">
+                      <span class="badge ${hLead ? 'bg-danger text-white shadow-xs' : 'bg-light text-dark border'} fw-bold" style="font-size:0.73rem; padding: 3px 8px;">
+                        [홈] ${trait.h.score}점 · ${trait.h.label}
                       </span>
-                      <div class="d-flex gap-1.5 align-items-center font-monospace fw-bold" style="font-size:0.72rem;">
-                        <span class="badge ${hLead ? 'bg-danger text-white' : 'bg-light text-dark border'} px-1.5 py-0.5">${trait.h.score}점</span>
-                        <span class="text-muted small">:</span>
-                        <span class="badge ${aLead ? 'bg-primary text-white' : 'bg-light text-dark border'} px-1.5 py-0.5">${trait.a.score}점</span>
+                      <div class="d-flex align-items-center gap-1">
+                        <strong class="text-dark d-flex align-items-center gap-1" style="font-size:0.78rem;">
+                          <i class="bi ${trait.icon}" style="color:${trait.iconColor};"></i>
+                          <span>${trait.title}</span>
+                        </strong>
+                        ${advantageTag}
                       </div>
+                      <span class="badge ${aLead ? 'bg-primary text-white shadow-xs' : 'bg-light text-dark border'} fw-bold" style="font-size:0.73rem; padding: 3px 8px;">
+                        ${trait.a.label} · ${trait.a.score}점 [원정]
+                      </span>
                     </div>
 
-                    <!-- 2-Tone Gauge Bar -->
-                    <div class="progress mb-1.5" style="height: 8px; border-radius: 4px; background: #e2e8f0; overflow:hidden;">
-                      <div class="progress-bar bg-danger" role="progressbar" style="width: ${hPct}%;" aria-valuenow="${hPct}" aria-valuemin="0" aria-valuemax="100"></div>
-                      <div class="progress-bar bg-primary" role="progressbar" style="width: ${aPct}%;" aria-valuenow="${aPct}" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-
-                    <!-- Tactical Descriptions for Both Teams -->
-                    <div class="row g-1 text-dark" style="font-size:0.68rem; line-height:1.35;">
-                      <div class="col-12 col-md-6">
-                        <div class="p-1 rounded bg-white border border-danger-subtle h-100">
-                          <strong class="text-danger">🔴 ${hName}:</strong> ${trait.h.label}
-                          <div class="text-muted mt-0.5" style="font-size:0.64rem;">${trait.h.desc}</div>
+                    <!-- 2. Text Assessment Card -->
+                    <div class="p-2 rounded bg-white border" style="border-color:#e2e8f0 !important;">
+                      <div class="d-flex align-items-center justify-content-between gap-1 mb-1 pb-1 border-bottom" style="border-color:#f1f5f9 !important;">
+                        <div class="d-flex align-items-center gap-1.5">
+                          <span class="badge bg-dark text-white" style="font-size:0.62rem; padding: 2px 5px;">${trait.badge}</span>
+                          <strong class="text-dark" style="font-size:0.70rem;">전술 격돌 진단</strong>
                         </div>
+                        <span class="text-muted" style="font-size:0.63rem;">관전 지표: ${trait.unit}</span>
                       </div>
-                      <div class="col-12 col-md-6">
-                        <div class="p-1 rounded bg-white border border-primary-subtle h-100">
-                          <strong class="text-primary">🔵 ${aName}:</strong> ${trait.a.label}
-                          <div class="text-muted mt-0.5" style="font-size:0.64rem;">${trait.a.desc}</div>
+                      <div class="row g-1 text-dark" style="font-size:0.69rem; line-height:1.45;">
+                        <div class="col-12 col-md-6">
+                          <div class="p-1.5 rounded bg-light border-start border-3 border-danger h-100">
+                            <strong class="text-danger">🔴 ${hName}:</strong> ${trait.h.desc}
+                          </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                          <div class="p-1.5 rounded bg-light border-start border-3 border-primary h-100">
+                            <strong class="text-primary">🔵 ${aName}:</strong> ${trait.a.desc}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -19205,15 +19238,23 @@ function updateSlimPanel(matchId, type, contentHtml) {
                     <span class="badge bg-light text-dark border px-1.5 py-0.5" style="font-size:0.62rem;">최근 경기 표본</span>
                   </div>
 
-                  <!-- 2-Tone Possession Bar -->
-                  <div class="mb-2">
-                    <div class="d-flex justify-content-between small fw-bold mb-1" style="font-size:0.72rem;">
-                      <span class="text-danger">${hName} ${poss.home_avg}%</span>
-                      <span class="text-primary">${poss.away_avg}% ${aName}</span>
+                  <!-- Text-Based Symmetrical Possession Matrix (No Bars) -->
+                  <div class="d-flex justify-content-between align-items-center p-2 rounded-2 mb-2" style="background:#f8fafc; border:1px solid #e2e8f0;">
+                    <div class="text-start">
+                      <span class="badge bg-danger text-white mb-1" style="font-size:0.65rem;">[홈] ${hName}</span>
+                      <div class="fw-black text-danger font-monospace" style="font-size:1.15rem; line-height:1;">${poss.home_avg}%</div>
+                      <div class="text-muted small mt-0.5" style="font-size:0.64rem;">${poss.home_style}</div>
                     </div>
-                    <div class="progress" style="height: 12px; border-radius: 6px; overflow: hidden; background: #e2e8f0;">
-                      <div class="progress-bar bg-danger" role="progressbar" style="width: ${poss.home_bar_pct}%; font-size:0.62rem; font-weight:bold;" aria-valuenow="${poss.home_bar_pct}" aria-valuemin="0" aria-valuemax="100">${poss.home_bar_pct}%</div>
-                      <div class="progress-bar bg-primary" role="progressbar" style="width: ${poss.away_bar_pct}%; font-size:0.62rem; font-weight:bold;" aria-valuenow="${poss.away_bar_pct}" aria-valuemin="0" aria-valuemax="100">${poss.away_bar_pct}%</div>
+                    <div class="text-center px-1">
+                      <span class="badge ${poss.home_avg > poss.away_avg ? 'bg-danger text-white' : (poss.away_avg > poss.home_avg ? 'bg-primary text-white' : 'bg-secondary text-white')} fw-bold px-2 py-0.5" style="font-size:0.68rem;">
+                        ${poss.home_avg > poss.away_avg ? '👑 홈 점유 우세' : (poss.away_avg > poss.home_avg ? '👑 원정 점유 우세' : '🤝 동등 점유율')}
+                      </span>
+                      <div class="text-secondary small mt-1 fw-bold" style="font-size:0.65rem;">경기 장악력 비교</div>
+                    </div>
+                    <div class="text-end">
+                      <span class="badge bg-primary text-white mb-1" style="font-size:0.65rem;">${aName} [원정]</span>
+                      <div class="fw-black text-primary font-monospace" style="font-size:1.15rem; line-height:1;">${poss.away_avg}%</div>
+                      <div class="text-muted small mt-0.5" style="font-size:0.64rem;">${poss.away_style}</div>
                     </div>
                   </div>
 
