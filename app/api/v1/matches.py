@@ -558,6 +558,34 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
         except Exception:
             pass
 
+    is_kbo = (m.sport_code == "BASEBALL") and (
+        ("KBO" in (m.league_name or "")) or 
+        (m.official_id and m.official_id.startswith("KBO_")) or 
+        any(k in (m.home_team_name or "") for k in ["트윈스", "베어스", "타이거즈", "라이온즈", "이글스", "랜더스", "다이노스", "위즈", "자이언츠", "히어로즈"])
+    )
+    if is_kbo and m.status != "FINISHED" and (not h_starter or not a_starter):
+        try:
+            from app.scrapers.official_kbo_live_scraper import KboOfficialScraper
+            m_date = (m.match_date or "")[:10]
+            if m_date:
+                kbo_starters = KboOfficialScraper().scrape_probable_starters(m_date)
+                for ks in kbo_starters:
+                    h_m = teams_match(ks.get("home_team_name"), m.home_team_name)
+                    a_m = teams_match(ks.get("away_team_name"), m.away_team_name)
+                    if h_m or a_m:
+                        if not h_starter and ks.get("home_starter"):
+                            h_starter = ks["home_starter"]
+                        if not a_starter and ks.get("away_starter"):
+                            a_starter = ks["away_starter"]
+                        if isinstance(details_ts, dict) and "starters" in details_ts:
+                            if ks.get("home_starter_detail"):
+                                details_ts["starters"]["home"] = ks["home_starter_detail"]
+                            if ks.get("away_starter_detail"):
+                                details_ts["starters"]["away"] = ks["away_starter_detail"]
+                        break
+        except Exception:
+            pass
+
     hist_data = {}
     try:
         hist_data = HistoricalAgentRouter.get_match_history_by_agent(m.id, max_games=10)

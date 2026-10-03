@@ -800,54 +800,21 @@ class MatchService:
             ("선발투수" in (p.get("player_name") or ""))
             for p in player_stats_list
         )
+        # 🛡️ 사용자의 강력한 원칙: 공식 사이트/네이버에 선발 라인업이 아직 발표되지 않은 경기(SCHEDULED)는
+        # 과거 2024년 고정 더미 데이터를 채우지 않고 '공식 라인업 발표 대기(미표시)' 상태를 유지합니다.
+        # 공식 라인업이 실제 수집되어 있을 때만 player_stats_list를 제공합니다.
         if is_baseball and (len(player_stats_list) == 0 or has_placeholder):
-            try:
-                from app.services.baseball_roster_service import BaseballRosterService
-                synth_players, boxscore = BaseballRosterService.enrich_match_player_stats(match, team_stats)
-                player_stats_list = synth_players
-                team_stats["boxscore"] = boxscore
-
-                # DB에 실시간 선수별 지표 및 박스스코어 자동 영구 적재
+            status = (getattr(match, "status", "") or "SCHEDULED").upper()
+            if status in ["LIVE", "FINISHED"] and has_placeholder:
+                # 경기 진행중/종료 시점의 플레이스홀더만 정리
                 try:
-                    if has_placeholder:
-                        db.query(PlayerMatchStat).filter(
-                            PlayerMatchStat.match_id == match.id,
-                            PlayerMatchStat.is_override == False
-                        ).delete(synchronize_session=False)
-
-                    for p_stat in synth_players:
-                        extra_str = json.dumps(p_stat.get("extra_stats", {}), ensure_ascii=False)
-                        new_p = PlayerMatchStat(
-                            match_id=match.id,
-                            team_name=p_stat["team_name"],
-                            player_name=p_stat["player_name"],
-                            back_number=p_stat.get("back_number"),
-                            position=p_stat.get("position"),
-                            minutes_played=0,
-                            points=p_stat.get("points", 0),
-                            assists=0,
-                            shots=p_stat.get("shots", 0),
-                            extra_stats=extra_str,
-                            is_override=False
-                        )
-                        db.add(new_p)
-
-                    if match.details:
-                        match.details.team_stats = json.dumps(team_stats, ensure_ascii=False)
-                    else:
-                        new_det = MatchDetail(
-                            match_id=match.id,
-                            period_scores=json.dumps(period_scores, ensure_ascii=False),
-                            team_stats=json.dumps(team_stats, ensure_ascii=False),
-                            source_url=source_url
-                        )
-                        db.add(new_det)
+                    db.query(PlayerMatchStat).filter(
+                        PlayerMatchStat.match_id == match.id,
+                        PlayerMatchStat.is_override == False
+                    ).delete(synchronize_session=False)
                     db.commit()
-                except Exception as commit_err:
+                except Exception:
                     db.rollback()
-                    logger.warning(f"Failed to persist synth players to DB: {commit_err}")
-            except Exception as e:
-                logger.warning(f"Failed to auto-enrich baseball player stats for match {match_id}: {e}")
 
         events_list = []
         for ev in match.events:

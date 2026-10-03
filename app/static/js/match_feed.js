@@ -40,23 +40,29 @@ const MatchFeed = (() => {
     if (_selectedLeague === 'PAST') {
       _filteredMatches = _allMatches.filter(m => m.status === 'FINISHED');
     } else {
-      // General league tabs show ONLY upcoming/live matches (exclude past finished games)
+      // 1. 진행중(LIVE) 및 예정(SCHEDULED) 경기 우선 추출 (배트맨 프로토 발매 대상)
       const activeMatches = _allMatches.filter(m => m.status !== 'FINISHED');
 
       if (_selectedLeague === 'ALL') {
-        _filteredMatches = activeMatches;
+        // 배트맨 발매 경기 우선, 없으면 전체 경기 표시
+        _filteredMatches = activeMatches.length > 0 ? activeMatches : _allMatches;
       } else {
-        _filteredMatches = activeMatches.filter(m => {
+        const filterFn = (m) => {
           const lName = (m.league_name || '').toUpperCase();
           const sCode = (m.sport_code || '').toUpperCase();
 
-          if (_selectedLeague === 'KBO') return lName.includes('KBO');
+          if (_selectedLeague === 'KBO') return lName.includes('KBO') || lName.includes('한국야구') || lName.includes('한국');
           if (_selectedLeague === 'NPB') return lName.includes('NPB') || lName.includes('일본');
           if (_selectedLeague === 'MLB') return lName.includes('MLB') || lName.includes('메이저');
-          if (_selectedLeague === 'SOCCER') return sCode === 'SOCCER' || ['EPL', 'LALIGA', 'SERIE_A', 'BUNDESLIGA', 'K_LEAGUE'].some(k => lName.includes(k));
-          if (_selectedLeague === 'BASKETBALL') return sCode === 'BASKETBALL' || lName.includes('NBA') || lName.includes('KBL');
+          if (_selectedLeague === 'SOCCER') return sCode === 'SOCCER' || ['EPL', 'LALIGA', 'SERIE', 'BUNDESLIGA', 'K_LEAGUE', '네이션스', 'NATIONS', 'FIFA', 'A매치', '친선', '축구'].some(k => lName.includes(k));
+          if (_selectedLeague === 'BASKETBALL') return sCode === 'BASKETBALL' || lName.includes('NBA') || lName.includes('KBL') || lName.includes('농구');
+          if (_selectedLeague === 'VOLLEYBALL') return sCode === 'VOLLEYBALL' || lName.includes('배구') || lName.includes('KOVO') || lName.includes('V-리그') || lName.includes('V리그');
           return true;
-        });
+        };
+
+        const leagueActive = activeMatches.filter(filterFn);
+        // 예정 경기가 있으면 예정 경기 우선, 없으면 해당 종목 최근 경기 표시 (빈 화면 방지)
+        _filteredMatches = leagueActive.length > 0 ? leagueActive : _allMatches.filter(filterFn);
       }
     }
 

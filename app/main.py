@@ -200,21 +200,41 @@ def refresh_server_matches_cache() -> str:
     try:
         from app.schemas.schemas import MatchResponse
         from datetime import datetime, timedelta
-        # Initial payload focuses on today's active/upcoming matches (~140 matches) for instant 0ms First Paint
+        from app.services.betman_service import BetmanService
+        from app.models.models import Match
+
+        # 1. 배트맨 프로토 승부식 최신 경기 동기화 (네이션스리그, 축구, KBO, NPB, 농구, 배구 등)
+        try:
+            BetmanService.sync_betman_proto_matches(db)
+        except Exception as be:
+            print(f"[WARN] Betman sync in refresh cache: {be}")
+
         now_kst = datetime.utcnow() + timedelta(hours=9)
-        today_str = now_kst.strftime("%Y-%m-%d")
-        matches = MatchService.get_matches(db, start_date=today_str, limit=150, order='asc')
-        if not matches:
-            # 오늘 경기 없으면 3일 이내 가장 가까운 미래 경기 우선 표시 (과거 완료 경기 X)
-            for days_ahead in [1, 2, 3]:
-                future_str = (now_kst + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
-                matches = MatchService.get_matches(db, start_date=future_str, limit=150, order='asc')
-                if matches:
-                    break
-        if not matches:
-            # 그래도 없으면 최신 100경기 (가장 최근 날짜 기준 내림차순)
-            matches = MatchService.get_matches(db, limit=100, order='desc')
-        serialized = [MatchResponse.model_validate(m).model_dump(mode="json") for m in matches]
+
+        # 2. 진행중(LIVE) 및 예정(SCHEDULED) 경기 우선 추출 (배트맨 발매 경기 100% 포함)
+        active_matches = db.query(Match).filter(
+            Match.status.in_(['LIVE', 'SCHEDULED'])
+        ).order_by(Match.match_date.asc()).limit(250).all()
+
+        # 3. 최근 완료(FINISHED) 경기 보강
+        finished_matches = db.query(Match).filter(
+            Match.status == 'FINISHED',
+            Match.match_date >= (now_kst - timedelta(days=2)).strftime("%Y-%m-%d")
+        ).order_by(Match.match_date.desc()).limit(100).all()
+
+        seen_ids = set()
+        combined = []
+        for m in active_matches + finished_matches:
+            if m.id not in seen_ids:
+                seen_ids.add(m.id)
+                combined.append(m)
+
+        combined.sort(key=lambda x: str(x.match_date or ''))
+
+        if not combined:
+            combined = MatchService.get_matches(db, limit=100, order='desc')
+
+        serialized = [MatchResponse.model_validate(m).model_dump(mode="json") for m in combined]
         json_str = json.dumps(serialized, ensure_ascii=False)
         _SERVER_MATCHES_CACHE["json_str"] = json_str
         _SERVER_MATCHES_CACHE["updated_at"] = time.time()
