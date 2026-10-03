@@ -19866,6 +19866,27 @@ function updateSlimPanel(matchId, type, contentHtml) {
             { pos: 'PF', name: '루이 하치무라', stat: '13.5점 5.1리바', badge: 'PF 미드레인지' },
             { pos: 'C', name: '앤서니 데이비스', stat: '24.5점 12.6리바 2.3블록', badge: 'C DPOY급골밑' }
           ];
+          if (tName.includes('토론토') || tName.includes('Raptors')) return [
+            { pos: 'PG', name: '이매뉴얼 퀴클리', stat: '17.0점 6.8어시', badge: 'PG 야전사령관' },
+            { pos: 'SG', name: '그레이디 딕', stat: '14.5점 3점 38%', badge: 'SG 3점슈터' },
+            { pos: 'SF', name: 'RJ 배럿', stat: '21.8점 6.4리바', badge: 'SF 슬래셔' },
+            { pos: 'PF', name: '스코티 반스', stat: '20.0점 8.2리바 6.1어시', badge: 'PF 프랜차이즈' },
+            { pos: 'C', name: '야콥 퍼들', stat: '11.5점 8.6리바 1.5블록', badge: 'C 림프로텍터' }
+          ];
+          if (tName.includes('마이애미') || tName.includes('Heat')) return [
+            { pos: 'PG', name: '테리 로지어', stat: '16.4점 4.6어시', badge: 'PG 듀얼가드' },
+            { pos: 'SG', name: '타일러 히로', stat: '20.8점 5.3리바 4.5어시', badge: 'SG 클러치슈터' },
+            { pos: 'SF', name: '지미 버틀러', stat: '21.0점 5.3리바 5.0어시', badge: 'SF 플레이오프지미' },
+            { pos: 'PF', name: '니콜라 요비치', stat: '9.5점 4.8리바 3점 40%', badge: 'PF 스트레치' },
+            { pos: 'C', name: '뱀 아데바요', stat: '19.3점 10.4리바 3.9어시', badge: 'C DPOY급수비' }
+          ];
+          if (tName.includes('보스턴') || tName.includes('Celtics')) return [
+            { pos: 'PG', name: '즈루 홀리데이', stat: '12.5점 5.4리바 4.8어시', badge: 'PG 락다운수비' },
+            { pos: 'SG', name: '데릭 화이트', stat: '15.2점 4.2리바 5.2어시', badge: 'SG 공수겸장' },
+            { pos: 'SF', name: '제일런 브라운', stat: '23.0점 5.5리바 3.6어시', badge: 'SF 파이널MVP' },
+            { pos: 'PF', name: '제이슨 테이텀', stat: '26.9점 8.1리바 4.9어시', badge: 'PF 슈퍼스타' },
+            { pos: 'C', name: '크리스타프스 포르징기스', stat: '20.1점 7.2리바 1.9블록', badge: 'C 유니콘' }
+          ];
           return [
             { pos: 'PG', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '포인트가드', isPending: true },
             { pos: 'SG', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '슈팅가드', isPending: true },
@@ -19923,7 +19944,19 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const astToH = (1.8 + ((seedH % 5) * 0.15)).toFixed(2);
       const astToA = (1.7 + ((seedA % 5) * 0.15)).toFixed(2);
 
-      // 4. 최근 10경기 및 H2H
+      // 4. 감독/사령탑 전술 성향 & 스타일
+      const hMgr = {
+        name: `${hName} 사령탑`,
+        style: paceH >= 75 ? '업템포 트랜지션 & 빠른 3점 스페이싱 공격 농구' : '하프코트 세트플레이 & 탄탄한 인사이드 페인트존 수비',
+        tags: ['#트랜지션', '#3점스페이싱', '#페인트존수비']
+      };
+      const aMgr = {
+        name: `${aName} 사령탑`,
+        style: paceA >= 75 ? '업템포 트랜지션 & 빠른 3점 스페이싱 공격 농구' : '하프코트 세트플레이 & 탄탄한 인사이드 페인트존 수비',
+        tags: ['#하프코트세트', '#맨투맨압박', '#속공저지']
+      };
+
+      // 5. 최근 10경기 및 H2H
       const hist = m.history || {};
       const h2hMatches = hist.h2h_matches || [];
       const homeRecent = hist.home_recent || [];
@@ -20113,19 +20146,19 @@ function updateSlimPanel(matchId, type, contentHtml) {
             <div class="row g-2 mb-2">
               <div class="col-6">
                 <div class="p-2 rounded-2 border h-100" style="background:#f8fafc; border-color:#e2e8f0 !important;">
-                  <strong class="text-primary d-block small" style="font-size:0.75rem;">[홈] ${hMgr.name}</strong>
-                  <div class="text-muted small mb-1" style="font-size:0.68rem;">${hMgr.style}</div>
+                  <strong class="text-primary d-block small" style="font-size:0.75rem;">[홈] ${hMgr?.name || hName + ' 사령탑'}</strong>
+                  <div class="text-muted small mb-1" style="font-size:0.68rem;">${hMgr?.style || '균형잡힌 전술 운용'}</div>
                   <div class="d-flex flex-wrap gap-1">
-                    ${hMgr.tags.map(t => `<span class="badge bg-light text-secondary border p-0.5" style="font-size:0.58rem;">${t}</span>`).join('')}
+                    ${(hMgr?.tags || ['#트랜지션', '#스페이싱']).map(t => `<span class="badge bg-light text-secondary border p-0.5" style="font-size:0.58rem;">${t}</span>`).join('')}
                   </div>
                 </div>
               </div>
               <div class="col-6">
                 <div class="p-2 rounded-2 border h-100" style="background:#f8fafc; border-color:#e2e8f0 !important;">
-                  <strong class="text-danger d-block small" style="font-size:0.75rem;">[원정] ${aMgr.name}</strong>
-                  <div class="text-muted small mb-1" style="font-size:0.68rem;">${aMgr.style}</div>
+                  <strong class="text-danger d-block small" style="font-size:0.75rem;">[원정] ${aMgr?.name || aName + ' 사령탑'}</strong>
+                  <div class="text-muted small mb-1" style="font-size:0.68rem;">${aMgr?.style || '균형잡힌 전술 운용'}</div>
                   <div class="d-flex flex-wrap gap-1">
-                    ${aMgr.tags.map(t => `<span class="badge bg-light text-secondary border p-0.5" style="font-size:0.58rem;">${t}</span>`).join('')}
+                    ${(aMgr?.tags || ['#하프코트세트', '#맨투맨압박']).map(t => `<span class="badge bg-light text-secondary border p-0.5" style="font-size:0.58rem;">${t}</span>`).join('')}
                   </div>
                 </div>
               </div>
@@ -20642,19 +20675,19 @@ function updateSlimPanel(matchId, type, contentHtml) {
             <div class="row g-2 mb-2">
               <div class="col-6">
                 <div class="p-2 rounded-2 border h-100" style="background:#f8fafc; border-color:#e2e8f0 !important;">
-                  <strong class="text-primary d-block small" style="font-size:0.75rem;">[홈] ${hMgr.name}</strong>
-                  <div class="text-muted small mb-1" style="font-size:0.68rem;">${hMgr.style}</div>
+                  <strong class="text-primary d-block small" style="font-size:0.75rem;">[홈] ${hMgr?.name || hName + ' 사령탑'}</strong>
+                  <div class="text-muted small mb-1" style="font-size:0.68rem;">${hMgr?.style || '균형잡힌 전술 운용'}</div>
                   <div class="d-flex flex-wrap gap-1">
-                    ${hMgr.tags.map(t => `<span class="badge bg-light text-secondary border p-0.5" style="font-size:0.58rem;">${t}</span>`).join('')}
+                    ${(hMgr?.tags || ['#파워배구', '#블로킹']).map(t => `<span class="badge bg-light text-secondary border p-0.5" style="font-size:0.58rem;">${t}</span>`).join('')}
                   </div>
                 </div>
               </div>
               <div class="col-6">
                 <div class="p-2 rounded-2 border h-100" style="background:#f8fafc; border-color:#e2e8f0 !important;">
-                  <strong class="text-danger d-block small" style="font-size:0.75rem;">[원정] ${aMgr.name}</strong>
-                  <div class="text-muted small mb-1" style="font-size:0.68rem;">${aMgr.style}</div>
+                  <strong class="text-danger d-block small" style="font-size:0.75rem;">[원정] ${aMgr?.name || aName + ' 사령탑'}</strong>
+                  <div class="text-muted small mb-1" style="font-size:0.68rem;">${aMgr?.style || '균형잡힌 전술 운용'}</div>
                   <div class="d-flex flex-wrap gap-1">
-                    ${aMgr.tags.map(t => `<span class="badge bg-light text-secondary border p-0.5" style="font-size:0.58rem;">${t}</span>`).join('')}
+                    ${(aMgr?.tags || ['#스피드배구', '#속공']).map(t => `<span class="badge bg-light text-secondary border p-0.5" style="font-size:0.58rem;">${t}</span>`).join('')}
                   </div>
                 </div>
               </div>
@@ -21384,8 +21417,23 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
       }
 
-      const basketballAnalyticsHtml = isBasketball ? renderBasketballDetailAnalyticsWidgetHtml(m) : '';
-      const volleyballAnalyticsHtml = isVolleyball ? renderVolleyballDetailAnalyticsWidgetHtml(m) : '';
+      let basketballAnalyticsHtml = '';
+      if (isBasketball) {
+        try {
+          basketballAnalyticsHtml = renderBasketballDetailAnalyticsWidgetHtml(m);
+        } catch (e) {
+          console.error('renderBasketballDetailAnalyticsWidgetHtml error:', e);
+        }
+      }
+
+      let volleyballAnalyticsHtml = '';
+      if (isVolleyball) {
+        try {
+          volleyballAnalyticsHtml = renderVolleyballDetailAnalyticsWidgetHtml(m);
+        } catch (e) {
+          console.error('renderVolleyballDetailAnalyticsWidgetHtml error:', e);
+        }
+      }
       const apexChartsSectionHtml = renderApexAnalyticsCardHtml(m);
       const recentMatchesSectionHtml = renderRecentTeamMatchesWidgetHtml(m);
       const liveLineupSectionHtml = isBaseball ? renderBaseballLiveLineupWidgetHtml(m, hP, aP) : '';
