@@ -15164,13 +15164,11 @@ function getFullModalMatchList() {
                       ${hName}
                     </div>
                   </div>
-                  <div class="text-truncate" style="font-size:0.70rem; color:#f1f5f9; line-height:1.2; text-shadow:0 1px 4px #000;">
-                    ⚽ <span style="color:#94a3b8;">포메이션:</span> <b class="text-white">4-3-3</b>
-                  </div>
+                  <div></div>
                 </div>
 
-                <!-- Center: Scoreboard HUD & Pitch Graphic -->
-                <div class="position-absolute d-flex flex-column align-items-center justify-content-between" style="left:50%; top:44px; bottom:10px; transform:translateX(-50%); width:220px; z-index:4; pointer-events:none;">
+                <!-- Center: Scoreboard HUD -->
+                <div class="position-absolute d-flex flex-column align-items-center justify-content-around" style="left:50%; top:44px; bottom:10px; transform:translateX(-50%); width:220px; z-index:4; pointer-events:none;">
                   <!-- Top: Symmetrical Soccer Scoreboard Pill -->
                   <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.3); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:28px; pointer-events:auto;">
                     ${(st.match_time && st.match_time !== '진행중' && st.match_time !== 'LIVE') ? `<span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center me-1" style="font-size:0.62rem; min-width:44px; border-radius:10px;">${st.match_time}</span>` : ''}
@@ -15182,19 +15180,6 @@ function getFullModalMatchList() {
                     <div class="d-flex align-items-center justify-content-center bg-dark bg-opacity-75 px-1.5 py-0.5 rounded-pill border border-secondary border-opacity-50" style="height:19px; min-width:48px;">
                       <span class="fw-bold text-warning" style="font-size:0.56rem; letter-spacing:-0.2px;">${st.possession ? `점유 ${st.possession}` : '공방전'}</span>
                     </div>
-                  </div>
-
-                  <!-- Middle: Soccer Pitch Center Graphic -->
-                  <div class="position-relative my-auto" style="pointer-events:auto;">
-                    <svg width="140" height="42" viewBox="0 0 140 42">
-                      <rect x="10" y="2" width="120" height="38" rx="3" fill="rgba(6,78,59,0.35)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2" />
-                      <line x1="70" y1="2" x2="70" y2="40" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-dasharray="2,2" />
-                      <ellipse cx="70" cy="21" rx="15" ry="11" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.2" />
-                      <circle cx="70" cy="21" r="2.2" fill="#ffffff" />
-                      <rect x="10" y="8" width="16" height="26" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" />
-                      <rect x="114" y="8" width="16" height="26" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" />
-                      <text x="70" y="36" text-anchor="middle" font-size="6.5" font-weight="800" fill="rgba(255,255,255,0.7)" letter-spacing="0.5">LIVE STADIUM MATCH</text>
-                    </svg>
                   </div>
 
                   <!-- Bottom: Live Situation Status Pill (100% Automatic) -->
@@ -15213,9 +15198,7 @@ function getFullModalMatchList() {
                       ${aName}
                     </div>
                   </div>
-                  <div class="text-truncate" style="font-size:0.70rem; color:#f1f5f9; line-height:1.2; text-shadow:0 1px 4px #000;">
-                    ⚽ <span style="color:#94a3b8;">포메이션:</span> <b class="text-white">4-2-3-1</b>
-                  </div>
+                  <div></div>
                 </div>
               </div>
 
@@ -17969,32 +17952,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
         `;
       }
 
-      // ⚽ 축구 잔디 피치 뷰 (11인 포메이션)
-      let badgesHtml = '';
-      roster.forEach(p => {
-        badgesHtml += `
-          <div style="position: absolute; top: ${p.top}; left: ${p.left}; transform: translate(-50%, -50%); z-index: 3; text-align: center; width: 84px;">
-            <div style="background: rgba(15, 23, 42, 0.92); color: #ffffff; border: 1px solid #4ade80; border-radius: 5px; padding: 2px 3px; box-shadow: 0 2px 5px rgba(0,0,0,0.4);">
-              <div style="font-size: 0.58rem; font-weight: 800; color: #86efac;">${p.badge}</div>
-              <div class="text-truncate fw-bold" style="font-size: 0.68rem;">${p.name}</div>
-              <div style="font-size: 0.56rem; color: #cbd5e1;">${p.r1}</div>
-            </div>
-          </div>
-        `;
-      });
-
-      return `
-        <div class="position-relative rounded-3 overflow-hidden mb-3" style="background: linear-gradient(180deg, #1e5c33 0%, #144324 100%); height: 340px; border: 2px solid #0d2e18; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);">
-          <svg viewBox="0 0 400 340" style="position: absolute; top:0; left:0; width: 100%; height: 100%; opacity: 0.4;">
-            <!-- Goal & Penalty box -->
-            <rect x="130" y="10" width="140" height="55" fill="none" stroke="#ffffff" stroke-width="1.5"/>
-            <rect x="130" y="275" width="140" height="55" fill="none" stroke="#ffffff" stroke-width="1.5"/>
-            <circle cx="200" cy="170" r="45" fill="none" stroke="#ffffff" stroke-width="1.5"/>
-            <line x1="20" y1="170" x2="380" y2="170" stroke="#ffffff" stroke-width="1.5"/>
-          </svg>
-          ${badgesHtml}
-        </div>
-      `;
+      // 축구는 포메이션/피치 뷰를 렌더링하지 않음
+      return '';
     }
 
     // ============================================================
@@ -19229,100 +19188,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
             </div>
           </div>
 
-          <!-- ========================================================= -->
-          <!-- 📐 [섹션 4] 포메이션 & 피치 전술 배치 (Formations & Pitch) -->
-          <!-- ========================================================= -->
-          <div class="p-2.5 border-bottom" style="border-color:#e2e8f0 !important;">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <div class="d-flex align-items-center gap-1.5">
-                <span class="badge bg-success text-white px-2 py-0.5" style="font-size:0.70rem;">
-                  <i class="bi bi-grid-3x3 me-1"></i>포메이션
-                </span>
-                <strong class="text-dark" style="font-size:0.82rem;">예상 포메이션 & 필드 전술 상성</strong>
-              </div>
-              <span class="badge bg-light text-dark border px-2 py-0.5 fw-bold" style="font-size:0.70rem;">
-                <span class="text-danger">${hName} [${forms.home}]</span> vs <span class="text-primary">${aName} [${forms.away}]</span>
-              </span>
-            </div>
 
-            <!-- Styled Green Soccer Pitch Tactical Board -->
-            <div class="rounded-3 p-2 mb-2 text-white position-relative overflow-hidden shadow-sm" style="background: linear-gradient(180deg, #15803d 0%, #166534 50%, #15803d 100%); border: 2px solid #22c55e; min-height: 200px;">
-              <!-- Soccer Pitch Lines -->
-              <div style="position:absolute; top:0; bottom:0; left:0; right:0; pointer-events:none;">
-                <!-- Half line -->
-                <div style="position:absolute; top:50%; left:5%; right:5%; height:1px; background:rgba(255,255,255,0.4);"></div>
-                <!-- Center circle -->
-                <div style="position:absolute; top:50%; left:50%; width:64px; height:64px; transform:translate(-50%,-50%); border:1px solid rgba(255,255,255,0.4); border-radius:50%;"></div>
-                <div style="position:absolute; top:50%; left:50%; width:4px; height:4px; transform:translate(-50%,-50%); background:rgba(255,255,255,0.7); border-radius:50%;"></div>
-                <!-- Top penalty area (Away) -->
-                <div style="position:absolute; top:0; left:28%; right:28%; height:32px; border:1px solid rgba(255,255,255,0.4); border-top:none;"></div>
-                <!-- Bottom penalty area (Home) -->
-                <div style="position:absolute; bottom:0; left:28%; right:28%; height:32px; border:1px solid rgba(255,255,255,0.4); border-bottom:none;"></div>
-              </div>
-
-              <!-- Top: Away Team Side (Blue) -->
-              <div class="position-relative d-flex justify-content-between align-items-center px-2 py-0.5 mb-1.5">
-                <span class="badge bg-primary text-white border border-light py-0.5 px-2 fw-bold" style="font-size:0.72rem;">
-                  🔵 ${aName} [${forms.away}] 원정 진영
-                </span>
-                <span class="text-white-50 small" style="font-size:0.62rem;">⬇ 공격 방향</span>
-              </div>
-
-              <!-- Away Tactical Player Lines -->
-              <div class="position-relative text-center my-1" style="font-size:0.68rem;">
-                <!-- Away Attack -->
-                <div class="d-flex justify-content-around mb-1.5">
-                  <span class="badge bg-primary rounded-pill px-2 py-0.5 shadow-sm border border-light">ST ${aName.slice(0, 3)}</span>
-                  <span class="badge bg-primary rounded-pill px-2 py-0.5 shadow-sm border border-light">${forms.away.includes('4-4-2') ? 'ST' : 'CF'}</span>
-                </div>
-                <!-- Away Midfield -->
-                <div class="d-flex justify-content-around mb-2">
-                  <span class="badge bg-primary-subtle text-primary fw-bold rounded-pill px-1.5 py-0.5">LM</span>
-                  <span class="badge bg-primary-subtle text-primary fw-bold rounded-pill px-1.5 py-0.5">CM</span>
-                  <span class="badge bg-primary-subtle text-primary fw-bold rounded-pill px-1.5 py-0.5">CM</span>
-                  <span class="badge bg-primary-subtle text-primary fw-bold rounded-pill px-1.5 py-0.5">RM</span>
-                </div>
-              </div>
-
-              <!-- Center Clash Zone -->
-              <div class="position-relative text-center my-1">
-                <span class="badge bg-dark bg-opacity-75 text-warning border border-warning-subtle px-2.5 py-0.5 shadow-sm" style="font-size:0.64rem;">
-                  ⚡ 중앙 밀집 & 하프스페이스 점유 공방 구역
-                </span>
-              </div>
-
-              <!-- Home Tactical Player Lines -->
-              <div class="position-relative text-center my-1" style="font-size:0.68rem;">
-                <!-- Home Midfield -->
-                <div class="d-flex justify-content-around mb-1.5">
-                  <span class="badge bg-danger-subtle text-danger fw-bold rounded-pill px-1.5 py-0.5">LW</span>
-                  <span class="badge bg-danger-subtle text-danger fw-bold rounded-pill px-1.5 py-0.5">${forms.home.includes('4-2-3-1') ? 'AM' : 'CM'}</span>
-                  <span class="badge bg-danger-subtle text-danger fw-bold rounded-pill px-1.5 py-0.5">DM</span>
-                  <span class="badge bg-danger-subtle text-danger fw-bold rounded-pill px-1.5 py-0.5">RW</span>
-                </div>
-                <!-- Home Attack -->
-                <div class="d-flex justify-content-around mt-1">
-                  <span class="badge bg-danger rounded-pill px-2 py-0.5 shadow-sm border border-light">ST ${hName.slice(0, 3)}</span>
-                </div>
-              </div>
-
-              <!-- Bottom: Home Team Side (Red) -->
-              <div class="position-relative d-flex justify-content-between align-items-center px-2 py-0.5 mt-1.5">
-                <span class="text-white-50 small" style="font-size:0.62rem;">⬆ 공격 방향</span>
-                <span class="badge bg-danger text-white border border-light py-0.5 px-2 fw-bold" style="font-size:0.72rem;">
-                  🔴 ${hName} [${forms.home}] 홈 진영
-                </span>
-              </div>
-            </div>
-
-            <!-- Tactical Clash Points -->
-            <div class="p-2 rounded-2 bg-light border text-dark" style="font-size:0.72rem; line-height:1.5; border-color:#e2e8f0 !important;">
-              <strong class="text-primary d-block mb-1"><i class="bi bi-lightbulb-fill text-warning me-1"></i>전술 상성 핵심 체크포인트:</strong>
-              <ul class="mb-0 ps-3">
-                ${(clash.points || []).map(pt => `<li>${pt}</li>`).join('')}
-              </ul>
-            </div>
-          </div>
 
           <!-- ========================================================= -->
           <!-- 📊 [섹션 3] 점유율 & 카드/파울 징계 통계 (Possession & Cards) -->
@@ -26867,13 +26733,11 @@ function renderPredDetail(m, customDetailData = null) {
                       ${hName}
                     </div>
                   </div>
-                  <div class="text-truncate" style="font-size:0.70rem; color:#f1f5f9; line-height:1.2; text-shadow:0 1px 4px #000;">
-                    ⚽ <span style="color:#94a3b8;">전술:</span> <b class="text-white">공격 포메이션</b>
-                  </div>
+                  <div></div>
                 </div>
 
-                <!-- Center: Scoreboard HUD & Pitch Graphic -->
-                <div class="position-absolute d-flex flex-column align-items-center justify-content-between" style="left:50%; top:42px; bottom:10px; transform:translateX(-50%); width:220px; z-index:4; pointer-events:none;">
+                <!-- Center: Scoreboard HUD -->
+                <div class="position-absolute d-flex flex-column align-items-center justify-content-around" style="left:50%; top:42px; bottom:10px; transform:translateX(-50%); width:220px; z-index:4; pointer-events:none;">
                   <!-- Top: Score HUD -->
                   <div class="d-inline-flex align-items-center justify-content-center px-2 py-0.5 rounded-pill" style="background:rgba(0,0,0,0.85); border:1.2px solid rgba(255,255,255,0.3); backdrop-filter:blur(8px); box-shadow:0 2px 10px rgba(0,0,0,0.7); height:28px; pointer-events:auto;">
                     ${matchTimeText ? `<span class="badge bg-danger text-white px-1.5 py-0.5 fw-black text-center me-1" style="font-size:0.62rem; min-width:40px; border-radius:10px;">${matchTimeText}</span>` : ''}
@@ -26885,19 +26749,6 @@ function renderPredDetail(m, customDetailData = null) {
                     <div class="d-flex align-items-center justify-content-center bg-dark bg-opacity-75 px-1.5 py-0.5 rounded-pill border border-secondary border-opacity-50" style="height:19px; min-width:46px;">
                       <span class="fw-bold text-warning" style="font-size:0.56rem; letter-spacing:-0.2px;">${st.possession ? `점유 ${st.possession}` : (isLive ? '실시간' : (isFin ? '종료' : '전력분석'))}</span>
                     </div>
-                  </div>
-
-                  <!-- Middle: Soccer Pitch Graphic -->
-                  <div class="position-relative my-auto" style="pointer-events:auto;">
-                    <svg width="156" height="46" viewBox="0 0 156 46">
-                      <rect x="8" y="3" width="140" height="40" rx="3" fill="rgba(6,78,59,0.45)" stroke="rgba(255,255,255,0.40)" stroke-width="1.2" />
-                      <line x1="78" y1="3" x2="78" y2="43" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-dasharray="2,2" />
-                      <ellipse cx="78" cy="23" rx="16" ry="12" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.2" />
-                      <circle cx="78" cy="23" r="2.5" fill="#ffffff" />
-                      <rect x="8" y="10" width="18" height="26" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2" />
-                      <rect x="130" y="10" width="18" height="26" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2" />
-                      <text x="78" y="39" text-anchor="middle" font-size="7" font-weight="900" fill="rgba(255,255,255,0.75)" letter-spacing="0.5">SOCCER LIVE STADIUM</text>
-                    </svg>
                   </div>
 
                   <!-- Bottom: Situation Status Pill -->
@@ -26916,9 +26767,7 @@ function renderPredDetail(m, customDetailData = null) {
                       ${aName}
                     </div>
                   </div>
-                  <div class="text-truncate" style="font-size:0.70rem; color:#f1f5f9; line-height:1.2; text-shadow:0 1px 4px #000;">
-                    ⚽ <span style="color:#94a3b8;">전술:</span> <b class="text-white">역습 포메이션</b>
-                  </div>
+                  <div></div>
                 </div>
               </div>
             </div>
