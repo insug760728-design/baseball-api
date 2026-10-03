@@ -382,8 +382,14 @@ class BaseballRosterService:
     ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
         """
         DB 경기(match)의 선발/구원 투수 및 1~9번 타자 박스스코어를 
-        즉시 실시간 1:1 바인딩으로 조립하여 player_stats_list와 boxscore 딕셔너리로 반환합니다.
+        실제 공식 사이트 라인업이 수집되었을 때만 반환합니다.
+        (경기 시작 전 미발표 시 과거 2024년 고정 더미 데이터 일체 생성 금지)
         """
+        status = getattr(match, "status", "SCHEDULED") or "SCHEDULED"
+        if status == "SCHEDULED":
+            # 🛡️ 공식 사이트 미발표 시 미표시 원칙 준수 (2024년 가짜 로스터 임의 생성 원천 차단)
+            return [], {}
+
         home_team = getattr(match, "home_team_name", "홈팀")
         away_team = getattr(match, "away_team_name", "원정팀")
         match_id = getattr(match, "id", 0)

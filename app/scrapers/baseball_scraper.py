@@ -78,35 +78,8 @@ class BaseballScraper(BaseScraper):
         if res and res.get("player_stats") and len(res["player_stats"]) > 0:
             return res
 
-        # 베트맨(BETMAN) 연동 경기 및 미등록/진행 중 경기에 대한 실시간 박스스코어 즉시 바인딩 파이프라인
-        try:
-            from app.services.baseball_roster_service import BaseballRosterService
-            target_match = match
-            if not target_match:
-                from app.core.database import SessionLocal
-                from app.models.models import Match
-                from sqlalchemy.orm import joinedload
-                with SessionLocal() as db_sess:
-                    target_match = db_sess.query(Match).options(joinedload(Match.details)).filter(Match.official_id == official_id).first()
-                    if target_match:
-                        db_sess.expunge(target_match)
-
-            if target_match:
-                base_team_stats = (res and res.get("team_stats")) or {}
-                synth_players, boxscore = BaseballRosterService.enrich_match_player_stats(target_match, base_team_stats)
-                if "boxscore" not in base_team_stats or not base_team_stats["boxscore"]:
-                    base_team_stats["boxscore"] = boxscore
-
-                return {
-                    "period_scores": (res and res.get("period_scores")) or {},
-                    "team_stats": base_team_stats,
-                    "source_url": (res and res.get("source_url")) or f"https://www.betman.co.kr/game/{official_id}",
-                    "events": (res and res.get("events")) or [],
-                    "player_stats": synth_players
-                }
-        except Exception as e:
-            print(f"[Baseball Scraper Universal Pipeline Error] {e}")
-
+        # 🛡️ 사용자의 강력한 원칙: 공식 사이트에 박스스코어/라인업이 아직 없으면
+        # 2024년 과거 고정 데이터를 임의 주입하지 않고 깨끗하게 빈 상태(발표 대기)로 반환합니다.
         return res or {
             "period_scores": {},
             "team_stats": {},
