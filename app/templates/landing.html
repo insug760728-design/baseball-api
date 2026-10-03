@@ -2644,8 +2644,22 @@
           </div>
         </a>
         <span class="badge fw-bold py-1 px-2 d-none d-md-inline-flex align-items-center ms-2" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.72rem; border-radius: 6px;">
-          <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">664</strong>명
+          <span class="pulse-dot me-1" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#10b981;"></span>실시간 접속자: <strong id="topLiveUsersCount" class="text-dark ms-1">896</strong>명
         </span>
+        <script>
+          (function(){
+            try {
+              var s = sessionStorage.getItem('tokeon_live_users_count');
+              if (s) {
+                var n = parseInt(s, 10);
+                if (!isNaN(n) && n >= 100) {
+                  var el = document.getElementById('topLiveUsersCount');
+                  if (el) el.innerText = n;
+                }
+              }
+            } catch(e){}
+          })();
+        </script>
       </div>
 
       <!-- Right Nav Action Group -->
@@ -2777,8 +2791,22 @@
                 </div>
                 <div class="d-flex align-items-center gap-1">
                   <span class="badge" style="background: #eff6ff; border: 1px solid #bfdbfe; font-size: 0.68rem; color: #1d4ed8; padding: 2px 6px;">
-                    <span id="chatOnlineBadge">🟢 680+명 참여중</span>
+                    <span id="chatOnlineBadge">🟢 896명 참여중</span>
                   </span>
+                  <script>
+                    (function(){
+                      try {
+                        var s = sessionStorage.getItem('tokeon_live_users_count');
+                        if (s) {
+                          var n = parseInt(s, 10);
+                          if (!isNaN(n) && n >= 100) {
+                            var el = document.getElementById('chatOnlineBadge');
+                            if (el) el.innerText = '🟢 ' + n + '명 참여중';
+                          }
+                        }
+                      } catch(e){}
+                    })();
+                  </script>
                 </div>
               </div>
 
@@ -21275,7 +21303,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
               </span>
             </div>
             <div class="text-muted small" style="font-size:0.68rem;">
-              <i class="bi bi-people me-1"></i>${currentLiveUsersCount || 685}명 참여 중
+              <i class="bi bi-people me-1"></i>${currentLiveUsersCount || 896}명 참여 중
             </div>
           </div>
 
@@ -25704,15 +25732,12 @@ function renderPredDetail(m, customDetailData = null) {
 
     function handleIncomingWebSocketMessage(data) {
       if (data.type === 'CONNECTION_ESTABLISHED') {
-        const wsEl = document.getElementById('wsClientCount');
-        const topEl = document.getElementById('topLiveUsersCount');
-        // Synchronize both counters to the exact same live visitor count
-        const targetCount = (data.active_clients && data.active_clients >= 100) ? data.active_clients : currentLiveUsersCount;
-        currentLiveUsersCount = targetCount;
-        if (wsEl) wsEl.innerText = targetCount;
-        if (topEl) topEl.innerText = targetCount;
-        const chatBadge = document.getElementById('chatOnlineBadge');
-        if (chatBadge) chatBadge.innerText = `🟢 ${targetCount}명 참여중`;
+        const wsTarget = (data.active_clients && data.active_clients >= 100) ? data.active_clients : currentLiveUsersCount;
+        // 자연스러운 접속자 표시: 차이가 15명 초과일 때만 미세 동기화하여 잔상/급변 현상 완전 방지
+        if (Math.abs(wsTarget - currentLiveUsersCount) > 15) {
+          currentLiveUsersCount = wsTarget;
+        }
+        syncLiveUserCounts();
       } else if (data.type === 'CLEAR_COMMUNITY_MESSAGES') {
         communityMessages = [];
         renderCommunityFeed();
@@ -27331,20 +27356,58 @@ function renderPredDetail(m, customDetailData = null) {
       return 205;
     }
 
-    let currentLiveUsersCount = calculateTargetLiveUsers();
+    let currentLiveUsersCount = (function() {
+      // 1. 새로고침 시 화면 깜빡임/잔상 완벽 방지를 위해 세션 스토리지 최우선 확인
+      try {
+        const saved = sessionStorage.getItem('tokeon_live_users_count');
+        if (saved) {
+          const num = parseInt(saved, 10);
+          const target = calculateTargetLiveUsers();
+          // 현재 타겟과 오차 범위 40 이내면 사용자 경험 연속성을 위해 세션 값 유지
+          if (!isNaN(num) && Math.abs(num - target) <= 40) {
+            return num;
+          }
+        }
+      } catch (e) {}
+
+      // 2. 서버가 응답 시점 실시간 계산하여 주입한 값 우선
+      if (typeof window.SERVER_INITIAL_LIVE_COUNT === 'number' && window.SERVER_INITIAL_LIVE_COUNT >= 100) {
+        return window.SERVER_INITIAL_LIVE_COUNT;
+      }
+
+      // 3. DOM에 이미 렌더링된 값 읽기
+      const topEl = document.getElementById('topLiveUsersCount');
+      if (topEl) {
+        const num = parseInt(topEl.innerText.replace(/[^0-9]/g, ''), 10);
+        if (!isNaN(num) && num >= 100) return num;
+      }
+
+      return calculateTargetLiveUsers();
+    })();
+
     let liveUsersInterval = null;
 
     function syncLiveUserCounts() {
+      try {
+        sessionStorage.setItem('tokeon_live_users_count', currentLiveUsersCount);
+      } catch (e) {}
       const el = document.getElementById('topLiveUsersCount');
-      if (el) el.innerText = currentLiveUsersCount;
+      if (el && el.innerText !== String(currentLiveUsersCount)) {
+        el.innerText = currentLiveUsersCount;
+      }
       const chatBadge = document.getElementById('chatOnlineBadge');
-      if (chatBadge) chatBadge.innerText = `🟢 ${currentLiveUsersCount}명 참여중`;
+      const badgeText = `🟢 ${currentLiveUsersCount}명 참여중`;
+      if (chatBadge && chatBadge.innerText !== badgeText) {
+        chatBadge.innerText = badgeText;
+      }
       const wsEl = document.getElementById('wsClientCount');
-      if (wsEl) wsEl.innerText = currentLiveUsersCount;
+      if (wsEl && wsEl.innerText !== String(currentLiveUsersCount)) {
+        wsEl.innerText = currentLiveUsersCount;
+      }
     }
 
     function startLiveUsersFluctuation() {
-      currentLiveUsersCount = calculateTargetLiveUsers();
+      // 최초 실행 시 기존 count를 덮어쓰지 않고 즉시 DOM과 동기화 (잔상/숫자 튐 방지)
       syncLiveUserCounts();
 
       if (liveUsersInterval) return;

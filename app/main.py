@@ -278,9 +278,28 @@ def get_portal_html(target_path: str):
     
     mtime = os.path.getmtime(target_path)
     now = time.time()
+
+    from app.services.traffic_service import TrafficService
+    current_live_count = TrafficService.get_realtime_active_count()
+
     combined = _PORTAL_COMBINED_CACHE.get(target_path)
-    if combined and combined.get("mtime") == mtime and (now - combined.get("created_at", 0) < 180.0):
-        return combined["content"], combined["etag"]
+    if combined and combined.get("mtime") == mtime and (now - combined.get("created_at", 0) < 60.0):
+        cached_content = combined["content"]
+        cached_live = combined.get("live_count", current_live_count)
+        if cached_live != current_live_count:
+            cached_content = cached_content.replace(
+                f'<strong id="topLiveUsersCount" class="text-dark ms-1">{cached_live}</strong>',
+                f'<strong id="topLiveUsersCount" class="text-dark ms-1">{current_live_count}</strong>'
+            ).replace(
+                f'<span id="chatOnlineBadge">🟢 {cached_live}명 참여중</span>',
+                f'<span id="chatOnlineBadge">🟢 {current_live_count}명 참여중</span>'
+            ).replace(
+                f'window.SERVER_INITIAL_LIVE_COUNT = {cached_live};',
+                f'window.SERVER_INITIAL_LIVE_COUNT = {current_live_count};'
+            )
+            combined["content"] = cached_content
+            combined["live_count"] = current_live_count
+        return cached_content, combined["etag"]
 
     if target_path not in _PORTAL_HTML_CACHE or _PORTAL_HTML_CACHE[target_path].get("mtime") != mtime:
         with open(target_path, "r", encoding="utf-8") as f:
@@ -289,9 +308,27 @@ def get_portal_html(target_path: str):
     else:
         raw_content = _PORTAL_HTML_CACHE[target_path]["raw_content"]
 
-    # Pre-inject SERVER_INITIAL_MATCHES after DOM markup (before scripts) for instant 0ms First Paint
+    import re
+    # Replace any hardcoded/fallback visitor counts with authentic real-time count
+    raw_content = re.sub(
+        r'<strong id="topLiveUsersCount"[^>]*>.*?</strong>',
+        f'<strong id="topLiveUsersCount" class="text-dark ms-1">{current_live_count}</strong>',
+        raw_content
+    )
+    raw_content = re.sub(
+        r'<span id="chatOnlineBadge"[^>]*>.*?</span>',
+        f'<span id="chatOnlineBadge">🟢 {current_live_count}명 참여중</span>',
+        raw_content
+    )
+
+    # Pre-inject SERVER_INITIAL_MATCHES and SERVER_INITIAL_LIVE_COUNT after DOM markup (before scripts) for instant 0ms First Paint
     initial_matches_json = get_server_initial_matches_json()
-    injection_script = f"<script id=\"serverInitialData\">window.SERVER_INITIAL_MATCHES = {initial_matches_json};</script>"
+    injection_script = (
+        f"<script id=\"serverInitialData\">"
+        f"window.SERVER_INITIAL_MATCHES = {initial_matches_json};\n"
+        f"window.SERVER_INITIAL_LIVE_COUNT = {current_live_count};"
+        f"</script>"
+    )
     if '<script src="https://cdn.jsdelivr.net/npm/bootstrap' in raw_content:
         content = raw_content.replace('<script src="https://cdn.jsdelivr.net/npm/bootstrap', f'{injection_script}\n  <script src="https://cdn.jsdelivr.net/npm/bootstrap', 1)
     elif "</body>" in raw_content:
@@ -307,7 +344,8 @@ def get_portal_html(target_path: str):
         "mtime": mtime,
         "created_at": time.time(),
         "content": content,
-        "etag": etag
+        "etag": etag,
+        "live_count": current_live_count
     }
     return content, etag
 
