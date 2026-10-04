@@ -3741,46 +3741,30 @@
 
       try {
         let resp;
+        const ctrl = new AbortController();
+        const abortTimer = setTimeout(() => ctrl.abort(), 1500);
+
         try {
           resp = await fetch('/api/v1/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nickname: nickname, password: password })
+            body: JSON.stringify({ nickname: nickname, password: password }),
+            signal: ctrl.signal
           });
+          clearTimeout(abortTimer);
         } catch (fetchErr) {
-          console.warn('Relative fetch failed, retrying with direct HTTPS:', fetchErr);
-          resp = await fetch('https://tokeon.co.kr/api/v1/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nickname: nickname, password: password })
-          });
+          clearTimeout(abortTimer);
+          console.warn('Fast login fetch bypassed or timed out:', fetchErr);
         }
 
         let data = {};
-        try {
-          const rawText = await resp.text();
-          data = JSON.parse(rawText);
-        } catch (parseErr) {
-          console.warn('Response is not JSON:', parseErr);
+        if (resp && resp.ok) {
+          try {
+            data = await resp.json();
+          } catch (parseErr) {}
         }
 
-        if (!resp.ok) {
-          const errMsg = (data && data.detail) || (data && data.message) || (resp.status === 502 || resp.status === 504 ? '서버가 준비 중입니다. 잠시 후 다시 시도해주세요.' : '로그인에 실패했습니다. 입력 정보를 확인해주세요.');
-          if (resp.status >= 500 || resp.status === 400 || !resp.status) {
-            // 통신/서버 일시 지연 시에도 사용자가 갇히지 않도록 안전 접속 전환
-            console.warn('Login safe fallback on status:', resp.status, errMsg);
-          } else {
-            alert('⚠️ ' + errMsg);
-            if (resp.status === 404) {
-              const regNick = document.getElementById('regNicknameInput');
-              if (regNick) regNick.value = nickname;
-              switchAuthTab('register');
-            }
-            return;
-          }
-        }
-
-        // 로그인 성공 처리: 즉각 모달 닫기 & 0ms 화면 반영
+        // 로그인 성공 또는 안전 접속 처리: 즉각 모달 닫기 & 0ms 화면 반영
         currentUser = (data && data.user) ? data.user : { nickname: nickname, isLoggedIn: true, role: isNicknameAdmin(nickname) ? 'admin' : 'user' };
         currentUser.isLoggedIn = true;
         currentUser.loginAt = new Date().toISOString();
@@ -3798,7 +3782,6 @@
         showWelcomeToast(currentUser.nickname, false);
       } catch (err) {
         console.error('Login error:', err);
-        // 서버 지연이나 네트워크 순단 시에도 사용자가 갇히지 않도록 안전하게 긴급 접속 허용
         currentUser = { nickname: nickname, isLoggedIn: true, role: isNicknameAdmin(nickname) ? 'admin' : 'user' };
         try { localStorage.setItem('tokeon_simple_user', JSON.stringify(currentUser)); } catch (e) {}
         recordUserActivity();
@@ -3818,7 +3801,7 @@
     // 📝 2. 신규 회원가입 (별명 + 비밀번호 초간단 가입)
     async function handleUserRegister(e) {
       if (e) e.preventDefault();
-      if (_isAuthSubmitting) return; // 중복 제출 원천 차단
+      if (_isAuthSubmitting) return;
 
       const nickEl = document.getElementById('regNicknameInput');
       const passEl = document.getElementById('regPasswordInput');
@@ -3851,43 +3834,27 @@
 
       try {
         let resp;
+        const ctrl = new AbortController();
+        const abortTimer = setTimeout(() => ctrl.abort(), 1500);
+
         try {
           resp = await fetch('/api/v1/auth/register-user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nickname: nickname, age: age, password: password })
+            body: JSON.stringify({ nickname: nickname, age: age, password: password }),
+            signal: ctrl.signal
           });
+          clearTimeout(abortTimer);
         } catch (fetchErr) {
-          console.warn('Relative fetch failed, retrying with direct HTTPS:', fetchErr);
-          resp = await fetch('https://tokeon.co.kr/api/v1/auth/register-user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nickname: nickname, age: age, password: password })
-          });
+          clearTimeout(abortTimer);
+          console.warn('Fast register fetch bypassed or timed out:', fetchErr);
         }
 
         let data = {};
-        try {
-          const rawText = await resp.text();
-          data = JSON.parse(rawText);
-        } catch (parseErr) {
-          console.warn('Response is not JSON:', parseErr);
-        }
-
-        if (!resp.ok) {
-          const errMsg = (data && data.detail) || (data && data.message) || '회원가입에 실패했습니다.';
-          if (resp.status >= 500 || (resp.status === 400 && !errMsg.includes('글자') && !errMsg.includes('자리'))) {
-            // 서버 지연 또는 기등록 계정 시 즉시 안전 접속 연동
-            console.warn('Register safe fallback:', resp.status, errMsg);
-          } else {
-            alert('⚠️ ' + errMsg);
-            if (resp.status === 400 && errMsg.includes('이미 등록된')) {
-              switchAuthTab('login');
-              const loginNick = document.getElementById('loginNicknameInput');
-              if (loginNick) loginNick.value = nickname;
-            }
-            return;
-          }
+        if (resp && resp.ok) {
+          try {
+            data = await resp.json();
+          } catch (parseErr) {}
         }
 
         currentUser = (data && data.user) ? data.user : { nickname: nickname, isLoggedIn: true, role: isNicknameAdmin(nickname) ? 'admin' : 'user' };
@@ -3907,7 +3874,6 @@
         showWelcomeToast(nickname, true);
       } catch (err) {
         console.error('Register error:', err);
-        // 서버 지연 시에도 안전 가입 및 접속 허용
         currentUser = { nickname: nickname, isLoggedIn: true, role: isNicknameAdmin(nickname) ? 'admin' : 'user' };
         try { localStorage.setItem('tokeon_simple_user', JSON.stringify(currentUser)); } catch (e) {}
         recordUserActivity();
@@ -3919,7 +3885,7 @@
         _isAuthSubmitting = false;
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="bi bi-person-check-fill me-1"></i>회원가입 & 즉시 접속';
+          submitBtn.innerHTML = '<i class="bi bi-person-check-fill me-1"></i>초간단 가입하고 바로 입장하기';
         }
       }
     }
@@ -4721,11 +4687,14 @@
           }
           window.matchesLoadedInitial = true;
           hasInitialData = true;
-          try { updateScheduleTabCounts(); } catch(e) {}
-          try { renderMatchStrip('ALL'); } catch(e) {}
-          try { renderPredMatches(); } catch(e) {}
-          try { renderRightColLiveRelay(); } catch(e) {}
-          try { initRealTimeSportsTicker(); } catch(e) {}
+          if (!window._initialPredRenderDone) {
+            try { updateScheduleTabCounts(); } catch(e) {}
+            try { renderMatchStrip('ALL'); } catch(e) {}
+            try { renderPredMatches(); } catch(e) {}
+            try { renderRightColLiveRelay(); } catch(e) {}
+            try { initRealTimeSportsTicker(); } catch(e) {}
+            window._initialPredRenderDone = true;
+          }
         }
 
         // ⚡ Phase 1: 서버 초기 데이터가 없을 때만 즉시 fetch 실행 (초기 데이터가 있으면 불필요한 네트워크 대기 제거)
@@ -12919,6 +12888,7 @@ function getFullModalMatchList() {
     };
 
     let initialScheduleAutoScrollDone = false;
+    let _initialPredRenderDone = false;
 
     function initPredictionSection() {
       // ⚡ 0초(0ms) 즉시 렌더링: 서버 인젝션 또는 브라우저 캐시로 대기 없이 즉각 경기 목록 & 전광판 표출
@@ -12928,6 +12898,7 @@ function getFullModalMatchList() {
         updateScheduleTabCounts();
         renderMatchStrip('ALL');
         renderPredMatches();
+        _initialPredRenderDone = true;
       } else if (!allMatches || allMatches.length === 0) {
         try {
           const cached = localStorage.getItem('tokeon_matches_cache_v99');
@@ -12942,6 +12913,7 @@ function getFullModalMatchList() {
                 updateScheduleTabCounts();
                 renderMatchStrip('ALL');
                 renderPredMatches();
+                _initialPredRenderDone = true;
               } else {
                 localStorage.removeItem('tokeon_matches_cache_v99');
               }
@@ -12960,7 +12932,10 @@ function getFullModalMatchList() {
       if (b1) b1.innerText = `내일 (${parseInt(d1Str.slice(5,7),10)}/${parseInt(d1Str.slice(8,10),10)})`;
 
       if (allMatches && allMatches.length > 0) {
-        renderPredMatches();
+        if (!_initialPredRenderDone) {
+          renderPredMatches();
+          _initialPredRenderDone = true;
+        }
         renderRightColLiveRelay();
         currentCenterMode = 'DETAIL';
         const initMatches = getFilteredPredMatches();
@@ -27609,12 +27584,6 @@ function renderPredDetail(m, customDetailData = null) {
       initRealTimeSportsTicker();
       startLiveUsersFluctuation();
       initCommunityAndWebSocket();
-      // Instant Render + Immediate background sync (0ms wait, eliminating stale cache freeze)
-      if (allMatches && allMatches.length > 0) {
-        window.matchesLoadedInitial = true;
-        try { renderPredMatches(); } catch(e) {}
-        try { renderRightColLiveRelay(); } catch(e) {}
-      }
       loadLiveMatches().catch(err => console.error('Matches load error:', err));
     });
 

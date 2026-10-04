@@ -200,27 +200,21 @@ def refresh_server_matches_cache() -> str:
     try:
         from app.schemas.schemas import MatchResponse
         from datetime import datetime, timedelta
-        from app.services.betman_service import BetmanService
         from app.models.models import Match
 
-        # 1. 배트맨 프로토 승부식 최신 경기 동기화 (네이션스리그, 축구, KBO, NPB, 농구, 배구 등)
-        try:
-            BetmanService.sync_betman_proto_matches(db)
-        except Exception as be:
-            print(f"[WARN] Betman sync in refresh cache: {be}")
-
         now_kst = datetime.utcnow() + timedelta(hours=9)
+        yesterday_str = (now_kst - timedelta(days=1)).strftime("%Y-%m-%d")
 
-        # 2. 진행중(LIVE) 및 예정(SCHEDULED) 경기 우선 추출 (배트맨 발매 경기 100% 포함)
+        # ⚡ [0ms 첫 화면 즉시 표출] 당일 및 진행중 경기 중심 (최대 110경기) 초고속 추출
         active_matches = db.query(Match).filter(
-            Match.status.in_(['LIVE', 'SCHEDULED'])
-        ).order_by(Match.match_date.asc()).limit(250).all()
+            Match.status.in_(['LIVE', 'SCHEDULED']),
+            Match.match_date >= yesterday_str
+        ).order_by(Match.match_date.asc()).limit(80).all()
 
-        # 3. 최근 완료(FINISHED) 경기 보강
         finished_matches = db.query(Match).filter(
             Match.status == 'FINISHED',
-            Match.match_date >= (now_kst - timedelta(days=2)).strftime("%Y-%m-%d")
-        ).order_by(Match.match_date.desc()).limit(100).all()
+            Match.match_date >= yesterday_str
+        ).order_by(Match.match_date.desc()).limit(30).all()
 
         seen_ids = set()
         combined = []
@@ -232,12 +226,14 @@ def refresh_server_matches_cache() -> str:
         combined.sort(key=lambda x: str(x.match_date or ''))
 
         if not combined:
-            combined = MatchService.get_matches(db, limit=100, order='desc')
+            combined = MatchService.get_matches(db, limit=50, order='desc')
 
         serialized = [MatchResponse.model_validate(m).model_dump(mode="json") for m in combined]
         json_str = json.dumps(serialized, ensure_ascii=False)
         _SERVER_MATCHES_CACHE["json_str"] = json_str
         _SERVER_MATCHES_CACHE["updated_at"] = time.time()
+        # Invalidate combined cache so next request picks up fresh data
+        _PORTAL_COMBINED_CACHE.clear()
         return json_str
     except Exception as e:
         print(f"[WARN] Failed to refresh server matches cache: {e}")
@@ -249,23 +245,18 @@ def refresh_server_matches_cache() -> str:
                 db.close()
             except Exception:
                 pass
-        try:
-            import gc
-            gc.collect()
-        except Exception:
-            pass
 
 def get_server_initial_matches_json() -> str:
     global _SERVER_MATCHES_CACHE
     now = time.time()
     if _SERVER_MATCHES_CACHE["json_str"] != "[]":
-        # 180초(3분) 캐시 TTL: 백그라운드 비동기 갱신으로 사용자 요청 지연 0ms 보장
-        if (now - _SERVER_MATCHES_CACHE["updated_at"] > 180.0) and not _SERVER_MATCHES_CACHE.get("is_refreshing"):
+        # 300초(5분) TTL: 백그라운드 비동기 갱신으로 사용자 요청 지연 0ms 보장
+        if (now - _SERVER_MATCHES_CACHE["updated_at"] > 300.0) and not _SERVER_MATCHES_CACHE.get("is_refreshing"):
             import threading
             threading.Thread(target=refresh_server_matches_cache, daemon=True).start()
         return _SERVER_MATCHES_CACHE["json_str"]
     
-    # Synchronously warm cache if empty so initial page load always has full match data
+    # Synchronously warm cache if empty so initial page load always has match data
     try:
         refresh_server_matches_cache()
     except Exception as e:
@@ -283,7 +274,7 @@ def get_portal_html(target_path: str):
     current_live_count = TrafficService.get_realtime_active_count()
 
     combined = _PORTAL_COMBINED_CACHE.get(target_path)
-    if combined and combined.get("mtime") == mtime and (now - combined.get("created_at", 0) < 60.0):
+    if combined and combined.get("mtime") == mtime and (now - combined.get("created_at", 0) < 300.0):
         cached_content = combined["content"]
         cached_live = combined.get("live_count", current_live_count)
         if cached_live != current_live_count:
@@ -309,7 +300,6 @@ def get_portal_html(target_path: str):
         raw_content = _PORTAL_HTML_CACHE[target_path]["raw_content"]
 
     import re
-    # Replace any hardcoded/fallback visitor counts with authentic real-time count
     raw_content = re.sub(
         r'<strong id="topLiveUsersCount"[^>]*>.*?</strong>',
         f'<strong id="topLiveUsersCount" class="text-dark ms-1">{current_live_count}</strong>',
@@ -321,7 +311,7 @@ def get_portal_html(target_path: str):
         raw_content
     )
 
-    # Pre-inject SERVER_INITIAL_MATCHES and SERVER_INITIAL_LIVE_COUNT after DOM markup (before scripts) for instant 0ms First Paint
+    # 🚀 Pre-inject SERVER_INITIAL_MATCHES in <head> for INSTANT 0ms DOM readiness before rendering starts
     initial_matches_json = get_server_initial_matches_json()
     injection_script = (
         f"<script id=\"serverInitialData\">"
@@ -329,12 +319,12 @@ def get_portal_html(target_path: str):
         f"window.SERVER_INITIAL_LIVE_COUNT = {current_live_count};"
         f"</script>"
     )
-    if '<script src="https://cdn.jsdelivr.net/npm/bootstrap' in raw_content:
+    if "</head>" in raw_content:
+        content = raw_content.replace("</head>", f"{injection_script}\n</head>", 1)
+    elif '<script src="https://cdn.jsdelivr.net/npm/bootstrap' in raw_content:
         content = raw_content.replace('<script src="https://cdn.jsdelivr.net/npm/bootstrap', f'{injection_script}\n  <script src="https://cdn.jsdelivr.net/npm/bootstrap', 1)
     elif "</body>" in raw_content:
         content = raw_content.replace("</body>", f"{injection_script}\n</body>", 1)
-    elif "</head>" in raw_content:
-        content = raw_content.replace("</head>", f"{injection_script}\n</head>", 1)
     else:
         content = f"{injection_script}\n{raw_content}"
 
