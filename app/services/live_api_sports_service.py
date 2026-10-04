@@ -1689,6 +1689,7 @@ class LiveApiSportsService:
         }
 
     _request_cache: Dict[str, Any] = {} # {cache_key: (timestamp, data)}
+    _access_blocked_until: Dict[str, float] = {}  # {sport: unblock_timestamp}
 
     @classmethod
     def _make_request(cls, endpoint: str, sport: str = "football", timeout: int = 10, ttl_seconds: Optional[int] = None) -> Optional[Dict[str, Any]]:
@@ -1734,10 +1735,19 @@ class LiveApiSportsService:
                 base_url = "https://v1.baseball.api-sports.io"
 
         url = f"{base_url}{endpoint}"
+        disabled_until = cls._access_blocked_until.get(sport, 0)
+        if disabled_until and now_ts < disabled_until:
+            return None
         try:
             req = urllib.request.Request(url, headers=headers)
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
+                errs = data.get("errors") if isinstance(data, dict) else None
+                if isinstance(errs, dict) and errs.get("access"):
+                    # 계정 정지/권한 없음 → 10분간 해당 종목 호출 차단 (헛호출로 인한 지연 방지)
+                    cls._access_blocked_until[sport] = now_ts + 600
+                    logger.error(f"[LiveApiSports] {sport} access blocked: {errs.get('access')}")
+                    return None
                 if data and "response" in data:
                     cls._request_cache[cache_key] = (now_ts, data)
                 return data
@@ -2803,9 +2813,15 @@ class LiveApiSportsService:
         - 0.1ms 초고속 캐싱 및 실시간 강제 새로고침(?force=true) 지원
         """
         ts = ts or {}
-        cached_lineup = ts.get("soccer_lineup") or ts.get("lineup")
-        if not force and cached_lineup and isinstance(cached_lineup, dict):
-            if (cached_lineup.get("is_lineup_confirmed") or cached_lineup.get("confirmed")) and cached_lineup.get("events_timeline") is not None:
+        cached_lineup = ts.get("soccer_lineup")
+        if not force and cached_lineup and isinstance(cached_lineup, dict) and cached_lineup.get("source") in ("espn", "api-football"):
+            fresh = False
+            try:
+                upd = datetime.strptime(cached_lineup.get("updated_at", ""), "%Y-%m-%d %H:%M:%S")
+                fresh = (datetime.now() - upd).total_seconds() < 120
+            except Exception:
+                fresh = False
+            if cached_lineup.get("is_lineup_confirmed") and (fresh or match.status == "FINISHED"):
                 return cached_lineup
 
         home_name = match.home_team_name or "홈팀"
@@ -3561,15 +3577,30 @@ class LiveApiSportsService:
 
             return xi, subs
 
-        if len(home_xi) < 7:
-            home_xi, home_subs = _get_smart_squad(home_name, True)
+        # 5-3. 실시간 공식 라인업 (ESPN 공개 API) — API-Football 미사용/정지 시 1순위 공급원
+        lineup_source = "api-football" if (fixture_id and len(home_xi) >= 7 and len(away_xi) >= 7) else None
+        if not lineup_source:
+            try:
+                from app.services.realtime_lineup_sources import fetch_espn_soccer_lineup
+                espn = fetch_espn_soccer_lineup(home_name, away_name, match.match_date, force=force)
+                if espn and len(espn["home"]["xi"]) >= 7 and len(espn["away"]["xi"]) >= 7:
+                    home_xi, home_subs = espn["home"]["xi"], espn["home"]["subs"]
+                    away_xi, away_subs = espn["away"]["xi"], espn["away"]["subs"]
+                    home_formation = espn["home"].get("formation") or home_formation
+                    away_formation = espn["away"].get("formation") or away_formation
+                    lineup_source = "espn"
+            except Exception as e:
+                logger.warning(f"ESPN soccer lineup failed: {e}")
 
-        if len(away_xi) < 7:
-            away_xi, away_subs = _get_smart_squad(away_name, False)
+        if not lineup_source:
+            # 🛡️ 공식 발표 전: 고정/과거 선수 명단으로 채우지 않고 '발표 대기' 상태 유지
+            if len(home_xi) < 7:
+                home_xi, home_subs = [], []
+            if len(away_xi) < 7:
+                away_xi, away_subs = [], []
 
-        # 시작 전 경기(SCHEDULED)이거나 라인업이 불완전(7명 미만)할 경우 심판/연맹 공식 발표 전까지 '선발 발표 대기(EXPECTED)' 유지
-        if not fixture_id or (match and match.status == 'SCHEDULED') or len(home_xi) < 7 or len(away_xi) < 7:
-            is_confirmed = False
+        # 양 팀 선발 11명이 실제 공급원에서 확인되면 경기 시작 전이라도 '확정'으로 표시
+        is_confirmed = bool(lineup_source) and len(home_xi) >= 11 and len(away_xi) >= 11
 
         # 6. 선수별 이벤트 필드 초기화 (골, 카드, 교체 IN/OUT)
         for p in (home_xi + away_xi + home_subs + away_subs):
@@ -3789,9 +3820,9 @@ class LiveApiSportsService:
             except Exception as e:
                 logger.warning(f"Error fetching API-Football events/statistics: {e}")
 
-        # 8. 실시간 통계 및 이벤트 스마트 폴백 (API 쿼터 소진 또는 미지원 경기 대응)
-        is_arm_mne = ("아르메니" in home_name and "몬테네그" in away_name) or ("몬테네그" in home_name and "아르메니" in away_name)
-        is_geo_ukr = ("조지아" in home_name and "우크라이나" in away_name) or ("우크라이나" in home_name and "조지아" in away_name)
+        # 8. 실시간 통계 및 이벤트 (🛡️ 특정 경기 하드코딩 스코어/타임라인 덮어쓰기 비활성화 — 실제 데이터만 사용)
+        is_arm_mne = False
+        is_geo_ukr = False
 
         if is_arm_mne:
             h_score_val = 2
@@ -4093,11 +4124,11 @@ class LiveApiSportsService:
             "match_stats": match_stats,
             "stats_summary": stats_summary,
             "league": match.league_name,
-            "source": "api-football" if fixture_id else "official_database",
+            "source": lineup_source or "pending",
             "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
 
-        # DB 캐싱 (dt.team_stats 저장)
+        # DB 캐싱 (MatchDetail.team_stats 저장 — 과거에 저장된 고정 명단도 함께 덮어씀)
         if db is not None and match is not None:
             try:
                 if not isinstance(ts, dict):
@@ -4109,15 +4140,21 @@ class LiveApiSportsService:
                     "confirmed": is_confirmed,
                     "formation": {"home": home_formation, "away": away_formation},
                     "coach": {"home": home_coach, "away": away_coach},
-                    "injuries": {"home": home_injuries, "away": away_injuries}
+                    "injuries": {"home": home_injuries, "away": away_injuries},
+                    "source": lineup_source or "pending",
+                    "fetched_at": result["updated_at"],
                 }
                 if fixture_id:
                     ts["api_sports_fixture_id"] = fixture_id
-                if hasattr(match, 'team_stats'):
-                    match.team_stats = ts
-                db.commit()
+                if dt is not None:
+                    dt.team_stats = json.dumps(ts, ensure_ascii=False)
+                    db.commit()
             except Exception as e:
                 logger.warning(f"Failed to cache soccer lineup in DB: {e}")
+                try:
+                    db.rollback()
+                except Exception:
+                    pass
 
         return result
 

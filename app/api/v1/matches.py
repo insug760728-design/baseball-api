@@ -3,6 +3,7 @@ import time
 import json
 import re
 from typing import List, Optional, Dict, Tuple, Any
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
@@ -421,7 +422,7 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
             return cached_res
         if match_id in _MATCH_FULL_CACHE:
             cache_time, cached_res = _MATCH_FULL_CACHE[match_id]
-            ttl = 30 if (cached_res.get("status") == "LIVE") else (1800 if cached_res.get("status") == "SCHEDULED" else 3600)
+            ttl = 30 if (cached_res.get("status") == "LIVE") else (60 if cached_res.get("status") == "SCHEDULED" else 3600)
             if now - cache_time < ttl:
                 response.headers["Cache-Control"] = "public, max-age=10, s-maxage=30"
                 return cached_res
@@ -532,9 +533,16 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
 
     if isinstance(details_ts, dict) and details_ts.get("lineup"):
         lu = details_ts["lineup"]
-        h_lineup = lu.get("home", [])
-        a_lineup = lu.get("away", [])
-        is_lineup_confirmed = lu.get("confirmed", False)
+        # 실시간 공식 소스로 수집된(fetched_at) 라인업만 사용 — 과거 저장/가공 데이터는 무시
+        if isinstance(lu, dict) and (lu.get("fetched_at") or (m.status == "FINISHED" and lu.get("confirmed"))):
+            h_lineup = lu.get("home", [])
+            a_lineup = lu.get("away", [])
+            is_lineup_confirmed = lu.get("confirmed", False)
+
+    if isinstance(details_ts, dict) and details_ts.get("soccer_lineup"):
+        slu = details_ts.get("soccer_lineup")
+        if not (isinstance(slu, dict) and slu.get("source") in ("espn", "api-football")):
+            details_ts.pop("soccer_lineup", None)
 
     is_mlb = (m.sport_code == "BASEBALL") and (
         ("MLB" in (m.league_name or "")) or 
@@ -623,7 +631,7 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
         "is_lineup_confirmed": is_lineup_confirmed or (details_ts.get("soccer_lineup", {}).get("is_lineup_confirmed", False) if isinstance(details_ts, dict) else False),
         "lineup_status": "CONFIRMED" if (is_lineup_confirmed or (details_ts.get("soccer_lineup", {}).get("is_lineup_confirmed", False) if isinstance(details_ts, dict) else False)) else "EXPECTED"
     }
-    ttl = 30 if (res.get("status") == "LIVE") else (1800 if res.get("status") == "SCHEDULED" else 3600)
+    ttl = 30 if (res.get("status") == "LIVE") else (60 if res.get("status") == "SCHEDULED" else 3600)
     cache_set_json(ckey, res, ttl_seconds=ttl)
     _MATCH_FULL_CACHE[match_id] = (now, res)
     response.headers["Cache-Control"] = "public, max-age=10, s-maxage=30"
@@ -677,54 +685,92 @@ def get_match_lineup(match_id: int, force: bool = False, db: Session = Depends(g
         except Exception:
             ts = {}
 
-    db_lineup = ts.get("lineup", {})
-    db_home = db_lineup.get("home", [])
-    db_away = db_lineup.get("away", [])
-    db_confirmed = db_lineup.get("confirmed", False)
+    db_lineup = ts.get("lineup", {}) if isinstance(ts.get("lineup"), dict) else {}
+    db_home = db_lineup.get("home", []) or []
+    db_away = db_lineup.get("away", []) or []
+    db_confirmed = bool(db_lineup.get("confirmed", False))
+    db_fetched_at = db_lineup.get("fetched_at")
+    db_source = db_lineup.get("source")
 
-    is_mlb = (m.sport_code == "BASEBALL") and (
-        ("MLB" in (m.league_name or "")) or 
-        (m.official_id and m.official_id.startswith("MLB_")) or 
-        any(k in (m.home_team_name or "") for k in ["양키", "다저", "토론", "볼티", "보스", "디트", "워싱", "메츠", "필라", "컵스", "화삭", "자이", "파드", "브루", "카디"])
+    def _age_seconds(stamp):
+        try:
+            return (datetime.now() - datetime.strptime(stamp, "%Y-%m-%d %H:%M:%S")).total_seconds()
+        except Exception:
+            return None
+
+    league_txt = (m.league_name or "") + " " + (m.official_id or "")
+    is_baseball = m.sport_code == "BASEBALL"
+    is_mlb = is_baseball and (
+        ("MLB" in league_txt) or ("메이저" in league_txt) or
+        any(k in (m.home_team_name or "") for k in ["양키", "다저", "토론", "볼티", "보스", "디트", "워싱", "메츠", "필라", "컵스", "화삭", "자이언츠 (SF)", "파드", "브루", "카디", "가디언스", "레이스"])
     )
+    is_kbo = is_baseball and not is_mlb and (("KBO" in league_txt) or ("한국" in league_txt))
+    is_npb = is_baseball and not is_mlb and not is_kbo and (("NPB" in league_txt) or ("일본" in league_txt))
 
-    if is_mlb and (force or not db_confirmed or not db_home or not db_away):
+    age = _age_seconds(db_fetched_at) if db_fetched_at else None
+    is_finished = (m.status == "FINISHED")
+    # 실시간 재조회 조건: 강제 새로고침 / 한 번도 실시간 조회한 적 없음(과거·레거시 데이터) / 60초 경과(경기 전·중) / 종료경기인데 미확정
+    need_refresh = force or age is None or (not is_finished and age > 60) or (is_finished and not db_confirmed)
+
+    def _persist(home_lineup, away_lineup, confirmed, source, home_sp=None, away_sp=None):
+        if not dt:
+            return
+        try:
+            ts["lineup"] = {
+                "home": home_lineup,
+                "away": away_lineup,
+                "confirmed": confirmed,
+                "source": source,
+                "fetched_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            }
+            if home_sp and home_sp.get("name"):
+                ts.setdefault("starters", {})["home"] = {**(ts.get("starters", {}).get("home") or {}), **home_sp}
+            if away_sp and away_sp.get("name"):
+                ts.setdefault("starters", {})["away"] = {**(ts.get("starters", {}).get("away") or {}), **away_sp}
+            dt.team_stats = json.dumps(ts, ensure_ascii=False)
+            db.commit()
+            clear_match_full_cache(m.id)
+        except Exception as pe:
+            db.rollback()
+            logging.getLogger("MatchAPI").warning(f"lineup persist error: {pe}")
+
+    def _payload(home_lineup, away_lineup, confirmed, source, home_sp=None, away_sp=None):
+        return {
+            "match_id": m.id,
+            "is_lineup_confirmed": confirmed,
+            "lineup_status": "CONFIRMED" if confirmed else "EXPECTED",
+            "home_lineup": home_lineup,
+            "away_lineup": away_lineup,
+            "home_starter": home_sp if home_sp is not None else ts.get("starters", {}).get("home"),
+            "away_starter": away_sp if away_sp is not None else ts.get("starters", {}).get("away"),
+            "league": m.league_name,
+            "source": source,
+            "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+
+    if is_mlb and need_refresh:
         try:
             from app.scrapers.official_mlb_live_scraper import MlbOfficialScraper
-            mlb_scraper = MlbOfficialScraper()
             mlb_pk = int(m.official_id.replace("MLB_", "")) if (m.official_id and m.official_id.startswith("MLB_") and m.official_id.replace("MLB_", "").isdigit()) else None
-            res = mlb_scraper.fetch_realtime_lineup(m.away_team_name, m.home_team_name, m.match_date, game_pk=mlb_pk)
-            if res and (res.get("home_lineup") or res.get("away_lineup")):
-                home_lineup = res.get("home_lineup", [])
-                away_lineup = res.get("away_lineup", [])
-                is_confirmed = res.get("is_lineup_confirmed", False)
-                if dt:
-                    ts["lineup"] = {
-                        "home": home_lineup,
-                        "away": away_lineup,
-                        "confirmed": is_confirmed
-                    }
-                    if res.get("home_starter") and res.get("home_starter").get("name"):
-                        if "starters" not in ts: ts["starters"] = {}
-                        ts["starters"]["home"] = res["home_starter"]
-                    if res.get("away_starter") and res.get("away_starter").get("name"):
-                        if "starters" not in ts: ts["starters"] = {}
-                        ts["starters"]["away"] = res["away_starter"]
-                    dt.team_stats = json.dumps(ts, ensure_ascii=False)
-                    db.commit()
-                return {
-                    "match_id": m.id,
-                    "is_lineup_confirmed": is_confirmed,
-                    "lineup_status": "CONFIRMED" if is_confirmed else "EXPECTED",
-                    "home_lineup": home_lineup,
-                    "away_lineup": away_lineup,
-                    "home_starter": res.get("home_starter"),
-                    "away_starter": res.get("away_starter"),
-                    "league": m.league_name,
-                    "source": "statsapi.mlb.com"
-                }
+            res = MlbOfficialScraper().fetch_realtime_lineup(m.away_team_name, m.home_team_name, m.match_date, game_pk=mlb_pk)
+            if res is not None:
+                h, a = res.get("home_lineup", []) or [], res.get("away_lineup", []) or []
+                conf = bool(res.get("is_lineup_confirmed")) and len(h) >= 9 and len(a) >= 9
+                _persist(h, a, conf, "statsapi.mlb.com", res.get("home_starter"), res.get("away_starter"))
+                return _payload(h, a, conf, "statsapi.mlb.com", res.get("home_starter"), res.get("away_starter"))
         except Exception as e:
             logging.getLogger("MatchAPI").warning(f"get_match_lineup MLB error: {e}")
+
+    if (is_kbo or is_npb) and need_refresh:
+        try:
+            from app.services.realtime_lineup_sources import fetch_naver_baseball_lineup
+            res = fetch_naver_baseball_lineup(m.home_team_name, m.away_team_name, m.match_date, "KBO" if is_kbo else "NPB", force=force)
+            if res is not None:
+                h, a = res["home_lineup"], res["away_lineup"]
+                _persist(h, a, res["confirmed"], res["source"], res.get("home_starter"), res.get("away_starter"))
+                return _payload(h, a, res["confirmed"], res["source"], res.get("home_starter"), res.get("away_starter"))
+        except Exception as e:
+            logging.getLogger("MatchAPI").warning(f"get_match_lineup NAVER error: {e}")
 
     # ⚽ 축구(SOCCER) 공식 선발 라인업 & 결장/부상 실시간 연동
     if m.sport_code == "SOCCER":
@@ -735,21 +781,17 @@ def get_match_lineup(match_id: int, force: bool = False, db: Session = Depends(g
                 # 하위 호환성을 위해 home_lineup, away_lineup 루트 키도 함께 제공
                 soccer_res["home_lineup"] = soccer_res.get("home", {}).get("starting_xi", [])
                 soccer_res["away_lineup"] = soccer_res.get("away", {}).get("starting_xi", [])
+                clear_match_full_cache(m.id)
                 return soccer_res
         except Exception as e:
             logging.getLogger("MatchAPI").warning(f"get_match_lineup SOCCER error: {e}")
 
-    return {
-        "match_id": m.id,
-        "is_lineup_confirmed": db_confirmed,
-        "lineup_status": "CONFIRMED" if db_confirmed else "EXPECTED",
-        "home_lineup": db_home,
-        "away_lineup": db_away,
-        "home_starter": ts.get("starters", {}).get("home"),
-        "away_starter": ts.get("starters", {}).get("away"),
-        "league": m.league_name,
-        "source": "database"
-    }
+    # 최근 실시간 조회 결과만 반환 (실시간 조회 이력이 없는 과거/레거시 명단은 노출하지 않음)
+    if db_fetched_at:
+        return _payload(db_home, db_away, db_confirmed, db_source or "database")
+    if is_finished and db_confirmed:
+        return _payload(db_home, db_away, db_confirmed, "database")
+    return _payload([], [], False, "pending")
 
 
 
