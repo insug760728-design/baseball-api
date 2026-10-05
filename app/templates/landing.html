@@ -12604,44 +12604,49 @@ function getFullModalMatchList() {
         const homeAdv = !isTie && (lowerIsBetter ? (nH < nA) : (nH > nA));
         const awayAdv = !isTie && (lowerIsBetter ? (nA < nH) : (nA > nH));
 
-        // 낮을수록 좋은 지표(ERA, WHIP, 실점, 실책 등)는 수치가 낮은 쪽이 우세하므로 시각적 바 너비 반전
-        let pctH = Math.min(90, Math.max(10, Math.round((nH / total) * 100)));
+        let pctH = Math.min(100, Math.max(15, Math.round((nH / total) * 100)));
+        let pctA = Math.min(100, Math.max(15, Math.round((nA / total) * 100)));
         if (lowerIsBetter && !isTie) {
-          pctH = 100 - pctH;
+          const temp = pctH;
+          pctH = pctA;
+          pctA = temp;
         }
-        let pctA = 100 - pctH;
 
-        // 우세는 빨간색 (#dc2626), 반대는 파란색 (#2563eb), 동률은 중립 회색 (#9ca3af)
-        const barColorH = homeAdv ? '#dc2626' : (awayAdv ? '#2563eb' : '#9ca3af');
-        const barColorA = awayAdv ? '#dc2626' : (homeAdv ? '#2563eb' : '#9ca3af');
+        const barColorH = homeAdv ? '#2563eb' : (awayAdv ? '#cbd5e1' : '#94a3b8');
+        const barColorA = awayAdv ? '#dc2626' : (homeAdv ? '#cbd5e1' : '#94a3b8');
 
-        // 분석수치 통계 숫자 배지: 우세는 빨간색, 반대는 파란색
-        const badgeStyleH = homeAdv 
-          ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626; font-weight: 800;'
-          : (awayAdv ? 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb; font-weight: 700;'
-                     : 'color: #374151; background: #f9fafb; border: 1px solid #d1d5db; font-weight: 600;');
+        const valColorH = homeAdv ? 'color: #1d4ed8; font-weight: 800;' : 'color: #334155; font-weight: 600;';
+        const valColorA = awayAdv ? 'color: #dc2626; font-weight: 800;' : 'color: #334155; font-weight: 600;';
 
-        const badgeStyleA = awayAdv 
-          ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626; font-weight: 800;'
-          : (homeAdv ? 'color: #2563eb; background: #eff6ff; border: 1.5px solid #2563eb; font-weight: 700;'
-                     : 'color: #374151; background: #f9fafb; border: 1px solid #d1d5db; font-weight: 600;');
+        const advBadgeH = homeAdv ? '<span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0.5 px-1 me-1" style="font-size:0.60rem; font-weight:800;">우세▲</span>' : '';
+        const advBadgeA = awayAdv ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle py-0.5 px-1 ms-1" style="font-size:0.60rem; font-weight:800;">▲우세</span>' : '';
 
         return `
-          <div class="mb-2 p-2 rounded-2" style="background: #ffffff; border: 1px solid #e5e7eb;">
+          <div class="mb-2 p-2 rounded-2 border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="badge" style="font-size: 0.86rem; padding: 2px 7px; border-radius: 4px; ${badgeStyleH}">
-                ${valH} ${homeAdv ? '▲' : ''}
-              </span>
-              <span class="fw-bold px-2 py-1 text-center text-truncate" style="font-size: 0.82rem; color: #111827; letter-spacing: -0.2px;">
+              <div class="d-flex align-items-center" style="${valColorH}; font-size: 0.82rem;">
+                ${advBadgeH}
+                <span>${valH}</span>
+              </div>
+              <span class="badge bg-white text-dark border px-2 py-0.5" style="border-color: #cbd5e1 !important; font-size: 0.72rem; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
                 ${label}
               </span>
-              <span class="badge" style="font-size: 0.86rem; padding: 2px 7px; border-radius: 4px; ${badgeStyleA}">
-                ${valA} ${awayAdv ? '▲' : ''}
-              </span>
+              <div class="d-flex align-items-center" style="${valColorA}; font-size: 0.82rem;">
+                <span>${valA}</span>
+                ${advBadgeA}
+              </div>
             </div>
-            <div class="d-flex rounded-pill overflow-hidden" style="height: 7px; background: #f3f4f6;">
-              <div style="width: ${pctH}%; background: ${barColorH}; transition: width 0.3s;"></div>
-              <div style="width: ${pctA}%; background: ${barColorA}; transition: width 0.3s;"></div>
+            <div class="row g-1 align-items-center" style="height: 8px;">
+              <div class="col-6 pe-0.5">
+                <div class="w-100 rounded-start-pill overflow-hidden d-flex justify-content-end" style="height: 8px; background: #e2e8f0;">
+                  <div style="width: ${pctH}%; background: ${barColorH}; border-radius: 4px 0 0 4px; transition: width 0.3s;"></div>
+                </div>
+              </div>
+              <div class="col-6 ps-0.5">
+                <div class="w-100 rounded-end-pill overflow-hidden d-flex justify-content-start" style="height: 8px; background: #e2e8f0;">
+                  <div style="width: ${pctA}%; background: ${barColorA}; border-radius: 0 4px 4px 0; transition: width 0.3s;"></div>
+                </div>
+              </div>
             </div>
           </div>
         `;
@@ -12651,20 +12656,26 @@ function getFullModalMatchList() {
         container.innerHTML = `
           <div class="row g-2">
             <div class="col-md-6">
-              <div class="p-2 rounded-2" style="background: #ffffff; border: 1px solid #e5e7eb;">
-                <div class="fw-bold mb-2 small" style="color: #111827; font-weight: 800;"><i class="bi bi-house-door-fill me-1 text-dark"></i>[홈] ${m.home_team_name} 순수 홈 경기 지표</div>
-                ${makeModalBar('홈/원정 순수 승률 (Win%)', homeSplit.win_pct, awaySplit.win_pct, parseFloat(homeSplit.win_pct)*1000, parseFloat(awaySplit.win_pct)*1000)}
-                ${makeModalBar('홈/원정 경기당 평균 득점 (RPG)', `${homeSplit.rpg}점`, `${awaySplit.rpg}점`, homeSplit.rpg, awaySplit.rpg)}
-                ${makeModalBar('홈/원정 득실 마진 (Run Diff)', `${homeSplit.diff > 0 ? '+' : ''}${homeSplit.diff}점`, `${awaySplit.diff > 0 ? '+' : ''}${awaySplit.diff}점`, homeSplit.diff + 10, awaySplit.diff + 10)}
-                ${makeModalBar('홈/원정 경기당 안타 (Hits/G)', `${homeSplit.hits_pg}개`, `${awaySplit.hits_pg}개`, homeSplit.hits_pg, awaySplit.hits_pg)}
+              <div class="p-2.5 rounded-3 bg-white border shadow-sm" style="border-color: #cbd5e1 !important;">
+                <div class="fw-bold mb-2 small d-flex justify-content-between align-items-center pb-1 border-bottom" style="color: #1e293b; border-color: #f1f5f9 !important;">
+                  <span><i class="bi bi-fire text-danger me-1"></i>[공격] 홈/원정 득점 & 타선 생산력</span>
+                  <span class="badge bg-light text-muted border" style="font-size:0.64rem;">순수 분할 성적</span>
+                </div>
+                ${makeModalBar('순수 승률 (Win%)', homeSplit.win_pct, awaySplit.win_pct, parseFloat(homeSplit.win_pct)*1000, parseFloat(awaySplit.win_pct)*1000)}
+                ${makeModalBar('경기당 평균 득점 (RPG)', `${homeSplit.rpg}점`, `${awaySplit.rpg}점`, homeSplit.rpg, awaySplit.rpg)}
+                ${makeModalBar('득실 마진 (Run Diff)', `${homeSplit.diff > 0 ? '+' : ''}${homeSplit.diff}점`, `${awaySplit.diff > 0 ? '+' : ''}${awaySplit.diff}점`, homeSplit.diff + 10, awaySplit.diff + 10)}
+                ${makeModalBar('경기당 안타 (Hits/G)', `${homeSplit.hits_pg}개`, `${awaySplit.hits_pg}개`, homeSplit.hits_pg, awaySplit.hits_pg)}
               </div>
             </div>
             <div class="col-md-6">
-              <div class="p-2 rounded-2" style="background: #ffffff; border: 1px solid #e5e7eb;">
-                <div class="fw-bold mb-2 small" style="color: #111827; font-weight: 800;"><i class="bi bi-airplane-fill me-1 text-dark"></i>[원정] ${m.away_team_name} 순수 원정 경기 지표</div>
-                ${makeModalBar('홈/원정 평균 실점 (RA - 낮을수록 우수)', `${homeSplit.ra}점`, `${awaySplit.ra}점`, awaySplit.ra, homeSplit.ra)}
-                ${makeModalBar('홈/원정 수비 실책 (Errors - 낮을수록 우수)', `${homeSplit.err_pg}개`, `${awaySplit.err_pg}개`, awaySplit.err_pg, homeSplit.err_pg)}
-                ${makeModalBar('홈/원정 잔루율 (LOB - 낮을수록 우수)', `${homeSplit.lob_pg}개`, `${awaySplit.lob_pg}개`, awaySplit.lob_pg, homeSplit.lob_pg)}
+              <div class="p-2.5 rounded-3 bg-white border shadow-sm" style="border-color: #cbd5e1 !important;">
+                <div class="fw-bold mb-2 small d-flex justify-content-between align-items-center pb-1 border-bottom" style="color: #1e293b; border-color: #f1f5f9 !important;">
+                  <span><i class="bi bi-shield-check text-success me-1"></i>[수비] 홈/원정 실점 & 마운드 안정성</span>
+                  <span class="badge bg-light text-muted border" style="font-size:0.64rem;">낮을수록 우수</span>
+                </div>
+                ${makeModalBar('평균 실점 (RA)', `${homeSplit.ra}점`, `${awaySplit.ra}점`, awaySplit.ra, homeSplit.ra, true)}
+                ${makeModalBar('수비 실책 (Errors)', `${homeSplit.err_pg}개`, `${awaySplit.err_pg}개`, awaySplit.err_pg, homeSplit.err_pg, true)}
+                ${makeModalBar('잔루율 (LOB)', `${homeSplit.lob_pg}개`, `${awaySplit.lob_pg}개`, awaySplit.lob_pg, homeSplit.lob_pg, true)}
                 ${makeModalBar('최근 5경기 폼 (Recent Form)', homeSplit.recent_5, awaySplit.recent_5, 5, 5)}
               </div>
             </div>
@@ -12676,17 +12687,23 @@ function getFullModalMatchList() {
         container.innerHTML = `
           <div class="row g-2">
             <div class="col-md-6">
-              <div class="p-2 rounded-2" style="background: #ffffff; border: 1px solid #e5e7eb;">
-                <div class="fw-bold mb-2 small" style="color: #111827; font-weight: 800;"><i class="bi bi-graph-up me-1 text-dark"></i>[홈] ${m.home_team_name} 홈 경기 지표</div>
-                ${makeModalBar('홈/원정 순수 승률 (Win%)', homeSplit.win_pct, awaySplit.win_pct, parseFloat(homeSplit.win_pct)*1000, parseFloat(awaySplit.win_pct)*1000)}
-                ${makeModalBar('홈/원정 경기당 평균 득점 (GPG)', `${homeSplit.rpg}골`, `${awaySplit.rpg}골`, homeSplit.rpg, awaySplit.rpg)}
-                ${makeModalBar('홈/원정 득실 마진 (Goal Diff)', `${homeSplit.diff > 0 ? '+' : ''}${homeSplit.diff}골`, `${awaySplit.diff > 0 ? '+' : ''}${awaySplit.diff}골`, homeSplit.diff + 10, awaySplit.diff + 10)}
+              <div class="p-2.5 rounded-3 bg-white border shadow-sm" style="border-color: #cbd5e1 !important;">
+                <div class="fw-bold mb-2 small d-flex justify-content-between align-items-center pb-1 border-bottom" style="color: #1e293b; border-color: #f1f5f9 !important;">
+                  <span><i class="bi bi-bullseye text-danger me-1"></i>[공격] 홈/원정 득점 & 골득실 마진</span>
+                  <span class="badge bg-light text-muted border" style="font-size:0.64rem;">순수 분할 성적</span>
+                </div>
+                ${makeModalBar('순수 승률 (Win%)', homeSplit.win_pct, awaySplit.win_pct, parseFloat(homeSplit.win_pct)*1000, parseFloat(awaySplit.win_pct)*1000)}
+                ${makeModalBar('경기당 평균 득점 (GPG)', `${homeSplit.rpg}골`, `${awaySplit.rpg}골`, homeSplit.rpg, awaySplit.rpg)}
+                ${makeModalBar('골득실 마진 (Goal Diff)', `${homeSplit.diff > 0 ? '+' : ''}${homeSplit.diff}골`, `${awaySplit.diff > 0 ? '+' : ''}${awaySplit.diff}골`, homeSplit.diff + 10, awaySplit.diff + 10)}
               </div>
             </div>
             <div class="col-md-6">
-              <div class="p-2 rounded-2" style="background: #ffffff; border: 1px solid #e5e7eb;">
-                <div class="fw-bold mb-2 small" style="color: #111827; font-weight: 800;"><i class="bi bi-shield-shaded me-1 text-dark"></i>[원정] ${m.away_team_name} 원정 경기 지표</div>
-                ${makeModalBar('홈/원정 평균 실점 (GA - 낮을수록 우수)', `${homeSplit.ra}골`, `${awaySplit.ra}골`, awaySplit.ra, homeSplit.ra)}
+              <div class="p-2.5 rounded-3 bg-white border shadow-sm" style="border-color: #cbd5e1 !important;">
+                <div class="fw-bold mb-2 small d-flex justify-content-between align-items-center pb-1 border-bottom" style="color: #1e293b; border-color: #f1f5f9 !important;">
+                  <span><i class="bi bi-shield-shaded text-primary me-1"></i>[수비 & 점유율] 실점 억제 & 주도권</span>
+                  <span class="badge bg-light text-muted border" style="font-size:0.64rem;">순수 분할 성적</span>
+                </div>
+                ${makeModalBar('평균 실점 (GA)', `${homeSplit.ra}골`, `${awaySplit.ra}골`, awaySplit.ra, homeSplit.ra, true)}
                 ${makeModalBar('볼 점유율 (Possession %)', `${possH}%`, `${possA}%`, possH, possA)}
                 ${makeModalBar('최근 5경기 폼 (Recent Form)', homeSplit.recent_5, awaySplit.recent_5, 5, 5)}
               </div>
@@ -12698,17 +12715,23 @@ function getFullModalMatchList() {
         container.innerHTML = `
           <div class="row g-2">
             <div class="col-md-6">
-              <div class="p-2 rounded-2" style="background: #ffffff; border: 1px solid #e5e7eb;">
-                <div class="fw-bold mb-2 small" style="color: #111827; font-weight: 800;"><i class="bi bi-star-fill me-1 text-dark"></i>[홈] ${m.home_team_name} 홈 경기 지표</div>
-                ${makeModalBar('홈/원정 순수 승률 (Win%)', homeSplit.win_pct, awaySplit.win_pct, parseFloat(homeSplit.win_pct)*1000, parseFloat(awaySplit.win_pct)*1000)}
-                ${makeModalBar('홈/원정 경기당 평균 득점 (PPG)', `${homeSplit.rpg}점`, `${awaySplit.rpg}점`, homeSplit.rpg, awaySplit.rpg)}
-                ${makeModalBar('홈/원정 득실 마진 (Point Diff)', `${homeSplit.diff > 0 ? '+' : ''}${homeSplit.diff}점`, `${awaySplit.diff > 0 ? '+' : ''}${awaySplit.diff}점`, homeSplit.diff + 20, awaySplit.diff + 20)}
+              <div class="p-2.5 rounded-3 bg-white border shadow-sm" style="border-color: #cbd5e1 !important;">
+                <div class="fw-bold mb-2 small d-flex justify-content-between align-items-center pb-1 border-bottom" style="color: #1e293b; border-color: #f1f5f9 !important;">
+                  <span><i class="bi bi-fire text-danger me-1"></i>[공격] 홈/원정 득점 & 포인트 마진</span>
+                  <span class="badge bg-light text-muted border" style="font-size:0.64rem;">순수 분할 성적</span>
+                </div>
+                ${makeModalBar('순수 승률 (Win%)', homeSplit.win_pct, awaySplit.win_pct, parseFloat(homeSplit.win_pct)*1000, parseFloat(awaySplit.win_pct)*1000)}
+                ${makeModalBar('경기당 평균 득점 (PPG)', `${homeSplit.rpg}점`, `${awaySplit.rpg}점`, homeSplit.rpg, awaySplit.rpg)}
+                ${makeModalBar('포인트 마진 (Point Diff)', `${homeSplit.diff > 0 ? '+' : ''}${homeSplit.diff}점`, `${awaySplit.diff > 0 ? '+' : ''}${awaySplit.diff}점`, homeSplit.diff + 20, awaySplit.diff + 20)}
               </div>
             </div>
             <div class="col-md-6">
-              <div class="p-2 rounded-2" style="background: #ffffff; border: 1px solid #e5e7eb;">
-                <div class="fw-bold mb-2 small" style="color: #111827; font-weight: 800;"><i class="bi bi-dribbble me-1 text-dark"></i>[원정] ${m.away_team_name} 원정 경기 지표</div>
-                ${makeModalBar('홈/원정 평균 실점 (PAPG - 낮을수록 우수)', `${homeSplit.ra}점`, `${awaySplit.ra}점`, awaySplit.ra, homeSplit.ra)}
+              <div class="p-2.5 rounded-3 bg-white border shadow-sm" style="border-color: #cbd5e1 !important;">
+                <div class="fw-bold mb-2 small d-flex justify-content-between align-items-center pb-1 border-bottom" style="color: #1e293b; border-color: #f1f5f9 !important;">
+                  <span><i class="bi bi-shield-shaded text-primary me-1"></i>[수비] 홈/원정 실점 억제 & 최근 폼</span>
+                  <span class="badge bg-light text-muted border" style="font-size:0.64rem;">순수 분할 성적</span>
+                </div>
+                ${makeModalBar('평균 실점 (PAPG)', `${homeSplit.ra}점`, `${awaySplit.ra}점`, awaySplit.ra, homeSplit.ra, true)}
                 ${makeModalBar('최근 5경기 폼 (Recent Form)', homeSplit.recent_5, awaySplit.recent_5, 5, 5)}
               </div>
             </div>
@@ -24616,44 +24639,49 @@ function renderPredDetail(m, customDetailData = null) {
         const homeAdv = !isTie && (lowerIsBetter ? (nH < nA) : (nH > nA));
         const awayAdv = !isTie && (lowerIsBetter ? (nA < nH) : (nA > nH));
 
-        // 낮을수록 좋은 지표(ERA, WHIP, 실점, 실책 등)는 수치가 낮은 쪽이 우세하므로 시각적 바 너비 반전
-        let pctH = Math.min(90, Math.max(10, Math.round((nH / total) * 100)));
+        let pctH = Math.min(100, Math.max(15, Math.round((nH / total) * 100)));
+        let pctA = Math.min(100, Math.max(15, Math.round((nA / total) * 100)));
         if (lowerIsBetter && !isTie) {
-          pctH = 100 - pctH;
+          const temp = pctH;
+          pctH = pctA;
+          pctA = temp;
         }
-        let pctA = 100 - pctH;
 
-        // 우세는 빨간색 (#dc2626), 반대는 파란색 (#2563eb), 동률은 중립 회색 (#9ca3af)
-        const barColorH = homeAdv ? '#dc2626' : (awayAdv ? '#2563eb' : '#9ca3af');
-        const barColorA = awayAdv ? '#dc2626' : (homeAdv ? '#2563eb' : '#9ca3af');
+        const barColorH = homeAdv ? '#2563eb' : (awayAdv ? '#cbd5e1' : '#94a3b8');
+        const barColorA = awayAdv ? '#dc2626' : (homeAdv ? '#cbd5e1' : '#94a3b8');
 
-        // 분석수치 통계 숫자 배지: 우세는 빨간색, 반대는 파란색
-        const badgeStyleH = homeAdv 
-          ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626; font-weight: 800;'
-          : (awayAdv ? 'color: #2563eb; background: #eff6ff; border: 1px solid #2563eb; font-weight: 700;'
-                     : 'color: #374151; background: #f9fafb; border: 1px solid #d1d5db; font-weight: 600;');
+        const valColorH = homeAdv ? 'color: #1d4ed8; font-weight: 800;' : 'color: #334155; font-weight: 600;';
+        const valColorA = awayAdv ? 'color: #dc2626; font-weight: 800;' : 'color: #334155; font-weight: 600;';
 
-        const badgeStyleA = awayAdv 
-          ? 'color: #dc2626; background: #fef2f2; border: 1.5px solid #dc2626; font-weight: 800;'
-          : (homeAdv ? 'color: #2563eb; background: #eff6ff; border: 1px solid #2563eb; font-weight: 700;'
-                     : 'color: #374151; background: #f9fafb; border: 1px solid #d1d5db; font-weight: 600;');
+        const advBadgeH = homeAdv ? '<span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0.5 px-1 me-1" style="font-size:0.60rem; font-weight:800;">우세▲</span>' : '';
+        const advBadgeA = awayAdv ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle py-0.5 px-1 ms-1" style="font-size:0.60rem; font-weight:800;">▲우세</span>' : '';
 
         return `
-          <div class="mb-2 p-2 rounded-2" style="background: #ffffff; border: 1px solid #e5e7eb;">
+          <div class="mb-2 p-2 rounded-2 border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="badge" style="font-size: 0.86rem; padding: 2px 7px; border-radius: 4px; ${badgeStyleH}">
-                ${valH} ${homeAdv ? '▲' : ''}
-              </span>
-              <span class="fw-bold px-2 text-center text-truncate" style="font-size: 0.80rem; color: #111827; font-weight: 700;">
+              <div class="d-flex align-items-center" style="${valColorH}; font-size: 0.82rem;">
+                ${advBadgeH}
+                <span>${valH}</span>
+              </div>
+              <span class="badge bg-white text-dark border px-2 py-0.5" style="border-color: #cbd5e1 !important; font-size: 0.72rem; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
                 ${label}
               </span>
-              <span class="badge" style="font-size: 0.86rem; padding: 2px 7px; border-radius: 4px; ${badgeStyleA}">
-                ${valA} ${awayAdv ? '▲' : ''}
-              </span>
+              <div class="d-flex align-items-center" style="${valColorA}; font-size: 0.82rem;">
+                <span>${valA}</span>
+                ${advBadgeA}
+              </div>
             </div>
-            <div class="d-flex rounded-pill overflow-hidden" style="height: 7px; background: #f3f4f6;">
-              <div style="width: ${pctH}%; background: ${barColorH}; transition: width 0.3s;"></div>
-              <div style="width: ${pctA}%; background: ${barColorA}; transition: width 0.3s;"></div>
+            <div class="row g-1 align-items-center" style="height: 8px;">
+              <div class="col-6 pe-0.5">
+                <div class="w-100 rounded-start-pill overflow-hidden d-flex justify-content-end" style="height: 8px; background: #e2e8f0;">
+                  <div style="width: ${pctH}%; background: ${barColorH}; border-radius: 4px 0 0 4px; transition: width 0.3s;"></div>
+                </div>
+              </div>
+              <div class="col-6 ps-0.5">
+                <div class="w-100 rounded-end-pill overflow-hidden d-flex justify-content-start" style="height: 8px; background: #e2e8f0;">
+                  <div style="width: ${pctA}%; background: ${barColorA}; border-radius: 0 4px 4px 0; transition: width 0.3s;"></div>
+                </div>
+              </div>
             </div>
           </div>
         `;
