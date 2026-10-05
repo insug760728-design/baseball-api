@@ -1552,7 +1552,11 @@
       const aList = data.awayRecent10 || [];
       let h2hList = data.h2hRecent10 || [];
       if (!h2hList || h2hList.length === 0) {
-        h2hList = generateFallbackH2h(hName, aName);
+        if (typeof generateFallbackH2h === 'function') {
+          h2hList = generateFallbackH2h(hName, aName);
+        } else {
+          h2hList = [];
+        }
       }
 
       function buildTeam10Html(teamName, isHome, list) {

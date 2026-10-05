@@ -2720,7 +2720,7 @@
             <div class="dash-card-header pb-1 pt-0">
               <!-- 📌 1열: [경기목록] [지난경기] [승무15패] [전경기 전광판] (모바일에서는 상단 탭에 경기목록이 있으므로 하위 중복 경기목록 숨김) -->
               <div class="d-flex align-items-center gap-1.5 mb-1.5" id="scheduleModeSwitchGroup">
-                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill d-none d-lg-inline-flex align-items-center justify-content-center" id="btnTabActiveMatches" onclick="filterPredDate('ACTIVE')" style="border-radius: 6px; font-size: 0.78rem; background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8;">
+                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill d-inline-flex align-items-center justify-content-center" id="btnTabActiveMatches" onclick="filterPredDate('ACTIVE')" style="border-radius: 6px; font-size: 0.78rem; background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8;">
                   <i class="bi bi-calendar-check me-1"></i>경기목록
                 </button>
                 <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill" id="btnTabFinishedMatches" onclick="filterPredDate(typeof currentPredDate !== 'undefined' && currentPredDate === 'FINISHED' ? 'ACTIVE' : 'FINISHED')" style="border-radius: 6px; font-size: 0.78rem; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;">
@@ -13301,6 +13301,9 @@ function getFullModalMatchList() {
 
       const d0Str = getKSTDateString(now);
 
+      let activeCount = 0;
+      let finishedCount = 0;
+
       for (const m of baseList) {
         const isLive = isMatchTrulyLive(m);
         const mDate = m.match_date || '';
@@ -13810,7 +13813,24 @@ function getFullModalMatchList() {
           list = combinedActive;
         } else {
           // 비시즌 등 오늘/예정 경기가 전혀 없는 경우 최근 경기 표시 (빈 화면 방지)
-          list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+          let fallbackList = [...allMatches];
+          if (currentPredSport === 'SOCCER') {
+            fallbackList = fallbackList.filter(m => m.sport_code === 'SOCCER');
+          } else if (currentPredSport === 'BASEBALL') {
+            fallbackList = fallbackList.filter(m => m.sport_code === 'BASEBALL');
+          } else if (currentPredSport === 'BASKETBALL') {
+            fallbackList = fallbackList.filter(m => m.sport_code === 'BASKETBALL' || (m.league_name && (m.league_name.includes('농구') || m.league_name.includes('NBA') || m.league_name.includes('KBL'))));
+          } else if (currentPredSport === 'HOCKEY') {
+            fallbackList = fallbackList.filter(m => m.sport_code === 'HOCKEY' || (m.league_name && (m.league_name.includes('하키') || m.league_name.includes('NHL'))));
+          } else if (currentPredSport === 'VOLLEYBALL') {
+            fallbackList = fallbackList.filter(m => m.sport_code === 'VOLLEYBALL' || (m.league_name && (m.league_name.includes('배구') || m.league_name.includes('V-리그'))));
+          }
+          if (fallbackList.length > 0) {
+            fallbackList.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+            list = fallbackList;
+          } else {
+            list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
+          }
         }
       }
 
