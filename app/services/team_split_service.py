@@ -9163,19 +9163,42 @@ class TeamSplitService:
         h_data = splits.get(home_team)
         a_data = splits.get(away_team)
 
+        h_overall = h_data["overall"] if h_data else _init_stat_dict()
+        a_overall = a_data["overall"] if a_data else _init_stat_dict()
+        h_tot_games = h_overall.get("games", 0)
+        a_tot_games = a_overall.get("games", 0)
+
+        # If neither team has played any recorded games in DB, return None (avoid producing identical dummy predictions)
+        if h_tot_games == 0 and a_tot_games == 0:
+            return None
+
+        # Prior constants per sport
+        if sport_code == "SOCCER":
+            prior_g, prior_rf, prior_ra = 3, 1.35, 1.35
+        elif sport_code == "BASKETBALL":
+            is_nba = "NBA" in (league_name or "").upper() or ("미국" in (league_name or "") and "농구" in (league_name or ""))
+            prior_g, prior_rf, prior_ra = 3, (112.0 if is_nba else 80.0), (112.0 if is_nba else 80.0)
+        else: # BASEBALL
+            prior_g, prior_rf, prior_ra = 4, 4.40, 4.40
+
         h_home = h_data["home"] if h_data else _init_stat_dict()
         a_away = a_data["away"] if a_data else _init_stat_dict()
 
-        h_games = max(1, h_home["games"])
-        a_games = max(1, a_away["games"])
+        h_eff_g = h_home.get("games", 0) * 0.5 + h_tot_games * 0.5
+        a_eff_g = a_away.get("games", 0) * 0.5 + a_tot_games * 0.5
 
-        h_win_rate = h_home["wins"] / h_games
-        a_win_rate = a_away["wins"] / a_games
+        h_eff_rf = h_home.get("rf", 0) * 0.5 + h_overall.get("rf", 0) * 0.5
+        h_eff_ra = h_home.get("ra", 0) * 0.5 + h_overall.get("ra", 0) * 0.5
+        a_eff_rf = a_away.get("rf", 0) * 0.5 + a_overall.get("rf", 0) * 0.5
+        a_eff_ra = a_away.get("ra", 0) * 0.5 + a_overall.get("ra", 0) * 0.5
 
-        h_rf = h_home["rf"] / h_games
-        h_ra = h_home["ra"] / h_games
-        a_rf = a_away["rf"] / a_games
-        a_ra = a_away["ra"] / a_games
+        h_rf = (h_eff_rf + prior_g * prior_rf) / (h_eff_g + prior_g)
+        h_ra = (h_eff_ra + prior_g * prior_ra) / (h_eff_g + prior_g)
+        a_rf = (a_eff_rf + prior_g * prior_rf) / (a_eff_g + prior_g)
+        a_ra = (a_eff_ra + prior_g * prior_ra) / (a_eff_g + prior_g)
+
+        h_win_rate = (h_overall.get("wins", 0) + 1.5) / (max(1, h_tot_games) + 3.0)
+        a_win_rate = (a_overall.get("wins", 0) + 1.5) / (max(1, a_tot_games) + 3.0)
 
         series_ctx = None
         h_starter_era = None
