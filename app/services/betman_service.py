@@ -589,6 +589,75 @@ class BetmanService:
         return summary
 
     @staticmethod
+    def _enrich_toto_matches_with_db(data: dict, gm_id: str = 'G011') -> dict:
+        if not data or not isinstance(data, dict) or not data.get('matches'):
+            return data
+        try:
+            from app.core.database import SessionLocal
+            from app.models.models import Match
+            db = SessionLocal()
+            try:
+                db_matches = db.query(Match).all()
+                for m in data['matches']:
+                    h = (m.get('home') or '').replace(' ', '').replace('.', '').lower()
+                    a = (m.get('away') or '').replace(' ', '').replace('.', '').lower()
+                    matched = None
+                    for dm in db_matches:
+                        dm_h = (dm.home_team_name or '').replace(' ', '').replace('.', '').lower()
+                        dm_a = (dm.away_team_name or '').replace(' ', '').replace('.', '').lower()
+                        if (h and dm_h and (h in dm_h or dm_h in h)) and (a and dm_a and (a in dm_a or dm_a in a)):
+                            matched = dm
+                            break
+                    if matched:
+                        m['db_match_id'] = matched.id
+                        m['db_home_team'] = matched.home_team_name
+                        m['db_away_team'] = matched.away_team_name
+                        m['status'] = matched.status
+                        if matched.home_score is not None and matched.away_score is not None:
+                            m['home_score'] = matched.home_score
+                            m['away_score'] = matched.away_score
+                            is_fin = (matched.status in ['FINISHED', 'Finished'])
+                            has_score = (matched.home_score + matched.away_score > 0)
+                            if is_fin or (has_score and matched.status in ['LIVE', 'IN_PLAY']):
+                                if gm_id == 'G011':  # 축구 승무패
+                                    if matched.home_score > matched.away_score:
+                                        m['result'] = '승'
+                                        m['result_code'] = 'A'
+                                    elif matched.home_score == matched.away_score:
+                                        m['result'] = '무'
+                                        m['result_code'] = 'D'
+                                    else:
+                                        m['result'] = '패'
+                                        m['result_code'] = 'B'
+                                elif gm_id == 'G024':  # 야구 승1패
+                                    diff = matched.home_score - matched.away_score
+                                    if diff > 1:
+                                        m['result'] = '승'
+                                        m['result_code'] = 'A'
+                                    elif abs(diff) <= 1:
+                                        m['result'] = '1'
+                                        m['result_code'] = 'D'
+                                    else:
+                                        m['result'] = '패'
+                                        m['result_code'] = 'B'
+                                elif gm_id == 'G027':  # 농구 승5패
+                                    diff = matched.home_score - matched.away_score
+                                    if diff > 5:
+                                        m['result'] = '승'
+                                        m['result_code'] = 'A'
+                                    elif abs(diff) <= 5:
+                                        m['result'] = '5'
+                                        m['result_code'] = 'D'
+                                    else:
+                                        m['result'] = '패'
+                                        m['result_code'] = 'B'
+            finally:
+                db.close()
+        except Exception as e:
+            logger.debug(f"[Betman] enrich error: {e}")
+        return data
+
+    @staticmethod
     def get_round_data(gm_id: str = 'G011', gm_ts: int = None, force_refresh: bool = False) -> dict:
         """베트맨 특정 토토 게임(축구 승무패 G011, 야구 승1패 G024, 농구 승5패 G027) 14경기 공식 실시간 데이터 조회"""
         now = time.time()
@@ -601,7 +670,7 @@ class BetmanService:
         # 1. In-memory cache check
         if not force_refresh and cache_key in _CACHE:
             ts_cached, data = _CACHE[cache_key]
-            if now - ts_cached < CACHE_TTL:
+            if now - ts_cached < 10:  # 10초 실시간 갱신 캐시
                 return data
 
         # 2. Live API fetch with requests (Reliable & fast)
@@ -621,6 +690,7 @@ class BetmanService:
                 if isinstance(res, dict) and (res.get('schedulesList') or res.get('currentLottery')):
                     parsed = BetmanService._parse_betman_payload(res, gm_id, gm_ts)
                     if parsed and parsed.get('status') == 'success':
+                        parsed = BetmanService._enrich_toto_matches_with_db(parsed, gm_id)
                         _CACHE[cache_key] = (now, parsed)
                         # Save local snapshot for fast offline recovery
                         try:
@@ -638,6 +708,7 @@ class BetmanService:
                 try:
                     with open(snap_file, 'r', encoding='utf-8') as f:
                         snap_data = json.load(f)
+                        snap_data = BetmanService._enrich_toto_matches_with_db(snap_data, gm_id)
                         _CACHE[cache_key] = (now, snap_data)
                         return snap_data
                 except Exception:
