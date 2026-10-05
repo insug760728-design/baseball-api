@@ -12780,7 +12780,7 @@ function getFullModalMatchList() {
 
     let currentCenterMode = 'DETAIL'; // Always 'DETAIL' (Match Studio)
     let currentTotoRound = 'WDL'; // 'WDL' (축구 승무패), 'W1L' (야구), 'W5L' (농구)
-    let currentBetmanTs = 260054; // Current active Betman round: 54회차 (축구 승무패 실시간 발매중🔥)
+    let currentBetmanTs = 260058; // Current active Betman round: 58회차 (축구 승무패 실시간 발매중🔥)
     let userTotoMarks = {}; // key: `${totoKey}_${seq}`, value: ['W', 'D', 'L']
 
     // ------------------------------------------------------------------
@@ -23140,34 +23140,59 @@ function updateSlimPanel(matchId, type, contentHtml) {
     // ------------------------------------------------------------------
     const TOTO_ROUNDS = {
       'WDL': [
-        { gmTs: 260051, roundNo: 51, label: '51회', fullLabel: '축구 승무패 51회차 (종료결과)', status: 'Finished', tag: '종료' },
-        { gmTs: 260052, roundNo: 52, label: '52회', fullLabel: '⚽ 축구 승무패 52회차 (종료결과)', status: 'Finished', tag: '종료' },
         { gmTs: 260053, roundNo: 53, label: '53회', fullLabel: '축구 승무패 53회차 (종료결과)', status: 'Finished', tag: '종료' },
-        { gmTs: 260054, roundNo: 54, label: '54회', fullLabel: '🔥 축구 승무패 54회차 (발매중 · 11.2억 이월🔥)', status: 'SaleProgress', tag: '🔥발매중' },
-        { gmTs: 260055, roundNo: 55, label: '55회', fullLabel: '축구 승무패 55회차 (발매예정)', status: 'SaleBefore', tag: '예정' },
-        { gmTs: 260056, roundNo: 56, label: '56회', fullLabel: '축구 승무패 56회차 (발매예정)', status: 'SaleBefore', tag: '예정' }
+        { gmTs: 260054, roundNo: 54, label: '54회', fullLabel: '축구 승무패 54회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260055, roundNo: 55, label: '55회', fullLabel: '축구 승무패 55회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260056, roundNo: 56, label: '56회', fullLabel: '축구 승무패 56회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260057, roundNo: 57, label: '57회', fullLabel: '축구 승무패 57회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260058, roundNo: 58, label: '58회', fullLabel: '🔥 축구 승무패 58회차 (실시간 발매중🔥)', status: 'SaleProgress', tag: '🔥발매중' }
       ],
       'W1L': [
+        { gmTs: 260067, roundNo: 67, label: '67회', fullLabel: '야구 승1패 67회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260068, roundNo: 68, label: '68회', fullLabel: '야구 승1패 68회차 (종료결과)', status: 'Finished', tag: '종료' },
         { gmTs: 260069, roundNo: 69, label: '69회', fullLabel: '야구 승1패 69회차 (종료결과)', status: 'Finished', tag: '종료' },
         { gmTs: 260070, roundNo: 70, label: '70회', fullLabel: '야구 승1패 70회차 (종료결과)', status: 'Finished', tag: '종료' },
-        { gmTs: 260071, roundNo: 71, label: '71회', fullLabel: '🔥 야구 승1패 71회차 (발매중 · 1.8억 이월🔥)', status: 'SaleProgress', tag: '🔥발매중' },
-        { gmTs: 260072, roundNo: 72, label: '72회', fullLabel: '야구 승1패 72회차 (발매예정)', status: 'SaleBefore', tag: '예정' },
-        { gmTs: 260073, roundNo: 73, label: '73회', fullLabel: '야구 승1패 73회차 (발매예정)', status: 'SaleBefore', tag: '예정' }
+        { gmTs: 260071, roundNo: 71, label: '71회', fullLabel: '🔥 야구 승1패 71회차 (실시간 발매중🔥)', status: 'SaleProgress', tag: '🔥발매중' }
       ],
       'W5L': [
-        { gmTs: 260027, roundNo: 27, label: '27회', fullLabel: '🏀 농구 승5패 27회차 (종료결과 · 5,232만)', status: 'Finished', tag: '종료' },
-        { gmTs: 260028, roundNo: 28, label: '28회', fullLabel: '농구 승5패 28회차 (종료결과)', status: 'Finished', tag: '종료' },
-        { gmTs: 260001, roundNo: 1, label: '01회', fullLabel: '🔥 농구 승5패 01회차 (발매중)', status: 'SaleProgress', tag: '🔥발매중' }
+        { gmTs: 260025, roundNo: 25, label: '25회', fullLabel: '농구 승5패 25회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260026, roundNo: 26, label: '26회', fullLabel: '농구 승5패 26회차 (종료결과)', status: 'Finished', tag: '종료' },
+        { gmTs: 260027, roundNo: 27, label: '27회', fullLabel: '🏀 농구 승5패 27회차 (실시간 발매중🔥)', status: 'SaleProgress', tag: '🔥발매중' }
       ]
     };
 
     // ⚡ 현재 발매중인 이번회차를 자동으로 탐색하여 반환 (고정 회차 버그 방지)
     function getActiveTotoRoundTs(roundKey) {
       const rounds = TOTO_ROUNDS[roundKey] || [];
-      const active = rounds.find(r => r.status === 'SaleProgress' || (r.tag && r.tag.includes('발매중')));
-      if (active) return active.gmTs;
+      const actives = rounds.filter(r => r.status === 'SaleProgress' || (r.tag && r.tag.includes('발매중')));
+      if (actives.length > 0) {
+        return Math.max(...actives.map(r => r.gmTs));
+      }
       if (rounds.length > 0) return rounds[rounds.length - 1].gmTs;
-      return (roundKey === 'WDL') ? 260054 : ((roundKey === 'W1L') ? 260071 : 260001);
+      return (roundKey === 'WDL') ? 260058 : ((roundKey === 'W1L') ? 260071 : 260027);
+    }
+
+    // ⚡ 서버 공식 API로부터 최신 토토 회차 목록 실시간 동기화
+    async function syncTotoAvailableRounds(roundKey) {
+      const gmId = (roundKey === 'W1L') ? 'G024' : ((roundKey === 'W5L') ? 'G027' : 'G011');
+      try {
+        const resp = await fetch(`/api/v1/toto/rounds?gmId=${gmId}`);
+        if (resp.ok) {
+          const res = await resp.json();
+          if (res && Array.isArray(res.rounds) && res.rounds.length > 0) {
+            TOTO_ROUNDS[roundKey] = res.rounds;
+            if (res.active_ts) {
+              if (!currentBetmanTs || !res.rounds.some(r => r.gmTs === currentBetmanTs)) {
+                currentBetmanTs = res.active_ts;
+              }
+            }
+            renderTotoRoundScrollBar(roundKey, currentBetmanTs);
+            renderTotoModalRoundScrollBar(roundKey, currentBetmanTs);
+          }
+        }
+      } catch (err) {
+        console.debug('Failed to sync toto rounds:', err);
+      }
     }
 
     function renderTotoRoundScrollBar(roundKey, activeTs) {
@@ -23240,6 +23265,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
         gmId = 'G027';
         sportTitle = '농구 승5패 ' + (defaultTs % 1000) + '회차';
       }
+
+      // 회차 목록 비동기 동기화
+      syncTotoAvailableRounds(roundKey);
 
       const targetTs = gmTs || (currentBetmanTs && (TOTO_ROUNDS[roundKey] || []).some(r => r.gmTs === currentBetmanTs) ? currentBetmanTs : defaultTs);
       currentBetmanTs = targetTs;
@@ -23314,7 +23342,20 @@ function updateSlimPanel(matchId, type, contentHtml) {
               const rItem = TOTO_ROUNDS[roundKey].find(x => x.gmTs === targetTs);
               if (rItem && data.sale_status) {
                 rItem.status = data.sale_status;
+                if (data.sale_status === 'SaleProgress') {
+                  rItem.tag = '🔥발매중';
+                }
               }
+              if (data.sale_status === 'SaleProgress') {
+                TOTO_ROUNDS[roundKey].forEach(r => {
+                  if (r.gmTs < targetTs && r.status === 'SaleProgress') {
+                    r.status = 'Finished';
+                    r.tag = '종료';
+                  }
+                });
+              }
+              renderTotoRoundScrollBar(roundKey, currentBetmanTs);
+              renderTotoModalRoundScrollBar(roundKey, currentBetmanTs);
             }
           }
         }
@@ -23362,6 +23403,16 @@ function updateSlimPanel(matchId, type, contentHtml) {
                       tag: '🔥발매중'
                     });
                     TOTO_ROUNDS[rKey].sort((a, b) => a.gmTs - b.gmTs);
+                  }
+                  // 이전 회차는 모두 Finished로 마감 처리
+                  TOTO_ROUNDS[rKey].forEach(r => {
+                    if (r.gmTs < g.gmTs && r.status === 'SaleProgress') {
+                      r.status = 'Finished';
+                      r.tag = '종료';
+                    }
+                  });
+                  if (rKey === currentTotoRound && (!currentBetmanTs || currentBetmanTs < g.gmTs)) {
+                    currentBetmanTs = g.gmTs;
                   }
                 }
               }
@@ -23830,6 +23881,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
     function openTotoModal(roundKey = null, gmTs = null) {
       if (roundKey) currentTotoRound = roundKey;
       if (!currentTotoRound) currentTotoRound = 'WDL';
+      
+      // 최신 공식 회차 백그라운드 실시간 동기화
+      syncTotoAvailableRounds(currentTotoRound);
+
       const activeDefaultTs = getActiveTotoRoundTs(currentTotoRound);
       if (gmTs) {
         currentBetmanTs = gmTs;
@@ -23865,6 +23920,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
     function switchTotoModalGame(gameKey) {
       currentTotoRound = gameKey;
+      syncTotoAvailableRounds(gameKey);
       const defaultTs = getActiveTotoRoundTs(gameKey);
       currentBetmanTs = defaultTs;
       selectTotoRound(gameKey, currentBetmanTs);
@@ -23996,7 +24052,11 @@ function updateSlimPanel(matchId, type, contentHtml) {
         }
 
         let resultBadge = '';
-        if (m.home_score !== undefined && m.away_score !== undefined && (m.status === 'FINISHED' || m.status === 'Finished')) {
+        if (m.result) {
+          const rText = m.result === 'W' ? '승' : (m.result === 'D' ? drawLabel : '패');
+          const rColor = m.result === 'W' ? 'bg-primary' : (m.result === 'D' ? 'bg-secondary' : 'bg-danger');
+          resultBadge = `<span class="badge ${rColor} text-white fw-bold px-1.5 py-0.5" style="font-size:0.68rem;">결과: ${rText}</span>`;
+        } else if (m.home_score !== undefined && m.away_score !== undefined && (m.status === 'FINISHED' || m.status === 'Finished')) {
           resultBadge = `<span class="badge bg-light border text-dark fw-bold" style="border-color:#cbd5e1!important; font-size:0.65rem;">${m.home_score}:${m.away_score}</span>`;
         } else if (m.status === 'LIVE' || m.status === 'Live') {
           resultBadge = `<span class="badge bg-danger animate-pulse text-white fw-bold" style="font-size:0.62rem;">LIVE ${m.home_score || 0}:${m.away_score || 0}</span>`;
@@ -24132,9 +24192,35 @@ function updateSlimPanel(matchId, type, contentHtml) {
       if (markedCount === 0) combinations = 0;
       const totalBetPrice = combinations * 1000;
 
+      // 회차 상단 상태 배너 (회차명, 실시간 발매현황, 1등 당첨금 & 이월금)
+      const isSelling = (toto.status === 'SaleProgress' || toto.is_live);
+      const statusBadge = isSelling 
+        ? `<span class="badge bg-danger text-white px-2 py-1"><i class="bi bi-fire me-1"></i>실시간 발매중</span>`
+        : `<span class="badge bg-secondary text-white px-2 py-1"><i class="bi bi-flag-fill me-1"></i>발매마감 · 결과확인</span>`;
+      
+      const bannerHtml = `
+        <div class="p-2 mb-2 rounded border d-flex align-items-center justify-content-between flex-wrap gap-2" style="background: ${isSelling ? '#fff7ed' : '#f8fafc'}; border-color: ${isSelling ? '#fed7aa' : '#e2e8f0'} !important;">
+          <div class="d-flex align-items-center gap-2">
+            ${statusBadge}
+            <span class="fw-bold text-dark" style="font-size: 0.95rem;">${toto.title || (totoKey === 'WDL' ? '축구 승무패' : (totoKey === 'W1L' ? '야구 승1패' : '농구 승5패'))}</span>
+            <span class="text-secondary small font-monospace">${toto.period || ''}</span>
+          </div>
+          <div class="d-flex align-items-center gap-2 ms-auto flex-wrap">
+            <span class="badge bg-white border text-dark py-1 px-2" style="font-size:0.75rem;">
+              발매표수: <strong class="text-primary">${toto.totalVotes || Number(toto.total_sale_cnt || 0).toLocaleString()}</strong>표
+            </span>
+            <span class="badge bg-white border text-dark py-1 px-2" style="font-size:0.75rem;">
+              1등 총상금: <strong style="color:#dc2626;">${toto.prize || (Number(toto.first_prize_pool || 0).toLocaleString() + '원')}</strong>
+            </span>
+            ${toto.rollover ? `<span class="badge bg-danger text-white py-1 px-2" style="font-size:0.75rem;">${toto.rollover}</span>` : ''}
+          </div>
+        </div>
+      `;
+
       const calcHtml = buildTotoCalculatorHtml(totoKey, toto);
 
       modalBody.innerHTML = `
+        ${bannerHtml}
         <!-- 모바일 전용 초슬림 리스트 뷰 (한 화면 14경기 완벽 배치) -->
         <div class="d-md-none mb-1">
           ${mobileCardsHtml}

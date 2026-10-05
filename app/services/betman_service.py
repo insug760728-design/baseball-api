@@ -459,7 +459,7 @@ class BetmanService:
         res_map = {'toto': {}, 'proto': {}}
         try:
             payload = {'_sbmInfo': {'_sbmInfo': {'debugMode': 'false'}}}
-            r = _SESSION.post(BETMAN_BUYABLE_URL, json=payload, timeout=1.0)
+            r = _SESSION.post(BETMAN_BUYABLE_URL, json=payload, timeout=3.5)
             if r.status_code == 200:
                 data = r.json()
                 for tg in data.get('totoGames', []):
@@ -485,12 +485,12 @@ class BetmanService:
         # Fallback cached for 60s so failed outbound connections don't block subsequent requests
         res_map = {
             'toto': {
-                'G011': {'gmId': 'G011', 'gmTs': 260054, 'gmOsidTsYear': 2026, 'gameName': '축구토토 승무패'},
+                'G011': {'gmId': 'G011', 'gmTs': 260058, 'gmOsidTsYear': 2026, 'gameName': '축구토토 승무패'},
                 'G024': {'gmId': 'G024', 'gmTs': 260071, 'gmOsidTsYear': 2026, 'gameName': '야구토토 승1패'},
                 'G027': {'gmId': 'G027', 'gmTs': 260027, 'gmOsidTsYear': 2026, 'gameName': '농구토토 승5패'}
             },
             'proto': {
-                'G101': {'gmId': 'G101', 'gmTs': 260111, 'gmOsidTsYear': 2026, 'gameName': '프로토 승부식'}
+                'G101': {'gmId': 'G101', 'gmTs': 260118, 'gmOsidTsYear': 2026, 'gameName': '프로토 승부식'}
             }
         }
         _CACHE[cache_key] = (now, res_map)
@@ -504,10 +504,10 @@ class BetmanService:
             return rounds_map['toto'][gm_id].get('gmTs')
         if gm_id in rounds_map.get('proto', {}):
             return rounds_map['proto'][gm_id].get('gmTs')
-        if gm_id == 'G011': return 260054
+        if gm_id == 'G011': return 260058
         if gm_id == 'G024': return 260071
         if gm_id == 'G027': return 260027
-        if gm_id == 'G101': return 260111
+        if gm_id == 'G101': return 260118
         return 260001
 
     @staticmethod
@@ -1472,6 +1472,26 @@ class BetmanService:
             away_n = s.get('awayName', '')
             match_date_str = s.get('gameDateStr') or s.get('gameDate') or ''
 
+            match_state = str(s.get('matchState', ''))
+            m_status = 'SCHEDULED'
+            if match_state == '3' or res_code or cur.get('saleProgress') is False or str(cur.get('saleStatus')) in ['PayoStart', 'SaleComplete', 'Close']:
+                m_status = 'FINISHED'
+            elif match_state == '2':
+                m_status = 'LIVE'
+            elif match_state in ['0', '1']:
+                m_status = 'SCHEDULED'
+
+            home_sc = s.get('homeScore') if s.get('homeScore') is not None else 0
+            away_sc = s.get('awayScore') if s.get('awayScore') is not None else 0
+            if s.get('mchScore'):
+                try:
+                    parts = str(s.get('mchScore')).split(':')
+                    if len(parts) == 2:
+                        home_sc = int(parts[0].strip())
+                        away_sc = int(parts[1].strip())
+                except Exception:
+                    pass
+
             matches.append({
                 'seq': s.get('matchSeq', idx + 1),
                 'league': s.get('leagueName', 'EPL' if gm_id == 'G011' else ('KBO' if s.get('domastic') else 'MLB')),
@@ -1480,9 +1500,9 @@ class BetmanService:
                 'away': away_n,
                 'result': result_label,
                 'result_code': res_code,
-                'status': 'SCHEDULED',
-                'home_score': 0,
-                'away_score': 0,
+                'status': m_status,
+                'home_score': home_sc,
+                'away_score': away_sc,
                 'votes': votes,
                 'ai_pick': '승' if votes['win'] >= votes['loss'] else '패',
                 'ai_conf': max(votes['win'], votes['loss'])

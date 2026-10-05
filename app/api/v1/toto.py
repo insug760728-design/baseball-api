@@ -26,35 +26,32 @@ def get_live_toto_summary(force: bool = Query(False, description='강제 최신 
 @router.get('/rounds', summary='토토 회차 목록')
 def get_available_rounds(gmId: str = Query('G011')):
     active_ts = BetmanService.get_active_round_ts(gmId)
-    if gmId == 'G024':
-        return {
-            'gmId': 'G024',
-            'sport': '야구 승1패',
-            'rounds': [
-                {'gmTs': active_ts, 'label': f'{str(active_ts)[-2:]}회차 (실시간 발매중🔥)', 'status': 'SaleProgress', 'is_live': True},
-                {'gmTs': active_ts - 1, 'label': f'{str(active_ts - 1)[-2:]}회차 (종료결과)', 'status': 'Finished', 'is_live': False},
-                {'gmTs': active_ts - 2, 'label': f'{str(active_ts - 2)[-2:]}회차 (종료결과)', 'status': 'Finished', 'is_live': False}
-            ]
-        }
-    elif gmId == 'G011':
-        return {
-            'gmId': 'G011',
-            'sport': '축구 승무패',
-            'rounds': [
-                {'gmTs': active_ts, 'label': f'{str(active_ts)[-2:]}회차 (실시간 발매중🔥)', 'status': 'SaleProgress', 'is_live': True},
-                {'gmTs': active_ts - 1, 'label': f'{str(active_ts - 1)[-2:]}회차 (종료결과)', 'status': 'Finished', 'is_live': False},
-                {'gmTs': active_ts - 2, 'label': f'{str(active_ts - 2)[-2:]}회차 (종료결과)', 'status': 'Finished', 'is_live': False}
-            ]
-        }
-    else:
-        return {
-            'gmId': 'G027',
-            'sport': '농구 승5패',
-            'rounds': [
-                {'gmTs': active_ts, 'label': f'{str(active_ts)[-2:]}회차 (실시간)', 'status': 'SaleProgress', 'is_live': True},
-                {'gmTs': active_ts - 1, 'label': f'{str(active_ts - 1)[-2:]}회차 (종료결과)', 'status': 'Finished', 'is_live': False}
-            ]
-        }
+    sport_name = '축구 승무패' if gmId == 'G011' else ('야구 승1패' if gmId == 'G024' else '농구 승5패')
+    
+    rounds = []
+    # 최신 발매중 회차 + 최근 7개 회차 (총 8개 회차)
+    for i in range(8):
+        ts = active_ts - i
+        if ts <= 0:
+            continue
+        r_num = ts % 1000
+        is_live = (i == 0)
+        rounds.append({
+            'gmTs': ts,
+            'roundNo': r_num,
+            'label': f'{r_num}회',
+            'fullLabel': f'{sport_name} {r_num}회차' + (' (실시간 발매중🔥)' if is_live else ' (종료결과)'),
+            'status': 'SaleProgress' if is_live else 'Finished',
+            'tag': '🔥발매중' if is_live else '종료',
+            'is_live': is_live
+        })
+    rounds.reverse()
+    return {
+        'gmId': gmId,
+        'sport': sport_name,
+        'active_ts': active_ts,
+        'rounds': rounds
+    }
 
 
 @router.get('/match-odds/{match_id}', summary='특정 경기 베트맨 전체 배당 조합 조회 (승패/핸디캡/U&O/SUM/전반 등)')
