@@ -2216,6 +2216,23 @@
       touch-action: pan-x pan-y !important;
     }
 
+    /* 📱 모바일 핸드폰 가독성 극대화 (글자 찌그러짐 원천 방지 및 편안한 시인성) */
+    @media (max-width: 576px) {
+      #matchModal .modal-body {
+        padding: 6px 4px !important;
+      }
+      #matchModal .modal-header {
+        padding: 10px 12px !important;
+      }
+      #matchModal .card, #matchModal .border {
+        border-radius: 8px !important;
+      }
+      /* 글자 강제 세로 줄바꿈 방지 */
+      #matchModal strong, #matchModal .badge, #matchModal span {
+        word-break: keep-all !important;
+      }
+    }
+
     /* Modal Styling */
     .modal-content-custom {
       background-color: #ffffff !important;
@@ -18661,7 +18678,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const clash = tactical?.tactical_clash || {
         title: `${hName} (${forms.home}) vs ${aName} (${forms.away}) 전술 매치업`,
         points: [
-          `지휘관 지략 대결: ${hMgr.name_kr}의 '${hMgr.tactical_style}' vs ${aMgr.name_kr}의 '${aMgr.tactical_style}'.`,
+          `전술 스타일 매치업: ${hName}의 공격 빌드업 vs ${aName}의 수비 전환 구조.`,
           `포메이션 상성: ${hName}의 ${forms.home} 빌드업 구조와 ${aName}의 ${forms.away} 수비 블록의 정면 대결.`,
           `세트피스 & 롱볼 상성: ${hName}의 '${hTend.set_piece?.label || '세트피스 강점'}' vs ${aName}의 '${aTend.set_piece?.label || '세트피스 수비'}'. 롱볼 지수 [${hTend.long_ball?.score || 60}점 : ${aTend.long_ball?.score || 60}점].`,
           `역습 vs 압박 격돌: ${hName}의 [${hTend.pressing?.label || '전방 압박'}]과 ${aName}의 [${aTend.counter_attack?.label || '카운터 역습'}] 상호 정면 대결.`,
@@ -18928,98 +18945,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
             </div>
           ` : ''}
 
-          <!-- ========================================================= -->
-          <!-- 👔 [섹션 1] 감독 성향 & 지휘관 전술 대결 (Manager Tendency) -->
-          <!-- ========================================================= -->
-          <div class="p-2.5 border-bottom bg-light" style="border-color:#e2e8f0 !important;">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <div class="d-flex align-items-center gap-1.5">
-                <span class="badge bg-dark text-white px-2 py-0.5" style="font-size:0.70rem;">
-                  <i class="bi bi-person-badge-fill text-warning me-1"></i>감독 성향
-                </span>
-                <strong class="text-dark" style="font-size:0.82rem;">양 팀 지휘관 전술 철학 & 성향 분석</strong>
-              </div>
-              <span class="text-muted small" style="font-size:0.68rem;">선호 포메이션 & 전술 스타일</span>
-            </div>
 
-            <div class="row g-2">
-              <!-- Home Manager Card -->
-              <div class="col-12 col-md-6">
-                <div class="p-2.5 rounded-2 bg-white border h-100 shadow-xs d-flex flex-column justify-content-between" style="border-color:#fecaca !important;">
-                  <div>
-                    <div class="d-flex justify-content-between align-items-start mb-1.5">
-                      <div class="d-flex align-items-center gap-2">
-                        <div class="rounded-circle bg-danger-subtle text-danger border border-danger-subtle d-flex align-items-center justify-content-center fw-bold shadow-2xs" style="width:38px; height:38px; font-size:1.1rem; flex-shrink:0;">
-                          <i class="bi bi-person-fill"></i>
-                        </div>
-                        <div>
-                          <div class="d-flex align-items-center gap-1">
-                            <strong class="text-dark" style="font-size:0.85rem;">${hMgr.name_kr}</strong>
-                            <span class="badge bg-danger text-white py-0.5 px-1" style="font-size:0.60rem;">홈</span>
-                          </div>
-                          <div class="text-muted small" style="font-size:0.68rem;">
-                            ${hMgr.name_en || ''} · ${hMgr.nationality || ''} (${hMgr.age ? hMgr.age + '세' : ''})
-                          </div>
-                        </div>
-                      </div>
-                      <div class="text-end">
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-1.5 py-0.5 fw-bold" style="font-size:0.66rem;">
-                          선호 ${hMgr.preferred_formation || forms.home}
-                        </span>
-                        <div class="text-muted small mt-0.5" style="font-size:0.64rem;">승률 ${hMgr.win_rate || hWinRate + '%'}</div>
-                      </div>
-                    </div>
-                    <div class="p-1.5 rounded bg-light border text-dark mb-1.5" style="font-size:0.72rem; line-height:1.45; border-color:#f1f5f9 !important;">
-                      <strong class="text-danger"><i class="bi bi-compass me-1"></i>전술 성향:</strong> ${hMgr.tactical_style}
-                    </div>
-                  </div>
-                  <div class="d-flex flex-wrap gap-1">
-                    ${(hMgr.tendency_tags || ['#공격지향', '#하이라인', '#전방압박']).map(t => `
-                      <span class="badge bg-danger-subtle text-danger border border-danger-subtle py-0.5 px-1.5" style="font-size:0.62rem;">${t}</span>
-                    `).join('')}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Away Manager Card -->
-              <div class="col-12 col-md-6">
-                <div class="p-2.5 rounded-2 bg-white border h-100 shadow-xs d-flex flex-column justify-content-between" style="border-color:#bfdbfe !important;">
-                  <div>
-                    <div class="d-flex justify-content-between align-items-start mb-1.5">
-                      <div class="d-flex align-items-center gap-2">
-                        <div class="rounded-circle bg-primary-subtle text-primary border border-primary-subtle d-flex align-items-center justify-content-center fw-bold shadow-2xs" style="width:38px; height:38px; font-size:1.1rem; flex-shrink:0;">
-                          <i class="bi bi-person-fill"></i>
-                        </div>
-                        <div>
-                          <div class="d-flex align-items-center gap-1">
-                            <strong class="text-dark" style="font-size:0.85rem;">${aMgr.name_kr}</strong>
-                            <span class="badge bg-primary text-white py-0.5 px-1" style="font-size:0.60rem;">원정</span>
-                          </div>
-                          <div class="text-muted small" style="font-size:0.68rem;">
-                            ${aMgr.name_en || ''} · ${aMgr.nationality || ''} (${aMgr.age ? aMgr.age + '세' : ''})
-                          </div>
-                        </div>
-                      </div>
-                      <div class="text-end">
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-1.5 py-0.5 fw-bold" style="font-size:0.66rem;">
-                          선호 ${aMgr.preferred_formation || forms.away}
-                        </span>
-                        <div class="text-muted small mt-0.5" style="font-size:0.64rem;">승률 ${aMgr.win_rate || aWinRate + '%'}</div>
-                      </div>
-                    </div>
-                    <div class="p-1.5 rounded bg-light border text-dark mb-1.5" style="font-size:0.72rem; line-height:1.45; border-color:#f1f5f9 !important;">
-                      <strong class="text-primary"><i class="bi bi-compass me-1"></i>전술 성향:</strong> ${aMgr.tactical_style}
-                    </div>
-                  </div>
-                  <div class="d-flex flex-wrap gap-1">
-                    ${(aMgr.tendency_tags || ['#수비조직력', '#카운터', '#속공전환']).map(t => `
-                      <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0.5 px-1.5" style="font-size:0.62rem;">${t}</span>
-                    `).join('')}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           <!-- ========================================================= -->
           <!-- 🎯 [섹션 2] 축구 5대 핵심 전술 텍스트 지표 (막대표 대체 정밀 텍스트 매트릭스) -->
@@ -19111,43 +19037,59 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 }
 
                 return `
-                  <div class="p-2 rounded-2 border" style="background:#f8fafc; border-color:#e2e8f0 !important;">
-                    <!-- 1. Header: [Home] Value vs Name vs Value [Away] -->
-                    <div class="d-flex justify-content-between align-items-center mb-1.5">
-                      <span class="badge ${hLead ? 'bg-danger text-white shadow-xs' : 'bg-light text-dark border'} fw-bold" style="font-size:0.73rem; padding: 3px 8px;">
-                        [홈] ${trait.h.score}점 · ${trait.h.label}
-                      </span>
-                      <div class="d-flex align-items-center gap-1">
-                        <strong class="text-dark d-flex align-items-center gap-1" style="font-size:0.78rem;">
-                          <i class="bi ${trait.icon}" style="color:${trait.iconColor};"></i>
-                          <span>${trait.title}</span>
+                  <div class="p-2.5 rounded-2 border shadow-xs" style="background:#ffffff; border-color:#e2e8f0 !important;">
+                    <!-- 1. Header: 전술명 & 우세 판정 배지 (모바일 가로 100% 한 줄 분할) -->
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom" style="border-color:#f1f5f9 !important;">
+                      <div class="d-flex align-items-center gap-1.5" style="min-width:0;">
+                        <span class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:26px; height:26px; background:${trait.iconColor}15; color:${trait.iconColor}; font-size:0.9rem;">
+                          <i class="bi ${trait.icon}"></i>
+                        </span>
+                        <strong class="text-dark" style="font-size:0.86rem; letter-spacing:-0.2px;">
+                          ${trait.title}
                         </strong>
+                      </div>
+                      <div class="flex-shrink-0 ms-1">
                         ${advantageTag}
                       </div>
-                      <span class="badge ${aLead ? 'bg-primary text-white shadow-xs' : 'bg-light text-dark border'} fw-bold" style="font-size:0.73rem; padding: 3px 8px;">
-                        ${trait.a.label} · ${trait.a.score}점 [원정]
-                      </span>
                     </div>
 
-                    <!-- 2. Text Assessment Card -->
-                    <div class="p-2 rounded bg-white border" style="border-color:#e2e8f0 !important;">
-                      <div class="d-flex align-items-center justify-content-between gap-1 mb-1 pb-1 border-bottom" style="border-color:#f1f5f9 !important;">
-                        <div class="d-flex align-items-center gap-1.5">
-                          <span class="badge bg-dark text-white" style="font-size:0.62rem; padding: 2px 5px;">${trait.badge}</span>
-                          <strong class="text-dark" style="font-size:0.70rem;">전술 격돌 진단</strong>
+                    <!-- 2. Symmetrical Comparison: [홈] 점수 vs [원정] 점수 (2열 반응형 그리드) -->
+                    <div class="row g-1.5 mb-2">
+                      <div class="col-6">
+                        <div class="p-1.5 rounded d-flex align-items-center justify-content-between ${hLead ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-light text-secondary border'}" style="min-height:36px;">
+                          <div class="d-flex align-items-center gap-1 text-truncate">
+                            <span class="badge ${hLead ? 'bg-danger text-white' : 'bg-secondary text-white'} py-0.5 px-1 flex-shrink-0" style="font-size:0.62rem;">홈</span>
+                            <span class="text-truncate fw-bold" style="font-size:0.75rem;">${trait.h.label}</span>
+                          </div>
+                          <span class="fw-black font-monospace flex-shrink-0 ms-1" style="font-size:0.86rem;">${trait.h.score}점</span>
                         </div>
-                        <span class="text-muted" style="font-size:0.63rem;">관전 지표: ${trait.unit}</span>
                       </div>
-                      <div class="row g-1 text-dark" style="font-size:0.69rem; line-height:1.45;">
-                        <div class="col-12 col-md-6">
-                          <div class="p-1.5 rounded bg-light border-start border-3 border-danger h-100">
-                            <strong class="text-danger">🔴 ${hName}:</strong> ${trait.h.desc}
+                      <div class="col-6">
+                        <div class="p-1.5 rounded d-flex align-items-center justify-content-between ${aLead ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-light text-secondary border'}" style="min-height:36px;">
+                          <span class="fw-black font-monospace flex-shrink-0 me-1" style="font-size:0.86rem;">${trait.a.score}점</span>
+                          <div class="d-flex align-items-center gap-1 text-truncate justify-content-end">
+                            <span class="text-truncate fw-bold" style="font-size:0.75rem;">${trait.a.label}</span>
+                            <span class="badge ${aLead ? 'bg-primary text-white' : 'bg-secondary text-white'} py-0.5 px-1 flex-shrink-0" style="font-size:0.62rem;">원정</span>
                           </div>
                         </div>
-                        <div class="col-12 col-md-6">
-                          <div class="p-1.5 rounded bg-light border-start border-3 border-primary h-100">
-                            <strong class="text-primary">🔵 ${aName}:</strong> ${trait.a.desc}
-                          </div>
+                      </div>
+                    </div>
+
+                    <!-- 3. Text Assessment Card -->
+                    <div class="p-2 rounded bg-light border" style="border-color:#e2e8f0 !important;">
+                      <div class="d-flex align-items-center justify-content-between gap-1 mb-1.5 pb-1 border-bottom border-white">
+                        <div class="d-flex align-items-center gap-1.5">
+                          <span class="badge bg-dark text-white" style="font-size:0.64rem; padding: 2px 6px;">${trait.badge}</span>
+                          <strong class="text-dark" style="font-size:0.75rem;">전술 격돌 진단</strong>
+                        </div>
+                        <span class="text-muted small text-truncate" style="font-size:0.66rem;">관전 지표: ${trait.unit}</span>
+                      </div>
+                      <div class="d-flex flex-column gap-1.5 text-dark" style="font-size:0.76rem; line-height:1.45;">
+                        <div class="p-2 rounded bg-white border-start border-3 border-danger shadow-2xs">
+                          <strong class="text-danger d-inline-block me-1">🔴 ${hName}:</strong>${trait.h.desc}
+                        </div>
+                        <div class="p-2 rounded bg-white border-start border-3 border-primary shadow-2xs">
+                          <strong class="text-primary d-inline-block me-1">🔵 ${aName}:</strong>${trait.a.desc}
                         </div>
                       </div>
                     </div>
@@ -19283,22 +19225,24 @@ function updateSlimPanel(matchId, type, contentHtml) {
                   </div>
 
                   <!-- Text-Based Symmetrical Possession Matrix (No Bars) -->
-                  <div class="d-flex justify-content-between align-items-center p-2 rounded-2 mb-2" style="background:#f8fafc; border:1px solid #e2e8f0;">
-                    <div class="text-start">
-                      <span class="badge bg-danger text-white mb-1" style="font-size:0.65rem;">[홈] ${hName}</span>
-                      <div class="fw-black text-danger font-monospace" style="font-size:1.15rem; line-height:1;">${poss.home_avg}%</div>
-                      <div class="text-muted small mt-0.5" style="font-size:0.64rem;">${poss.home_style}</div>
-                    </div>
-                    <div class="text-center px-1">
-                      <span class="badge ${poss.home_avg > poss.away_avg ? 'bg-danger text-white' : (poss.away_avg > poss.home_avg ? 'bg-primary text-white' : 'bg-secondary text-white')} fw-bold px-2 py-0.5" style="font-size:0.68rem;">
-                        ${poss.home_avg > poss.away_avg ? '👑 홈 점유 우세' : (poss.away_avg > poss.home_avg ? '👑 원정 점유 우세' : '🤝 동등 점유율')}
-                      </span>
-                      <div class="text-secondary small mt-1 fw-bold" style="font-size:0.65rem;">경기 장악력 비교</div>
-                    </div>
-                    <div class="text-end">
-                      <span class="badge bg-primary text-white mb-1" style="font-size:0.65rem;">${aName} [원정]</span>
-                      <div class="fw-black text-primary font-monospace" style="font-size:1.15rem; line-height:1;">${poss.away_avg}%</div>
-                      <div class="text-muted small mt-0.5" style="font-size:0.64rem;">${poss.away_style}</div>
+                  <div class="p-2 rounded-2 mb-2" style="background:#f8fafc; border:1px solid #e2e8f0;">
+                    <div class="row g-1 align-items-center text-center">
+                      <div class="col-4 text-start">
+                        <span class="badge bg-danger text-white mb-1 text-truncate d-inline-block" style="font-size:0.65rem; max-width:100%;">[홈] ${hName}</span>
+                        <div class="fw-black text-danger font-monospace" style="font-size:1.15rem; line-height:1;">${poss.home_avg}%</div>
+                        <div class="text-muted small mt-0.5 text-truncate" style="font-size:0.64rem;">${poss.home_style}</div>
+                      </div>
+                      <div class="col-4 text-center px-0.5">
+                        <span class="badge ${poss.home_avg > poss.away_avg ? 'bg-danger text-white' : (poss.away_avg > poss.home_avg ? 'bg-primary text-white' : 'bg-secondary text-white')} fw-bold px-1.5 py-0.5" style="font-size:0.66rem;">
+                          ${poss.home_avg > poss.away_avg ? '👑 홈 우세' : (poss.away_avg > poss.home_avg ? '👑 원정 우세' : '🤝 호각')}
+                        </span>
+                        <div class="text-secondary small mt-1 fw-bold" style="font-size:0.64rem;">점유율 비교</div>
+                      </div>
+                      <div class="col-4 text-end">
+                        <span class="badge bg-primary text-white mb-1 text-truncate d-inline-block" style="font-size:0.65rem; max-width:100%;">${aName} [원정]</span>
+                        <div class="fw-black text-primary font-monospace" style="font-size:1.15rem; line-height:1;">${poss.away_avg}%</div>
+                        <div class="text-muted small mt-0.5 text-truncate" style="font-size:0.64rem;">${poss.away_style}</div>
+                      </div>
                     </div>
                   </div>
 
@@ -20050,30 +19994,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
             </div>
           </div>
 
-          <!-- 👔 [섹션 4] 감독 전술 성향 & 팀 핵심 장단점 -->
+          <!-- 🛡️ [섹션 4] 팀 핵심 전력 강점 & 주의 약점 분석 -->
           <div class="p-2.5 mb-2.5 rounded-3 border bg-white shadow-sm" style="border-color: #cbd5e1 !important;">
             <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: #f1f5f9 !important;">
-              <strong style="font-size: 0.80rem; color: #1e293b;"><i class="bi bi-person-badge-fill text-success me-1"></i>지휘관 사령탑 성향 & 장단점 분석</strong>
-            </div>
-            <div class="row g-2 mb-2">
-              <div class="col-6">
-                <div class="p-2 rounded-2 border h-100" style="background:#f8fafc; border-color:#e2e8f0 !important;">
-                  <strong class="text-primary d-block small" style="font-size:0.75rem;">[홈] ${hMgr?.name || hName + ' 사령탑'}</strong>
-                  <div class="text-muted small mb-1" style="font-size:0.68rem;">${hMgr?.style || '균형잡힌 전술 운용'}</div>
-                  <div class="d-flex flex-wrap gap-1">
-                    ${(hMgr?.tags || ['#트랜지션', '#스페이싱']).map(t => `<span class="badge bg-light text-secondary border p-0.5" style="font-size:0.58rem;">${t}</span>`).join('')}
-                  </div>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="p-2 rounded-2 border h-100" style="background:#f8fafc; border-color:#e2e8f0 !important;">
-                  <strong class="text-danger d-block small" style="font-size:0.75rem;">[원정] ${aMgr?.name || aName + ' 사령탑'}</strong>
-                  <div class="text-muted small mb-1" style="font-size:0.68rem;">${aMgr?.style || '균형잡힌 전술 운용'}</div>
-                  <div class="d-flex flex-wrap gap-1">
-                    ${(aMgr?.tags || ['#하프코트세트', '#맨투맨압박']).map(t => `<span class="badge bg-light text-secondary border p-0.5" style="font-size:0.58rem;">${t}</span>`).join('')}
-                  </div>
-                </div>
-              </div>
+              <strong style="font-size: 0.80rem; color: #1e293b;"><i class="bi bi-shield-check text-success me-1"></i>양 팀 핵심 전력 강점 & 주의 약점 분석</strong>
             </div>
 
             <!-- 핵심 장단점 -->
@@ -20629,30 +20553,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
             </div>
           </div>
 
-          <!-- 👔 [섹션 4] 감독 성향 & 팀 핵심 장단점 -->
+          <!-- 🛡️ [섹션 4] 팀 핵심 전력 강점 & 주의 약점 분석 -->
           <div class="p-2.5 mb-2.5 rounded-3 border bg-white shadow-sm" style="border-color: #cbd5e1 !important;">
             <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: #f1f5f9 !important;">
-              <strong style="font-size: 0.80rem; color: #1e293b;"><i class="bi bi-person-badge-fill text-success me-1"></i>지휘관 사령탑 성향 & 장단점 분석</strong>
-            </div>
-            <div class="row g-2 mb-2">
-              <div class="col-6">
-                <div class="p-2 rounded-2 border h-100" style="background:#f8fafc; border-color:#e2e8f0 !important;">
-                  <strong class="text-primary d-block small" style="font-size:0.75rem;">[홈] ${hMgr?.name || hName + ' 사령탑'}</strong>
-                  <div class="text-muted small mb-1" style="font-size:0.68rem;">${hMgr?.style || '균형잡힌 전술 운용'}</div>
-                  <div class="d-flex flex-wrap gap-1">
-                    ${(hMgr?.tags || ['#파워배구', '#블로킹']).map(t => `<span class="badge bg-light text-secondary border p-0.5" style="font-size:0.58rem;">${t}</span>`).join('')}
-                  </div>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="p-2 rounded-2 border h-100" style="background:#f8fafc; border-color:#e2e8f0 !important;">
-                  <strong class="text-danger d-block small" style="font-size:0.75rem;">[원정] ${aMgr?.name || aName + ' 사령탑'}</strong>
-                  <div class="text-muted small mb-1" style="font-size:0.68rem;">${aMgr?.style || '균형잡힌 전술 운용'}</div>
-                  <div class="d-flex flex-wrap gap-1">
-                    ${(aMgr?.tags || ['#스피드배구', '#속공']).map(t => `<span class="badge bg-light text-secondary border p-0.5" style="font-size:0.58rem;">${t}</span>`).join('')}
-                  </div>
-                </div>
-              </div>
+              <strong style="font-size: 0.80rem; color: #1e293b;"><i class="bi bi-shield-check text-success me-1"></i>양 팀 핵심 전력 강점 & 주의 약점 분석</strong>
             </div>
 
             <!-- 장단점 -->
