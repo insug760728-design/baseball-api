@@ -9391,6 +9391,8 @@ class TeamSplitService:
             "ou_confidence": ou_info["ou_confidence"],
             "odds": odds_data
         }
+        cls._QUICK_PRED_CACHE[cache_key] = (now_ts, res)
+        return res
 
     @classmethod
     def get_matchup_analysis(cls, home_team: str, away_team: str, sport_code: str = "BASEBALL", match_id: Optional[int] = None, team_stats: Optional[Dict[str, Any]] = None):

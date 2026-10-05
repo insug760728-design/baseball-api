@@ -227,6 +227,38 @@ def refresh_server_matches_cache() -> str:
 
         if not combined:
             combined = MatchService.get_matches(db, limit=50, order='desc')
+        else:
+            try:
+                from app.services.team_split_service import TeamSplitService
+                for m in combined:
+                    if not getattr(m, "odds", None):
+                        try:
+                            m.prediction = TeamSplitService.get_quick_prediction(
+                                m.home_team_name,
+                                m.away_team_name,
+                                m.sport_code,
+                                m.status,
+                                m.home_score,
+                                m.away_score,
+                                match_date=m.match_date,
+                                starter_h=m.home_starter_name,
+                                starter_a=m.away_starter_name,
+                                league_name=m.league_name
+                            )
+                            if m.prediction:
+                                m.odds = m.prediction.get("odds")
+                                m.ou_line = m.prediction.get("ou_line")
+                                m.ou_pick = m.prediction.get("ou_pick")
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+            try:
+                from app.services.betman_service import BetmanService
+                combined = BetmanService.attach_betman_odds_to_matches(combined, db)
+            except Exception:
+                pass
 
         serialized = [MatchResponse.model_validate(m).model_dump(mode="json") for m in combined]
         json_str = json.dumps(serialized, ensure_ascii=False)

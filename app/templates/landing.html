@@ -14998,6 +14998,25 @@ function getFullModalMatchList() {
         : 'color: #94a3b8; background: #ffffff; border: 1px solid #e2e8f0;';
       const cardBellIcon = isCardSubscribed ? 'bi-bell-fill' : 'bi-bell';
 
+      // 📊 배당 박스 HTML 사전 생성 (Live 카드 및 일반 카드 공통 활용)
+      let betmanOddsHtml = '';
+      if (m.sport_code === 'SOCCER') {
+        const hw = oddsInfo.home ? `<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">${oddsInfo.home}</span></span>` : '<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">-</span></span>';
+        const dw = oddsInfo.draw ? `<span class="betman-box draw"><span class="betman-lbl">무</span><span class="betman-val">${oddsInfo.draw}</span></span>` : '<span class="betman-box draw"><span class="betman-lbl">무</span><span class="betman-val">-</span></span>';
+        const aw = oddsInfo.away ? `<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">${oddsInfo.away}</span></span>` : '<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">-</span></span>';
+        betmanOddsHtml = `${hw}${dw}${aw}`;
+      } else if (m.sport_code === 'BASEBALL') {
+        const hw = oddsInfo.home ? `<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">${oddsInfo.home}</span></span>` : '<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">-</span></span>';
+        const dw = (oddsInfo.draw && oddsInfo.draw !== '-') ? `<span class="betman-box draw"><span class="betman-lbl">1</span><span class="betman-val">${oddsInfo.draw}</span></span>` : '';
+        const aw = oddsInfo.away ? `<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">${oddsInfo.away}</span></span>` : '<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">-</span></span>';
+        betmanOddsHtml = `${hw}${dw}${aw}`;
+      } else {
+        const hw = oddsInfo.home ? `<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">${oddsInfo.home}</span></span>` : '<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">-</span></span>';
+        const aw = oddsInfo.away ? `<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">${oddsInfo.away}</span></span>` : '<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">-</span></span>';
+        betmanOddsHtml = `${hw}${aw}`;
+      }
+      const oddsJsonStr = JSON.stringify(m.odds || (m.prediction && m.prediction.odds) || {});
+
       // ==========================================================
       // 🏟️ [LIVE 진행 중] 2배 크기 실시간 중계 전광판 화면으로 자동 변신!
       // ==========================================================
@@ -15603,10 +15622,18 @@ function getFullModalMatchList() {
         }
 
         return `
-          <div class="slim-match-card pred-card-compact card-status-live ${sportClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" data-match-score="${m.home_score ?? 0}-${m.away_score ?? 0}" data-match-time="${(st.match_time || st.quarter || st.inning_text || '')}" onmouseenter="prefetchMatchDetails(${m.id})" ontouchstart="prefetchMatchDetails(${m.id})" onclick="selectPredMatch(${m.id}, true)" style="padding:0 !important; overflow:hidden !important; border-radius:12px !important; border:2px solid #ef4444 !important; background:#0b1329 !important; box-shadow:0 6px 20px rgba(239,68,68,0.25) !important;">
+          <div class="slim-match-card pred-card-compact card-status-live ${sportClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" data-match-score="${m.home_score ?? 0}-${m.away_score ?? 0}" data-match-time="${(st.match_time || st.quarter || st.inning_text || '')}" data-match-odds='${oddsJsonStr}' onmouseenter="prefetchMatchDetails(${m.id})" ontouchstart="prefetchMatchDetails(${m.id})" onclick="selectPredMatch(${m.id}, true)" style="padding:0 !important; overflow:hidden !important; border-radius:12px !important; border:2px solid #ef4444 !important; background:#0b1329 !important; box-shadow:0 6px 20px rgba(239,68,68,0.25) !important;">
 
             <!-- Live Broadcast Stage (Scoreboard & Diamond <-> Event Animation Switcher) -->
             ${liveBroadcastStageHtml}
+
+            <!-- Live In-Play Odds Strip (실시간 라이브 배당 스트립) -->
+            <div class="d-flex justify-content-between align-items-center px-3 py-1.5" style="background:#090d16; border-top:1px solid rgba(255,255,255,0.08);">
+              <span class="badge py-0.5 px-1.5" style="background:rgba(239,68,68,0.2); color:#f87171; border:1px solid rgba(239,68,68,0.4); font-size:0.62rem; font-weight:800;">
+                <span class="pulse-dot me-1" style="display:inline-block; width:5px; height:5px; border-radius:50%; background:#ef4444;"></span>실시간 LIVE 배당
+              </span>
+              <div class="betman-odds-center">${betmanOddsHtml}</div>
+            </div>
 
             <!-- Bottom Action Buttons -->
             <div class="slim-card-actions px-2.5 py-2" style="background:#0f172a; border-top:1px solid rgba(255,255,255,0.08);">
@@ -15626,23 +15653,6 @@ function getFullModalMatchList() {
       // ==========================================================
       // 📋 [예정 / 종료 경기] 표준 컴팩트 카드 렌더링
       // ==========================================================
-      let betmanOddsHtml = '';
-      if (m.sport_code === 'SOCCER') {
-        const hw = oddsInfo.home ? `<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">${oddsInfo.home}</span></span>` : '<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">-</span></span>';
-        const dw = oddsInfo.draw ? `<span class="betman-box draw"><span class="betman-lbl">무</span><span class="betman-val">${oddsInfo.draw}</span></span>` : '<span class="betman-box draw"><span class="betman-lbl">무</span><span class="betman-val">-</span></span>';
-        const aw = oddsInfo.away ? `<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">${oddsInfo.away}</span></span>` : '<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">-</span></span>';
-        betmanOddsHtml = `${hw}${dw}${aw}`;
-      } else if (m.sport_code === 'BASEBALL') {
-        const hw = oddsInfo.home ? `<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">${oddsInfo.home}</span></span>` : '<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">-</span></span>';
-        const dw = (oddsInfo.draw && oddsInfo.draw !== '-') ? `<span class="betman-box draw"><span class="betman-lbl">1</span><span class="betman-val">${oddsInfo.draw}</span></span>` : '';
-        const aw = oddsInfo.away ? `<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">${oddsInfo.away}</span></span>` : '<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">-</span></span>';
-        betmanOddsHtml = `${hw}${dw}${aw}`;
-      } else {
-        const hw = oddsInfo.home ? `<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">${oddsInfo.home}</span></span>` : '<span class="betman-box win"><span class="betman-lbl">승</span><span class="betman-val">-</span></span>';
-        const aw = oddsInfo.away ? `<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">${oddsInfo.away}</span></span>` : '<span class="betman-box lose"><span class="betman-lbl">패</span><span class="betman-val">-</span></span>';
-        betmanOddsHtml = `${hw}${aw}`;
-      }
-
       const hScoreVal = m.home_score ?? (m.scoreboard && m.scoreboard.home_score) ?? (m.team_stats && m.team_stats.home_score) ?? null;
       const aScoreVal = m.away_score ?? (m.scoreboard && m.scoreboard.away_score) ?? (m.team_stats && m.team_stats.away_score) ?? null;
       const isBkOrVb = (m.sport_code === 'BASKETBALL' || m.sport_code === 'VOLLEYBALL');
@@ -15658,6 +15668,9 @@ function getFullModalMatchList() {
             <span class="betman-inning-badge ${isFinished ? 'finished' : (isLive ? 'bg-danger text-white' : '')}">${innText}</span>
             <span class="betman-score-val away finished">${aScoreVal ?? 0}</span>
             <span class="betman-team-away" title="${m.away_team_name}">${formatTeamName(m.away_team_name)}</span>
+          </div>
+          <div class="d-flex justify-content-center align-items-center mb-1 mt-1">
+            <div class="betman-odds-center">${betmanOddsHtml}</div>
           </div>
         `;
       } else if (isBkOrVb && isLive) {
@@ -15732,7 +15745,7 @@ function getFullModalMatchList() {
       const highlightBadgeHtml = getMatchHighlightHtml(m, isFinished, isLive);
 
       return `
-        <div class="slim-match-card pred-card-compact ${sportClass} ${statusClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" data-match-score="${m.home_score ?? 0}-${m.away_score ?? 0}" data-match-time="" onmouseenter="prefetchMatchDetails(${m.id})" ontouchstart="prefetchMatchDetails(${m.id})" onclick="selectPredMatch(${m.id}, true)">
+        <div class="slim-match-card pred-card-compact ${sportClass} ${statusClass} ${isSel ? 'active-match-card' : ''}" id="predMatchCard_${m.id}" data-sport="${sportCode}" data-match-date="${m.match_date || ''}" data-match-status="${m.status || ''}" data-match-score="${m.home_score ?? 0}-${m.away_score ?? 0}" data-match-time="" data-match-odds='${oddsJsonStr}' onmouseenter="prefetchMatchDetails(${m.id})" ontouchstart="prefetchMatchDetails(${m.id})" onclick="selectPredMatch(${m.id}, true)">
           <div class="d-flex justify-content-between align-items-center mb-1.5" style="gap: 6px;">
             <div class="d-flex align-items-center gap-1 text-truncate" style="min-width:0; flex:1 1 auto; overflow:hidden;">
               <span class="slim-card-sport-time text-truncate" style="min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${sportIcon} ${m.league_name || m.sport_code} · ${timeStr}${sweepBadge}</span>

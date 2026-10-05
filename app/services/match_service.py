@@ -705,12 +705,15 @@ class MatchService:
 
                 m.starters_confirmed = bool(m.home_starter_name and m.away_starter_name and h_confirmed and a_confirmed)
 
-            if m.status != "LIVE":
-                m.prediction = None
-                m.odds = None
-                m.ou_line = None
-                m.ou_pick = None
-            else:
+            m.prediction = None
+            m.odds = None
+            m.ou_line = None
+            m.ou_pick = None
+            m.all_odds = []
+            m.betman_main_odds = None
+            m.betman_odds = []
+
+            if m.status != "FINISHED":
                 try:
                     m.prediction = TeamSplitService.get_quick_prediction(
                         m.home_team_name,
@@ -724,17 +727,12 @@ class MatchService:
                         starter_a=m.away_starter_name,
                         league_name=m.league_name
                     )
+                    if m.prediction:
+                        m.odds = m.prediction.get("odds")
+                        m.ou_line = m.prediction.get("ou_line")
+                        m.ou_pick = m.prediction.get("ou_pick")
                 except Exception:
-                    m.prediction = None
-
-                if m.prediction:
-                    m.odds = m.prediction.get("odds")
-                    m.ou_line = m.prediction.get("ou_line")
-                    m.ou_pick = m.prediction.get("ou_pick")
-                else:
-                    m.odds = None
-                    m.ou_line = None
-                    m.ou_pick = None
+                    pass
 
         # 실제 베트맨 프로토(G101) 공식 배당 및 전체 배당 목록을 경기 데이터에 직접 연동
         try:
