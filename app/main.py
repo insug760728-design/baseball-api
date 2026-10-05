@@ -278,12 +278,17 @@ def refresh_server_matches_cache() -> str:
             except Exception:
                 pass
 
-def get_server_initial_matches_json() -> str:
+def invalidate_server_matches_cache():
+    global _SERVER_MATCHES_CACHE, _PORTAL_COMBINED_CACHE
+    _SERVER_MATCHES_CACHE["updated_at"] = 0.0
+    _PORTAL_COMBINED_CACHE.clear()
+
+def get_server_initial_matches_json(force: bool = False) -> str:
     global _SERVER_MATCHES_CACHE
     now = time.time()
-    if _SERVER_MATCHES_CACHE["json_str"] != "[]":
-        # 300초(5분) TTL: 백그라운드 비동기 갱신으로 사용자 요청 지연 0ms 보장
-        if (now - _SERVER_MATCHES_CACHE["updated_at"] > 300.0) and not _SERVER_MATCHES_CACHE.get("is_refreshing"):
+    if not force and _SERVER_MATCHES_CACHE["json_str"] != "[]":
+        # ⚡ 10초 TTL: LIVE 중계/득점 스코어 변동 시 최대 10초 이내 즉각 반영
+        if (now - _SERVER_MATCHES_CACHE["updated_at"] > 10.0) and not _SERVER_MATCHES_CACHE.get("is_refreshing"):
             import threading
             threading.Thread(target=refresh_server_matches_cache, daemon=True).start()
         return _SERVER_MATCHES_CACHE["json_str"]
@@ -306,7 +311,7 @@ def get_portal_html(target_path: str):
     current_live_count = TrafficService.get_realtime_active_count()
 
     combined = _PORTAL_COMBINED_CACHE.get(target_path)
-    if combined and combined.get("mtime") == mtime and (now - combined.get("created_at", 0) < 300.0):
+    if combined and combined.get("mtime") == mtime and (now - combined.get("created_at", 0) < 15.0):
         cached_content = combined["content"]
         cached_live = combined.get("live_count", current_live_count)
         if cached_live != current_live_count:

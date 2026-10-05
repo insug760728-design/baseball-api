@@ -14697,6 +14697,8 @@ function getFullModalMatchList() {
         time: Date.now() 
       };
       if (typeof renderPredMatches === 'function') renderPredMatches();
+      if (typeof renderRightColLiveRelay === 'function') renderRightColLiveRelay();
+      if (typeof renderLiveRelayModalBody === 'function') renderLiveRelayModalBody();
 
       // ⏱️ 정확히 8초간 유지 후 메인 스타디움 화면으로 즉시 원복
       if (window._liveEventTimeouts[matchId]) {
@@ -14710,6 +14712,8 @@ function getFullModalMatchList() {
           delete window._matchLastStateImage[matchId];
         }
         if (typeof renderPredMatches === 'function') renderPredMatches();
+        if (typeof renderRightColLiveRelay === 'function') renderRightColLiveRelay();
+        if (typeof renderLiveRelayModalBody === 'function') renderLiveRelayModalBody();
       }, 8000);
     };
 
@@ -27458,15 +27462,16 @@ function renderPredDetail(m, customDetailData = null) {
     }
 
     function buildTotoCanScoreboardRow(m, idx, isSelected = false) {
-      const isLive = (m.status === 'LIVE' || m.status === 'IN_PLAY' || m.status === '1H' || m.status === '2H' || m.status === 'HT');
+      const isLive = (typeof isRealTimeLive === 'function' ? isRealTimeLive(m) : false) || (m.status === 'LIVE' || m.status === 'IN_PLAY' || m.status === '1H' || m.status === '2H' || m.status === 'HT');
       const isFin = (m.status === 'FINISHED');
       const st = getLiveMatchState(m);
 
-      const hScore = Number(m.home_score ?? 0);
-      const aScore = Number(m.away_score ?? 0);
+      const hScore = Number(m.home_score ?? (m.scoreboard && m.scoreboard.home_score) ?? (m.team_stats && m.team_stats.home_score) ?? 0);
+      const aScore = Number(m.away_score ?? (m.scoreboard && m.scoreboard.away_score) ?? (m.team_stats && m.team_stats.away_score) ?? 0);
       const isBkOrVb = (m.sport_code === 'BASKETBALL' || m.sport_code === 'VOLLEYBALL');
       const isPendingResult = isBkOrVb && isLive && hScore === 0 && aScore === 0;
-      const isNotStarted = !isLive && !isFin;
+      const hasActualScore = (m.home_score !== null && m.home_score !== undefined) || (hScore > 0 || aScore > 0);
+      const isNotStarted = !isLive && !isFin && !hasActualScore;
 
       let scoreContentHtml = '';
       if (isPendingResult) {
@@ -27474,7 +27479,7 @@ function renderPredDetail(m, customDetailData = null) {
       } else if (isNotStarted) {
         scoreContentHtml = `<span style="color:#94a3b8; font-size:0.75rem; font-weight:600;">- : -</span>`;
       } else {
-        const hasScore = (m.home_score !== null && m.home_score !== undefined) || isLive || isFin;
+        const hasScore = hasActualScore || isLive || isFin;
         let hScoreHtml = `<span style="font-weight:700; color:#1e293b;">${hScore}</span>`;
         let aScoreHtml = `<span style="font-weight:700; color:#1e293b;">${aScore}</span>`;
         if (hasScore && hScore > aScore) {

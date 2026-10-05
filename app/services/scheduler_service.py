@@ -892,13 +892,21 @@ class SchedulerService:
                     from app.api.v1.matches import clear_matches_cache
                     clear_matches_cache()
                 
-                # 활성 LIVE 경기 상태 목록 추출하여 WebSocket에 직접 전송
+                # 활성 LIVE 경기 상태 목록 및 최근 점수 변동/종료 경기 추출하여 WebSocket에 직접 전송
                 def _extract_live_items():
                     d_db = SessionLocal()
                     items = []
                     try:
                         from app.models.models import Match
-                        live_list = d_db.query(Match).filter(Match.status == "LIVE").all()
+                        from sqlalchemy import or_
+                        from datetime import datetime, timedelta
+                        recent_cutoff = (datetime.utcnow() - timedelta(minutes=15)).strftime("%Y-%m-%d %H:%M:%S")
+                        live_list = d_db.query(Match).filter(
+                            or_(
+                                Match.status.in_(["LIVE", "IN_PLAY", "1H", "2H", "HT"]),
+                                Match.updated_at >= recent_cutoff
+                            )
+                        ).all()
                         for m in live_list:
                             cur_inn = None
                             outs_val = None

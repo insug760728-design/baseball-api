@@ -32,6 +32,11 @@ def clear_matches_cache(match_id: Optional[int] = None):
         cache_delete(f"match:full:{match_id}")
     else:
         _MATCH_FULL_CACHE.clear()
+    try:
+        from app.main import invalidate_server_matches_cache
+        invalidate_server_matches_cache()
+    except Exception:
+        pass
 
 def clear_match_full_cache(match_id: Optional[int] = None):
     if match_id:
@@ -323,8 +328,9 @@ def list_matches(
         if not end_date:
             end_date = date
 
-    # ⚡ 0초 초고속 서빙: 기본 경기 목록 조회인 경우 서버 사전 직렬화 캐시 즉시 반환
-    if not sport_code and not league_name and not status and not start_date and not end_date and (order or 'asc').lower() == 'asc':
+    # ⚡ 0초 초고속 서빙: 기본 경기 목록 초기 로딩(필터/limit 없음)인 경우에만 서버 사전 직렬화 캐시 즉시 반환
+    # 클라이언트가 실시간 동기화로 limit=350 등을 요청한 경우는 최신 DB 목록을 즉시 쿼리!
+    if not sport_code and not league_name and not status and not start_date and not end_date and not limit and (order or 'asc').lower() == 'asc':
         try:
             from app.main import get_server_initial_matches_json
             cached_initial = get_server_initial_matches_json()
@@ -348,7 +354,7 @@ def list_matches(
     now = time.time()
     if cache_key in _MATCHES_JSON_CACHE:
         cache_time, cached_bytes = _MATCHES_JSON_CACHE[cache_key]
-        if now - cache_time < 20: # 20초 메모리 초고속 서빙 (0.1ms 응답)
+        if now - cache_time < 5: # 5초 메모리 초고속 서빙 (실시간 스코어 즉시 반영)
             return Response(
                 content=cached_bytes,
                 media_type="application/json",
