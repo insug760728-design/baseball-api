@@ -19161,6 +19161,113 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const hStrWeak = tactical?.home_strengths_weaknesses || { strengths: hTraitFallback.strengths, weaknesses: hTraitFallback.weaknesses };
       const aStrWeak = tactical?.away_strengths_weaknesses || { strengths: aTraitFallback.strengths, weaknesses: aTraitFallback.weaknesses };
 
+      // 5대 핵심 전술 듀얼 게이지 비교 도표 데이터 (롱볼 · 세트피스 · 역습 · 압박 · 제공권)
+      const tacticalTraitsList = [
+        {
+          name: '🚀 롱볼 배급',
+          key: 'long_ball',
+          hScore: hTend.long_ball?.score ?? 60,
+          hLabel: hTend.long_ball?.label ?? '상황별 롱패스',
+          aScore: aTend.long_ball?.score ?? 60,
+          aLabel: aTend.long_ball?.label ?? '상황별 롱패스'
+        },
+        {
+          name: '🎯 세트피스',
+          key: 'set_piece',
+          hScore: hTend.set_piece?.score ?? 75,
+          hLabel: hTend.set_piece?.label ?? '세트피스 강점',
+          aScore: aTend.set_piece?.score ?? 72,
+          aLabel: aTend.set_piece?.label ?? '세트피스 강점'
+        },
+        {
+          name: '⚡ 역습 속도',
+          key: 'counter_attack',
+          hScore: hTend.counter_attack?.score ?? 74,
+          hLabel: hTend.counter_attack?.label ?? '카운터 역습',
+          aScore: aTend.counter_attack?.score ?? 76,
+          aLabel: aTend.counter_attack?.label ?? '카운터 역습'
+        },
+        {
+          name: '🛡️ 전방 압박',
+          key: 'pressing',
+          hScore: hTend.pressing?.score ?? 78,
+          hLabel: hTend.pressing?.label ?? '전방 압박',
+          aScore: aTend.pressing?.score ?? 70,
+          aLabel: aTend.pressing?.label ?? '미들서드 차단'
+        },
+        {
+          name: '✈️ 제공권 경합',
+          key: 'aerial_duel',
+          hScore: hTend.aerial_duel?.score ?? 72,
+          hLabel: hTend.aerial_duel?.label ?? '공중볼 경합',
+          aScore: aTend.aerial_duel?.score ?? 68,
+          aLabel: aTend.aerial_duel?.label ?? '지상 경합'
+        }
+      ];
+
+      let hAdvCount = 0, aAdvCount = 0;
+      tacticalTraitsList.forEach(t => {
+        if (t.hScore > t.aScore) hAdvCount++;
+        else if (t.aScore > t.hScore) aAdvCount++;
+      });
+      let tacticalSummaryText = '';
+      if (hAdvCount > aAdvCount) {
+        tacticalSummaryText = `🔴 ${hName} 전술 5대 항목 중 ${hAdvCount}개 항목 우세 (주도적 빌드업 & 압박 우위)`;
+      } else if (aAdvCount > hAdvCount) {
+        tacticalSummaryText = `🔵 ${aName} 전술 5대 항목 중 ${aAdvCount}개 항목 우세 (실리적 역습 & 결정력 우위)`;
+      } else {
+        tacticalSummaryText = `⚖️ 양 팀 5대 전술 성향 팽팽한 호각세 (전술 상성에 따른 승부처)`;
+      }
+
+      const tacticalGaugeTableRowsHtml = tacticalTraitsList.map(t => {
+        const diff = t.hScore - t.aScore;
+        const total = t.hScore + t.aScore || 1;
+        const ratioH = Math.round((t.hScore / total) * 100);
+        const ratioA = 100 - ratioH;
+
+        let badgeHtml = '';
+        if (diff >= 8) {
+          badgeHtml = `<span class="badge bg-danger text-white py-0.5 px-1 fw-bold" style="font-size:0.62rem;">👑 홈 압도</span>`;
+        } else if (diff >= 3) {
+          badgeHtml = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle py-0.5 px-1 fw-bold" style="font-size:0.62rem;">홈 우세</span>`;
+        } else if (diff <= -8) {
+          badgeHtml = `<span class="badge bg-primary text-white py-0.5 px-1 fw-bold" style="font-size:0.62rem;">👑 원정 압도</span>`;
+        } else if (diff <= -3) {
+          badgeHtml = `<span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0.5 px-1 fw-bold" style="font-size:0.62rem;">원정 우세</span>`;
+        } else {
+          badgeHtml = `<span class="badge bg-secondary-subtle text-secondary py-0.5 px-1 fw-bold" style="font-size:0.62rem;">🤝 호각</span>`;
+        }
+
+        return `
+          <tr style="height:34px;">
+            <td class="fw-bold text-dark text-start ps-2" style="font-size:0.75rem; white-space:nowrap;">
+              ${t.name}
+            </td>
+            <td class="text-center px-1" style="white-space:nowrap;">
+              <span class="fw-black ${diff > 0 ? 'text-danger' : 'text-dark'}" style="font-size:0.86rem;">${t.hScore}점</span>
+              <div class="text-muted text-truncate" style="font-size:0.64rem; max-width:130px; margin:0 auto;" title="${t.hLabel}">${t.hLabel}</div>
+            </td>
+            <td class="text-center px-1" style="min-width:90px;">
+              <div class="d-flex align-items-center justify-content-center gap-1">
+                <span class="text-danger fw-bold font-monospace" style="font-size:0.68rem;">${ratioH}%</span>
+                <div class="progress flex-grow-1" style="height:6px; border-radius:3px; background:#e2e8f0; overflow:hidden; min-width:45px;">
+                  <div class="progress-bar bg-danger" role="progressbar" style="width:${ratioH}%;"></div>
+                  <div class="progress-bar bg-primary" role="progressbar" style="width:${ratioA}%;"></div>
+                </div>
+                <span class="text-primary fw-bold font-monospace" style="font-size:0.68rem;">${ratioA}%</span>
+              </div>
+            </td>
+            <td class="text-center px-1" style="white-space:nowrap;">
+              <span class="fw-black ${diff < 0 ? 'text-primary' : 'text-dark'}" style="font-size:0.86rem;">${t.aScore}점</span>
+              <div class="text-muted text-truncate" style="font-size:0.64rem; max-width:130px; margin:0 auto;" title="${t.aLabel}">${t.aLabel}</div>
+            </td>
+            <td class="text-center px-1" style="white-space:nowrap;">
+              ${badgeHtml}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
       const hMgr = (tactical && tactical.home_manager && tactical.home_manager.name_kr) ? tactical.home_manager : getSmartFallbackManager(hName, true, hWinRate);
       const aMgr = (tactical && tactical.away_manager && tactical.away_manager.name_kr) ? tactical.away_manager : getSmartFallbackManager(aName, false, aWinRate);
       const forms = tactical?.formations || {
@@ -19473,6 +19580,57 @@ function updateSlimPanel(matchId, type, contentHtml) {
               </div>
             </div>
           ` : ''}
+
+          <!-- ========================================================= -->
+          <!-- ⚡ [정밀 지표] 축구 9대 첨단 AI 정밀 지표 허브 (자동 계산) -->
+          <!-- ========================================================= -->
+          ${(typeof renderSoccerPrecisionMetricsHtml === 'function') ? renderSoccerPrecisionMetricsHtml(m) : ''}
+
+          <!-- ========================================================= -->
+          <!-- 📊 [전술 도표] 축구 5대 핵심 전술 듀얼 게이지 비교 도표 (스타일 1) -->
+          <!-- ========================================================= -->
+          <div class="p-2.5 border-bottom bg-white" style="border-color:#e2e8f0 !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+              <div class="d-flex align-items-center gap-1.5">
+                <span class="badge bg-primary text-white px-2 py-0.5" style="font-size:0.70rem;">
+                  <i class="bi bi-bar-chart-fill me-1"></i>전술 비교 도표
+                </span>
+                <strong class="text-dark" style="font-size:0.84rem;">축구 5대 AI 전술 듀얼 게이지 비교 (100점 만점)</strong>
+              </div>
+              <div class="d-flex gap-2 small fw-bold" style="font-size:0.70rem;">
+                <span class="text-danger">🔴 [홈] ${hName}</span>
+                <span class="text-muted">vs</span>
+                <span class="text-primary">🔵 [원정] ${aName}</span>
+              </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="table-responsive rounded border bg-white shadow-xs overflow-hidden" style="border-color:#cbd5e1 !important;">
+              <table class="table table-sm table-bordered table-hover text-center align-middle mb-0" style="width:100%; font-size:0.74rem;">
+                <thead style="background:#0f172a; color:#ffffff;">
+                  <tr style="height:28px;">
+                    <th style="width:23%; text-align:center; color:#e2e8f0; font-weight:700;">전술 핵심 지표</th>
+                    <th style="width:23%; text-align:center; color:#f87171; font-weight:800;">🔴 [홈] ${hName}</th>
+                    <th style="width:24%; text-align:center; color:#cbd5e1; font-weight:700;">⚔️ 전술 격돌 게이지</th>
+                    <th style="width:23%; text-align:center; color:#60a5fa; font-weight:800;">🔵 [원정] ${aName}</th>
+                    <th style="width:7%; text-align:center; color:#e2e8f0; font-weight:700;">우세</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tacticalGaugeTableRowsHtml}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- AI Tactical Summary Footer Banner -->
+            <div class="mt-2 p-2 rounded bg-light border d-flex align-items-center justify-content-between" style="border-color:#e2e8f0 !important; font-size:0.72rem;">
+              <div class="d-flex align-items-center gap-1.5 text-truncate">
+                <span class="badge bg-dark text-white px-1.5 py-0.5" style="font-size:0.65rem;">AI 전술 총평</span>
+                <span class="text-dark fw-bold text-truncate">${tacticalSummaryText}</span>
+              </div>
+              <span class="text-muted small flex-shrink-0 ms-1 d-none d-sm-inline">100점 만점 전력 분석 모델</span>
+            </div>
+          </div>
 
           <!-- ========================================================= -->
           <!-- ⚔️ [H2H] 맞대결 상대전적 (Head-to-Head)                 -->
