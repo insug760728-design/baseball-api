@@ -151,6 +151,146 @@
       return sanitizePlayerName(raw);
     }
 
+    // =============================================================
+    // 🈳 일본어 가타카나/히라가나 -> 한국어 한글 음차 변환기
+    // =============================================================
+    function katakanaToHangul(text) {
+      if (!text) return '';
+      const SPECIAL_KANA_WORDS = {
+        'ソフトバンク': '소프트뱅크', 'ホークス': '호크스', 'オリックス': '오릭스', 'バファローズ': '버팔로즈',
+        'ロッテ': '롯데', 'マリーンズ': '마린스', 'ライオンズ': '라이온즈', '西武': '세이부',
+        'ファイターズ': '파이터즈', '日本ハム': '닛폰햄', 'イー글스': '이글스', 'イーグルス': '이글스', '楽天': '라쿠텐',
+        'ジャイアンツ': '자이언츠', '巨人': '요미우리', 'タイガース': '타이거스', '阪神': '한신',
+        'ドラゴンズ': '드래곤즈', '中日': '주니치', 'ベイスターズ': '베이스타즈', 'DeNA': 'DeNA',
+        'カープ': '카프', '広島': '히로시마', 'スワローズ': '스왈로즈', 'ヤクルト': '야쿠르트',
+        'スチュワート': '스튜어트', 'スチュワートJr.': '스튜어트 주니어', 'スチュワートJr': '스튜어트 주니어',
+        'バウアー': '바우어', 'モイネロ': '모이넬로', 'オスナ': '오스나', 'ペルドモ': '페르도모',
+        'エスピノーザ': '에스피노자', 'マルティネス': '마르티네스', 'マルチネス': '마르티네스',
+        'マチャド': '마차도', 'ヘルナンデス': '에르난데스', 'ルイーズ': '루이즈', 'サイスニード': '사이 스니드',
+        'ケイ': '안소니 케이', 'ジャクソン': '안드레 잭슨', 'エンス': '엔스', 'メルセデス': '멜세데스',
+        'サンタナ': '산타나', 'ポランコ': '폴랑코', 'ソト': '소토', 'ウォーカー': '워커',
+        'ディアス': '디아즈', 'ゴンザレス': '곤잘레스', 'カスティーヨ': '카스티요', 'バルドナード': '발도나도',
+        'グリフィン': '그리핀', 'メンデス': '멘데스', 'ボス': '보스', 'ビシエド': '비시에도', 'カリステ': '칼리스테',
+        'ロドリ게스': '로드리게스', 'ロドリゲス': '로드리게스', 'ジェリー': '젤리', 'ラトリッジ': '러틀리지',
+        'クラーク': '클라크', 'アンダーソン': '앤더슨'
+      };
+      if (SPECIAL_KANA_WORDS[text]) return SPECIAL_KANA_WORDS[text];
+
+      let s = String(text);
+      s = s.replace(/[\u3041-\u3096]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
+
+      const DIGRAPHS = {
+        'ヴァ': '바', 'ヴィ': '비', 'ヴ': '브', 'ヴェ': '베', 'ヴォ': '보',
+        'キャ': '캬', 'キュ': '큐', 'キョ': '쿄',
+        'ギャ': '갸', 'ギュ': '규', 'ギョ': '교',
+        'シャ': '샤', 'シュ': '슈', 'シェ': '셰', 'ショ': '쇼',
+        'ジャ': '자', 'ジュ': '주', 'ジェ': '제', 'ジョ': '조',
+        'チャ': '차', 'チュ': '추', 'チェ': '체', 'チョ': '초',
+        'ニャ': '냐', 'ニュ': '뉴', 'ニョ': '뇨',
+        'ヒャ': '햐', 'ヒュ': '휴', 'ヒョ': '효',
+        'ビャ': '뱌', 'ビュ': '뷰', 'ビョ': '뵤',
+        'ピャ': '퍄', 'ピュ': '퓨', 'ピョ': '표',
+        'ミャ': '먀', 'ミュ': '뮤', 'ミョ': '묘',
+        'リャ': '랴', 'リュ': '류', 'リョ': '료',
+        'ティ': '티', 'ディ': '디', 'トゥ': '투', 'ドゥ': '두',
+        'ファ': '파', 'フィ': '피', 'フェ': '페', 'フォ': '포', 'フュ': '퓨',
+        'ウィ': '위', 'ウェ': '웨', 'ウォ': '워',
+        'ツァ': '차', 'ツィ': '치', 'ツェ': '체', 'ツォ': '초',
+        'クァ': '콰', 'クィ': '퀴', 'クェ': '퀘', 'クォ': '쿼',
+        'グァ': '과', 'グィ': '귀', 'グェ': '궤', 'グォ': '궈',
+        'スチュ': '스튜', 'イェ': '예'
+      };
+
+      const MONOGRAPHS = {
+        'ア': '아', 'イ': '이', 'ウ': '우', 'エ': '에', 'オ': '오',
+        'カ': '카', 'キ': '키', 'ク': '쿠', 'ケ': '케', 'コ': '코',
+        'ガ': '가', 'ギ': '기', 'グ': '구', 'ゲ': '게', 'ゴ': '고',
+        'サ': '사', 'シ': '시', 'ス': '스', 'セ': '세', 'ソ': '소',
+        'ザ': '자', 'ジ': '지', 'ズ': '즈', 'ゼ': '제', 'ゾ': '조',
+        'タ': '타', 'チ': '치', 'ツ': '츠', 'テ': '테', 'ト': '토',
+        'ダ': '다', 'ヂ': '지', 'ヅ': '즈', 'デ': '데', 'ド': '도',
+        'ナ': '나', 'ニ': '니', 'ヌ': '누', 'ネ': '네', 'ノ': '노',
+        'ハ': '하', 'ヒ': '히', 'フ': '후', 'ヘ': '헤', 'ホ': '호',
+        'バ': '바', 'ビ': '비', 'ブ': '부', 'ベ': '베', 'ボ': '보',
+        'パ': '파', 'ピ': '피', 'プ': '푸', 'ペ': '페', 'ポ': '포',
+        'マ': '마', 'ミ': '미', 'ム': '무', 'メ': '메', 'モ': '모',
+        'ヤ': '야', 'ユ': '유', 'ヨ': '요',
+        'ラ': '라', 'リ': '리', 'ル': '루', 'レ': '레', 'ロ': '로',
+        'ワ': '와', 'ヲ': '오',
+        'ァ': '아', 'ィ': '이', 'ゥ': '우', 'ェ': '에', 'ォ': '오',
+        'ッ': 'ㅅ', '・': ' ', '＝': '-', '=': '-'
+      };
+
+      const JONG = ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+
+      function attachJong(charStr, jongChar) {
+        if (!charStr || charStr.length !== 1) return charStr + jongChar;
+        const code = charStr.charCodeAt(0);
+        if (code >= 0xAC00 && code <= 0xD7A3) {
+          const sylIdx = code - 0xAC00;
+          const jongIdx = sylIdx % 28;
+          const jPos = JONG.indexOf(jongChar);
+          if (jongIdx === 0 && jPos > 0) {
+            return String.fromCharCode(code + jPos);
+          }
+        }
+        return charStr + jongChar;
+      }
+
+      const res = [];
+      let i = 0;
+      const n = s.length;
+      while (i < n) {
+        if (i + 2 < n && DIGRAPHS[s.slice(i, i + 3)]) {
+          res.push(DIGRAPHS[s.slice(i, i + 3)]);
+          i += 3;
+        } else if (i + 1 < n && DIGRAPHS[s.slice(i, i + 2)]) {
+          res.push(DIGRAPHS[s.slice(i, i + 2)]);
+          i += 2;
+        } else if (s[i] === 'ン') {
+          if (res.length > 0 && res[res.length - 1].length === 1) {
+            const lastCode = res[res.length - 1].charCodeAt(0);
+            if (lastCode >= 0xAC00 && lastCode <= 0xD7A3 && (lastCode - 0xAC00) % 28 === 0) {
+              res[res.length - 1] = attachJong(res[res.length - 1], 'ㄴ');
+            } else {
+              res.push('ㄴ');
+            }
+          } else {
+            res.push('엔');
+          }
+          i += 1;
+        } else if (s[i] === 'ッ') {
+          if (i + 1 < n) {
+            const nextC = s[i + 1];
+            const batchim = 'カキクケコガギグゲゴ'.includes(nextC) ? 'ㄱ' : ('パピプペポバビブベボ'.includes(nextC) ? 'ㅂ' : 'ㅅ');
+            if (res.length > 0 && res[res.length - 1].length === 1) {
+              const lastCode = res[res.length - 1].charCodeAt(0);
+              if (lastCode >= 0xAC00 && lastCode <= 0xD7A3 && (lastCode - 0xAC00) % 28 === 0) {
+                res[res.length - 1] = attachJong(res[res.length - 1], batchim);
+              } else {
+                res.push('읏');
+              }
+            } else {
+              res.push('읏');
+            }
+          } else {
+            res.push('스');
+          }
+          i += 1;
+        } else if (s[i] === 'ー') {
+          i += 1;
+        } else if (MONOGRAPHS[s[i]]) {
+          res.push(MONOGRAPHS[s[i]]);
+          i += 1;
+        } else {
+          res.push(s[i]);
+          i += 1;
+        }
+      }
+
+      return res.join('');
+    }
+
     function formatPlayerKorean(raw) {
       if (!raw) return '';
       raw = sanitizePlayerName(raw);
@@ -181,12 +321,12 @@
       for (const [fam, famKo] of sortedFamEntries) {
         if (raw.startsWith(fam) && raw.length > fam.length) {
           const rem = raw.slice(fam.length).trim();
-          const remKo = NPB_GIVEN_NAME_MAP[rem] || NPB_FAMILY_NAME_MAP[rem] || rem;
+          const remKo = NPB_GIVEN_NAME_MAP[rem] || NPB_FAMILY_NAME_MAP[rem] || (/[\u3040-\u30ff]/.test(rem) ? katakanaToHangul(rem) : rem);
           return `${famKo} ${remKo}`.trim() + suffix;
         }
         if (noSpace.startsWith(fam) && noSpace.length > fam.length) {
           const rem = noSpace.slice(fam.length).trim();
-          const remKo = NPB_GIVEN_NAME_MAP[rem] || NPB_FAMILY_NAME_MAP[rem] || rem;
+          const remKo = NPB_GIVEN_NAME_MAP[rem] || NPB_FAMILY_NAME_MAP[rem] || (/[\u3040-\u30ff]/.test(rem) ? katakanaToHangul(rem) : rem);
           return `${famKo} ${remKo}`.trim() + suffix;
         }
       }
@@ -199,7 +339,10 @@
           if (NPB_GIVEN_NAME_MAP[tok]) { anyConverted = true; return NPB_GIVEN_NAME_MAP[tok]; }
           if (NPB_FAMILY_NAME_MAP[tok]) { anyConverted = true; return NPB_FAMILY_NAME_MAP[tok]; }
           if (FULL_PLAYER_KO_MAP[tok]) { anyConverted = true; return FULL_PLAYER_KO_MAP[tok]; }
-          if (/[\u3040-\u30ff]/.test(tok)) { anyConverted = true; return katakanaToHangul(tok); }
+          if (/[\u3040-\u30ff]/.test(tok)) {
+            anyConverted = true;
+            return (typeof katakanaToHangul === 'function') ? katakanaToHangul(tok) : tok;
+          }
           return tok;
         });
         if (anyConverted) {
@@ -279,6 +422,19 @@
         }
         return prefix + formatPlayerKorean(match);
       });
+    }
+
+    if (typeof window !== 'undefined') {
+      window.katakanaToHangul = katakanaToHangul;
+      window.formatPlayerKorean = formatPlayerKorean;
+      window.formatAnalysisText = formatAnalysisText;
+      window.sanitizePlayerName = sanitizePlayerName;
+    }
+    if (typeof globalThis !== 'undefined') {
+      globalThis.katakanaToHangul = katakanaToHangul;
+      globalThis.formatPlayerKorean = formatPlayerKorean;
+      globalThis.formatAnalysisText = formatAnalysisText;
+      globalThis.sanitizePlayerName = sanitizePlayerName;
     }
 
 

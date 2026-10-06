@@ -201,9 +201,10 @@ class HistoricalAgentRouter:
         if '라리가' in ln or 'LALIGA' in ln or 'LA LIGA' in ln: return 'LALIGA'
         if '분데스' in ln or 'BUNDESLIGA' in ln: return 'BUNDESLIGA'
         if '세리에' in ln or 'SERIE' in ln: return 'SERIE_A'
-        if '리그1' in ln or 'LIGUE' in ln: return 'LIGUE_1'
+        if '리그1' in ln or '리그 1' in ln or 'LIGUE' in ln: return 'LIGUE_1'
         if '에레디비시' in ln or 'EREDIVISIE' in ln: return 'EREDIVISIE'
-        if 'MLS' in ln or '메이저리그 사커' in ln or '미국축구' in ln: return 'MLS'
+        if 'MLS' in ln or '메이저리그 사커' in ln or '메이저리그사커' in ln or '미국축구' in ln: return 'MLS'
+        if '챔피언십' in ln or 'CHAMPIONSHIP' in ln: return 'CHAMPIONSHIP'
         if '챔피언스' in ln or 'UCL' in ln: return 'UCL'
         if '유로파' in ln or 'UEL' in ln: return 'UEL'
         if '네이션스' in ln or 'NATIONS' in ln: return 'NATIONS_LEAGUE'
@@ -265,7 +266,7 @@ class HistoricalAgentRouter:
             from app.services.live_api_sports_service import TEAM_SYNONYMS as LS
 
             SHORT_ALLOWED = {'nc', 'lg', 'kt', 'ssg', 'kia', 'az', 'psv', 'qpr'}
-            NOISY_TOKENS = {'fc', 'cf', 'sc', 'ac', '축구단', '1995', 'city', 'united', 'ren', 'v', 'la', 'as', 'de', 'sv', 'afc', 'bsc', 'sd', 'cd', 'rc', 'ud', 'bk', 'club', 'town', 'and', '레알', 'real', '아틀레틱', 'athletic', '아틀레티코', 'atletico', '마드리드', 'madrid', '스포르팅', 'sporting', '맨', 'man', '도쿄', 'tokyo', '오사카', 'osaka', 'new', 'york', 'los', 'angeles', 'chicago'}
+            NOISY_TOKENS = {'fc', 'cf', 'sc', 'ac', '축구단', '1995', 'city', 'united', 'ren', 'v', 'la', 'as', 'de', 'sv', 'afc', 'bsc', 'sd', 'cd', 'rc', 'ud', 'bk', 'club', 'town', 'and', '레알', 'real', '아틀레틱', 'athletic', '마드리드', 'madrid', '스포르팅', 'sporting', '맨', 'man', '도쿄', 'tokyo', '오사카', 'osaka', 'new', 'york', 'los', 'angeles', 'chicago'}
 
             SPAIN_TEAM_ALIASES = {
                 '레알 베티스': ['베티스', 'real betis', 'betis'],
@@ -275,7 +276,8 @@ class HistoricalAgentRouter:
                 '말라가': ['말라가', 'malaga'],
                 '바르셀로나': ['바르셀로나', 'barcelona', '바르샤'],
                 '레알 마드리드': ['레알 마드리드', '레알마드리드', 'real madrid'],
-                '아틀레티코 마드리드': ['아틀레티코 마드리드', '아틀레티코마드리드', 'atletico madrid', 'at 마드리드', 'at마드리드'],
+                '아틀레티코 마드리드': ['아틀레티코', '아틀레티코 마드리드', '아틀레티코마드리드', 'atletico madrid', 'atletico', 'at 마드리드', 'at마드리드'],
+                '아틀레티코': ['아틀레티코', '아틀레티코 마드리드', '아틀레티코마드리드', 'atletico madrid', 'atletico', 'at 마드리드', 'at마드리드'],
                 '아틀레틱 빌바오': ['아틀레틱 빌바오', '아틀레틱빌바오', 'athletic club', 'athletic bilbao', '빌바오'],
                 '세비야': ['세비야', 'sevilla'],
                 '발렌시아': ['발렌시아', 'valencia'],
@@ -434,6 +436,148 @@ class HistoricalAgentRouter:
                 '도호쿠 라쿠텐 골든이글스': ['도호쿠 라쿠텐 골든이글스', '라쿠텐 골든이글스', '라쿠텐', '골든이글스', 'rakuten', 'eagles'],
                 '사이타마 세이부 라이온즈': ['사이타마 세이부 라이온즈', '세이부 라이온즈', '세이부', '라이온즈', 'seibu', 'lions'],
                 '홋카이도 닛폰햄 파이터즈': ['홋카이도 닛폰햄 파이터즈', '닛폰햄 파이터스', '니혼햄 파이터스', '니혼햄 파이터즈', '닛폰햄', '니혼햄', '파이터스', '파이터즈', 'nipponham', 'fighters']
+            }
+
+            BUNDESLIGA_TEAM_ALIASES = {
+                '도르트문트': ['도르트문트', '도르트', 'dortmund', 'bvb'],
+                '브레멘': ['베르더 브레멘', '베르더브레멘', '브레멘', 'bremen', 'werder'],
+                '바이에른뮌헨': ['바이에른 뮌헨', '바이에른뮌헨', '뮌헨', 'bayern munich', 'bayern'],
+                '라이프치히': ['라이프치히', 'rb 라이프치히', 'leipzig'],
+                '레버쿠젠': ['바이어 레버쿠젠', '레버쿠젠', 'leverkusen'],
+                '슈투트가르트': ['슈투트가르트', 'stuttgart'],
+                '프랑크푸르트': ['프랑크푸르트', '아인트라흐트 프랑크푸르트', 'frankfurt'],
+                '호펜하임': ['호펜하임', 'hoffenheim'],
+                '하이덴하임': ['하이덴하임', 'heidenheim'],
+                '프라이부르크': ['프라이부르크', 'freiburg'],
+                '아우크스부르크': ['아우크스부르크', 'augsburg'],
+                '볼프스부르크': ['볼프스부르크', 'wolfsburg'],
+                '마인츠': ['마인츠', 'mainz'],
+                '묀헨글라트바흐': ['묀헨글라트바흐', '글라트바흐', 'monchengladbach'],
+                '우니온베를린': ['우니온 베를린', '우니온베를린', '우니온', 'union berlin'],
+                '보훔': ['보훔', 'bochum'],
+                '장크트 파울리': ['장크트 파울리', '장크트파울리', 'st pauli'],
+                '홀슈타인 킬': ['홀슈타인 킬', '홀슈타인킬', '킬', 'holstein kiel'],
+                '쾰른': ['쾰른', 'koln', 'cologne'],
+                '파더보른': ['파더보른', 'paderborn'],
+                '엘베르스베르크': ['엘베르스베르크', 'elversberg'],
+                '함부르크': ['함부르크', 'hamburg', 'hsv']
+            }
+
+            SERIEA_TEAM_ALIASES = {
+                '인테르': ['인테르', '인터 밀란', '인터밀란', 'inter', 'inter milan'],
+                'AC밀란': ['AC 밀란', 'AC밀란', '밀란', 'ac milan'],
+                '유벤투스': ['유벤투스', '유벤', 'juventus'],
+                '아탈란타': ['아탈란타', 'atalanta'],
+                '볼로냐': ['볼로냐', 'bologna'],
+                'AS로마': ['AS 로마', 'AS로마', '로마', 'as roma', 'roma'],
+                '라치오': ['라치오', 'lazio'],
+                '피오렌티나': ['피오렌티나', '피오렌', 'fiorentina'],
+                '토리노': ['토리노', 'torino'],
+                '나폴리': ['나폴리', 'napoli'],
+                '제노아': ['제노아', 'genoa'],
+                '몬차': ['몬차', 'monza'],
+                '엘라스 베로나': ['베로나', '엘라스 베로나', 'hellas verona'],
+                '레체': ['레체', 'lecce'],
+                '우디네세': ['우디네세', 'udinese'],
+                '칼리아리': ['칼리아리', 'cagliari'],
+                '엠폴리': ['엠폴리', 'empoli'],
+                '파르마': ['파르마', 'parma'],
+                '코모': ['코모', 'como'],
+                '베네치아': ['베네치아', 'venezia'],
+                '프로시노네': ['프로시노네', 'frosinone'],
+                '사수올로': ['사수올로', 'sassuolo']
+            }
+
+            LIGUE1_TEAM_ALIASES = {
+                '파리생제르맹': ['파리생제르맹', '파리 생제르맹', '파리', 'psg', 'paris sg'],
+                '모나코': ['AS 모나코', '모나코', 'as monaco', 'monaco'],
+                '브레스트': ['브레스트', 'brest'],
+                '릴': ['릴', 'lille'],
+                '니스': ['니스', 'nice'],
+                '리옹': ['올림피크 리옹', '리옹', 'lyon'],
+                '랑스': ['랑스', 'lens'],
+                '마르세유': ['올림피크 마르세유', '마르세유', 'marseille'],
+                '랭스': ['랭스', 'reims'],
+                '스타드 렌': ['스타드 렌', '렌', 'rennes'],
+                '툴루즈': ['툴루즈', 'toulouse'],
+                '몽펠리에': ['몽펠리에', 'montpellier'],
+                '스트라스부르': ['스트라스부르', 'strasbourg'],
+                '낭트': ['낭트', 'nantes'],
+                '르아브르': ['르아브르', 'le havre'],
+                '생테티엔': ['생테티엔', 'saint-etienne'],
+                '앙제': ['앙제', 'angers'],
+                '오세르': ['오세르', 'auxerre'],
+                '로리앙': ['로리앙', 'lorient'],
+                '파리FC': ['파리FC', '파리 FC', 'paris fc'],
+                '르망': ['르망', 'le mans']
+            }
+
+            CHAMPIONSHIP_TEAM_ALIASES = {
+                '찰턴': ['찰턴', '찰턴 애슬레틱', 'charlton'],
+                '브리스톨시티': ['브리스톨 시티', '브리스톨시티', 'bristol city'],
+                '스완지': ['스완지', '스완지 시티', 'swansea'],
+                '노리치': ['노리치', '노리치 시티', 'norwich'],
+                '웨스트브롬': ['웨스트브롬', '웨스트브로미치', 'west brom'],
+                '버밍엄': ['버밍엄', '버밍엄 시티', 'birmingham'],
+                '블랙번': ['블랙번', '블랙번 로버스', 'blackburn'],
+                '카디프': ['카디프', '카디프 시티', 'cardiff'],
+                '볼턴': ['볼턴', '볼턴 원더러스', 'bolton'],
+                '스토크시티': ['스토크 시티', '스토크시티', '스토크', 'stoke'],
+                '더비': ['더비', '더비 카운티', 'derby'],
+                '렉섬': ['렉섬', 'wrexham'],
+                '미들즈브러': ['미들즈브러', 'middlesbrough'],
+                '프레스턴': ['프레스턴', 'preston'],
+                '밀월': ['밀월', 'millwall'],
+                '셰필드': ['셰필드', 'sheffield'],
+                '링컨시티': ['링컨 시티', '링컨시티', 'lincoln'],
+                '왓포드': ['왓포드', 'watford'],
+                '번리': ['번리', 'burnley'],
+                'QPR': ['QPR', '퀸즈파크', 'qpr']
+            }
+
+            EREDIVISIE_TEAM_ALIASES = {
+                'PSV에인트호번': ['PSV 에인트호번', 'PSV에인트호번', 'PSV', '에인트호번', 'psv'],
+                '페예노르트': ['페예노르트', 'feyenoord'],
+                '아약스': ['아약스', 'ajax'],
+                'AZ알크마르': ['AZ 알크마르', 'AZ알크마르', '알크마르', 'az alkmaar'],
+                '트벤테': ['트벤테', 'twente'],
+                '위트레흐트': ['위트레흐트', 'utrecht'],
+                '헤이렌베인': ['헤이렌베인', 'heerenveen'],
+                '스파르타': ['스파르타 로테르담', '스파르타', 'sparta rotterdam'],
+                '네이메헌': ['네이메헌', 'nec'],
+                '시타르트': ['포르투나 시타르트', '시타르트', 'sittard'],
+                '고어헤드': ['고어헤드 이글스', '고어헤드', 'go ahead eagles']
+            }
+
+            MLS_TEAM_ALIASES = {
+                '토론토 FC': ['토론토 FC', '토론토', 'toronto fc'],
+                'CF 몬트리올': ['CF 몬트리올', '몬트리올', 'montreal'],
+                '시카고 파이어': ['시카고 파이어', 'chicago fire'],
+                '뉴욕 시티 FC': ['뉴욕 시티 FC', '뉴욕 시티', 'new york city'],
+                '애틀랜타 유나이티드': ['애틀랜타 유나이티드', '애틀랜타', 'atlanta united'],
+                'FC 신시내티': ['FC 신시내티', '신시내티', 'cincinnati'],
+                '샬럿 FC': ['샬럿 FC', '샬럿', 'charlotte'],
+                'FC 댈러스': ['FC 댈러스', '댈러스', 'dallas'],
+                '인터 마이애미': ['인터 마이애미', '마이애미', 'inter miami'],
+                'DC 유나이티드': ['DC 유나이티드', 'dc united'],
+                '뉴잉글랜드 레볼루션': ['뉴잉글랜드 레볼루션', '뉴잉글랜드', 'new england'],
+                '시애틀 사운더스': ['시애틀 사운더스', '시애틀', 'seattle sounders'],
+                '올랜도 시티': ['올랜도 시티', '올랜도', 'orlando city'],
+                '콜럼버스 크루': ['콜럼버스 크루', '콜럼버스', 'columbus crew'],
+                '필라델피아 유니온': ['필라델피아 유니온', '필라델피아', 'philadelphia union'],
+                '레알 솔트레이크': ['레알 솔트레이크', '솔트레이크', 'real salt lake'],
+                '뉴욕 레드불스': ['뉴욕 레드불스', 'new york red bulls'],
+                '샌디에이고 FC': ['샌디에이고 FC', '샌디에이고', 'san diego'],
+                '오스틴 FC': ['오스틴 FC', '오스틴', 'austin fc'],
+                '내슈빌 SC': ['내슈빌 SC', '내슈빌', 'nashville'],
+                '미네소타 유나이티드': ['미네소타 유나이티드', '미네소타', 'minnesota united'],
+                '휴스턴 다이나모': ['휴스턴 다이나모', '휴스턴', 'houston dynamo'],
+                '스포팅 캔자스시티': ['스포팅 캔자스시티', '캔자스시티', 'sporting kansas city'],
+                '포틀랜드 팀버즈': ['포틀랜드 팀버즈', '포틀랜드', 'portland timbers'],
+                '콜로라도 래피즈': ['콜로라도 래피즈', '콜로라도', 'colorado rapids'],
+                '산호세 어스퀘이크스': ['산호세 어스퀘이크스', '산호세', 'san jose'],
+                '로스앤젤레스 FC (LAFC)': ['로스앤젤레스 FC (LAFC)', '로스앤젤레스 FC', 'LAFC', 'lafc'],
+                '밴쿠버 화이트캡스': ['밴쿠버 화이트캡스', '밴쿠버', 'vancouver']
             }
 
             def teams_match(t1: str, t2: str) -> bool:
@@ -603,7 +747,38 @@ class HistoricalAgentRouter:
                 '버뮤다': ['버뮤다', 'bermuda'],
                 '캐나다': ['캐나다', 'canada'],
                 '미국': ['미국', 'usa', 'united states'],
-                '멕시코': ['멕시코', 'mexico']
+                '멕시코': ['멕시코', 'mexico'],
+                '러시아': ['러시아', 'russia'],
+                '나이지리아': ['나이지리아', 'nigeria'],
+                '알제리': ['알제리', 'algeria'],
+                '니제르': ['니제르', 'niger'],
+                '베냉': ['베냉', 'benin'],
+                '콜롬비아': ['콜롬비아', 'colombia'],
+                '칠레': ['칠레', 'chile'],
+                '파라과이': ['파라과이', 'paraguay'],
+                '페루': ['페루', 'peru'],
+                '베네수엘라': ['베네수엘라', 'venezuela'],
+                '볼리비아': ['볼리비아', 'bolivia'],
+                '이집트': ['이집트', 'egypt'],
+                '남아공': ['남아공', '남아프리카공화국', 'south africa'],
+                '모로코': ['모로코', 'morocco'],
+                '세네갈': ['세네갈', 'senegal'],
+                '카메룬': ['카메룬', 'cameroon'],
+                '코트디부아르': ['코트디부아르', 'ivory coast'],
+                '튀니지': ['튀니지', 'tunisia'],
+                '말리': ['말리', 'mali'],
+                '가나': ['가나', 'ghana'],
+                '부르키나파소': ['부르키나파소', 'burkina faso'],
+                '우간다': ['우간다', 'uganda'],
+                '콩고': ['콩고', 'congo', 'congo dr'],
+                '바하마': ['바하마', 'bahamas'],
+                '몬트세랫': ['몬트세랫', 'montserrat'],
+                '바베이도스': ['바베이도스', 'barbados'],
+                '세인트루시아': ['세인트루시아', 'st. lucia', 'st lucia'],
+                '쿠바': ['쿠바', 'cuba'],
+                '푸에르토리코': ['푸에르토리코', 'puerto rico'],
+                '벨리즈': ['벨리즈', 'belize'],
+                '아루바': ['아루바', 'aruba']
             }
 
 
@@ -612,10 +787,14 @@ class HistoricalAgentRouter:
                 if not name: return []
                 clean_name = str(name).strip()
                 clean_base = clean_name.replace('_남자', '').replace('_여자', '').strip()
-                if clean_base in NATIONAL_TEAM_ALIASES:
-                    sfx = '_남자' if '_남자' in clean_name else ('_여자' if '_여자' in clean_name else '')
-                    aliases = [a + sfx for a in NATIONAL_TEAM_ALIASES[clean_base]] + NATIONAL_TEAM_ALIASES[clean_base]
-                    return list(set(aliases))
+                clean_lower = clean_base.lower()
+
+                # 국가대표팀 대소문자 및 영문/한글 상호 매핑
+                for nat_k, nat_aliases in NATIONAL_TEAM_ALIASES.items():
+                    if clean_lower == nat_k.lower() or any(clean_lower == a.lower() for a in nat_aliases):
+                        sfx = '_남자' if '_남자' in clean_name else ('_여자' if '_여자' in clean_name else '')
+                        aliases = [a + sfx for a in nat_aliases] + nat_aliases + [nat_k]
+                        return list(set(aliases))
                 for sp_key, aliases in SPAIN_TEAM_ALIASES.items():
                     if sp_key in clean_name or clean_name in sp_key:
                         return list(set([sp_key] + aliases))
@@ -628,6 +807,24 @@ class HistoricalAgentRouter:
                 for jl_key, aliases in JLEAGUE_TEAM_ALIASES.items():
                     if jl_key in clean_name or clean_name in jl_key:
                         return list(set([jl_key] + aliases))
+                for bd_key, aliases in BUNDESLIGA_TEAM_ALIASES.items():
+                    if bd_key in clean_name or clean_name in bd_key:
+                        return list(set([bd_key] + aliases))
+                for sa_key, aliases in SERIEA_TEAM_ALIASES.items():
+                    if sa_key in clean_name or clean_name in sa_key:
+                        return list(set([sa_key] + aliases))
+                for lg_key, aliases in LIGUE1_TEAM_ALIASES.items():
+                    if lg_key in clean_name or clean_name in lg_key:
+                        return list(set([lg_key] + aliases))
+                for ch_key, aliases in CHAMPIONSHIP_TEAM_ALIASES.items():
+                    if ch_key in clean_name or clean_name in ch_key:
+                        return list(set([ch_key] + aliases))
+                for ed_key, aliases in EREDIVISIE_TEAM_ALIASES.items():
+                    if ed_key in clean_name or clean_name in ed_key:
+                        return list(set([ed_key] + aliases))
+                for mls_key, aliases in MLS_TEAM_ALIASES.items():
+                    if mls_key in clean_name or clean_name in mls_key:
+                        return list(set([mls_key] + aliases))
                 for npb_key, aliases in NPB_TEAM_ALIASES.items():
                     if npb_key in clean_name or clean_name in npb_key:
                         return list(set([npb_key] + aliases))
@@ -701,10 +898,18 @@ class HistoricalAgentRouter:
                 league_patterns.extend(['%세리에%', '%SERIE%', '%이탈리아%'])
             elif league_code == 'BUNDESLIGA':
                 league_patterns.extend(['%분데스%', '%BUNDESLIGA%', '%독일%'])
+            elif league_code == 'LIGUE_1':
+                league_patterns.extend(['%리그1%', '%리그 1%', '%LIGUE%', '%프랑스%'])
+            elif league_code == 'CHAMPIONSHIP':
+                league_patterns.extend(['%챔피언십%', '%CHAMPIONSHIP%', '%잉글랜드 챔피언십%'])
+            elif league_code == 'EREDIVISIE':
+                league_patterns.extend(['%에레디비시%', '%EREDIVISIE%', '%네덜란드%'])
+            elif league_code == 'MLS':
+                league_patterns.extend(['%MLS%', '%메이저리그사커%', '%메이저리그 사커%', '%미국%'])
             elif league_code == 'K_LEAGUE':
                 league_patterns.extend(['%K리그%', '%K-LEAGUE%', '%K LEAGUE%', '%K League%', '%Korea%'])
             elif league_code == 'J_LEAGUE':
-                league_patterns.extend(['%J리그%', '%J.LEAGUE%', '%J1%', '%J2%', '%Japan%', '%일본%'])
+                league_patterns.extend(['%J리그%', '%J.LEAGUE%', '%J1%', '%J2%', '%Japan%', '%일본%', '%일본 FA컵%', '%일왕배%', '%르방컵%'])
             elif league_code == 'NATIONS_LEAGUE':
                 league_patterns.extend(['%네이션스%', '%NATIONS%'])
             elif league_code == 'INTERNATIONAL':
@@ -778,6 +983,11 @@ class HistoricalAgentRouter:
                 last_season_start_year = (ref_dt.year - 1) if ref_dt.month >= 8 else (ref_dt.year - 2)
                 min_date_threshold = f"{last_season_start_year}-08-01"
                 min_h2h_threshold = f"{last_season_start_year}-08-01"
+            elif sport_code == 'SOCCER':
+                # 사용자 요청: "최근결과란에 축구는 업데이트가 안되어있어 최근결과란 현시점부터 5년과거를 해당해"
+                # 현시점 기준 과거 5년치(2021년~현재 2026년) 공식 경기 결과 및 상대전적
+                min_date_threshold = f"{ref_dt.year - 5}-01-01"
+                min_h2h_threshold = f"{ref_dt.year - 5}-01-01"
             elif is_national_match or sport_code == 'VOLLEYBALL':
                 min_date_threshold = f"{ref_dt.year - 5}-01-01"
                 min_h2h_threshold = f"{ref_dt.year - 6}-01-01"
@@ -938,6 +1148,10 @@ class HistoricalAgentRouter:
                         cutoff_dt = datetime(last_season_start_year, 8, 1)
                         if cur_dt < cutoff_dt:
                             continue
+                    elif sp_code == 'SOCCER':
+                        # 사용자 요청: 축구는 최근결과란 현시점부터 5년과거(2021~2026) 해당
+                        if cur_dt.year < (ref_dt.year - 5):
+                            continue
                     elif sp_code == 'VOLLEYBALL':
                         if cur_dt.year < (ref_dt.year - 4):
                             continue
@@ -945,8 +1159,8 @@ class HistoricalAgentRouter:
                         if cur_dt.year < (ref_dt.year - 1):
                             continue
                     else:
-                        # 국가대표(A매치/네이션스리그/월드컵예선 등)는 경기 빈도가 적으므로 최근 4년 공식 경기 허용
-                        if cur_dt.year < (ref_dt.year - 4):
+                        # 국가대표(A매치/네이션스리그/월드컵예선 등)는 경기 빈도가 적으므로 최근 5년 공식 경기 허용
+                        if cur_dt.year < (ref_dt.year - 5):
                             continue
 
                     if d_str not in by_date:
@@ -996,6 +1210,10 @@ class HistoricalAgentRouter:
                         last_season_start_year = (ref_dt.year - 1) if ref_dt.month >= 8 else (ref_dt.year - 2)
                         cutoff_dt = datetime(last_season_start_year, 8, 1)
                         if cur_dt < cutoff_dt:
+                            continue
+                    elif sp_code == 'SOCCER':
+                        # 사용자 요청: 축구 맞대결도 최근 5년치(2021~2026) 해당
+                        if cur_dt.year < (ref_dt.year - 5):
                             continue
 
                     # 🛡️ 상대전적은 한 시즌에 10경기가 채워지지 않는 팀들(인터리그, 타 지구 등)이 있으므로,

@@ -3512,9 +3512,143 @@
       if (typeof INSTANT_STAR_PLAYERS !== 'undefined' && INSTANT_STAR_PLAYERS[noSp]) {
         return INSTANT_STAR_PLAYERS[noSp];
       }
+      if (typeof katakanaToHangul === 'function' && /[\u3040-\u30ff]/.test(raw)) {
+        try { return katakanaToHangul(raw); } catch (e) {}
+      }
       return raw;
     }
     window.formatPlayerKorean = formatPlayerKorean;
+
+    // 🈳 일본어 가타카나 음차 폴백 (player_ko_map.js 비동기 로드 전/오류 시 즉각 변환 보장)
+    function katakanaToHangul(text) {
+      if (!text) return '';
+      const SPECIAL_KANA_WORDS = {
+        'ソフトバンク': '소프트뱅크', 'ホークス': '호크스', 'オリックス': '오릭스', 'バファローズ': '버팔로즈',
+        'ロッテ': '롯데', 'マリーンズ': '마린스', 'ライオンズ': '라이온즈', '西武': '세이부',
+        'ファイターズ': '파이터즈', '日本ハム': '닛폰햄', 'イー글스': '이글스', 'イーグル스': '이글스', '楽天': '라쿠텐',
+        'ジャイアンツ': '자이언츠', '巨人': '요미우리', 'タイガース': '타이거스', '阪神': '한신',
+        'ドラゴンズ': '드래곤즈', '中日': '주니치', 'ベイスターズ': '베이스타즈', 'DeNA': 'DeNA',
+        'カープ': '카프', '広島': '히로시마', 'スワローズ': '스왈로즈', 'ヤクルト': '야쿠르트',
+        'スチュワート': '스튜어트', 'バウアー': '바우어', 'モイネロ': '모이넬로', 'オスナ': '오스나',
+        'ペルドモ': '페르도모', 'エスピノーザ': '에스피노자', 'マルティネス': '마르티네스', 'マルチネス': '마르티네스'
+      };
+      if (SPECIAL_KANA_WORDS[text]) return SPECIAL_KANA_WORDS[text];
+
+      let s = String(text);
+      s = s.replace(/[\u3041-\u3096]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
+
+      const DIGRAPHS = {
+        'ヴァ': '바', 'ヴィ': '비', 'ヴ': '브', 'ヴェ': '베', 'ヴォ': '보',
+        'キャ': '캬', 'キュ': '큐', 'キョ': '쿄',
+        'ギャ': '갸', 'ギュ': '규', 'ギョ': '교',
+        'シャ': '샤', 'シュ': '슈', 'シェ': '셰', 'ショ': '쇼',
+        'ジャ': '자', 'ジュ': '주', 'ジェ': '제', 'ジョ': '조',
+        'チャ': '차', 'チュ': '추', 'チェ': '체', 'チョ': '초',
+        'ニャ': '냐', 'ニュ': '뉴', 'ニョ': '뇨',
+        'ヒャ': '햐', 'ヒュ': '휴', 'ヒョ': '효',
+        'ビャ': '뱌', 'ビュ': '뷰', 'ビョ': '뵤',
+        'ピャ': '퍄', 'ピュ': '퓨', 'ピョ': '표',
+        'ミャ': '먀', 'ミュ': '뮤', 'ミョ': '묘',
+        'リャ': '랴', 'リュ': '류', 'リョ': '료',
+        'ティ': '티', 'ディ': '디', 'トゥ': '투', 'ドゥ': '두',
+        'ファ': '파', 'フィ': '피', 'フェ': '페', 'フォ': '포', 'フュ': '퓨',
+        'ウィ': '위', 'ウェ': '웨', 'ウォ': '워',
+        'ツァ': '차', 'ツィ': '치', 'ツェ': '체', 'ツォ': '초',
+        'クァ': '콰', 'クィ': '퀴', 'クェ': '퀘', 'クォ': '쿼',
+        'グァ': '과', 'グィ': '귀', 'グェ': '궤', 'グォ': '궈',
+        'スチュ': '스튜', 'イェ': '예'
+      };
+
+      const MONOGRAPHS = {
+        'ア': '아', 'イ': '이', 'ウ': '우', 'エ': '에', 'オ': '오',
+        'カ': '카', 'キ': '키', 'ク': '쿠', 'ケ': '케', 'コ': '코',
+        'ガ': '가', 'ギ': '기', 'グ': '구', 'ゲ': '게', 'ゴ': '고',
+        'サ': '사', 'シ': '시', 'ス': '스', 'セ': '세', 'ソ': '소',
+        'ザ': '자', 'ジ': '지', 'ズ': '즈', 'ゼ': '제', 'ゾ': '조',
+        'タ': '타', 'チ': '치', 'ツ': '츠', 'テ': '테', 'ト': '토',
+        'ダ': '다', 'ヂ': '지', 'ヅ': '즈', 'デ': '데', 'ド': '도',
+        'ナ': '나', 'ニ': '니', 'ヌ': '누', 'ネ': '네', 'ノ': '노',
+        'ハ': '하', 'ヒ': '히', 'フ': '후', 'ヘ': '헤', 'ホ': '호',
+        'バ': '바', 'ビ': '비', 'ブ': '부', 'ベ': '베', 'ボ': '보',
+        'パ': '파', 'ピ': '피', 'プ': '푸', 'ペ': '페', 'ポ': '포',
+        'マ': '마', 'ミ': '미', 'ム': '무', 'メ': '메', '모': '모',
+        'ヤ': '야', 'ユ': '유', 'ヨ': '요',
+        'ラ': '라', 'リ': '리', 'ル': '루', 'レ': '레', 'ロ': '로',
+        'ワ': '와', 'ヲ': '오',
+        'ァ': '아', 'ィ': '이', 'ゥ': '우', 'ェ': '에', 'ォ': '오',
+        'ッ': 'ㅅ', '・': ' ', '＝': '-', '=': '-'
+      };
+
+      const JONG = ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', 'ㄺ', 'ㄻ', 'ㄼ', 'ㄽ', 'ㄾ', 'ㄿ', 'ㅀ', 'ㅁ', 'ㅂ', 'ㅄ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+
+      function attachJong(charStr, jongChar) {
+        if (!charStr || charStr.length !== 1) return charStr + jongChar;
+        const code = charStr.charCodeAt(0);
+        if (code >= 0xAC00 && code <= 0xD7A3) {
+          const sylIdx = code - 0xAC00;
+          const jongIdx = sylIdx % 28;
+          const jPos = JONG.indexOf(jongChar);
+          if (jongIdx === 0 && jPos > 0) {
+            return String.fromCharCode(code + jPos);
+          }
+        }
+        return charStr + jongChar;
+      }
+
+      const res = [];
+      let i = 0;
+      const n = s.length;
+      while (i < n) {
+        if (i + 2 < n && DIGRAPHS[s.slice(i, i + 3)]) {
+          res.push(DIGRAPHS[s.slice(i, i + 3)]);
+          i += 3;
+        } else if (i + 1 < n && DIGRAPHS[s.slice(i, i + 2)]) {
+          res.push(DIGRAPHS[s.slice(i, i + 2)]);
+          i += 2;
+        } else if (s[i] === 'ン') {
+          if (res.length > 0 && res[res.length - 1].length === 1) {
+            const lastCode = res[res.length - 1].charCodeAt(0);
+            if (lastCode >= 0xAC00 && lastCode <= 0xD7A3 && (lastCode - 0xAC00) % 28 === 0) {
+              res[res.length - 1] = attachJong(res[res.length - 1], 'ㄴ');
+            } else {
+              res.push('ㄴ');
+            }
+          } else {
+            res.push('엔');
+          }
+          i += 1;
+        } else if (s[i] === 'ッ') {
+          if (i + 1 < n) {
+            const nextC = s[i + 1];
+            const batchim = 'カキクケコガギグゲゴ'.includes(nextC) ? 'ㄱ' : ('パピプペポバビブベボ'.includes(nextC) ? 'ㅂ' : 'ㅅ');
+            if (res.length > 0 && res[res.length - 1].length === 1) {
+              const lastCode = res[res.length - 1].charCodeAt(0);
+              if (lastCode >= 0xAC00 && lastCode <= 0xD7A3 && (lastCode - 0xAC00) % 28 === 0) {
+                res[res.length - 1] = attachJong(res[res.length - 1], batchim);
+              } else {
+                res.push('읏');
+              }
+            } else {
+              res.push('읏');
+            }
+          } else {
+            res.push('스');
+          }
+          i += 1;
+        } else if (s[i] === 'ー') {
+          i += 1;
+        } else if (MONOGRAPHS[s[i]]) {
+          res.push(MONOGRAPHS[s[i]]);
+          i += 1;
+        } else {
+          res.push(s[i]);
+          i += 1;
+        }
+      }
+
+      return res.join('');
+    }
+    window.katakanaToHangul = katakanaToHangul;
 
     function formatAnalysisText(text) { return text || ''; }
     window.formatAnalysisText = formatAnalysisText;
@@ -8709,6 +8843,10 @@ function getFullModalMatchList() {
       const aName = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : (m.away_team_name || '원정팀');
       const hFlagImg = getTeamFlagImg(m.home_team_name, 18, 12);
       const aFlagImg = getTeamFlagImg(m.away_team_name, 18, 12);
+      const hFifaBadge = (typeof getFifaRankBadgeHtml === 'function') ? getFifaRankBadgeHtml(m.home_team_name, { fontSize: '0.68rem' }) : '';
+      const aFifaBadge = (typeof getFifaRankBadgeHtml === 'function') ? getFifaRankBadgeHtml(m.away_team_name, { fontSize: '0.68rem' }) : '';
+      const hNameWithFifa = `${hName}${hFifaBadge}`;
+      const aNameWithFifa = `${aName}${aFifaBadge}`;
 
       const soccerData = m.soccer_lineup || (m.details && m.details.team_stats && m.details.team_stats.soccer_lineup) || {};
       const hData = soccerData.home || {};
@@ -9120,7 +9258,7 @@ function getFullModalMatchList() {
             <div class="d-flex align-items-center justify-content-between mb-1">
               <div class="d-flex align-items-center gap-1.5 flex-wrap">
                 <span style="font-size:1.10rem; font-weight:800; color:#0f172a; letter-spacing:-0.3px;">
-                  ${hFlagImg} ${hName} <span style="font-size:0.90rem; font-weight:600; color:#64748b; margin:0 4px;">vs</span> ${aName} ${aFlagImg}
+                  ${hFlagImg} ${hNameWithFifa} <span style="font-size:0.90rem; font-weight:600; color:#64748b; margin:0 4px;">vs</span> ${aNameWithFifa} ${aFlagImg}
                 </span>
                 ${isLiveOrFinished
                   ? `<span class="badge ${m.status === 'LIVE' ? 'bg-danger' : 'bg-secondary'} text-white fw-bold" style="font-size:0.65rem; padding:2px 6px;">${m.status === 'LIVE' ? 'LIVE 진행중' : '경기종료'}</span>`
@@ -9161,10 +9299,10 @@ function getFullModalMatchList() {
             <!-- 홈 vs 원정 팀명 헤더 -->
             <div class="d-flex text-center fw-bold" style="font-size:0.75rem; border-top:1px solid #cbd5e1; border-bottom:1.5px solid #cbd5e1;">
               <div class="py-1.5 px-2 text-truncate" style="width:50%; background:#fecaca; color:#991b1b; border-right:1px solid #cbd5e1;">
-                ${hName}
+                ${hNameWithFifa}
               </div>
               <div class="py-1.5 px-2 text-truncate" style="width:50%; background:#bfdbfe; color:#1e40af;">
-                ${aName}
+                ${aNameWithFifa}
               </div>
             </div>
 
@@ -16700,6 +16838,276 @@ function updateSlimPanel(matchId, type, contentHtml) {
       return clean.trim() || clean;
     }
 
+    // =============================================================
+    // 🏆 FIFA 공식 세계 랭킹 데이터베이스 (남자 축구 국가대표팀 211개국 완벽 지원)
+    // =============================================================
+    const FIFA_WORLD_RANKINGS = {
+      // 1 ~ 30
+      '아르헨티나': 1, 'Argentina': 1,
+      '프랑스': 2, 'France': 2,
+      '스페인': 3, 'Spain': 3,
+      '잉글랜드': 4, 'England': 4,
+      '브라질': 5, 'Brazil': 5,
+      '벨기에': 6, 'Belgium': 6,
+      '네덜란드': 7, 'Netherlands': 7,
+      '포르투갈': 8, 'Portugal': 8,
+      '콜롬비아': 9, 'Colombia': 9,
+      '이탈리아': 10, 'Italy': 10,
+      '우루과이': 11, 'Uruguay': 11,
+      '크로아티아': 12, 'Croatia': 12,
+      '독일': 13, 'Germany': 13,
+      '모로코': 14, 'Morocco': 14,
+      '스위스': 15, 'Switzerland': 15,
+      '일본': 16, 'Japan': 16,
+      '미국': 17, 'USA': 17, 'United States': 17,
+      '멕시코': 18, 'Mexico': 18,
+      '이란': 19, 'Iran': 19,
+      '덴마크': 20, 'Denmark': 20,
+      '세네갈': 21, 'Senegal': 21,
+      '오스트리아': 22, 'Austria': 22,
+      '대한민국': 23, '한국': 23, 'South Korea': 23, 'Korea Republic': 23, 'Korea': 23,
+      '호주': 24, 'Australia': 24,
+      '우크라이나': 25, 'Ukraine': 25,
+      '튀르키예': 26, '터키': 26, 'Turkey': 26, 'Türkiye': 26,
+      '에콰도르': 27, 'Ecuador': 27,
+      '스웨덴': 28, 'Sweden': 28,
+      '웨일스': 29, 'Wales': 29,
+      '폴란드': 30, 'Poland': 30,
+
+      // 31 ~ 60
+      '헝가리': 31, 'Hungary': 31,
+      '세르비아': 32, 'Serbia': 32,
+      '러시아': 33, 'Russia': 33,
+      '이집트': 34, 'Egypt': 34,
+      '코트디부아르': 35, 'Ivory Coast': 35, "Côte d'Ivoire": 35,
+      '나이지리아': 36, 'Nigeria': 36,
+      '카타르': 37, 'Qatar': 37,
+      '튀니지': 38, 'Tunisia': 38,
+      '칠레': 39, 'Chile': 39,
+      '체코': 40, 'Czech Republic': 40, 'Czechia': 40,
+      '알제리': 41, 'Algeria': 41,
+      '캐나다': 42, 'Canada': 42,
+      '페루': 43, 'Peru': 43,
+      '노르웨이': 44, 'Norway': 44,
+      '슬로바키아': 45, 'Slovakia': 45,
+      '파나마': 46, 'Panama': 46,
+      '루마니아': 47, 'Romania': 47,
+      '스코틀랜드': 48, 'Scotland': 48,
+      '카메룬': 49, 'Cameroon': 49,
+      '코스타리카': 50, 'Costa Rica': 50,
+      '말리': 51, 'Mali': 51,
+      '그리스': 52, 'Greece': 52,
+      '베네수엘라': 53, 'Venezuela': 53,
+      '자메이카': 54, 'Jamaica': 54,
+      '슬로베니아': 55, 'Slovenia': 55,
+      '파라과이': 56, 'Paraguay': 56,
+      '사우디아라비아': 57, '사우디': 57, 'Saudi Arabia': 57,
+      '남아프리카공화국': 58, '남아공': 58, 'South Africa': 58,
+      '콩고민주공화국': 59, 'DR 콩고': 59, 'DR콩고': 59, 'Congo DR': 59, 'Democratic Republic of the Congo': 59,
+      '우즈베키스탄': 60, 'Uzbekistan': 60, '우즈벡': 60,
+
+      // 61 ~ 100
+      '핀란드': 61, 'Finland': 61,
+      '아일랜드': 62, 'Republic of Ireland': 62, 'Ireland': 62,
+      '부르키나파소': 63, 'Burkina Faso': 63,
+      '알바니아': 64, 'Albania': 64,
+      '북마케도니아': 65, 'North Macedonia': 65, '마케도니아': 65,
+      '조지아': 66, 'Georgia': 66,
+      '아이슬란드': 67, 'Iceland': 67,
+      '카보베르데': 68, 'Cape Verde': 68, 'Cabo Verde': 68,
+      '요르단': 69, 'Jordan': 69,
+      '아랍에미리트': 69, 'UAE': 69, 'United Arab Emirates': 69,
+      '보스니아 헤르체고비나': 70, '보스니아': 70, 'Bosnia and Herzegovina': 70, 'Bosnia': 70,
+      '몬테네그로': 71, 'Montenegro': 71,
+      '북아일랜드': 72, 'Northern Ireland': 72,
+      '기니': 73, 'Guinea': 73,
+      '온두라스': 74, 'Honduras': 74,
+      '가나': 75, 'Ghana': 75,
+      '앙골라': 76, 'Angola': 76,
+      '바레인': 77, 'Bahrain': 77,
+      '오만': 78, 'Oman': 78,
+      '이스라엘': 79, 'Israel': 79,
+      '엘살바도르': 80, 'El Salvador': 80,
+      '볼리비아': 81, 'Bolivia': 81,
+      '가봉': 82, 'Gabon': 82,
+      '불가리아': 83, 'Bulgaria': 83,
+      '룩셈부르크': 84, 'Luxembourg': 84,
+      '우간다': 85, 'Uganda': 85,
+      '잠비아': 86, 'Zambia': 86,
+      '아이티': 87, 'Haiti': 87,
+      '퀴라소': 88, 'Curaçao': 88, 'Curacao': 88,
+      '아르메니아': 89, 'Armenia': 89,
+      '벨라루스': 90, 'Belarus': 90,
+      '베냉': 91, 'Benin': 91,
+      '중국': 92, 'China': 92, 'China PR': 92,
+      '시리아': 93, 'Syria': 93,
+      '기니비사우': 94, 'Guinea-Bissau': 94,
+      '팔레스타인': 95, 'Palestine': 95,
+      '태국': 96, 'Thailand': 96,
+      '뉴질랜드': 97, 'New Zealand': 97,
+      '코소보': 98, 'Kosovo': 98,
+      '키르기스스탄': 99, 'Kyrgyzstan': 99, '키르기스': 99,
+      '타지키스탄': 100, 'Tajikistan': 100,
+
+      // 101 ~ 150
+      '트리니다드 토바고': 101, 'Trinidad and Tobago': 101,
+      '케냐': 102, 'Kenya': 102,
+      '모잠비크': 103, 'Mozambique': 103,
+      '마다가스카르': 104, 'Madagascar': 104,
+      '카자흐스탄': 105, 'Kazakhstan': 105,
+      '과테말라': 106, 'Guatemala': 106,
+      '탄자니아': 107, 'Tanzania': 107,
+      '코모로': 108, '코모': 108, 'Comoros': 108,
+      '아제르바이잔': 109, 'Azerbaijan': 109,
+      '에스토니아': 110, 'Estonia': 110,
+      '토고': 111, 'Togo': 111,
+      '수단': 112, 'Sudan': 112,
+      '리비아': 113, 'Libya': 113,
+      '레바논': 114, 'Lebanon': 114,
+      '베트남': 115, 'Vietnam': 115,
+      '적도기니': 116, 'Equatorial Guinea': 116,
+      '짐바브웨': 117, 'Zimbabwe': 117,
+      '나미비아': 118, 'Namibia': 118,
+      '인도네시아': 119, 'Indonesia': 119,
+      '니제르': 120, 'Niger': 120,
+      '북한': 121, 'North Korea': 121, 'Korea DPR': 121,
+      '시에라리온': 122, 'Sierra Leone': 122,
+      '감비아': 123, 'Gambia': 123,
+      '르완다': 124, 'Rwanda': 124,
+      '말라위': 125, 'Malawi': 125,
+      '인도': 126, 'India': 126,
+      '키프로스': 127, 'Cyprus': 127,
+      '중앙아프리카공화국': 128, '중앙아프리카': 128, 'Central African Republic': 128,
+      '말레이시아': 129, 'Malaysia': 129,
+      '니카라과': 130, 'Nicaragua': 130,
+      '튀르크메니스탄': 131, '투르크메니스탄': 131, 'Turkmenistan': 131,
+      '페로제도': 132, '파로에제도': 132, 'Faroe Islands': 132,
+      '수리남': 133, 'Suriname': 133,
+      '필리핀': 134, 'Philippines': 134,
+      '라트비아': 135, 'Latvia': 135,
+      '쿠웨이트': 136, 'Kuwait': 136,
+      '리투아니아': 137, 'Lithuania': 137,
+      '도미니카공화국': 138, 'Dominican Republic': 138,
+      '부룬디': 139, 'Burundi': 139,
+      '앤티가 바부다': 140, 'Antigua and Barbuda': 140,
+      '세인트키츠 네비스': 141, 'St. Kitts and Nevis': 141,
+      '라이베리아': 142, 'Liberia': 142,
+      '에티오피아': 144, 'Ethiopia': 144,
+      '보츠와나': 145, 'Botswana': 145,
+      '레소토': 146, 'Lesotho': 146,
+      '에스와티니': 147, 'Eswatini': 147,
+      '몰도바': 148, 'Moldova': 148,
+      '예멘': 149, 'Yemen': 149,
+      '싱가포르': 150, 'Singapore': 150,
+
+      // 151 ~ 211
+      '콩고': 151, 'Congo': 151,
+      '푸에르토리코': 152, 'Puerto Rico': 152,
+      '홍콩': 153, 'Hong Kong': 153,
+      '가이아나': 154, 'Guyana': 154,
+      '미얀마': 155, 'Myanmar': 155,
+      '아프가니스탄': 156, 'Afghanistan': 156,
+      '안도라': 157, 'Andorra': 157,
+      '몰디브': 158, 'Maldives': 158,
+      '세인트빈센트 그레나딘': 159, 'St. Vincent and the Grenadines': 159,
+      '바누아투': 160, 'Vanuatu': 160,
+      '파푸아뉴기니': 161, 'Papua New Guinea': 161,
+      '몬트세랫': 162, 'Montserrat': 162,
+      '몰타': 163, 'Malta': 163,
+      '피지': 164, 'Fiji': 164,
+      '쿠바': 165, 'Cuba': 165,
+      '세인트루시아': 166, 'St. Lucia': 166,
+      '버뮤다': 167, 'Bermuda': 167,
+      '바베이도스': 168, 'Barbados': 168,
+      '캄보디아': 169, 'Cambodia': 169,
+      '그레나다': 170, 'Grenada': 170,
+      '네팔': 171, 'Nepal': 171,
+      '차드': 172, 'Chad': 172,
+      '모리셔스': 173, 'Mauritius': 173,
+      '방글라데시': 174, 'Bangladesh': 174,
+      '벨리즈': 175, 'Belize': 175,
+      '라오스': 176, 'Laos': 176,
+      '남수단': 177, 'South Sudan': 177,
+      '부탄': 178, 'Bhutan': 178,
+      '몽골': 179, 'Mongolia': 179,
+      '상투메 프린시페': 180, 'Sao Tome and Principe': 180,
+      '마르티니크': 181, 'Martinique': 181,
+      '도미니카': 182, '도미니카 연방': 182, 'Dominica': 182,
+      '사모아': 183, 'Samoa': 183,
+      '브루나이': 184, 'Brunei': 184,
+      '지브롤터': 185, 'Gibraltar': 185,
+      '아루바': 186, 'Aruba': 186,
+      '리히텐슈타인': 187, 'Liechtenstein': 187,
+      '동티모르': 188, 'Timor-Leste': 188,
+      '케이맨 제도': 189, 'Cayman Islands': 189,
+      '소말리아': 190, 'Somalia': 190,
+      '세이셸': 191, 'Seychelles': 191,
+      '지부티': 192, 'Djibouti': 192,
+      '파키스탄': 193, 'Pakistan': 193,
+      '통가': 194, 'Tonga': 194,
+      '에리트레아': 195, 'Eritrea': 195,
+      '바하마': 196, 'Bahamas': 196,
+      '스리랑카': 197, 'Sri Lanka': 197,
+      '과들루프': 198, 'Guadeloupe': 198,
+      '괌': 200, 'Guam': 200,
+      '터크스 케이커스': 202, 'Turks and Caicos Islands': 202,
+      '보네르': 203, 'Bonaire': 203,
+      '세인트마틴': 204, 'St. Martin': 204,
+      '신트마르턴': 205, 'Sint Maarten': 205,
+      '프랑스령 기아나': 206, 'French Guiana': 206,
+      '앵귈라': 207, 'Anguilla': 207,
+      '영국령 버진아일랜드': 208, 'British Virgin Islands': 208,
+      '미국령 버진아일랜드': 209, 'US Virgin Islands': 209,
+      '산마리노': 210, 'San Marino': 210
+    };
+
+    function getFifaRank(teamName) {
+      if (!teamName) return null;
+      let clean = String(teamName).trim();
+      clean = clean.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '').trim();
+      clean = clean.replace(/\s*(축구대표팀|국가대표|대표팀|A대표팀)$/g, '').trim();
+
+      if (FIFA_WORLD_RANKINGS[clean]) return FIFA_WORLD_RANKINGS[clean];
+      if (FIFA_WORLD_RANKINGS[teamName.trim()]) return FIFA_WORLD_RANKINGS[teamName.trim()];
+
+      const lowerClean = clean.toLowerCase();
+      for (const [k, rank] of Object.entries(FIFA_WORLD_RANKINGS)) {
+        if (k.length >= 2 && rank) {
+          const lowerK = k.toLowerCase();
+          if (lowerClean === lowerK || lowerClean.startsWith(lowerK) || (clean.length > 2 && lowerClean.includes(lowerK))) {
+            if (!clean.includes('FC') && !clean.includes('유나이티드') && !clean.includes('시티')) {
+              return rank;
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    function getFifaRankBadgeHtml(teamName, options = {}) {
+      const rank = getFifaRank(teamName);
+      if (!rank) return '';
+      const fontSize = options.fontSize || '0.70rem';
+      const marginClass = options.marginClass || 'ms-1';
+      return `<span class="badge ${marginClass} fw-bold" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:${fontSize}; vertical-align:middle; display:inline-flex; align-items:center; gap:2px; padding:1px 5px; border-radius:4px; font-weight:700;"><i class="bi bi-trophy-fill" style="font-size:0.65em; color:#d97706;"></i>FIFA ${rank}위</span>`;
+    }
+
+    function formatTeamNameWithFifa(teamName, isSoccer = true, asBadge = true, badgeOptions = {}) {
+      const baseName = (typeof formatTeamName === 'function') ? formatTeamName(teamName) : (teamName || '');
+      if (!isSoccer) return baseName;
+      const rank = getFifaRank(teamName);
+      if (!rank) return baseName;
+      if (asBadge) {
+        return `${baseName} ${getFifaRankBadgeHtml(teamName, badgeOptions)}`;
+      }
+      return `${baseName} (FIFA ${rank}위)`;
+    }
+
+    window.FIFA_WORLD_RANKINGS = FIFA_WORLD_RANKINGS;
+    window.getFifaRank = getFifaRank;
+    window.getFifaRankBadgeHtml = getFifaRankBadgeHtml;
+    window.formatTeamNameWithFifa = formatTeamNameWithFifa;
+
     function toggleSlimAccordion(matchId, type) {
       if (type === 'history' || type === 'vvip') {
         // 🔒 VVIP 전용 - 운영자(whathehas)만 열람 허용, 일반 유저는 클릭 차단
@@ -18024,7 +18432,19 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const spIcon = match.sport_code === 'BASEBALL' ? '⚾' : (match.sport_code === 'BASKETBALL' ? '🏀' : (match.sport_code === 'VOLLEYBALL' ? '🏐' : '⚽'));
       if (numBadge) numBadge.innerText = `NO. ${match.id}`;
       if (leagueBadge) leagueBadge.innerText = `${spIcon} ${match.league_name || match.sport_code}`;
-      if (headTitle) headTitle.innerText = `${formatTeamName(match.home_team_name)} VS ${formatTeamName(match.away_team_name)}`;
+      if (headTitle) {
+        if (match.sport_code === 'SOCCER') {
+          const hNameWithRank = (typeof formatTeamNameWithFifa === 'function')
+            ? formatTeamNameWithFifa(match.home_team_name, true, true, { fontSize: '0.74rem' })
+            : formatTeamName(match.home_team_name);
+          const aNameWithRank = (typeof formatTeamNameWithFifa === 'function')
+            ? formatTeamNameWithFifa(match.away_team_name, true, true, { fontSize: '0.74rem' })
+            : formatTeamName(match.away_team_name);
+          headTitle.innerHTML = `${hNameWithRank} <span class="text-muted mx-1" style="font-size:0.85rem; font-weight:600;">VS</span> ${aNameWithRank}`;
+        } else {
+          headTitle.innerText = `${formatTeamName(match.home_team_name)} VS ${formatTeamName(match.away_team_name)}`;
+        }
+      }
       if (venueDate) venueDate.innerText = `${formatKSTDateTime(match.match_date)} [ ${match.stadium || '홈구장'} ]`;
 
       window._currentOpenDetailMatch = match;
@@ -18954,6 +19374,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
       let awayRecent = Array.isArray(hist.away_recent) ? window.dedupeRecentMatches(hist.away_recent) : [];
       const hName = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : (m.home_team_name || '홈팀');
       const aName = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : (m.away_team_name || '원정팀');
+      const hFifaBadge = (typeof getFifaRankBadgeHtml === 'function') ? getFifaRankBadgeHtml(m.home_team_name, { fontSize: '0.68rem' }) : '';
+      const aFifaBadge = (typeof getFifaRankBadgeHtml === 'function') ? getFifaRankBadgeHtml(m.away_team_name, { fontSize: '0.68rem' }) : '';
+      const hNameWithFifa = `${hName}${hFifaBadge}`;
+      const aNameWithFifa = `${aName}${aFifaBadge}`;
       const leagueTitle = m.league_name || '축구 분석';
 
       // H2H가 비어있을 경우 1차: 최근 10경기에서 상호 맞대결 추출, 2차: buildDynamicH2HList 완벽 연동
@@ -19598,9 +20022,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 <strong class="text-dark" style="font-size:0.84rem;">축구 5대 AI 전술 듀얼 게이지 비교 (100점 만점)</strong>
               </div>
               <div class="d-flex gap-2 small fw-bold" style="font-size:0.70rem;">
-                <span class="text-danger">🔴 [홈] ${hName}</span>
+                <span class="text-danger">🔴 [홈] ${hNameWithFifa}</span>
                 <span class="text-muted">vs</span>
-                <span class="text-primary">🔵 [원정] ${aName}</span>
+                <span class="text-primary">🔵 [원정] ${aNameWithFifa}</span>
               </div>
             </div>
 
@@ -19610,9 +20034,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 <thead style="background:#0f172a; color:#ffffff;">
                   <tr style="height:28px;">
                     <th style="width:23%; text-align:center; color:#e2e8f0; font-weight:700;">전술 핵심 지표</th>
-                    <th style="width:23%; text-align:center; color:#f87171; font-weight:800;">🔴 [홈] ${hName}</th>
+                    <th style="width:23%; text-align:center; color:#f87171; font-weight:800;">🔴 [홈] ${hNameWithFifa}</th>
                     <th style="width:24%; text-align:center; color:#cbd5e1; font-weight:700;">⚔️ 전술 격돌 게이지</th>
-                    <th style="width:23%; text-align:center; color:#60a5fa; font-weight:800;">🔵 [원정] ${aName}</th>
+                    <th style="width:23%; text-align:center; color:#60a5fa; font-weight:800;">🔵 [원정] ${aNameWithFifa}</th>
                     <th style="width:7%; text-align:center; color:#e2e8f0; font-weight:700;">우세</th>
                   </tr>
                 </thead>
@@ -19704,7 +20128,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
               <div class="col-12 col-lg-6" id="soccerRecentColHome_${m.id}">
                 <div class="p-2 rounded-2 bg-white border shadow-xs h-100" style="border-color:#cbd5e1;">
                   <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom" style="border-color:#fecaca !important;">
-                    <span class="fw-bold text-danger" style="font-size:0.78rem;">🔴 ${hName} ${homeRecent.length > 0 ? `최근 ${homeRecent.length}경기 전적` : '최근 공식 전적'}</span>
+                    <span class="fw-bold text-danger" style="font-size:0.78rem;">🔴 ${hNameWithFifa} ${homeRecent.length > 0 ? `최근 ${homeRecent.length}경기 전적` : '최근 공식 전적'}</span>
                     ${homeRecent.length > 0 ? `
                       <span class="badge bg-light text-danger border border-danger-subtle px-1.5 py-0.5" style="font-size:0.64rem;">
                         ${hWins}승 ${hDraws}무 ${hLosses}패 (${hWinRate}%)
@@ -19754,7 +20178,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
               <div class="col-12 col-lg-6" id="soccerRecentColAway_${m.id}">
                 <div class="p-2 rounded-2 bg-white border shadow-xs h-100" style="border-color:#cbd5e1;">
                   <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom" style="border-color:#bfdbfe !important;">
-                    <span class="fw-bold text-primary" style="font-size:0.78rem;">🔵 ${aName} ${awayRecent.length > 0 ? `최근 ${awayRecent.length}경기 전적` : '최근 공식 전적'}</span>
+                    <span class="fw-bold text-primary" style="font-size:0.78rem;">🔵 ${aNameWithFifa} ${awayRecent.length > 0 ? `최근 ${awayRecent.length}경기 전적` : '최근 공식 전적'}</span>
                     ${awayRecent.length > 0 ? `
                       <span class="badge bg-light text-primary border border-primary-subtle px-1.5 py-0.5" style="font-size:0.64rem;">
                         ${aWins}승 ${aDraws}무 ${aLosses}패 (${aWinRate}%)
@@ -19890,141 +20314,104 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const otH = quarters['OT']?.home ?? '-';
       const otA = quarters['OT']?.away ?? '-';
 
-      // 2. 5인 스타팅 라인업 로스터
-      const isKorean = /KBL|WKBL|한국|농구/i.test(leagueTitle) || /KCC|DB|SK|LG|KT|삼성|정관장|가스공사|모비스|소노|우리은행|KB|하나|신한|BNK/i.test(hName + aName);
-      const isWomen = /WKBL|여자/i.test(leagueTitle) || /우리은행|KB스타즈|삼성생명|하나원큐|신한은행|BNK썸/i.test(hName + aName);
+      // 2. 5인 스타팅 라인업 로스터 (실제 공식 발표 데이터만 추출, 더미 데이터 완전 제거)
+      const defaultPositions = ['PG', 'SG', 'SF', 'PF', 'C'];
+      const defaultBadges = ['포인트가드', '슈팅가드', '스몰포워드', '파워포워드', '센터'];
 
-      function getBballRoster(tName) {
-        if (isWomen) {
-          if (tName.includes('우리은행')) return [
-            { pos: 'PG', name: '이명관', stat: '8.4점 4.2어시', badge: 'PG 리딩' },
-            { pos: 'SG', name: '나윤정', stat: '9.2점 3점 36%', badge: 'SG 3점슈터' },
-            { pos: 'SF', name: '김단비', stat: '18.5점 8.2리바', badge: 'SF 올라운더' },
-            { pos: 'PF', name: '한엄지', stat: '7.8점 5.5리바', badge: 'PF 포워드' },
-            { pos: 'C', name: '스미스', stat: '14.2점 10.4리바', badge: 'C 골밑장악' }
-          ];
-          if (tName.includes('KB') || tName.includes('스타즈')) return [
-            { pos: 'PG', name: '허예은', stat: '11.2점 6.5어시', badge: 'PG 야전사령관' },
-            { pos: 'SG', name: '강이슬', stat: '16.4점 3점 40%', badge: 'SG 국대슈터' },
-            { pos: 'SF', name: '염윤아', stat: '8.1점 4.8리바', badge: 'SF 수비에이스' },
-            { pos: 'PF', name: '김소담', stat: '6.5점 4.2리바', badge: 'PF 스트레치' },
-            { pos: 'C', name: '박지수', stat: '21.8점 15.2리바', badge: 'C 국보센터' }
-          ];
-          return [
-            { pos: 'PG', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '포인트가드', isPending: true },
-            { pos: 'SG', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '슈팅가드', isPending: true },
-            { pos: 'SF', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '스몰포워드', isPending: true },
-            { pos: 'PF', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '파워포워드', isPending: true },
-            { pos: 'C', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '센터', isPending: true }
-          ];
-        } else if (isKorean) {
-          if (tName.includes('KCC')) return [
-            { pos: 'PG', name: '정창영', stat: '8.5점 4.2어시', badge: 'PG 노련미' },
-            { pos: 'SG', name: '허웅', stat: '16.8점 3점 39%', badge: 'SG 슈퍼스타' },
-            { pos: 'SF', name: '최준용', stat: '14.5점 6.5리바', badge: 'SF 올라운더' },
-            { pos: 'PF', name: '송교창', stat: '13.2점 5.8리바', badge: 'PF 기동력' },
-            { pos: 'C', name: '라건아', stat: '15.6점 10.8리바', badge: 'C 골밑폭격' }
-          ];
-          if (tName.includes('SK')) return [
-            { pos: 'PG', name: '김선형', stat: '15.2점 5.8어시', badge: 'PG 플래시' },
-            { pos: 'SG', name: '오재현', stat: '11.4점 3점 35%', badge: 'SG 수비수' },
-            { pos: 'SF', name: '안영준', stat: '14.8점 5.6리바', badge: 'SF 에이스' },
-            { pos: 'PF', name: '최부경', stat: '7.8점 6.2리바', badge: 'PF 궂은일' },
-            { pos: 'C', name: '자밀 워니', stat: '23.4점 11.5리바', badge: 'C KBL 1옵션' }
-          ];
-          if (tName.includes('DB')) return [
-            { pos: 'PG', name: '유현준', stat: '7.4점 4.8어시', badge: 'PG 패서' },
-            { pos: 'SG', name: '이선 알바노', stat: '16.5점 6.8어시', badge: 'SG MVP 가드' },
-            { pos: 'SF', name: '강상재', stat: '14.2점 6.4리바', badge: 'SF 캡틴' },
-            { pos: 'PF', name: '김종규', stat: '12.5점 6.8리바', badge: 'PF 높이의벽' },
-            { pos: 'C', name: '치나누 오누아쿠', stat: '18.4점 12.2리바', badge: 'C 괴물센터' }
-          ];
-          if (tName.includes('KT')) return [
-            { pos: 'PG', name: '허훈', stat: '15.8점 6.2어시', badge: 'PG 에이스' },
-            { pos: 'SG', name: '정성우', stat: '8.4점 3.5어시', badge: 'SG 압박수비' },
-            { pos: 'SF', name: '문성곤', stat: '7.2점 5.8리바', badge: 'SF 스틸머신' },
-            { pos: 'PF', name: '하윤기', stat: '15.4점 7.2리바', badge: 'PF 덩크머신' },
-            { pos: 'C', name: '레이션 해먼즈', stat: '19.2점 9.8리바', badge: 'C 득점원' }
-          ];
-          return [
-            { pos: 'PG', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '포인트가드', isPending: true },
-            { pos: 'SG', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '슈팅가드', isPending: true },
-            { pos: 'SF', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '스몰포워드', isPending: true },
-            { pos: 'PF', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '파워포워드', isPending: true },
-            { pos: 'C', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '센터', isPending: true }
-          ];
-        } else {
-          if (tName.includes('골든스테이트') || tName.includes('Warriors')) return [
-            { pos: 'PG', name: '스테픈 커리', stat: '26.4점 5.1어시 3점 41%', badge: 'PG 역대최고슈터' },
-            { pos: 'SG', name: '버디 힐드', stat: '14.8점 3점 40%', badge: 'SG 스나이퍼' },
-            { pos: 'SF', name: '앤드루 위긴스', stat: '16.2점 5.2리바', badge: 'SF 투웨이' },
-            { pos: 'PF', name: '드레이먼드 그린', stat: '8.8점 7.2리바 6.8어시', badge: 'PF 수비앵커' },
-            { pos: 'C', name: '케본 루니', stat: '6.5점 8.4리바', badge: 'C 스크리너' }
-          ];
-          if (tName.includes('레이커스') || tName.includes('Lakers')) return [
-            { pos: 'PG', name: '디앤젤로 러셀', stat: '15.8점 6.3어시', badge: 'PG 플레이메이커' },
-            { pos: 'SG', name: '오스틴 리브스', stat: '16.2점 5.5어시', badge: 'SG 클러치' },
-            { pos: 'SF', name: '르브론 제임스', stat: '24.8점 7.8리바 8.2어시', badge: 'SF 살아있는전설' },
-            { pos: 'PF', name: '루이 하치무라', stat: '13.5점 5.1리바', badge: 'PF 미드레인지' },
-            { pos: 'C', name: '앤서니 데이비스', stat: '24.5점 12.6리바 2.3블록', badge: 'C DPOY급골밑' }
-          ];
-          if (tName.includes('토론토') || tName.includes('Raptors')) return [
-            { pos: 'PG', name: '이매뉴얼 퀴클리', stat: '17.0점 6.8어시', badge: 'PG 야전사령관' },
-            { pos: 'SG', name: '그레이디 딕', stat: '14.5점 3점 38%', badge: 'SG 3점슈터' },
-            { pos: 'SF', name: 'RJ 배럿', stat: '21.8점 6.4리바', badge: 'SF 슬래셔' },
-            { pos: 'PF', name: '스코티 반스', stat: '20.0점 8.2리바 6.1어시', badge: 'PF 프랜차이즈' },
-            { pos: 'C', name: '야콥 퍼들', stat: '11.5점 8.6리바 1.5블록', badge: 'C 림프로텍터' }
-          ];
-          if (tName.includes('마이애미') || tName.includes('Heat')) return [
-            { pos: 'PG', name: '테리 로지어', stat: '16.4점 4.6어시', badge: 'PG 듀얼가드' },
-            { pos: 'SG', name: '타일러 히로', stat: '20.8점 5.3리바 4.5어시', badge: 'SG 클러치슈터' },
-            { pos: 'SF', name: '지미 버틀러', stat: '21.0점 5.3리바 5.0어시', badge: 'SF 플레이오프지미' },
-            { pos: 'PF', name: '니콜라 요비치', stat: '9.5점 4.8리바 3점 40%', badge: 'PF 스트레치' },
-            { pos: 'C', name: '뱀 아데바요', stat: '19.3점 10.4리바 3.9어시', badge: 'C DPOY급수비' }
-          ];
-          if (tName.includes('보스턴') || tName.includes('Celtics')) return [
-            { pos: 'PG', name: '즈루 홀리데이', stat: '12.5점 5.4리바 4.8어시', badge: 'PG 락다운수비' },
-            { pos: 'SG', name: '데릭 화이트', stat: '15.2점 4.2리바 5.2어시', badge: 'SG 공수겸장' },
-            { pos: 'SF', name: '제일런 브라운', stat: '23.0점 5.5리바 3.6어시', badge: 'SF 파이널MVP' },
-            { pos: 'PF', name: '제이슨 테이텀', stat: '26.9점 8.1리바 4.9어시', badge: 'PF 슈퍼스타' },
-            { pos: 'C', name: '크리스타프스 포르징기스', stat: '20.1점 7.2리바 1.9블록', badge: 'C 유니콘' }
-          ];
-          return [
-            { pos: 'PG', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '포인트가드', isPending: true },
-            { pos: 'SG', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '슈팅가드', isPending: true },
-            { pos: 'SF', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '스몰포워드', isPending: true },
-            { pos: 'PF', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '파워포워드', isPending: true },
-            { pos: 'C', name: '공식 발표 대기', stat: '선발 라인업 공시 예정', badge: '센터', isPending: true }
-          ];
-        }
+      function formatBballLineupList(list) {
+        if (!Array.isArray(list)) return [];
+        return list.slice(0, 5).map((item, idx) => {
+          if (!item) return null;
+          const rawName = item.player_name || item.name || item.playerName || (typeof item === 'string' ? item : '');
+          if (!rawName || rawName === '공식 발표 대기' || rawName.includes('발표 대기') || rawName.includes('미정')) return null;
+          const pos = item.pos || item.position || defaultPositions[idx] || '선수';
+          const stat = item.stat || (item.points ? `${item.points}점 ${item.rebounds || 0}리바` : '');
+          const badge = item.badge || defaultBadges[idx] || pos;
+          return {
+            pos: pos,
+            name: typeof formatPlayerKorean === 'function' ? formatPlayerKorean(rawName) : rawName,
+            stat: stat,
+            badge: badge
+          };
+        }).filter(Boolean);
       }
 
-      const hRoster = getBballRoster(hName);
-      const aRoster = getBballRoster(aName);
+      function extractBballStarters(isHome) {
+        const tName = isHome ? m.home_team_name : m.away_team_name;
+        // 1. m.basketball_lineup
+        const bLineup = m.basketball_lineup || (m.details && m.details.basketball_lineup) || (m.details && m.details.team_stats && m.details.team_stats.basketball_lineup);
+        if (bLineup) {
+          const sideList = isHome ? (bLineup.home || bLineup.home_starters || bLineup.starting_five) : (bLineup.away || bLineup.away_starters || bLineup.starting_five);
+          const formatted = formatBballLineupList(sideList);
+          if (formatted.length >= 5) return formatted;
+        }
+        // 2. m.home_lineup / m.away_lineup
+        const directList = isHome ? (m.home_lineup || m.homeLineup) : (m.away_lineup || m.awayLineup);
+        if (Array.isArray(directList)) {
+          const formatted = formatBballLineupList(directList);
+          if (formatted.length >= 5) return formatted;
+        }
+        // 3. m.starters or m.details.starters
+        const starters = m.starters || (m.details && m.details.starters);
+        if (starters) {
+          const sideList = isHome ? (starters.home || starters.home_starters) : (starters.away || starters.away_starters);
+          const formatted = formatBballLineupList(sideList);
+          if (formatted.length >= 5) return formatted;
+        }
+        // 4. m.player_stats (출전 선수 중 선발 5명이 마킹된 경우)
+        const pStats = m.player_stats || (m.details && m.details.player_stats);
+        if (Array.isArray(pStats) && pStats.length >= 10) {
+          const teamPlayers = pStats.filter(p => p && p.team_name === tName && (p.is_starter || p.starter || p.starting));
+          const formatted = formatBballLineupList(teamPlayers);
+          if (formatted.length >= 5) return formatted;
+        }
+        return null;
+      }
 
-      // 코트 포지션별 뱃지 HTML 렌더러
-      function renderCourtRosterHtml(roster, isHomeTeam) {
-        const coords = [
-          { top: '80%', left: '50%' }, // PG
-          { top: '65%', left: '22%' }, // SG
-          { top: '48%', left: '26%' }, // SF
-          { top: '48%', left: '74%' }, // PF
-          { top: '28%', left: '50%' }  // C
+      const hRoster = extractBballStarters(true);
+      const aRoster = extractBballStarters(false);
+      const hasRealBballLineup = !!(hRoster && aRoster && hRoster.length >= 5 && aRoster.length >= 5);
+
+      // 🏀 5:5 일체형 풀코트 선수 노드 렌더러 (홈팀: 좌측 진영, 원정팀: 우측 진영)
+      function renderFullCourtRosterHtml(roster, isHomeTeam) {
+        if (!Array.isArray(roster)) return '';
+        // 홈팀: 골대(좌측) -> 센터라인 방향 (PG, SG, SF, PF, C)
+        const homeCoords = [
+          { top: '50%', left: '38%' }, // PG (탑 오브 더 키 / 센터라인 앞)
+          { top: '22%', left: '32%' }, // SG (상단 윙)
+          { top: '78%', left: '32%' }, // SF (하단 윙)
+          { top: '24%', left: '20%' }, // PF (상단 엘보우/포스트)
+          { top: '50%', left: '11%' }  // C  (골밑/로우포스트)
         ];
+        // 원정팀: 골대(우측) -> 센터라인 방향 (PG, SG, SF, PF, C)
+        const awayCoords = [
+          { top: '50%', left: '62%' }, // PG (탑 오브 더 키 / 센터라인 앞)
+          { top: '22%', left: '68%' }, // SG (상단 윙)
+          { top: '78%', left: '68%' }, // SF (하단 윙)
+          { top: '24%', left: '80%' }, // PF (상단 엘보우/포스트)
+          { top: '50%', left: '89%' }  // C  (골밑/로우포스트)
+        ];
+
+        const coords = isHomeTeam ? homeCoords : awayCoords;
+        const mainColor = isHomeTeam ? '#38bdf8' : '#f87171';
+        const badgeBg = isHomeTeam ? '#1d4ed8' : '#b91c1c';
+        const badgeBorder = isHomeTeam ? '#60a5fa' : '#fca5a5';
+        const cardBg = isHomeTeam 
+          ? 'linear-gradient(135deg, rgba(15,23,42,0.96) 0%, rgba(30,58,138,0.94) 100%)'
+          : 'linear-gradient(135deg, rgba(15,23,42,0.96) 0%, rgba(153,27,27,0.94) 100%)';
+
         return roster.map((p, idx) => {
-          const c = coords[idx] || { top: '50%', left: '50%' };
-          const isPending = !!p.isPending;
-          const borderColor = isPending ? 'rgba(255,255,255,0.45)' : (isHomeTeam ? '#3b82f6' : '#ef4444');
-          const borderStyle = isPending ? 'dashed' : 'solid';
-          const tagBg = isPending ? '#475569' : (isHomeTeam ? '#1d4ed8' : '#b91c1c');
-          const nameColor = isPending ? '#cbd5e1' : '#ffffff';
-          const statColor = isPending ? '#94a3b8' : '#e2e8f0';
+          if (!p) return '';
+          const c = coords[idx] || { top: '50%', left: isHomeTeam ? '25%' : '75%' };
           return `
-            <div style="position: absolute; top: ${c.top}; left: ${c.left}; transform: translate(-50%, -50%); z-index: 3; text-align: center; width: 110px;">
-              <div style="background: rgba(15, 23, 42, 0.94); color: #ffffff; border: 1.5px ${borderStyle} ${borderColor}; border-radius: 7px; padding: 3px 5px; box-shadow: 0 3px 8px rgba(0,0,0,0.5);">
-                <div style="font-size: 0.62rem; font-weight: 800; color: #fbbf24;"><span class="badge me-1" style="background:${tagBg}; font-size:0.55rem; padding:1px 3px;">${p.pos}</span>${p.badge}</div>
-                <div class="text-truncate fw-bold" style="font-size: 0.74rem; color:${nameColor};">${p.name}</div>
-                <div style="font-size: 0.58rem; color: ${statColor};">${p.stat}</div>
+            <div style="position: absolute; top: ${c.top}; left: ${c.left}; transform: translate(-50%, -50%); z-index: 4; text-align: center; width: 84px; pointer-events: auto; transition: transform 0.15s ease;" onmouseover="this.style.transform='translate(-50%, -50%) scale(1.08)'" onmouseout="this.style.transform='translate(-50%, -50%) scale(1.0)'">
+              <div style="background: ${cardBg}; color: #ffffff; border: 1.5px solid ${mainColor}; border-radius: 8px; padding: 3px 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.65); backdrop-filter: blur(4px);">
+                <div class="d-flex align-items-center justify-content-center gap-0.5" style="margin-bottom: 2px;">
+                  <span class="badge fw-black" style="background:${badgeBg}; color:#fff; border:1px solid ${badgeBorder}; font-size:0.56rem; padding:1px 3px; border-radius:3px; line-height:1;">${p.pos}</span>
+                  <span style="font-size: 0.56rem; font-weight: 700; color: #fbbf24; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 50px;">${p.badge}</span>
+                </div>
+                <div class="text-truncate fw-black" style="font-size: 0.72rem; color: #ffffff; letter-spacing: -0.3px; line-height: 1.2;" title="${p.name}">${p.name}</div>
+                ${p.stat ? `<div class="text-truncate" style="font-size: 0.54rem; color: #cbd5e1; line-height: 1.1;" title="${p.stat}">${p.stat}</div>` : ''}
               </div>
             </div>
           `;
@@ -20064,18 +20451,18 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const ftH = tsHome.freeThrowsPct ? Number(tsHome.freeThrowsPct).toFixed(1) : '78.5';
       const ftA = tsAway.freeThrowsPct ? Number(tsAway.freeThrowsPct).toFixed(1) : '77.8';
 
-      // 🏀 현대 농구 6대 AI 전술 정밀 텍스트 지표 정의
+      // 🏀 현대 농구 6대 AI 전술 정밀 도표 지표 정의 (Pace · ORtg · 3P · REB · AST/TO · FT)
       const bballMetrics = [
         {
           id: 'pace',
           name: '공격 템포 (Pace)',
           icon: 'bi-speedometer2',
           iconColor: '#3b82f6',
+          hRaw: parseFloat(paceH),
+          aRaw: parseFloat(paceA),
           hVal: `${paceH}회`,
           aVal: `${paceA}회`,
           unit: '48분당 포제션',
-          badge: (Number(paceH) > Number(paceA)) ? `[홈] ${hName} 업템포 우세` : (Number(paceH) < Number(paceA) ? `[원정] ${aName} 템포 장악` : '템포 호각세'),
-          badgeClass: (Number(paceH) > Number(paceA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(paceH) < Number(paceA) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
           desc: (Number(paceH) > Number(paceA)) 
             ? `빠른 트랜지션 얼리 오펜스로 상대 수비 정렬 전 손쉬운 속공 득점 창출 유리 (+${(Number(paceH) - Number(paceA)).toFixed(1)}회 빠른 전환)`
             : (Number(paceH) < Number(paceA) 
@@ -20087,11 +20474,11 @@ function updateSlimPanel(matchId, type, contentHtml) {
           name: '공격 효율성 (ORtg)',
           icon: 'bi-bullseye',
           iconColor: '#ef4444',
+          hRaw: parseFloat(ortgH),
+          aRaw: parseFloat(ortgA),
           hVal: `${ortgH}점`,
           aVal: `${ortgA}점`,
           unit: '100포제션 기대득점',
-          badge: (Number(ortgH) > Number(ortgA)) ? `[홈] ${hName} 화력 우위` : (Number(ortgH) < Number(ortgA) ? `[원정] ${aName} 화력 우위` : '화력 대등'),
-          badgeClass: (Number(ortgH) > Number(ortgA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(ortgH) < Number(ortgA) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
           desc: (Number(ortgH) > Number(ortgA))
             ? `100회 공격 시 기대득점 +${(Number(ortgH) - Number(ortgA)).toFixed(1)}점 우세. 정교한 슛 셀렉션과 효율적인 인사이드 공략 강점`
             : (Number(ortgH) < Number(ortgA))
@@ -20103,11 +20490,11 @@ function updateSlimPanel(matchId, type, contentHtml) {
           name: '3점 외곽 화력 (3PT%)',
           icon: 'bi-fire',
           iconColor: '#f97316',
+          hRaw: parseFloat(fg3H),
+          aRaw: parseFloat(fg3A),
           hVal: `${fg3H}%`,
           aVal: `${fg3A}%`,
-          unit: '성공률',
-          badge: (Number(fg3H) > Number(fg3A)) ? `[홈] ${hName} 외곽 우세` : (Number(fg3H) < Number(fg3A) ? `[원정] ${aName} 외곽 우세` : '외곽 호각세'),
-          badgeClass: (Number(fg3H) > Number(fg3A)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(fg3H) < Number(fg3A) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
+          unit: '외곽 성공률',
           desc: (Number(fg3H) > Number(fg3A))
             ? `코너 3점 스페이싱 및 캐치앤슛 성공률 +${(Number(fg3H) - Number(fg3A)).toFixed(1)}% 우세. 공간 창출을 통한 폭발적인 득점력 기대`
             : (Number(fg3H) < Number(fg3A))
@@ -20116,14 +20503,14 @@ function updateSlimPanel(matchId, type, contentHtml) {
         },
         {
           id: 'reb',
-          name: '골밑 장악 & 리바운드 (REB)',
+          name: '골밑 리바운드 (REB)',
           icon: 'bi-shield-shaded',
           iconColor: '#8b5cf6',
+          hRaw: parseFloat(rebH),
+          aRaw: parseFloat(rebA),
           hVal: `${rebH}개`,
           aVal: `${rebA}개`,
-          unit: '경기당',
-          badge: (Number(rebH) > Number(rebA)) ? `[홈] ${hName} 높이 우위` : (Number(rebH) < Number(rebA) ? `[원정] ${aName} 높이 우위` : '제공권 백중세'),
-          badgeClass: (Number(rebH) > Number(rebA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(rebH) < Number(rebA) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
+          unit: '경기당 리바운드',
           desc: (Number(rebH) > Number(rebA))
             ? `공격 리바운드 +${(Number(rebH) - Number(rebA)).toFixed(1)}개 우세. 세컨드 찬스 풋백 득점 및 포제션 추가 확보 경쟁력 탁월`
             : (Number(rebH) < Number(rebA))
@@ -20132,14 +20519,14 @@ function updateSlimPanel(matchId, type, contentHtml) {
         },
         {
           id: 'astTo',
-          name: '볼 케어 & 패스 연계 (AST/TO)',
+          name: '볼 케어 & 패스 (AST/TO)',
           icon: 'bi-share-fill',
           iconColor: '#10b981',
+          hRaw: parseFloat(astToH),
+          aRaw: parseFloat(astToA),
           hVal: `${astToH}`,
           aVal: `${astToA}`,
           unit: '어시스트/실책비',
-          badge: (Number(astToH) > Number(astToA)) ? `[홈] ${hName} 볼케어 우수` : (Number(astToH) < Number(astToA) ? `[원정] ${aName} 볼케어 우수` : '안정성 대등'),
-          badgeClass: (Number(astToH) > Number(astToA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(astToH) < Number(astToA) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
           desc: (Number(astToH) > Number(astToA))
             ? `어시스트/턴오버 비율 +${(Number(astToH) - Number(astToA)).toFixed(2)} 우세. 실책에 의한 속공 실점 억제 및 안정적인 볼 공유`
             : (Number(astToH) < Number(astToA))
@@ -20148,14 +20535,14 @@ function updateSlimPanel(matchId, type, contentHtml) {
         },
         {
           id: 'ft',
-          name: '클러치 집중력 & 자유투 (FT%)',
+          name: '승부처 자유투 (FT%)',
           icon: 'bi-trophy-fill',
           iconColor: '#eab308',
+          hRaw: parseFloat(ftH),
+          aRaw: parseFloat(ftA),
           hVal: `${ftH}%`,
           aVal: `${ftA}%`,
           unit: '자유투 성공률',
-          badge: (Number(ftH) > Number(ftA)) ? `[홈] ${hName} 클러치 안정` : (Number(ftH) < Number(ftA) ? `[원정] ${aName} 클러치 안정` : '클러치 호각세'),
-          badgeClass: (Number(ftH) > Number(ftA)) ? 'bg-primary-subtle text-primary border border-primary-subtle' : (Number(ftH) < Number(ftA) ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'),
           desc: (Number(ftH) > Number(ftA))
             ? `팀 자유투 성공률 +${(Number(ftH) - Number(ftA)).toFixed(1)}% 우위. 4쿼터 원포제션 접전 시 파울 작전 및 클러치 슈팅 침착성 우세`
             : (Number(ftH) < Number(ftA))
@@ -20163,6 +20550,85 @@ function updateSlimPanel(matchId, type, contentHtml) {
               : '4쿼터 클러치 자유투 성공률 80% 내외로 양 팀 모두 승부처 집중력 유지'
         }
       ];
+
+      let bballHAdv = 0, bballAAdv = 0;
+      bballMetrics.forEach(bm => {
+        const diff = bm.hRaw - bm.aRaw;
+        bm.diff = diff;
+        let ratioH = 50;
+        if (bm.id === 'astTo') {
+          ratioH = 50 + Math.max(-25, Math.min(25, Math.round(diff * 35)));
+        } else if (bm.id === 'pace' || bm.id === 'reb') {
+          ratioH = 50 + Math.max(-25, Math.min(25, Math.round(diff * 4)));
+        } else if (bm.id === 'ortg') {
+          ratioH = 50 + Math.max(-25, Math.min(25, Math.round(diff * 3)));
+        } else {
+          // fg3, ft (%)
+          ratioH = 50 + Math.max(-25, Math.min(25, Math.round(diff * 2.5)));
+        }
+        if (isNaN(ratioH)) ratioH = 50;
+        bm.ratioH = Math.max(20, Math.min(80, ratioH));
+        bm.ratioA = 100 - bm.ratioH;
+
+        if (diff > 0.05) {
+          bballHAdv++;
+          bm.badge = '홈 우세';
+          bm.badgeClass = 'bg-danger text-white';
+        } else if (diff < -0.05) {
+          bballAAdv++;
+          bm.badge = '원정 우세';
+          bm.badgeClass = 'bg-primary text-white';
+        } else {
+          bm.badge = '🤝 호각';
+          bm.badgeClass = 'bg-secondary-subtle text-secondary border';
+        }
+      });
+
+      let bballTacticalSummary = '';
+      if (bballHAdv > bballAAdv) {
+        bballTacticalSummary = `🔴 [홈] ${hName} 6대 전술 지표 중 ${bballHAdv}개 항목 우세 (공격 템포 및 제공권 우위)`;
+      } else if (bballAAdv > bballHAdv) {
+        bballTacticalSummary = `🔵 [원정] ${aName} 6대 전술 지표 중 ${bballAAdv}개 항목 우세 (외곽 화력 및 클러치 우위)`;
+      } else {
+        bballTacticalSummary = `⚖️ 양 팀 6대 전술 지표 팽팽한 호각세 (당일 슛감 및 턴오버가 승부 분수령)`;
+      }
+
+      const bballTableRowsHtml = bballMetrics.map(bm => {
+        const isH = bm.diff > 0.05;
+        const isA = bm.diff < -0.05;
+        return `
+          <tr style="height:36px;">
+            <td class="text-start ps-2 py-1" style="white-space:nowrap;">
+              <div class="d-flex align-items-center gap-1.5">
+                <i class="bi ${bm.icon}" style="color:${bm.iconColor}; font-size:0.86rem;"></i>
+                <div>
+                  <div class="fw-bold text-dark" style="font-size:0.75rem;">${bm.name}</div>
+                  <div class="text-muted" style="font-size:0.60rem;">${bm.unit}</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-center px-1 py-1" style="white-space:nowrap;">
+              <span class="fw-black ${isH ? 'text-danger' : 'text-dark'}" style="font-size:0.86rem;">${bm.hVal}</span>
+            </td>
+            <td class="text-center px-1 py-1" style="min-width:85px;">
+              <div class="d-flex align-items-center justify-content-center gap-1">
+                <span class="text-danger fw-bold font-monospace" style="font-size:0.65rem;">${bm.ratioH}%</span>
+                <div class="progress flex-grow-1" style="height:7px; border-radius:3px; background:#e2e8f0; overflow:hidden; min-width:40px;">
+                  <div class="progress-bar bg-danger" role="progressbar" style="width:${bm.ratioH}%;"></div>
+                  <div class="progress-bar bg-primary" role="progressbar" style="width:${bm.ratioA}%;"></div>
+                </div>
+                <span class="text-primary fw-bold font-monospace" style="font-size:0.65rem;">${bm.ratioA}%</span>
+              </div>
+            </td>
+            <td class="text-center px-1 py-1" style="white-space:nowrap;">
+              <span class="fw-black ${isA ? 'text-primary' : 'text-dark'}" style="font-size:0.86rem;">${bm.aVal}</span>
+            </td>
+            <td class="text-center px-1 py-1" style="white-space:nowrap;">
+              <span class="badge ${bm.badgeClass} py-0.5 px-1.5 fw-bold" style="font-size:0.64rem;">${bm.badge}</span>
+            </td>
+          </tr>
+        `;
+      }).join('');
 
       // 4. 감독/사령탑 전술 성향 & 스타일
       const hMgr = {
@@ -20246,81 +20712,181 @@ function updateSlimPanel(matchId, type, contentHtml) {
             </div>
           </div>
 
-          <!-- 🏟️ [섹션 2] 하드우드 농구 코트 5인 스타팅 라인업 (Court View) -->
+          <!-- 🏟️ [섹션 2] 하드우드 농구 코트 5인 스타팅 라인업 (일체형 Full Court View) -->
+          ${hasRealBballLineup ? `
           <div class="p-2.5 mb-2.5 rounded-3 border bg-white shadow-sm" style="border-color: #cbd5e1 !important;">
             <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: #f1f5f9 !important;">
-              <strong style="font-size: 0.80rem; color: #1e293b;"><i class="bi bi-diagram-3-fill text-primary me-1"></i>하드우드 코트 선발 5인 포메이션</strong>
-              <div class="btn-group btn-group-sm" id="bballRosterSwitchBtns_${m.id}">
-                <button type="button" class="btn btn-outline-primary btn-xs active fw-bold py-0.5 px-2" onclick="switchBballRosterView(${m.id}, 'home')">[홈] ${hName}</button>
-                <button type="button" class="btn btn-outline-danger btn-xs fw-bold py-0.5 px-2" onclick="switchBballRosterView(${m.id}, 'away')">[원정] ${aName}</button>
+              <strong style="font-size: 0.82rem; color: #1e293b;">
+                <i class="bi bi-diagram-3-fill text-primary me-1"></i>하드우드 풀코트 5:5 선발 라인업 (홈 vs 원정 일체형)
+              </strong>
+              <div class="d-flex align-items-center gap-1">
+                <span class="badge bg-success text-white fw-bold px-2 py-0.5" style="font-size: 0.68rem; letter-spacing: 0.3px;">
+                  <i class="bi bi-check-circle-fill me-1"></i>공식 선발 확정
+                </span>
               </div>
             </div>
 
-            <div class="alert alert-light border py-1.5 px-3 mb-2 d-flex align-items-center justify-content-between" style="font-size:0.75rem; background:#f8fafc; border-color:#e2e8f0; border-radius:6px; color:#475569;">
-              <div><i class="bi bi-shield-check text-primary me-1"></i><strong>공식 선발 라인업 발표 대기</strong> · 경기 시작 전 양 팀 공식 명단 공시 시 실시간 자동 연동됩니다.</div>
-              <span class="badge bg-secondary text-white" style="font-size:0.65rem;">5인 포지션 배치도</span>
-            </div>
-            <!-- 홈팀 농구 코트 -->
-            <div id="bballCourtHome_${m.id}" class="position-relative rounded-3 overflow-hidden mb-2" style="background: linear-gradient(180deg, #c27d38 0%, #a86222 100%); height: 280px; border: 2px solid #6c3b0d; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);">
-              <svg viewBox="0 0 400 280" style="position: absolute; top:0; left:0; width: 100%; height: 100%; opacity: 0.45;">
-                <rect x="145" y="15" width="110" height="90" fill="#1e3a8a" opacity="0.35" stroke="#ffffff" stroke-width="2"/>
-                <circle cx="200" cy="105" r="35" fill="none" stroke="#ffffff" stroke-width="2"/>
-                <path d="M 55 15 L 55 70 A 150 150 0 0 0 345 70 L 345 15" fill="none" stroke="#ffffff" stroke-width="2"/>
-                <circle cx="200" cy="35" r="8" fill="none" stroke="#fbbf24" stroke-width="2.5"/>
-                <line x1="175" y1="15" x2="225" y2="15" stroke="#ffffff" stroke-width="3"/>
-              </svg>
-              ${renderCourtRosterHtml(hRoster, true)}
-            </div>
+            <!-- 🏀 프리미엄 일체형 풀코트 그래픽 (홈 5명 vs 원정 5명 한 이미지 표출) -->
+            <div class="position-relative rounded-3 overflow-hidden shadow-sm" style="background: radial-gradient(ellipse at center, #d9883f 0%, #b86b24 55%, #8f4c11 100%); height: 380px; min-height: 380px; border: 2.5px solid #5c3008; box-shadow: inset 0 0 35px rgba(0,0,0,0.55);">
+              
+              <!-- 풀코트 정밀 SVG 규격 라인 -->
+              <svg viewBox="0 0 900 480" preserveAspectRatio="none" style="position: absolute; top:0; left:0; width: 100%; height: 100%; opacity: 0.88; pointer-events: none;">
+                <!-- 우드 플랭크 바닥 결 패턴 -->
+                <defs>
+                  <pattern id="bballPlanks" width="900" height="24" patternUnits="userSpaceOnUse">
+                    <line x1="0" y1="24" x2="900" y2="24" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>
+                  </pattern>
+                </defs>
+                <rect width="900" height="480" fill="url(#bballPlanks)"/>
 
-            <!-- 원정팀 농구 코트 (기본 display: none) -->
-            <div id="bballCourtAway_${m.id}" class="position-relative rounded-3 overflow-hidden mb-2" style="background: linear-gradient(180deg, #b45309 0%, #78350f 100%); height: 280px; border: 2px solid #451a03; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); display: none;">
-              <svg viewBox="0 0 400 280" style="position: absolute; top:0; left:0; width: 100%; height: 100%; opacity: 0.45;">
-                <rect x="145" y="15" width="110" height="90" fill="#991b1b" opacity="0.35" stroke="#ffffff" stroke-width="2"/>
-                <circle cx="200" cy="105" r="35" fill="none" stroke="#ffffff" stroke-width="2"/>
-                <path d="M 55 15 L 55 70 A 150 150 0 0 0 345 70 L 345 15" fill="none" stroke="#ffffff" stroke-width="2"/>
-                <circle cx="200" cy="35" r="8" fill="none" stroke="#fbbf24" stroke-width="2.5"/>
-                <line x1="175" y1="15" x2="225" y2="15" stroke="#ffffff" stroke-width="3"/>
+                <!-- 외곽 바운더리 라인 -->
+                <rect x="20" y="20" width="860" height="440" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.9"/>
+
+                <!-- 센터 라인 & 센터 서클 -->
+                <line x1="450" y1="20" x2="450" y2="460" stroke="#ffffff" stroke-width="2.5" opacity="0.9"/>
+                <circle cx="450" cy="240" r="65" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.9"/>
+                <circle cx="450" cy="240" r="24" fill="rgba(255,255,255,0.08)" stroke="#ffffff" stroke-width="1.8" opacity="0.9"/>
+
+                <!-- [좌측 홈팀 진영] -->
+                <!-- 페인트존 (Key) -->
+                <rect x="20" y="170" width="160" height="140" fill="#1e3a8a" fill-opacity="0.22" stroke="#ffffff" stroke-width="2.2" opacity="0.9"/>
+                <!-- 자유투 서클 -->
+                <path d="M 180 170 A 70 70 0 0 1 180 310" fill="none" stroke="#ffffff" stroke-width="2.2" opacity="0.9"/>
+                <path d="M 180 170 A 70 70 0 0 0 180 310" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="6,6" opacity="0.65"/>
+                <!-- 3점슛 아크 -->
+                <line x1="20" y1="55" x2="110" y2="55" stroke="#ffffff" stroke-width="2.2" opacity="0.9"/>
+                <line x1="20" y1="425" x2="110" y2="425" stroke="#ffffff" stroke-width="2.2" opacity="0.9"/>
+                <path d="M 110 55 A 195 195 0 0 1 110 425" fill="none" stroke="#ffffff" stroke-width="2.2" opacity="0.9"/>
+                <!-- 백보드 & 골대 림 -->
+                <line x1="55" y1="210" x2="55" y2="270" stroke="#ffffff" stroke-width="3.5" opacity="0.95"/>
+                <circle cx="70" cy="240" r="12" fill="none" stroke="#ea580c" stroke-width="3" opacity="0.95"/>
+
+                <!-- [우측 원정팀 진영] -->
+                <!-- 페인트존 (Key) -->
+                <rect x="720" y="170" width="160" height="140" fill="#991b1b" fill-opacity="0.22" stroke="#ffffff" stroke-width="2.2" opacity="0.9"/>
+                <!-- 자유투 서클 -->
+                <path d="M 720 170 A 70 70 0 0 0 720 310" fill="none" stroke="#ffffff" stroke-width="2.2" opacity="0.9"/>
+                <path d="M 720 170 A 70 70 0 0 1 720 310" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="6,6" opacity="0.65"/>
+                <!-- 3점슛 아크 -->
+                <line x1="880" y1="55" x2="790" y2="55" stroke="#ffffff" stroke-width="2.2" opacity="0.9"/>
+                <line x1="880" y1="425" x2="790" y2="425" stroke="#ffffff" stroke-width="2.2" opacity="0.9"/>
+                <path d="M 790 55 A 195 195 0 0 0 790 425" fill="none" stroke="#ffffff" stroke-width="2.2" opacity="0.9"/>
+                <!-- 백보드 & 골대 림 -->
+                <line x1="845" y1="210" x2="845" y2="270" stroke="#ffffff" stroke-width="3.5" opacity="0.95"/>
+                <circle cx="830" cy="240" r="12" fill="none" stroke="#ea580c" stroke-width="3" opacity="0.95"/>
+
+                <!-- 코트 바닥 워터마크 텍스트 -->
+                <text x="240" y="246" text-anchor="middle" font-size="20" font-weight="900" fill="rgba(255,255,255,0.18)" letter-spacing="2">HOME</text>
+                <text x="660" y="246" text-anchor="middle" font-size="20" font-weight="900" fill="rgba(255,255,255,0.18)" letter-spacing="2">AWAY</text>
               </svg>
-              ${renderCourtRosterHtml(aRoster, false)}
+
+              <!-- 상단 중앙 매치업 HUD 헤더 -->
+              <div class="position-absolute d-flex justify-content-between align-items-center w-100 px-3" style="top: 8px; left: 0; right: 0; z-index: 5; pointer-events: none;">
+                <div class="d-inline-flex align-items-center gap-1.5 px-2.5 py-1 rounded-pill shadow-sm" style="background: rgba(15, 23, 42, 0.88); border: 1.2px solid #3b82f6; backdrop-filter: blur(6px);">
+                  <span class="badge bg-primary text-white" style="font-size: 0.62rem; padding: 2px 5px;">HOME</span>
+                  <span class="fw-bold text-white text-truncate" style="font-size: 0.76rem; max-width: 110px;">${hName}</span>
+                </div>
+                <div class="px-2 py-0.5 rounded-pill shadow-sm" style="background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3); font-size: 0.66rem; font-weight: 800; color: #fbbf24; letter-spacing: 1px;">
+                  ⚔️ 5 vs 5 FULL COURT
+                </div>
+                <div class="d-inline-flex align-items-center gap-1.5 px-2.5 py-1 rounded-pill shadow-sm" style="background: rgba(15, 23, 42, 0.88); border: 1.2px solid #ef4444; backdrop-filter: blur(6px);">
+                  <span class="fw-bold text-white text-truncate" style="font-size: 0.76rem; max-width: 110px;">${aName}</span>
+                  <span class="badge bg-danger text-white" style="font-size: 0.62rem; padding: 2px 5px;">AWAY</span>
+                </div>
+              </div>
+
+              <!-- 홈팀 5명 선수 노드 (좌측 진영) -->
+              ${renderFullCourtRosterHtml(hRoster, true)}
+
+              <!-- 원정팀 5명 선수 노드 (우측 진영) -->
+              ${renderFullCourtRosterHtml(aRoster, false)}
             </div>
           </div>
-
-          <!-- 🎯 [섹션 3] 현대 농구 6대 AI 전술 정밀 텍스트 지표 (Advanced Tactical Text Metrics) -->
+          ` : `
+          <!-- 📋 [섹션 2] 실제 라인업 미발표 시: 가짜 라인업을 코트에 올리지 않고 공식 발표 대기 카드로 정갈하게 표출 -->
           <div class="p-2.5 mb-2.5 rounded-3 border bg-white shadow-sm" style="border-color: #cbd5e1 !important;">
             <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: #f1f5f9 !important;">
-              <strong style="font-size: 0.80rem; color: #1e293b;">
-                <i class="bi bi-cpu-fill text-danger me-1"></i>현대 농구 6대 AI 전술 정밀 텍스트 지표 (Pace · ORtg · 3P · REB · AST/TO · FT)
+              <strong style="font-size: 0.82rem; color: #1e293b;">
+                <i class="bi bi-diagram-3-fill text-warning me-1"></i>하드우드 코트 선발 5인 포메이션
               </strong>
-              <span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 0.65rem;">정밀 텍스트 매트릭스</span>
+              <span class="badge bg-secondary-subtle text-secondary border px-2 py-0.5 fw-bold" style="font-size: 0.68rem;">
+                <i class="bi bi-clock-history me-1"></i>선발 발표 대기중
+              </span>
+            </div>
+            <div class="py-4 px-3 text-center rounded-3 position-relative overflow-hidden" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1.5px dashed #475569;">
+              <div style="font-size: 2.2rem; margin-bottom: 8px;">🏀</div>
+              <div class="fw-bold text-white mb-1" style="font-size: 0.94rem;">공식 선발 라인업 발표 대기중</div>
+              <div style="font-size: 0.74rem; color: #94a3b8; line-height: 1.5; max-width: 440px; margin: 0 auto;">
+                현재 해당 경기의 공식 5인 선발 라인업이 발표되지 않아 가짜 명단을 올리지 않습니다.<br>
+                <span style="color: #fbbf24;">경기 시작 전 구단 및 연맹 공식 선발 명단 등록 시 실시간으로 5:5 풀코트 포메이션이 자동 표출됩니다.</span>
+              </div>
+            </div>
+          </div>
+          `}
+
+          <!-- 📊 [섹션 3] 현대 농구 6대 AI 전술 정밀 비교 도표 (Advanced Tactical Comparison Table) -->
+          <div class="p-2.5 mb-2.5 rounded-3 border bg-white shadow-sm" style="border-color: #cbd5e1 !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom flex-wrap gap-1" style="border-color: #f1f5f9 !important;">
+              <div class="d-flex align-items-center gap-1.5">
+                <span class="badge bg-danger text-white px-2 py-0.5" style="font-size:0.70rem;">
+                  <i class="bi bi-bar-chart-fill me-1"></i>전술 비교 도표
+                </span>
+                <strong style="font-size: 0.82rem; color: #1e293b;">
+                  현대 농구 6대 AI 전술 정밀 매치업 도표
+                </strong>
+              </div>
+              <div class="d-flex gap-2 small fw-bold" style="font-size:0.70rem;">
+                <span class="text-danger">🔴 [홈] ${hName}</span>
+                <span class="text-muted">vs</span>
+                <span class="text-primary">🔵 [원정] ${aName}</span>
+              </div>
             </div>
 
-            <div class="d-flex flex-column gap-2">
-              ${bballMetrics.map(bm => `
-                <div class="p-2 rounded-2 border" style="background:#f8fafc; border-color:#e2e8f0 !important;">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-bold" style="font-size:0.72rem; padding: 2px 7px;">
-                      [홈] ${bm.hVal}
-                    </span>
-                    <span class="fw-bold text-dark d-flex align-items-center gap-1" style="font-size:0.76rem;">
-                      <i class="bi ${bm.icon}" style="color:${bm.iconColor};"></i>
-                      <span>${bm.name}</span>
-                    </span>
-                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-bold" style="font-size:0.72rem; padding: 2px 7px;">
-                      ${bm.aVal} [원정]
-                    </span>
-                  </div>
-                  <div class="p-1.5 rounded bg-white border" style="border-color:#e2e8f0 !important;">
-                    <div class="d-flex align-items-center justify-content-between gap-1 mb-0.5">
-                      <div class="d-flex align-items-center gap-1">
-                        <span class="badge ${bm.badgeClass}" style="font-size:0.64rem; padding: 2px 5px;">${bm.badge}</span>
-                        <strong class="text-dark" style="font-size:0.69rem;">전술 진단</strong>
-                      </div>
-                      <span class="text-muted" style="font-size:0.62rem;">기준: ${bm.unit}</span>
+            <!-- 6대 지표 도표 (Table) -->
+            <div class="table-responsive rounded border bg-white shadow-xs overflow-hidden mb-2" style="border-color:#cbd5e1 !important;">
+              <table class="table table-sm table-bordered table-hover text-center align-middle mb-0" style="width:100%; font-size:0.74rem;">
+                <thead style="background:#0f172a; color:#ffffff;">
+                  <tr style="height:28px;">
+                    <th style="width:26%; text-align:center; color:#e2e8f0; font-weight:700;">전술 핵심 지표</th>
+                    <th style="width:22%; text-align:center; color:#f87171; font-weight:800;">🔴 [홈] ${hName}</th>
+                    <th style="width:24%; text-align:center; color:#cbd5e1; font-weight:700;">⚔️ 전술 격돌 게이지</th>
+                    <th style="width:22%; text-align:center; color:#60a5fa; font-weight:800;">🔵 [원정] ${aName}</th>
+                    <th style="width:6%; text-align:center; color:#e2e8f0; font-weight:700;">우세</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${bballTableRowsHtml}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- AI Tactical Summary Footer Banner -->
+            <div class="p-2 rounded bg-light border d-flex align-items-center justify-content-between mb-2" style="border-color:#e2e8f0 !important; font-size:0.72rem;">
+              <div class="d-flex align-items-center gap-1.5 text-truncate">
+                <span class="badge bg-dark text-white px-1.5 py-0.5" style="font-size:0.65rem;">AI 전술 총평</span>
+                <span class="text-dark fw-bold text-truncate">${bballTacticalSummary}</span>
+              </div>
+              <span class="text-muted small flex-shrink-0 ms-1 d-none d-sm-inline">포제션·세이버메트릭스 공식 모델</span>
+            </div>
+
+            <!-- 💡 6대 전술 핵심 진단 인사이트 (도표 요약 가이드) -->
+            <div class="p-2 rounded bg-white border" style="border-color:#e2e8f0 !important; font-size:0.70rem;">
+              <div class="d-flex align-items-center justify-content-between mb-1 pb-1 border-bottom" style="border-color:#f1f5f9 !important;">
+                <strong class="text-dark d-flex align-items-center gap-1" style="font-size:0.72rem;">
+                  <i class="bi bi-lightbulb-fill text-warning"></i>6대 전술 핵심 매치업 진단 요약
+                </strong>
+                <span class="text-muted" style="font-size:0.62rem;">팀별 전술 상성 진단</span>
+              </div>
+              <div class="row g-1.5">
+                ${bballMetrics.map(bm => `
+                  <div class="col-12 col-md-6">
+                    <div class="p-1.5 rounded bg-light border-0 d-flex align-items-start gap-1.5" style="background:#f8fafc !important;">
+                      <span class="badge ${bm.badgeClass} flex-shrink-0 mt-0.5" style="font-size:0.60rem; padding:2px 4px;">${bm.name.split(' ')[0]}</span>
+                      <div class="text-secondary" style="font-size:0.66rem; line-height:1.35;">${bm.desc}</div>
                     </div>
-                    <div class="text-secondary small" style="font-size:0.68rem; line-height:1.45;">${bm.desc}</div>
                   </div>
-                </div>
-              `).join('')}
+                `).join('')}
+              </div>
             </div>
           </div>
 
@@ -21380,7 +21946,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
           startsList = startsList.map(s => {
             let oppName = s.opponent || s.opp || '';
             if (typeof formatTeamName === 'function') oppName = formatTeamName(oppName);
-            if (typeof formatPlayerKorean === 'function') oppName = formatPlayerKorean(oppName);
+            if (typeof formatPlayerKorean === 'function') {
+              try { oppName = formatPlayerKorean(oppName); } catch (e) { console.warn('oppName format error', e); }
+            }
             let dec = s.decision || '';
             if (dec === '勝') dec = '승';
             else if (dec === '敗') dec = '패';
