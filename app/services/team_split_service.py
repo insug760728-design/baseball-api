@@ -44,7 +44,10 @@ NPB_TEAMS_POOL = [
     "요미우리 자이언츠", "한신 타이거스", "주니치 드래곤즈", "요코하마 DeNA 베이스타즈",
     "히로시마 도요 카프", "도쿄 야쿠르트 스왈로스", "후쿠오카 소프트뱅크 호크스",
     "홋카이도 닛폰햄 파이터즈", "지바 롯데 마린스", "도호쿠 라쿠텐 골든이글스",
-    "오릭스 버펄로스", "사이타마 세이부 라이온즈"
+    "오릭스 버펄로스", "사이타마 세이부 라이온즈",
+    # 짧은 구단명
+    "요미우리", "한신", "주니치", "요코하마", "히로시마", "야쿠르트",
+    "소프트뱅크", "닛폰햄", "지바", "지바롯데", "라쿠텐", "오릭스", "세이부"
 ]
 
 KBO_TEAMS_POOL = [
@@ -86,7 +89,7 @@ def is_npb_team_name(name: str) -> bool:
     npb_markers = [
         "요미우리", "yomiuri", "한신", "hanshin", "주니치", "chunichi", "dena", "베이스타즈", "baystars",
         "카프", "carp", "야쿠르트", "yakult", "소프트뱅크", "softbank", "닛폰햄", "니혼햄", "fighters",
-        "지바롯데", "치바롯데", "chiba", "마린스", "marines", "라쿠텐", "rakuten", "버펄로스", "buffaloes",
+        "지바롯데", "치바롯데", "지바", "치바", "chiba", "마린스", "marines", "라쿠텐", "rakuten", "버펄로스", "buffaloes",
         "오릭스", "orix", "세이부", "seibu"
     ]
     return any(k in name_clean for k in npb_markers)
@@ -119,7 +122,7 @@ CANONICAL_BASEBALL_TEAMS = {
     "NPB_HIROSHIMA": ["히로시마 도요 카프", "히로시마 도요카프", "히로시마 카프", "히로시마", "도요 카프", "도요카프", "hiroshima", "carp"],
     "NPB_SOFTBANK": ["후쿠오카 소프트뱅크 호크스", "후쿠오카소프트뱅크호크스", "소프트뱅크 호크스", "소프트뱅크", "소뱅", "softbank", "hawks"],
     "NPB_ORIX": ["오릭스 버펄로스", "오릭스 버팔로스", "오릭스 버팔로즈", "오릭스버펄로스", "오릭스버팔로스", "오릭스버팔로즈", "오릭스", "orix", "buffaloes"],
-    "NPB_CHIBALOTTE": ["지바 롯데 마린스", "지바롯데 마린스", "지바롯데마린스", "지바 롯데", "지바롯데", "치바 롯데", "치바롯데", "chiba lotte", "chiba", "marines"],
+    "NPB_CHIBALOTTE": ["지바 롯데 마린스", "지바롯데 마린스", "지바롯데마린스", "지바 롯데", "지바롯데", "치바 롯데", "치바롯데", "지바", "치바", "chiba lotte", "chiba", "marines"],
     "NPB_SEIBU": ["사이타마 세이부 라이온즈", "사이타마세이부라이온즈", "세이부 라이온즈", "세이부라이온즈", "세이부", "seibu", "lions"],
     "NPB_RAKUTEN": ["도호쿠 라쿠텐 골든이글스", "도호쿠 라쿠텐", "라쿠텐 골든이글스", "라쿠텐 골든이글즈", "라쿠텐", "rakuten", "eagles"],
     "NPB_NIPPONHAM": ["홋카이도 닛폰햄 파이터즈", "홋카이도 닛폰햄 파이터스", "닛폰햄 파이터즈", "닛폰햄 파이터스", "니혼햄 파이터스", "닛폰햄", "니혼햄", "nipponham", "fighters"],
@@ -895,13 +898,17 @@ DEFAULT_ROTATION_STARTERS = {
     # NPB 단축형 구단명 대응
     "요미우리": {"name": "토고 쇼세이", "name_en": "Shosei Togo", "throws": "우완"},
     "한신": {"name": "사이키 히로토", "name_en": "Hiroto Saiki", "throws": "우완"},
+    "요코하마": {"name": "아즈마 카츠키", "name_en": "Katsuki Azuma", "throws": "좌완"},
     "DeNA": {"name": "아즈마 카츠키", "name_en": "Katsuki Azuma", "throws": "좌완"},
     "히로시마": {"name": "토코다 히로키", "name_en": "Hiroki Tokoda", "throws": "좌완"},
     "야쿠르트": {"name": "오쿠가와 야스노부", "name_en": "Yasunobu Okugawa", "throws": "우완"},
     "주니치": {"name": "야나기 유야", "name_en": "Yuya Yanagi", "throws": "우완"},
     "소프트뱅크": {"name": "L.모이넬로", "name_en": "Livan Moinelo", "throws": "좌완"},
+    "닛폰햄": {"name": "야마사키 사치야", "name_en": "Sachiya Yamasaki", "throws": "좌완"},
     "니혼햄": {"name": "야마사키 사치야", "name_en": "Sachiya Yamasaki", "throws": "좌완"},
+    "지바": {"name": "타나카 세이야", "name_en": "Seiya Tanaka", "throws": "우완"},
     "지바 롯데": {"name": "타나카 세이야", "name_en": "Seiya Tanaka", "throws": "우완"},
+    "지바롯데": {"name": "타나카 세이야", "name_en": "Seiya Tanaka", "throws": "우완"},
     "라쿠텐": {"name": "마에다 켄타", "name_en": "Kenta Maeda", "throws": "우완"},
     "오릭스": {"name": "S.젤리", "name_en": "S. Jerry", "throws": "우완"},
     "세이부": {"name": "타이라 카이마", "name_en": "Kaima Taira", "throws": "우완"},

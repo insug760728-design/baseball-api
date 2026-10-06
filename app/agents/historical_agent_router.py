@@ -22,6 +22,13 @@ from app.agents.national_teams_historical_data import NATIONAL_TEAM_H2H_ARCHIVE,
 def teams_match(t1: str, t2: str) -> bool:
     if not t1 or not t2:
         return False
+    # 🏀 농구(KBL, WKBL, NBA) 1:1 축약명 정밀 매칭 (수원KT == 수원KT 소닉붐)
+    try:
+        from app.core.basketball_master import is_same_basketball_team
+        if is_same_basketball_team(t1, t2):
+            return True
+    except Exception:
+        pass
     try:
         from app.services.live_api_sports_service import teams_match as core_teams_match, are_city_rivals, NATIONAL_TEAM_MAP
         if are_city_rivals(t1, t2):
@@ -432,18 +439,31 @@ class HistoricalAgentRouter:
             }
 
             NPB_TEAM_ALIASES = {
-                '요미우리 자이언츠': ['요미우리 자이언츠', '요미우리', '자이언츠', 'yomiuri', 'giants'],
-                '한신 타이거즈': ['한신 타이거즈', '한신 타이거스', '한신', '타이거즈', '타이거스', 'hanshin', 'tigers'],
-                '주니치 드래곤즈': ['주니치 드래곤즈', '주니치 드래건스', '주니치', '드래곤즈', '드래건스', 'chunichi', 'dragons'],
-                '요코하마 DeNA 베이스타즈': ['요코하마 DeNA 베이스타즈', '요코하마 DeNA베이스타스', '요코하마 DeNA', 'DeNA 베이스타즈', 'DeNA', '요코하마', '베이스타즈', '베이스타스', 'yokohama', 'baystars'],
-                '히로시마 도요 카프': ['히로시마 도요 카프', '히로시마 도요카프', '히로시마 카프', '히로시마', '카프', '도요카프', 'hiroshima', 'carp'],
-                '도쿄 야쿠르트 스왈로스': ['도쿄 야쿠르트 스왈로스', '야쿠르트 스왈로스', '야쿠르트 스왈로즈', '야쿠르트', '스왈로스', '스왈로즈', 'yakult', 'swallows'],
-                '오릭스 버펄로스': ['오릭스 버펄로스', '오릭스 버팔로스', '오릭스 버팔로즈', '오릭스', '버펄로스', '버팔로스', '버팔로즈', 'orix', 'buffaloes'],
-                '지바 롯데 마린스': ['지바 롯데 마린스', '지바롯데 마린스', '지바 롯데', '지바롯데', '지바롯데마린스', 'chiba lotte', 'marines'],
-                '후쿠오카 소프트뱅크 호크스': ['후쿠오카 소프트뱅크 호크스', '소프트뱅크 호크스', '소프트뱅크', '소뱅', '호크스', 'softbank', 'hawks'],
-                '도호쿠 라쿠텐 골든이글스': ['도호쿠 라쿠텐 골든이글스', '라쿠텐 골든이글스', '라쿠텐', '골든이글스', 'rakuten', 'eagles'],
-                '사이타마 세이부 라이온즈': ['사이타마 세이부 라이온즈', '세이부 라이온즈', '세이부', '라이온즈', 'seibu', 'lions'],
-                '홋카이도 닛폰햄 파이터즈': ['홋카이도 닛폰햄 파이터즈', '닛폰햄 파이터스', '니혼햄 파이터스', '니혼햄 파이터즈', '닛폰햄', '니혼햄', '파이터스', '파이터즈', 'nipponham', 'fighters']
+                '요미우리': ['요미우리', '요미우리 자이언츠', '요미우리자이언츠', '자이언츠', 'yomiuri', 'giants', '読売', '巨人'],
+                '한신': ['한신', '한신 타이거즈', '한신 타이거스', '한신타이거즈', '한신타이거스', '한신타이', '타이거즈', '타이거스', 'hanshin', 'tigers', '阪神'],
+                '주니치': ['주니치', '주니치 드래곤즈', '주니치 드래건스', '주니치드래곤즈', '주니치드래건스', '주니드래', '드래곤즈', '드래건스', 'chunichi', 'dragons', '中日'],
+                '요코하마': ['요코하마', '요코하마 DeNA 베이스타즈', '요코하마 DeNA베이스타스', '요코하마 DeNA', 'DeNA 베이스타즈', 'DeNA', '요코베이', '베이스타즈', '베이스타스', 'yokohama', 'baystars', '横浜'],
+                '히로시마': ['히로시마', '히로시마 도요 카프', '히로시마 도요카프', '히로시마도요카프', '히로시마 카프', '히로시마카프', '도요카프', '히로카프', '카프', 'hiroshima', 'carp', '広島'],
+                '야쿠르트': ['야쿠르트', '도쿄 야쿠르트 스왈로스', '도쿄야쿠르트스왈로스', '도쿄 야쿠르트', '도쿄야쿠르트', '야쿠르트 스왈로스', '야쿠르트스왈로스', '야쿠르트 스왈로즈', '야쿠르트스왈로즈', '야쿠스왈', '스왈로스', '스왈로즈', 'yakult', 'swallows', '東京ヤクルト', 'ヤクルト'],
+                '오릭스': ['오릭스', '오릭스 버펄로스', '오릭스버펄로스', '오릭스 버팔로스', '오릭스버팔로스', '오릭스 버팔로즈', '오릭스버팔로즈', '오릭버펄', '오릭버팔', '버펄로스', '버팔로스', '버팔로즈', 'orix', 'buffaloes', 'オリックス'],
+                '지바': ['지바', '지바 롯데 마린스', '지바롯데 마린스', '지바 롯데', '지바롯데', '지바롯데마린스', '지바마린', '치바 롯데 마린스', '치바 롯데', '치바롯데', '치바롯데마린스', '치바', 'chiba lotte', 'marines', '千葉ロッテ', 'ロッテ'],
+                '지바롯데': ['지바', '지바 롯데 마린스', '지바롯데 마린스', '지바 롯데', '지바롯데', '지바롯데마린스', '지바마린', '치바 롯데 마린스', '치바 롯데', '치바롯데', '치바롯데마린스', '치바', 'chiba lotte', 'marines', '千葉ロッテ', 'ロッテ'],
+                '소프트뱅크': ['소프트뱅크', '후쿠오카 소프트뱅크 호크스', '후쿠오카소프트뱅크호크스', '후쿠오카 소프트뱅크', '소프트뱅크 호크스', '소프트뱅크호크스', '소프트뱅크 호크즈', '소프호크', '소뱅', '호크스', 'softbank', 'hawks', '福岡ソフトバンク', 'ソフトバンク'],
+                '라쿠텐': ['라쿠텐', '도호쿠 라쿠텐 골든이글스', '도호쿠라쿠텐골든이글스', '도호쿠 라쿠텐', '도호쿠라쿠텐', '라쿠텐 골든이글스', '라쿠텐골든이글스', '라쿠텐 골든이글즈', '라쿠골든', '라쿠이글', '골든이글스', 'rakuten', 'eagles', '東北楽天', '楽天'],
+                '세이부': ['세이부', '사이타마 세이부 라이온즈', '사이타마세이부라이온즈', '세이부 라이온즈', '세이부라이온즈', '세이부 라이온스', '세이부라이온스', '사이타마 세이부', '세이라이', '라이온즈', 'seibu', 'lions', '埼玉西武', '西武'],
+                '닛폰햄': ['닛폰햄', '홋카이도 닛폰햄 파이터즈', '홋카이도닛폰햄파이터즈', '홋카이도 닛폰햄 파이터스', '닛폰햄 파이터즈', '닛폰햄파이터즈', '닛폰햄 파이터스', '닛폰햄파이터스', '니혼햄 파이터스', '니혼햄 파이터즈', '홋카이도 닛폰햄', '니혼햄', '닛폰파이', '파이터스', '파이터즈', 'nipponham', 'fighters', '北海道日本ハム', '日本ハム'],
+                '요미우리 자이언츠': ['요미우리 자이언츠', '요미우리', '자이언츠', 'yomiuri', 'giants', '読売', '巨人'],
+                '한신 타이거즈': ['한신 타이거즈', '한신 타이거스', '한신', '타이거즈', '타이거스', 'hanshin', 'tigers', '阪神'],
+                '주니치 드래곤즈': ['주니치 드래곤즈', '주니치 드래건스', '주니치', '드래곤즈', '드래건스', 'chunichi', 'dragons', '中日'],
+                '요코하마 DeNA 베이스타즈': ['요코하마 DeNA 베이스타즈', '요코하마 DeNA베이스타스', '요코하마 DeNA', 'DeNA 베이스타즈', 'DeNA', '요코하마', '베이스타즈', '베이스타스', 'yokohama', 'baystars', '横浜'],
+                '히로시마 도요 카프': ['히로시마 도요 카프', '히로시마 도요카프', '히로시마 카프', '히로시마', '카프', '도요카프', 'hiroshima', 'carp', '広島'],
+                '도쿄 야쿠르트 스왈로스': ['도쿄 야쿠르트 스왈로스', '야쿠르트 스왈로스', '야쿠르트 스왈로즈', '야쿠르트', '스왈로스', '스왈로즈', 'yakult', 'swallows', '東京ヤクルト', 'ヤクルト'],
+                '오릭스 버펄로스': ['오릭스 버펄로스', '오릭스 버팔로스', '오릭스 버팔로즈', '오릭스', '버펄로스', '버팔로스', '버팔로즈', 'orix', 'buffaloes', 'オリックス'],
+                '지바 롯데 마린스': ['지바 롯데 마린스', '지바롯데 마린스', '지바 롯데', '지바롯데', '지바롯데마린스', '지바', '치바', 'chiba lotte', 'marines', '千葉ロッテ', 'ロッテ'],
+                '후쿠오카 소프트뱅크 호크스': ['후쿠오카 소프트뱅크 호크스', '소프트뱅크 호크스', '소프트뱅크', '소뱅', '호크스', 'softbank', 'hawks', '福岡ソフトバンク', 'ソフトバンク'],
+                '도호쿠 라쿠텐 골든이글스': ['도호쿠 라쿠텐 골든이글스', '라쿠텐 골든이글스', '라쿠텐', '골든이글스', 'rakuten', 'eagles', '東北楽天', '楽天'],
+                '사이타마 세이부 라이온즈': ['사이타마 세이부 라이온즈', '세이부 라이온즈', '세이부', '라이온즈', 'seibu', 'lions', '埼玉西武', '西武'],
+                '홋카이도 닛폰햄 파이터즈': ['홋카이도 닛폰햄 파이터즈', '닛폰햄 파이터스', '니혼햄 파이터스', '니혼햄 파이터즈', '닛폰햄', '니혼햄', '파이터스', '파이터즈', 'nipponham', 'fighters', '北海道日本ハム', '日本ハム']
             }
 
             BUNDESLIGA_TEAM_ALIASES = {
@@ -922,6 +942,15 @@ class HistoricalAgentRouter:
                     for a in aliases:
                         if a in clean_name or clean_name in a:
                             return list(set([clean_name, npb_key] + aliases))
+                # 🏀 농구(KBL, WKBL, NBA) 1:1 표준 토큰 세트 즉시 반환
+                try:
+                    from app.core.basketball_master import get_basketball_tokens_for_query, to_short_basketball_name
+                    short_n = to_short_basketball_name(clean_name)
+                    if short_n != clean_name:
+                        return list(set(get_basketball_tokens_for_query(clean_name) + [clean_name, short_n]))
+                except Exception:
+                    pass
+
                 for kbl_key, aliases in KBL_TEAM_ALIASES.items():
                     if kbl_key in clean_name or clean_name in kbl_key or any(a in clean_name or clean_name in a for a in aliases):
                         return list(set([clean_name, kbl_key] + aliases))
@@ -1079,10 +1108,9 @@ class HistoricalAgentRouter:
             except Exception:
                 ref_dt = datetime(2026, 9, 22)
             if sport_code == 'BASKETBALL':
-                # 농구 사용자 요청: 최근3년 상대전적이 아니고 작년 한시즌 전체 상대전적만 나오게 하고, 최근 경기도 작년 시즌 전체 포함
-                # 현시점(2026년 가을) 기준 작년 한 시즌(2024-2025 / 2025년) 전체 범위: 2024-09-01 이후
-                min_date_threshold = f"{ref_dt.year - 2}-09-01"
-                min_h2h_threshold = f"{ref_dt.year - 2}-09-01"
+                # 농구: 올해(2026년) 가을 기준 직전 한 시즌(2025-2026 시즌: 2025년 9월 ~ 2026년 여름/가을) 전체 포함
+                min_date_threshold = f"{ref_dt.year - 1}-09-01"
+                min_h2h_threshold = f"{ref_dt.year - 1}-09-01"
             elif sport_code == 'SOCCER':
                 # 사용자 요청: "최근결과란에 축구는 업데이트가 안되어있어 최근결과란 현시점부터 5년과거를 해당해"
                 # 현시점 기준 과거 5년치(2021년~현재 2026년) 공식 경기 결과 및 상대전적
@@ -1243,8 +1271,7 @@ class HistoricalAgentRouter:
                     if cur_dt > ref_dt:
                         continue
                     if sp_code == 'BASKETBALL':
-                        # 농구는 작년 시즌(2024-2025 / 2025년) 공식 기록 전체 포함 (2024-09-01 이후)
-                        cutoff_dt = datetime(ref_dt.year - 2, 9, 1)
+                        cutoff_dt = datetime(ref_dt.year - 1, 9, 1)
                         if cur_dt < cutoff_dt:
                             continue
                     elif sp_code == 'SOCCER':
@@ -1306,9 +1333,7 @@ class HistoricalAgentRouter:
                         continue
 
                     if sp_code == 'BASKETBALL':
-                        # 사용자 요청: "농구 최근3년 상대전적이 아니고 작년 한시즌 전체 상대전적만 나오게 해죠"
-                        # 3년 전 과거(2023년 등) 데이터 배제, 작년 한 시즌(2024-09-01 이후 ~ 2025년 / 현시점) 맞대결 전체만 포함
-                        cutoff_dt = datetime(ref_dt.year - 2, 9, 1)
+                        cutoff_dt = datetime(ref_dt.year - 1, 9, 1)
                         if cur_dt < cutoff_dt:
                             continue
                     elif sp_code == 'SOCCER':

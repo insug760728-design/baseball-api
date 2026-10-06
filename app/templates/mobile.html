@@ -716,6 +716,8 @@
     </div>
   </nav>
 
+  <!-- Common Utilities (Team Normalization, formatting) -->
+  <script src="/static/js/common_utils.js"></script>
   <script>
     let allMatches = [];
     let currentSportFilter = 'ALL';
@@ -810,8 +812,10 @@
           }
         }
 
-        const homeName = m.home_team_name || '홈팀';
-        const awayName = m.away_team_name || '원정팀';
+        const rawHome = m.home_team_name || '홈팀';
+        const rawAway = m.away_team_name || '원정팀';
+        const homeName = (typeof CommonUtils !== 'undefined' && CommonUtils.formatTeamName) ? CommonUtils.formatTeamName(rawHome) : rawHome;
+        const awayName = (typeof CommonUtils !== 'undefined' && CommonUtils.formatTeamName) ? CommonUtils.formatTeamName(rawAway) : rawAway;
         const homeStarter = m.home_starter ? `👤 ${m.home_starter}` : '';
         const awayStarter = m.away_starter ? `👤 ${m.away_starter}` : '';
 
@@ -951,7 +955,7 @@
       container.innerHTML = targetMatches.map((m, idx) => `
         <div class="calc-row">
           <div class="calc-team-names">
-            ${m.home_team_name} vs ${m.away_team_name}
+            ${(typeof CommonUtils !== 'undefined' && CommonUtils.formatTeamName) ? CommonUtils.formatTeamName(m.home_team_name) : m.home_team_name} vs ${(typeof CommonUtils !== 'undefined' && CommonUtils.formatTeamName) ? CommonUtils.formatTeamName(m.away_team_name) : m.away_team_name}
           </div>
           <div class="calc-btn-group">
             <button class="calc-btn ${selectedCalc[m.id]?.includes('W') ? 'selected' : ''}" onclick="toggleCalc(${m.id}, 'W', ${m.odds?.home_win || 1.8})">승</button>

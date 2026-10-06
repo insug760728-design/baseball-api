@@ -10147,10 +10147,92 @@ function getFullModalMatchList() {
         'NC 다이노스': 'NC', 'NC': 'NC',
         '한화 이글스': '한화', '한화': '한화',
         '롯데 자이언츠': '롯데', '롯데': '롯데',
-        '키움 히어로즈': '키움', '키움': '키움'
+        '키움 히어로즈': '키움', '키움': '키움',
+        // KBL (한국프로농구 10개 구단)
+        '수원 KT 소닉붐': 'KT', '수원 KT': 'KT', '수원KT': 'KT', 'KT 소닉붐': 'KT', 'KT소닉붐': 'KT', '수원kt': 'KT',
+        '창원 LG 세이커스': 'LG', '창원 LG': 'LG', '창원LG': 'LG', 'LG 세이커스': 'LG', 'LG세이커스': 'LG', '창원lg': 'LG',
+        '서울 SK 나이츠': 'SK', '서울 SK': 'SK', '서울SK': 'SK', 'SK 나이츠': 'SK', 'SK나이츠': 'SK', '서울sk': 'SK',
+        '원주 DB 프로미': 'DB', '원주 DB': 'DB', '원주DB': 'DB', 'DB 프로미': 'DB', 'DB프로미': 'DB', '원주db': 'DB',
+        '부산 KCC 이지스': 'KCC', '부산 KCC': 'KCC', '부산KCC': 'KCC', 'KCC 이지스': 'KCC', 'KCC이지스': 'KCC', '부산kcc': 'KCC', '전주 KCC': 'KCC', '전주KCC': 'KCC',
+        '서울 삼성 썬더스': '삼성', '서울 삼성': '삼성', '서울삼성': '삼성', '삼성 썬더스': '삼성', '삼성썬더스': '삼성',
+        '고양 소노 스카이거너스': '소노', '고양 소노': '소노', '고양소노': '소노', '소노 스카이거너스': '소노', '소노스카이거너스': '소노', '고양 캐롯': '소노', '고양캐롯': '소노',
+        '안양 정관장 레드부스터스': '정관장', '안양 정관장': '정관장', '안양정관장': '정관장', '정관장 레드부스터스': '정관장', '정관장레드부스터스': '정관장', '안양 KGC': '정관장', '안양KGC': '정관장', 'KGC인삼공사': '정관장',
+        '대구 한국가스공사 페가수스': '가스공사', '대구 한국가스공사': '가스공사', '대구한국가스공사': '가스공사', '대구 한국가스': '가스공사', '대구한국가스': '가스공사', '한국가스공사 페가수스': '가스공사', '한국가스공사': '가스공사', '한국가스': '가스공사', '대구가스공사': '가스공사', '가스공사 페가수스': '가스공사', '가스공사': '가스공사',
+        '울산 현대모비스 피버스': '모비스', '울산 현대모비스': '모비스', '울산현대모비스': '모비스', '현대모비스 피버스': '모비스', '현대모비스피버스': '모비스', '현대모비스': '모비스', '울산 모비스': '모비스', '울산모비스': '모비스', '모비스 피버스': '모비스', '모비스': '모비스',
+        // WKBL (여자프로농구 6개 구단)
+        '아산 우리은행 우리WON': '우리은행', '아산 우리은행': '우리은행', '아산우리은행': '우리은행', '우리은행 우리WON': '우리은행', '우리은행': '우리은행',
+        '청주 KB스타즈': 'KB스타즈', '청주 KB': 'KB스타즈', '청주KB스타즈': 'KB스타즈', '청주KB': 'KB스타즈', 'KB스타즈': 'KB스타즈', 'KB 스타즈': 'KB스타즈',
+        '용인 삼성생명 블루밍스': '삼성생명', '용인 삼성생명': '삼성생명', '용인삼성생명': '삼성생명', '삼성생명 블루밍스': '삼성생명', '삼성생명': '삼성생명',
+        '인천 신한은행 에스버드': '신한은행', '인천 신한은행': '신한은행', '인천신한은행': '신한은행', '신한은행 에스버드': '신한은행', '신한은행': '신한은행',
+        '부산 BNK 썸': 'BNK썸', '부산 BNK': 'BNK썸', '부산BNK썸': 'BNK썸', '부산BNK': 'BNK썸', 'BNK 썸': 'BNK썸', 'BNK썸': 'BNK썸', 'BNK': 'BNK썸',
+        '부천 하나은행': '하나은행', '부천하나은행': '하나은행', '부천 하나원큐': '하나은행', '하나원큐': '하나은행', '하나은행': '하나은행',
+        // KOVO (배구)
+        '인천 대한항공 점보스': '대한항공', '대한항공 점보스': '대한항공', '대한항공': '대한항공',
+        '서울 우리카드 우리WON': '우리카드', '우리카드 우리WON': '우리카드', '우리카드': '우리카드',
+        '천안 현대캐피탈 스카이워커스': '현대캐피탈', '현대캐피탈 스카이워커스': '현대캐피탈', '현대캐피탈': '현대캐피탈',
+        '안산 OK금융그룹 읏맨': 'OK저축', 'OK저축은행 브리온': 'OK저축', 'OK저축은행': 'OK저축', 'OK금융그룹': 'OK저축', 'OK저축': 'OK저축',
+        '수원 한국전력 빅스톰': '한국전력', '한국전력 빅스톰': '한국전력', '한국전력': '한국전력',
+        '대전 삼성화재 블루팡스': '삼성화재', '삼성화재 블루팡스': '삼성화재', '삼성화재': '삼성화재',
+        '의정부 KB손해보험 스타즈': 'KB손보', 'KB손해보험 스타즈': 'KB손보', 'KB손해보험': 'KB손보', 'KB손보': 'KB손보',
+        '인천 흥국생명 핑크스파이더스': '흥국생명', '흥국생명 핑크스파이더스': '흥국생명', '흥국생명': '흥국생명',
+        '수원 현대건설 힐스테이트': '현대건설', '현대건설 힐스테이트': '현대건설', '현대건설': '현대건설',
+        '화성 IBK기업은행 알토스': '기업은행', 'IBK기업은행 알토스': '기업은행', 'IBK기업은행': '기업은행', '기업은행': '기업은행',
+        '한국도로공사 하이패스': '도로공사', '한국도로공사': '도로공사', '도로공사': '도로공사',
+        'GS칼텍스 서울Kixx': 'GS칼텍스', 'GS칼텍스 서울kixx': 'GS칼텍스', 'GS칼텍스': 'GS칼텍스',
+        '광주 페퍼저축은행 AI페퍼스': '페퍼', '페퍼저축은행 AI페퍼스': '페퍼', '페퍼저축은행': '페퍼', '페퍼': '페퍼',
+        // 축구 대표 클럽
+        '맨체스터 시티': '맨시티', '맨체스터시티': '맨시티', '맨체스터 C': '맨시티',
+        '맨체스터 유나이티드': '맨유', '맨체스터유나이티드': '맨유', '맨체스터 U': '맨유',
+        '토트넘 홋스퍼': '토트넘', '토트넘 핫스퍼': '토트넘', '토트넘홋스퍼': '토트넘',
+        '뉴캐슬 유나이티드': '뉴캐슬', '뉴캐슬유나이티드': '뉴캐슬',
+        '아스톤 빌라': '아스톤빌라', '아스톤빌라': '아스톤빌라',
+        '크리스탈 팰리스': 'C.팰리스', '크리스탈팰리스': 'C.팰리스',
+        '울버햄튼 원더러스': '울버햄튼', '울버햄튼원더러스': '울버햄튼',
+        '레알 마드리드': '레알', '레알마드리드': '레알',
+        '아틀레티코 마드리드': 'AT마드리드', '아틀레티코마드리드': 'AT마드리드',
+        '바이에른 뮌헨': '뮌헨', '바이에른뮌헨': '뮌헨',
+        '보루시아 도르트문트': '도르트문트', '보루시아도르트문트': '도르트문트',
+        '파리 생제르맹': '파리SG', '파리생제르맹': '파리SG', '파리 생제르망': '파리SG',
+        '인테르 밀란': '인테르', '인터 밀란': '인테르', '인테르나치오날레': '인테르',
+        'AC 밀란': 'AC밀란', 'AC밀란': 'AC밀란'
       };
 
       if (FRONT_MAP[name]) return FRONT_MAP[name];
+
+      // KBL 농구 10개 구단 초간결 정규화 (대구한국가스, 울산현대모비스, 수원KT 등)
+      if (/(한국가스|가스공사)/i.test(name)) return '가스공사';
+      if (/(현대모비스|모비스)/i.test(name)) return '모비스';
+      if (/(정관장|KGC인삼|인삼공사)/i.test(name)) return '정관장';
+      if (/(소노|스카이거너스|캐롯)/i.test(name)) return '소노';
+      if (/KCC/i.test(name)) return 'KCC';
+      if (/KT\b|케이티|소닉붐/i.test(name)) return 'KT';
+      if (/LG\b|엘지|세이커스/i.test(name)) return 'LG';
+      if (/SK\b|에스케이|나이츠/i.test(name)) return 'SK';
+      if (/DB\b|디비|프로미/i.test(name)) return 'DB';
+      if (/(삼성\s*썬더스|^서울\s*삼성|^삼성$)/i.test(name)) return '삼성';
+
+      // WKBL 여자농구
+      if (/우리은행/i.test(name)) return '우리은행';
+      if (/KB스타즈|KB국민|국민은행/i.test(name)) return 'KB스타즈';
+      if (/삼성생명/i.test(name)) return '삼성생명';
+      if (/신한은행/i.test(name)) return '신한은행';
+      if (/하나은행|하나원큐/i.test(name)) return '하나은행';
+      if (/BNK/i.test(name)) return 'BNK';
+
+      // KOVO 배구
+      if (/현대캐피탈/i.test(name)) return '현대캐피탈';
+      if (/대한항공/i.test(name)) return '대한항공';
+      if (/우리카드/i.test(name)) return '우리카드';
+      if (/한국전력/i.test(name)) return '한국전력';
+      if (/KB손해|KB손보/i.test(name)) return 'KB손보';
+      if (/OK저축|OK금융|OK읏맨/i.test(name)) return 'OK저축';
+      if (/삼성화재/i.test(name)) return '삼성화재';
+      if (/흥국생명/i.test(name)) return '흥국생명';
+      if (/현대건설/i.test(name)) return '현대건설';
+      if (/IBK|기업은행/i.test(name)) return '기업은행';
+      if (/도로공사/i.test(name)) return '도로공사';
+      if (/GS칼텍스/i.test(name)) return 'GS칼텍스';
+      if (/페퍼저축|AI페퍼/i.test(name)) return '페퍼';
 
       // 공백 기준 앞 단어(앞자리) 취득
       const parts = name.split(/\s+/);
@@ -16886,7 +16968,59 @@ function updateSlimPanel(matchId, type, contentHtml) {
       '알두하일': '알두하일', '알 두하일': '알두하일',
       '광저우 FC': '광저우 FC', '상하이 선화': '상하이 선화', '상하이 포트': '상하이 포트', '산둥 타이산': '산둥 타이산',
       '요코하마 F. 마리노스': '요코하마 F.마리노스', '가와사키 프론탈레': '가와사키 프론탈레', '우라와 레즈': '우라와 레즈', '비셀 고베': '비셀 고베', '산프레체 히로시마': '산프레체 히로시마',
-      '울산 HD': '울산 HD', '울산 현대': '울산 HD', '전북 현대': '전북 현대', '포항 스틸러스': '포항 스틸러스', 'FC 서울': 'FC 서울', '광주 FC': '광주 FC', '인천 유나이티드': '인천 유나이티드', '제주 유나이티드': '제주 유나이티드', '강원 FC': '강원 FC', '수원 FC': '수원 FC', '수원 삼성': '수원 삼성', '대전 하나': '대전 하나', '김천 상무': '김천 상무'
+      '울산 HD': '울산 HD', '울산 현대': '울산 HD', '전북 현대': '전북 현대', '포항 스틸러스': '포항 스틸러스', 'FC 서울': 'FC 서울', '광주 FC': '광주 FC', '인천 유나이티드': '인천 유나이티드', '제주 유나이티드': '제주 유나이티드', '강원 FC': '강원 FC', '수원 FC': '수원 FC', '수원 삼성': '수원 삼성', '대전 하나': '대전 하나', '김천 상무': '김천 상무',
+
+      // BASKETBALL - KBL (한국 남자프로농구 10개 구단)
+      '수원KT 소닉붐': '수원KT', '수원 KT 소닉붐': '수원KT', '수원kt 소닉붐': '수원KT', '수원KT': '수원KT', '수원 KT': '수원KT', '수원kt': '수원KT', 'KT 소닉붐': '수원KT', 'KT소닉붐': '수원KT',
+      '창원LG 세이커스': '창원LG', '창원 LG 세이커스': '창원LG', '창원lg 세이커스': '창원LG', '창원LG': '창원LG', '창원 LG': '창원LG', '창원lg': '창원LG', 'LG 세이커스': '창원LG', 'LG세이커스': '창원LG',
+      '서울SK 나이츠': '서울SK', '서울 SK 나이츠': '서울SK', '서울sk 나이츠': '서울SK', '서울SK': '서울SK', '서울 SK': '서울SK', '서울sk': '서울SK', 'SK 나이츠': '서울SK', 'SK나이츠': '서울SK',
+      '서울삼성 썬더스': '서울삼성', '서울 삼성 썬더스': '서울삼성', '서울삼성': '서울삼성', '서울 삼성': '서울삼성', '삼성 썬더스': '서울삼성', '삼성썬더스': '서울삼성',
+      '안양정관장 레드부스터스': '안양정관장', '안양 정관장 레드부스터스': '안양정관장', '안양 정관장': '안양정관장', '안양정관장': '안양정관장', '정관장 레드부스터스': '안양정관장', '정관장레드부스터스': '안양정관장', '안양 KGC': '안양정관장', '안양KGC': '안양정관장',
+      '원주DB 프로미': '원주DB', '원주 DB 프로미': '원주DB', '원주db 프로미': '원주DB', '원주DB': '원주DB', '원주 DB': '원주DB', '원주db': '원주DB', 'DB 프로미': '원주DB', 'DB프로미': '원주DB',
+      '고양소노 스카이거너스': '고양소노', '고양 소노 스카이거너스': '고양소노', '고양소노': '고양소노', '고양 소노': '고양소노', '소노 스카이거너스': '고양소노', '소노스카이거너스': '고양소노', '고양 캐롯': '고양소노',
+      '대구한국가스공사 페가수스': '한국가스공사', '대구 한국가스공사 페가수스': '한국가스공사', '대구한국가스공사': '한국가스공사', '대구 한국가스공사': '한국가스공사', '한국가스공사 페가수스': '한국가스공사', '한국가스공사': '한국가스공사', '대구가스공사': '한국가스공사',
+      '부산KCC 이지스': '부산KCC', '부산 KCC 이지스': '부산kcc 이지스', '부산KCC': '부산KCC', '부산 KCC': '부산KCC', '부산kcc': '부산KCC', 'KCC 이지스': '부산KCC', 'KCC이지스': '부산KCC', '전주KCC': '부산KCC', '전주 KCC': '부산KCC',
+      '울산현대모비스 피버스': '현대모비스', '울산 현대모비스 피버스': '현대모비스', '울산현대모비스': '현대모비스', '울산 현대모비스': '현대모비스', '현대모비스 피버스': '현대모비스', '현대모비스': '현대모비스', '울산모비스': '현대모비스',
+
+      // BASKETBALL - WKBL (한국 여자프로농구 6개 구단)
+      '아산 우리은행 우리WON': '우리은행', '아산 우리은행': '우리은행', '아산우리은행': '우리은행', '우리은행 우리WON': '우리은행', '우리은행우리WON': '우리은행', '우리은행': '우리은행',
+      '청주 KB스타즈': 'KB스타즈', '청주 KB국민은행 스타즈': 'KB스타즈', '청주KB스타즈': 'KB스타즈', '청주 KB': 'KB스타즈', 'KB스타즈': 'KB스타즈', 'KB 스타즈': 'KB스타즈',
+      '용인 삼성생명 블루밍스': '삼성생명', '용인 삼성생명': '삼성생명', '용인삼성생명': '삼성생명', '삼성생명 블루밍스': '삼성생명', '삼성생명': '삼성생명',
+      '인천 신한은행 에스버드': '신한은행', '인천 신한은행': '신한은행', '인천신한은행': '신한은행', '신한은행 에스버드': '신한은행', '신한은행': '신한은행',
+      '부산 BNK 썸': 'BNK썸', '부산 BNK썸': 'BNK썸', '부산BNK썸': 'BNK썸', '부산 BNK': 'BNK썸', 'BNK 썸': 'BNK썸', 'BNK썸': 'BNK썸', '부산bnk': 'BNK썸',
+      '부천 하나은행': '하나은행', '부천하나은행': '하나은행', '부천 하나원큐': '하나은행', '부천하나원큐': '하나은행', '하나원큐': '하나은행', '하나은행': '하나은행',
+
+      // BASKETBALL - NBA (미국 프로농구 30개 구단)
+      '보스턴 셀틱스': '보스턴', 'Boston Celtics': '보스턴', '보스턴': '보스턴',
+      '뉴욕 닉스': '뉴욕닉스', '뉴욕닉스': '뉴욕닉스', 'New York Knicks': '뉴욕닉스',
+      '밀워키 벅스': '밀워키', 'Milwaukee Bucks': '밀워키', '밀워키': '밀워키',
+      '클리블랜드 캐벌리어스': '클리블랜드', 'Cleveland Cavaliers': '클리블랜드', '클리블랜드': '클리블랜드',
+      '인디애나 페이서스': '인디애나', 'Indiana Pacers': '인디애나', '인디애나': '인디애나',
+      '필라델피아 세븐티식서스': '필라델피아', '필라델피아 76ers': '필라델피아', 'Philadelphia 76ers': '필라델피아', '필라델피아': '필라델피아',
+      '마이애미 히트': '마이애미', 'Miami Heat': '마이애미', '마이애미': '마이애미',
+      '올랜도 매직': '올랜도', 'Orlando Magic': '올랜도', '올랜도': '올랜도',
+      '시카고 불스': '시카고불스', 'Chicago Bulls': '시카고불스', '시카고불스': '시카고불스',
+      '애틀랜타 호크스': '애틀랜타', 'Atlanta Hawks': '애틀랜타', '애틀랜타': '애틀랜타',
+      '브루클린 네츠': '브루클린', 'Brooklyn Nets': '브루클린', '브루클린': '브루클린',
+      '토론토 랩터스': '토론토', 'Toronto Raptors': '토론토', '토론토': '토론토',
+      '샬럿 호네츠': '샬럿', 'Charlotte Hornets': '샬럿', '샬럿': '샬럿',
+      '워싱턴 위저즈': '워싱턴', '워싱턴 위저드': '워싱턴', 'Washington Wizards': '워싱턴', '워싱턴': '워싱턴',
+      '디트로이트 피스톤스': '디트로이트', '디트로이트 피스톤즈': '디트로이트', 'Detroit Pistons': '디트로이트', '디트로이트': '디트로이트',
+      '오클라호마시티 썬더': '오클라호마', '오클라호마 썬더': '오클라호마', 'Oklahoma City Thunder': '오클라호마', '오클라호마': '오클라호마',
+      '덴버 너게츠': '덴버', 'Denver Nuggets': '덴버', '덴버': '덴버',
+      '미네소타 팀버울브스': '미네소타', 'Minnesota Timberwolves': '미네소타', '미네소타': '미네소타',
+      'LA 클리퍼스': 'LA클리퍼스', 'LA클리퍼스': 'LA클리퍼스', 'Los Angeles Clippers': 'LA클리퍼스',
+      '댈러스 매버릭스': '댈러스', 'Dallas Mavericks': '댈러스', '댈러스': '댈러스',
+      '피닉스 선즈': '피닉스', '피닉스 선스': '피닉스', 'Phoenix Suns': '피닉스', '피닉스': '피닉스',
+      'LA 레이커스': 'LA레이커스', 'LA레이커스': 'LA레이커스', 'Los Angeles Lakers': 'LA레이커스',
+      '뉴올리언스 펠리컨스': '뉴올리언스', 'New Orleans Pelicans': '뉴올리언스', '뉴올리언스': '뉴올리언스',
+      '새크라멘토 킹스': '새크라멘토', 'Sacramento Kings': '새크라멘토', '새크라멘토': '새크라멘토',
+      '골든스테이트 워리어스': '골든스테이트', 'Golden State Warriors': '골든스테이트', '골든스테이트': '골든스테이트', 'GS 워리어스': '골든스테이트', 'GS워리어스': '골든스테이트',
+      '휴스턴 로키츠': '휴스턴', '휴스턴 로케츠': '휴스턴', 'Houston Rockets': '휴스턴', '휴스턴': '휴스턴',
+      '유타 재즈': '유타', 'Utah Jazz': '유타', '유타': '유타',
+      '멤피스 그리즐리스': '멤피스', 'Memphis Grizzlies': '멤피스', '멤피스': '멤피스',
+      '샌안토니오 스퍼스': '샌안토니오', 'San Antonio Spurs': '샌안토니오', '샌안토니오': '샌안토니오',
+      '포틀랜드 트레일블레이저스': '포틀랜드', 'Portland Trail Blazers': '포틀랜드', '포틀랜드': '포틀랜드'
     };
 
     function formatTeamName(name) {
@@ -20407,6 +20541,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
       const hName = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : m.home_team_name;
       const aName = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : m.away_team_name;
+      const hShort = (typeof getFrontTeamName === 'function') ? getFrontTeamName(hName) : hName;
+      const aShort = (typeof getFrontTeamName === 'function') ? getFrontTeamName(aName) : aName;
       const hFlag = (typeof getTeamFlagImg === 'function') ? getTeamFlagImg(m.home_team_name, 20, 14) : '';
       const aFlag = (typeof getTeamFlagImg === 'function') ? getTeamFlagImg(m.away_team_name, 20, 14) : '';
       const leagueTitle = m.league_name || '프로농구';
@@ -20774,6 +20910,152 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const awayRecent = hist.away_recent || [];
       const h2hSum = hist.h2h_summary || { total_matches: h2hMatches.length, home_wins: 0, away_wins: 0, summary_text: `${h2hMatches.length}전` };
 
+      // 🏀 [농구 전용] 최근 경기 파싱 헬퍼: [날짜 | 홈팀명 | 스코어 | 원정팀명] 100% 정합 추출
+      function parseBasketballMatchRow(rm, baseTeam) {
+        if (!rm) return null;
+        const rawDate = rm.date || rm.match_date || '';
+        let dateStr = '';
+        let dateShort = '';
+        const dMatch = String(rawDate).match(/(\d{4})[.-](\d{1,2})[.-](\d{1,2})/);
+        if (dMatch) {
+          dateStr = `${dMatch[1]}.${dMatch[2].padStart(2, '0')}.${dMatch[3].padStart(2, '0')}`;
+          dateShort = `${dMatch[2].padStart(2, '0')}.${dMatch[3].padStart(2, '0')}`;
+        } else {
+          const dShort = String(rawDate).match(/(\d{1,2})[.-](\d{1,2})/);
+          if (dShort) {
+            dateStr = `2026.${dShort[1].padStart(2, '0')}.${dShort[2].padStart(2, '0')}`;
+            dateShort = `${dShort[1].padStart(2, '0')}.${dShort[2].padStart(2, '0')}`;
+          } else {
+            dateStr = (rawDate || '').slice(0, 10).replace(/-/g, '.') || '-';
+            dateShort = dateStr.length >= 5 ? dateStr.slice(-5) : dateStr;
+          }
+        }
+
+        let hTeam = '';
+        let aTeam = '';
+        let hScore = null;
+        let aScore = null;
+
+        if (rm.home_team_name && rm.away_team_name) {
+          hTeam = rm.home_team_name;
+          aTeam = rm.away_team_name;
+          hScore = rm.home_score;
+          aScore = rm.away_score;
+        } else if (rm.home_team && rm.away_team) {
+          hTeam = rm.home_team;
+          aTeam = rm.away_team;
+          hScore = rm.home_score;
+          aScore = rm.away_score;
+        } else {
+          const isHomeVenue = (rm.home_away === '홈' || rm.is_home === true || rm.home_away === 'HOME');
+          const opp = rm.opponent || rm.opp_team || '상대팀';
+          if (isHomeVenue) {
+            hTeam = baseTeam || rm.team_name || '홈팀';
+            aTeam = opp;
+            hScore = rm.team_score ?? rm.home_score;
+            aScore = rm.opp_score ?? rm.away_score;
+          } else {
+            hTeam = opp;
+            aTeam = baseTeam || rm.team_name || '원정팀';
+            hScore = rm.opp_score ?? rm.home_score;
+            aScore = rm.team_score ?? rm.away_score;
+          }
+        }
+
+        if ((hScore === null || hScore === undefined || isNaN(hScore)) && rm.score) {
+          const parts = String(rm.score).split(/[-:]/).map(s => s.trim());
+          if (parts.length >= 2) {
+            hScore = Number(parts[0]);
+            aScore = Number(parts[1]);
+          }
+        }
+
+        const numH = (hScore !== null && hScore !== undefined && !isNaN(hScore)) ? Number(hScore) : null;
+        const numA = (aScore !== null && aScore !== undefined && !isNaN(aScore)) ? Number(aScore) : null;
+        const isHWin = (numH !== null && numA !== null) && (numH > numA);
+        const isAWin = (numH !== null && numA !== null) && (numA > numH);
+
+        const hDisplay = (typeof getFrontTeamName === 'function') ? getFrontTeamName(hTeam) : ((typeof formatTeamName === 'function') ? formatTeamName(hTeam) : hTeam);
+        const aDisplay = (typeof getFrontTeamName === 'function') ? getFrontTeamName(aTeam) : ((typeof formatTeamName === 'function') ? formatTeamName(aTeam) : aTeam);
+
+        return {
+          dateStr,
+          dateShort,
+          hTeam: hDisplay,
+          aTeam: aDisplay,
+          fullHTeam: hTeam,
+          fullATeam: aTeam,
+          hScore: (numH !== null) ? numH : '-',
+          aScore: (numA !== null) ? numA : '-',
+          isHWin,
+          isAWin
+        };
+      }
+
+      // 🏀 [농구 전용] 최근 경기 규격화 테이블 렌더러 (헤더: 날짜 | 홈팀명 | 스코어 | 원정팀명)
+      function renderBasketballMatchesTableHtml(matchesList, baseTeam, isHomeSection = true) {
+        if (!matchesList || matchesList.length === 0) {
+          return `
+            <div class="text-center text-muted small py-3 bg-white border rounded" style="border-color:#e2e8f0 !important; font-size:0.74rem;">
+              최근 공식 경기 기록 준비 중입니다.
+            </div>
+          `;
+        }
+
+        const rows = matchesList.slice(0, 10).map((rm, idx) => {
+          const p = parseBasketballMatchRow(rm, baseTeam);
+          if (!p) return '';
+          const bg = (idx % 2 === 0) ? '#ffffff' : '#f8fafc';
+          return `
+            <tr style="height: 32px; background: ${bg}; border-bottom: 1px solid #f1f5f9; font-size: 0.74rem;">
+              <!-- 1. 날짜 -->
+              <td class="text-secondary text-center font-monospace" style="width: 20%; white-space: nowrap; font-size: 0.72rem; padding: 4px 2px;">
+                <span class="d-none d-sm-inline">${p.dateStr}</span>
+                <span class="d-inline d-sm-none">${p.dateShort}</span>
+              </td>
+              <!-- 2. 홈팀명 -->
+              <td class="text-end text-truncate" style="width: 30%; white-space: nowrap; padding: 4px 10px 4px 2px;" title="${p.fullHTeam}">
+                <span style="color: ${p.isHWin ? '#dc2626' : '#1e293b'}; font-weight: ${p.isHWin ? '800' : '600'}; font-size: 0.78rem;">
+                  ${p.hTeam}
+                </span>
+              </td>
+              <!-- 3. 스코어 -->
+              <td class="text-center font-monospace" style="width: 20%; white-space: nowrap; padding: 3px 2px;">
+                <span class="px-2 py-0.5 rounded-pill font-monospace" style="background: #f1f5f9; border: 1px solid #cbd5e1; font-weight: 800; font-size: 0.82rem; display: inline-block;">
+                  <span style="color: ${p.isHWin ? '#dc2626' : '#1e293b'}; font-weight: 800;">${p.hScore}</span>
+                  <span style="color: #94a3b8; margin: 0 2px;">:</span>
+                  <span style="color: ${p.isAWin ? '#dc2626' : '#1e293b'}; font-weight: 800;">${p.aScore}</span>
+                </span>
+              </td>
+              <!-- 4. 원정팀명 -->
+              <td class="text-start text-truncate" style="width: 30%; white-space: nowrap; padding: 4px 2px 4px 10px;" title="${p.fullATeam}">
+                <span style="color: ${p.isAWin ? '#dc2626' : '#1e293b'}; font-weight: ${p.isAWin ? '800' : '600'}; font-size: 0.78rem;">
+                  ${p.aTeam}
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        return `
+          <div class="rounded border bg-white overflow-hidden shadow-xs" style="border-color: #cbd5e1 !important; width: 100%;">
+            <table class="table table-sm text-center align-middle mb-0" style="table-layout: fixed; width: 100%; font-size: 0.74rem;">
+              <thead style="background: #f8fafc !important;">
+                <tr style="height: 28px; font-size: 0.72rem; background: #f8fafc !important; border-bottom: 1.5px solid #cbd5e1;">
+                  <th style="width: 20%; background: #f8fafc !important; text-align: center; color: #475569 !important; font-weight: 700; padding: 4px 2px;">날짜</th>
+                  <th style="width: 30%; background: #f8fafc !important; text-align: right; padding-right: 12px; color: #dc2626 !important; font-weight: 800;">홈팀명</th>
+                  <th style="width: 20%; background: #f8fafc !important; text-align: center; color: #0f172a !important; font-weight: 800; padding: 4px 2px;">스코어</th>
+                  <th style="width: 30%; background: #f8fafc !important; text-align: left; padding-left: 12px; color: #2563eb !important; font-weight: 800;">원정팀명</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
       return `
         <div class="basketball-detail-analytics-widget mb-3">
           <!-- 🏀 헤더 배너 -->
@@ -20812,7 +21094,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 <tbody>
                   <tr>
                     <td class="text-start fw-bold text-truncate" style="color: #1e3a8a;">
-                      ${hFlag} <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0 px-1 me-1" style="font-size:0.62rem;">홈</span>${hName}
+                      ${hFlag} <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0 px-1 me-1" style="font-size:0.62rem;">홈</span>${hShort}
                     </td>
                     <td>${q1H}</td>
                     <td>${q2H}</td>
@@ -20823,7 +21105,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
                   </tr>
                   <tr>
                     <td class="text-start fw-bold text-truncate" style="color: #991b1b;">
-                      ${aFlag} <span class="badge bg-danger-subtle text-danger border border-danger-subtle py-0 px-1 me-1" style="font-size:0.62rem;">원정</span>${aName}
+                      ${aFlag} <span class="badge bg-danger-subtle text-danger border border-danger-subtle py-0 px-1 me-1" style="font-size:0.62rem;">원정</span>${aShort}
                     </td>
                     <td>${q1A}</td>
                     <td>${q2A}</td>
@@ -20909,13 +21191,13 @@ function updateSlimPanel(matchId, type, contentHtml) {
               <div class="position-absolute d-flex justify-content-between align-items-center w-100 px-3" style="top: 8px; left: 0; right: 0; z-index: 5; pointer-events: none;">
                 <div class="d-inline-flex align-items-center gap-1.5 px-2.5 py-1 rounded-pill shadow-sm" style="background: rgba(15, 23, 42, 0.88); border: 1.2px solid #3b82f6; backdrop-filter: blur(6px);">
                   <span class="badge bg-primary text-white" style="font-size: 0.62rem; padding: 2px 5px;">HOME</span>
-                  <span class="fw-bold text-white text-truncate" style="font-size: 0.76rem; max-width: 110px;">${hName}</span>
+                  <span class="fw-bold text-white text-truncate" style="font-size: 0.76rem; max-width: 110px;">${hShort}</span>
                 </div>
                 <div class="px-2 py-0.5 rounded-pill shadow-sm" style="background: rgba(0,0,0,0.75); border: 1px solid rgba(255,255,255,0.3); font-size: 0.66rem; font-weight: 800; color: #fbbf24; letter-spacing: 1px;">
                   ⚔️ 5 vs 5 FULL COURT
                 </div>
                 <div class="d-inline-flex align-items-center gap-1.5 px-2.5 py-1 rounded-pill shadow-sm" style="background: rgba(15, 23, 42, 0.88); border: 1.2px solid #ef4444; backdrop-filter: blur(6px);">
-                  <span class="fw-bold text-white text-truncate" style="font-size: 0.76rem; max-width: 110px;">${aName}</span>
+                  <span class="fw-bold text-white text-truncate" style="font-size: 0.76rem; max-width: 110px;">${aShort}</span>
                   <span class="badge bg-danger text-white" style="font-size: 0.62rem; padding: 2px 5px;">AWAY</span>
                 </div>
               </div>
@@ -20961,9 +21243,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 </strong>
               </div>
               <div class="d-flex gap-2 small fw-bold" style="font-size:0.70rem;">
-                <span class="text-danger text-truncate" style="max-width: 110px;">🔴 [홈] ${hName}</span>
+                <span class="text-danger text-truncate" style="max-width: 110px;">🔴 [홈] ${hShort}</span>
                 <span class="text-muted">vs</span>
-                <span class="text-primary text-truncate" style="max-width: 110px;">🔵 [원정] ${aName}</span>
+                <span class="text-primary text-truncate" style="max-width: 110px;">🔵 [원정] ${aShort}</span>
               </div>
             </div>
 
@@ -20973,13 +21255,13 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 <thead style="background: #0f172a; color: #ffffff;">
                   <tr style="height: 32px;">
                     <th style="width: 28%; text-align: center; color: #f87171; font-weight: 800; padding: 4px 2px;" class="text-truncate">
-                      🔴 [홈] ${hName}
+                      🔴 [홈] ${hShort}
                     </th>
                     <th style="width: 44%; text-align: center; color: #cbd5e1; font-weight: 700; padding: 4px 2px;">
                       ⚔️ 6대 전술 격돌 게이지
                     </th>
                     <th style="width: 28%; text-align: center; color: #60a5fa; font-weight: 800; padding: 4px 2px;" class="text-truncate">
-                      🔵 [원정] ${aName}
+                      🔵 [원정] ${aShort}
                     </th>
                   </tr>
                 </thead>
@@ -21048,69 +21330,54 @@ function updateSlimPanel(matchId, type, contentHtml) {
             </div>
           </div>
 
-          <!-- ⚖️ [섹션 5] 최근 3년 상대전적(H2H 10경기) 및 최근 10경기 흐름 -->
+          <!-- ⚖️ [섹션 5] 최근 상대전적(H2H) 및 팀별 최근 경기 결과 -->
           <div class="p-2.5 mb-2.5 rounded-3 border bg-white shadow-sm" style="border-color: #cbd5e1 !important;">
             <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color: #f1f5f9 !important;">
-              <strong style="font-size: 0.80rem; color: #1e293b;">
-                <i class="bi bi-clock-history text-primary me-1"></i>최근 3년 상대전적 (H2H ${h2hMatches.length}경기)
+              <strong style="font-size: 0.82rem; color: #1e293b;">
+                <i class="bi bi-clock-history text-primary me-1"></i>맞대결 상대전적 (H2H ${h2hMatches.length}경기)
               </strong>
               <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-0.5" style="font-size:0.72rem; font-weight:800;">
                 ${h2hSum.summary_text}
               </span>
             </div>
 
-            <!-- H2H 경기 리스트 -->
-            <div class="d-flex flex-column gap-1.5 mb-3">
-              ${h2hMatches.length > 0 ? h2hMatches.slice(0, 6).map(hm => `
-                <div class="d-flex justify-content-between align-items-center p-1.5 rounded-2 border" style="background:#f8fafc; border-color:#e2e8f0 !important; font-size:0.74rem;">
-                  <span class="text-muted small" style="width: 75px;">${hm.date || hm.match_date || ''}</span>
-                  <div class="d-flex align-items-center gap-1 flex-grow-1 justify-content-center">
-                    <span class="fw-bold ${hm.home_team_name === hName ? 'text-primary' : 'text-dark'}">${hm.home_team_name}</span>
-                    <span class="badge bg-dark text-white px-2 py-0.5" style="font-size:0.75rem;">${hm.home_score} : ${hm.away_score}</span>
-                    <span class="fw-bold ${hm.away_team_name === aName ? 'text-danger' : 'text-dark'}">${hm.away_team_name}</span>
-                  </div>
-                  <span class="badge ${hm.home_score > hm.away_score ? (hm.home_team_name === hName ? 'bg-primary' : 'bg-danger') : (hm.home_team_name === hName ? 'bg-danger' : 'bg-primary')} px-1.5 py-0.5" style="font-size:0.65rem;">
-                    ${hm.home_score > hm.away_score ? (hm.home_team_name === hName ? '홈 승' : '원정 승') : (hm.home_team_name === hName ? '홈 패' : '원정 승')}
-                  </span>
-                </div>
-              `).join('') : '<div class="text-center text-muted small py-2">상대전적 공식 기록 준비 중</div>'}
+            <!-- H2H 상대전적 테이블: 날짜 | 홈팀명 | 스코어 | 원정팀명 -->
+            <div class="mb-3">
+              ${renderBasketballMatchesTableHtml(h2hMatches, hName)}
             </div>
 
-            <!-- 최근 10경기 뷰 전환 탭 -->
+            <!-- 최근 경기 뷰 전환 탭 -->
             <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-top pt-2" style="border-color: #f1f5f9 !important;">
-              <strong style="font-size: 0.78rem; color: #1e293b;">팀별 최근 10경기 흐름</strong>
+              <strong style="font-size: 0.82rem; color: #1e293b;">
+                <i class="bi bi-calendar-check me-1 text-primary"></i>팀별 최근 경기 결과
+              </strong>
               <div class="btn-group btn-group-sm" id="bballRecentTeamTabBtns_${m.id}">
                 <button type="button" class="btn btn-outline-secondary btn-xs active py-0.5 px-2" onclick="switchBballRecentView(${m.id}, 'all')">전체</button>
-                <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-2" onclick="switchBballRecentView(${m.id}, 'home')">[홈] ${hName}</button>
-                <button type="button" class="btn btn-outline-danger btn-xs py-0.5 px-2" onclick="switchBballRecentView(${m.id}, 'away')">[원정] ${aName}</button>
+                <button type="button" class="btn btn-outline-primary btn-xs py-0.5 px-2" onclick="switchBballRecentView(${m.id}, 'home')">[홈] ${hShort}</button>
+                <button type="button" class="btn btn-outline-danger btn-xs py-0.5 px-2" onclick="switchBballRecentView(${m.id}, 'away')">[원정] ${aShort}</button>
               </div>
             </div>
 
-            <div class="row g-2">
-              <div class="col-6" id="bballRecentColHome_${m.id}">
-                <div class="p-1.5 rounded-2 border bg-light h-100">
-                  <div class="fw-bold small text-primary mb-1" style="font-size:0.70rem;">[홈] ${hName} 최근경기</div>
-                  ${homeRecent.length > 0 ? homeRecent.slice(0, 5).map(rm => `
-                    <div class="d-flex justify-content-between small py-0.5 border-bottom" style="font-size:0.66rem; border-color:#e2e8f0 !important;">
-                      <span class="text-muted">${(rm.date || rm.match_date || '').slice(0, 10).replace(/-/g, '.')}</span>
-                      <span class="text-truncate" style="max-width: 65px;">vs ${rm.opponent || rm.away_team_name}</span>
-                      <span class="fw-bold ${rm.result === 'WIN' ? 'text-success' : 'text-danger'}">${rm.score || (rm.team_score + '-' + rm.opp_score)} ${rm.result_kr || ''}</span>
-                    </div>
-                  `).join('') : '<div class="text-muted small">기록 없음</div>'}
-                </div>
+            <!-- [홈팀] 최근 경기 테이블 -->
+            <div id="bballRecentColHome_${m.id}" class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-1.5 px-1">
+                <span class="fw-bold text-dark" style="font-size: 0.78rem;">
+                  <span class="badge bg-danger text-white me-1" style="font-size: 0.65rem;">홈</span>[홈팀] ${hShort} 최근 경기
+                </span>
+                <span class="badge bg-light text-secondary border px-1.5 py-0.5" style="font-size: 0.64rem;">공식 실데이터 (${homeRecent.length}경기)</span>
               </div>
-              <div class="col-6" id="bballRecentColAway_${m.id}">
-                <div class="p-1.5 rounded-2 border bg-light h-100">
-                  <div class="fw-bold small text-danger mb-1" style="font-size:0.70rem;">[원정] ${aName} 최근경기</div>
-                  ${awayRecent.length > 0 ? awayRecent.slice(0, 5).map(rm => `
-                    <div class="d-flex justify-content-between small py-0.5 border-bottom" style="font-size:0.66rem; border-color:#e2e8f0 !important;">
-                      <span class="text-muted">${(rm.date || rm.match_date || '').slice(0, 10).replace(/-/g, '.')}</span>
-                      <span class="text-truncate" style="max-width: 65px;">vs ${rm.opponent || rm.home_team_name}</span>
-                      <span class="fw-bold ${rm.result === 'WIN' ? 'text-success' : 'text-danger'}">${rm.score || (rm.team_score + '-' + rm.opp_score)} ${rm.result_kr || ''}</span>
-                    </div>
-                  `).join('') : '<div class="text-muted small">기록 없음</div>'}
-                </div>
+              ${renderBasketballMatchesTableHtml(homeRecent, hName, true)}
+            </div>
+
+            <!-- [원정팀] 최근 경기 테이블 -->
+            <div id="bballRecentColAway_${m.id}" class="mb-1">
+              <div class="d-flex justify-content-between align-items-center mb-1.5 px-1">
+                <span class="fw-bold text-dark" style="font-size: 0.78rem;">
+                  <span class="badge bg-primary text-white me-1" style="font-size: 0.65rem;">원정</span>[원정팀] ${aShort} 최근 경기
+                </span>
+                <span class="badge bg-light text-secondary border px-1.5 py-0.5" style="font-size: 0.64rem;">공식 실데이터 (${awayRecent.length}경기)</span>
               </div>
+              ${renderBasketballMatchesTableHtml(awayRecent, aName, false)}
             </div>
           </div>
         </div>

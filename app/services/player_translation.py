@@ -134,7 +134,54 @@ SPECIAL_NPB_READINGS = {
     "選手名": "선수명",
     "アドゥワ 誠": "아두와 마코토",
     "スチュワート・ジュニア": "스튜어트 주니어",
-    "ボー・タカハシ": "보 타카하시"
+    "ボー・タカハシ": "보 타카하시",
+    "工藤 泰己": "쿠도 야스키",
+    "工藤泰己": "쿠도 야스키",
+    "쿠도 야스시 오노레": "쿠도 야스키",
+    "武内 夏暉": "타케우치 나츠키",
+    "武内夏暉": "타케우치 나츠키",
+    "小島 和哉": "코지마 카즈야",
+    "小島和哉": "코지마 카즈야",
+    "隅田 知一郎": "스미다 치히로",
+    "隅田知一郎": "스미다 치히로",
+    "松本 健吾": "마츠모토 켄고",
+    "松本健吾": "마츠모토 켄고",
+    "北山 亘基": "키타야마 코키",
+    "北山亘基": "키타야마 코키",
+    "山下 舜平大": "야마시타 슌페이타",
+    "山下舜平大": "야마시타 슌페이타",
+    "高橋 奎二": "타카하시 케이지",
+    "高橋奎二": "타카하시 케이지",
+    "床田 寛樹": "토코다 히로키",
+    "床田寛樹": "토코다 히로키",
+    "西 勇輝": "니시 유키",
+    "西勇輝": "니시 유키",
+    "村上 頌樹": "무라카미 쇼키",
+    "村上頌樹": "무라카미 쇼키",
+    "森下 暢仁": "모리시타 마사토",
+    "森下暢仁": "모리시타 마사토",
+    "伊藤 将司": "이토 마사시",
+    "伊藤将司": "이토 마사시",
+    "青柳 晃洋": "아오야기 코요",
+    "青柳晃洋": "아오야기 코요",
+    "東 克樹": "아즈마 카츠키",
+    "東克樹": "아즈마 카츠키",
+    "加藤 貴之": "카토 타카유키",
+    "加藤貴之": "카토 타카유키",
+    "山崎 福也": "야마사키 사치야",
+    "山崎福也": "야마사키 사치야",
+    "健藤平": "후지히라 쇼마",
+    "藤平 尚真": "후지히라 쇼마",
+    "藤平尚真": "후지히라 쇼마",
+    "横山 陸人": "요코야마 리쿠",
+    "横山陸人": "요코야마 리쿠",
+    "横山": "요코야마 리쿠",
+    "森浦 大輔": "모리우라 다이스케",
+    "森浦大輔": "모리우라 다이스케",
+    "森浦": "모리우라 다이스케",
+    "마에다 健藤平": "마에다 켄타",
+    "코지마 横山": "코지마 카즈야",
+    "오오세라 森浦": "오오세라 다이치"
 }
 
 def clean_korean_phonetics(hangeul: str) -> str:
@@ -896,11 +943,23 @@ def translate_player_name(raw: str) -> str:
                     kakasi_res = clean_korean_phonetics(kakasi_res)
                     if kakasi_res and not any('\u4e00' <= ch <= '\u9fff' or '\u3040' <= ch <= '\u30ff' for ch in kakasi_res):
                         return kakasi_res + suffix
+                    # If still has kanji, strip leftover non-hangul
+                    kakasi_res_clean = re.sub(r'[\u4e00-\u9fff\u3040-\u30ff]', '', kakasi_res).strip()
+                    if kakasi_res_clean:
+                        return kakasi_res_clean + suffix
             except Exception:
                 pass
 
         if any_converted:
+            res_clean = re.sub(r'[\u4e00-\u9fff\u3040-\u30ff]', '', res).strip()
+            if res_clean:
+                return clean_korean_phonetics(res_clean) + suffix
             return clean_korean_phonetics(res) + suffix
+
+        # Fallback: remove remaining Kanji/Kana so Japanese characters never show up
+        raw_hangul_only = re.sub(r'[\u4e00-\u9fff\u3040-\u30ff]', '', raw).strip()
+        if raw_hangul_only:
+            return raw_hangul_only + suffix
 
     # 4. Japanese Katakana / Hiragana automatic transliteration
     if re.search(r'[\u3040-\u309F\u30A0-\u30FF]', raw):

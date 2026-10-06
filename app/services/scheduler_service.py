@@ -437,6 +437,15 @@ class SchedulerService:
             except Exception as ade:
                 logger.error(f"[Scheduler] 데이터 검증 엔진 실행 오류: {ade}")
 
+            # 국가대표 공식 경기(네이션스리그, 유로 등) 자동 동기화
+            try:
+                from app.services.national_sync_service import sync_official_national_matches
+                nat_res = await asyncio.to_thread(sync_official_national_matches)
+                summary["NATIONAL_MATCHES_SYNC"] = nat_res
+                logger.info(f"[Scheduler Hourly] 국가대표 공식 전적 자동 동기화 완료: {nat_res}")
+            except Exception as ne:
+                logger.warning(f"[Scheduler Hourly] 국가대표 동기화 경고: {ne}")
+
             try:
                 from app.core.websocket_manager import manager
                 await manager.broadcast({

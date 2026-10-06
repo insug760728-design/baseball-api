@@ -421,8 +421,13 @@ def teams_match(api_name: str, db_name: str) -> bool:
 
     if not norm_api or not norm_db:
         return False
-    if norm_api == norm_db:
-        return True
+    # 🏀 농구(KBL, WKBL, NBA) 1:1 축약명 정밀 매칭 (수원KT == 수원KT 소닉붐)
+    try:
+        from app.core.basketball_master import is_same_basketball_team
+        if is_same_basketball_team(api_name, db_name):
+            return True
+    except Exception:
+        pass
 
     # 🛡️ 동일 연고지 라이벌 구단 상호 오매칭 방지 및 간결/축약 매핑
     try:
@@ -1533,6 +1538,13 @@ class BetmanService:
             sp = d.get('itemCode', 'BS')
             seq = d.get('matchSeq')
             m_date_day = m_date_str[:10] if m_date_str else ""
+
+            # 🏀 농구 종목 및 KBL, WKBL, NBA 팀명 단축 정규화 (1:1 매칭 보장)
+            if sp == "BK" or l in ["KBL", "WKBL", "NBA", "박신자컵"] or "농구" in l:
+                from app.core.basketball_master import to_short_basketball_name
+                h = to_short_basketball_name(h)
+                a = to_short_basketball_name(a)
+
             m_key = f"{sp}_{l}_{h}_{a}_{m_date_day}"
 
             if m_key not in grouped:
