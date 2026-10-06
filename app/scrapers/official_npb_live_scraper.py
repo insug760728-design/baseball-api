@@ -18,42 +18,42 @@ def clean_int(val: Any) -> int:
         return 0
 
 TEAM_NAME_MAP = {
-    '巨人': '요미우리 자이언츠',
-    '読売': '요미우리 자이언츠',
-    '読売ジャイアンツ': '요미우리 자이언츠',
-    '阪神': '한신 타이거스',
-    '阪神タイガース': '한신 타이거스',
-    '中日': '주니치 드래곤즈',
-    '中日ドラゴンズ': '주니치 드래곤즈',
-    'DeNA': '요코하마 DeNA 베이스타즈',
-    'ＤｅＮＡ': '요코하마 DeNA 베이스타즈',
-    '横浜': '요코하마 DeNA 베이스타즈',
-    '横浜DeNA': '요코하마 DeNA 베이스타즈',
-    '横浜DeNAベイスターズ': '요코하마 DeNA 베이스타즈',
-    '広島': '히로시마 도요 카프',
-    '広島東洋': '히로시마 도요 카프',
-    '広島東洋カープ': '히로시마 도요 카프',
-    'ヤクルト': '도쿄 야쿠르트 스왈로스',
-    '東京ヤクルト': '도쿄 야쿠르트 스왈로스',
-    '東京ヤクルトスワローズ': '도쿄 야쿠르트 스왈로스',
-    'ソフトバンク': '후쿠오카 소프트뱅크 호크스',
-    '福岡ソフトバンク': '후쿠오카 소프트뱅크 호크스',
-    '福岡ソフトバンクホークス': '후쿠오카 소프트뱅크 호크스',
-    '日本ハム': '홋카이도 닛폰햄 파이터즈',
-    '北海道日本ハム': '홋카이도 닛폰햄 파이터즈',
-    '北海道日本ハムファイターズ': '홋카이도 닛폰햄 파이터즈',
-    'ロッテ': '지바 롯데 마린스',
-    '千葉ロッテ': '지바 롯데 마린스',
-    '千葉ロッテマリーンズ': '지바 롯데 마린스',
-    '楽天': '도호쿠 라쿠텐 골든이글스',
-    '東北楽天': '도호쿠 라쿠텐 골든이글스',
-    '東北楽天ゴールデンイーグルス': '도호쿠 라쿠텐 골든이글스',
-    'オリックス': '오릭스 버펄로스',
-    'オリックス・バファローズ': '오릭스 버펄로스',
-    'オリックスバファローズ': '오릭스 버펄로스',
-    '西武': '사이타마 세이부 라이온즈',
-    '埼玉西武': '사이타마 세이부 라이온즈',
-    '埼玉西武ライオンズ': '사이타마 세이부 라이온즈'
+    '巨人': '요미우리',
+    '読売': '요미우리',
+    '読売ジャイアンツ': '요미우리',
+    '阪神': '한신',
+    '阪神タイガース': '한신',
+    '中日': '주니치',
+    '中日ドラゴンズ': '주니치',
+    'DeNA': '요코하마',
+    'ＤｅＮＡ': '요코하마',
+    '横浜': '요코하마',
+    '横浜DeNA': '요코하마',
+    '横浜DeNAベイスターズ': '요코하마',
+    '広島': '히로시마',
+    '広島東洋': '히로시마',
+    '広島東洋カープ': '히로시마',
+    'ヤクルト': '야쿠르트',
+    '東京ヤクルト': '야쿠르트',
+    '東京ヤクルトスワローズ': '야쿠르트',
+    'ソフトバンク': '소프트뱅크',
+    '福岡ソフトバンク': '소프트뱅크',
+    '福岡ソフトバンクホークス': '소프트뱅크',
+    '日本ハム': '닛폰햄',
+    '北海道日本ハム': '닛폰햄',
+    '北海道日本ハムファイターズ': '닛폰햄',
+    'ロッテ': '지바',
+    '千葉ロッテ': '지바',
+    '千葉ロッテマリーンズ': '지바',
+    '楽天': '라쿠텐',
+    '東北楽天': '라쿠텐',
+    '東北楽天ゴールデンイーグルス': '라쿠텐',
+    'オリックス': '오릭스',
+    'オリックス・バファローズ': '오릭스',
+    'オリックスバファローズ': '오릭스',
+    '西武': '세이부',
+    '埼玉西武': '세이부',
+    '埼玉西武ライオンズ': '세이부'
 }
 
 NPB_STADIUM_MAP = {
@@ -117,8 +117,12 @@ def translate_npb_player_name(raw: str) -> str:
     clean = sanitize_player_name(raw)
     res = translate_player_name(clean)
     if res:
-        return res
-    return clean
+        # 혹시 한자/가나가 부분적으로 남아있을 경우 제거
+        res_clean = re.sub(r'[\u4e00-\u9fff\u3040-\u30ff]', '', res).strip()
+        return res_clean if res_clean else res
+    # fallback: clean에서도 한자/가나 제거
+    fallback = re.sub(r'[\u4e00-\u9fff\u3040-\u30ff]', '', clean).strip()
+    return fallback if fallback else clean
 
 class NpbOfficialScraper:
     """
@@ -515,11 +519,42 @@ class NpbOfficialScraper:
                 home_p_el = it.find('div', class_='bb-score__playerHome')
                 away_p_el = it.find('div', class_='bb-score__playerAway')
                 if home_p_el:
-                    clean_hp = re.sub(r'\(予\)|\(예상\)|\(投\)|\(打\)|予告|先発|：|:', '', home_p_el.get_text(strip=True)).strip()
-                    p_h = translate_npb_player_name(clean_hp)
+                    raw_hp = home_p_el.get_text(strip=True)
+                    if '(打)' not in raw_hp:
+                        clean_hp = re.sub(r'\(予\)|\(예상\)|\(投\)|予告|先発|：|:', '', raw_hp).strip()
+                        p_h = translate_npb_player_name(clean_hp)
                 if away_p_el:
-                    clean_ap = re.sub(r'\(予\)|\(예상\)|\(投\)|\(打\)|予告|先発|：|:', '', away_p_el.get_text(strip=True)).strip()
-                    p_a = translate_npb_player_name(clean_ap)
+                    raw_ap = away_p_el.get_text(strip=True)
+                    if '(打)' not in raw_ap:
+                        clean_ap = re.sub(r'\(予\)|\(예상\)|\(投\)|予告|先発|：|:', '', raw_ap).strip()
+                        p_a = translate_npb_player_name(clean_ap)
+
+                # 만약 경기 진행 중이어서 타자(打)로 인해 선발투수가 비어있다면, 문자중계(text)에서 선발투수 추출
+                if (not p_h or not p_a) and game_id_m:
+                    try:
+                        gid = game_id_m.group(1)
+                        t_url = f"https://baseball.yahoo.co.jp/npb/game/{gid}/text"
+                        t_html = self._fetch_html(t_url)
+                        if t_html:
+                            t_soup = BeautifulSoup(t_html, 'html.parser')
+                            for p_tag in t_soup.find_all('p'):
+                                p_txt = p_tag.get_text(strip=True)
+                                if '先発' in p_txt:
+                                    mat = re.search(r'先発ピッチャーは(.+?)が(?:.+?[でる])?([^、,\s]+)[、,](.+?)が(?:.+?[でる])?([^\s]+)', p_txt)
+                                    if mat:
+                                        t1_r, p1_r, t2_r, p2_r = mat.groups()
+                                        if map_npb_team(t1_r) == t_home:
+                                            p_h = p_h or translate_npb_player_name(p1_r.strip())
+                                            p_a = p_a or translate_npb_player_name(p2_r.strip())
+                                        elif map_npb_team(t2_r) == t_home:
+                                            p_h = p_h or translate_npb_player_name(p2_r.strip())
+                                            p_a = p_a or translate_npb_player_name(p1_r.strip())
+                                        else:
+                                            p_h = p_h or translate_npb_player_name(p1_r.strip())
+                                            p_a = p_a or translate_npb_player_name(p2_r.strip())
+                                        break
+                    except Exception as ex:
+                        pass
 
                 sb = None
                 if status == "LIVE" and game_id_m:
