@@ -222,7 +222,7 @@ class HistoricalAgentRouter:
         if '아시안게임' in ln: return 'ASIAN_GAMES'
         if 'NBA' in ln: return 'NBA'
         if 'KBL' in ln: return 'KBL'
-        if 'WKBL' in ln or '여자농구' in ln: return 'WKBL'
+        if 'WKBL' in ln or '여자농구' in ln or '박신자' in ln: return 'WKBL'
         if 'KOVO' in ln or '배구' in ln or 'V-리그' in ln or 'V리그' in ln: return 'KOVO'
         return sport_code.upper() if sport_code else 'SOCCER'
 
@@ -588,6 +588,62 @@ class HistoricalAgentRouter:
                 '밴쿠버 화이트캡스': ['밴쿠버 화이트캡스', '밴쿠버', 'vancouver']
             }
 
+            KBL_TEAM_ALIASES = {
+                '수원KT 소닉붐': ['수원KT 소닉붐', '수원KT', '수원 KT', 'KT 소닉붐', 'KT', 'kt'],
+                '창원LG 세이커스': ['창원LG 세이커스', '창원LG', '창원 LG', 'LG 세이커스', 'LG', 'lg'],
+                '부산KCC 이지스': ['부산KCC 이지스', '부산KCC', '부산 KCC', 'KCC 이지스', 'KCC', 'kcc'],
+                '대구한국가스공사 페가수스': ['대구한국가스공사 페가수스', '대구한국가스공사', '대구 한국가스공사', '한국가스공사', '가스공사'],
+                '안양정관장 레드부스터스': ['안양정관장 레드부스터스', '안양정관장', '안양 정관장', '정관장 레드부스터스', '정관장'],
+                '원주DB 프로미': ['원주DB 프로미', '원주DB', '원주 DB', 'DB 프로미', 'DB', 'db'],
+                '서울SK 나이츠': ['서울SK 나이츠', '서울SK', '서울 SK', 'SK 나이츠', 'SK', 'sk'],
+                '울산현대모비스 피버스': ['울산현대모비스 피버스', '울산현대모비스', '울산 현대모비스', '현대모비스', '모비스'],
+                '고양소노 스카이거너스': ['고양소노 스카이거너스', '고양소노', '고양 소노', '소노 스카이거너스', '소노'],
+                '서울삼성 썬더스': ['서울삼성 썬더스', '서울삼성', '서울 삼성', '삼성 썬더스', '삼성']
+            }
+
+            NBA_TEAM_ALIASES = {
+                'Boston Celtics': ['Boston Celtics', '보스턴 셀틱스', '보스턴', 'celtics'],
+                'New York Knicks': ['New York Knicks', '뉴욕 닉스', '뉴욕닉스', '뉴욕', 'knicks'],
+                'Milwaukee Bucks': ['Milwaukee Bucks', '밀워키 벅스', '밀워키벅스', '밀워키', 'bucks'],
+                'Cleveland Cavaliers': ['Cleveland Cavaliers', '클리블랜드 캐벌리어스', '클리블랜드', 'cavaliers', 'cavs'],
+                'Indiana Pacers': ['Indiana Pacers', '인디애나 페이서스', '인디애나', 'pacers'],
+                'Philadelphia 76ers': ['Philadelphia 76ers', '필라델피아 세븐티식서스', '필라델피아', '76ers', 'sixers'],
+                'Miami Heat': ['Miami Heat', '마이애미 히트', '마이애미', 'heat'],
+                'Orlando Magic': ['Orlando Magic', '올랜도 매직', '올랜도', 'magic'],
+                'Chicago Bulls': ['Chicago Bulls', '시카고 불스', '시카고불스', '시카고', 'bulls'],
+                'Atlanta Hawks': ['Atlanta Hawks', '애틀랜타 호크스', '애틀랜타', 'hawks'],
+                'Brooklyn Nets': ['Brooklyn Nets', '브루클린 네츠', '브루클린네츠', '브루클린', 'nets'],
+                'Toronto Raptors': ['Toronto Raptors', '토론토 랩터스', '토론토', 'raptors'],
+                'Charlotte Hornets': ['Charlotte Hornets', '샬럿 호네츠', '샬럿', 'hornets'],
+                'Washington Wizards': ['Washington Wizards', '워싱턴 위저즈', '워싱턴', 'wizards'],
+                'Detroit Pistons': ['Detroit Pistons', '디트로이트 피스톤스', '디트로이트', 'pistons'],
+                'Oklahoma City Thunder': ['Oklahoma City Thunder', '오클라호마시티 썬더', '오클라호마', 'thunder', 'okc'],
+                'Denver Nuggets': ['Denver Nuggets', '덴버 너게츠', '덴버', 'nuggets'],
+                'Minnesota Timberwolves': ['Minnesota Timberwolves', '미네소타 팀버울브스', '미네소타', 'timberwolves', 'wolves'],
+                'LA Clippers': ['LA Clippers', 'Los Angeles Clippers', 'LA 클리퍼스', 'LA클리퍼스', '클리퍼스', 'clippers'],
+                'Dallas Mavericks': ['Dallas Mavericks', '댈러스 매버릭스', '댈러스', 'mavericks', 'mavs'],
+                'Phoenix Suns': ['Phoenix Suns', '피닉스 선즈', '피닉스', 'suns'],
+                'Los Angeles Lakers': ['Los Angeles Lakers', 'LA Lakers', 'LA 레이커스', 'LA레이커스', '레이커스', 'lakers'],
+                'New Orleans Pelicans': ['New Orleans Pelicans', '뉴올리언스 펠리컨스', '뉴올리언스', 'pelicans'],
+                'Sacramento Kings': ['Sacramento Kings', '새크라멘토 킹스', '새크라멘토', 'kings'],
+                'Golden State Warriors': ['Golden State Warriors', '골든스테이트 워리어스', '골든스테이트', '골스', 'warriors', 'gsw'],
+                'Houston Rockets': ['Houston Rockets', '휴스턴 로케츠', '휴스턴', 'rockets'],
+                'Utah Jazz': ['Utah Jazz', '유타 재즈', '유타', 'jazz'],
+                'Memphis Grizzlies': ['Memphis Grizzlies', '멤피스 그리즐리스', '멤피스', 'grizzlies'],
+                'San Antonio Spurs': ['San Antonio Spurs', '샌안토니오 스퍼스', '샌안토니오', 'spurs'],
+                'Portland Trail Blazers': ['Portland Trail Blazers', '포틀랜드 트레일블레이저스', '포틀랜드', 'trail blazers', 'blazers']
+            }
+
+            WKBL_TEAM_ALIASES = {
+                '우리은행': ['우리은행', '아산 우리은행 우리WON', '아산 우리은행', '아산우리은행', 'woori'],
+                'KB 스타즈': ['KB 스타즈', 'KB스타즈', '청주 KB스타즈', '청주KB스타즈', '청주 KB', 'kb'],
+                '삼성생명 블루밍스': ['삼성생명 블루밍스', '삼성생명', '용인 삼성생명', '용인삼성생명', 'samsung'],
+                '신한은행 에스버드': ['신한은행 에스버드', '신한은행', '인천 신한은행', '인천신한은행', 'shinhan'],
+                '하나은행': ['하나은행', '부천 하나은행', '하나원큐', '부천 하나원큐', 'hana'],
+                'BNK 썸': ['BNK 썸', 'BNK썸', '부산 BNK썸', '부산BNK썸', '부산 BNK', 'bnk'],
+                '후지쯔 레드웨이브': ['후지쯔 레드웨이브', '후지쯔', 'fujitsu']
+            }
+
             def teams_match(t1: str, t2: str) -> bool:
                 if not t1 or not t2:
                     return False
@@ -866,6 +922,15 @@ class HistoricalAgentRouter:
                     for a in aliases:
                         if a in clean_name or clean_name in a:
                             return list(set([clean_name, npb_key] + aliases))
+                for kbl_key, aliases in KBL_TEAM_ALIASES.items():
+                    if kbl_key in clean_name or clean_name in kbl_key or any(a in clean_name or clean_name in a for a in aliases):
+                        return list(set([clean_name, kbl_key] + aliases))
+                for nba_key, aliases in NBA_TEAM_ALIASES.items():
+                    if nba_key in clean_name or clean_name in nba_key or any(a in clean_name or clean_name in a for a in aliases):
+                        return list(set([clean_name, nba_key] + aliases))
+                for wkbl_key, aliases in WKBL_TEAM_ALIASES.items():
+                    if wkbl_key in clean_name or clean_name in wkbl_key or any(a in clean_name or clean_name in a for a in aliases):
+                        return list(set([clean_name, wkbl_key] + aliases))
 
                 tokens = set()
                 raw = clean_name
@@ -1014,10 +1079,10 @@ class HistoricalAgentRouter:
             except Exception:
                 ref_dt = datetime(2026, 9, 22)
             if sport_code == 'BASKETBALL':
-                # 농구는 선수/용병/전술 변동이 크므로 사용자 요청에 따라 작년 시즌(직전 1시즌) 공식 기록만 조회
-                last_season_start_year = (ref_dt.year - 1) if ref_dt.month >= 8 else (ref_dt.year - 2)
-                min_date_threshold = f"{last_season_start_year}-08-01"
-                min_h2h_threshold = f"{last_season_start_year}-08-01"
+                # 농구 사용자 요청: 최근3년 상대전적이 아니고 작년 한시즌 전체 상대전적만 나오게 하고, 최근 경기도 작년 시즌 전체 포함
+                # 현시점(2026년 가을) 기준 작년 한 시즌(2024-2025 / 2025년) 전체 범위: 2024-09-01 이후
+                min_date_threshold = f"{ref_dt.year - 2}-09-01"
+                min_h2h_threshold = f"{ref_dt.year - 2}-09-01"
             elif sport_code == 'SOCCER':
                 # 사용자 요청: "최근결과란에 축구는 업데이트가 안되어있어 최근결과란 현시점부터 5년과거를 해당해"
                 # 현시점 기준 과거 5년치(2021년~현재 2026년) 공식 경기 결과 및 상대전적
@@ -1056,7 +1121,7 @@ class HistoricalAgentRouter:
                     ]
 
                 # 1차: 동일 리그 내에서 조회 (중복 제거 감안하여 충분한 수량 확보)
-                fetch_limit = min(max_games * 2, 20)
+                fetch_limit = 60 if sport_code == 'BASKETBALL' else min(max_games * 2, 20)
                 upper_bound_date = (target.match_date or ref_date_str or '2026-12-31 23:59')
                 q = db.query(Match).options(joinedload(Match.details)).filter(
                     Match.sport_code == sport_code,
@@ -1069,7 +1134,7 @@ class HistoricalAgentRouter:
                     or_(*conds)
                 ).order_by(desc(Match.match_date)).limit(fetch_limit)
                 res = q.all()
-                if len(res) >= 5 or is_national_match:
+                if (len(res) >= 20 and sport_code == 'BASKETBALL') or (len(res) >= 5 and sport_code != 'BASKETBALL') or is_national_match:
                     return res
 
                 # 2차: 동일 종목 내(승강/컵대회 포함) 보강 조회
@@ -1178,9 +1243,8 @@ class HistoricalAgentRouter:
                     if cur_dt > ref_dt:
                         continue
                     if sp_code == 'BASKETBALL':
-                        # 농구는 작년 시즌(직전 1시즌) 공식 기록만 포함
-                        last_season_start_year = (ref_dt.year - 1) if ref_dt.month >= 8 else (ref_dt.year - 2)
-                        cutoff_dt = datetime(last_season_start_year, 8, 1)
+                        # 농구는 작년 시즌(2024-2025 / 2025년) 공식 기록 전체 포함 (2024-09-01 이후)
+                        cutoff_dt = datetime(ref_dt.year - 2, 9, 1)
                         if cur_dt < cutoff_dt:
                             continue
                     elif sp_code == 'SOCCER':
@@ -1214,9 +1278,10 @@ class HistoricalAgentRouter:
 
                 sorted_dates = sorted(by_date.keys(), reverse=True)
                 valid = []
+                recent_limit = 60 if sp_code == 'BASKETBALL' else max_games
                 for d_str in sorted_dates:
                     valid.append(by_date[d_str])
-                    if len(valid) >= max_games:
+                    if len(valid) >= recent_limit:
                         break
                 return valid
 
@@ -1241,9 +1306,9 @@ class HistoricalAgentRouter:
                         continue
 
                     if sp_code == 'BASKETBALL':
-                        # 농구 상대전적도 사용자 요청에 따라 작년 시즌(직전 1시즌) 공식 기록만 포함
-                        last_season_start_year = (ref_dt.year - 1) if ref_dt.month >= 8 else (ref_dt.year - 2)
-                        cutoff_dt = datetime(last_season_start_year, 8, 1)
+                        # 사용자 요청: "농구 최근3년 상대전적이 아니고 작년 한시즌 전체 상대전적만 나오게 해죠"
+                        # 3년 전 과거(2023년 등) 데이터 배제, 작년 한 시즌(2024-09-01 이후 ~ 2025년 / 현시점) 맞대결 전체만 포함
+                        cutoff_dt = datetime(ref_dt.year - 2, 9, 1)
                         if cur_dt < cutoff_dt:
                             continue
                     elif sp_code == 'SOCCER':
@@ -1278,9 +1343,10 @@ class HistoricalAgentRouter:
 
                 sorted_dates = sorted(by_date.keys(), reverse=True)
                 valid = []
+                h2h_limit = 20 if sp_code == 'BASKETBALL' else max_games
                 for d_str in sorted_dates:
                     valid.append(by_date[d_str])
-                    if len(valid) >= max_games:
+                    if len(valid) >= h2h_limit:
                         break
                 return valid
 
@@ -1949,8 +2015,9 @@ class HistoricalAgentRouter:
                 res.sort(key=lambda m: str(m.get('date') or (m.get('match_date') or '')), reverse=True)
                 return res[:target_count]
 
-            formatted_h_recent = enrich_recent_matches_to_target(home_team, league_name, sport_code, formatted_h_recent, max_games)
-            formatted_a_recent = enrich_recent_matches_to_target(away_team, league_name, sport_code, formatted_a_recent, max_games)
+            recent_target = 60 if sport_code == 'BASKETBALL' else max_games
+            formatted_h_recent = enrich_recent_matches_to_target(home_team, league_name, sport_code, formatted_h_recent, recent_target)
+            formatted_a_recent = enrich_recent_matches_to_target(away_team, league_name, sport_code, formatted_a_recent, recent_target)
 
             # 5. 맞대결(H2H) 전적 완벽 보강 함수 (야구, 축구, 농구 등 전 종목 공통 지원)
             def enrich_h2h_matches_to_target(h_team: str, a_team: str, l_name: str, sp_code: str, existing_h2h: list, h_rec: list, a_rec: list, target_count: int = 6) -> list:
@@ -2049,6 +2116,8 @@ class HistoricalAgentRouter:
                 'away_team_name': away_team,
                 'home_recent': formatted_h_recent,
                 'away_recent': formatted_a_recent,
+                'home_recent_matches': formatted_h_recent,
+                'away_recent_matches': formatted_a_recent,
                 'h2h_matches': formatted_h2h,
                 'h2h_summary': {
                     'total_matches': len(formatted_h2h),

@@ -20625,34 +20625,38 @@ function updateSlimPanel(matchId, type, contentHtml) {
         const isH = bm.diff > 0.05;
         const isA = bm.diff < -0.05;
         return `
-          <tr style="height:36px;">
-            <td class="text-start ps-2 py-1" style="white-space:nowrap;">
-              <div class="d-flex align-items-center gap-1.5">
-                <i class="bi ${bm.icon}" style="color:${bm.iconColor}; font-size:0.86rem;"></i>
-                <div>
-                  <div class="fw-bold text-dark" style="font-size:0.75rem;">${bm.name}</div>
-                  <div class="text-muted" style="font-size:0.60rem;">${bm.unit}</div>
-                </div>
+          <tr style="border-bottom: 1px solid #f1f5f9; height: 48px;">
+            <!-- 🔴 홈팀 수치 & 우세 배지 (28%) -->
+            <td class="text-center py-1 px-1" style="vertical-align: middle; width: 28%;">
+              <div class="fw-black ${isH ? 'text-danger' : 'text-dark'}" style="font-size: 0.90rem; line-height: 1.15;">
+                ${bm.hVal}
               </div>
+              ${isH ? `<span class="badge bg-danger text-white py-0.5 px-1 mt-0.5 fw-bold" style="font-size: 0.58rem;">홈 우세</span>` : ''}
             </td>
-            <td class="text-center px-1 py-1" style="white-space:nowrap;">
-              <span class="fw-black ${isH ? 'text-danger' : 'text-dark'}" style="font-size:0.86rem;">${bm.hVal}</span>
-            </td>
-            <td class="text-center px-1 py-1" style="min-width:85px;">
+
+            <!-- ⚔️ 중앙 전술 지표명 + 듀얼 비교 게이지 (44%) -->
+            <td class="text-center py-1 px-1" style="vertical-align: middle; width: 44%;">
+              <div class="d-flex align-items-center justify-content-center gap-1 mb-1">
+                <i class="bi ${bm.icon}" style="color:${bm.iconColor}; font-size:0.78rem;"></i>
+                <span class="fw-bold text-dark text-truncate" style="font-size:0.73rem;">${bm.name}</span>
+              </div>
               <div class="d-flex align-items-center justify-content-center gap-1">
-                <span class="text-danger fw-bold font-monospace" style="font-size:0.65rem;">${bm.ratioH}%</span>
-                <div class="progress flex-grow-1" style="height:7px; border-radius:3px; background:#e2e8f0; overflow:hidden; min-width:40px;">
+                <span class="text-danger fw-bold font-monospace" style="font-size:0.62rem; min-width:20px; text-align:right;">${bm.ratioH}%</span>
+                <div class="progress flex-grow-1" style="height:6px; border-radius:3px; background:#e2e8f0; overflow:hidden;">
                   <div class="progress-bar bg-danger" role="progressbar" style="width:${bm.ratioH}%;"></div>
                   <div class="progress-bar bg-primary" role="progressbar" style="width:${bm.ratioA}%;"></div>
                 </div>
-                <span class="text-primary fw-bold font-monospace" style="font-size:0.65rem;">${bm.ratioA}%</span>
+                <span class="text-primary fw-bold font-monospace" style="font-size:0.62rem; min-width:20px; text-align:left;">${bm.ratioA}%</span>
               </div>
+              <div class="text-muted" style="font-size:0.56rem; margin-top:1px;">${bm.unit}</div>
             </td>
-            <td class="text-center px-1 py-1" style="white-space:nowrap;">
-              <span class="fw-black ${isA ? 'text-primary' : 'text-dark'}" style="font-size:0.86rem;">${bm.aVal}</span>
-            </td>
-            <td class="text-center px-1 py-1" style="white-space:nowrap;">
-              <span class="badge ${bm.badgeClass} py-0.5 px-1.5 fw-bold" style="font-size:0.64rem;">${bm.badge}</span>
+
+            <!-- 🔵 원정팀 수치 & 우세 배지 (28%) -->
+            <td class="text-center py-1 px-1" style="vertical-align: middle; width: 28%;">
+              <div class="fw-black ${isA ? 'text-primary' : 'text-dark'}" style="font-size: 0.90rem; line-height: 1.15;">
+                ${bm.aVal}
+              </div>
+              ${isA ? `<span class="badge bg-primary text-white py-0.5 px-1 mt-0.5 fw-bold" style="font-size: 0.58rem;">원정 우세</span>` : (bm.status === 'tie' ? `<span class="badge bg-secondary-subtle text-secondary border py-0.5 px-1 mt-0.5 fw-bold" style="font-size: 0.58rem;">호각</span>` : '')}
             </td>
           </tr>
         `;
@@ -20864,22 +20868,26 @@ function updateSlimPanel(matchId, type, contentHtml) {
                 </strong>
               </div>
               <div class="d-flex gap-2 small fw-bold" style="font-size:0.70rem;">
-                <span class="text-danger">🔴 [홈] ${hName}</span>
+                <span class="text-danger text-truncate" style="max-width: 110px;">🔴 [홈] ${hName}</span>
                 <span class="text-muted">vs</span>
-                <span class="text-primary">🔵 [원정] ${aName}</span>
+                <span class="text-primary text-truncate" style="max-width: 110px;">🔵 [원정] ${aName}</span>
               </div>
             </div>
 
-            <!-- 6대 지표 도표 (Table) -->
-            <div class="table-responsive rounded border bg-white shadow-xs overflow-hidden mb-2" style="border-color:#cbd5e1 !important;">
-              <table class="table table-sm table-bordered table-hover text-center align-middle mb-0" style="width:100%; font-size:0.74rem;">
-                <thead style="background:#0f172a; color:#ffffff;">
-                  <tr style="height:28px;">
-                    <th style="width:26%; text-align:center; color:#e2e8f0; font-weight:700;">전술 핵심 지표</th>
-                    <th style="width:22%; text-align:center; color:#f87171; font-weight:800;">🔴 [홈] ${hName}</th>
-                    <th style="width:24%; text-align:center; color:#cbd5e1; font-weight:700;">⚔️ 전술 격돌 게이지</th>
-                    <th style="width:22%; text-align:center; color:#60a5fa; font-weight:800;">🔵 [원정] ${aName}</th>
-                    <th style="width:6%; text-align:center; color:#e2e8f0; font-weight:700;">우세</th>
+            <!-- 6대 지표 모바일 100% 최적화 대칭 도표 (Table) -->
+            <div class="rounded border bg-white shadow-xs overflow-hidden mb-2" style="border-color:#cbd5e1 !important; width:100%; max-width:100%;">
+              <table class="table table-sm table-hover text-center align-middle mb-0" style="table-layout: fixed; width: 100%; font-size: 0.74rem;">
+                <thead style="background: #0f172a; color: #ffffff;">
+                  <tr style="height: 32px;">
+                    <th style="width: 28%; text-align: center; color: #f87171; font-weight: 800; padding: 4px 2px;" class="text-truncate">
+                      🔴 [홈] ${hName}
+                    </th>
+                    <th style="width: 44%; text-align: center; color: #cbd5e1; font-weight: 700; padding: 4px 2px;">
+                      ⚔️ 6대 전술 격돌 게이지
+                    </th>
+                    <th style="width: 28%; text-align: center; color: #60a5fa; font-weight: 800; padding: 4px 2px;" class="text-truncate">
+                      🔵 [원정] ${aName}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -24563,8 +24571,11 @@ function updateSlimPanel(matchId, type, contentHtml) {
                      TOTO_DATA[totoKey];
         totoMatch = (toto && toto.matches) ? toto.matches.find(x => x.seq === seq) : null;
       }
-      const h = homeName || (totoMatch ? totoMatch.home : (dbMatch ? dbMatch.home_team_name : '홈팀'));
-      const a = awayName || (totoMatch ? totoMatch.away : (dbMatch ? dbMatch.away_team_name : '원정팀'));
+      const isSoccer = (totoKey === 'WDL');
+      const rawH = homeName || (totoMatch ? totoMatch.home : (dbMatch ? dbMatch.home_team_name : '홈팀'));
+      const rawA = awayName || (totoMatch ? totoMatch.away : (dbMatch ? dbMatch.away_team_name : '원정팀'));
+      const h = (isSoccer && typeof formatTeamNameWithFifa === 'function') ? formatTeamNameWithFifa(rawH, true, true, { fontSize: '0.65rem' }) : rawH;
+      const a = (isSoccer && typeof formatTeamNameWithFifa === 'function') ? formatTeamNameWithFifa(rawA, true, true, { fontSize: '0.65rem' }) : rawA;
       const mDate = (totoMatch && totoMatch.time) ? totoMatch.time : ((dbMatch && dbMatch.match_date) ? dbMatch.match_date : '일정 예정');
       const lName = (totoMatch && totoMatch.league) ? totoMatch.league : ((dbMatch && dbMatch.league_name) ? dbMatch.league_name : '공식 리그');
       const stadium = (dbMatch && dbMatch.stadium) ? dbMatch.stadium : '';
@@ -24583,13 +24594,13 @@ function updateSlimPanel(matchId, type, contentHtml) {
       });
 
       const h2hSummaryText = h2h.length > 0 
-        ? `최근 맞대결 ${h2h.length}경기 (${h} 기준 ${hWins}승 ${hDraws}무 ${hLosses}패)`
+        ? `최근 맞대결 ${h2h.length}경기 (${rawH} 기준 ${hWins}승 ${hDraws}무 ${hLosses}패)`
         : '공식 상대전적 기록 대기 중 (최근 맞대결 없음)';
 
       const h2hRowsHtml = h2h.length > 0 ? h2h.slice(0, 5).map(g => {
         const dateStr = (g.date || g.match_date || '').slice(0, 10).replace(/-/g, '.');
         const sc = g.score || `${g.home_score ?? 0} : ${g.away_score ?? 0}`;
-        const isHW = (g.home_team_name === h || (g.home && g.home === h)) ? (g.home_score > g.away_score) : (g.away_score > g.home_score);
+        const isHW = (g.home_team_name === rawH || (g.home && g.home === rawH)) ? (g.home_score > g.away_score) : (g.away_score > g.home_score);
         return `
           <div class="d-flex align-items-center justify-content-between py-1 px-2 mb-1 rounded bg-white border" style="font-size:0.72rem;">
             <span class="text-muted font-monospace" style="font-size:0.68rem;">${dateStr}</span>
@@ -25213,7 +25224,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
             </td>
             <td class="py-0.5 px-2 text-end" style="width: 25%;">
               <div class="d-flex align-items-center justify-content-end gap-1">
-                <span class="fw-bold text-dark text-truncate" style="font-size: 0.82rem;" title="${m.home}">${m.home}</span>
+                <span class="fw-bold text-dark text-truncate" style="font-size: 0.82rem;" title="${m.home}">${(totoKey === 'WDL' && typeof formatTeamNameWithFifa === 'function') ? formatTeamNameWithFifa(m.home, true, true, { fontSize: '0.62rem' }) : m.home}</span>
                 <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 0.62rem; font-weight: 700; padding: 1px 3px;">${probH}%</span>
               </div>
             </td>
@@ -25239,7 +25250,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
             <td class="py-0.5 px-2 text-start" style="width: 25%;">
               <div class="d-flex align-items-center justify-content-start gap-1">
                 <span class="badge" style="background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8; font-size: 0.62rem; font-weight: 700; padding: 1px 3px;">${probA}%</span>
-                <span class="fw-bold text-dark text-truncate" style="font-size: 0.82rem;" title="${m.away}">${m.away}</span>
+                <span class="fw-bold text-dark text-truncate" style="font-size: 0.82rem;" title="${m.away}">${(totoKey === 'WDL' && typeof formatTeamNameWithFifa === 'function') ? formatTeamNameWithFifa(m.away, true, true, { fontSize: '0.62rem' }) : m.away}</span>
               </div>
             </td>
             <td class="py-0.5 px-1 text-center" style="width: 70px;">
