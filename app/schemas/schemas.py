@@ -122,6 +122,7 @@ class MatchResponse(MatchBase):
     team_stats: Optional[Dict[str, Any]] = None
     all_odds: Optional[List[Dict[str, Any]]] = None
     audit_status: Optional[Dict[str, Any]] = None
+    odds_history_has_changes: Optional[bool] = False
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    MALLOC_ARENA_MAX=2
+    MALLOC_ARENA_MAX=1
 
 WORKDIR /app
 
@@ -23,5 +23,5 @@ COPY . .
 # 8000 포트 개방
 EXPOSE 8000
 
-# 🚀 3,000명 트래픽 대비 Gunicorn 멀티 프로세스 Uvicorn 워커 (기본 4개 워커)
-CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "app.main:app", "--bind", "0.0.0.0:8000", "--timeout", "120", "--access-logfile", "-"]
+# 🚀 Render 512MB RAM 최적화: 단일 비동기 Uvicorn 워커 (OOM 방지 및 실시간 처리)
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

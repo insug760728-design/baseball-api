@@ -11,79 +11,134 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="TOKEON Live">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#090d16">
+
+  <!-- Premium Korean Web Font: Pretendard -->
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 
   <style>
     :root {
-      --bg-primary: #0a0f1d;
-      --bg-card: #131d31;
-      --bg-card-hover: #1c2a47;
-      --accent-blue: #3b82f6;
+      --bg-base: #080c14;
+      --bg-surface: #111726;
+      --bg-card: rgba(19, 27, 44, 0.85);
+      --bg-card-hover: rgba(28, 39, 64, 0.95);
+      --bg-glass: rgba(17, 23, 38, 0.8);
+      
+      --accent-blue: #38bdf8;
+      --accent-primary: #2563eb;
       --accent-green: #10b981;
-      --accent-red: #ef4444;
+      --accent-red: #f43f5e;
       --accent-gold: #f59e0b;
+      --accent-purple: #8b5cf6;
+
       --text-main: #f8fafc;
       --text-sub: #94a3b8;
-      --border-color: #1e293b;
+      --text-muted: #64748b;
+      
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(56, 189, 248, 0.4);
+      --card-radius: 16px;
+      --shadow-card: 0 8px 24px -4px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0, 0, 0, 0.2);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
-      background-color: var(--bg-primary);
+      font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      background-color: var(--bg-base);
       color: var(--text-main);
-      padding-bottom: 75px;
+      padding-bottom: calc(75px + env(safe-area-inset-bottom, 12px));
       user-select: none;
       -webkit-font-smoothing: antialiased;
+      line-height: 1.45;
+      letter-spacing: -0.3px;
     }
 
-    /* Top App Bar */
+    /* Top App Header */
     .app-header {
       position: sticky;
       top: 0;
       z-index: 50;
-      background: rgba(15, 23, 42, 0.92);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
       padding: 12px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
+
     .app-logo {
-      font-size: 18px;
-      font-weight: 800;
+      font-size: 19px;
+      font-weight: 900;
       letter-spacing: -0.5px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      gap: 7px;
+      background: linear-gradient(135deg, #60a5fa 10%, #38bdf8 50%, #c084fc 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .live-status-pill {
       font-size: 11px;
       font-weight: 700;
-      background: rgba(16, 185, 129, 0.15);
+      background: rgba(16, 185, 129, 0.12);
       color: var(--accent-green);
       border: 1px solid rgba(16, 185, 129, 0.3);
-      padding: 3px 8px;
-      border-radius: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
     }
+
     .live-dot {
       width: 6px;
       height: 6px;
       background-color: var(--accent-green);
       border-radius: 50%;
-      animation: pulse 1.5s infinite;
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse-dot 1.8s infinite ease-in-out;
     }
-    @keyframes pulse {
-      0% { transform: scale(0.9); opacity: 0.8; }
-      50% { transform: scale(1.3); opacity: 1; }
-      100% { transform: scale(0.9); opacity: 0.8; }
+
+    .btn-refresh {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-sub);
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-refresh:active {
+      transform: rotate(180deg) scale(0.9);
+      background: rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+    }
+
+    @keyframes pulse-dot {
+      0% { transform: scale(0.9); opacity: 0.7; }
+      50% { transform: scale(1.4); opacity: 1; filter: drop-shadow(0 0 4px var(--accent-green)); }
+      100% { transform: scale(0.9); opacity: 0.7; }
     }
 
     /* Sport Category Chips */
@@ -93,100 +148,249 @@
       padding: 10px 16px;
       overflow-x: auto;
       scrollbar-width: none;
-      background: var(--bg-primary);
-      border-bottom: 1px solid rgba(30, 41, 59, 0.6);
+      background: var(--bg-base);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 55px;
+      z-index: 40;
+      backdrop-filter: blur(10px);
     }
     .category-scroll::-webkit-scrollbar { display: none; }
+    
     .chip {
       padding: 6px 14px;
-      border-radius: 20px;
+      border-radius: 22px;
       font-size: 13px;
       font-weight: 600;
-      background: var(--bg-card);
+      background: var(--bg-surface);
       color: var(--text-sub);
-      border: 1px solid var(--border-color);
+      border: 1px solid var(--border-subtle);
       white-space: nowrap;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
+    .chip:active { transform: scale(0.95); }
     .chip.active {
-      background: var(--accent-blue);
+      background: linear-gradient(135deg, #2563eb, #38bdf8);
       color: #ffffff;
-      border-color: var(--accent-blue);
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+    }
+
+    /* Sub Tabs (전체 / 진행중 / 마감) */
+    .sub-filter-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px 4px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .sub-filter-buttons {
+      display: flex;
+      gap: 6px;
+    }
+    .sub-filter-btn {
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: transparent;
+      border: none;
+      color: var(--text-sub);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .sub-filter-btn.active {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--accent-blue);
     }
 
     /* Tab Content Pages */
-    .tab-page { display: none; padding: 12px 16px; }
-    .tab-page.active { display: block; }
+    .tab-page { display: none; padding: 10px 16px; }
+    .tab-page.active { display: block; animation: fadeIn 0.2s ease-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
     /* Match Cards */
     .match-card {
       background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 14px;
-      padding: 14px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--card-radius);
+      padding: 14px 15px;
       margin-bottom: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-      transition: transform 0.15s ease;
+      box-shadow: var(--shadow-card);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .match-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: transparent;
+      transition: background 0.2s;
+    }
+    .match-card.is-live::before {
+      background: var(--accent-red);
+      box-shadow: 0 0 10px var(--accent-red);
     }
     .match-card:active {
       transform: scale(0.985);
       background: var(--bg-card-hover);
+      border-color: var(--border-focus);
     }
+
     .match-meta {
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 12px;
       color: var(--text-sub);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     }
-    .badge-status {
-      font-size: 11px;
+    .league-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 6px;
+      color: #cbd5e1;
     }
-    .badge-live { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.4); }
-    .badge-finished { background: #334155; color: #cbd5e1; }
-    .badge-scheduled { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+    .match-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
 
+    .badge-status {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.3px;
+    }
+    .badge-live {
+      background: rgba(244, 63, 94, 0.15);
+      color: var(--accent-red);
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      animation: pulse-live 2s infinite ease-in-out;
+    }
+    @keyframes pulse-live {
+      0% { opacity: 0.85; }
+      50% { opacity: 1; box-shadow: 0 0 8px rgba(244, 63, 94, 0.4); }
+      100% { opacity: 0.85; }
+    }
+    .badge-finished { background: rgba(51, 65, 85, 0.6); color: #94a3b8; }
+    .badge-scheduled { background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25); }
+
+    /* Teams & Score Layout (Clean Flex Grid) */
     .teams-layout {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin: 8px 0;
+      gap: 8px;
     }
     .team-col {
       flex: 1;
+      min-width: 0; /* Crucial for ellipsis text */
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
     }
-    .team-col.away { text-align: right; }
+    .team-col.away {
+      text-align: right;
+      align-items: flex-end;
+    }
+    .team-col.home {
+      text-align: left;
+      align-items: flex-start;
+    }
+
     .team-name {
       font-size: 15px;
       font-weight: 700;
       color: var(--text-main);
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.4px;
     }
     .team-starter {
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-muted);
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 3px;
     }
+    .team-col.away .team-starter {
+      justify-content: flex-end;
+    }
+
     .score-center {
-      padding: 0 16px;
+      padding: 0 10px;
       text-align: center;
+      min-width: 65px;
+      flex-shrink: 0;
     }
     .score-text {
       font-size: 22px;
       font-weight: 900;
       letter-spacing: 1px;
       color: var(--accent-gold);
+      text-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+      font-variant-numeric: tabular-nums;
+    }
+    .score-live-tag {
+      font-size: 9px;
+      font-weight: 800;
+      color: var(--accent-red);
+      margin-top: -2px;
     }
     .vs-text {
       font-size: 13px;
-      font-weight: 700;
-      color: #64748b;
+      font-weight: 800;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2px 8px;
+      border-radius: 8px;
+    }
+
+    /* AI / Note Highlight Box */
+    .match-note-box {
+      background: rgba(37, 99, 235, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 8px;
+      padding: 6px 10px;
+      margin: 10px 0 4px;
+      font-size: 11px;
+      color: #93c5fd;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     }
 
     /* Odds Mini Bar */
@@ -200,29 +404,41 @@
     .odd-box {
       flex: 1;
       text-align: center;
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 8px;
       padding: 6px 4px;
+      transition: background 0.15s;
     }
-    .odd-label { font-size: 10px; color: var(--text-sub); }
-    .odd-val { font-size: 12px; font-weight: 700; color: #38bdf8; margin-top: 2px; }
+    .odd-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .odd-val {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--accent-blue);
+      margin-top: 1px;
+      font-variant-numeric: tabular-nums;
+    }
 
     /* Scoreboard View (Tab 2) */
     .board-container {
       background: var(--bg-card);
-      border-radius: 14px;
-      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border-subtle);
       overflow: hidden;
       margin-bottom: 14px;
+      box-shadow: var(--shadow-card);
     }
     .board-header {
-      background: linear-gradient(135deg, #1e293b, #0f172a);
-      padding: 12px 16px;
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+      padding: 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-subtle);
     }
     .table-scroll {
       overflow-x: auto;
@@ -235,73 +451,128 @@
       text-align: center;
     }
     table.mobile-table th, table.mobile-table td {
-      padding: 7px 5px;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 8px 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
     }
-    table.mobile-table th { color: var(--text-sub); font-weight: 600; }
+    table.mobile-table th {
+      color: var(--text-sub);
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.02);
+    }
 
     /* Timeline events */
     .timeline-item {
       display: flex;
       align-items: flex-start;
       gap: 10px;
-      padding: 10px 14px;
+      padding: 11px 14px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
       font-size: 13px;
     }
+    .timeline-item:last-child { border-bottom: none; }
     .time-badge {
-      background: #334155;
+      background: rgba(51, 65, 85, 0.7);
       color: #94a3b8;
       font-size: 11px;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 4px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 6px;
       white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     }
 
     /* Calculator View (Tab 3) */
     .calc-box {
       background: var(--bg-card);
-      border-radius: 14px;
-      border: 1px solid var(--border-color);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border-subtle);
       padding: 16px;
       margin-bottom: 14px;
+      box-shadow: var(--shadow-card);
     }
     .calc-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 0;
+      padding: 12px 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      gap: 8px;
+    }
+    .calc-team-names {
+      font-size: 13px;
+      font-weight: 700;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .calc-btn-group {
       display: flex;
-      gap: 4px;
+      gap: 5px;
+      flex-shrink: 0;
     }
     .calc-btn {
-      width: 44px;
-      height: 34px;
-      border-radius: 8px;
-      background: #1e293b;
-      color: #94a3b8;
-      border: 1px solid var(--border-color);
-      font-weight: 700;
+      width: 42px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--bg-surface);
+      color: var(--text-sub);
+      border: 1px solid var(--border-subtle);
+      font-weight: 800;
       font-size: 13px;
       cursor: pointer;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     }
+    .calc-btn:active { transform: scale(0.92); }
     .calc-btn.selected {
-      background: var(--accent-blue);
+      background: linear-gradient(135deg, #2563eb, #38bdf8);
       color: #ffffff;
-      border-color: #60a5fa;
+      border-color: transparent;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
     }
     .calc-summary {
-      background: linear-gradient(135deg, #1e3a8a, #0f172a);
-      border-radius: 12px;
-      padding: 14px;
+      background: linear-gradient(135deg, rgba(30, 58, 138, 0.8), rgba(15, 23, 42, 0.9));
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 14px;
+      padding: 16px;
       margin-top: 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+    }
+
+    /* Skeleton Loading UI */
+    .skeleton-card {
+      background: var(--bg-card);
+      border-radius: var(--card-radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border-subtle);
+    }
+    .skeleton-line {
+      height: 14px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+      background-size: 200% 100%;
+      animation: skeleton-glow 1.5s infinite;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    @keyframes skeleton-glow {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: var(--text-muted);
+    }
+    .empty-icon {
+      font-size: 42px;
+      margin-bottom: 12px;
+      opacity: 0.6;
     }
 
     /* Bottom Navigation Bar */
@@ -311,32 +582,35 @@
       left: 0;
       right: 0;
       z-index: 100;
-      height: 64px;
-      background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(16px);
-      border-top: 1px solid var(--border-color);
+      height: calc(60px + env(safe-area-inset-bottom, 12px));
+      background: rgba(10, 14, 24, 0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border-subtle);
       display: flex;
       justify-content: space-around;
-      align-items: center;
-      padding-bottom: env(safe-area-inset-bottom, 0px);
+      align-items: flex-start;
+      padding-top: 8px;
     }
     .nav-item {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      color: var(--text-sub);
+      gap: 3px;
+      color: var(--text-muted);
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
-      transition: color 0.2s;
+      transition: all 0.2s ease;
     }
     .nav-item.active {
-      color: #38bdf8;
+      color: var(--accent-blue);
     }
+    .nav-item:active { transform: scale(0.92); }
     .nav-icon {
       font-size: 20px;
+      line-height: 1;
     }
   </style>
 </head>
@@ -347,24 +621,45 @@
     <div class="app-logo">
       <span>⚡</span> TOKEON LIVE
     </div>
-    <div class="live-status-pill">
-      <span class="live-dot"></span> 실시간 동기화
+    <div class="header-actions">
+      <div class="live-status-pill">
+        <span class="live-dot"></span> 실시간
+      </div>
+      <button class="btn-refresh" onclick="loadMobileData(true)" title="새로고침">🔄</button>
     </div>
   </header>
 
   <!-- Sport Filter Chips -->
   <div class="category-scroll">
-    <div class="chip active" onclick="filterSport('ALL', this)">전체</div>
+    <div class="chip active" onclick="filterSport('ALL', this)">전체 종목</div>
     <div class="chip" onclick="filterSport('SOCCER', this)">⚽ 축구</div>
     <div class="chip" onclick="filterSport('BASEBALL', this)">⚾ 야구</div>
     <div class="chip" onclick="filterSport('BASKETBALL', this)">🏀 농구</div>
+    <div class="chip" onclick="filterSport('VOLLEYBALL', this)">🏐 배구</div>
   </div>
 
   <!-- TAB 1: Matches / Live Scores -->
   <main id="tab-matches" class="tab-page active">
+    <div class="sub-filter-bar">
+      <span id="match-total-count">오늘 경기 불러오는 중...</span>
+      <div class="sub-filter-buttons">
+        <button class="sub-filter-btn active" onclick="filterStatus('ALL', this)">전체</button>
+        <button class="sub-filter-btn" onclick="filterStatus('LIVE', this)">🔴 LIVE</button>
+        <button class="sub-filter-btn" onclick="filterStatus('SCHEDULED', this)">예정</button>
+        <button class="sub-filter-btn" onclick="filterStatus('FINISHED', this)">종료</button>
+      </div>
+    </div>
     <div id="match-list-container">
-      <div style="text-align:center; padding: 40px; color: #64748b;">
-        최신 경기 데이터를 불러오는 중...
+      <!-- Loading Skeletons -->
+      <div class="skeleton-card">
+        <div class="skeleton-line" style="width: 40%;"></div>
+        <div class="skeleton-line" style="width: 80%; height: 24px;"></div>
+        <div class="skeleton-line" style="width: 60%;"></div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton-line" style="width: 35%;"></div>
+        <div class="skeleton-line" style="width: 75%; height: 24px;"></div>
+        <div class="skeleton-line" style="width: 50%;"></div>
       </div>
     </div>
   </main>
@@ -372,8 +667,10 @@
   <!-- TAB 2: Live Scoreboard / Timeline -->
   <main id="tab-scoreboard" class="tab-page">
     <div id="scoreboard-detail-container">
-      <div style="text-align:center; padding: 40px; color: #64748b;">
-        경기 목록에서 카드를 누르거나 경기를 선택하세요.
+      <div class="empty-state">
+        <div class="empty-icon">🏟️</div>
+        <p style="font-size: 14px; font-weight: 600; color: #cbd5e1;">선택된 경기가 없습니다.</p>
+        <p style="font-size: 12px; margin-top: 4px;">경기 목록에서 카드를 누르시면 상세 전광판을 확인하실 수 있습니다.</p>
       </div>
     </div>
   </main>
@@ -381,20 +678,23 @@
   <!-- TAB 3: Toto / Odds Calculator -->
   <main id="tab-calc" class="tab-page">
     <div class="calc-box">
-      <div style="font-size: 15px; font-weight: 800; margin-bottom: 12px; color: #38bdf8;">
-        🧮 토토 승무패 간편 계산기
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+        <div style="font-size: 15px; font-weight: 800; color: #38bdf8; display:flex; align-items:center; gap: 6px;">
+          <span>🧮</span> 토토 승무패 간편 계산기
+        </div>
+        <button onclick="resetCalc()" style="background:transparent; border:none; color:#94a3b8; font-size:12px; font-weight:600; cursor:pointer;">초기화</button>
       </div>
       <div id="calc-match-rows">
         <!-- Dynamically rendered rows -->
       </div>
       <div class="calc-summary">
         <div>
-          <div style="font-size: 11px; color: #93c5fd;">선택 조합수</div>
-          <div id="calc-combinations" style="font-size: 18px; font-weight: 900; color: #ffffff;">1 조합</div>
+          <div style="font-size: 11px; color: #93c5fd; font-weight: 600;">선택 조합 수</div>
+          <div id="calc-combinations" style="font-size: 20px; font-weight: 900; color: #ffffff;">0 조합</div>
         </div>
         <div style="text-align: right;">
-          <div style="font-size: 11px; color: #93c5fd;">예상 배당률</div>
-          <div id="calc-total-odds" style="font-size: 20px; font-weight: 900; color: #fbbf24;">1.00 배</div>
+          <div style="font-size: 11px; color: #93c5fd; font-weight: 600;">예상 배당률</div>
+          <div id="calc-total-odds" style="font-size: 22px; font-weight: 900; color: #fbbf24;">0.00 배</div>
         </div>
       </div>
     </div>
@@ -418,81 +718,154 @@
 
   <script>
     let allMatches = [];
-    let currentFilter = 'ALL';
+    let currentSportFilter = 'ALL';
+    let currentStatusFilter = 'ALL';
     let selectedCalc = {};
 
     // 1. Fetch Today Matches from Mobile API
-    async function loadMobileData() {
+    async function loadMobileData(isManual = false) {
+      const container = document.getElementById('match-list-container');
       try {
         const res = await fetch('/api/v1/app/matches/today');
+        if (!res.ok) throw new Error('API 응답 오류');
         const data = await res.json();
         allMatches = data.matches || [];
         renderMatchList();
         renderCalcRows();
-        if (allMatches.length > 0) {
+        
+        // 경기 총 개수 텍스트 갱신
+        document.getElementById('match-total-count').innerText = `총 ${allMatches.length}경기`;
+
+        // 첫 번째 경기가 있고 전광판이 비어있으면 초기 로드
+        const sbContainer = document.getElementById('scoreboard-detail-container');
+        if (allMatches.length > 0 && sbContainer.querySelector('.empty-state')) {
           loadScoreboard(allMatches[0].id);
         }
       } catch (e) {
-        document.getElementById('match-list-container').innerHTML = 
-          '<div style="text-align:center; padding:30px; color:#ef4444;">데이터 로드 실패. 다시 시도해주세요.</div>';
+        if (!allMatches.length) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">⚠️</div>
+              <p style="font-size: 14px; font-weight: 700; color: #f43f5e;">데이터를 불러오지 못했습니다.</p>
+              <button onclick="loadMobileData(true)" style="margin-top:14px; background:#2563eb; color:#fff; border:none; padding:8px 16px; border-radius:8px; font-weight:700; cursor:pointer;">다시 시도</button>
+            </div>`;
+        }
       }
     }
 
     // 2. Render Match Cards
     function renderMatchList() {
       const container = document.getElementById('match-list-container');
-      const filtered = currentFilter === 'ALL' ? allMatches : allMatches.filter(m => m.sport_code === currentFilter);
+      
+      let filtered = allMatches;
+      if (currentSportFilter !== 'ALL') {
+        filtered = filtered.filter(m => m.sport_code === currentSportFilter);
+      }
+      if (currentStatusFilter !== 'ALL') {
+        filtered = filtered.filter(m => m.status === currentStatusFilter);
+      }
 
       if (!filtered.length) {
-        container.innerHTML = '<div style="text-align:center; padding: 40px; color:#64748b;">진행 중인 경기가 없습니다.</div>';
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <p style="font-size: 14px; font-weight: 600; color: #cbd5e1;">해당 조건의 경기가 없습니다.</p>
+            <p style="font-size: 12px; margin-top: 4px;">다른 종목이나 상태 필터를 선택해보세요.</p>
+          </div>`;
         return;
       }
 
       container.innerHTML = filtered.map(m => {
         let badgeClass = 'badge-scheduled';
         let statusText = '예정';
-        if (m.status === 'LIVE') { badgeClass = 'badge-live'; statusText = 'LIVE'; }
-        else if (m.status === 'FINISHED') { badgeClass = 'badge-finished'; statusText = '종료'; }
+        let isLive = (m.status === 'LIVE');
+
+        if (isLive) {
+          badgeClass = 'badge-live';
+          statusText = '● LIVE';
+        } else if (m.status === 'FINISHED') {
+          badgeClass = 'badge-finished';
+          statusText = '종료';
+        }
 
         const hasScore = m.home_score !== null && m.away_score !== null;
+        
+        // 종목별 아이콘 매핑
+        const sportIcons = {
+          'SOCCER': '⚽',
+          'BASEBALL': '⚾',
+          'BASKETBALL': '🏀',
+          'VOLLEYBALL': '🏐'
+        };
+        const sportIcon = sportIcons[m.sport_code] || '🏆';
+
+        // 경기 날짜/시간 포맷팅 (YYYY-MM-DD HH:mm -> MM/DD HH:mm)
+        let timeStr = '';
+        if (m.match_date) {
+          const parts = m.match_date.split(' ');
+          if (parts.length >= 2) {
+            timeStr = parts[1].slice(0, 5);
+          } else {
+            timeStr = m.match_date.slice(5, 16);
+          }
+        }
+
+        const homeName = m.home_team_name || '홈팀';
+        const awayName = m.away_team_name || '원정팀';
+        const homeStarter = m.home_starter ? `👤 ${m.home_starter}` : '';
+        const awayStarter = m.away_starter ? `👤 ${m.away_starter}` : '';
 
         return `
-          <div class="match-card" onclick="openScoreboard(${m.id})">
+          <div class="match-card ${isLive ? 'is-live' : ''}" onclick="openScoreboard(${m.id})">
             <div class="match-meta">
-              <span><strong>${m.league_name}</strong> · ${m.match_date ? m.match_date.slice(5, 16) : ''}</span>
+              <span class="league-badge">
+                <span>${sportIcon}</span>
+                <span>${m.league_name || '리그'}</span>
+                <span class="match-time">${timeStr}</span>
+              </span>
               <span class="badge-status ${badgeClass}">${statusText}</span>
             </div>
+
             <div class="teams-layout">
-              <div class="team-col">
-                <div class="team-name">${m.home_team_name}</div>
-                <div class="team-starter">${m.home_starter || '선발 미정'}</div>
+              <div class="team-col home">
+                <div class="team-name" title="${homeName}">${homeName}</div>
+                ${homeStarter ? `<div class="team-starter">${homeStarter}</div>` : ''}
               </div>
+
               <div class="score-center">
-                ${hasScore ? `<div class="score-text">${m.home_score} : ${m.away_score}</div>` : `<div class="vs-text">VS</div>`}
+                ${hasScore ? `
+                  <div class="score-text">${m.home_score} : ${m.away_score}</div>
+                  ${isLive ? `<div class="score-live-tag">실시간 중계</div>` : ''}
+                ` : `
+                  <div class="vs-text">VS</div>
+                `}
               </div>
+
               <div class="team-col away">
-                <div class="team-name">${m.away_team_name}</div>
-                <div class="team-starter">${m.away_starter || '선발 미정'}</div>
+                <div class="team-name" title="${awayName}">${awayName}</div>
+                ${awayStarter ? `<div class="team-starter">${awayStarter}</div>` : ''}
               </div>
             </div>
+
             ${(m.custom_notes || m.summary) ? `
-              <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; border-radius: 6px; padding: 5px 8px; margin: 8px 0 4px; font-size: 11px; color: #e2e8f0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${m.custom_notes || m.summary}">
-                ${m.custom_notes || m.summary}
+              <div class="match-note-box" title="${m.custom_notes || m.summary}">
+                <span>💡</span> <span>${m.custom_notes || m.summary}</span>
               </div>
             ` : ''}
-            ${m.odds && m.odds.home_win ? `
+
+            ${(m.odds && m.odds.home_win) ? `
               <div class="odds-bar">
                 <div class="odd-box">
                   <div class="odd-label">홈 승</div>
-                  <div class="odd-val">${m.odds.home_win}</div>
+                  <div class="odd-val">${Number(m.odds.home_win).toFixed(2)}</div>
                 </div>
                 <div class="odd-box">
                   <div class="odd-label">무승부</div>
-                  <div class="odd-val">${m.odds.draw || '-'}</div>
+                  <div class="odd-val">${m.odds.draw ? Number(m.odds.draw).toFixed(2) : '-'}</div>
                 </div>
                 <div class="odd-box">
                   <div class="odd-label">원정 승</div>
-                  <div class="odd-val">${m.odds.away_win}</div>
+                  <div class="odd-val">${Number(m.odds.away_win).toFixed(2)}</div>
                 </div>
               </div>
             ` : ''}
@@ -512,41 +885,53 @@
         let eventsHtml = (data.events || []).map(ev => `
           <div class="timeline-item">
             <span class="time-badge">${ev.time_display || '기록'}</span>
-            <div>
-              <strong>[${ev.team_name || ''}] ${ev.player_name || ''}</strong>
-              <div style="color:#94a3b8; font-size:12px;">${ev.description || ''}</div>
+            <div style="flex:1; min-width:0;">
+              <strong style="color:#f8fafc; font-size:13px;">[${ev.team_name || ''}] ${ev.player_name || ''}</strong>
+              <div style="color:#94a3b8; font-size:12px; margin-top:2px;">${ev.description || ''}</div>
             </div>
-            <div style="margin-left:auto; font-weight:800; color:#fbbf24;">${ev.score_after || ''}</div>
+            <div style="font-weight:900; color:#fbbf24; font-size:14px;">${ev.score_after || ''}</div>
           </div>
         `).join('');
 
         if (!eventsHtml) {
-          eventsHtml = '<div style="padding:16px; text-align:center; color:#64748b;">주요 상황 기록이 없습니다.</div>';
+          eventsHtml = '<div style="padding:24px; text-align:center; color:#64748b; font-size:13px;">주요 상황 기록이 없습니다.</div>';
         }
+
+        const isLive = data.status === 'LIVE';
 
         container.innerHTML = `
           <div class="board-container">
             <div class="board-header">
               <div>
-                <span style="font-size:12px; color:#93c5fd;">${data.league_name}</span>
-                <div style="font-size:16px; font-weight:800; margin-top:2px;">
+                <span style="font-size:12px; font-weight:700; color:#38bdf8;">${data.league_name || ''}</span>
+                <div style="font-size:16px; font-weight:800; margin-top:2px; color:#ffffff;">
                   ${data.teams.home.name} vs ${data.teams.away.name}
                 </div>
               </div>
-              <div style="font-size:22px; font-weight:900; color:#fbbf24;">
-                ${data.teams.home.score !== null ? `${data.teams.home.score} : ${data.teams.away.score}` : 'VS'}
+              <div style="text-align:right;">
+                <div style="font-size:24px; font-weight:900; color:#fbbf24; letter-spacing:1px;">
+                  ${data.teams.home.score !== null ? `${data.teams.home.score} : ${data.teams.away.score}` : 'VS'}
+                </div>
+                ${isLive ? '<span class="badge-status badge-live" style="margin-top:4px; display:inline-block;">LIVE</span>' : ''}
               </div>
             </div>
-            <div style="padding:12px;">
-              <div style="font-size:13px; font-weight:700; color:#38bdf8; margin-bottom:8px;">⏱️ 실시간 상황 타임라인</div>
-              <div style="background:#0f172a; border-radius:10px; overflow:hidden;">
+            
+            <div style="padding:14px;">
+              <div style="font-size:13px; font-weight:800; color:#38bdf8; margin-bottom:10px; display:flex; align-items:center; gap:5px;">
+                <span>⏱️</span> <span>실시간 상황 타임라인</span>
+              </div>
+              <div style="background:rgba(15, 23, 42, 0.7); border:1px solid rgba(255,255,255,0.05); border-radius:12px; overflow:hidden;">
                 ${eventsHtml}
               </div>
             </div>
           </div>
         `;
       } catch (e) {
-        container.innerHTML = '<div style="text-align:center; padding:30px; color:#ef4444;">전광판 상세 데이터를 불러올 수 없습니다.</div>';
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">⚠️</div>
+            <p style="font-size: 14px; font-weight: 700; color: #f43f5e;">전광판 상세 데이터를 불러올 수 없습니다.</p>
+          </div>`;
       }
     }
 
@@ -560,12 +945,12 @@
       const container = document.getElementById('calc-match-rows');
       const targetMatches = allMatches.slice(0, 10);
       if (!targetMatches.length) {
-        container.innerHTML = '<div style="padding:20px; text-align:center; color:#64748b;">계산 가능한 경기 일정이 없습니다.</div>';
+        container.innerHTML = '<div style="padding:30px; text-align:center; color:#64748b; font-size:13px;">계산 가능한 경기 일정이 없습니다.</div>';
         return;
       }
       container.innerHTML = targetMatches.map((m, idx) => `
         <div class="calc-row">
-          <div style="font-size:13px; font-weight:700; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+          <div class="calc-team-names">
             ${m.home_team_name} vs ${m.away_team_name}
           </div>
           <div class="calc-btn-group">
@@ -586,6 +971,12 @@
       } else {
         selectedCalc[matchId].push(pick);
       }
+      renderCalcRows();
+      calculateTotal();
+    }
+
+    function resetCalc() {
+      selectedCalc = {};
       renderCalcRows();
       calculateTotal();
     }
@@ -617,15 +1008,22 @@
     }
 
     function filterSport(sport, el) {
-      currentFilter = sport;
-      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      currentSportFilter = sport;
+      document.querySelectorAll('.category-scroll .chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      renderMatchList();
+    }
+
+    function filterStatus(status, el) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.sub-filter-btn').forEach(b => b.classList.remove('active'));
       el.classList.add('active');
       renderMatchList();
     }
 
     // Auto Refresh every 30s
     loadMobileData();
-    setInterval(loadMobileData, 30000);
+    setInterval(() => loadMobileData(false), 30000);
   </script>
 </body>
 </html>

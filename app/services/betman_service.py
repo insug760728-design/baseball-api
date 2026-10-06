@@ -7,6 +7,7 @@ import sqlite3
 import re
 import logging
 from datetime import datetime, timezone, timedelta
+from typing import Optional, List, Dict, Any
 from functools import lru_cache
 
 logger = logging.getLogger("BetmanService")
@@ -28,6 +29,23 @@ _SESSION.headers.update(HEADERS)
 
 _CACHE = {}
 CACHE_TTL = 300 # 5 minutes cache for real-time responsiveness
+
+_IS_RENDER = bool(os.environ.get("RENDER") or os.environ.get("RENDER_SERVICE_ID"))
+_BETMAN_DISABLED_UNTIL = 0.0
+
+def is_betman_online_available() -> bool:
+    """Render(해외 서버) 환경이거나 최근 베트맨 서버 통신 실패 시 즉시 False 반환 (논블로킹 즉각 서빙)"""
+    global _BETMAN_DISABLED_UNTIL
+    if _IS_RENDER:
+        return False
+    if time.time() < _BETMAN_DISABLED_UNTIL:
+        return False
+    return True
+
+def mark_betman_offline():
+    """베트맨 연결 실패 시 10분간 외부 HTTP 호출을 중단하고 로컬 스냅샷 우선 서빙"""
+    global _BETMAN_DISABLED_UNTIL
+    _BETMAN_DISABLED_UNTIL = time.time() + 600.0
 
 def format_kr_money(amount: int) -> str:
     """Format Korean won amount into readable eok/man string (e.g., 2억 8,249만 원)"""
@@ -457,30 +475,31 @@ class BetmanService:
                 return data
 
         res_map = {'toto': {}, 'proto': {}}
-        try:
-            payload = {'_sbmInfo': {'_sbmInfo': {'debugMode': 'false'}}}
-            r = _SESSION.post(BETMAN_BUYABLE_URL, json=payload, timeout=3.5)
-            if r.status_code == 200:
-                data = r.json()
-                for tg in data.get('totoGames', []):
-                    gid = tg.get('gmId')
-                    ts = tg.get('gmTs')
-                    if gid and ts:
-                        if gid not in res_map['toto'] or ts > res_map['toto'][gid].get('gmTs', 0):
-                            res_map['toto'][gid] = tg
+        if is_betman_online_available():
+            try:
+                payload = {'_sbmInfo': {'_sbmInfo': {'debugMode': 'false'}}}
+                r = _SESSION.post(BETMAN_BUYABLE_URL, json=payload, timeout=0.8)
+                if r.status_code == 200:
+                    data = r.json()
+                    for tg in data.get('totoGames', []):
+                        gid = tg.get('gmId')
+                        ts = tg.get('gmTs')
+                        if gid and ts:
+                            if gid not in res_map['toto'] or ts > res_map['toto'][gid].get('gmTs', 0):
+                                res_map['toto'][gid] = tg
 
-                for pg in data.get('protoGames', []):
-                    gid = pg.get('gmId')
-                    ts = pg.get('gmTs')
-                    if gid and ts:
-                        if gid not in res_map['proto'] or ts > res_map['proto'][gid].get('gmTs', 0):
-                            res_map['proto'][gid] = pg
+                    for pg in data.get('protoGames', []):
+                        gid = pg.get('gmId')
+                        ts = pg.get('gmTs')
+                        if gid and ts:
+                            if gid not in res_map['proto'] or ts > res_map['proto'][gid].get('gmTs', 0):
+                                res_map['proto'][gid] = pg
 
-                if res_map['toto'] or res_map['proto']:
-                    _CACHE[cache_key] = (now, res_map)
-                    return res_map
-        except Exception as e:
-            pass
+                    if res_map['toto'] or res_map['proto']:
+                        _CACHE[cache_key] = (now, res_map)
+                        return res_map
+            except Exception as e:
+                mark_betman_offline()
 
         # Fallback cached for 60s so failed outbound connections don't block subsequent requests
         res_map = {
@@ -525,44 +544,45 @@ class BetmanService:
             'updated_at': datetime.now().strftime("%H:%M:%S"),
             'games': {}
         }
-        try:
-            payload = {'_sbmInfo': {'_sbmInfo': {'debugMode': 'false'}}}
-            r = _SESSION.post(BETMAN_BUYABLE_URL, json=payload, timeout=4.0)
-            if r.status_code == 200:
-                res = r.json()
-                for g in res.get('totoGames', []):
-                    gid = g.get('gmId')
-                    if gid in ['G011', 'G024', 'G027']:
-                        sport_label = '야구 승1패' if gid == 'G024' else ('축구 승무패' if gid == 'G011' else '농구 승5패')
-                        ts = g.get('gmTs')
-                        s_amt = int(g.get('totalSellAmount') or 0)
-                        f_amt = int(g.get('forwardAmount') or 0)
-                        w_prize = int(g.get('winnerTotalPrize') or int(s_amt * 0.25))
-                        f_pool = f_amt + w_prize
+        if is_betman_online_available():
+            try:
+                payload = {'_sbmInfo': {'_sbmInfo': {'debugMode': 'false'}}}
+                r = _SESSION.post(BETMAN_BUYABLE_URL, json=payload, timeout=0.8)
+                if r.status_code == 200:
+                    res = r.json()
+                    for g in res.get('totoGames', []):
+                        gid = g.get('gmId')
+                        if gid in ['G011', 'G024', 'G027']:
+                            sport_label = '야구 승1패' if gid == 'G024' else ('축구 승무패' if gid == 'G011' else '농구 승5패')
+                            ts = g.get('gmTs')
+                            s_amt = int(g.get('totalSellAmount') or 0)
+                            f_amt = int(g.get('forwardAmount') or 0)
+                            w_prize = int(g.get('winnerTotalPrize') or int(s_amt * 0.25))
+                            f_pool = f_amt + w_prize
 
-                        summary['games'][gid] = {
-                            'gmId': gid,
-                            'sport': sport_label,
-                            'gmTs': ts,
-                            'round_no': str(ts)[-2:],
-                            'title': f"{sport_label} {str(ts)[-2:]}회차",
-                            'total_sell_amount': s_amt,
-                            'total_sale_cnt': int(g.get('totalSaleCnt') or (s_amt // 1000)),
-                            'forward_amount': f_amt,
-                            'forward_cnt': g.get('forwardCnt', 0),
-                            'first_prize_pool': f_pool,
-                            'first_prize_text': format_kr_money(f_pool),
-                            'total_sell_text': format_kr_money(s_amt),
-                            'forward_text': format_kr_money(f_amt) if f_amt > 0 else '이월 없음',
-                            'status': 'SaleProgress' if s_amt > 0 else 'SaleComplete',
-                            'is_live': True
-                        }
+                            summary['games'][gid] = {
+                                'gmId': gid,
+                                'sport': sport_label,
+                                'gmTs': ts,
+                                'round_no': str(ts)[-2:],
+                                'title': f"{sport_label} {str(ts)[-2:]}회차",
+                                'total_sell_amount': s_amt,
+                                'total_sale_cnt': int(g.get('totalSaleCnt') or (s_amt // 1000)),
+                                'forward_amount': f_amt,
+                                'forward_cnt': g.get('forwardCnt', 0),
+                                'first_prize_pool': f_pool,
+                                'first_prize_text': format_kr_money(f_pool),
+                                'total_sell_text': format_kr_money(s_amt),
+                                'forward_text': format_kr_money(f_amt) if f_amt > 0 else '이월 없음',
+                                'status': 'SaleProgress' if s_amt > 0 else 'SaleComplete',
+                                'is_live': True
+                            }
 
-                if summary['games']:
-                    _CACHE[cache_key] = (now, summary)
-                    return summary
-        except Exception as e:
-            print(f"[WARN] Failed to fetch live toto summary: {e}")
+                    if summary['games']:
+                        _CACHE[cache_key] = (now, summary)
+                        return summary
+            except Exception as e:
+                mark_betman_offline()
 
         # Fallback default live summary
         for gid in ['G011', 'G024', 'G027']:
@@ -674,33 +694,34 @@ class BetmanService:
                 return data
 
         # 2. Live API fetch with requests (Reliable & fast)
-        try:
-            params = {
-                'gmId': gm_id,
-                'gmTs': int(gm_ts),
-                '_sbmInfo': {
+        if is_betman_online_available():
+            try:
+                params = {
+                    'gmId': gm_id,
+                    'gmTs': int(gm_ts),
                     '_sbmInfo': {
-                        'debugMode': 'false'
+                        '_sbmInfo': {
+                            'debugMode': 'false'
+                        }
                     }
                 }
-            }
-            r = _SESSION.post(BETMAN_TOTO_URL, json=params, timeout=4.0)
-            if r.status_code == 200:
-                res = r.json()
-                if isinstance(res, dict) and (res.get('schedulesList') or res.get('currentLottery')):
-                    parsed = BetmanService._parse_betman_payload(res, gm_id, gm_ts)
-                    if parsed and parsed.get('status') == 'success':
-                        parsed = BetmanService._enrich_toto_matches_with_db(parsed, gm_id)
-                        _CACHE[cache_key] = (now, parsed)
-                        # Save local snapshot for fast offline recovery
-                        try:
-                            with open(f'betman_{gm_id}_{gm_ts}.json', 'w', encoding='utf-8') as sf:
-                                json.dump(parsed, sf, ensure_ascii=False, indent=2)
-                        except Exception:
-                            pass
-                        return parsed
-        except Exception as e:
-            print(f"[WARN] Betman totoGameData live fetch error ({gm_id} {gm_ts}): {e}")
+                r = _SESSION.post(BETMAN_TOTO_URL, json=params, timeout=0.8)
+                if r.status_code == 200:
+                    res = r.json()
+                    if isinstance(res, dict) and (res.get('schedulesList') or res.get('currentLottery')):
+                        parsed = BetmanService._parse_betman_payload(res, gm_id, gm_ts)
+                        if parsed and parsed.get('status') == 'success':
+                            parsed = BetmanService._enrich_toto_matches_with_db(parsed, gm_id)
+                            _CACHE[cache_key] = (now, parsed)
+                            # Save local snapshot for fast offline recovery
+                            try:
+                                with open(f'betman_{gm_id}_{gm_ts}.json', 'w', encoding='utf-8') as sf:
+                                    json.dump(parsed, sf, ensure_ascii=False, indent=2)
+                            except Exception:
+                                pass
+                            return parsed
+            except Exception as e:
+                mark_betman_offline()
 
         # 3. Fallback snapshot
         for snap_file in [f'betman_{gm_id}_{gm_ts}.json', f'betman_{gm_ts}.json']:
@@ -738,16 +759,17 @@ class BetmanService:
 
         # 2. 베트맨 발매 가능 목록에서 실시간 최신 회차(gmTs) 동적 감지
         detected_ts = None
-        try:
-            b_res = _SESSION.post(BETMAN_BUYABLE_URL, json={'_sbmInfo': {'debugMode': 'false'}}, timeout=3.0)
-            if b_res.status_code == 200:
-                b_data = b_res.json()
-                for pg in b_data.get('protoGames', []):
-                    if pg.get('gmId') == 'G101' and pg.get('gmTs'):
-                        detected_ts = int(pg.get('gmTs'))
-                        break
-        except Exception as e:
-            logger.debug(f"[Betman] Failed to detect active proto round: {e}")
+        if is_betman_online_available():
+            try:
+                b_res = _SESSION.post(BETMAN_BUYABLE_URL, json={'_sbmInfo': {'debugMode': 'false'}}, timeout=0.8)
+                if b_res.status_code == 200:
+                    b_data = b_res.json()
+                    for pg in b_data.get('protoGames', []):
+                        if pg.get('gmId') == 'G101' and pg.get('gmTs'):
+                            detected_ts = int(pg.get('gmTs'))
+                            break
+            except Exception as e:
+                mark_betman_offline()
 
         # 신규 회차가 감지되었으면 active_ts를 신규 회차로 갱신
         if detected_ts and detected_ts != active_ts:
@@ -767,16 +789,17 @@ class BetmanService:
             return snapshot_data
 
         # 3. 실시간 라이브 페칭 시도 (신규 회차 또는 force_refresh 시)
-        try:
-            payload = {
-                "gmId": "G101",
-                "gmTs": active_ts,
-                "gameYear": "2026",
-                "_sbmInfo": {"_sbmInfo": {"debugMode": "false"}}
-            }
-            r = _SESSION.post(BETMAN_INQ_URL, json=payload, timeout=4.0)
-            if r.status_code == 200:
-                data = r.json()
+        if is_betman_online_available():
+            try:
+                payload = {
+                    "gmId": "G101",
+                    "gmTs": active_ts,
+                    "gameYear": "2026",
+                    "_sbmInfo": {"_sbmInfo": {"debugMode": "false"}}
+                }
+                r = _SESSION.post(BETMAN_INQ_URL, json=payload, timeout=0.8)
+                if r.status_code == 200:
+                    data = r.json()
                 keys = data.get('compSchedules', {}).get('keys', [])
                 datas = data.get('compSchedules', {}).get('datas', [])
                 vote_dict = {v.get('GM_SEQ'): v for v in data.get('voteStatus', [])}
@@ -798,8 +821,9 @@ class BetmanService:
                         except Exception:
                             pass
                     return parsed_result
-        except Exception as e:
-            logger.warning(f"[Betman] Live fetch error for G101 {active_ts}: {e}")
+            except Exception as e:
+                mark_betman_offline()
+                logger.warning(f"[Betman] Live fetch error for G101 {active_ts}: {e}")
 
         # 4. 네트워크 실패 시 스냅샷 데이터 반환
         if snapshot_data and snapshot_data.get('datas'):
@@ -1196,21 +1220,50 @@ class BetmanService:
             ).order_by(BetmanOddsHistory.captured_at.asc(), BetmanOddsHistory.id.asc()).all()
 
             history_items = []
+            prev_h, prev_d, prev_a = None, None, None
             for r in records:
                 cap_kst = r.captured_at + timedelta(hours=9) if r.captured_at else None
                 time_str = cap_kst.strftime("%H:%M") if cap_kst else ""
+                date_str = cap_kst.strftime("%m/%d") if cap_kst else ""
+                full_dt_str = cap_kst.strftime("%Y-%m-%d %H:%M") if cap_kst else ""
+                iso_dt_str = cap_kst.strftime("%Y-%m-%dT%H:%M") if cap_kst else ""
+
                 h_val = float(r.home_odds) if r.home_odds and r.home_odds != 'None' else None
                 d_val = float(r.draw_odds) if r.draw_odds and r.draw_odds != 'None' and float(r.draw_odds or 0) > 0 else None
                 a_val = float(r.away_odds) if r.away_odds and r.away_odds != 'None' else None
+
+                diff_h = round(h_val - prev_h, 2) if (prev_h is not None and h_val is not None) else 0.0
+                diff_d = round(d_val - prev_d, 2) if (prev_d is not None and d_val is not None) else 0.0
+                diff_a = round(a_val - prev_a, 2) if (prev_a is not None and a_val is not None) else 0.0
+
+                is_changed_val = bool(r.is_changed or (prev_h is not None and (diff_h != 0.0 or diff_d != 0.0 or diff_a != 0.0)))
+
                 history_items.append({
                     "id": r.id,
+                    "seq": r.seq,
+                    "date": date_str,
                     "time": time_str,
-                    "timestamp": cap_kst.strftime("%m/%d %H:%M") if cap_kst else "",
+                    "timestamp": f"{date_str} {time_str}".strip(),
+                    "full_datetime": full_dt_str,
+                    "iso_datetime": iso_dt_str,
                     "home": h_val,
                     "draw": d_val,
                     "away": a_val,
-                    "is_changed": bool(r.is_changed)
+                    "prev_home": prev_h,
+                    "prev_draw": prev_d,
+                    "prev_away": prev_a,
+                    "diff_home": diff_h,
+                    "diff_draw": diff_d,
+                    "diff_away": diff_a,
+                    "win_vote_pct": r.win_vote_pct or "",
+                    "draw_vote_pct": r.draw_vote_pct or "",
+                    "loss_vote_pct": r.loss_vote_pct or "",
+                    "is_changed": is_changed_val
                 })
+
+                if h_val is not None: prev_h = h_val
+                if d_val is not None: prev_d = d_val
+                if a_val is not None: prev_a = a_val
 
             indexed = BetmanService.get_indexed_proto_matches()
             h_norm = clean_name(match.home_team_name)
@@ -1234,6 +1287,207 @@ class BetmanService:
                 "total_records": len(history_items),
                 "has_changes": any(item.get("is_changed") for item in history_items)
             }
+        finally:
+            if own_db and db is not None:
+                db.close()
+
+    @staticmethod
+    def add_odds_history_record(
+        match_id: int,
+        home_odds: float,
+        draw_odds: Optional[float] = None,
+        away_odds: float = 0.0,
+        captured_at_str: Optional[str] = None,
+        win_vote_pct: Optional[str] = None,
+        draw_vote_pct: Optional[str] = None,
+        loss_vote_pct: Optional[str] = None,
+        db=None
+    ) -> dict:
+        """
+        특정 경기에 배당 변동 이력을 수동으로 등록/추가
+        """
+        from app.models.models import BetmanOddsHistory, Match, MatchDetail
+        import json
+        from datetime import datetime, timedelta
+
+        own_db = False
+        if db is None:
+            from app.core.database import SessionLocal
+            db = SessionLocal()
+            own_db = True
+
+        try:
+            match = db.query(Match).filter(Match.id == match_id).first()
+            if not match:
+                return {"status": "error", "message": f"경기 ID {match_id}를 찾을 수 없습니다."}
+
+            dt_utc = datetime.utcnow()
+            if captured_at_str and str(captured_at_str).strip():
+                s = str(captured_at_str).strip().replace('T', ' ')
+                parsed_dt = None
+                for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y/%m/%d %H:%M", "%m/%d %H:%M"):
+                    try:
+                        if fmt == "%m/%d %H:%M":
+                            p = datetime.strptime(s, fmt)
+                            parsed_dt = p.replace(year=datetime.utcnow().year)
+                        else:
+                            parsed_dt = datetime.strptime(s, fmt)
+                        break
+                    except ValueError:
+                        continue
+                if parsed_dt:
+                    dt_utc = parsed_dt - timedelta(hours=9)
+
+            last_hist = db.query(BetmanOddsHistory).filter(
+                BetmanOddsHistory.match_id == match_id
+            ).order_by(BetmanOddsHistory.captured_at.desc(), BetmanOddsHistory.id.desc()).first()
+
+            h_str = f"{float(home_odds):.2f}"
+            d_str = f"{float(draw_odds):.2f}" if draw_odds and float(draw_odds) > 0 else "0.0"
+            a_str = f"{float(away_odds):.2f}"
+
+            is_diff = True
+            if last_hist:
+                try:
+                    prev_h = float(last_hist.home_odds or 0)
+                    prev_d = float(last_hist.draw_odds or 0)
+                    prev_a = float(last_hist.away_odds or 0)
+                    is_diff = (prev_h != float(h_str) or prev_d != float(d_str) or prev_a != float(a_str))
+                except Exception:
+                    is_diff = True
+
+            new_record = BetmanOddsHistory(
+                match_id=match_id,
+                seq=last_hist.seq if last_hist else None,
+                home_odds=h_str,
+                draw_odds=d_str,
+                away_odds=a_str,
+                win_vote_pct=win_vote_pct or (last_hist.win_vote_pct if last_hist else ""),
+                draw_vote_pct=draw_vote_pct or (last_hist.draw_vote_pct if last_hist else ""),
+                loss_vote_pct=loss_vote_pct or (last_hist.loss_vote_pct if last_hist else ""),
+                captured_at=dt_utc,
+                is_changed=is_diff
+            )
+            db.add(new_record)
+            db.commit()
+            db.refresh(new_record)
+
+            # 최신 기록인 경우 MatchDetail의 team_stats 배당 정보도 동기화 갱신
+            latest_record = db.query(BetmanOddsHistory).filter(
+                BetmanOddsHistory.match_id == match_id
+            ).order_by(BetmanOddsHistory.captured_at.desc(), BetmanOddsHistory.id.desc()).first()
+
+            if latest_record and latest_record.id == new_record.id:
+                try:
+                    detail = db.query(MatchDetail).filter(MatchDetail.match_id == match_id).first()
+                    if not detail:
+                        detail = MatchDetail(match_id=match_id, team_stats='{}')
+                        db.add(detail)
+                    ts = {}
+                    if detail.team_stats:
+                        try:
+                            ts = json.loads(detail.team_stats)
+                        except Exception:
+                            ts = {}
+                    ts['betman_main_odds'] = {
+                        'home': float(h_str),
+                        'draw': float(d_str) if float(d_str) > 0 else None,
+                        'away': float(a_str),
+                        'domestic_home': float(h_str),
+                        'domestic_draw': float(d_str) if float(d_str) > 0 else None,
+                        'domestic_away': float(a_str),
+                        'is_betman_official': True
+                    }
+                    detail.team_stats = json.dumps(ts, ensure_ascii=False)
+                    db.commit()
+                except Exception as e:
+                    logger.warning(f"Failed to update team_stats odds for match {match_id}: {e}")
+
+            # 캐시 무효화
+            try:
+                from app.api.v1.matches import clear_matches_cache
+                clear_matches_cache(match_id)
+            except Exception:
+                pass
+
+            updated_hist = BetmanService.get_match_odds_history(match_id=match_id, db=db)
+            return {
+                "status": "success",
+                "message": "배당 변동 이력이 성공적으로 저장되었습니다.",
+                "created_id": new_record.id,
+                "data": updated_hist
+            }
+        except Exception as e:
+            db.rollback()
+            return {"status": "error", "message": f"배당 변동 등록 실패: {str(e)}"}
+        finally:
+            if own_db and db is not None:
+                db.close()
+
+    @staticmethod
+    def delete_odds_history_record(history_id: int, db=None) -> dict:
+        """
+        배당 변동 이력 레코드 삭제
+        """
+        from app.models.models import BetmanOddsHistory, MatchDetail
+        import json
+
+        own_db = False
+        if db is None:
+            from app.core.database import SessionLocal
+            db = SessionLocal()
+            own_db = True
+
+        try:
+            record = db.query(BetmanOddsHistory).filter(BetmanOddsHistory.id == history_id).first()
+            if not record:
+                return {"status": "error", "message": f"이력 ID {history_id}를 찾을 수 없습니다."}
+
+            match_id = record.match_id
+            db.delete(record)
+            db.commit()
+
+            latest = db.query(BetmanOddsHistory).filter(
+                BetmanOddsHistory.match_id == match_id
+            ).order_by(BetmanOddsHistory.captured_at.desc(), BetmanOddsHistory.id.desc()).first()
+
+            if latest:
+                try:
+                    detail = db.query(MatchDetail).filter(MatchDetail.match_id == match_id).first()
+                    if detail and detail.team_stats:
+                        ts = json.loads(detail.team_stats)
+                        h_val = float(latest.home_odds or 0)
+                        d_val = float(latest.draw_odds or 0) if latest.draw_odds and float(latest.draw_odds) > 0 else None
+                        a_val = float(latest.away_odds or 0)
+                        ts['betman_main_odds'] = {
+                            'home': h_val,
+                            'draw': d_val,
+                            'away': a_val,
+                            'domestic_home': h_val,
+                            'domestic_draw': d_val,
+                            'domestic_away': a_val,
+                            'is_betman_official': True
+                        }
+                        detail.team_stats = json.dumps(ts, ensure_ascii=False)
+                        db.commit()
+                except Exception:
+                    pass
+
+            try:
+                from app.api.v1.matches import clear_matches_cache
+                clear_matches_cache(match_id)
+            except Exception:
+                pass
+
+            updated_hist = BetmanService.get_match_odds_history(match_id=match_id, db=db)
+            return {
+                "status": "success",
+                "message": "배당 이력이 성공적으로 삭제되었습니다.",
+                "data": updated_hist
+            }
+        except Exception as e:
+            db.rollback()
+            return {"status": "error", "message": f"배당 이력 삭제 실패: {str(e)}"}
         finally:
             if own_db and db is not None:
                 db.close()

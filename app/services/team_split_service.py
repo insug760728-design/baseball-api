@@ -8935,7 +8935,7 @@ class TeamSplitService:
                    m.home_score, m.away_score, m.match_date, md.team_stats
             FROM matches m
             LEFT JOIN match_details md ON m.id = md.match_id
-            WHERE m.status = 'FINISHED'
+            WHERE m.status = 'FINISHED' AND m.match_date >= '2024-01-01'
             ORDER BY m.match_date ASC
         """)
         rows = c.fetchall()
@@ -9496,26 +9496,78 @@ class TeamSplitService:
             if eff_sp == "SOCCER":
                 h_games, h_wins, h_losses, h_draws, h_win_pct, h_rpg, h_ra = 12, 7, 2, 3, 0.583, 1.6, 1.1
             elif eff_sp == "BASKETBALL":
-                h_games, h_wins, h_losses, h_draws, h_win_pct, h_rpg, h_ra = 10, 6, 4, 0, 0.600, 112.4, 107.5
+                try:
+                    from app.services.basketball_2025_stats import get_basketball_2025_team_stats
+                    h_bball_2025 = get_basketball_2025_team_stats(home_team)
+                except Exception:
+                    h_bball_2025 = None
+                if h_bball_2025:
+                    h_stat = h_bball_2025.get("home") if h_bball_2025.get("home", {}).get("games", 0) > 0 else h_bball_2025.get("total", {})
+                    h_games = h_stat.get("games", 30)
+                    h_wins = h_stat.get("wins", 15)
+                    h_losses = h_stat.get("losses", 15)
+                    h_draws = 0
+                    h_win_pct = float(h_stat.get("win_pct", 0.500))
+                    h_rpg = float(h_stat.get("rpg", 80.0))
+                    h_ra = float(h_stat.get("ra", 80.0))
+                else:
+                    h_games, h_wins, h_losses, h_draws, h_win_pct, h_rpg, h_ra = 10, 6, 4, 0, 0.600, 112.4, 107.5
             else:
                 h_games, h_wins, h_losses, h_draws, h_win_pct, h_rpg, h_ra = 10, 6, 4, 0, 0.600, 4.8, 3.9
         else:
             if h_rpg == 0.0 and h_ra == 0.0:
                 if eff_sp == "SOCCER": h_rpg, h_ra = 1.6, 1.1
-                elif eff_sp == "BASKETBALL": h_rpg, h_ra = 112.4, 107.5
+                elif eff_sp == "BASKETBALL":
+                    try:
+                        from app.services.basketball_2025_stats import get_basketball_2025_team_stats
+                        h_bball_2025 = get_basketball_2025_team_stats(home_team)
+                    except Exception:
+                        h_bball_2025 = None
+                    if h_bball_2025:
+                        h_stat = h_bball_2025.get("home") or h_bball_2025.get("total", {})
+                        h_rpg = float(h_stat.get("rpg", 80.0))
+                        h_ra = float(h_stat.get("ra", 80.0))
+                    else:
+                        h_rpg, h_ra = 112.4, 107.5
                 else: h_rpg, h_ra = 4.8, 3.9
 
         if a_split["games"] == 0:
             if eff_sp == "SOCCER":
                 a_games, a_wins, a_losses, a_draws, a_win_pct, a_rpg, a_ra = 12, 4, 4, 4, 0.333, 1.1, 1.5
             elif eff_sp == "BASKETBALL":
-                a_games, a_wins, a_losses, a_draws, a_win_pct, a_rpg, a_ra = 10, 4, 6, 0, 0.400, 106.8, 111.2
+                try:
+                    from app.services.basketball_2025_stats import get_basketball_2025_team_stats
+                    a_bball_2025 = get_basketball_2025_team_stats(away_team)
+                except Exception:
+                    a_bball_2025 = None
+                if a_bball_2025:
+                    a_stat = a_bball_2025.get("away") if a_bball_2025.get("away", {}).get("games", 0) > 0 else a_bball_2025.get("total", {})
+                    a_games = a_stat.get("games", 30)
+                    a_wins = a_stat.get("wins", 15)
+                    a_losses = a_stat.get("losses", 15)
+                    a_draws = 0
+                    a_win_pct = float(a_stat.get("win_pct", 0.500))
+                    a_rpg = float(a_stat.get("rpg", 80.0))
+                    a_ra = float(a_stat.get("ra", 80.0))
+                else:
+                    a_games, a_wins, a_losses, a_draws, a_win_pct, a_rpg, a_ra = 10, 4, 6, 0, 0.400, 106.8, 111.2
             else:
                 a_games, a_wins, a_losses, a_draws, a_win_pct, a_rpg, a_ra = 10, 4, 6, 0, 0.400, 3.9, 4.6
         else:
             if a_rpg == 0.0 and a_ra == 0.0:
                 if eff_sp == "SOCCER": a_rpg, a_ra = 1.1, 1.5
-                elif eff_sp == "BASKETBALL": a_rpg, a_ra = 106.8, 111.2
+                elif eff_sp == "BASKETBALL":
+                    try:
+                        from app.services.basketball_2025_stats import get_basketball_2025_team_stats
+                        a_bball_2025 = get_basketball_2025_team_stats(away_team)
+                    except Exception:
+                        a_bball_2025 = None
+                    if a_bball_2025:
+                        a_stat = a_bball_2025.get("away") or a_bball_2025.get("total", {})
+                        a_rpg = float(a_stat.get("rpg", 80.0))
+                        a_ra = float(a_stat.get("ra", 80.0))
+                    else:
+                        a_rpg, a_ra = 106.8, 111.2
                 else: a_rpg, a_ra = 3.9, 4.6
 
         sorted_pair = f"{min(home_team, away_team)} vs {max(home_team, away_team)}"

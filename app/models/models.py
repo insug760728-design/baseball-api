@@ -360,6 +360,47 @@ class Match(Base):
     @linescore.setter
     def linescore(self, val):
         self._linescore = val
+
+    @property
+    def betman_main_odds(self):
+        if hasattr(self, '_betman_main_odds') and self._betman_main_odds:
+            return self._betman_main_odds
+        ts = self.team_stats or {}
+        if isinstance(ts, dict) and ts.get("betman_main_odds"):
+            return ts["betman_main_odds"]
+        return None
+
+    @betman_main_odds.setter
+    def betman_main_odds(self, val):
+        self._betman_main_odds = val
+
+    @property
+    def odds(self):
+        if hasattr(self, '_odds') and self._odds:
+            return self._odds
+        b_main = self.betman_main_odds
+        if b_main and isinstance(b_main, dict):
+            return b_main
+        ts = self.team_stats or {}
+        if isinstance(ts, dict) and ts.get("odds"):
+            return ts["odds"]
+        return None
+
+    @odds.setter
+    def odds(self, val):
+        self._odds = val
+
+    @property
+    def odds_history_has_changes(self):
+        if hasattr(self, '_odds_history_has_changes') and self._odds_history_has_changes is not None:
+            return self._odds_history_has_changes
+        if self.odds_history:
+            return any(bool(getattr(h, 'is_changed', False)) for h in self.odds_history)
+        return False
+
+    @odds_history_has_changes.setter
+    def odds_history_has_changes(self, val):
+        self._odds_history_has_changes = val
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

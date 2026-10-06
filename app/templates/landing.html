@@ -1279,32 +1279,46 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      margin: 6px 0;
+      gap: 6px;
+      margin: 5px 0;
     }
     .betman-team-home {
       flex: 1 1 45%;
       min-width: 0;
-      font-size: 0.98rem;
+      font-size: 0.90rem;
       font-weight: 800;
       color: #0f172a;
       text-align: left;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      letter-spacing: -0.2px;
+      letter-spacing: -0.3px;
     }
     .betman-team-away {
       flex: 1 1 45%;
       min-width: 0;
-      font-size: 0.98rem;
+      font-size: 0.90rem;
       font-weight: 800;
       color: #0f172a;
       text-align: right;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      letter-spacing: -0.3px;
+    }
+    .betman-card-team-title {
+      font-size: 0.90rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+    .fifa-rank-badge {
+      font-size: 0.60rem;
+      padding: 1px 3.5px;
+      border-radius: 3px;
+      line-height: 1.25;
+      font-weight: 700;
       letter-spacing: -0.2px;
+      flex-shrink: 0;
     }
     .betman-score-val {
       flex: 0 0 auto;
@@ -1331,6 +1345,64 @@
       background: #fef2f2;
       color: #dc2626;
       border-color: #fecaca;
+    }
+
+    /* 📱 모바일 화면 최적화: 온두라스/자메이카 등 팀명과 피파 랭킹이 말줄임표(...) 없이 다 함께 온전히 나오도록 규격 반응형 축소 */
+    @media (max-width: 576px) {
+      .betman-match-row {
+        gap: 3px !important;
+        margin: 4px 0 !important;
+      }
+      .betman-team-home,
+      .betman-team-away,
+      .betman-card-team-title {
+        font-size: 0.80rem !important;
+        letter-spacing: -0.4px !important;
+      }
+      .fifa-rank-badge {
+        font-size: 0.54rem !important;
+        padding: 0 2.5px !important;
+        letter-spacing: -0.3px !important;
+      }
+      .fifa-rank-badge i {
+        font-size: 0.55em !important;
+      }
+      .betman-score-val {
+        font-size: 1.05rem !important;
+        min-width: 17px !important;
+      }
+      .betman-inning-badge {
+        font-size: 0.62rem !important;
+        padding: 1px 4px !important;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .betman-match-row {
+        gap: 2px !important;
+      }
+      .betman-team-home,
+      .betman-team-away,
+      .betman-card-team-title {
+        font-size: 0.74rem !important;
+        letter-spacing: -0.5px !important;
+      }
+      .fifa-rank-badge {
+        font-size: 0.50rem !important;
+        padding: 0 2px !important;
+        letter-spacing: -0.4px !important;
+      }
+      .fifa-rank-badge i {
+        font-size: 0.50em !important;
+      }
+      .betman-score-val {
+        font-size: 0.95rem !important;
+        min-width: 15px !important;
+      }
+      .betman-inning-badge {
+        font-size: 0.56rem !important;
+        padding: 1px 3px !important;
+      }
     }
     .betman-odds-center {
       display: flex;
@@ -4882,7 +4954,10 @@
         // ⚡ Phase 1: 서버 초기 데이터가 없을 때만 즉시 fetch 실행 (초기 데이터가 있으면 불필요한 네트워크 대기 제거)
         if (!hasInitialData) {
           try {
-            const fastResp = await fetch(`/api/v1/matches?limit=350&order=asc`);
+            const abortCtrl = new AbortController();
+            const abortTimer = setTimeout(() => abortCtrl.abort(), 3500);
+            const fastResp = await fetch(`/api/v1/matches?limit=350&order=asc`, { signal: abortCtrl.signal });
+            clearTimeout(abortTimer);
             if (fastResp.ok) {
               const fastMatches = await fastResp.json();
               if (Array.isArray(fastMatches) && fastMatches.length > 0) {
@@ -4924,6 +4999,12 @@
               }
             }
           } catch (e) {}
+        }
+
+        // 🛡️ 여전히 빈 경우에도 스켈레톤 로딩 무한 회전을 반드시 해제하고 빈 화면/재시도 UI 표출
+        if (!allMatches || allMatches.length === 0) {
+          window.matchesLoadedInitial = true;
+          renderPredMatches();
         }
 
         const list = getFilteredPredMatches();
@@ -15450,18 +15531,8 @@ function getFullModalMatchList() {
         <!-- ⚡ [정밀 지표] 축구 9대 첨단 AI 정밀 지표 허브 (모바일 최적화) -->
         <!-- ========================================================= -->
         <div class="p-2.5 border-bottom bg-white" style="border-color:#e2e8f0 !important;">
-          <!-- Top Title Row -->
-          <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
-            <div class="d-flex align-items-center gap-1.5">
-              <span class="badge bg-danger text-white px-2 py-0.5" style="font-size:0.70rem;">
-                <i class="bi bi-cpu-fill me-1"></i>AI 정밀 엔진
-              </span>
-              <strong class="text-dark" style="font-size:0.84rem; letter-spacing:-0.2px;">축구 9대 첨단 정밀 지표 (xG · PPDA · Field Tilt)</strong>
-            </div>
-            <div>
-              ${statusBadge}
-            </div>
-          </div>
+          <!-- Top Status Badge Only (불필요한 제목 삭제) -->
+          ${statusBadge ? `<div class="d-flex justify-content-end mb-2">${statusBadge}</div>` : ''}
 
           <!-- Hero Dual Battle Bar -->
           <div class="p-2.5 rounded-3 mb-2" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border:1px solid #cbd5e1;">
@@ -16262,10 +16333,10 @@ function getFullModalMatchList() {
 
       const isCardSoccer = (m.sport_code === 'SOCCER');
       const hCardName = (isCardSoccer && typeof formatTeamNameWithFifa === 'function')
-        ? formatTeamNameWithFifa(m.home_team_name, true, true, { fontSize: '0.65rem' })
+        ? formatTeamNameWithFifa(m.home_team_name, true, true, { fontSize: '0.58rem', marginClass: 'ms-0.5' })
         : formatTeamName(m.home_team_name);
       const aCardName = (isCardSoccer && typeof formatTeamNameWithFifa === 'function')
-        ? formatTeamNameWithFifa(m.away_team_name, true, true, { fontSize: '0.65rem' })
+        ? formatTeamNameWithFifa(m.away_team_name, true, true, { fontSize: '0.58rem', marginClass: 'ms-0.5' })
         : formatTeamName(m.away_team_name);
 
       let innText = isFinished ? '종료' : (isLive ? '진행중' : '예정');
@@ -16273,11 +16344,11 @@ function getFullModalMatchList() {
       if (hasScores) {
         centerRowHtml = `
           <div class="betman-match-row">
-            <span class="betman-team-home" title="${m.home_team_name}">${hCardName}</span>
+            <span class="betman-team-home betman-card-team-title" title="${m.home_team_name}">${hCardName}</span>
             <span class="betman-score-val home finished">${hScoreVal ?? 0}</span>
             <span class="betman-inning-badge ${isFinished ? 'finished' : (isLive ? 'bg-danger text-white' : '')}">${innText}</span>
             <span class="betman-score-val away finished">${aScoreVal ?? 0}</span>
-            <span class="betman-team-away" title="${m.away_team_name}">${aCardName}</span>
+            <span class="betman-team-away betman-card-team-title" title="${m.away_team_name}">${aCardName}</span>
           </div>
           <div class="d-flex justify-content-center align-items-center mb-1 mt-1">
             <div class="betman-odds-center">${betmanOddsHtml}</div>
@@ -16286,18 +16357,18 @@ function getFullModalMatchList() {
       } else if (isBkOrVb && isLive) {
         centerRowHtml = `
           <div class="betman-match-row">
-            <span class="betman-team-home" title="${m.home_team_name}">${hCardName}</span>
+            <span class="betman-team-home betman-card-team-title" title="${m.home_team_name}">${hCardName}</span>
             <span class="badge bg-warning text-dark px-2 py-1" style="font-size:0.72rem; font-weight:700;"><i class="bi bi-clock-history me-1"></i>진행중 (결과 집계 중)</span>
-            <span class="betman-team-away" title="${m.away_team_name}">${aCardName}</span>
+            <span class="betman-team-away betman-card-team-title" title="${m.away_team_name}">${aCardName}</span>
           </div>
         `;
       } else {
         centerRowHtml = `
           <!-- 1. 팀명 영역 (배당과 겹치지 않게 상단에 독립 배치하여 팀명 100% 가독성 확보) -->
-          <div class="d-flex justify-content-between align-items-center mb-1.5" style="gap: 8px;">
-            <span class="betman-team-home text-start text-truncate" style="flex: 1 1 48%; min-width:0; font-size: 0.98rem; font-weight: 800;" title="${m.home_team_name}">${hCardName}</span>
+          <div class="d-flex justify-content-between align-items-center mb-1.5" style="gap: 6px;">
+            <span class="betman-team-home text-start text-truncate betman-card-team-title" style="flex: 1 1 48%; min-width:0;" title="${m.home_team_name}">${hCardName}</span>
             <span class="text-muted fw-bold px-1" style="font-size: 0.70rem; flex: 0 0 auto; letter-spacing: 0.5px; opacity: 0.65;">VS</span>
-            <span class="betman-team-away text-end text-truncate" style="flex: 1 1 48%; min-width:0; font-size: 0.98rem; font-weight: 800;" title="${m.away_team_name}">${aCardName}</span>
+            <span class="betman-team-away text-end text-truncate betman-card-team-title" style="flex: 1 1 48%; min-width:0;" title="${m.away_team_name}">${aCardName}</span>
           </div>
           <!-- 2. 배당 영역 (하단 중앙에 슬림하게 배치하여 팀명을 침범하지 않음) -->
           <div class="d-flex justify-content-center align-items-center mb-1">
@@ -17111,9 +17182,9 @@ function updateSlimPanel(matchId, type, contentHtml) {
     function getFifaRankBadgeHtml(teamName, options = {}) {
       const rank = getFifaRank(teamName);
       if (!rank) return '';
-      const fontSize = options.fontSize || '0.70rem';
+      const fontSize = options.fontSize || '0.62rem';
       const marginClass = options.marginClass || 'ms-1';
-      return `<span class="badge ${marginClass} fw-bold" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:${fontSize}; vertical-align:middle; display:inline-flex; align-items:center; gap:2px; padding:1px 5px; border-radius:4px; font-weight:700;"><i class="bi bi-trophy-fill" style="font-size:0.65em; color:#d97706;"></i>FIFA ${rank}위</span>`;
+      return `<span class="badge ${marginClass} fw-bold fifa-rank-badge" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:${fontSize}; vertical-align:middle; display:inline-flex; align-items:center; gap:2px; padding:1px 3.5px; border-radius:3px; font-weight:800; flex-shrink:0; white-space:nowrap; letter-spacing:-0.2px;"><i class="bi bi-trophy-fill" style="font-size:0.60em; color:#d97706;"></i>FIFA ${rank}위</span>`;
     }
 
     function formatTeamNameWithFifa(teamName, isSoccer = true, asBadge = true, badgeOptions = {}) {
@@ -17122,7 +17193,12 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const rank = getFifaRank(teamName);
       if (!rank) return baseName;
       if (asBadge) {
-        return `${baseName} ${getFifaRankBadgeHtml(teamName, badgeOptions)}`;
+        const badge = getFifaRankBadgeHtml(teamName, badgeOptions);
+        if (badgeOptions && badgeOptions.wrapFlex) {
+          const justify = badgeOptions.isAway ? 'justify-content-end' : 'justify-content-start';
+          return `<span class="d-inline-flex align-items-center ${justify}" style="max-width:100%; min-width:0; vertical-align:middle;"><span class="text-truncate">${baseName}</span>${badge}</span>`;
+        }
+        return `${baseName} ${badge}`;
       }
       return `${baseName} (FIFA ${rank}위)`;
     }
@@ -19673,44 +19749,62 @@ function updateSlimPanel(matchId, type, contentHtml) {
         const ratioH = Math.round((t.hScore / total) * 100);
         const ratioA = 100 - ratioH;
 
-        let badgeHtml = '';
+        const isH = diff >= 3;
+        const isA = diff <= -3;
+        const isTie = Math.abs(diff) < 3;
+
+        let badgeH = '';
         if (diff >= 8) {
-          badgeHtml = `<span class="badge bg-danger text-white py-0.5 px-1 fw-bold" style="font-size:0.62rem;">👑 홈 압도</span>`;
+          badgeH = `<span class="badge bg-danger text-white py-0.5 px-1 mt-0.5 fw-bold" style="font-size:0.56rem;">👑 홈 압도</span>`;
         } else if (diff >= 3) {
-          badgeHtml = `<span class="badge bg-danger-subtle text-danger border border-danger-subtle py-0.5 px-1 fw-bold" style="font-size:0.62rem;">홈 우세</span>`;
-        } else if (diff <= -8) {
-          badgeHtml = `<span class="badge bg-primary text-white py-0.5 px-1 fw-bold" style="font-size:0.62rem;">👑 원정 압도</span>`;
+          badgeH = `<span class="badge bg-danger text-white py-0.5 px-1 mt-0.5 fw-bold" style="font-size:0.56rem;">홈 우세</span>`;
+        }
+
+        let badgeA = '';
+        if (diff <= -8) {
+          badgeA = `<span class="badge bg-primary text-white py-0.5 px-1 mt-0.5 fw-bold" style="font-size:0.56rem;">👑 원정 압도</span>`;
         } else if (diff <= -3) {
-          badgeHtml = `<span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0.5 px-1 fw-bold" style="font-size:0.62rem;">원정 우세</span>`;
-        } else {
-          badgeHtml = `<span class="badge bg-secondary-subtle text-secondary py-0.5 px-1 fw-bold" style="font-size:0.62rem;">🤝 호각</span>`;
+          badgeA = `<span class="badge bg-primary text-white py-0.5 px-1 mt-0.5 fw-bold" style="font-size:0.56rem;">원정 우세</span>`;
         }
 
         return `
-          <tr style="height:34px;">
-            <td class="fw-bold text-dark text-start ps-2" style="font-size:0.75rem; white-space:nowrap;">
-              ${t.name}
-            </td>
-            <td class="text-center px-1" style="white-space:nowrap;">
-              <span class="fw-black ${diff > 0 ? 'text-danger' : 'text-dark'}" style="font-size:0.86rem;">${t.hScore}점</span>
-              <div class="text-muted text-truncate" style="font-size:0.64rem; max-width:130px; margin:0 auto;" title="${t.hLabel}">${t.hLabel}</div>
-            </td>
-            <td class="text-center px-1" style="min-width:90px;">
-              <div class="d-flex align-items-center justify-content-center gap-1">
-                <span class="text-danger fw-bold font-monospace" style="font-size:0.68rem;">${ratioH}%</span>
-                <div class="progress flex-grow-1" style="height:6px; border-radius:3px; background:#e2e8f0; overflow:hidden; min-width:45px;">
-                  <div class="progress-bar bg-danger" role="progressbar" style="width:${ratioH}%;"></div>
-                  <div class="progress-bar bg-primary" role="progressbar" style="width:${ratioA}%;"></div>
-                </div>
-                <span class="text-primary fw-bold font-monospace" style="font-size:0.68rem;">${ratioA}%</span>
+          <tr style="border-bottom: 1px solid #f1f5f9; height: 50px;">
+            <!-- 🔴 홈팀 점수 & 레이블 & 우세 배지 (28%) -->
+            <td class="text-center py-1.5 px-1" style="vertical-align: middle; width: 28%; word-break: break-all;">
+              <div class="fw-black ${isH ? 'text-danger' : 'text-dark'}" style="font-size: 0.90rem; line-height: 1.15;">
+                ${t.hScore}점
               </div>
+              <div class="text-muted text-truncate" style="font-size: 0.62rem; line-height: 1.2; max-width: 95px; margin: 0 auto;" title="${t.hLabel}">
+                ${t.hLabel}
+              </div>
+              ${badgeH}
             </td>
-            <td class="text-center px-1" style="white-space:nowrap;">
-              <span class="fw-black ${diff < 0 ? 'text-primary' : 'text-dark'}" style="font-size:0.86rem;">${t.aScore}점</span>
-              <div class="text-muted text-truncate" style="font-size:0.64rem; max-width:130px; margin:0 auto;" title="${t.aLabel}">${t.aLabel}</div>
+
+            <!-- ⚔️ 중앙 전술 지표명 + 듀얼 비교 게이지 (44%) -->
+            <td class="text-center py-1.5 px-1" style="vertical-align: middle; width: 44%;">
+              <div class="d-flex align-items-center justify-content-center gap-1 mb-1">
+                <span class="fw-bold text-dark text-truncate" style="font-size: 0.74rem;">${t.name}</span>
+              </div>
+              <div class="d-flex align-items-center justify-content-center gap-1 px-1">
+                <span class="text-danger fw-bold font-monospace" style="font-size: 0.62rem; min-width: 22px; text-align: right;">${ratioH}%</span>
+                <div class="progress flex-grow-1" style="height: 6px; border-radius: 3px; background: #e2e8f0; overflow: hidden;">
+                  <div class="progress-bar bg-danger" role="progressbar" style="width: ${ratioH}%;"></div>
+                  <div class="progress-bar bg-primary" role="progressbar" style="width: ${ratioA}%;"></div>
+                </div>
+                <span class="text-primary fw-bold font-monospace" style="font-size: 0.62rem; min-width: 22px; text-align: left;">${ratioA}%</span>
+              </div>
+              ${isTie ? `<span class="badge bg-secondary-subtle text-secondary border py-0.2 px-1 mt-0.5 fw-bold" style="font-size: 0.54rem;">🤝 호각</span>` : ''}
             </td>
-            <td class="text-center px-1" style="white-space:nowrap;">
-              ${badgeHtml}
+
+            <!-- 🔵 원정팀 점수 & 레이블 & 우세 배지 (28%) -->
+            <td class="text-center py-1.5 px-1" style="vertical-align: middle; width: 28%; word-break: break-all;">
+              <div class="fw-black ${isA ? 'text-primary' : 'text-dark'}" style="font-size: 0.90rem; line-height: 1.15;">
+                ${t.aScore}점
+              </div>
+              <div class="text-muted text-truncate" style="font-size: 0.62rem; line-height: 1.2; max-width: 95px; margin: 0 auto;" title="${t.aLabel}">
+                ${t.aLabel}
+              </div>
+              ${badgeA}
             </td>
           </tr>
         `;
@@ -19927,15 +20021,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
 
       return `
         <div class="mb-2.5 rounded-3 border bg-white shadow-sm overflow-hidden" style="border-color: #cbd5e1 !important;">
-          <!-- Top Section Header -->
-          <div class="d-flex justify-content-between align-items-center px-3 py-2" style="background:#0f172a; color:#ffffff;">
-            <div class="d-flex align-items-center gap-2">
-              <span class="fw-bold" style="font-size:0.88rem; letter-spacing:-0.2px;">⚽ ${leagueTitle} 공식 전력 & 전술 분석</span>
-            </div>
-            <span class="badge bg-success-subtle text-success border border-success-subtle py-0.5 px-1.5 d-none d-sm-inline" style="font-size:0.66rem;">
-              <span class="pulse-dot me-1" style="display:inline-block; width:5px; height:5px; border-radius:50%; background:#10b981;"></span>100% 공식 데이터 연동
-            </span>
-          </div>
+          <!-- Top Section Header (불필요한 제목 삭제됨) -->
 
           <!-- ========================================================= -->
           <!-- ⚡ [실시간 라이브 전술 트래커] (경기가 LIVE이거나 실시간 데이터가 있을 때) -->
@@ -20056,16 +20142,23 @@ function updateSlimPanel(matchId, type, contentHtml) {
               </div>
             </div>
 
-            <!-- Table Container -->
-            <div class="table-responsive rounded border bg-white shadow-xs overflow-hidden" style="border-color:#cbd5e1 !important;">
-              <table class="table table-sm table-bordered table-hover text-center align-middle mb-0" style="width:100%; font-size:0.74rem;">
+            <!-- Table Container (📱 핸드폰 화면에 100% 최적화된 3열 대칭형 고정 레이아웃) -->
+            <div class="rounded border bg-white shadow-xs overflow-hidden" style="border-color:#cbd5e1 !important; width:100%;">
+              <table class="table table-sm table-bordered text-center align-middle mb-0" style="width:100%; table-layout:fixed; font-size:0.74rem;">
                 <thead style="background:#0f172a; color:#ffffff;">
-                  <tr style="height:28px;">
-                    <th style="width:23%; text-align:center; color:#e2e8f0; font-weight:700;">전술 핵심 지표</th>
-                    <th style="width:23%; text-align:center; color:#f87171; font-weight:800;">🔴 [홈] ${hNameWithFifa}</th>
-                    <th style="width:24%; text-align:center; color:#cbd5e1; font-weight:700;">⚔️ 전술 격돌 게이지</th>
-                    <th style="width:23%; text-align:center; color:#60a5fa; font-weight:800;">🔵 [원정] ${aNameWithFifa}</th>
-                    <th style="width:7%; text-align:center; color:#e2e8f0; font-weight:700;">우세</th>
+                  <tr style="height:32px;">
+                    <!-- 🔴 홈팀 (28%) -->
+                    <th style="width:28%; text-align:center; color:#f87171; font-weight:800; font-size:0.75rem; vertical-align:middle; padding:4px 2px;">
+                      🔴 [홈] ${hNameWithFifa}
+                    </th>
+                    <!-- ⚔️ 중앙 전술 지표 (44%) -->
+                    <th style="width:44%; text-align:center; color:#cbd5e1; font-weight:700; font-size:0.74rem; vertical-align:middle; padding:4px 2px;">
+                      ⚔️ 축구 5대 AI 전술 격돌 게이지
+                    </th>
+                    <!-- 🔵 원정팀 (28%) -->
+                    <th style="width:28%; text-align:center; color:#60a5fa; font-weight:800; font-size:0.75rem; vertical-align:middle; padding:4px 2px;">
+                      🔵 [원정] ${aNameWithFifa}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -21625,12 +21718,65 @@ function updateSlimPanel(matchId, type, contentHtml) {
     window.switchVballRecentView = switchVballRecentView;
     window.renderVolleyballDetailAnalyticsWidgetHtml = renderVolleyballDetailAnalyticsWidgetHtml;
 
+    // 🏀 2025년 시즌 농구 공식 구단 팩트 통계 (KBL 10개 구단, WKBL 6개 구단, NBA 30개 구단)
+    const BBALL_2025_SEASON_STATS = {"수원KT 소닉붐": {"league": "KBL", "home": {"games": 34, "wins": 16, "losses": 18, "win_pct": "0.471", "rpg": 80.3, "ra": 81.6, "diff": -1.3, "recent_5": "W-W-W-W-W"}, "away": {"games": 34, "wins": 19, "losses": 15, "win_pct": "0.559", "rpg": 80.7, "ra": 80.9, "diff": -0.2, "recent_5": "L-W-W-L-W"}, "total": {"games": 68, "wins": 35, "losses": 33, "win_pct": "0.515", "rpg": 80.5, "ra": 81.2, "diff": -0.7, "recent_5": "W-L-W-W-W"}}, "창원LG 세이커스": {"league": "KBL", "home": {"games": 30, "wins": 19, "losses": 11, "win_pct": "0.633", "rpg": 84.1, "ra": 83.2, "diff": 0.9, "recent_5": "L-W-L-W-W"}, "away": {"games": 29, "wins": 12, "losses": 17, "win_pct": "0.414", "rpg": 80.9, "ra": 83.7, "diff": -2.8, "recent_5": "L-L-W-L-L"}, "total": {"games": 59, "wins": 31, "losses": 28, "win_pct": "0.525", "rpg": 82.5, "ra": 83.4, "diff": -0.9, "recent_5": "L-L-L-W-L"}}, "대구한국가스공사 페가수스": {"league": "KBL", "home": {"games": 28, "wins": 10, "losses": 18, "win_pct": "0.357", "rpg": 78.8, "ra": 82.0, "diff": -3.2, "recent_5": "L-L-W-W-L"}, "away": {"games": 27, "wins": 13, "losses": 14, "win_pct": "0.481", "rpg": 77.6, "ra": 79.9, "diff": -2.3, "recent_5": "W-W-L-L-L"}, "total": {"games": 55, "wins": 23, "losses": 32, "win_pct": "0.418", "rpg": 78.2, "ra": 80.9, "diff": -2.7, "recent_5": "L-W-W-L-L"}}, "부산KCC 이지스": {"league": "KBL", "home": {"games": 33, "wins": 30, "losses": 3, "win_pct": "0.909", "rpg": 87.4, "ra": 78.5, "diff": 8.9, "recent_5": "W-L-L-W-W"}, "away": {"games": 34, "wins": 27, "losses": 7, "win_pct": "0.794", "rpg": 87.5, "ra": 80.0, "diff": 7.5, "recent_5": "W-L-L-L-L"}, "total": {"games": 67, "wins": 57, "losses": 10, "win_pct": "0.851", "rpg": 87.5, "ra": 79.3, "diff": 8.2, "recent_5": "W-L-W-L-L"}}, "안양정관장 레드부스터스": {"league": "KBL", "home": {"games": 27, "wins": 9, "losses": 18, "win_pct": "0.333", "rpg": 76.2, "ra": 79.2, "diff": -3.0, "recent_5": "W-L-L-L-W"}, "away": {"games": 28, "wins": 6, "losses": 22, "win_pct": "0.214", "rpg": 75.6, "ra": 80.5, "diff": -4.9, "recent_5": "W-L-W-L-L"}, "total": {"games": 55, "wins": 15, "losses": 40, "win_pct": "0.273", "rpg": 75.9, "ra": 79.9, "diff": -4.0, "recent_5": "W-L-W-L-L"}}, "서울SK 나이츠": {"league": "KBL", "home": {"games": 28, "wins": 14, "losses": 14, "win_pct": "0.500", "rpg": 81.8, "ra": 80.1, "diff": 1.7, "recent_5": "L-L-W-W-L"}, "away": {"games": 29, "wins": 12, "losses": 17, "win_pct": "0.414", "rpg": 82.2, "ra": 83.9, "diff": -1.7, "recent_5": "L-L-W-W-W"}, "total": {"games": 57, "wins": 26, "losses": 31, "win_pct": "0.456", "rpg": 82.0, "ra": 82.0, "diff": 0.0, "recent_5": "L-L-L-W-W"}}, "원주DB 프로미": {"league": "KBL", "home": {"games": 29, "wins": 28, "losses": 1, "win_pct": "0.966", "rpg": 88.2, "ra": 80.0, "diff": 8.2, "recent_5": "W-W-W-W-L"}, "away": {"games": 29, "wins": 24, "losses": 5, "win_pct": "0.828", "rpg": 87.7, "ra": 80.2, "diff": 7.5, "recent_5": "W-L-W-W-W"}, "total": {"games": 58, "wins": 52, "losses": 6, "win_pct": "0.897", "rpg": 88.0, "ra": 80.1, "diff": 7.9, "recent_5": "W-L-W-W-W"}}, "울산현대모비스 피버스": {"league": "KBL", "home": {"games": 30, "wins": 10, "losses": 20, "win_pct": "0.333", "rpg": 79.6, "ra": 81.9, "diff": -2.3, "recent_5": "L-L-W-L-L"}, "away": {"games": 29, "wins": 13, "losses": 16, "win_pct": "0.448", "rpg": 79.4, "ra": 80.2, "diff": -0.8, "recent_5": "L-W-W-W-L"}, "total": {"games": 59, "wins": 23, "losses": 36, "win_pct": "0.390", "rpg": 79.5, "ra": 81.1, "diff": -1.6, "recent_5": "L-L-W-L-W"}}, "고양소노 스카이거너스": {"league": "KBL", "home": {"games": 27, "wins": 9, "losses": 18, "win_pct": "0.333", "rpg": 76.8, "ra": 78.7, "diff": -1.9, "recent_5": "L-L-L-L-L"}, "away": {"games": 27, "wins": 13, "losses": 14, "win_pct": "0.481", "rpg": 76.4, "ra": 78.7, "diff": -2.3, "recent_5": "L-W-W-L-L"}, "total": {"games": 54, "wins": 22, "losses": 32, "win_pct": "0.407", "rpg": 76.6, "ra": 78.7, "diff": -2.1, "recent_5": "L-L-L-L-L"}}, "서울삼성 썬더스": {"league": "KBL", "home": {"games": 27, "wins": 5, "losses": 22, "win_pct": "0.185", "rpg": 71.4, "ra": 77.9, "diff": -6.5, "recent_5": "W-L-L-L-W"}, "away": {"games": 27, "wins": 4, "losses": 23, "win_pct": "0.148", "rpg": 73.0, "ra": 78.5, "diff": -5.5, "recent_5": "L-L-L-L-L"}, "total": {"games": 54, "wins": 9, "losses": 45, "win_pct": "0.167", "rpg": 72.2, "ra": 78.2, "diff": -6.0, "recent_5": "W-L-L-L-W"}}, "Boston Celtics": {"league": "NBA", "home": {"games": 51, "wins": 28, "losses": 23, "win_pct": "0.549", "rpg": 116.9, "ra": 113.8, "diff": 3.1, "recent_5": "W-W-W-L-W"}, "away": {"games": 35, "wins": 21, "losses": 14, "win_pct": "0.600", "rpg": 116.9, "ra": 115.7, "diff": 1.2, "recent_5": "L-L-W-W-W"}, "total": {"games": 86, "wins": 49, "losses": 37, "win_pct": "0.570", "rpg": 116.9, "ra": 114.6, "diff": 2.3, "recent_5": "W-L-L-W-W"}}, "New York Knicks": {"league": "NBA", "home": {"games": 45, "wins": 25, "losses": 20, "win_pct": "0.556", "rpg": 115.3, "ra": 115.3, "diff": 0.0, "recent_5": "W-W-W-W-L"}, "away": {"games": 33, "wins": 15, "losses": 18, "win_pct": "0.455", "rpg": 113.2, "ra": 114.5, "diff": -1.3, "recent_5": "L-L-L-W-W"}, "total": {"games": 78, "wins": 40, "losses": 38, "win_pct": "0.513", "rpg": 114.4, "ra": 114.9, "diff": -0.5, "recent_5": "L-W-L-L-W"}}, "Milwaukee Bucks": {"league": "NBA", "home": {"games": 41, "wins": 27, "losses": 14, "win_pct": "0.659", "rpg": 114.2, "ra": 111.3, "diff": 2.9, "recent_5": "W-L-L-W-W"}, "away": {"games": 31, "wins": 19, "losses": 12, "win_pct": "0.613", "rpg": 117.2, "ra": 113.3, "diff": 3.9, "recent_5": "W-W-W-L-L"}, "total": {"games": 72, "wins": 46, "losses": 26, "win_pct": "0.639", "rpg": 115.5, "ra": 112.1, "diff": 3.4, "recent_5": "W-W-W-L-L"}}, "Cleveland Cavaliers": {"league": "NBA", "home": {"games": 40, "wins": 18, "losses": 22, "win_pct": "0.450", "rpg": 113.2, "ra": 115.4, "diff": -2.2, "recent_5": "L-W-W-L-W"}, "away": {"games": 32, "wins": 14, "losses": 18, "win_pct": "0.438", "rpg": 113.1, "ra": 115.1, "diff": -2.0, "recent_5": "L-W-L-L-W"}, "total": {"games": 72, "wins": 32, "losses": 40, "win_pct": "0.444", "rpg": 113.1, "ra": 115.3, "diff": -2.2, "recent_5": "L-W-L-L-W"}}, "Philadelphia 76ers": {"league": "NBA", "home": {"games": 41, "wins": 24, "losses": 17, "win_pct": "0.585", "rpg": 113.5, "ra": 111.1, "diff": 2.4, "recent_5": "W-W-W-W-L"}, "away": {"games": 37, "wins": 13, "losses": 24, "win_pct": "0.351", "rpg": 112.8, "ra": 115.4, "diff": -2.6, "recent_5": "L-L-L-W-L"}, "total": {"games": 78, "wins": 37, "losses": 41, "win_pct": "0.474", "rpg": 113.1, "ra": 113.1, "diff": 0.0, "recent_5": "W-L-W-W-L"}}, "Miami Heat": {"league": "NBA", "home": {"games": 39, "wins": 8, "losses": 31, "win_pct": "0.205", "rpg": 109.7, "ra": 116.4, "diff": -6.7, "recent_5": "L-L-L-W-L"}, "away": {"games": 38, "wins": 14, "losses": 24, "win_pct": "0.368", "rpg": 110.4, "ra": 117.3, "diff": -6.9, "recent_5": "L-W-W-W-L"}, "total": {"games": 77, "wins": 22, "losses": 55, "win_pct": "0.286", "rpg": 110.1, "ra": 116.9, "diff": -6.8, "recent_5": "L-L-L-W-W"}}, "Orlando Magic": {"league": "NBA", "home": {"games": 36, "wins": 7, "losses": 29, "win_pct": "0.194", "rpg": 109.2, "ra": 118.1, "diff": -8.9, "recent_5": "L-L-W-L-L"}, "away": {"games": 36, "wins": 8, "losses": 28, "win_pct": "0.222", "rpg": 108.2, "ra": 117.2, "diff": -9.0, "recent_5": "L-L-W-L-L"}, "total": {"games": 72, "wins": 15, "losses": 57, "win_pct": "0.208", "rpg": 108.7, "ra": 117.6, "diff": -8.9, "recent_5": "L-L-W-L-L"}}, "Indiana Pacers": {"league": "NBA", "home": {"games": 41, "wins": 33, "losses": 8, "win_pct": "0.805", "rpg": 116.6, "ra": 108.3, "diff": 8.3, "recent_5": "L-L-W-W-W"}, "away": {"games": 35, "wins": 26, "losses": 9, "win_pct": "0.743", "rpg": 117.1, "ra": 111.3, "diff": 5.8, "recent_5": "W-L-W-W-W"}, "total": {"games": 76, "wins": 59, "losses": 17, "win_pct": "0.776", "rpg": 116.8, "ra": 109.6, "diff": 7.2, "recent_5": "L-L-W-L-W"}}, "Brooklyn Nets": {"league": "NBA", "home": {"games": 33, "wins": 18, "losses": 15, "win_pct": "0.545", "rpg": 108.2, "ra": 109.5, "diff": -1.3, "recent_5": "W-W-W-W-L"}, "away": {"games": 39, "wins": 19, "losses": 20, "win_pct": "0.487", "rpg": 109.9, "ra": 111.4, "diff": -1.5, "recent_5": "W-W-W-L-W"}, "total": {"games": 72, "wins": 37, "losses": 35, "win_pct": "0.514", "rpg": 109.1, "ra": 110.5, "diff": -1.4, "recent_5": "W-W-W-L-W"}}, "Toronto Raptors": {"league": "NBA", "home": {"games": 32, "wins": 18, "losses": 14, "win_pct": "0.562", "rpg": 110.5, "ra": 109.6, "diff": 0.9, "recent_5": "W-L-W-L-W"}, "away": {"games": 40, "wins": 19, "losses": 21, "win_pct": "0.475", "rpg": 109.8, "ra": 111.0, "diff": -1.2, "recent_5": "L-W-W-W-W"}, "total": {"games": 72, "wins": 37, "losses": 35, "win_pct": "0.514", "rpg": 110.1, "ra": 110.4, "diff": -0.3, "recent_5": "L-W-W-W-W"}}, "Chicago Bulls": {"league": "NBA", "home": {"games": 35, "wins": 7, "losses": 28, "win_pct": "0.200", "rpg": 108.7, "ra": 114.1, "diff": -5.4, "recent_5": "L-L-L-L-L"}, "away": {"games": 37, "wins": 20, "losses": 17, "win_pct": "0.541", "rpg": 112.6, "ra": 111.5, "diff": 1.1, "recent_5": "W-L-L-W-L"}, "total": {"games": 72, "wins": 27, "losses": 45, "win_pct": "0.375", "rpg": 110.7, "ra": 112.8, "diff": -2.1, "recent_5": "W-L-L-W-L"}}, "Atlanta Hawks": {"league": "NBA", "home": {"games": 34, "wins": 28, "losses": 6, "win_pct": "0.824", "rpg": 114.0, "ra": 105.8, "diff": 8.2, "recent_5": "W-W-W-W-W"}, "away": {"games": 38, "wins": 29, "losses": 9, "win_pct": "0.763", "rpg": 116.9, "ra": 108.1, "diff": 8.8, "recent_5": "W-W-W-W-W"}, "total": {"games": 72, "wins": 57, "losses": 15, "win_pct": "0.792", "rpg": 115.5, "ra": 107.0, "diff": 8.5, "recent_5": "W-W-W-W-W"}}, "Charlotte Hornets": {"league": "NBA", "home": {"games": 31, "wins": 16, "losses": 15, "win_pct": "0.516", "rpg": 107.3, "ra": 108.3, "diff": -1.0, "recent_5": "L-L-W-L-L"}, "away": {"games": 41, "wins": 12, "losses": 29, "win_pct": "0.293", "rpg": 105.7, "ra": 110.4, "diff": -4.7, "recent_5": "L-L-L-W-L"}, "total": {"games": 72, "wins": 28, "losses": 44, "win_pct": "0.389", "rpg": 106.3, "ra": 109.5, "diff": -3.2, "recent_5": "L-L-L-W-L"}}, "Washington Wizards": {"league": "NBA", "home": {"games": 30, "wins": 19, "losses": 11, "win_pct": "0.633", "rpg": 107.1, "ra": 103.3, "diff": 3.8, "recent_5": "L-W-W-W-W"}, "away": {"games": 42, "wins": 28, "losses": 14, "win_pct": "0.667", "rpg": 108.8, "ra": 105.3, "diff": 3.5, "recent_5": "W-W-W-L-W"}, "total": {"games": 72, "wins": 47, "losses": 25, "win_pct": "0.653", "rpg": 108.1, "ra": 104.5, "diff": 3.6, "recent_5": "W-W-W-L-W"}}, "Detroit Pistons": {"league": "NBA", "home": {"games": 29, "wins": 20, "losses": 9, "win_pct": "0.690", "rpg": 107.8, "ra": 105.6, "diff": 2.2, "recent_5": "W-L-W-L-W"}, "away": {"games": 43, "wins": 17, "losses": 26, "win_pct": "0.395", "rpg": 105.2, "ra": 106.3, "diff": -1.1, "recent_5": "L-L-L-L-W"}, "total": {"games": 72, "wins": 37, "losses": 35, "win_pct": "0.514", "rpg": 106.2, "ra": 106.0, "diff": 0.2, "recent_5": "L-L-L-L-W"}}, "Oklahoma City Thunder": {"league": "NBA", "home": {"games": 46, "wins": 22, "losses": 24, "win_pct": "0.478", "rpg": 117.0, "ra": 116.1, "diff": 0.9, "recent_5": "L-L-W-W-W"}, "away": {"games": 32, "wins": 18, "losses": 14, "win_pct": "0.562", "rpg": 117.2, "ra": 116.7, "diff": 0.5, "recent_5": "L-W-L-L-L"}, "total": {"games": 78, "wins": 40, "losses": 38, "win_pct": "0.513", "rpg": 117.1, "ra": 116.3, "diff": 0.8, "recent_5": "L-L-L-W-W"}}, "Denver Nuggets": {"league": "NBA", "home": {"games": 46, "wins": 26, "losses": 20, "win_pct": "0.565", "rpg": 116.6, "ra": 113.8, "diff": 2.8, "recent_5": "L-W-L-L-L"}, "away": {"games": 32, "wins": 23, "losses": 9, "win_pct": "0.719", "rpg": 115.7, "ra": 111.5, "diff": 4.2, "recent_5": "L-L-W-L-L"}, "total": {"games": 78, "wins": 49, "losses": 29, "win_pct": "0.628", "rpg": 116.2, "ra": 112.9, "diff": 3.3, "recent_5": "L-W-L-L-L"}}, "LA Clippers": {"league": "NBA", "home": {"games": 41, "wins": 16, "losses": 25, "win_pct": "0.390", "rpg": 112.8, "ra": 116.1, "diff": -3.3, "recent_5": "W-L-L-W-W"}, "away": {"games": 32, "wins": 13, "losses": 19, "win_pct": "0.406", "rpg": 114.1, "ra": 114.8, "diff": -0.7, "recent_5": "W-W-L-L-W"}, "total": {"games": 73, "wins": 29, "losses": 44, "win_pct": "0.397", "rpg": 113.4, "ra": 115.5, "diff": -2.1, "recent_5": "W-L-L-W-W"}}, "Minnesota Timberwolves": {"league": "NBA", "home": {"games": 45, "wins": 12, "losses": 33, "win_pct": "0.267", "rpg": 111.0, "ra": 118.1, "diff": -7.1, "recent_5": "W-L-L-L-W"}, "away": {"games": 36, "wins": 11, "losses": 25, "win_pct": "0.306", "rpg": 112.2, "ra": 118.2, "diff": -6.0, "recent_5": "L-L-L-L-L"}, "total": {"games": 81, "wins": 23, "losses": 58, "win_pct": "0.284", "rpg": 111.5, "ra": 118.1, "diff": -6.6, "recent_5": "L-W-L-L-L"}}, "Dallas Mavericks": {"league": "NBA", "home": {"games": 47, "wins": 38, "losses": 9, "win_pct": "0.809", "rpg": 116.5, "ra": 108.6, "diff": 7.9, "recent_5": "W-W-W-W-W"}, "away": {"games": 41, "wins": 21, "losses": 20, "win_pct": "0.512", "rpg": 112.9, "ra": 111.5, "diff": 1.4, "recent_5": "L-L-L-L-W"}, "total": {"games": 88, "wins": 59, "losses": 29, "win_pct": "0.670", "rpg": 114.8, "ra": 110.0, "diff": 4.8, "recent_5": "L-W-W-L-L"}}, "Phoenix Suns": {"league": "NBA", "home": {"games": 40, "wins": 24, "losses": 16, "win_pct": "0.600", "rpg": 114.7, "ra": 112.0, "diff": 2.7, "recent_5": "W-W-W-W-W"}, "away": {"games": 36, "wins": 18, "losses": 18, "win_pct": "0.500", "rpg": 114.6, "ra": 114.4, "diff": 0.2, "recent_5": "W-L-L-L-W"}, "total": {"games": 76, "wins": 42, "losses": 34, "win_pct": "0.553", "rpg": 114.6, "ra": 113.1, "diff": 1.5, "recent_5": "W-W-W-W-W"}}, "New Orleans Pelicans": {"league": "NBA", "home": {"games": 36, "wins": 11, "losses": 25, "win_pct": "0.306", "rpg": 112.3, "ra": 116.3, "diff": -4.0, "recent_5": "L-L-W-L-L"}, "away": {"games": 36, "wins": 14, "losses": 22, "win_pct": "0.389", "rpg": 112.9, "ra": 115.6, "diff": -2.7, "recent_5": "L-L-L-W-L"}, "total": {"games": 72, "wins": 25, "losses": 47, "win_pct": "0.347", "rpg": 112.6, "ra": 115.9, "diff": -3.3, "recent_5": "L-L-W-L-L"}}, "Los Angeles Lakers": {"league": "NBA", "home": {"games": 39, "wins": 23, "losses": 16, "win_pct": "0.590", "rpg": 113.1, "ra": 110.3, "diff": 2.8, "recent_5": "L-L-W-W-L"}, "away": {"games": 38, "wins": 21, "losses": 17, "win_pct": "0.553", "rpg": 116.2, "ra": 113.1, "diff": 3.1, "recent_5": "L-W-L-L-W"}, "total": {"games": 77, "wins": 44, "losses": 33, "win_pct": "0.571", "rpg": 114.6, "ra": 111.7, "diff": 2.9, "recent_5": "L-L-W-L-W"}}, "Sacramento Kings": {"league": "NBA", "home": {"games": 35, "wins": 19, "losses": 16, "win_pct": "0.543", "rpg": 115.5, "ra": 112.2, "diff": 3.3, "recent_5": "W-W-W-W-L"}, "away": {"games": 37, "wins": 22, "losses": 15, "win_pct": "0.595", "rpg": 114.1, "ra": 109.9, "diff": 4.2, "recent_5": "W-W-L-W-W"}, "total": {"games": 72, "wins": 41, "losses": 31, "win_pct": "0.569", "rpg": 114.8, "ra": 111.0, "diff": 3.8, "recent_5": "W-W-W-W-W"}}, "Golden State Warriors": {"league": "NBA", "home": {"games": 34, "wins": 29, "losses": 5, "win_pct": "0.853", "rpg": 117.5, "ra": 111.1, "diff": 6.4, "recent_5": "W-L-L-W-W"}, "away": {"games": 39, "wins": 21, "losses": 18, "win_pct": "0.538", "rpg": 116.2, "ra": 114.4, "diff": 1.8, "recent_5": "L-L-W-W-L"}, "total": {"games": 73, "wins": 50, "losses": 23, "win_pct": "0.685", "rpg": 116.8, "ra": 112.8, "diff": 4.0, "recent_5": "L-W-L-L-L"}}, "Utah Jazz": {"league": "NBA", "home": {"games": 32, "wins": 17, "losses": 15, "win_pct": "0.531", "rpg": 111.1, "ra": 108.3, "diff": 2.8, "recent_5": "W-W-W-L-W"}, "away": {"games": 41, "wins": 24, "losses": 17, "win_pct": "0.585", "rpg": 111.2, "ra": 108.0, "diff": 3.2, "recent_5": "W-W-L-W-W"}, "total": {"games": 73, "wins": 41, "losses": 32, "win_pct": "0.562", "rpg": 111.2, "ra": 108.2, "diff": 3.0, "recent_5": "W-W-W-W-W"}}, "Houston Rockets": {"league": "NBA", "home": {"games": 33, "wins": 11, "losses": 22, "win_pct": "0.333", "rpg": 112.6, "ra": 116.3, "diff": -3.7, "recent_5": "L-L-L-L-L"}, "away": {"games": 39, "wins": 20, "losses": 19, "win_pct": "0.513", "rpg": 113.9, "ra": 114.5, "diff": -0.6, "recent_5": "L-L-W-L-W"}, "total": {"games": 72, "wins": 31, "losses": 41, "win_pct": "0.431", "rpg": 113.3, "ra": 115.3, "diff": -2.0, "recent_5": "L-L-L-L-L"}}, "Memphis Grizzlies": {"league": "NBA", "home": {"games": 31, "wins": 8, "losses": 23, "win_pct": "0.258", "rpg": 105.3, "ra": 112.8, "diff": -7.5, "recent_5": "W-L-W-L-L"}, "away": {"games": 41, "wins": 8, "losses": 33, "win_pct": "0.195", "rpg": 106.2, "ra": 115.5, "diff": -9.3, "recent_5": "L-L-L-L-L"}, "total": {"games": 72, "wins": 16, "losses": 56, "win_pct": "0.222", "rpg": 105.8, "ra": 114.3, "diff": -8.5, "recent_5": "W-L-W-L-L"}}, "San Antonio Spurs": {"league": "NBA", "home": {"games": 30, "wins": 11, "losses": 19, "win_pct": "0.367", "rpg": 109.4, "ra": 112.3, "diff": -2.9, "recent_5": "W-L-W-L-L"}, "away": {"games": 42, "wins": 27, "losses": 15, "win_pct": "0.643", "rpg": 111.3, "ra": 107.6, "diff": 3.7, "recent_5": "W-L-W-W-W"}, "total": {"games": 72, "wins": 38, "losses": 34, "win_pct": "0.528", "rpg": 110.5, "ra": 109.6, "diff": 0.9, "recent_5": "W-L-W-W-L"}}, "Portland Trail Blazers": {"league": "NBA", "home": {"games": 29, "wins": 11, "losses": 18, "win_pct": "0.379", "rpg": 106.4, "ra": 109.6, "diff": -3.2, "recent_5": "W-L-W-W-L"}, "away": {"games": 43, "wins": 13, "losses": 30, "win_pct": "0.302", "rpg": 108.1, "ra": 112.1, "diff": -4.0, "recent_5": "L-W-W-L-W"}, "total": {"games": 72, "wins": 24, "losses": 48, "win_pct": "0.333", "rpg": 107.4, "ra": 111.1, "diff": -3.7, "recent_5": "W-L-W-L-W"}}, "우리은행": {"league": "WKBL", "home": {"games": 18, "wins": 9, "losses": 9, "win_pct": "0.500", "rpg": 69.0, "ra": 70.2, "diff": -1.2, "recent_5": "W-W-W-W-W"}, "away": {"games": 16, "wins": 6, "losses": 10, "win_pct": "0.375", "rpg": 69.2, "ra": 70.6, "diff": -1.4, "recent_5": "W-W-L-L-W"}, "total": {"games": 34, "wins": 15, "losses": 19, "win_pct": "0.441", "rpg": 69.1, "ra": 70.4, "diff": -1.3, "recent_5": "W-W-W-W-W"}}, "KB스타즈": {"league": "WKBL", "home": {"games": 15, "wins": 9, "losses": 6, "win_pct": "0.600", "rpg": 69.5, "ra": 68.3, "diff": 1.2, "recent_5": "W-W-W-W-L"}, "away": {"games": 15, "wins": 11, "losses": 4, "win_pct": "0.733", "rpg": 69.1, "ra": 67.1, "diff": 2.0, "recent_5": "W-L-W-W-W"}, "total": {"games": 30, "wins": 20, "losses": 10, "win_pct": "0.667", "rpg": 69.3, "ra": 67.7, "diff": 1.6, "recent_5": "W-L-W-W-W"}}, "삼성생명 블루밍스": {"league": "WKBL", "home": {"games": 16, "wins": 7, "losses": 9, "win_pct": "0.438", "rpg": 65.8, "ra": 65.8, "diff": 0.0, "recent_5": "L-L-L-L-L"}, "away": {"games": 17, "wins": 7, "losses": 10, "win_pct": "0.412", "rpg": 65.5, "ra": 68.3, "diff": -2.8, "recent_5": "L-L-L-L-L"}, "total": {"games": 33, "wins": 14, "losses": 19, "win_pct": "0.424", "rpg": 65.7, "ra": 67.1, "diff": -1.4, "recent_5": "L-L-L-L-L"}}, "신한은행 에스버드": {"league": "WKBL", "home": {"games": 16, "wins": 10, "losses": 6, "win_pct": "0.625", "rpg": 64.4, "ra": 63.5, "diff": 0.9, "recent_5": "W-W-L-W-W"}, "away": {"games": 16, "wins": 9, "losses": 7, "win_pct": "0.562", "rpg": 62.5, "ra": 60.4, "diff": 2.1, "recent_5": "L-W-W-L-L"}, "total": {"games": 32, "wins": 19, "losses": 13, "win_pct": "0.594", "rpg": 63.4, "ra": 61.9, "diff": 1.5, "recent_5": "L-W-W-W-W"}}, "BNK 썸": {"league": "WKBL", "home": {"games": 17, "wins": 12, "losses": 5, "win_pct": "0.706", "rpg": 64.2, "ra": 61.1, "diff": 3.1, "recent_5": "L-W-L-W-W"}, "away": {"games": 16, "wins": 8, "losses": 8, "win_pct": "0.500", "rpg": 63.8, "ra": 63.2, "diff": 0.6, "recent_5": "L-L-W-W-L"}, "total": {"games": 33, "wins": 20, "losses": 13, "win_pct": "0.606", "rpg": 64.0, "ra": 62.1, "diff": 1.9, "recent_5": "L-W-L-L-L"}}, "하나은행": {"league": "WKBL", "home": {"games": 16, "wins": 4, "losses": 12, "win_pct": "0.250", "rpg": 59.4, "ra": 63.1, "diff": -3.7, "recent_5": "L-W-L-W-L"}, "away": {"games": 16, "wins": 4, "losses": 12, "win_pct": "0.250", "rpg": 60.9, "ra": 63.9, "diff": -3.0, "recent_5": "L-L-L-W-L"}, "total": {"games": 32, "wins": 8, "losses": 24, "win_pct": "0.250", "rpg": 60.2, "ra": 63.5, "diff": -3.3, "recent_5": "L-L-W-L-W"}}, "KB 스타즈": {"league": "WKBL", "home": {"games": 1, "wins": 1, "losses": 0, "win_pct": "1.000", "rpg": 75.0, "ra": 68.0, "diff": 7.0, "recent_5": "W"}, "away": {"games": 2, "wins": 1, "losses": 1, "win_pct": "0.500", "rpg": 72.0, "ra": 70.5, "diff": 1.5, "recent_5": "L-W"}, "total": {"games": 3, "wins": 2, "losses": 1, "win_pct": "0.667", "rpg": 73.0, "ra": 69.7, "diff": 3.3, "recent_5": "L-W-W"}}, "후지쯔 레드웨이브": {"league": "WKBL", "home": {"games": 2, "wins": 1, "losses": 1, "win_pct": "0.500", "rpg": 79.5, "ra": 70.0, "diff": 9.5, "recent_5": "W-L"}, "away": {"games": 3, "wins": 2, "losses": 1, "win_pct": "0.667", "rpg": 70.7, "ra": 68.7, "diff": 2.0, "recent_5": "L-W-W"}, "total": {"games": 5, "wins": 3, "losses": 2, "win_pct": "0.600", "rpg": 74.2, "ra": 69.2, "diff": 5.0, "recent_5": "W-L-W-W-L"}}};
+    const BBALL_TEAM_ALIASES = {"수원KT 소닉붐": ["수원KT", "수원 KT", "KT", "kt", "KT소닉붐", "수원KT 소닉붐"], "창원LG 세이커스": ["창원LG", "창원 LG", "LG", "lg", "LG세이커스", "창원LG 세이커스"], "대구한국가스공사 페가수스": ["대구한국가스공사", "한국가스공사", "가스공사", "대구 가스공사", "대구한국가스공사 페가수스", "페가수스"], "부산KCC 이지스": ["부산KCC", "부산 KCC", "KCC", "kcc", "KCC이지스", "부산KCC 이지스"], "안양정관장 레드부스터스": ["안양정관장", "정관장", "안양 정관장", "KGC", "레드부스터스", "안양정관장 레드부스터스"], "서울SK 나이츠": ["서울SK", "서울 SK", "SK", "sk", "SK나이츠", "서울SK 나이츠"], "원주DB 프로미": ["원주DB", "원주 DB", "DB", "db", "DB프로미", "원주DB 프로미"], "울산현대모비스 피버스": ["울산현대모비스", "현대모비스", "모비스", "현대 모비스", "울산 모비스", "울산현대모비스 피버스"], "고양소노 스카이거너스": ["고양소노", "소노", "고양 소노", "스카이거너스", "고양소노 스카이거너스"], "서울삼성 썬더스": ["서울삼성", "삼성", "서울 삼성", "삼성썬더스", "서울삼성 썬더스"], "우리은행": ["우리은행", "아산 우리은행", "우리은행 우리WON", "우리WON"], "KB스타즈": ["KB스타즈", "KB 스타즈", "청주 KB스타즈", "KB", "국민은행"], "삼성생명 블루밍스": ["삼성생명", "용인 삼성생명", "삼성생명 블루밍스", "블루밍스"], "신한은행 에스버드": ["신한은행", "인천 신한은행", "신한은행 에스버드", "에스버드"], "BNK 썸": ["BNK 썸", "BNK썸", "부산 BNK 썸", "부산 BNK", "BNK"], "하나은행": ["하나은행", "부천 하나은행", "하나원큐", "부천 하나원큐"], "Boston Celtics": ["보스턴", "보스턴 셀틱스", "Boston Celtics", "Celtics"], "New York Knicks": ["뉴욕 닉스", "뉴욕닉스", "New York Knicks", "Knicks"], "Milwaukee Bucks": ["밀워키", "밀워키 벅스", "Milwaukee Bucks", "Bucks"], "Cleveland Cavaliers": ["클리블랜드", "클리블랜드 캐벌리어스", "Cleveland Cavaliers", "Cavaliers"], "Philadelphia 76ers": ["필라델피아", "필라델피아 76ers", "Philadelphia 76ers", "76ers"], "Miami Heat": ["마이애미", "마이애미 히트", "Miami Heat", "Heat"], "Orlando Magic": ["올랜도", "올랜도 매직", "Orlando Magic", "Magic"], "Indiana Pacers": ["인디애나", "인디애나 페이서스", "Indiana Pacers", "Pacers"], "Brooklyn Nets": ["브루클린", "브루클린 네츠", "Brooklyn Nets", "Nets"], "Toronto Raptors": ["토론토", "토론토 랩터스", "Toronto Raptors", "Raptors"], "Chicago Bulls": ["시카고 불스", "시카고불스", "Chicago Bulls", "Bulls"], "Atlanta Hawks": ["애틀랜타", "애틀랜타 호크스", "Atlanta Hawks", "Hawks"], "Charlotte Hornets": ["샬럿", "샬럿 호네츠", "Charlotte Hornets", "Hornets"], "Detroit Pistons": ["디트로이트", "디트로이트 피스톤스", "Detroit Pistons", "Pistons"], "Washington Wizards": ["워싱턴", "워싱턴 위저즈", "Washington Wizards", "Wizards"], "Oklahoma City Thunder": ["오클라호마", "오클라호마시티 썬더", "Oklahoma City Thunder", "Thunder", "OKC"], "Denver Nuggets": ["덴버", "덴버 너게츠", "Denver Nuggets", "Nuggets"], "Minnesota Timberwolves": ["미네소타", "미네소타 팀버울브스", "Minnesota Timberwolves", "Timberwolves"], "LA Clippers": ["LA 클리퍼스", "로스앤젤레스 클리퍼스", "LA Clippers", "Clippers"], "Dallas Mavericks": ["댈러스", "댈러스 매버릭스", "Dallas Mavericks", "Mavericks"], "Phoenix Suns": ["피닉스", "피닉스 선즈", "Phoenix Suns", "Suns"], "New Orleans Pelicans": ["뉴올리언스", "뉴올리언스 펠리컨스", "New Orleans Pelicans", "Pelicans"], "Los Angeles Lakers": ["LA 레이커스", "로스앤젤레스 레이커스", "Los Angeles Lakers", "Lakers"], "Sacramento Kings": ["새크라멘토", "새크라멘토 킹스", "Sacramento Kings", "Kings"], "Golden State Warriors": ["골든스테이트", "골든스테이트 워리어스", "Golden State Warriors", "Warriors", "GSW"], "Houston Rockets": ["휴스턴", "휴스턴 로키츠", "Houston Rockets", "Rockets"], "Utah Jazz": ["유타", "유타 재즈", "Utah Jazz", "Jazz"], "Memphis Grizzlies": ["멤피스", "멤피스 그리즐리스", "Memphis Grizzlies", "Grizzlies"], "San Antonio Spurs": ["샌안토니오", "샌안토니오 스퍼스", "San Antonio Spurs", "Spurs"], "Portland Trail Blazers": ["포틀랜드", "포틀랜드 트레일블레이저스", "Portland Trail Blazers", "Blazers"]};
+    if (typeof window !== 'undefined') {
+      window.BBALL_2025_SEASON_STATS = BBALL_2025_SEASON_STATS;
+      window.BBALL_TEAM_ALIASES = BBALL_TEAM_ALIASES;
+    }
+
+    function findBball2025Stats(teamName) {
+      const bballDb = (typeof window !== 'undefined' && window.BBALL_2025_SEASON_STATS) ? window.BBALL_2025_SEASON_STATS : BBALL_2025_SEASON_STATS;
+      const aliasDb = (typeof window !== 'undefined' && window.BBALL_TEAM_ALIASES) ? window.BBALL_TEAM_ALIASES : BBALL_TEAM_ALIASES;
+      if (!teamName || !bballDb) return null;
+      const tn = String(teamName).trim().toLowerCase().replace(/\s+/g, '');
+      
+      // 1. Direct match
+      if (bballDb[teamName]) {
+        return bballDb[teamName];
+      }
+      
+      // 2. Alias match
+      if (aliasDb) {
+        for (const [canonName, aliasList] of Object.entries(aliasDb)) {
+          for (const a of aliasList) {
+            const aClean = a.toLowerCase().replace(/\s+/g, '');
+            if (tn === aClean || tn.includes(aClean) || aClean.includes(tn)) {
+              if (bballDb[canonName]) {
+                return bballDb[canonName];
+              }
+            }
+          }
+        }
+      }
+
+      // 3. Substring match across all canonical keys
+      for (const [canonName, statObj] of Object.entries(bballDb)) {
+        const cClean = canonName.toLowerCase().replace(/\s+/g, '');
+        if (tn.includes(cClean) || cClean.includes(tn)) {
+          return statObj;
+        }
+      }
+
+      return null;
+    }
+    if (typeof window !== 'undefined') {
+      window.findBball2025Stats = findBball2025Stats;
+    }
+
     function getRealTeamSplits(m) {
       const hName = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : (m.home_team_name || '홈팀');
       const aName = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : (m.away_team_name || '원정팀');
       const sport = m.sport_code || 'BASEBALL';
-      const matchup = m.matchup_analysis || (typeof matchDetailCache !== 'undefined' && matchDetailCache ? (matchDetailCache.get(Number(m.id))?.matchup_analysis || matchDetailCache.get(m.id)?.matchup_analysis) : null) || {};
-      const history = m.history || (typeof matchDetailCache !== 'undefined' && matchDetailCache ? (matchDetailCache.get(Number(m.id))?.history || matchDetailCache.get(m.id)?.history) : null) || {};
+      const isBasketball = (sport === 'BASKETBALL') || (m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('NBA') || m.league_name.includes('농구') || m.league_name.includes('WKBL') || m.league_name.includes('박신자컵')));
+      
+      // 최신 캐시와 현재 열린 매치 객체에서 matchup_analysis 및 history 우선 탐색
+      const cachedDetail = (typeof matchDetailCache !== 'undefined' && matchDetailCache) ? (matchDetailCache.get(Number(m.id)) || matchDetailCache.get(m.id)) : null;
+      const curMatch = (typeof window !== 'undefined' && window._currentOpenDetailMatch && String(window._currentOpenDetailMatch.id) === String(m.id)) ? window._currentOpenDetailMatch : null;
+      
+      const matchup = m.matchup_analysis || curMatch?.matchup_analysis || cachedDetail?.matchup_analysis || {};
+      const history = m.history || curMatch?.history || cachedDetail?.history || (typeof window !== 'undefined' && window._matchHistoryCache ? window._matchHistoryCache[m.id] : null) || {};
 
       function calcFromRecent(list, teamName) {
         if (!list || !Array.isArray(list) || list.length === 0) return null;
@@ -21683,16 +21829,69 @@ function updateSlimPanel(matchId, type, contentHtml) {
       if (hRecentCalc && (!homeSplit.games || homeSplit.games === 0)) homeSplit = hRecentCalc;
       if (aRecentCalc && (!awaySplit.games || awaySplit.games === 0)) awaySplit = aRecentCalc;
 
-      return { homeSplit, awaySplit };
+      let isSeason2025Fallback = false;
+
+      // 🏀 농구 시즌 전환 / 최근 자료 0건 부재 시 2025년 시즌 공식 팩트 통계로 자동 계산
+      if (isBasketball) {
+        const hInvalid = (!homeSplit.games || homeSplit.games === 0 || (homeSplit.rpg === 0 && homeSplit.wins === 0 && homeSplit.losses === 0));
+        const aInvalid = (!awaySplit.games || awaySplit.games === 0 || (awaySplit.rpg === 0 && awaySplit.wins === 0 && awaySplit.losses === 0));
+
+        if (hInvalid || aInvalid) {
+          const bballFinder = (typeof findBball2025Stats === 'function') ? findBball2025Stats : ((typeof window !== 'undefined' && window.findBball2025Stats) ? window.findBball2025Stats : null);
+          const h2025 = bballFinder ? (bballFinder(m.home_team_name) || bballFinder(hName)) : null;
+          const a2025 = bballFinder ? (bballFinder(m.away_team_name) || bballFinder(aName)) : null;
+
+          if (hInvalid && h2025) {
+            const hStat = (h2025.home && h2025.home.games > 0) ? h2025.home : h2025.total;
+            homeSplit = {
+              name: hName,
+              games: hStat.games,
+              wins: hStat.wins,
+              losses: hStat.losses,
+              draws: 0,
+              win_pct: String(hStat.win_pct || '0').replace('0.', '.'),
+              rpg: Number(hStat.rpg || 0),
+              ra: Number(hStat.ra || 0),
+              diff: Number(hStat.diff || 0),
+              recent_5: hStat.recent_5 || '-',
+              is2025Season: true
+            };
+            isSeason2025Fallback = true;
+          }
+
+          if (aInvalid && a2025) {
+            const aStat = (a2025.away && a2025.away.games > 0) ? a2025.away : a2025.total;
+            awaySplit = {
+              name: aName,
+              games: aStat.games,
+              wins: aStat.wins,
+              losses: aStat.losses,
+              draws: 0,
+              win_pct: String(aStat.win_pct || '0').replace('0.', '.'),
+              rpg: Number(aStat.rpg || 0),
+              ra: Number(aStat.ra || 0),
+              diff: Number(aStat.diff || 0),
+              recent_5: aStat.recent_5 || '-',
+              is2025Season: true
+            };
+            isSeason2025Fallback = true;
+          }
+        }
+      }
+
+      return { homeSplit, awaySplit, isSeason2025Fallback };
     }
-    window.getRealTeamSplits = getRealTeamSplits;
+    if (typeof window !== 'undefined') {
+      window.getRealTeamSplits = getRealTeamSplits;
+    }
 
     function renderNextGenHomeAwaySplitSectionHtml(m) {
-      const { homeSplit, awaySplit } = getRealTeamSplits(m);
+      const { homeSplit, awaySplit, isSeason2025Fallback } = getRealTeamSplits(m);
       const hName = (typeof formatTeamName === 'function') ? formatTeamName(m.home_team_name) : (m.home_team_name || '홈팀');
       const aName = (typeof formatTeamName === 'function') ? formatTeamName(m.away_team_name) : (m.away_team_name || '원정팀');
       const sport = m.sport_code || 'BASEBALL';
       const isSoccer = (sport === 'SOCCER');
+      const isBasketball = (sport === 'BASKETBALL') || (m.league_name && (m.league_name.includes('KBL') || m.league_name.includes('NBA') || m.league_name.includes('농구') || m.league_name.includes('WKBL') || m.league_name.includes('박신자컵')));
       const hSplitName = (isSoccer && typeof formatTeamNameWithFifa === 'function') ? formatTeamNameWithFifa(hName, true, true, { fontSize: '0.68rem' }) : hName;
       const aSplitName = (isSoccer && typeof formatTeamNameWithFifa === 'function') ? formatTeamNameWithFifa(aName, true, true, { fontSize: '0.68rem' }) : aName;
       const rawTs = m.team_stats || (m.details && m.details.team_stats) || null;
@@ -21700,7 +21899,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const tsAway = rawTs?.away || {};
 
       function makeBar(label, valH, valA, numH, numA, lowerIsBetter = false) {
-        if (typeof window.makeModalBar === 'function') {
+        if (typeof window !== 'undefined' && typeof window.makeModalBar === 'function') {
           return window.makeModalBar(label, valH, valA, numH, numA, lowerIsBetter);
         }
         const nH = isNaN(numH) ? 0 : Number(numH);
@@ -21752,15 +21951,15 @@ function updateSlimPanel(matchId, type, contentHtml) {
         `;
       }
 
-      const scoreUnit = sport === 'BASEBALL' ? '점' : (sport === 'SOCCER' ? '골' : (sport === 'BASKETBALL' ? '점' : '점'));
+      const scoreUnit = sport === 'BASEBALL' ? '점' : (sport === 'SOCCER' ? '골' : '점');
       const hWinPctNum = parseFloat(homeSplit.win_pct || '0');
       const aWinPctNum = parseFloat(awaySplit.win_pct || '0');
       const hRpg = Number(homeSplit.rpg || 0);
       const aRpg = Number(awaySplit.rpg || 0);
       const hRa = Number(homeSplit.ra || 0);
       const aRa = Number(awaySplit.ra || 0);
-      const hDiff = Number(homeSplit.diff || (hRpg - hRa).toFixed(sport === 'BASKETBALL' ? 1 : 2));
-      const aDiff = Number(awaySplit.diff || (aRpg - aRa).toFixed(sport === 'BASKETBALL' ? 1 : 2));
+      const hDiff = Number(homeSplit.diff || (hRpg - hRa).toFixed(isBasketball ? 1 : 2));
+      const aDiff = Number(awaySplit.diff || (aRpg - aRa).toFixed(isBasketball ? 1 : 2));
 
       let extraBarsHtml = '';
       if (sport === 'SOCCER') {
@@ -21793,7 +21992,15 @@ function updateSlimPanel(matchId, type, contentHtml) {
               <span class="fw-bold small d-inline-flex align-items-center gap-1" style="color: #0f172a; font-size: 0.82rem;">
                 <i class="bi bi-bar-chart-line-fill text-primary"></i> 100% 팩트 기반 홈 / 원정 정밀 성적 비교
               </span>
-              <span class="badge bg-success-subtle text-success border border-success-subtle ms-1" style="font-size: 0.62rem; font-weight: 700;">실데이터 연동</span>
+              ${isSeason2025Fallback ? `
+                <span class="badge bg-warning-subtle text-dark border border-warning-subtle ms-1" style="font-size: 0.62rem; font-weight: 700;">
+                  <i class="bi bi-clock-history me-1 text-warning-emphasis"></i>2025시즌 공식 팩트 반영
+                </span>
+              ` : `
+                <span class="badge bg-success-subtle text-success border border-success-subtle ms-1" style="font-size: 0.62rem; font-weight: 700;">
+                  <i class="bi bi-check2-circle me-1"></i>실데이터 연동
+                </span>
+              `}
             </div>
             <div class="d-flex align-items-center gap-2">
               <strong class="text-dark" style="font-size: 0.86rem;">${aSplitName}</strong>
@@ -21806,7 +22013,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
               <div class="p-2.5 rounded-3 bg-light border" style="border-color: #e2e8f0 !important;">
                 <div class="fw-bold mb-2 small d-flex justify-content-between align-items-center pb-1 border-bottom" style="color: #1e293b; border-color: #e2e8f0 !important;">
                   <span><i class="bi bi-fire text-danger me-1"></i>[공격] 홈/원정 득점 & 승률</span>
-                  <span class="badge bg-white text-muted border" style="font-size:0.64rem;">공식 집계</span>
+                  <span class="badge bg-white text-muted border" style="font-size:0.64rem;">${isSeason2025Fallback ? '2025 시즌' : '공식 집계'}</span>
                 </div>
                 ${makeBar('순수 승률 (Win%)', `${(hWinPctNum * 100).toFixed(1)}% (${homeSplit.wins}승 ${homeSplit.losses}패)`, `${(aWinPctNum * 100).toFixed(1)}% (${awaySplit.wins}승 ${awaySplit.losses}패)`, hWinPctNum * 1000, aWinPctNum * 1000)}
                 ${makeBar('경기당 평균 득점 (Scored)', `${hRpg}${scoreUnit}`, `${aRpg}${scoreUnit}`, hRpg, aRpg)}
@@ -21825,10 +22032,17 @@ function updateSlimPanel(matchId, type, contentHtml) {
               </div>
             </div>
           </div>
+          ${isSeason2025Fallback ? `
+            <div class="mt-2 px-2.5 py-1.5 rounded-2 border border-warning-subtle bg-warning-subtle text-dark small" style="font-size: 0.70rem; font-weight: 600;">
+              <i class="bi bi-info-circle-fill text-warning-emphasis me-1"></i>현재 새 시즌 데이터 수집 초기 단계로, 2025년 시즌 구단 공식 홈/원정 실전 기록(승률·평균득점·실점·득실마진)으로 자동 정밀 계산되었습니다.
+            </div>
+          ` : ''}
         </div>
       `;
     }
-    window.renderNextGenHomeAwaySplitSectionHtml = renderNextGenHomeAwaySplitSectionHtml;
+    if (typeof window !== 'undefined') {
+      window.renderNextGenHomeAwaySplitSectionHtml = renderNextGenHomeAwaySplitSectionHtml;
+    }
 
     function renderNextGenDetail(m, activeTab = 'roster', rosterTeam = 'home') {
       const container = document.getElementById('nextGenDetailModalBody');
