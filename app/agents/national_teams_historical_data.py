@@ -567,10 +567,12 @@ NATIONAL_TEAM_H2H_ARCHIVE = [
         'teams': ('아르헨티나', '베냉'),
         'matches': []
     },
-    # 61. 러시아 vs 나이지리아 (역대 첫 A매치 맞대결)
+    # 61. 러시아 vs 나이지리아
     {
         'teams': ('러시아', '나이지리아'),
-        'matches': []
+        'matches': [
+            {'date': '2025-06-06', 'home_team_name': '러시아', 'away_team_name': '나이지리아', 'home_score': 1, 'away_score': 1, 'league_name': '남자축구 친선경기'},
+        ]
     },
     # 62. 알제리 vs 니제르
     {

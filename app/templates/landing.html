@@ -20127,8 +20127,8 @@ function updateSlimPanel(matchId, type, contentHtml) {
               </div>
             ` : `
               <div class="p-3 text-center bg-light rounded-2 border" style="border-color:#e2e8f0; font-size:0.78rem;">
-                <div class="fw-bold text-dark mb-1"><i class="bi bi-shield-check me-1 text-primary"></i>최근 3시즌 간 공식 맞대결 이력 없음</div>
-                <div class="text-muted small" style="line-height:1.4;">양 팀은 최근 시즌 간 상위/하위 디비전 분리 또는 일정 배정에 따라 직전 맞대결이 없었던 매치업입니다.<br>아래 <strong class="text-dark">양 팀의 최근 10경기 전력 및 지휘관 전술 지표</strong>를 바탕으로 비교 분석합니다.</div>
+                <div class="fw-bold text-dark mb-1"><i class="bi bi-shield-check me-1 text-primary"></i>${(m.sport_code === 'SOCCER' && (typeof isNationalMatch === 'function' ? isNationalMatch(m) : false)) || (m.league_name && (m.league_name.includes('A매치') || m.league_name.includes('친선') || m.league_name.includes('월드컵') || m.league_name.includes('네이션스'))) ? '양 국가 간 역사상 첫 공식 A매치 맞대결 (0경기)' : '최근 3시즌 간 공식 맞대결 이력 없음'}</div>
+                <div class="text-muted small" style="line-height:1.4;">${(m.sport_code === 'SOCCER' && (typeof isNationalMatch === 'function' ? isNationalMatch(m) : false)) || (m.league_name && (m.league_name.includes('A매치') || m.league_name.includes('친선') || m.league_name.includes('월드컵') || m.league_name.includes('네이션스'))) ? '양 국가는 역사상 성인 A대표팀 간 공식 경기를 치른 이력이 없는 최초의 맞대결입니다.<br>아래 <strong class="text-dark">양 팀의 최근 10경기 A매치 전력 및 FIFA 랭킹/공격·수비 지표</strong>를 바탕으로 비교 분석합니다.' : '양 팀은 최근 시즌 간 상위/하위 디비전 분리 또는 일정 배정에 따라 직전 맞대결이 없었던 매치업입니다.<br>아래 <strong class="text-dark">양 팀의 최근 10경기 전력 및 지휘관 전술 지표</strong>를 바탕으로 비교 분석합니다.'}</div>
               </div>
             `}
           </div>
@@ -26130,12 +26130,12 @@ function renderPredDetail(m, customDetailData = null) {
                 </thead>
                 <tbody style="background: #ffffff;">
                   <tr>
-                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 140px; color: #111827;">${formatTeamName(m.home_team_name)}</td>
+                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 140px; color: #111827;">${(typeof formatTeamNameWithFifa === 'function') ? formatTeamNameWithFifa(m.home_team_name, true, true, { fontSize: '0.65rem' }) : formatTeamName(m.home_team_name)}</td>
                     <td style="color: #111827;">${hP['1H'] ?? hP['1h'] ?? '-'}</td><td style="color: #111827;">${hP['2H'] ?? hP['2h'] ?? '-'}</td><td style="color: #111827;">${hP.et ?? '-'}</td><td style="color: #111827;">${hP.pk ?? '-'}</td>
                     <td class="fw-bold" style="color: #111827; font-size: 1.0rem; font-weight: 800;">${m.home_score}</td>
                   </tr>
                   <tr>
-                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 140px; color: #111827;">${formatTeamName(m.away_team_name)}</td>
+                    <td class="fw-bold text-start ps-2 text-truncate" style="max-width: 140px; color: #111827;">${(typeof formatTeamNameWithFifa === 'function') ? formatTeamNameWithFifa(m.away_team_name, true, true, { fontSize: '0.65rem' }) : formatTeamName(m.away_team_name)}</td>
                     <td style="color: #111827;">${aP['1H'] ?? aP['1h'] ?? '-'}</td><td style="color: #111827;">${aP['2H'] ?? aP['2h'] ?? '-'}</td><td style="color: #111827;">${aP.et ?? '-'}</td><td style="color: #111827;">${aP.pk ?? '-'}</td>
                     <td class="fw-bold" style="color: #111827; font-size: 1.0rem; font-weight: 800;">${m.away_score}</td>
                   </tr>
@@ -26212,14 +26212,14 @@ function renderPredDetail(m, customDetailData = null) {
               <div class="row g-2 mb-2">
                 <div class="col-6">
                   <div class="p-2 rounded bg-light border text-start" style="font-size:0.75rem;">
-                    <div class="fw-bold mb-1 text-dark"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">[홈]</span>${m.home_team_name}</div>
+                    <div class="fw-bold mb-1 text-dark"><span class="badge me-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">[홈]</span>${(isSoccer && typeof formatTeamNameWithFifa === 'function') ? formatTeamNameWithFifa(m.home_team_name, true, true, { fontSize: '0.65rem' }) : m.home_team_name}</div>
                     <div class="text-dark">⚽ <b>골:</b> ${sH.goals || (m.home_score > 0 ? `${m.home_score}득점` : '0득점')}</div>
                     <div class="mt-0.5 text-dark">🟨 <b>옐로:</b> ${sH.yellowCards || 0}장 | 🟥 <b>레드:</b> ${sH.redCards || 0}장</div>
                   </div>
                 </div>
                 <div class="col-6">
                   <div class="p-2 rounded bg-light border text-end" style="font-size:0.75rem;">
-                    <div class="fw-bold mb-1 text-dark">${m.away_team_name}<span class="badge ms-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">[원정]</span></div>
+                    <div class="fw-bold mb-1 text-dark">${(isSoccer && typeof formatTeamNameWithFifa === 'function') ? formatTeamNameWithFifa(m.away_team_name, true, true, { fontSize: '0.65rem' }) : m.away_team_name}<span class="badge ms-1" style="background:#ffffff; color:#111827; border:1px solid #111827; font-size:0.65rem; padding: 1px 4px; font-weight: 800;">[원정]</span></div>
                     <div class="text-dark">⚽ <b>골:</b> ${sA.goals || (m.away_score > 0 ? `${m.away_score}득점` : '0득점')}</div>
                     <div class="mt-0.5 text-dark">🟨 <b>옐로:</b> ${sA.yellowCards || 0}장 | 🟥 <b>레드:</b> ${sA.redCards || 0}장</div>
                   </div>
@@ -26589,6 +26589,10 @@ function renderPredDetail(m, customDetailData = null) {
       const pickTeam = synced.favoredTeam;
       const pickConf = synced.confidence;
       const pickLabel = synced.expectedLabel;
+      const hDetailName = (isSoccer && typeof formatTeamNameWithFifa === 'function') ? formatTeamNameWithFifa(m.home_team_name, true, true) : m.home_team_name;
+      const aDetailName = (isSoccer && typeof formatTeamNameWithFifa === 'function') ? formatTeamNameWithFifa(m.away_team_name, true, true) : m.away_team_name;
+      const pickTeamDisplay = (isSoccer && typeof formatTeamNameWithFifa === 'function') ? formatTeamNameWithFifa(synced.favoredTeam, true, true) : synced.favoredTeam;
+      const actualWinnerDisplay = (actualWinner === '무승부') ? '무승부로 마감' : ((isSoccer && typeof formatTeamNameWithFifa === 'function') ? formatTeamNameWithFifa(actualWinner, true, true) : actualWinner) + ' 최종 승리';
 
       let verificationBoxHtml = '';
       if (isFinished) {
@@ -26604,11 +26608,11 @@ function renderPredDetail(m, customDetailData = null) {
                     ${isMatch ? '★ AI 예측 일치 (적중) ✓' : '✕ AI 예측 불일치 (미적중)'}
                   </span>
                   <span class="fw-bold" style="font-size: 0.95rem; color: #111827;">
-                    AI 추천 픽: [<span style="${synced.isDraw ? 'color: #ea580c;' : 'color: #dc2626;'} font-weight: 800;">${pickTeam}</span>] (${pickConf}% ${pickLabel})
+                    AI 추천 픽: [<span style="${synced.isDraw ? 'color: #ea580c;' : 'color: #dc2626;'} font-weight: 800;">${pickTeamDisplay}</span>] (${pickConf}% ${pickLabel})
                   </span>
                 </div>
                 <div class="small mt-1" style="color: #111827;">
-                  실제 최종 스코어: <b style="color: #111827;">[홈] ${m.home_team_name}</b> <b style="color: #111827; font-size: 1.05rem; margin: 0 4px;">${m.home_score} : ${m.away_score}</b> <b style="color: #111827;">[원정] ${m.away_team_name}</b> (${actualWinner === '무승부' ? '무승부로 마감' : actualWinner + ' 최종 승리'})
+                  실제 최종 스코어: <b style="color: #111827;">[홈] ${hDetailName}</b> <b style="color: #111827; font-size: 1.05rem; margin: 0 4px;">${m.home_score} : ${m.away_score}</b> <b style="color: #111827;">[원정] ${aDetailName}</b> (${actualWinnerDisplay})
                 </div>
               </div>
             </div>
@@ -26632,7 +26636,7 @@ function renderPredDetail(m, customDetailData = null) {
                     AI 정밀 분석 픽
                   </span>
                   <span class="fw-bold" style="font-size: 0.95rem; color: #111827;">
-                    [<span style="${synced.isDraw ? 'color: #ea580c;' : 'color: #dc2626;'} font-weight: 800;">${pickTeam}</span>] (${pickConf}% ${pickLabel})
+                    [<span style="${synced.isDraw ? 'color: #ea580c;' : 'color: #dc2626;'} font-weight: 800;">${pickTeamDisplay}</span>] (${pickConf}% ${pickLabel})
                   </span>
                 </div>
                 <div class="small mt-1" style="color: #4b5563;">
@@ -26718,7 +26722,7 @@ function renderPredDetail(m, customDetailData = null) {
             <div class="row align-items-center text-center">
               <div class="col-5">
                 <div class="fw-bold text-truncate" style="font-size: 1.2rem; color: #111827;">
-                  <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.75rem; padding: 2px 5px; font-weight: 800;">[홈]</span>${m.home_team_name}
+                  <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.75rem; padding: 2px 5px; font-weight: 800;">[홈]</span>${hDetailName}
                 </div>
                 <div class="badge mt-1" style="font-size: 0.8rem; color: #111827; background: #ffffff; border: 1px solid #d1d5db;">
                   ${isSoccer ? `[홈] ${homeSplit.wins}승 ${homeSplit.draws || 0}무 ${homeSplit.losses}패 (승점 ${homeSplit.points || (homeSplit.wins * 3 + (homeSplit.draws || 0))}점)` : `[홈] ${homeSplit.wins}승 ${homeSplit.losses}패 (승률 ${homeSplit.win_pct})`}
@@ -26754,7 +26758,7 @@ function renderPredDetail(m, customDetailData = null) {
 
               <div class="col-5">
                 <div class="fw-bold text-truncate" style="font-size: 1.2rem; color: #111827;">
-                  <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.75rem; padding: 2px 5px; font-weight: 800;">[원정]</span>${m.away_team_name}
+                  <span class="badge me-1" style="background:#ffffff; color:#111827; border:1.5px solid #111827; font-size:0.75rem; padding: 2px 5px; font-weight: 800;">[원정]</span>${aDetailName}
                 </div>
                 <div class="badge mt-1" style="font-size: 0.8rem; color: #111827; background: #ffffff; border: 1px solid #d1d5db;">
                   ${isSoccer ? `[원정] ${awaySplit.wins}승 ${awaySplit.draws || 0}무 ${awaySplit.losses}패 (승점 ${awaySplit.points || (awaySplit.wins * 3 + (awaySplit.draws || 0))}점)` : `[원정] ${awaySplit.wins}승 ${awaySplit.losses}패 (승률 ${awaySplit.win_pct})`}
@@ -26791,9 +26795,9 @@ function renderPredDetail(m, customDetailData = null) {
               <div style="width: ${probs.away}%; background: ${probs.away >= probs.home && probs.away >= probs.draw && !synced.isDraw ? '#dc2626' : '#2563eb'}; transition: width 0.3s;" title="[원정] ${m.away_team_name}: ${probs.away}%"></div>
             </div>
             <div class="d-flex justify-content-between small fw-bold mx-auto mb-2" style="max-width: 480px; font-size: 0.76rem;">
-              <span style="${probs.home >= probs.away && probs.home >= probs.draw && !synced.isDraw ? 'color: #dc2626; font-weight: 800;' : 'color: #2563eb; font-weight: 700;'}">[홈] ${m.home_team_name} ${probs.home}%</span>
+              <span style="${probs.home >= probs.away && probs.home >= probs.draw && !synced.isDraw ? 'color: #dc2626; font-weight: 800;' : 'color: #2563eb; font-weight: 700;'}">[홈] ${hDetailName} ${probs.home}%</span>
               <span style="${synced.isDraw || (probs.draw >= probs.home && probs.draw >= probs.away) ? 'color: #ea580c; font-weight: 800;' : 'color: #4b5563; font-weight: 700;'}">무승부 ${probs.draw}% ${synced.isDraw ? '★' : ''}</span>
-              <span style="${probs.away >= probs.home && probs.away >= probs.draw && !synced.isDraw ? 'color: #dc2626; font-weight: 800;' : 'color: #2563eb; font-weight: 700;'}">[원정] ${m.away_team_name} ${probs.away}%</span>
+              <span style="${probs.away >= probs.home && probs.away >= probs.draw && !synced.isDraw ? 'color: #dc2626; font-weight: 800;' : 'color: #2563eb; font-weight: 700;'}">[원정] ${aDetailName} ${probs.away}%</span>
             </div>
           ` : `
             <div class="d-flex rounded-pill overflow-hidden mt-1 mb-1 mx-auto" style="max-width: 480px; height: 9px; background: #f3f4f6; border: 1px solid #e5e7eb;">
@@ -26801,8 +26805,8 @@ function renderPredDetail(m, customDetailData = null) {
               <div style="width: ${probs.away}%; background: ${probs.away > probs.home ? '#dc2626' : '#2563eb'}; transition: width 0.3s;" title="[원정] ${m.away_team_name}: ${probs.away}%"></div>
             </div>
             <div class="d-flex justify-content-between small fw-bold mx-auto mb-2" style="max-width: 480px; font-size: 0.76rem;">
-              <span style="${probs.home >= probs.away ? 'color: #dc2626; font-weight: 800;' : 'color: #2563eb; font-weight: 700;'}">[홈] ${m.home_team_name} ${probs.home}% ${probs.home >= probs.away ? '▲' : ''}</span>
-              <span style="${probs.away > probs.home ? 'color: #dc2626; font-weight: 800;' : 'color: #2563eb; font-weight: 700;'}">[원정] ${m.away_team_name} ${probs.away}% ${probs.away > probs.home ? '▲' : ''}</span>
+              <span style="${probs.home >= probs.away ? 'color: #dc2626; font-weight: 800;' : 'color: #2563eb; font-weight: 700;'}">[홈] ${hDetailName} ${probs.home}% ${probs.home >= probs.away ? '▲' : ''}</span>
+              <span style="${probs.away > probs.home ? 'color: #dc2626; font-weight: 800;' : 'color: #2563eb; font-weight: 700;'}">[원정] ${aDetailName} ${probs.away}% ${probs.away > probs.home ? '▲' : ''}</span>
             </div>
           `}
 
@@ -26835,7 +26839,7 @@ function renderPredDetail(m, customDetailData = null) {
           <!-- Category Navigation Tabs (All, Attack, Defense, Play, Discipline, Lineup) -->
           <div class="mb-2 fw-bold d-flex justify-content-between align-items-center" style="font-size: 0.86rem; color: #111827;">
             <span><i class="bi bi-bar-chart-line-fill text-dark me-1"></i>[전종목 정밀 세부 통계 지표]</span>
-            <span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; font-size: 0.72rem; font-weight: 700;">[홈] ${m.home_team_name} vs [원정] ${m.away_team_name} 1:1 정밀 대조</span>
+            <span class="badge bg-white border text-dark" style="border-color: #d1d5db !important; font-size: 0.72rem; font-weight: 700;">[홈] ${hDetailName} vs [원정] ${aDetailName} 1:1 정밀 대조</span>
           </div>
           ${categoryTabsHtml}
 
@@ -28444,8 +28448,15 @@ function renderPredDetail(m, customDetailData = null) {
         inningBadgeStyle = 'background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;';
       }
 
-      const hName = formatTeamName(m.home_team_name);
-      const aName = formatTeamName(m.away_team_name);
+      const isSoccer = (m.sport_code === 'SOCCER');
+      const rawHName = formatTeamName(m.home_team_name);
+      const rawAName = formatTeamName(m.away_team_name);
+      const hName = (isSoccer && typeof formatTeamNameWithFifa === 'function')
+        ? formatTeamNameWithFifa(m.home_team_name, true, true, { fontSize: '0.62rem' })
+        : rawHName;
+      const aName = (isSoccer && typeof formatTeamNameWithFifa === 'function')
+        ? formatTeamNameWithFifa(m.away_team_name, true, true, { fontSize: '0.62rem' })
+        : rawAName;
 
       const isSubscribed = _subscribedMatchAlerts.has(Number(m.id));
       const bellBtnStyle = isSubscribed
@@ -28463,7 +28474,7 @@ function renderPredDetail(m, customDetailData = null) {
           </td>
 
           <!-- Home Team -->
-          <td class="text-end py-1.5 px-1" style="vertical-align: middle; overflow: hidden;" title="${hName}">
+          <td class="text-end py-1.5 px-1" style="vertical-align: middle; overflow: hidden;" title="${rawHName}">
             <span class="fw-bold text-dark text-truncate d-block" style="font-size: 0.82rem; letter-spacing: -0.4px;">
               ${hName}
             </span>
@@ -28477,7 +28488,7 @@ function renderPredDetail(m, customDetailData = null) {
           </td>
 
           <!-- Away Team -->
-          <td class="text-start py-1.5 px-1" style="vertical-align: middle; overflow: hidden;" title="${aName}">
+          <td class="text-start py-1.5 px-1" style="vertical-align: middle; overflow: hidden;" title="${rawAName}">
             <span class="fw-bold text-dark text-truncate d-block" style="font-size: 0.82rem; letter-spacing: -0.4px;">
               ${aName}
             </span>

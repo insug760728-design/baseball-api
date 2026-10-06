@@ -2055,7 +2055,7 @@ class HistoricalAgentRouter:
                     'home_wins': h_wins,
                     'draws': draws,
                     'away_wins': a_wins,
-                    'summary_text': f"{h_wins}승 {draws}무 {a_wins}패" if sport_code == 'SOCCER' else f"{h_wins}승 {a_wins}패"
+                    'summary_text': ("역사상 첫 공식 맞대결 (0전)" if not formatted_h2h else (f"{h_wins}승 {draws}무 {a_wins}패" if sport_code == 'SOCCER' else f"{h_wins}승 {a_wins}패"))
                 },
                 'tactical_analysis': tactical_analysis
             }
