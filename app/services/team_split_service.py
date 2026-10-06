@@ -9227,6 +9227,10 @@ class TeamSplitService:
             if tot2 > 0:
                 p_h /= tot2; p_d /= tot2; p_a /= tot2
 
+            home_win_prob = int(round(p_h * 100))
+            draw_prob = int(round(p_d * 100))
+            away_win_prob = 100 - home_win_prob - draw_prob
+
             if p_d >= 0.32 and abs(p_h - p_a) <= 0.08:
                 pick_type = "DRAW"
                 expected_label = "예상무"
@@ -9271,6 +9275,10 @@ class TeamSplitService:
             a_rec_w = sum(1 for x in a_data.get("recent_5", []) if x == 'W') if a_data else 2
             rec_diff = (h_rec_w - a_rec_w) * 0.015
             prob_home = min(0.89, max(0.11, prob_home + rec_diff))
+
+            home_win_prob = int(round(prob_home * 100))
+            draw_prob = 0
+            away_win_prob = 100 - home_win_prob
 
             if prob_home >= 0.50:
                 pick_type = "HOME_WIN"
@@ -9361,6 +9369,10 @@ class TeamSplitService:
                 elif series_ctx.get("sweep_leader") == away_team:
                     prob_home = min(0.85, max(0.15, prob_home + 0.07))
 
+            home_win_prob = int(round(prob_home * 100))
+            draw_prob = 0
+            away_win_prob = 100 - home_win_prob
+
             if prob_home >= 0.50:
                 pick_type = "HOME_WIN"
                 expected_label = "예상승"
@@ -9404,6 +9416,9 @@ class TeamSplitService:
             "favored_team": favored_team,
             "confidence": confidence,
             "confidence_level": conf_tier,
+            "home_win_prob": home_win_prob,
+            "draw_prob": draw_prob,
+            "away_win_prob": away_win_prob,
             "is_finished": is_finished,
             "is_match": is_match,
             "status_badge": status_badge,

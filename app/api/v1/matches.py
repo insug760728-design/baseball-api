@@ -606,6 +606,48 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
     except Exception as e:
         print(f"[get_match_full] HistoricalAgentRouter error for match {m.id}: {e}")
 
+    # ⚡ prediction & odds 동기화: 목록과 100% 동일한 정밀 예측 수치 유지
+    pred = None
+    odds = None
+    ou_line = None
+    ou_pick = None
+    betman_main_odds = None
+    betman_odds = []
+    if m.status != "FINISHED":
+        try:
+            pred = TeamSplitService.get_quick_prediction(
+                m.home_team_name,
+                m.away_team_name,
+                m.sport_code,
+                m.status,
+                m.home_score,
+                m.away_score,
+                match_date=m.match_date,
+                starter_h=h_starter,
+                starter_a=a_starter,
+                league_name=m.league_name
+            )
+            if pred:
+                odds = pred.get("odds")
+                ou_line = pred.get("ou_line")
+                ou_pick = pred.get("ou_pick")
+        except Exception:
+            pass
+
+    try:
+        from app.services.betman_service import BetmanService
+        proto_map = BetmanService.get_active_proto_odds_map()
+        proto_info = proto_map.get(m.id) or proto_map.get(str(m.id))
+        if proto_info:
+            betman_main_odds = proto_info.get("main_odds")
+            betman_odds = proto_info.get("all_odds", [])
+            if proto_info.get("main_odds"):
+                odds = proto_info["main_odds"]
+            if proto_info.get("ou_line"):
+                ou_line = proto_info["ou_line"]
+    except Exception:
+        pass
+
     res = {
         "id": m.id,
         "official_id": m.official_id,
@@ -630,6 +672,12 @@ def get_match_full(match_id: int, response: Response, force: bool = False, db: S
         "player_stats": data["player_stats"],
         "matchup_analysis": matchup_analysis,
         "history": hist_data,
+        "prediction": pred,
+        "odds": odds,
+        "ou_line": ou_line,
+        "ou_pick": ou_pick,
+        "betman_main_odds": betman_main_odds,
+        "betman_odds": betman_odds,
         "soccer": MatchService.get_soccer_board_dict(m, t_stats=details_ts) if m.sport_code == "SOCCER" else None,
         "soccer_lineup": details_ts.get("soccer_lineup") if isinstance(details_ts, dict) else None,
         "home_lineup": h_lineup or (details_ts.get("soccer_lineup", {}).get("home", {}).get("starting_xi") if isinstance(details_ts, dict) else None),

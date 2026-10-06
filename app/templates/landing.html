@@ -2738,16 +2738,16 @@
   <section class="pt-1 pb-1 px-1" id="prediction-section" style="background: #ffffff; border-bottom: 1px solid #e5e7eb;">
     <div class="dash-container">
 
-      <!-- 📱 Mobile Tab Bar (모바일 전용 탭 전환: 경기목록 / 채팅창 / 라이브중계) -->
+      <!-- 📱 Mobile Tab Bar (모바일 전용 탭: 경기목록 / 승무15패 / 채팅창) - 지난경기는 경기목록 위로 스크롤하여 확인 -->
       <div class="d-flex d-lg-none gap-1 mb-1.5 px-0" id="mobileDashboardTabBar">
-        <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5 active" id="mobTabSchedule" onclick="switchMobileTab('schedule'); if (typeof currentPredDate !== 'undefined' && currentPredDate !== 'ACTIVE') filterPredDate('ACTIVE');" style="border-radius: 6px; font-size: 0.80rem; background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8;">
+        <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5 px-1 text-nowrap d-inline-flex align-items-center justify-content-center active" id="mobTabSchedule" onclick="switchMobileTab('schedule'); filterPredDate('ACTIVE');" style="border-radius: 6px; font-size: 0.78rem; background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8;">
           <i class="bi bi-calendar-check me-1"></i>경기목록
         </button>
-        <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5" id="mobTabChat" onclick="switchMobileTab('chat')" style="border-radius: 6px; font-size: 0.80rem; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;">
-          <i class="bi bi-chat-dots-fill me-1 text-primary"></i>채팅창
+        <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5 px-1 text-nowrap d-inline-flex align-items-center justify-content-center" id="mobTabToto" onclick="openTotoModal('WDL')" style="border-radius: 6px; font-size: 0.78rem; background: #ffffff; color: #111827; border: 1.5px solid #cbd5e1;" title="클릭 시 배트맨 14경기 승무패/승1패/승5패 전용 팝업 오픈">
+          <i class="bi bi-trophy-fill text-warning me-1"></i>승무15패
         </button>
-        <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5" id="mobTabRelay" onclick="switchMobileTab('relay')" style="border-radius: 6px; font-size: 0.80rem; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;">
-          <i class="bi bi-broadcast me-1 text-danger"></i>라이브중계
+        <button type="button" class="btn btn-sm flex-fill fw-bold py-1.5 px-1 text-nowrap d-inline-flex align-items-center justify-content-center" id="mobTabChat" onclick="switchMobileTab('chat')" style="border-radius: 6px; font-size: 0.78rem; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;">
+          <i class="bi bi-chat-dots-fill me-1 text-primary"></i>채팅창
         </button>
       </div>
 
@@ -2759,13 +2759,10 @@
           <div class="dash-card-column">
             
             <div class="dash-card-header pb-1 pt-0">
-              <!-- 📌 1열: [경기목록] [지난경기] [승무15패] [전경기 전광판] (모바일에서는 상단 탭에 경기목록이 있으므로 하위 중복 경기목록 숨김) -->
-              <div class="d-flex align-items-center gap-1.5 mb-1.5" id="scheduleModeSwitchGroup">
+              <!-- 📌 1열: PC 전용 [경기목록] [승무15패] (모바일에서는 상단 탭에 통합되어 중복 숨김 d-none d-lg-flex) -->
+              <div class="d-none d-lg-flex align-items-center gap-1.5 mb-1.5" id="scheduleModeSwitchGroup">
                 <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill d-inline-flex align-items-center justify-content-center" id="btnTabActiveMatches" onclick="filterPredDate('ACTIVE')" style="border-radius: 6px; font-size: 0.78rem; background: #1d4ed8; color: #ffffff; border: 1.5px solid #1d4ed8;">
                   <i class="bi bi-calendar-check me-1"></i>경기목록
-                </button>
-                <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill" id="btnTabFinishedMatches" onclick="filterPredDate(typeof currentPredDate !== 'undefined' && currentPredDate === 'FINISHED' ? 'ACTIVE' : 'FINISHED')" style="border-radius: 6px; font-size: 0.78rem; background: #f8fafc; color: #475569; border: 1.5px solid #cbd5e1;">
-                  <i class="bi bi-clock-history me-1 text-secondary"></i>지난경기
                 </button>
                 <button type="button" class="btn btn-xs fw-bold text-nowrap py-1.5 px-2 flex-fill border" onclick="openTotoModal('WDL')" style="background: #ffffff; color: #111827; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.78rem;" title="클릭 시 배트맨 14경기 승무패/승1패/승5패 전용 팝업 오픈">
                   <i class="bi bi-trophy-fill text-warning me-1"></i>승무15패
@@ -13042,6 +13039,8 @@ function getFullModalMatchList() {
         initialScheduleAutoScrollDone = true;
       }
       initPredScrollGuard();
+      // 📌 지난경기 결과를 경기목록 위쪽에 미리 합쳐둠 (탭 클릭 없이 위로 스크롤하면 확인 가능)
+      try { loadPastFinishedMatches(); } catch (e) { console.warn('loadPastFinishedMatches failed', e); }
     }
 
     // 🛡️ 스크롤 보호기: 사용자가 경기 목록을 읽거나 스크롤 중일 때 백그라운드 갱신으로 인한 스크롤 튐 완벽 차단
@@ -13065,6 +13064,50 @@ function getFullModalMatchList() {
       container.addEventListener('wheel', markInteracting, { passive: true });
       container.addEventListener('touchstart', markInteracting, { passive: true });
       container.addEventListener('touchmove', markInteracting, { passive: true });
+
+      // 사용자가 직접 목록을 움직이면 더 이상 현재시점 자동 정렬을 하지 않음 (지난경기 탐색 중 튐 방지)
+      const markUserScrolled = () => { _predListUserScrolled = true; };
+      container.addEventListener('wheel', markUserScrolled, { passive: true });
+      container.addEventListener('touchmove', markUserScrolled, { passive: true });
+      container.addEventListener('keydown', markUserScrolled, { passive: true });
+      container.addEventListener('mousedown', (e) => {
+        // 스크롤바 드래그 감지 (카드 클릭은 제외)
+        if (e.target === container) _predListUserScrolled = true;
+      }, { passive: true });
+    }
+
+    // 📌 경기목록 현재시점 자동 정렬: 지난 경기는 위쪽에, 현재/다음 경기가 화면 맨 위에 오도록 스크롤
+    var _predListUserScrolled = false;
+    function alignPredListToNow(glow = false) {
+      const container = document.getElementById('predMatchList');
+      if (!container) return;
+      const cards = Array.from(container.querySelectorAll('.pred-card-compact'));
+      if (cards.length === 0) return;
+
+      const targetCard = findCurrentOrNextMatchCard(cards);
+      const divider = document.getElementById('currentTimeDivider');
+      const elementToAlign = divider || targetCard;
+      if (!elementToAlign) return;
+
+      const doAlign = () => {
+        const offset = elementToAlign.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
+        container.scrollTop = Math.max(0, offset - 4);
+      };
+      doAlign();
+      // 폰트/이미지 로딩으로 레이아웃이 바뀌는 경우를 대비해 다음 프레임에 한 번 더 보정
+      requestAnimationFrame(() => {
+        if (!_predListUserScrolled && elementToAlign.isConnected) doAlign();
+      });
+
+      const isMobile = window.innerWidth <= 768 || (typeof currentViewMode !== 'undefined' && currentViewMode === 'mobile');
+      if (isMobile && glow && window.pageYOffset > 20) {
+        window.scrollTo(0, 0);
+      }
+
+      if (glow && targetCard) {
+        targetCard.classList.add('current-time-glow');
+        setTimeout(() => targetCard.classList.remove('current-time-glow'), 2500);
+      }
     }
 
     // 5초 실시간 자동 업데이트 타이머
@@ -13194,6 +13237,13 @@ function getFullModalMatchList() {
               existingMap.set(m.id, {
                 ...ex,
                 ...m,
+                // 🛡️ 기존에 이미 렌더링된 정밀 예측 수치/배당/분석을 영구 유지 보존하여 시간이 지나도 숫자가 바뀌지 않도록 완벽 고정!
+                prediction: ex.prediction || m.prediction,
+                odds: ex.odds || m.odds,
+                ou_line: ex.ou_line || m.ou_line,
+                ou_pick: ex.ou_pick || m.ou_pick,
+                _soccer_precision_cache: ex._soccer_precision_cache,
+                _confirmed_probs: ex._confirmed_probs,
                 home_starter_name: m.home_starter_name || ex.home_starter_name,
                 away_starter_name: m.away_starter_name || ex.away_starter_name,
                 details: ex.details || m.details,
@@ -13366,86 +13416,85 @@ function getFullModalMatchList() {
       if (bF) bF.innerText = String(finishedCount);
     }
 
-    async function filterPredDate(dKey) {
-      currentPredDate = dKey;
-      if (window.filterAgent) window.filterAgent.setDateTab(dKey);
-      const isPast = (dKey === 'FINISHED' || dKey === 'PAST');
-      if (isPast && typeof loadFullMatchesArchive === 'function') {
-        loadFullMatchesArchive();
+    // 🕒 지난 경기(종료) 결과를 백그라운드로 병합: 경기목록 위쪽으로 스크롤하면 지난 경기를 볼 수 있도록 함
+    var _pastMatchesLoadedKeys = new Set();
+    async function loadPastFinishedMatches(force = false) {
+      let finishedUrl = '/api/v1/matches?status=FINISHED&order=desc&limit=150';
+      let cacheKey = 'ALL';
+      if (currentPredLeague && currentPredLeague !== 'ALL') {
+        const leagueParam = getLeagueQueryParam(currentPredLeague);
+        finishedUrl += `&league_name=${encodeURIComponent(leagueParam)}`;
+        cacheKey = 'L_' + currentPredLeague;
+      } else if (currentPredSport && currentPredSport !== 'ALL') {
+        finishedUrl += `&sport_code=${encodeURIComponent(currentPredSport)}`;
+        cacheKey = 'S_' + currentPredSport;
       }
-
-      // 1. 좌측 탭 버튼 스타일 업데이트
-      const btnTabActive = document.getElementById('btnTabActiveMatches');
-      const btnTabFinished = document.getElementById('btnTabFinishedMatches');
-      if (btnTabActive) {
-        if (!isPast) {
-          btnTabActive.style.background = '#1d4ed8';
-          btnTabActive.style.color = '#ffffff';
-          btnTabActive.style.borderColor = '#1d4ed8';
-        } else {
-          btnTabActive.style.background = '#f8fafc';
-          btnTabActive.style.color = '#475569';
-          btnTabActive.style.borderColor = '#cbd5e1';
-        }
-      }
-      if (btnTabFinished) {
-        if (isPast) {
-          btnTabFinished.style.background = '#111827';
-          btnTabFinished.style.color = '#ffffff';
-          btnTabFinished.style.borderColor = '#111827';
-          btnTabFinished.innerHTML = '<i class="bi bi-arrow-left me-1 text-warning"></i>오늘/진행경기';
-        } else {
-          btnTabFinished.style.background = '#f8fafc';
-          btnTabFinished.style.color = '#475569';
-          btnTabFinished.style.borderColor = '#cbd5e1';
-          btnTabFinished.innerHTML = '<i class="bi bi-clock-history me-1 text-secondary"></i>지난경기';
-        }
-      }
-
-      // 2. 상단 네비게이션 탭 동기화
-      const navTabSched = document.getElementById('mobTabSchedule');
-      const navTabPast = document.getElementById('mobTabPast');
-      if (navTabSched) {
-        if (!isPast) navTabSched.classList.add('active');
-        else navTabSched.classList.remove('active');
-      }
-      if (navTabPast) {
-        if (isPast) navTabPast.classList.add('active');
-        else navTabPast.classList.remove('active');
-      }
-
-      if (isPast) {
-        try {
-          let finishedUrl = '/api/v1/matches?status=FINISHED&order=desc&limit=150';
-          if (currentPredLeague && currentPredLeague !== 'ALL') {
-            const leagueParam = getLeagueQueryParam(currentPredLeague);
-            finishedUrl += `&league_name=${encodeURIComponent(leagueParam)}`;
-          } else if (currentPredSport && currentPredSport !== 'ALL') {
-            finishedUrl += `&sport_code=${encodeURIComponent(currentPredSport)}`;
-          }
-          const resp = await fetch(finishedUrl);
-          if (resp.ok) {
-            const finishedData = await resp.json();
-            const existingIds = new Set(allMatches.map(m => m.id));
-            for (const fm of finishedData) {
-              if (!existingIds.has(fm.id)) {
-                allMatches.push(fm);
-                existingIds.add(fm.id);
-              }
+      if (!force && _pastMatchesLoadedKeys.has(cacheKey)) return false;
+      _pastMatchesLoadedKeys.add(cacheKey);
+      let added = false;
+      try {
+        const resp = await fetch(finishedUrl);
+        if (resp.ok) {
+          const finishedData = await resp.json();
+          const existingIds = new Set(allMatches.map(m => m.id));
+          for (const fm of (finishedData || [])) {
+            if (!fm || (fm.official_id && String(fm.official_id).startsWith('SCHED_'))) continue;
+            if (!existingIds.has(fm.id)) {
+              allMatches.push(fm);
+              existingIds.add(fm.id);
+              added = true;
             }
           }
-        } catch (e) {
-          console.warn('Finished matches fetch error:', e);
         }
+      } catch (e) {
+        _pastMatchesLoadedKeys.delete(cacheKey);
+        console.warn('Finished matches fetch error:', e);
+      }
+      if (added) {
+        try { renderPredMatches(); } catch (e) {}
+      }
+      return added;
+    }
+
+    async function filterPredDate(dKey) {
+      // 📌 [지난경기] 탭 폐지: 경기목록 하나에 지난/오늘/예정 경기가 모두 표시됨 (D0/D1만 별도 유지)
+      if (dKey !== 'D0' && dKey !== 'D1') dKey = 'ACTIVE';
+      currentPredDate = dKey;
+      if (window.filterAgent) window.filterAgent.setDateTab(dKey);
+
+      const btnTabActive = document.getElementById('btnTabActiveMatches');
+      if (btnTabActive) {
+        btnTabActive.style.background = '#1d4ed8';
+        btnTabActive.style.color = '#ffffff';
+        btnTabActive.style.borderColor = '#1d4ed8';
+      }
+      const navTabSched = document.getElementById('mobTabSchedule');
+      if (navTabSched) {
+        navTabSched.classList.add('active');
+        navTabSched.style.background = '#1d4ed8';
+        navTabSched.style.color = '#ffffff';
+        navTabSched.style.borderColor = '#1d4ed8';
+      }
+      const navTabChat = document.getElementById('mobTabChat');
+      if (navTabChat) {
+        navTabChat.classList.remove('active');
+        navTabChat.style.background = '#f8fafc';
+        navTabChat.style.color = '#475569';
+        navTabChat.style.borderColor = '#cbd5e1';
       }
 
+      // 탭을 다시 누르면 현재 시점 경기로 재정렬
+      _predListUserScrolled = false;
       renderPredMatches();
+      alignPredListToNow(true);
+
       const list = getFilteredPredMatches();
-      if (list.length > 0) {
-        if (isPast || currentCenterMode === 'DETAIL') {
-          selectPredMatch(list[0].id);
-        }
+      if (list.length > 0 && currentCenterMode === 'DETAIL') {
+        const bestId = getInitialBestMatchId(list);
+        if (bestId) selectPredMatch(bestId);
       }
+
+      loadPastFinishedMatches();
     }
 
     async function filterPredSport(sKey) {
@@ -13483,19 +13532,18 @@ function getFullModalMatchList() {
         } catch (e) {
           console.warn('Basketball matches fetch error:', e);
         }
-        // KBL/NBA is currently in off-season (비시즌), auto-switch to FINISHED so matches immediately appear!
-        const curList = getFilteredPredMatches();
-        if (curList.length === 0 && currentPredDate !== 'FINISHED') {
-          await filterPredDate('FINISHED');
-          return;
-        }
+        // (지난경기 탭 폐지) 비시즌이라도 지난 경기가 같은 목록에 함께 표시되므로 별도 탭 전환 불필요
       }
 
+      _predListUserScrolled = false;
       renderPredMatches();
+      alignPredListToNow(false);
       const list = getFilteredPredMatches();
       if (list.length > 0 && currentCenterMode === 'DETAIL') {
-        selectPredMatch(list[0].id);
+        const bestId = getInitialBestMatchId(list);
+        if (bestId) selectPredMatch(bestId);
       }
+      loadPastFinishedMatches();
     }
 
     async function filterPredLeague(lKey, autoRender = true) {
@@ -13560,11 +13608,15 @@ function getFullModalMatchList() {
       }
 
       if (autoRender) {
+        _predListUserScrolled = false;
         renderPredMatches();
+        alignPredListToNow(false);
         const list = getFilteredPredMatches();
         if (list.length > 0 && currentCenterMode === 'DETAIL') {
-          selectPredMatch(list[0].id);
+          const bestId = getInitialBestMatchId(list);
+          if (bestId) selectPredMatch(bestId);
         }
+        loadPastFinishedMatches();
       }
     }
 
@@ -13586,10 +13638,13 @@ function getFullModalMatchList() {
           }
         }
       });
+      _predListUserScrolled = false;
       renderPredMatches();
+      alignPredListToNow(false);
       const list = getFilteredPredMatches();
       if (list.length > 0 && currentCenterMode === 'DETAIL') {
-        selectPredMatch(list[0].id);
+        const bestId = getInitialBestMatchId(list);
+        if (bestId) selectPredMatch(bestId);
       }
     }
 
@@ -13811,15 +13866,7 @@ function getFullModalMatchList() {
         list = list.filter(m => m.prediction && m.prediction.confidence >= 50);
       }
 
-      if (currentPredDate === 'FINISHED' || currentPredDate === 'PAST') {
-        // 🕒 [지난경기]: 종료(FINISHED), 취소/연기 경기, 또는 시작시간이 20분 이상 경과했으나 실제 LIVE가 아닌 경기
-        list = list.filter(m => {
-          if (m.status === 'FINISHED' || m.status === 'CANCELLED' || m.status === 'POSTPONED') return true;
-          if (m.match_date && m.match_date < bufferKstDateTime && !isMatchTrulyLive(m)) return true;
-          return false;
-        });
-        list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
-      } else if (currentPredDate === 'D0') {
+      if (currentPredDate === 'D0') {
         // 📅 [오늘 경기 (D0)]
         list = list.filter(m => (m.match_date && m.match_date.startsWith(d0Str)));
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
@@ -13828,53 +13875,9 @@ function getFullModalMatchList() {
         list = list.filter(m => (m.match_date && m.match_date.startsWith(d1Str)));
         list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       } else {
-        // 📅 [경기목록 (ACTIVE - 기본값)]: 오늘의 전 경기(종료된 경기 스코어 포함) + LIVE 경기 + 미래 진행/예정 경기 전체 노출!
-        const todayMatches = list.filter(m => m.match_date && m.match_date.startsWith(d0Str));
-        const liveMatches = list.filter(isMatchTrulyLive);
-        const futureMatches = list.filter(m => {
-          if (m.status === 'CANCELLED' || m.status === 'POSTPONED') return false;
-          if (m.match_date && m.match_date.startsWith(d0Str)) return false;
-          if (m.match_date && m.match_date > d0Str) return true;
-          return false;
-        });
-
-        // LIVE 경기 최우선 -> 오늘의 모든 경기(종료/진행) -> 미래 예정 경기 순서로 정렬 & 중복 방지
-        const seenIdMap = new Map();
-        for (const m of liveMatches) { seenIdMap.set(m.id, m); }
-        for (const m of todayMatches) { if (!seenIdMap.has(m.id)) seenIdMap.set(m.id, m); }
-        for (const m of futureMatches) { if (!seenIdMap.has(m.id)) seenIdMap.set(m.id, m); }
-
-        let combinedActive = Array.from(seenIdMap.values());
-        if (combinedActive.length > 0) {
-          combinedActive.sort((a, b) => {
-            const aLive = isMatchTrulyLive(a);
-            const bLive = isMatchTrulyLive(b);
-            if (aLive && !bLive) return -1;
-            if (!aLive && bLive) return 1;
-            return (a.match_date || '').localeCompare(b.match_date || '');
-          });
-          list = combinedActive;
-        } else {
-          // 비시즌 등 오늘/예정 경기가 전혀 없는 경우 최근 경기 표시 (빈 화면 방지)
-          let fallbackList = [...allMatches];
-          if (currentPredSport === 'SOCCER') {
-            fallbackList = fallbackList.filter(m => m.sport_code === 'SOCCER');
-          } else if (currentPredSport === 'BASEBALL') {
-            fallbackList = fallbackList.filter(m => m.sport_code === 'BASEBALL');
-          } else if (currentPredSport === 'BASKETBALL') {
-            fallbackList = fallbackList.filter(m => m.sport_code === 'BASKETBALL' || (m.league_name && (m.league_name.includes('농구') || m.league_name.includes('NBA') || m.league_name.includes('KBL'))));
-          } else if (currentPredSport === 'HOCKEY') {
-            fallbackList = fallbackList.filter(m => m.sport_code === 'HOCKEY' || (m.league_name && (m.league_name.includes('하키') || m.league_name.includes('NHL'))));
-          } else if (currentPredSport === 'VOLLEYBALL') {
-            fallbackList = fallbackList.filter(m => m.sport_code === 'VOLLEYBALL' || (m.league_name && (m.league_name.includes('배구') || m.league_name.includes('V-리그'))));
-          }
-          if (fallbackList.length > 0) {
-            fallbackList.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
-            list = fallbackList;
-          } else {
-            list.sort((a, b) => (b.match_date || '').localeCompare(a.match_date || ''));
-          }
-        }
+        // 📅 [경기목록 (ACTIVE - 기본값)]: 지난 경기 + 오늘 + LIVE + 예정 경기 전체를 시간순(오래된 → 미래)으로 표시
+        // 첫 화면은 현재 시점 경기로 자동 스크롤되며(alignPredListToNow), 위로 스크롤하면 지난 경기 결과를 볼 수 있음
+        list.sort((a, b) => (a.match_date || '').localeCompare(b.match_date || ''));
       }
 
       // 실시간 중복 제거
@@ -15071,13 +15074,18 @@ function getFullModalMatchList() {
     function calculateSoccerPrecisionMetrics(m) {
       if (!m || (m.sport_code && m.sport_code !== 'SOCCER')) return null;
 
+      const isLive = (m.status === 'LIVE' || m.status === 'IN_PLAY');
+      const isFin = (m.status === 'FINISHED');
+
+      // 🛡️ 경기 전(SCHEDULED)이거나 정적 상태일 때: 첫 화면에서 계산된 정밀 지표를 영구 고정하여 시간 경과로 인한 수치 변동 원천 차단
+      if (!isLive && m._soccer_precision_cache) {
+        return m._soccer_precision_cache;
+      }
+
       const rawSoccerTs = m.team_stats || (m.details && m.details.team_stats) || null;
       const socTsHome = rawSoccerTs?.home || {};
       const socTsAway = rawSoccerTs?.away || {};
       const liveSoccer = m.soccer || (m.scoreboard && m.scoreboard.soccer) || (m.details && m.details.soccer) || null;
-
-      const isLive = (m.status === 'LIVE' || m.status === 'IN_PLAY');
-      const isFin = (m.status === 'FINISHED');
       const hasLiveStats = isLive || isFin;
 
       // Extract home & away stats
@@ -15172,7 +15180,7 @@ function getFullModalMatchList() {
       let gkMarginH = Number((xgotA - (hasLiveStats ? actualGoalsA : xgA)).toFixed(2));
       let gkMarginA = Number((xgotH - (hasLiveStats ? actualGoalsH : xgH)).toFixed(2));
 
-      return {
+      const precisionResult = {
         is_live: isLive,
         is_finished: isFin,
         is_simulated: isSimulated,
@@ -15203,6 +15211,12 @@ function getFullModalMatchList() {
         home_gk_margin: gkMarginH,
         away_gk_margin: gkMarginA
       };
+
+      if (!isLive) {
+        m._soccer_precision_cache = precisionResult;
+      }
+
+      return precisionResult;
     }
     window.calculateSoccerPrecisionMetrics = calculateSoccerPrecisionMetrics;
 
@@ -16173,29 +16187,7 @@ function getFullModalMatchList() {
           `;
         }
       } else if (m.sport_code === 'SOCCER') {
-        const pm = (typeof calculateSoccerPrecisionMetrics === 'function') ? calculateSoccerPrecisionMetrics(m) : null;
-        if (pm) {
-          const absHtml = (absInfo.text && absInfo.text !== '-') ? `<div class="text-truncate text-muted mt-0.5" style="font-size:0.67rem;">🚑 ${absInfo.text}</div>` : '';
-          const diffXg = Math.abs(pm.home_xg - pm.away_xg);
-          const leaderBadge = pm.home_xg > pm.away_xg 
-            ? `<span style="color:#ef4444; font-weight:800;">홈 xG+${diffXg.toFixed(2)}</span>`
-            : (pm.away_xg > pm.home_xg ? `<span style="color:#3b82f6; font-weight:800;">원정 xG+${diffXg.toFixed(2)}</span>` : `<span class="text-secondary fw-bold">xG 호각</span>`);
-
-          subLineHtml = `
-            <div class="soccer-mini-precision-bar mt-1 px-2 py-1 rounded" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.71rem;">
-              <div class="d-flex justify-content-between align-items-center mb-0.5">
-                <span class="fw-bold text-danger">🔴 xG ${pm.home_xg.toFixed(2)} <span class="text-muted" style="font-size:0.65rem;">(${pm.home_field_tilt}%)</span></span>
-                <span class="badge bg-dark text-white px-1.5 py-0.5" style="font-size:0.62rem; font-weight:700;">AI 정밀 ${leaderBadge}</span>
-                <span class="fw-bold text-primary"><span class="text-muted" style="font-size:0.65rem;">(${pm.away_field_tilt}%)</span> xG ${pm.away_xg.toFixed(2)} 🔵</span>
-              </div>
-              <div class="progress" style="height:3.5px; border-radius:2px; background:#e2e8f0; overflow:hidden;">
-                <div class="progress-bar bg-danger" role="progressbar" style="width: ${pm.home_field_tilt}%"></div>
-                <div class="progress-bar bg-primary" role="progressbar" style="width: ${pm.away_field_tilt}%"></div>
-              </div>
-              ${absHtml}
-            </div>
-          `;
-        } else if (absInfo.text && absInfo.text !== '-') {
+        if (absInfo.text && absInfo.text !== '-') {
           subLineHtml = `<div class="slim-card-sub mt-1" style="font-size:0.74rem;">🚑 ${absInfo.text}</div>`;
         }
       } else if (m.sport_code === 'BASKETBALL' && absInfo.text && absInfo.text !== '-') {
@@ -16282,7 +16274,6 @@ function getFullModalMatchList() {
         let dateName = '';
         if (currentPredDate === 'D0') dateName = '오늘 ';
         else if (currentPredDate === 'D1') dateName = '내일 ';
-        else if (currentPredDate === 'FINISHED') dateName = '종료된 ';
 
         container.innerHTML = `
           <div class="text-center py-5 px-3">
@@ -16290,10 +16281,7 @@ function getFullModalMatchList() {
             <div class="fw-bold text-dark fs-6 mb-1">현재 ${dateName}${sportName} 경기가 없습니다.</div>
             <div class="text-muted small mb-3">새로운 시즌 및 공식 라운드 일정이 등록되는 즉시 실시간으로 자동 연동됩니다.</div>
             <div class="d-flex justify-content-center gap-2">
-              <button class="btn btn-sm btn-primary px-3 fw-bold" onclick="filterPredDate('FINISHED');">
-                <i class="bi bi-clock-history me-1"></i>최근 공식 경기 결과 보기
-              </button>
-              <button class="btn btn-sm btn-outline-secondary px-3 fw-bold" onclick="filterPredSport('ALL'); filterPredLeague('ALL'); filterPredDate('ALL');">
+              <button class="btn btn-sm btn-outline-secondary px-3 fw-bold" onclick="filterPredSport('ALL'); filterPredLeague('ALL'); filterPredDate('ACTIVE');">
                 <i class="bi bi-arrow-repeat me-1"></i>전체 경기 보기
               </button>
             </div>
@@ -16324,20 +16312,7 @@ function getFullModalMatchList() {
 
       let headerHtml = '';
 
-      // [지난경기결과 전용 상단 안내 배너]
-      if (currentPredDate === 'FINISHED') {
-        headerHtml += `
-          <div class="p-2 mb-2 rounded d-flex justify-content-between align-items-center" style="background: #ffffff; border: 1.5px solid #111827;">
-            <div class="d-flex align-items-center gap-1.5 text-truncate">
-              <span class="badge" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; font-size:0.68rem; font-weight: 800;"><i class="bi bi-clock-history me-1"></i>지난경기 결과</span>
-              <span class="text-dark small fw-bold text-truncate" style="font-size:0.75rem;">어제 및 이전 종료 경기 모음 (${filtered.length}경기)</span>
-            </div>
-            <button class="btn btn-xs py-0.5 px-2 fw-bold text-nowrap" onclick="filterPredDate('ALL')" style="background: #ffffff; color: #111827; border: 1.5px solid #111827; border-radius: 4px; font-size: 0.70rem;">
-              진행/예정 경기 보기 →
-            </button>
-          </div>
-        `;
-      } else if (currentPredDate === 'D0') {
+      if (currentPredDate === 'D0') {
         const hasLiveOrUpcoming = filtered.some(m => m.status !== 'FINISHED' && m.status !== 'CANCELLED' && m.status !== 'POSTPONED');
         if (!hasLiveOrUpcoming && filtered.length > 0) {
           headerHtml += `
@@ -16348,7 +16323,7 @@ function getFullModalMatchList() {
               </div>
               <div class="small text-muted mb-2">오늘 예정된 모든 경기가 종료되었습니다. 아래에서 최종 경기 결과를 확인하시거나 진행/예정 일정을 확인하세요.</div>
               <div class="d-flex gap-1">
-                <button class="btn btn-xs fw-bold px-2 py-1" onclick="filterPredDate('ALL')" style="background: #ffffff; color: #111827; border: 2px solid #111827; border-radius: 4px; font-size: 0.72rem;">
+                <button class="btn btn-xs fw-bold px-2 py-1" onclick="filterPredDate('ACTIVE')" style="background: #ffffff; color: #111827; border: 2px solid #111827; border-radius: 4px; font-size: 0.72rem;">
                   <i class="bi bi-arrow-right-circle me-1 text-dark"></i>진행/예정 경기 보기
                 </button>
                 <button class="btn btn-xs fw-bold px-2 py-1" onclick="filterPredDate('D1')" style="background: #ffffff; color: #6b7280; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.72rem;">
@@ -16430,7 +16405,7 @@ function getFullModalMatchList() {
             `;
           }
 
-          if (!dividerInserted && (currentPredDate === 'ALL' || currentPredDate === 'D0')) {
+          if (!dividerInserted && (currentPredDate === 'ACTIVE' || currentPredDate === 'ALL' || currentPredDate === 'D0')) {
             let isLiveToday = false;
             if (m.status === 'LIVE' && rawDate) {
               try {
@@ -16453,9 +16428,9 @@ function getFullModalMatchList() {
                     <span class="badge bg-primary text-white me-1" style="font-size: 0.68rem; font-weight: 700;">${dividerBadge}</span>
                     <span class="text-dark fw-bold" style="font-size: 0.76rem;">${dividerText}</span>
                   </div>
-                  <button class="btn btn-xs py-0 px-1.5 text-danger fw-bold border-0 bg-transparent" onclick="filterPredDate('FINISHED')" style="font-size: 0.68rem; text-decoration: underline;" title="어제 및 지난 종료 경기 결과 모아보기">
-                    <i class="bi bi-clock-history me-0.5"></i>지난결과 보기→
-                  </button>
+                  <span class="text-secondary fw-bold text-nowrap" style="font-size: 0.66rem;" title="위로 스크롤하면 지난 경기 결과를 볼 수 있습니다">
+                    <i class="bi bi-arrow-up me-0.5"></i>위로 스크롤: 지난경기
+                  </span>
                 </div>
               `;
               dividerInserted = true;
@@ -16476,9 +16451,10 @@ function getFullModalMatchList() {
       const prevWindowScrollY = (typeof window !== 'undefined' ? (window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0) || (document.body ? document.body.scrollTop : 0)) : 0) || 0;
 
       // 📌 1. Card Anchor: 사용자가 보고 있던 최상단 카드 및 픽셀 오프셋 정밀 기록
+      // (scrollTop이 0이어도 기록: 위쪽에 지난 경기가 추가로 병합될 때 보던 위치가 밀리지 않도록)
       let anchorCardId = null;
       let anchorCardOffset = 0;
-      if (container && prevContainerScrollTop > 0) {
+      if (container) {
         const cards = container.querySelectorAll('.pred-card-compact');
         const containerTop = container.getBoundingClientRect().top;
         for (const card of cards) {
@@ -16510,10 +16486,12 @@ function getFullModalMatchList() {
         }
       }
 
-      // 📌 4. 최초 페이지 로딩 시에만 단 1회 현재시간 경기로 자동 정렬
-      if (!initialScheduleAutoScrollDone && currentPredDate !== 'FINISHED') {
+      // 📌 4. 사용자가 직접 스크롤하기 전까지는 항상 현재시점 경기로 자동 정렬
+      //    (지난 경기가 위쪽에 백그라운드로 추가되어도 첫 화면은 현재/다음 경기가 보이도록 유지)
+      if (!_predListUserScrolled) {
+        const firstAlign = !initialScheduleAutoScrollDone;
         initialScheduleAutoScrollDone = true;
-        scrollToCurrentTimeMatch(false);
+        alignPredListToNow(firstAlign);
       } else {
         // 📌 5. 100% 정밀 스크롤 복원: 앵커 카드가 있으면 동일 위치로 복원, 없으면 이전 scrollTop 유지
         if (anchorCardId) {
@@ -18156,6 +18134,11 @@ function updateSlimPanel(matchId, type, contentHtml) {
             .then(res => res.json())
             .then(freshData => {
               if (freshData && _ngActiveMatchId == cur.id) {
+                if (cur.prediction && !freshData.prediction) freshData.prediction = cur.prediction;
+                if (cur.odds && !freshData.odds) freshData.odds = cur.odds;
+                if (cur.ou_line && !freshData.ou_line) freshData.ou_line = cur.ou_line;
+                if (cur._soccer_precision_cache && !freshData._soccer_precision_cache) freshData._soccer_precision_cache = cur._soccer_precision_cache;
+                if (cur._confirmed_probs && !freshData._confirmed_probs) freshData._confirmed_probs = cur._confirmed_probs;
                 if (cur.history && cur.history.home_recent && (!freshData.history || !freshData.history.home_recent)) {
                   freshData.history = cur.history;
                 }
@@ -18180,6 +18163,11 @@ function updateSlimPanel(matchId, type, contentHtml) {
           deduplicatedFetch(`/api/v1/matches/${match.id}`)
             .then(freshData => {
               if (freshData && _ngActiveMatchId == match.id) {
+                if (match.prediction && !freshData.prediction) freshData.prediction = match.prediction;
+                if (match.odds && !freshData.odds) freshData.odds = match.odds;
+                if (match.ou_line && !freshData.ou_line) freshData.ou_line = match.ou_line;
+                if (match._soccer_precision_cache && !freshData._soccer_precision_cache) freshData._soccer_precision_cache = match._soccer_precision_cache;
+                if (match._confirmed_probs && !freshData._confirmed_probs) freshData._confirmed_probs = match._confirmed_probs;
                 if (match.history && match.history.home_recent && (!freshData.history || !freshData.history.home_recent)) {
                   freshData.history = match.history;
                 }
@@ -19383,7 +19371,6 @@ function updateSlimPanel(matchId, type, contentHtml) {
           <!-- Top Section Header -->
           <div class="d-flex justify-content-between align-items-center px-3 py-2" style="background:#0f172a; color:#ffffff;">
             <div class="d-flex align-items-center gap-2">
-              <span class="badge bg-warning text-dark fw-bold px-2 py-0.5" style="font-size:0.72rem;">API-FOOTBALL</span>
               <span class="fw-bold" style="font-size:0.88rem; letter-spacing:-0.2px;">⚽ ${leagueTitle} 공식 전력 & 전술 분석</span>
             </div>
             <span class="badge bg-success-subtle text-success border border-success-subtle py-0.5 px-1.5 d-none d-sm-inline" style="font-size:0.66rem;">
@@ -19488,383 +19475,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
           ` : ''}
 
           <!-- ========================================================= -->
-          <!-- ⚡ [정밀 지표] 축구 9대 첨단 AI 정밀 지표 허브 (자동 계산) -->
-          <!-- ========================================================= -->
-          ${(typeof renderSoccerPrecisionMetricsHtml === 'function') ? renderSoccerPrecisionMetricsHtml(m) : ''}
-
-          <!-- ========================================================= -->
-          <!-- 🎯 [섹션 2] 축구 5대 핵심 전술 텍스트 지표 (막대표 대체 정밀 텍스트 매트릭스) -->
-          <!-- ========================================================= -->
-          <div class="p-2.5 border-bottom bg-white" style="border-color:#e2e8f0 !important;">
-            <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
-              <div class="d-flex align-items-center gap-1.5">
-                <span class="badge bg-primary text-white px-2 py-0.5" style="font-size:0.70rem;">
-                  <i class="bi bi-file-text-fill me-1"></i>정밀 텍스트 지표
-                </span>
-                <strong class="text-dark" style="font-size:0.82rem;">축구 5대 AI 전술 정밀 텍스트 분석 (롱볼 · 세트피스 · 역습 · 압박 · 제공권)</strong>
-              </div>
-              <div class="d-flex gap-2 small fw-bold" style="font-size:0.70rem;">
-                <span class="text-danger">🔴 [홈] ${hName}</span>
-                <span class="text-muted">vs</span>
-                <span class="text-primary">🔵 [원정] ${aName}</span>
-              </div>
-            </div>
-
-            <!-- Tactical Traits Comparison Text Cards -->
-            <div class="d-flex flex-column gap-2 mb-1">
-              ${[
-                {
-                  key: 'long_ball',
-                  title: '롱볼 전술 (Long Balls)',
-                  icon: 'bi-arrow-up-right-circle-fill',
-                  iconColor: '#3b82f6',
-                  badge: '빌드업 & 전방전환',
-                  unit: '뒷공간 직접 타격 / 롱패스 배급',
-                  h: hTend.long_ball || { score: 65, label: '다이렉트 롱패스', desc: '배후 뒷공간 직접 타격' },
-                  a: aTend.long_ball || { score: 55, label: '상황별 롱패스', desc: '중원 압박에 따른 전환' }
-                },
-                {
-                  key: 'set_piece',
-                  title: '세트피스 & 코너킥 위협도',
-                  icon: 'bi-crosshair',
-                  iconColor: '#ef4444',
-                  badge: '데드볼 주 득점루트',
-                  unit: '코너킥·프리킥 득점력 & 전담키커',
-                  h: hTend.set_piece || { score: 82, label: '세트피스 최상위 위협', desc: '약속된 코너킥·프리킥 득점력 상위' },
-                  a: aTend.set_piece || { score: 72, label: '세트피스 강점', desc: '정교한 킥 배급 및 제공권 활용' }
-                },
-                {
-                  key: 'counter_attack',
-                  title: '역습 전개 속도 (Counter)',
-                  icon: 'bi-lightning-charge-fill',
-                  iconColor: '#f59e0b',
-                  badge: '초고속 공수 전환',
-                  unit: '볼 탈취 후 침투 템포',
-                  h: hTend.counter_attack || { score: 76, label: '초고속 카운터어택', desc: '3~4회 터치 이내 빠른 침투' },
-                  a: aTend.counter_attack || { score: 80, label: '템포 조율형 역습', desc: '2선 지원을 동반한 속공' }
-                },
-                {
-                  key: 'pressing',
-                  title: '전방 압박 강도 (Pressing)',
-                  icon: 'bi-shield-shaded',
-                  iconColor: '#10b981',
-                  badge: '게겐프레싱 & 수비라인',
-                  unit: '1차 빌드업 저지 및 블록 높이',
-                  h: hTend.pressing || { score: 84, label: '초고강도 하이라인 압박', desc: '1차 빌드업 저지 게겐프레싱' },
-                  a: aTend.pressing || { score: 70, label: '미들서드 차단 블록', desc: '두 줄 수비 블록 형성' }
-                },
-                {
-                  key: 'aerial_duel',
-                  title: '공중볼 제공권 (Aerial Duels)',
-                  icon: 'bi-arrows-expand',
-                  iconColor: '#8b5cf6',
-                  badge: '높이 & 타깃맨 경합',
-                  unit: '헤더 경합 성공률 및 세컨볼 회수',
-                  h: hTend.aerial_duel || { score: 78, label: '공중볼 제공권 장악', desc: '타깃맨과 센터백의 강력한 헤더' },
-                  a: aTend.aerial_duel || { score: 68, label: '지상 볼 경합 중심', desc: '그라운드 패스워크와 세컨볼 회수' }
-                }
-              ].map(trait => {
-                const diff = trait.h.score - trait.a.score;
-                const hLead = diff > 0;
-                const aLead = diff < 0;
-
-                let advantageTag = '';
-                if (Math.abs(diff) >= 8) {
-                  advantageTag = hLead
-                    ? `<span class="badge bg-danger text-white py-0.5 px-1.5 fw-bold" style="font-size:0.62rem;">👑 홈 압도 (+${diff}점)</span>`
-                    : `<span class="badge bg-primary text-white py-0.5 px-1.5 fw-bold" style="font-size:0.62rem;">👑 원정 압도 (+${Math.abs(diff)}점)</span>`;
-                } else if (Math.abs(diff) >= 3) {
-                  advantageTag = hLead
-                    ? `<span class="badge bg-danger-subtle text-danger border border-danger-subtle py-0.5 px-1.5 fw-bold" style="font-size:0.62rem;">홈 우세 (+${diff}점)</span>`
-                    : `<span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0.5 px-1.5 fw-bold" style="font-size:0.62rem;">원정 우세 (+${Math.abs(diff)}점)</span>`;
-                } else {
-                  advantageTag = `<span class="badge bg-secondary-subtle text-secondary py-0.5 px-1.5 fw-bold" style="font-size:0.62rem;">🤝 호각세</span>`;
-                }
-
-                return `
-                  <div class="p-2.5 rounded-2 border shadow-xs" style="background:#ffffff; border-color:#e2e8f0 !important;">
-                    <!-- 1. Header: 전술명 & 우세 판정 배지 (모바일 가로 100% 한 줄 분할) -->
-                    <div class="d-flex justify-content-between align-items-center mb-2 pb-1.5 border-bottom" style="border-color:#f1f5f9 !important;">
-                      <div class="d-flex align-items-center gap-1.5" style="min-width:0;">
-                        <span class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:26px; height:26px; background:${trait.iconColor}15; color:${trait.iconColor}; font-size:0.9rem;">
-                          <i class="bi ${trait.icon}"></i>
-                        </span>
-                        <strong class="text-dark" style="font-size:0.86rem; letter-spacing:-0.2px;">
-                          ${trait.title}
-                        </strong>
-                      </div>
-                      <div class="flex-shrink-0 ms-1">
-                        ${advantageTag}
-                      </div>
-                    </div>
-
-                    <!-- 2. Symmetrical Comparison: [홈] 점수 vs [원정] 점수 (2열 반응형 그리드) -->
-                    <div class="row g-1.5 mb-2">
-                      <div class="col-6">
-                        <div class="p-1.5 rounded d-flex align-items-center justify-content-between ${hLead ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-light text-secondary border'}" style="min-height:36px;">
-                          <div class="d-flex align-items-center gap-1 text-truncate">
-                            <span class="badge ${hLead ? 'bg-danger text-white' : 'bg-secondary text-white'} py-0.5 px-1 flex-shrink-0" style="font-size:0.62rem;">홈</span>
-                            <span class="text-truncate fw-bold" style="font-size:0.75rem;">${trait.h.label}</span>
-                          </div>
-                          <span class="fw-black font-monospace flex-shrink-0 ms-1" style="font-size:0.86rem;">${trait.h.score}점</span>
-                        </div>
-                      </div>
-                      <div class="col-6">
-                        <div class="p-1.5 rounded d-flex align-items-center justify-content-between ${aLead ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-light text-secondary border'}" style="min-height:36px;">
-                          <span class="fw-black font-monospace flex-shrink-0 me-1" style="font-size:0.86rem;">${trait.a.score}점</span>
-                          <div class="d-flex align-items-center gap-1 text-truncate justify-content-end">
-                            <span class="text-truncate fw-bold" style="font-size:0.75rem;">${trait.a.label}</span>
-                            <span class="badge ${aLead ? 'bg-primary text-white' : 'bg-secondary text-white'} py-0.5 px-1 flex-shrink-0" style="font-size:0.62rem;">원정</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- 3. Text Assessment Card -->
-                    <div class="p-2 rounded bg-light border" style="border-color:#e2e8f0 !important;">
-                      <div class="d-flex align-items-center justify-content-between gap-1 mb-1.5 pb-1 border-bottom border-white">
-                        <div class="d-flex align-items-center gap-1.5">
-                          <span class="badge bg-dark text-white" style="font-size:0.64rem; padding: 2px 6px;">${trait.badge}</span>
-                          <strong class="text-dark" style="font-size:0.75rem;">전술 격돌 진단</strong>
-                        </div>
-                        <span class="text-muted small text-truncate" style="font-size:0.66rem;">관전 지표: ${trait.unit}</span>
-                      </div>
-                      <div class="d-flex flex-column gap-1.5 text-dark" style="font-size:0.76rem; line-height:1.45;">
-                        <div class="p-2 rounded bg-white border-start border-3 border-danger shadow-2xs">
-                          <strong class="text-danger d-inline-block me-1">🔴 ${hName}:</strong>${trait.h.desc}
-                        </div>
-                        <div class="p-2 rounded bg-white border-start border-3 border-primary shadow-2xs">
-                          <strong class="text-primary d-inline-block me-1">🔵 ${aName}:</strong>${trait.a.desc}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          </div>
-
-          <!-- ========================================================= -->
-          <!-- ⚖️ [섹션 3] 양 팀 핵심 장단점 & 상성 분석 (Strengths & Weaknesses) -->
-          <!-- ========================================================= -->
-          <div class="p-2.5 border-bottom bg-light" style="border-color:#e2e8f0 !important;">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <div class="d-flex align-items-center gap-1.5">
-                <span class="badge bg-dark text-white px-2 py-0.5" style="font-size:0.70rem;">
-                  <i class="bi bi-shield-check text-warning me-1"></i>장단점 분석
-                </span>
-                <strong class="text-dark" style="font-size:0.82rem;">양 팀 핵심 장점 & 단점/취약점 정밀 비교</strong>
-              </div>
-              <span class="text-muted small" style="font-size:0.68rem;">공식 전술 데이터 기반</span>
-            </div>
-
-            <div class="row g-2">
-              <!-- Home Team Strengths & Weaknesses -->
-              <div class="col-12 col-md-6">
-                <div class="p-2.5 rounded-2 bg-white border h-100 shadow-xs" style="border-color:#fecaca !important;">
-                  <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color:#fee2e2 !important;">
-                    <div class="d-flex align-items-center gap-1.5">
-                      <span class="badge bg-danger text-white py-0.5 px-1.5" style="font-size:0.68rem;">홈</span>
-                      <strong class="text-danger" style="font-size:0.82rem;">${hName} 장단점</strong>
-                    </div>
-                    <span class="badge bg-light text-secondary border px-1.5 py-0.5" style="font-size:0.62rem;">공격/수비 밸런스</span>
-                  </div>
-
-                  <!-- Strengths -->
-                  <div class="mb-2">
-                    <span class="badge bg-success-subtle text-success border border-success-subtle mb-1 py-0.5 px-1.5 fw-bold" style="font-size:0.64rem;">
-                      <i class="bi bi-check-circle-fill me-1"></i>핵심 장점 (Strengths)
-                    </span>
-                    <div class="d-flex flex-column gap-1 mt-0.5" style="font-size:0.70rem;">
-                      ${(hStrWeak.strengths || ['강력한 세트피스 공격', '빠른 공수 전환']).map(s => `
-                        <div class="p-1 rounded bg-light border-start border-3 border-success text-dark" style="border-color:#22c55e !important; line-height:1.35;">
-                          <strong class="text-success"><i class="bi bi-check2 me-1"></i></strong>${s}
-                        </div>
-                      `).join('')}
-                    </div>
-                  </div>
-
-                  <!-- Weaknesses -->
-                  <div>
-                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle mb-1 py-0.5 px-1.5 fw-bold" style="font-size:0.64rem;">
-                      <i class="bi bi-exclamation-triangle-fill me-1"></i>주요 단점 & 약점 (Weaknesses)
-                    </span>
-                    <div class="d-flex flex-column gap-1 mt-0.5" style="font-size:0.70rem;">
-                      ${(hStrWeak.weaknesses || ['하이라인 뒷공간 노출 위험', '세트피스 수비 집중력 불안']).map(w => `
-                        <div class="p-1 rounded bg-light border-start border-3 border-danger text-dark" style="border-color:#ef4444 !important; line-height:1.35;">
-                          <strong class="text-danger"><i class="bi bi-x-circle me-1"></i></strong>${w}
-                        </div>
-                      `).join('')}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Away Team Strengths & Weaknesses -->
-              <div class="col-12 col-md-6">
-                <div class="p-2.5 rounded-2 bg-white border h-100 shadow-xs" style="border-color:#bfdbfe !important;">
-                  <div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom" style="border-color:#dbeafe !important;">
-                    <div class="d-flex align-items-center gap-1.5">
-                      <span class="badge bg-primary text-white py-0.5 px-1.5" style="font-size:0.68rem;">원정</span>
-                      <strong class="text-primary" style="font-size:0.82rem;">${aName} 장단점</strong>
-                    </div>
-                    <span class="badge bg-light text-secondary border px-1.5 py-0.5" style="font-size:0.62rem;">공격/수비 밸런스</span>
-                  </div>
-
-                  <!-- Strengths -->
-                  <div class="mb-2">
-                    <span class="badge bg-success-subtle text-success border border-success-subtle mb-1 py-0.5 px-1.5 fw-bold" style="font-size:0.64rem;">
-                      <i class="bi bi-check-circle-fill me-1"></i>핵심 장점 (Strengths)
-                    </span>
-                    <div class="d-flex flex-column gap-1 mt-0.5" style="font-size:0.70rem;">
-                      ${(aStrWeak.strengths || ['콤팩트한 수비 블록', '초스피드 역습 전환']).map(s => `
-                        <div class="p-1 rounded bg-light border-start border-3 border-success text-dark" style="border-color:#22c55e !important; line-height:1.35;">
-                          <strong class="text-success"><i class="bi bi-check2 me-1"></i></strong>${s}
-                        </div>
-                      `).join('')}
-                    </div>
-                  </div>
-
-                  <!-- Weaknesses -->
-                  <div>
-                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle mb-1 py-0.5 px-1.5 fw-bold" style="font-size:0.64rem;">
-                      <i class="bi bi-exclamation-triangle-fill me-1"></i>주요 단점 & 약점 (Weaknesses)
-                    </span>
-                    <div class="d-flex flex-column gap-1 mt-0.5" style="font-size:0.70rem;">
-                      ${(aStrWeak.weaknesses || ['밀집 수비 시 지공 공간 창출 부족', '공중볼 경합 높이 열세']).map(w => `
-                        <div class="p-1 rounded bg-light border-start border-3 border-danger text-dark" style="border-color:#ef4444 !important; line-height:1.35;">
-                          <strong class="text-danger"><i class="bi bi-x-circle me-1"></i></strong>${w}
-                        </div>
-                      `).join('')}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Tactical Clash Takeaway Point -->
-            <div class="mt-2 p-2 rounded-2 bg-white border border-secondary-subtle" style="font-size:0.72rem; line-height:1.45;">
-              <strong class="text-dark d-block mb-1"><i class="bi bi-fire text-danger me-1"></i>장단점 상성 격돌 포인트:</strong>
-              <div class="text-muted small">
-                • <strong>세트피스 vs 수비 불안:</strong> ${hName}의 '${hTend.set_piece?.label || '세트피스 위협'}'과 ${aName}의 세트피스 수비 집중력 저하 약점이 맞물려 코너킥/프리킥 상황에서의 득점 발생 확률이 매우 높습니다.<br>
-                • <strong>롱볼 & 역습 격돌:</strong> ${hName}의 [${hTend.long_ball?.label || '롱패스 배급'}] 전술과 ${aName}의 [${aTend.counter_attack?.label || '카운터 속공'}]이 하프스페이스 및 수비 뒷공간에서 치열한 전환 공방전을 펼칠 것으로 예상됩니다.
-              </div>
-            </div>
-          </div>
-
-
-
-          <!-- ========================================================= -->
-          <!-- 📊 [섹션 3] 점유율 & 카드/파울 징계 통계 (Possession & Cards) -->
-          <!-- ========================================================= -->
-          <div class="p-2.5 border-bottom bg-light" style="border-color:#e2e8f0 !important;">
-            <div class="row g-2">
-              <!-- Left: 점유율 분석 카드 -->
-              <div class="col-12 col-md-6">
-                <div class="p-2.5 rounded-2 bg-white border h-100 shadow-xs" style="border-color:#cbd5e1 !important;">
-                  <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom" style="border-color:#f1f5f9 !important;">
-                    <strong class="text-dark" style="font-size:0.80rem;">
-                      <i class="bi bi-pie-chart-fill text-info me-1"></i>평균 점유율 비교 (Possession)
-                    </strong>
-                    <span class="badge bg-light text-dark border px-1.5 py-0.5" style="font-size:0.62rem;">최근 경기 표본</span>
-                  </div>
-
-                  <!-- Text-Based Symmetrical Possession Matrix (No Bars) -->
-                  <div class="p-2 rounded-2 mb-2" style="background:#f8fafc; border:1px solid #e2e8f0;">
-                    <div class="row g-1 align-items-center text-center">
-                      <div class="col-4 text-start">
-                        <span class="badge bg-danger text-white mb-1 text-truncate d-inline-block" style="font-size:0.65rem; max-width:100%;">[홈] ${hName}</span>
-                        <div class="fw-black text-danger font-monospace" style="font-size:1.15rem; line-height:1;">${poss.home_avg}%</div>
-                        <div class="text-muted small mt-0.5 text-truncate" style="font-size:0.64rem;">${poss.home_style}</div>
-                      </div>
-                      <div class="col-4 text-center px-0.5">
-                        <span class="badge ${poss.home_avg > poss.away_avg ? 'bg-danger text-white' : (poss.away_avg > poss.home_avg ? 'bg-primary text-white' : 'bg-secondary text-white')} fw-bold px-1.5 py-0.5" style="font-size:0.66rem;">
-                          ${poss.home_avg > poss.away_avg ? '👑 홈 우세' : (poss.away_avg > poss.home_avg ? '👑 원정 우세' : '🤝 호각')}
-                        </span>
-                        <div class="text-secondary small mt-1 fw-bold" style="font-size:0.64rem;">점유율 비교</div>
-                      </div>
-                      <div class="col-4 text-end">
-                        <span class="badge bg-primary text-white mb-1 text-truncate d-inline-block" style="font-size:0.65rem; max-width:100%;">${aName} [원정]</span>
-                        <div class="fw-black text-primary font-monospace" style="font-size:1.15rem; line-height:1;">${poss.away_avg}%</div>
-                        <div class="text-muted small mt-0.5 text-truncate" style="font-size:0.64rem;">${poss.away_style}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Detail Metrics Strip -->
-                  <div class="d-flex flex-column gap-1" style="font-size:0.71rem;">
-                    <div class="d-flex justify-content-between align-items-center">
-                      <span class="text-muted">전술 플레이 성향:</span>
-                      <span class="text-dark fw-bold">${poss.home_style} vs ${poss.away_style}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                      <span class="text-muted">상대진영 진입(Field Tilt):</span>
-                      <span class="text-dark fw-semibold"><span class="text-danger">${poss.home_field_tilt}%</span> / <span class="text-primary">${poss.away_field_tilt}%</span></span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                      <span class="text-muted">패스 성공률 (정밀도):</span>
-                      <span class="text-dark fw-semibold">${poss.home_pass_acc} / ${poss.away_pass_acc}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Right: 카드 & 파울 징계 통계 카드 -->
-              <div class="col-12 col-md-6">
-                <div class="p-2.5 rounded-2 bg-white border h-100 shadow-xs" style="border-color:#cbd5e1 !important;">
-                  <div class="d-flex justify-content-between align-items-center mb-1.5 pb-1 border-bottom" style="border-color:#f1f5f9 !important;">
-                    <strong class="text-dark" style="font-size:0.80rem;">
-                      <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>카드 & 파울 통계 (Discipline)
-                    </strong>
-                    <span class="badge bg-warning-subtle text-dark border border-warning-subtle px-1.5 py-0.5 fw-bold" style="font-size:0.62rem;">
-                      예상 합계 약 ${cards.expected_total_cards}장
-                    </span>
-                  </div>
-
-                  <div class="row g-1 text-center mb-2" style="font-size:0.72rem;">
-                    <div class="col-4">
-                      <div class="p-1.5 rounded bg-light border">
-                        <div class="text-muted small" style="font-size:0.62rem;">🟨 옐로카드/경기</div>
-                        <strong class="text-dark" style="font-size:0.78rem;">${cards.home_yellow_avg}장 / ${cards.away_yellow_avg}장</strong>
-                      </div>
-                    </div>
-                    <div class="col-4">
-                      <div class="p-1.5 rounded bg-light border">
-                        <div class="text-muted small" style="font-size:0.62rem;">🟥 레드카드/시즌</div>
-                        <strong class="text-danger" style="font-size:0.78rem;">${cards.home_red_total}회 / ${cards.away_red_total}회</strong>
-                      </div>
-                    </div>
-                    <div class="col-4">
-                      <div class="p-1.5 rounded bg-light border">
-                        <div class="text-muted small" style="font-size:0.62rem;">⚠️ 파울/경기</div>
-                        <strong class="text-secondary" style="font-size:0.78rem;">${cards.home_fouls_avg}회 / ${cards.away_fouls_avg}회</strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="d-flex flex-column gap-1" style="font-size:0.70rem;">
-                    <div class="d-flex align-items-center justify-content-between">
-                      <span class="text-danger fw-bold">🔴 ${hName} 카드 성향:</span>
-                      <span class="badge ${cards.home_risk_badge || 'bg-warning text-dark'} px-1.5 py-0.5">${cards.home_risk_level}</span>
-                    </div>
-                    <div class="text-muted small px-1" style="font-size:0.65rem; line-height:1.3;">
-                      ${cards.home_risk_text}
-                    </div>
-                    <div class="d-flex align-items-center justify-content-between mt-0.5">
-                      <span class="text-primary fw-bold">🔵 ${aName} 카드 성향:</span>
-                      <span class="badge ${cards.away_risk_badge || 'bg-danger text-white'} px-1.5 py-0.5">${cards.away_risk_level}</span>
-                    </div>
-                    <div class="text-muted small px-1" style="font-size:0.65rem; line-height:1.3;">
-                      ${cards.away_risk_text}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- ========================================================= -->
-          <!-- ⚔️ [섹션 4] 맞대결 상대전적 (Head-to-Head)                 -->
+          <!-- ⚔️ [H2H] 맞대결 상대전적 (Head-to-Head)                 -->
           <!-- ========================================================= -->
           <div class="p-2.5 border-bottom" style="border-color:#e2e8f0 !important;">
             <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
@@ -23677,7 +23288,14 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const bufferTimeStr = getKSTDateTimeString(new Date(now.getTime() - 20 * 60 * 1000));
 
       // 1. Truly active LIVE match of today - prioritize the top/first LIVE match
-      const firstLiveCard = cards.find(card => card.getAttribute('data-match-status') === 'LIVE');
+      // (지난경기가 같은 목록에 섞이므로, 시작시각이 -4.5h ~ +0.5h 범위인 LIVE만 인정)
+      const liveFromStr = getKSTDateTimeString(new Date(now.getTime() - 4.5 * 60 * 60 * 1000));
+      const liveToStr = getKSTDateTimeString(new Date(now.getTime() + 30 * 60 * 1000));
+      const firstLiveCard = cards.find(card => {
+        if (card.getAttribute('data-match-status') !== 'LIVE') return false;
+        const mDate = card.getAttribute('data-match-date') || '';
+        return !mDate || (mDate >= liveFromStr && mDate <= liveToStr);
+      });
       if (firstLiveCard) return firstLiveCard;
 
       // 2. First upcoming or in-progress match at or after bufferTimeStr
@@ -23727,27 +23345,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
       const targetCard = findCurrentOrNextMatchCard(cards);
       if (!targetCard) return;
 
-      const divider = document.getElementById('currentTimeDivider');
-      const elementToAlign = divider || targetCard;
-
-      const isMobile = window.innerWidth <= 768 || currentViewMode === 'mobile';
-
-      // Internal scroll inside predMatchList container (for both mobile and desktop)
-      const firstLive = cards.find(c => c.getAttribute('data-match-status') === 'LIVE');
-      if (firstLive && (cards.indexOf(firstLive) < 3 || targetCard === firstLive)) {
-        container.scrollTop = 0;
-      } else {
-        const targetOffset = elementToAlign.offsetTop - container.offsetTop;
-        container.scrollTop = Math.max(0, targetOffset - 4);
-      }
-      if (isMobile && window.pageYOffset > 20) {
-        window.scrollTo(0, 0);
-      }
-
-      targetCard.classList.add('current-time-glow');
-      setTimeout(() => {
-        targetCard.classList.remove('current-time-glow');
-      }, 2500);
+      // 📌 지난경기가 목록 위쪽에 함께 있으므로 scrollTop=0 대신 항상 현재시각 위치로 정렬
+      _predListUserScrolled = false;
+      alignPredListToNow(true);
+      initialScheduleAutoScrollDone = true;
 
       if (isManual) {
         const matchId = targetCard.id.replace('predMatchCard_', '');
@@ -24463,7 +24064,7 @@ function updateSlimPanel(matchId, type, contentHtml) {
     function openTotoMatchDetail(dbMatchId, homeName, awayName) {
       let target = (typeof findDbMatchForToto === 'function') ? findDbMatchForToto(dbMatchId, homeName, awayName) : null;
       if (!target && dbMatchId && typeof allMatches !== 'undefined' && allMatches) {
-        target = allMatches.find(m => m.id == dbMatchId);
+        target = allMatches.find(m => m.id == dbMatchId || String(m.id) === String(dbMatchId));
       }
       if (!target && (homeName || awayName) && typeof allMatches !== 'undefined' && allMatches) {
         const cleanH = (homeName || '').replace(/[\s\.\-]/g, '').toLowerCase();
@@ -24482,10 +24083,11 @@ function updateSlimPanel(matchId, type, contentHtml) {
                                    (!awayName && homeName && (x.home_team_name == homeName || (x.toto_match && x.toto_match.home == homeName))));
       }
 
-      const targetId = target ? target.id : (dbMatchId || ('synth_' + Date.now()));
-      if (!target) {
+      const targetId = target ? target.id : (dbMatchId || null);
+      if (!target && !targetId) {
+        const synthId = 'synth_' + Date.now();
         const synth = {
-          id: targetId,
+          id: synthId,
           seq: 1,
           sport_code: (currentTotoRound === 'WDL') ? 'SOCCER' : ((currentTotoRound === 'W1L') ? 'BASEBALL' : 'BASKETBALL'),
           league_name: (currentTotoRound === 'WDL') ? '축구' : ((currentTotoRound === 'W1L') ? '야구' : '농구'),
@@ -24499,12 +24101,20 @@ function updateSlimPanel(matchId, type, contentHtml) {
         if (typeof allMatches !== 'undefined' && allMatches) {
           allMatches.push(synth);
         }
+        openNextGenDetailModal(synthId);
+        return;
       }
 
       // 🚀 [초고속 0ms 즉각 전환] 기존 토토 모달창을 닫지 않고 그 위에 정밀 분석 모달을 바로 띄움
       const nextGenEl = document.getElementById('nextGenDetailModal');
       if (nextGenEl) {
         nextGenEl.style.zIndex = '1070';
+        setTimeout(() => {
+          const backdrops = document.querySelectorAll('.modal-backdrop');
+          if (backdrops.length > 1) {
+            backdrops[backdrops.length - 1].style.zIndex = '1065';
+          }
+        }, 50);
       }
       openNextGenDetailModal(targetId);
     }
@@ -24788,14 +24398,10 @@ function updateSlimPanel(matchId, type, contentHtml) {
         const probH = m.db_prob_home || (Math.round((Number(m.pW) || 45) * 1.05));
         const probA = m.db_prob_away || (100 - probH);
 
-        const activeDrawerSeq = window._activeTotoDrawerSeq ? window._activeTotoDrawerSeq[totoKey] : null;
-        const isDrawerOpen = (activeDrawerSeq === m.seq);
-        const drawerHtml = isDrawerOpen ? renderTotoDrawerContentHtml(totoKey, m.seq, m.db_match_id, m.home, m.away, dbMatch, m) : '';
-
         // 📱 모바일 초슬림 1줄 뷰: 한 화면 14경기 완벽 표출 (네이션스 등 리그명 삭제, 순수 팀명만 직관 표출!)
         mobileCardsHtml += `
           <div class="mb-0.5 bg-white border rounded ${hasPick ? 'border-primary' : 'border-slate-200'}" id="totoMobCard_${totoKey}_${m.seq}" style="font-size: 0.72rem; overflow:hidden; margin-bottom: 2px !important;">
-            <div class="d-flex align-items-center justify-content-between px-1" style="height: 25px; min-height: 25px; cursor: pointer; background:${isDrawerOpen ? '#eff6ff' : '#ffffff'};" onclick="toggleTotoRowDrawer('${totoKey}', ${m.seq})">
+            <div class="d-flex align-items-center justify-content-between px-1" style="height: 25px; min-height: 25px; cursor: pointer; background: #ffffff;" onclick="openTotoMatchDetailBySeq('${totoKey}', ${m.seq})" title="클릭 시 ${m.home} vs ${m.away} 상세 기록 및 분석 보기">
               <!-- 순번 -->
               <span class="badge" style="background: #111827; color: #ffffff; font-weight: 800; font-size: 0.60rem; padding: 2px 3px; border-radius: 3px; min-width: 18px; text-align: center; flex-shrink: 0;">
                 ${String(m.seq).padStart(2, '0')}
@@ -24829,22 +24435,17 @@ function updateSlimPanel(matchId, type, contentHtml) {
                   <span class="b-pct" style="font-size: 0.48rem; line-height: 1;">${isWinnerL ? '✓결과' : m.pL + '%'}</span>
                 </button>
               </div>
-              <!-- 아코디언 드로어 토글 -->
-              <button type="button" class="btn btn-xs ${isDrawerOpen ? 'btn-primary text-white' : 'btn-outline-secondary'} p-0 d-flex align-items-center justify-content-center" id="totoMobDrawerBtn_${totoKey}_${m.seq}" onclick="event.stopPropagation(); toggleTotoRowDrawer('${totoKey}', ${m.seq})" style="width: 18px; height: 21px; font-size: 0.56rem; border-radius: 3px; margin-left: 2px; flex-shrink: 0;" title="경기기록 보기">
-                ${isDrawerOpen ? '▴' : '▾'}
+              <!-- 경기 상세 기록 버튼 -->
+              <button type="button" class="btn btn-xs btn-outline-primary fw-bold p-0 d-flex align-items-center justify-content-center" id="totoMobDrawerBtn_${totoKey}_${m.seq}" onclick="event.stopPropagation(); openTotoMatchDetailBySeq('${totoKey}', ${m.seq})" style="width: 24px; height: 21px; font-size: 0.58rem; border-radius: 3px; margin-left: 2px; flex-shrink: 0;" title="경기 상세 기록 및 전력 분석">
+                기록
               </button>
             </div>
-            ${isDrawerOpen ? `
-              <div id="totoMobileDrawer_${totoKey}_${m.seq}" class="p-2 border-top" style="background:#f8fafc;">
-                ${drawerHtml}
-              </div>
-            ` : ''}
           </div>
         `;
 
         // 🖥️ 데스크톱 전용 테이블 로우 (순수 팀명만 표출, 대회명 제거)
         rowsHtml += `
-          <tr class="toto-modal-row ${hasPick ? 'row-has-pick' : ''}" id="totoRow_${totoKey}_${m.seq}" onclick="toggleTotoRowDrawer('${totoKey}', ${m.seq})" style="cursor: pointer; border-bottom: 1px solid #f1f5f9; background:${isDrawerOpen ? '#eff6ff' : '#ffffff'}; transition: background 0.15s ease;">
+          <tr class="toto-modal-row ${hasPick ? 'row-has-pick' : ''}" id="totoRow_${totoKey}_${m.seq}" onclick="openTotoMatchDetailBySeq('${totoKey}', ${m.seq})" style="cursor: pointer; border-bottom: 1px solid #f1f5f9; background: #ffffff; transition: background 0.15s ease;" title="클릭 시 ${m.home} vs ${m.away} 상세 기록 및 분석 보기">
             <td class="text-center py-0.5 px-1" style="width: 34px;">
               <span class="badge" style="background:#111827; color:#ffffff; font-weight:800; font-size:0.68rem; border-radius:3px; padding: 2px 4px;">
                 ${String(m.seq).padStart(2, '0')}
@@ -24888,18 +24489,11 @@ function updateSlimPanel(matchId, type, contentHtml) {
               ${resultBadge}
             </td>
             <td class="py-0.5 px-1 text-center" style="width: 50px;" onclick="event.stopPropagation()">
-              <button type="button" class="btn btn-xs ${isDrawerOpen ? 'btn-primary text-white' : 'btn-outline-primary'} fw-bold" id="totoDrawerBtn_${totoKey}_${m.seq}" onclick="event.stopPropagation(); toggleTotoRowDrawer('${totoKey}', ${m.seq})" style="font-size:0.62rem; padding: 2px 5px; white-space:nowrap;" title="상대전적 및 기록">
-                ${isDrawerOpen ? '접기 ▴' : '기록 ▾'}
+              <button type="button" class="btn btn-xs btn-outline-primary fw-bold" id="totoDrawerBtn_${totoKey}_${m.seq}" onclick="event.stopPropagation(); openTotoMatchDetailBySeq('${totoKey}', ${m.seq})" style="font-size:0.64rem; padding: 2px 6px; white-space:nowrap;" title="상세 경기 분석 및 기록">
+                기록 ↗
               </button>
             </td>
           </tr>
-          ${isDrawerOpen ? `
-            <tr id="totoDrawerRow_${totoKey}_${m.seq}" style="background:#f8fafc; border-bottom:2px solid #cbd5e1;">
-              <td colspan="7" class="p-2.5">
-                ${drawerHtml}
-              </td>
-            </tr>
-          ` : ''}
         `;
       });
 
@@ -25534,7 +25128,7 @@ function renderPredDetail(m, customDetailData = null) {
       // 1. Odds & Probabilities extraction with 100% predictive alignment across all sports
       const odds = getMatchOdds(m);
 
-      let probs = (matchup && matchup.probabilities) ? { ...matchup.probabilities } : null;
+      let probs = m._confirmed_probs || (matchup && matchup.probabilities) ? { ...(m._confirmed_probs || matchup.probabilities) } : null;
       if (!probs || (!matchup && probs.home === 55 && probs.away === 45)) {
         const pred = m.prediction || {};
         const conf = pred.confidence ? Number(pred.confidence) : 55;
@@ -25547,6 +25141,9 @@ function renderPredDetail(m, customDetailData = null) {
         } else {
           probs = { home: 100 - conf, away: conf, draw: 0, is_home_favored: false, favored_team: m.away_team_name, favored_pct: conf };
         }
+      }
+      if (!isLive) {
+        m._confirmed_probs = probs;
       }
 
       // Home & Away split data extraction
@@ -27115,6 +26712,19 @@ function renderPredDetail(m, customDetailData = null) {
       const hName = match ? formatTeamName(match.home_team_name) : '선택 경기';
       const aName = match ? formatTeamName(match.away_team_name) : '';
 
+      // 이미 종료되거나 취소된 경기는 알림 등록 불가 및 자동 해제
+      if (match && (match.status === 'FINISHED' || match.status === 'CANCELLED')) {
+        if (_subscribedMatchAlerts.has(mId)) {
+          _subscribedMatchAlerts.delete(mId);
+          try { localStorage.setItem('tokeon_subscribed_alerts', JSON.stringify(Array.from(_subscribedMatchAlerts))); } catch(e) {}
+          renderPredMatches();
+          renderRightColLiveRelay();
+          renderLiveRelayModalBody();
+        }
+        showMiniToast(`⚠️ [${hName} vs ${aName}] 이미 종료된 경기입니다.`);
+        return;
+      }
+
       if (_subscribedMatchAlerts.has(mId)) {
         _subscribedMatchAlerts.delete(mId);
         try { localStorage.setItem('tokeon_subscribed_alerts', JSON.stringify(Array.from(_subscribedMatchAlerts))); } catch(e) {}
@@ -27276,13 +26886,14 @@ function renderPredDetail(m, customDetailData = null) {
       if (!matchList || !Array.isArray(matchList)) return;
 
       let hasActiveSubscribedLive = false;
+      let needsSubscribedPersist = false;
 
       matchList.forEach(m => {
         if (!m || !m.id) return;
         const mId = Number(m.id);
         const isSubscribed = _subscribedMatchAlerts.has(mId);
         const isLive = (m.status === 'LIVE');
-        const isFin = (m.status === 'FINISHED');
+        const isFin = (m.status === 'FINISHED' || m.status === 'CANCELLED');
         const hScore = Number(m.home_score ?? 0);
         const aScore = Number(m.away_score ?? 0);
 
@@ -27307,8 +26918,8 @@ function renderPredDetail(m, customDetailData = null) {
             }
           }
 
-          // 2. 실시간 득점/골 감지 및 야구/축구 자동 이미지 트리거
-          if ((homeScored || awayScored) && (isLive || isFin)) {
+          // 2. 실시간 득점/골 감지 (반드시 경기가 진행 중(LIVE)일 때만 발송, 이미 종료된(FINISHED) 경기는 절대 차단)
+          if ((homeScored || awayScored) && isLive && !isFin) {
             const scoringSide = homeScored ? formatTeamName(m.home_team_name) : formatTeamName(m.away_team_name);
             if (m.sport_code === 'SOCCER') {
               if (typeof triggerSoccerGoalEvent === 'function') {
@@ -27340,7 +26951,7 @@ function renderPredDetail(m, customDetailData = null) {
             if (isSubscribed) {
               triggerMatchAlert('SCORE', m, { scoringSide, oldH: old.home, oldA: old.away, newH: hScore, newA: aScore });
             }
-          } else if (m.sport_code === 'BASEBALL' && isLive) {
+          } else if (m.sport_code === 'BASEBALL' && isLive && !isFin) {
             const oldOuts = old.outs || 0;
             if (curOuts > oldOuts) {
               if (typeof triggerBaseballEvent === 'function') {
@@ -27353,12 +26964,23 @@ function renderPredDetail(m, customDetailData = null) {
             }
           }
 
-          // 3. 경기 종료 감지 (LIVE -> FINISHED)
+          // 3. 경기 종료 감지 (LIVE -> FINISHED) : 최종 종료 알림 1회 발송 후 알림 설정 자동 해제!
           if (old.status !== 'FINISHED' && isFin) {
             if (isSubscribed && !_finishedAlertedMatches.has(mId)) {
               _finishedAlertedMatches.add(mId);
               triggerMatchAlert('FINISH', m, { finalH: hScore, finalA: aScore });
             }
+            // 경기가 종료되면 구독 목록에서 즉시 자동 해제하여 이후 불필요한 알림 발송 원천 차단
+            if (_subscribedMatchAlerts.has(mId)) {
+              _subscribedMatchAlerts.delete(mId);
+              needsSubscribedPersist = true;
+            }
+          }
+        } else {
+          // 최초 진입 시 이미 종료된 경기는 구독 목록에 남아있지 않도록 즉시 정리
+          if (isFin && _subscribedMatchAlerts.has(mId)) {
+            _subscribedMatchAlerts.delete(mId);
+            needsSubscribedPersist = true;
           }
         }
 
@@ -27372,6 +26994,15 @@ function renderPredDetail(m, customDetailData = null) {
           b3: curB3
         });
       });
+
+      if (needsSubscribedPersist) {
+        try {
+          localStorage.setItem('tokeon_subscribed_alerts', JSON.stringify(Array.from(_subscribedMatchAlerts)));
+        } catch(e) {}
+        if (typeof renderPredMatches === 'function') renderPredMatches();
+        if (typeof renderRightColLiveRelay === 'function') renderRightColLiveRelay();
+        if (typeof renderLiveRelayModalBody === 'function') renderLiveRelayModalBody();
+      }
 
       const anyLiveMatches = (allMatches || []).some(m => m && (m.status === 'LIVE' || isRealTimeLive(m)));
       if (anyLiveMatches && syncIntervalSeconds !== 2) {
@@ -28421,56 +28052,64 @@ function renderPredDetail(m, customDetailData = null) {
     }
 
     function switchMobileTab(tabKey) {
-      if (tabKey === 'center' || tabKey === 'toto') tabKey = 'chat';
-      if (tabKey === 'news' || tabKey === 'live_relay' || tabKey === 'community') tabKey = 'relay';
+      if (tabKey === 'center' || tabKey === 'toto' || tabKey === 'community') tabKey = 'chat';
+      if (tabKey === 'news' || tabKey === 'live_relay' || tabKey === 'relay') tabKey = 'schedule';
       currentMobileTab = tabKey;
       const p1 = document.getElementById('leftColSchedule');
       const p2 = document.getElementById('centerColMain');
       const p3 = document.getElementById('rightColCommunity');
 
-      const panels = {
-        schedule: p1,
-        chat: p2,
-        relay: p3,
-        toto: p2,
-        community: p3
-      };
+      const btnSched = document.getElementById('mobTabSchedule');
+      const btnChat = document.getElementById('mobTabChat');
 
-      const tabs = {
-        schedule: 'mobTabSchedule',
-        chat: 'mobTabChat',
-        relay: 'mobTabRelay',
-        toto: 'mobTabToto',
-        community: 'mobTabCommunity'
-      };
+      if (tabKey === 'chat') {
+        if (p1) p1.style.display = 'none';
+        if (p2) {
+          p2.style.display = 'block';
+          p2.style.width = '100%';
+          p2.style.maxWidth = '100%';
+          p2.style.flex = '0 0 100%';
+        }
+        if (p3) p3.style.display = 'none';
 
-      Object.keys(panels).forEach(k => {
-        const el = panels[k];
-        const btn = document.getElementById(tabs[k]);
-        if (el) {
-          if (k === tabKey || (tabKey === 'chat' && k === 'toto') || (tabKey === 'relay' && k === 'community')) {
-            el.style.display = 'block';
-            el.style.width = '100%';
-            el.style.maxWidth = '100%';
-            el.style.flex = '0 0 100%';
-          } else {
-            el.style.display = 'none';
-          }
+        if (btnChat) {
+          btnChat.classList.add('active');
+          btnChat.style.background = '#1d4ed8';
+          btnChat.style.color = '#ffffff';
+          btnChat.style.borderColor = '#1d4ed8';
         }
-        if (btn) {
-          if (k === tabKey || (tabKey === 'chat' && k === 'toto') || (tabKey === 'relay' && k === 'community')) {
-            btn.style.background = '#1d4ed8';
-            btn.style.color = '#ffffff';
-            btn.style.borderColor = '#1d4ed8';
-            btn.classList.add('active');
-          } else {
-            btn.style.background = '#f8fafc';
-            btn.style.color = '#475569';
-            btn.style.borderColor = '#cbd5e1';
-            btn.classList.remove('active');
-          }
+        if (btnSched) {
+          btnSched.classList.remove('active');
+          btnSched.style.background = '#f8fafc';
+          btnSched.style.color = '#475569';
+          btnSched.style.borderColor = '#cbd5e1';
         }
-      });
+      } else {
+        // tabKey === 'schedule'
+        if (p1) {
+          p1.style.display = 'block';
+          p1.style.width = '100%';
+          p1.style.maxWidth = '100%';
+          p1.style.flex = '0 0 100%';
+        }
+        if (p2) p2.style.display = 'none';
+        if (p3) p3.style.display = 'none';
+
+        if (btnChat) {
+          btnChat.classList.remove('active');
+          btnChat.style.background = '#f8fafc';
+          btnChat.style.color = '#475569';
+          btnChat.style.borderColor = '#cbd5e1';
+        }
+
+        // 📌 [지난경기] 탭 폐지: 경기목록 탭만 활성화
+        if (btnSched) {
+          btnSched.classList.add('active');
+          btnSched.style.background = '#1d4ed8';
+          btnSched.style.color = '#ffffff';
+          btnSched.style.borderColor = '#1d4ed8';
+        }
+      }
     }
 
     function setViewMode(mode, save = true) {
