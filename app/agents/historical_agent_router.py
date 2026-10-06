@@ -23,10 +23,18 @@ def teams_match(t1: str, t2: str) -> bool:
     if not t1 or not t2:
         return False
     try:
-        from app.services.live_api_sports_service import teams_match as core_teams_match, are_city_rivals
+        from app.services.live_api_sports_service import teams_match as core_teams_match, are_city_rivals, NATIONAL_TEAM_MAP
         if are_city_rivals(t1, t2):
             return False
         if core_teams_match(t1, t2):
+            return True
+        t1_norm = str(t1).strip().lower()
+        t2_norm = str(t2).strip().lower()
+        if t1_norm in NATIONAL_TEAM_MAP and NATIONAL_TEAM_MAP[t1_norm] == str(t2).strip():
+            return True
+        if t2_norm in NATIONAL_TEAM_MAP and NATIONAL_TEAM_MAP[t2_norm] == str(t1).strip():
+            return True
+        if t1_norm in NATIONAL_TEAM_MAP and t2_norm in NATIONAL_TEAM_MAP and NATIONAL_TEAM_MAP[t1_norm] == NATIONAL_TEAM_MAP[t2_norm]:
             return True
     except Exception:
         pass
@@ -621,11 +629,28 @@ class HistoricalAgentRouter:
                 if ('다저스' in s1 and '에인절스' in s2) or ('에인절스' in s1 and '다저스' in s2) or ('dodger' in s1 and 'angel' in s2) or ('angel' in s1 and 'dodger' in s2):
                     return False
 
-                # 🛡️ 국가대표팀 vs 클럽팀 오매칭 방지 (예: 포르투갈 vs 포르투)
-                if s1 in NATIONAL_TEAM_ALIASES and s2 not in NATIONAL_TEAM_ALIASES.get(s1, []):
+                # 🛡️ 국가대표팀 vs 클럽팀 오매칭 방지 및 영문/한글 상호 매핑 (예: Benin <-> 베냉, Tajikistan <-> 타지키스탄, 포르투갈 vs 포르투)
+                canon1 = None
+                canon2 = None
+                for nat_k, nat_aliases in NATIONAL_TEAM_ALIASES.items():
+                    k_clean = nat_k.lower().replace(' ', '').replace('·', '').replace('.', '').replace('-', '')
+                    if s1 == k_clean or any(s1 == a.lower().replace(' ', '').replace('·', '').replace('.', '').replace('-', '') for a in nat_aliases):
+                        canon1 = nat_k
+                    if s2 == k_clean or any(s2 == a.lower().replace(' ', '').replace('·', '').replace('.', '').replace('-', '') for a in nat_aliases):
+                        canon2 = nat_k
+                if canon1 and canon2:
+                    return canon1 == canon2
+                if canon1 and not canon2:
                     return False
-                if s2 in NATIONAL_TEAM_ALIASES and s1 not in NATIONAL_TEAM_ALIASES.get(s2, []):
+                if canon2 and not canon1:
                     return False
+
+                # 🛡️ 클럽팀 동의어 확인 (아틀레티코, 맨시티 등)
+                for club_dict in [SPAIN_TEAM_ALIASES, EPL_TEAM_ALIASES, KLEAGUE_TEAM_ALIASES, JLEAGUE_TEAM_ALIASES, BUNDESLIGA_TEAM_ALIASES, SERIEA_TEAM_ALIASES]:
+                    for ck, caliases in club_dict.items():
+                        c_all = [ck.lower().replace(' ', '')] + [ca.lower().replace(' ', '') for ca in caliases]
+                        if s1 in c_all and s2 in c_all:
+                            return True
 
                 if s1 in s2 or s2 in s1:
                     # 도시는 같지만 구단이 다른 경우 추가 방어 (예: 뉴욕시티 vs 뉴욕레드불스)
@@ -778,10 +803,20 @@ class HistoricalAgentRouter:
                 '쿠바': ['쿠바', 'cuba'],
                 '푸에르토리코': ['푸에르토리코', 'puerto rico'],
                 '벨리즈': ['벨리즈', 'belize'],
-                '아루바': ['아루바', 'aruba']
+                '아루바': ['아루바', 'aruba'],
+                '앤티가 바부다': ['앤티가 바부다', '앤티가바부다', '앤티가', 'antigua and barbuda', 'antigua & barbuda', 'antigua'],
+                '터크스 케이커스 제도': ['터크스 케이커스 제도', '터크스케이커스제도', '터크스케이커스', 'turks and caicos islands', 'turks & caicos islands', 'turks and caicos'],
+                '생마르탱': ['생마르탱', 'st. martin', 'st martin', 'saint martin'],
+                '프랑스령 기아나': ['프랑스령 기아나', '프랑스령기아나', 'french guiana'],
+                '케이맨제도': ['케이맨제도', 'cayman islands', 'cayman'],
+                '세인트빈센트 그레나딘': ['세인트빈센트 그레나딘', 'st vincent and the grenadines', 'st. vincent and the grenadines'],
+                '앵귈라': ['앵귈라', 'anguilla'],
+                '르완다': ['르완다', 'rwanda'],
+                '라이베리아': ['라이베리아', 'liberia'],
+                '적도기니': ['적도기니', 'equatorial guinea'],
+                '기니': ['기니', 'guinea'],
+                '수단': ['수단', 'sudan']
             }
-
-
 
             def extract_team_tokens(name: str) -> list:
                 if not name: return []
@@ -793,44 +828,44 @@ class HistoricalAgentRouter:
                 for nat_k, nat_aliases in NATIONAL_TEAM_ALIASES.items():
                     if clean_lower == nat_k.lower() or any(clean_lower == a.lower() for a in nat_aliases):
                         sfx = '_남자' if '_남자' in clean_name else ('_여자' if '_여자' in clean_name else '')
-                        aliases = [a + sfx for a in nat_aliases] + nat_aliases + [nat_k]
+                        aliases = [a + sfx for a in nat_aliases] + nat_aliases + [nat_k, clean_name]
                         return list(set(aliases))
                 for sp_key, aliases in SPAIN_TEAM_ALIASES.items():
-                    if sp_key in clean_name or clean_name in sp_key:
-                        return list(set([sp_key] + aliases))
+                    if sp_key in clean_name or clean_name in sp_key or any(a in clean_name or clean_name in a for a in aliases):
+                        return list(set([clean_name, sp_key] + aliases))
                 for ep_key, aliases in EPL_TEAM_ALIASES.items():
-                    if ep_key in clean_name or clean_name in ep_key:
-                        return list(set([ep_key] + aliases))
+                    if ep_key in clean_name or clean_name in ep_key or any(a in clean_name or clean_name in a for a in aliases):
+                        return list(set([clean_name, ep_key] + aliases))
                 for kl_key, aliases in KLEAGUE_TEAM_ALIASES.items():
-                    if kl_key in clean_name or clean_name in kl_key:
-                        return list(set([kl_key] + aliases))
+                    if kl_key in clean_name or clean_name in kl_key or any(a in clean_name or clean_name in a for a in aliases):
+                        return list(set([clean_name, kl_key] + aliases))
                 for jl_key, aliases in JLEAGUE_TEAM_ALIASES.items():
-                    if jl_key in clean_name or clean_name in jl_key:
-                        return list(set([jl_key] + aliases))
+                    if jl_key in clean_name or clean_name in jl_key or any(a in clean_name or clean_name in a for a in aliases):
+                        return list(set([clean_name, jl_key] + aliases))
                 for bd_key, aliases in BUNDESLIGA_TEAM_ALIASES.items():
-                    if bd_key in clean_name or clean_name in bd_key:
-                        return list(set([bd_key] + aliases))
+                    if bd_key in clean_name or clean_name in bd_key or any(a in clean_name or clean_name in a for a in aliases):
+                        return list(set([clean_name, bd_key] + aliases))
                 for sa_key, aliases in SERIEA_TEAM_ALIASES.items():
-                    if sa_key in clean_name or clean_name in sa_key:
-                        return list(set([sa_key] + aliases))
+                    if sa_key in clean_name or clean_name in sa_key or any(a in clean_name or clean_name in a for a in aliases):
+                        return list(set([clean_name, sa_key] + aliases))
                 for lg_key, aliases in LIGUE1_TEAM_ALIASES.items():
-                    if lg_key in clean_name or clean_name in lg_key:
-                        return list(set([lg_key] + aliases))
+                    if lg_key in clean_name or clean_name in lg_key or any(a in clean_name or clean_name in a for a in aliases):
+                        return list(set([clean_name, lg_key] + aliases))
                 for ch_key, aliases in CHAMPIONSHIP_TEAM_ALIASES.items():
-                    if ch_key in clean_name or clean_name in ch_key:
-                        return list(set([ch_key] + aliases))
+                    if ch_key in clean_name or clean_name in ch_key or any(a in clean_name or clean_name in a for a in aliases):
+                        return list(set([clean_name, ch_key] + aliases))
                 for ed_key, aliases in EREDIVISIE_TEAM_ALIASES.items():
-                    if ed_key in clean_name or clean_name in ed_key:
-                        return list(set([ed_key] + aliases))
+                    if ed_key in clean_name or clean_name in ed_key or any(a in clean_name or clean_name in a for a in aliases):
+                        return list(set([clean_name, ed_key] + aliases))
                 for mls_key, aliases in MLS_TEAM_ALIASES.items():
-                    if mls_key in clean_name or clean_name in mls_key:
-                        return list(set([mls_key] + aliases))
+                    if mls_key in clean_name or clean_name in mls_key or any(a in clean_name or clean_name in a for a in aliases):
+                        return list(set([clean_name, mls_key] + aliases))
                 for npb_key, aliases in NPB_TEAM_ALIASES.items():
-                    if npb_key in clean_name or clean_name in npb_key:
-                        return list(set([npb_key] + aliases))
+                    if npb_key in clean_name or clean_name in npb_key or any(a in clean_name or clean_name in a for a in aliases):
+                        return list(set([clean_name, npb_key] + aliases))
                     for a in aliases:
                         if a in clean_name or clean_name in a:
-                            return list(set([npb_key] + aliases))
+                            return list(set([clean_name, npb_key] + aliases))
 
                 tokens = set()
                 raw = clean_name
@@ -1748,17 +1783,18 @@ class HistoricalAgentRouter:
 
             # DB에 1:1 맞대결이 없는 경우 (승강/디비전 분리/이전 시즌), 공식 과거 전적 아카이브 자동 연결
             has_arch_h2h = False
-            for entry in HISTORICAL_H2H_ARCHIVE:
-                t1, t2 = entry['teams']
-                if ((t1 in home_team or teams_match(t1, home_team)) and (t2 in away_team or teams_match(t2, away_team))) or \
-                   ((t2 in home_team or teams_match(t2, home_team)) and (t1 in away_team or teams_match(t1, away_team))):
-                    arch_dtos = []
-                    for m_idx, arc_m in enumerate(entry['matches']):
-                        m_dto = format_archive_dto(arc_m, home_team)
-                        arch_dtos.append(m_dto)
-                    formatted_h2h = arch_dtos
-                    has_arch_h2h = True
-                    break
+            if not formatted_h2h:
+                for entry in HISTORICAL_H2H_ARCHIVE:
+                    t1, t2 = entry['teams']
+                    if ((t1 in home_team or teams_match(t1, home_team)) and (t2 in away_team or teams_match(t2, away_team))) or \
+                       ((t2 in home_team or teams_match(t2, home_team)) and (t1 in away_team or teams_match(t1, away_team))):
+                        arch_dtos = []
+                        for m_idx, arc_m in enumerate(entry['matches']):
+                            m_dto = format_archive_dto(arc_m, home_team)
+                            arch_dtos.append(m_dto)
+                        formatted_h2h = arch_dtos
+                        has_arch_h2h = True
+                        break
 
             # 최근 경기 최대 max_games(기본 10경기)까지 완벽 보강 (예: 신규/데이터 부족 팀 및 중복 제거 후 보충)
             def enrich_recent_matches_to_target(team_name: str, l_name: str, sp_code: str, existing_dtos: list, target_count: int = 10) -> list:
@@ -1797,7 +1833,7 @@ class HistoricalAgentRouter:
                 # 2. 국가대표팀인 경우 각국 축구협회 및 FIFA/UEFA 공식 A매치 실전 경기 우선 보강
                 from app.agents.national_teams_historical_data import NATIONAL_TEAM_OFFICIAL_RECENT_MATCHES
                 for nat_k, nat_matches in NATIONAL_TEAM_OFFICIAL_RECENT_MATCHES.items():
-                    if (nat_k == clean_tm or nat_k == team_name or (len(nat_k) >= 3 and nat_k in clean_tm)):
+                    if (nat_k == clean_tm or nat_k == team_name or (len(nat_k) >= 3 and nat_k in clean_tm) or teams_match(nat_k, clean_tm) or teams_match(nat_k, team_name)):
                         for nm in nat_matches:
                             d_str = nm['date']
                             if d_str not in seen_dtos:

@@ -77,7 +77,12 @@ NATIONAL_TEAM_TRANSLATION = {
     "Paraguay": "파라과이", "Peru": "페루", "Venezuela": "베네수엘라", "Bolivia": "볼리비아",
     "United States": "미국", "USA": "미국", "Mexico": "멕시코", "Canada": "캐나다",
     "Japan": "일본", "South Korea": "한국", "Korea Republic": "한국", "Australia": "호주",
-    "Saudi Arabia": "사우디", "Iran": "이란", "Qatar": "카타르", "Thailand": "태국", "Vietnam": "베트남", "Philippines": "필리핀"
+    "Saudi Arabia": "사우디", "Iran": "이란", "Qatar": "카타르", "Thailand": "태국", "Vietnam": "베트남", "Philippines": "필리핀",
+    "China": "중국", "Benin": "베냉", "Tajikistan": "타지키스탄", "Russia": "러시아", "Nigeria": "나이지리아",
+    "Algeria": "알제리", "Niger": "니제르", "Montserrat": "몬트세랫", "Turks and Caicos Islands": "터크스 케이커스 제도",
+    "St. Martin": "생마르탱", "Bahamas": "바하마", "Antigua and Barbuda": "앤티가 바부다", "Aruba": "아루바",
+    "French Guiana": "프랑스령 기아나", "Belize": "벨리즈", "Anguilla": "앵귈라", "Rwanda": "르완다",
+    "Liberia": "라이베리아", "Equatorial Guinea": "적도기니", "Guinea": "기니", "Sudan": "수단"
 }
 
 MLS_TEAM_TRANSLATION = {
