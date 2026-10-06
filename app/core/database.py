@@ -5,32 +5,41 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.core.config import settings
 
-# SQLite 자가 복구 (손상된 DB 파일 감지 시 자동 초기화)
+# SQLite 자가 복구 및 무결성 점검
 if 'sqlite' in settings.DATABASE_URL:
     db_file_path = settings.DATABASE_URL.replace('sqlite:///', '').split('?')[0]
-    if os.path.isabs(db_file_path) or os.path.exists(db_file_path):
+    if os.path.exists(db_file_path) and os.path.getsize(db_file_path) > 0:
         try:
             con = sqlite3.connect(db_file_path)
             res = con.execute("PRAGMA quick_check;").fetchall()
-            con.close()
             if not res or res[0][0] != 'ok':
-                print(f"[WARN] 손상된 SQLite 파일 감지: {res}. 새 DB로 자동 재생성합니다.")
-                os.rename(db_file_path, f"{db_file_path}.bad_{int(time.time())}")
-        except Exception as err:
-            print(f"[WARN] SQLite 파일 읽기 실패 ({err}). 복구 진행.")
+                print(f"[WARN] SQLite quick_check 경고: {res}. VACUUM 자동 최적화 시도...")
+                try:
+                    con.execute("VACUUM;")
+                    con.commit()
+                except Exception as vac_err:
+                    print(f"[WARN] VACUUM 실패: {vac_err}")
+            con.close()
+        except sqlite3.DatabaseError as err:
+            print(f"[ERROR] SQLite 치명적 손상 ({err}). 백업 후 재생성.")
             try:
                 os.rename(db_file_path, f"{db_file_path}.bad_{int(time.time())}")
             except Exception:
                 pass
+        except Exception as err:
+            print(f"[WARN] SQLite 점검 중 예외: {err}")
 
 db_url = settings.DATABASE_URL
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
+from sqlalchemy.pool import NullPool
+
 if 'sqlite' in db_url:
     engine = create_engine(
         db_url,
-        connect_args={'check_same_thread': False, 'timeout': 15.0}
+        poolclass=NullPool,
+        connect_args={'check_same_thread': False, 'timeout': 30.0}
     )
 else:
     # 🚀 PostgreSQL / MySQL 고성능 커넥션 풀 (동시접속 3,000명 트래픽 대비)
