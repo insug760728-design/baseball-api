@@ -11248,8 +11248,23 @@ function getFullModalMatchList() {
       }
 
       if (pStats && pStats.length > 0) {
-        const homePlayers = pStats.filter(p => p.team_name === m.home_team_name);
-        const awayPlayers = pStats.filter(p => p.team_name === m.away_team_name);
+        const hName = (m.home_team_name || m.home_team || '').trim();
+        const aName = (m.away_team_name || m.away_team || '').trim();
+        const isMatchTeam = (t1, t2) => {
+          if (!t1 || !t2) return false;
+          if (t1 === t2) return true;
+          const c1 = t1.replace(/\s+/g, '');
+          const c2 = t2.replace(/\s+/g, '');
+          return c1.includes(c2) || c2.includes(c1);
+        };
+        let homePlayers = pStats.filter(p => isMatchTeam(p.team_name, hName));
+        let awayPlayers = pStats.filter(p => isMatchTeam(p.team_name, aName));
+        if (homePlayers.length === 0 && awayPlayers.length === 0 && pStats.length >= 20) {
+          homePlayers = pStats.slice(0, 10);
+          awayPlayers = pStats.slice(10, 20);
+        } else if (homePlayers.length === 0 && pStats.length > 0) {
+          homePlayers = pStats;
+        }
         const sport = (m.sport_code || '').toUpperCase();
         const isSoccer = sport === 'SOCCER';
         const isBasketball = sport === 'BASKETBALL';
