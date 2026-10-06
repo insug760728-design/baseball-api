@@ -198,6 +198,30 @@ def _naver_find_game(home_name: str, away_name: str, match_date: Optional[str], 
     return best
 
 
+_PLAYER_AVG_MAP: Optional[Dict[str, str]] = None
+
+def _get_player_avg(name: str) -> str:
+    global _PLAYER_AVG_MAP
+    if _PLAYER_AVG_MAP is None:
+        _PLAYER_AVG_MAP = {}
+        try:
+            import os
+            roster_path = os.path.join(os.path.dirname(__file__), "baseball_rosters_master.json")
+            if os.path.exists(roster_path):
+                with open(roster_path, "r", encoding="utf-8") as fp:
+                    m_data = json.load(fp)
+                for tm, t_info in m_data.items():
+                    for b in t_info.get("batters", []):
+                        if b.get("name") and b.get("avg"):
+                            _PLAYER_AVG_MAP[b["name"]] = b["avg"]
+        except Exception:
+            pass
+    clean_name = str(name).strip()
+    if clean_name in _PLAYER_AVG_MAP:
+        return _PLAYER_AVG_MAP[clean_name]
+    # Default fallback average for pro baseball batters
+    return ".268"
+
 def fetch_naver_baseball_lineup(home_name: str, away_name: str, match_date: Optional[str], league: str, force: bool = False) -> Optional[Dict[str, Any]]:
     g = _naver_find_game(home_name, away_name, match_date, league)
     if not g or not g.get("gameId"):
@@ -225,13 +249,16 @@ def fetch_naver_baseball_lineup(home_name: str, away_name: str, match_date: Opti
                 else:
                     away_sp = sp
                 continue
+            hra = p.get("seasonHra") or p.get("hra") or ""
+            if not hra or hra == "-":
+                hra = _get_player_avg(nm)
             target.append({
                 "order": int(order),
                 "pos": p.get("positionName") or "",
                 "name": nm,
                 "id": p.get("playerCode"),
                 "hand": p.get("batsThrows") or p.get("hitType") or "",
-                "avg": p.get("seasonHra") or p.get("hra") or "",
+                "avg": hra,
             })
 
     # 2) 경기 시작 후 실제 출전 타순 (KBO/NPB record)
@@ -249,13 +276,17 @@ def fetch_naver_baseball_lineup(home_name: str, away_name: str, match_date: Opti
                 if not o or o in seen:
                     continue
                 seen.add(o)
+                nm = b.get("name") or ""
+                b_avg = b.get("avg") or ""
+                if not b_avg or b_avg == "-":
+                    b_avg = _get_player_avg(nm)
                 target.append({
                     "order": int(o),
                     "pos": b.get("posName") or b.get("pos") or "",
-                    "name": b.get("name") or "",
+                    "name": nm,
                     "id": b.get("playerId"),
                     "hand": "",
-                    "avg": b.get("avg") or "",
+                    "avg": b_avg,
                 })
         for key, is_home in (("homePitcher", True), ("awayPitcher", False)):
             ps = rdata.get(key) or []

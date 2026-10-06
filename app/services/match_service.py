@@ -814,6 +814,74 @@ class MatchService:
                 except Exception:
                     db.rollback()
 
+            # ⚾ 공식 확정 라인업(team_stats.lineup)이 있으면 player_stats_list로 자동 변환하여 즉시 제공
+            if len(player_stats_list) == 0 and isinstance(team_stats, dict):
+                lu = team_stats.get("lineup")
+                if lu and isinstance(lu, dict) and lu.get("confirmed"):
+                    h_lu = lu.get("home", [])
+                    a_lu = lu.get("away", [])
+                    st_dict = team_stats.get("starters", {})
+                    h_sp = st_dict.get("home", {}).get("name")
+                    a_sp = st_dict.get("away", {}).get("name")
+                    if h_sp:
+                        player_stats_list.append({
+                            "id": 1000000 + match.id * 100 + 1,
+                            "match_id": match.id,
+                            "team_name": match.home_team_name,
+                            "player_name": h_sp,
+                            "player_name_en": h_sp,
+                            "back_number": "",
+                            "position": "선발투수",
+                            "points": 0, "shots": 0,
+                            "extra_stats": {"type": "PITCHER", "role": "선발"}
+                        })
+                    if a_sp:
+                        player_stats_list.append({
+                            "id": 1000000 + match.id * 100 + 2,
+                            "match_id": match.id,
+                            "team_name": match.away_team_name,
+                            "player_name": a_sp,
+                            "player_name_en": a_sp,
+                            "back_number": "",
+                            "position": "선발투수",
+                            "points": 0, "shots": 0,
+                            "extra_stats": {"type": "PITCHER", "role": "선발"}
+                        })
+                    for idx, b in enumerate(h_lu):
+                        player_stats_list.append({
+                            "id": 2000000 + match.id * 100 + idx,
+                            "match_id": match.id,
+                            "team_name": match.home_team_name,
+                            "player_name": b.get("name"),
+                            "player_name_en": b.get("name"),
+                            "back_number": "",
+                            "position": f"{b.get('order', idx+1)}번 {b.get('pos', '타자')}",
+                            "points": 0, "shots": 0,
+                            "extra_stats": {
+                                "type": "HITTER",
+                                "order": f"{b.get('order', idx+1)}번",
+                                "pos": b.get("pos", "타자"),
+                                "avg": b.get("avg", ".268")
+                            }
+                        })
+                    for idx, b in enumerate(a_lu):
+                        player_stats_list.append({
+                            "id": 3000000 + match.id * 100 + idx,
+                            "match_id": match.id,
+                            "team_name": match.away_team_name,
+                            "player_name": b.get("name"),
+                            "player_name_en": b.get("name"),
+                            "back_number": "",
+                            "position": f"{b.get('order', idx+1)}번 {b.get('pos', '타자')}",
+                            "points": 0, "shots": 0,
+                            "extra_stats": {
+                                "type": "HITTER",
+                                "order": f"{b.get('order', idx+1)}번",
+                                "pos": b.get("pos", "타자"),
+                                "avg": b.get("avg", ".268")
+                            }
+                        })
+
         events_list = []
         for ev in match.events:
             ev_pname = sanitize_player_name(ev.player_name or "")
@@ -1039,6 +1107,25 @@ class MatchService:
                         "away": away_dict if away_dict else {"name": "선발 예고", "confirmed": False, "throws": "우완"}
                     }
                     cls.update_starters(db, m.id, st_data)
+
+                    # ⚾ 공식 타자 선발 라인업(1~9번 타순, 포지션, 타율)도 실시간 동기화
+                    try:
+                        from app.services.realtime_lineup_sources import fetch_naver_baseball_lineup
+                        lu = fetch_naver_baseball_lineup(m.home_team_name, m.away_team_name, m.match_date, "KBO")
+                        if lu and lu.get("confirmed") and curr_dt:
+                            curr_ts = json.loads(curr_dt.team_stats or "{}")
+                            curr_ts["lineup"] = {
+                                "home": lu["home_lineup"],
+                                "away": lu["away_lineup"],
+                                "confirmed": True,
+                                "source": "sports.naver.com",
+                                "fetched_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            }
+                            curr_dt.team_stats = json.dumps(curr_ts, ensure_ascii=False)
+                            db.commit()
+                    except Exception as l_err:
+                        pass
+
                     results["kbo_synced"] += 1
                     results["matches_updated"].append({"id": m.id, "league": "KBO", "home": m.home_team_name, "away": m.away_team_name, "starters": st_data})
         except Exception as e:
